@@ -21,6 +21,7 @@ import { approvalRequestsItem } from '@/shared/storage'
 import type { VaultStatus } from '@/shared/vault-protocol'
 import type { WalletStore } from '../../store'
 import { createTestWalletStore } from '../../store/test-store'
+import { VaultLockedError } from '../../vault'
 import { createDappDispatcher, type DappDispatcher } from './dispatch'
 
 const origin = 'https://dapp.example'
@@ -165,6 +166,24 @@ describe('createDappDispatcher', () => {
         // store is read.
         expect(signedIn.load).not.toHaveBeenCalled()
         expect(getStore).not.toHaveBeenCalled()
+    })
+
+    it('treats a lock after the status check as locked', async () => {
+        authContextStore.load.mockRejectedValue(new VaultLockedError())
+
+        await expect(
+            dispatcher.request(request('status'), origin)
+        ).resolves.toMatchObject({
+            result: { connection: { isConnected: false, reason: 'Locked' } },
+        })
+        await expect(
+            dispatcher.request(request('listAccounts'), origin)
+        ).resolves.toMatchObject({
+            error: {
+                code: errorCodes.provider.unauthorized,
+                message: 'Wallet is locked',
+            },
+        })
     })
 
     describe('when signed in', () => {

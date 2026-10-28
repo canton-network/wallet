@@ -235,24 +235,33 @@ describe('currentSessionSubscriber', () => {
         await expect(resolve()).resolves.toEqual(subscriber)
     })
 
-    it('resolves nothing, without an error log, while the vault is locked', async () => {
-        // The token is stored in plaintext, so it loads even while locked.
-        const logError = vi.spyOn(logger, 'error')
-        const resolve = currentSessionSubscriber(async () => {
-            throw new VaultLockedError()
-        }, fakeAuthContext(context))
-        const port = fakePort()
+    const locked = async (): Promise<never> => {
+        throw new VaultLockedError()
+    }
 
-        await expect(resolve()).resolves.toBeUndefined()
-        await handleNotificationPort(
-            asPort(port),
-            new NotificationService({ debug: vi.fn(), error: vi.fn() }),
-            resolve
-        )
+    // The store and the auth context are both in the vault. load() rejects
+    // too when a lock() lands after getStore().
+    it.each([
+        { rejects: 'getStore()', getStore: locked, load: async () => context },
+        { rejects: 'load()', getStore: async () => store, load: locked },
+    ])(
+        'resolves nothing, without an error log, when $rejects finds the vault locked',
+        async ({ getStore, load }) => {
+            const logError = vi.spyOn(logger, 'error')
+            const resolve = currentSessionSubscriber(getStore, { load })
+            const port = fakePort()
 
-        expect(port.disconnect).toHaveBeenCalledTimes(1)
-        expect(logError).not.toHaveBeenCalled()
-    })
+            await expect(resolve()).resolves.toBeUndefined()
+            await handleNotificationPort(
+                asPort(port),
+                new NotificationService({ debug: vi.fn(), error: vi.fn() }),
+                resolve
+            )
+
+            expect(port.disconnect).toHaveBeenCalledTimes(1)
+            expect(logError).not.toHaveBeenCalled()
+        }
+    )
 
     it('still fails on other store errors', async () => {
         const resolve = currentSessionSubscriber(async () => {

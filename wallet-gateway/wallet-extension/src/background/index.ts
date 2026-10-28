@@ -7,7 +7,6 @@ import { registerService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
 import { logger } from '@/shared/logger'
 import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
-import { authContextItem } from '@/shared/storage'
 import { createAuthContextStore } from './auth-context'
 import { createDappDispatcher } from './controllers/dapp/dispatch'
 import { requireUnlocked, userController } from './controllers/user'
@@ -42,7 +41,7 @@ export function startBackground({
             toNotificationLogger(logger.getChild('notifications'))
         )
     )
-    const authContext = createAuthContextStore(authContextItem)
+    const authContext = createAuthContextStore(vault)
     const walletStore = createWalletStore(vault)
     const getStore = async () =>
         loadAuthedStore(await walletStore.get(), authContext)

@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
     type DappNotificationEvent,
     type INotificationService,
@@ -93,16 +94,19 @@ export function currentSessionSubscriber(
     authContext: Pick<AuthContextStore, 'load'>
 ): ResolveSubscriber {
     return async () => {
-        const context = await authContext.load()
-        if (!context) return undefined
-
         let store: Store
+        let context: AuthContext | undefined
+        // Both reject with `VaultLockedError` while the vault is locked, and
+        // a locked vault has no session.
         try {
             store = await getStore()
+            context = await authContext.load()
         } catch (error) {
             if (error instanceof VaultLockedError) return undefined
             throw error
         }
+        if (!context) return undefined
+
         const session = await store.getSession(context.accessToken)
         if (!session) return undefined
 
