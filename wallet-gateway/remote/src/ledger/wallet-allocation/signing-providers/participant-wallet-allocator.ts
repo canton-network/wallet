@@ -7,7 +7,10 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
 import type { PartyAllocationService } from '../../party-allocation-service.js'
 import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
-import type { WalletAllocator } from '../wallet-allocation-service.js'
+import type {
+    WalletAllocationOptions,
+    WalletAllocator,
+} from '../wallet-allocation-service.js'
 
 export class ParticipantWalletAllocator implements WalletAllocator {
     constructor(
@@ -24,12 +27,16 @@ export class ParticipantWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
-        const party = await this.partyAllocator.allocatePartyAndGrantRights(
-            userId,
-            partyHint
-        )
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(partyHint)
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      userId,
+                      partyHint
+                  )
         const network = await this.store.getCurrentNetwork()
         const wallet: Wallet = {
             partyId: party.partyId,
@@ -52,12 +59,16 @@ export class ParticipantWalletAllocator implements WalletAllocator {
     async allocateParty(
         userId: UserId,
         email: string | undefined,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions
     ): Promise<void> {
-        const party = await this.partyAllocator.allocatePartyAndGrantRights(
-            userId,
-            existingWallet.hint
-        )
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(existingWallet.hint)
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      userId,
+                      existingWallet.hint
+                  )
         const network = await this.store.getCurrentNetwork()
         return await this.store.updateWallet({
             partyId: party.partyId,

@@ -589,7 +589,7 @@ export const userController = (
                 partyHint,
                 primary ?? false,
                 signingProviderId as SigningProvider,
-                params.keyName
+                { keyName: params.keyName }
             )
 
             const ledgerClient = new LedgerClient({

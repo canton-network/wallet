@@ -16,6 +16,7 @@ import type { PartyAllocationService } from '../../party-allocation-service.js'
 import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import {
     handleSigningProviderError,
+    type WalletAllocationOptions,
     type WalletAllocator,
 } from '../wallet-allocation-service.js'
 
@@ -37,7 +38,8 @@ export class KernelWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
         const key = await driver
@@ -46,28 +48,36 @@ export class KernelWalletAllocator implements WalletAllocator {
             })
             .then(handleSigningProviderError)
 
-        const party = await this.partyAllocator.allocatePartyAndGrantRights(
-            userId,
-            partyHint,
-            key.publicKey,
-            async (hash) => {
-                const { signature } = await driver
-                    .signTransaction({
-                        tx: '',
-                        txHash: hash,
-                        keyIdentifier: {
-                            publicKey: key.publicKey,
-                        },
-                    })
-                    .then(handleSigningProviderError)
+        const signingCallback = async (hash: string) => {
+            const { signature } = await driver
+                .signTransaction({
+                    tx: '',
+                    txHash: hash,
+                    keyIdentifier: {
+                        publicKey: key.publicKey,
+                    },
+                })
+                .then(handleSigningProviderError)
 
-                if (!signature) {
-                    throw new Error('No signature returned from signing driver')
-                }
-
-                return signature
+            if (!signature) {
+                throw new Error('No signature returned from signing driver')
             }
-        )
+
+            return signature
+        }
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(
+                      partyHint,
+                      key.publicKey,
+                      signingCallback
+                  )
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      userId,
+                      partyHint,
+                      key.publicKey,
+                      signingCallback
+                  )
 
         const network = await this.store.getCurrentNetwork()
         const wallet: Wallet = {
@@ -91,7 +101,8 @@ export class KernelWalletAllocator implements WalletAllocator {
     async allocateParty(
         userId: UserId,
         email: string | undefined,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions
     ): Promise<void> {
         const driver = this.signingDriver.controller(userId)
         const signingCallback = async (hash: string) => {
@@ -109,12 +120,19 @@ export class KernelWalletAllocator implements WalletAllocator {
             return result.signature
         }
 
-        const party = await this.partyAllocator.allocatePartyAndGrantRights(
-            userId,
-            existingWallet.hint,
-            existingWallet.publicKey,
-            signingCallback
-        )
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(
+                      existingWallet.hint,
+                      existingWallet.publicKey,
+                      signingCallback
+                  )
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      userId,
+                      existingWallet.hint,
+                      existingWallet.publicKey,
+                      signingCallback
+                  )
 
         const network = await this.store.getCurrentNetwork()
         const updateWallet: UpdateWallet = {

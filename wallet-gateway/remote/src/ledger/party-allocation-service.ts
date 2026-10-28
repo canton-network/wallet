@@ -184,24 +184,21 @@ export class PartyAllocationService {
     }
 
     /**
-     * Allocate party with wallet
-     * @param namespace The namespace of wallet.
-     * @param transactions There are topology transactions.
-     * @param signature A transaction signature from signingProviderId
-     * @param userId The ID of the user.
+     * Allocates a party using topology transactions signed by an existing wallet.
+     * @param namespace The namespace of the wallet.
+     * @param transactions The topology transactions.
+     * @param signature A transaction signature from the signing provider.
      */
     async allocatePartyWithExistingWallet(
         namespace: string,
         transactions: string[],
-        signature: string,
-        userId: string
+        signature: string
     ): Promise<string>
 
     async allocatePartyWithExistingWallet(
         namespace: string,
         transactions: string[],
-        signature: string,
-        userId: string
+        signature: string
     ): Promise<string> {
         const synchronizerId =
             this.synchronizerId ?? (await this.ledgerClient.getSynchronizerId())
@@ -220,8 +217,26 @@ export class PartyAllocationService {
             ]
         )
 
-        await this.grantUserRights(userId, res.partyId)
         return res.partyId
+    }
+
+    /**
+     * Allocates a party using topology transactions signed by an existing
+     * wallet and grants user rights to it.
+     */
+    async allocatePartyWithExistingWalletAndGrantRights(
+        namespace: string,
+        transactions: string[],
+        signature: string,
+        userId: string
+    ): Promise<string> {
+        const partyId = await this.allocatePartyWithExistingWallet(
+            namespace,
+            transactions,
+            signature
+        )
+        await this.grantUserRights(userId, partyId)
+        return partyId
     }
 
     private async allocateInternalParty(hint: string): Promise<AllocatedParty> {

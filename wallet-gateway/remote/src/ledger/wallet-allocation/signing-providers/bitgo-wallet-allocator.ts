@@ -16,6 +16,7 @@ import type { PartyAllocationService } from '../../party-allocation-service.js'
 import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import {
     handleSigningProviderError,
+    type WalletAllocationOptions,
     type WalletAllocator,
 } from '../wallet-allocation-service.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
@@ -43,7 +44,8 @@ export class BitGoWalletAllocator implements WalletAllocator {
         userId: UserId,
         _email: string | undefined,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         const driver = this.signingDriver.controller(userId)
 
@@ -99,7 +101,8 @@ export class BitGoWalletAllocator implements WalletAllocator {
             txId,
             topologyTransactions,
             namespace,
-            driver
+            driver,
+            options
         )
 
         await this.store.addWallet(wallet)
@@ -109,7 +112,8 @@ export class BitGoWalletAllocator implements WalletAllocator {
     async allocateParty(
         userId: UserId,
         _email: string | undefined,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions
     ): Promise<void> {
         if (
             !existingWallet.externalTxId ||
@@ -136,12 +140,18 @@ export class BitGoWalletAllocator implements WalletAllocator {
                 )
             }
             const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    existingWallet.namespace,
-                    existingWallet.topologyTransactions.split(', '),
-                    signature,
-                    userId
-                )
+                options.grantRights === false
+                    ? await this.partyAllocator.allocatePartyWithExistingWallet(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature
+                      )
+                    : await this.partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature,
+                          userId
+                      )
             walletUpdate = {
                 ...walletUpdate,
                 partyId,
@@ -180,7 +190,8 @@ export class BitGoWalletAllocator implements WalletAllocator {
         txId: string,
         topologyTransactions: string[],
         namespace: string,
-        driver: ReturnType<SigningDriverInterface['controller']>
+        driver: ReturnType<SigningDriverInterface['controller']>,
+        options: WalletAllocationOptions
     ): Promise<Wallet> {
         if (status === 'signed') {
             const { signature } = await driver
@@ -192,12 +203,18 @@ export class BitGoWalletAllocator implements WalletAllocator {
                 )
             }
             const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    namespace,
-                    topologyTransactions,
-                    signature,
-                    userId
-                )
+                options.grantRights === false
+                    ? await this.partyAllocator.allocatePartyWithExistingWallet(
+                          namespace,
+                          topologyTransactions,
+                          signature
+                      )
+                    : await this.partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                          namespace,
+                          topologyTransactions,
+                          signature,
+                          userId
+                      )
             return { ...walletBase, partyId, status: 'allocated' }
         }
 
