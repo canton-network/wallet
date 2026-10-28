@@ -60,13 +60,23 @@ export function OfferRow({ offer, onClick }: OfferRowProps) {
 
 function getOfferRowLabel(offer: OfferItem) {
     if (isTransferOffer(offer)) {
-        const message = offer.source.message ? `: ${offer.source.message}` : ''
+        const message = offer.source.message
+            ? `: ${truncateLabel(offer.source.message)}`
+            : ''
         return `Transfer Offer for ${formatAmount(offer.source.amount)} ${
             offer.source.instrumentId.id
         }${message}`
     }
 
     return 'Allocation Request'
+}
+
+const MAX_LABEL_MESSAGE_LENGTH = 50
+
+function truncateLabel(message: string) {
+    return message.length > MAX_LABEL_MESSAGE_LENGTH
+        ? `${message.slice(0, MAX_LABEL_MESSAGE_LENGTH)}…`
+        : message
 }
 
 function isTransferOffer(offer: OfferItem): offer is TransferOfferItem {

@@ -347,38 +347,34 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                 </form.Field>
 
                 <form.Field name="memo">
-                    {(field) => {
-                        return (
-                            <FieldBlock label="Description">
-                                <TextField
-                                    value={field.state.value}
-                                    onChange={(event) =>
-                                        field.handleChange(event.target.value)
-                                    }
-                                    disabled={disabled}
-                                    error={hasFieldError(field)}
-                                    helperText={getFieldError(field)}
-                                    multiline
-                                    rows={4}
-                                    slotProps={{
-                                        htmlInput: {
-                                            'aria-label': 'Description',
-                                        },
-                                    }}
-                                    fullWidth
-                                    sx={darkTextFieldSx}
-                                />
-                                <Typography
-                                    sx={{
-                                        mt: 1,
-                                        color: 'text.secondary',
-                                    }}
-                                >
-                                    {formatCharacterCount(field.state.value)}
-                                </Typography>
-                            </FieldBlock>
-                        )
-                    }}
+                    {(field) => (
+                        <FieldBlock label="Description">
+                            <TextField
+                                value={field.state.value}
+                                onChange={(event) =>
+                                    field.handleChange(event.target.value)
+                                }
+                                disabled={disabled}
+                                multiline
+                                rows={4}
+                                slotProps={{
+                                    htmlInput: {
+                                        'aria-label': 'Description',
+                                    },
+                                }}
+                                fullWidth
+                                sx={darkTextFieldSx}
+                            />
+                            <Typography
+                                sx={{
+                                    mt: 1,
+                                    color: 'text.secondary',
+                                }}
+                            >
+                                {formatCharacterCount(field.state.value)}
+                            </Typography>
+                        </FieldBlock>
+                    )}
                 </form.Field>
 
                 <form.Subscribe
