@@ -14,7 +14,7 @@ export type WalletStore = Store & AuthAware<Store>
 /** The wallet store, scoped to the signed-in user (if any). */
 export async function loadAuthedStore(
     store: WalletStore,
-    authContext: Pick<AuthContextStore, 'load'>
+    authContext: AuthContextStore
 ): Promise<Store> {
     return store.withAuthContext(await authContext.load())
 }

@@ -8,6 +8,7 @@ import type {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { fakeAuthContext } from '@/__tests__/fake-auth-context'
 import { createVault, type Vault, VaultLockedError } from '../vault'
 import { loadAuthedStore } from './index'
 import { createWalletStore } from './wallet-store'
@@ -170,6 +171,7 @@ describe('createWalletStore', () => {
         const loading = Promise.withResolvers<void>()
         const released = Promise.withResolvers<void>()
         const authContext = {
+            ...fakeAuthContext(),
             load: async () => {
                 loading.resolve()
                 await released.promise

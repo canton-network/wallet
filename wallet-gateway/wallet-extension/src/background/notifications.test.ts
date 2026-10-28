@@ -248,7 +248,10 @@ describe('currentSessionSubscriber', () => {
         'resolves nothing, without an error log, when $rejects finds the vault locked',
         async ({ getStore, load }) => {
             const logError = vi.spyOn(logger, 'error')
-            const resolve = currentSessionSubscriber(getStore, { load })
+            const resolve = currentSessionSubscriber(getStore, {
+                ...fakeAuthContext(),
+                load,
+            })
             const port = fakePort()
 
             await expect(resolve()).resolves.toBeUndefined()

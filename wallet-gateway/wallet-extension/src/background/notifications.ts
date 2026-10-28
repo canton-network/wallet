@@ -91,7 +91,7 @@ export type ResolveSubscriber = () => Promise<
  */
 export function currentSessionSubscriber(
     getStore: () => Promise<Store>,
-    authContext: Pick<AuthContextStore, 'load'>
+    authContext: AuthContextStore
 ): ResolveSubscriber {
     return async () => {
         let store: Store

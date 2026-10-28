@@ -33,7 +33,7 @@ export interface DappDispatcher {
 export function createDappDispatcher(
     deps: DappControllerDeps,
     vault: Pick<Vault, 'ready' | 'status'>,
-    authContext: Pick<AuthContextStore, 'load'>
+    authContext: AuthContextStore
 ): DappDispatcher {
     /** While the vault isn't unlocked, there's no signed-in user. */
     async function requestContext(
