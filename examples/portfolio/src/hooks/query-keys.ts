@@ -36,9 +36,8 @@ export const queryKeys = {
                 [...walletConnection, 'pendingTransfers', party] as const,
         },
         pendingTransfersV2: {
-            all: [...walletConnection, 'pendingTransfersV2'] as const,
             forParty: (party: string | undefined) =>
-                [...walletConnection, 'pendingTransfersV2', party] as const,
+                [...walletConnection, 'pendingTransfers', party, 'v2'] as const,
         },
 
         allocations: {
