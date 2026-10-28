@@ -286,7 +286,7 @@ jobs:
                     export DFNS_PRIVATE_KEY="${{ vars.DFNS_PRIVATE_KEY }}"
                     export DFNS_AUTH_TOKEN="${{ vars.DFNS_AUTH_TOKEN }}"
                   fi
-                  pnpm pm2 start ecosystem.ci.config.js --env development
+                  pnpm pm2 start ecosystem.ci.config.js
 
             - uses: ./.github/actions/setup_playwright
 
@@ -395,6 +395,8 @@ jobs:
             fail-fast: false
             matrix:
                 network: [devnet, mainnet]
+        env:
+            SPLICE_VERSION: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -410,7 +412,7 @@ jobs:
                   multi_sync: 'true'
 
             - name: Start remote WK
-              run: pnpm pm2 start ecosystem.ci.config.js --env development
+              run: pnpm pm2 start ecosystem.ci.config.js
 
             - uses: ./.github/actions/setup_playwright
 

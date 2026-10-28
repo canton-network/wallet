@@ -7,6 +7,7 @@ import { registerService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
 import { logger } from '@/shared/logger'
 import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
+import { createAuthContextStore } from './auth-context'
 import { createDappDispatcher } from './controllers/dapp/dispatch'
 import { requireUnlocked, userController } from './controllers/user'
 import {
@@ -40,10 +41,12 @@ export function startBackground({
             toNotificationLogger(logger.getChild('notifications'))
         )
     )
+    const authContext = createAuthContextStore(vault)
     const walletStore = createWalletStore(vault)
-    const getStore = async () => loadAuthedStore(await walletStore.get())
+    const getStore = async () =>
+        loadAuthedStore(await walletStore.get(), authContext)
     const signingDriver = new InternalSigningDriver(createSigningStore())
-    const deps = { getStore, signingDriver, notificationService }
+    const deps = { getStore, authContext, signingDriver, notificationService }
 
     registerVaultService(vault)
     // The dApp controller scopes the store to each request's user itself.
@@ -51,13 +54,14 @@ export function startBackground({
         DAPP_RPC_KEY,
         createDappDispatcher(
             { getStore: () => walletStore.get(), notificationService },
-            vault
+            vault,
+            authContext
         )
     )
     registerService(USER_RPC_KEY, requireUnlocked(vault, userController(deps)))
     registerNotificationPorts(
         notificationService,
-        currentSessionSubscriber(getStore)
+        currentSessionSubscriber(getStore, authContext)
     )
     registerOpenUiHandler()
     registerFirstRunOnboarding()

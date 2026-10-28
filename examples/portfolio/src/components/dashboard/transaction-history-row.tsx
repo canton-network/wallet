@@ -6,6 +6,7 @@ import { CopyableIdentifier } from '@components/copyable-identifier'
 import {
     getTransactionDisplay,
     type TransactionHistoryEntry,
+    type BalanceEffect,
 } from './transaction-history-utils'
 
 interface TransactionHistoryRowProps {
@@ -21,17 +22,18 @@ const bodyCellSx = {
     verticalAlign: 'middle',
 }
 
+const AMOUNT_COLOR = {
+    credit: 'success.main',
+    debit: 'error.main',
+    none: 'text.secondary',
+} as const satisfies Record<BalanceEffect, string>
+
 export function TransactionHistoryRow({
     entry,
     walletId,
 }: TransactionHistoryRowProps) {
     const display = getTransactionDisplay(entry, walletId)
-    const amountColor =
-        display.direction === 'received'
-            ? 'success.main'
-            : display.direction === 'sent'
-              ? 'error.main'
-              : 'text.secondary'
+    const amountColor = AMOUNT_COLOR[display.balanceEffect]
     const amountPrefix =
         display.direction === 'received'
             ? '+'

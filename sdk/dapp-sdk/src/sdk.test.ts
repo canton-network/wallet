@@ -32,6 +32,7 @@ import type {
     TxChangedEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import * as storage from './storage'
+import defaultGatewayList from './gateways.json'
 import {
     DappSDK,
     connect,
@@ -460,6 +461,80 @@ describe('DappSDK', () => {
             expect(provider.request).toHaveBeenCalledWith(
                 expect.objectContaining({ method: 'connect' })
             )
+        })
+
+        it('uses the latest picked name when reconnecting to a renamed custom gateway', async () => {
+            setRemoteProviderFactory(() => asProvider(makeMockProvider()))
+            const rpcUrl = 'https://custom.gateway.test'
+            let pickedName = rpcUrl
+            const sdk = new DappSDK({
+                walletPicker: async () => ({
+                    providerId: `remote:${rpcUrl}`,
+                    name: pickedName,
+                    type: 'remote',
+                    url: rpcUrl,
+                }),
+            })
+
+            await sdk.init({ defaultAdapters: [] })
+            await sdk.connect()
+            pickedName = 'Staging'
+            await sdk.connect()
+
+            expect(
+                getDiscovery(sdk)
+                    .listAdapters()
+                    .map((a) => a.getInfo().name)
+            ).toEqual(['Staging'])
+            expect(
+                JSON.parse(
+                    localStorage.getItem('splice_wallet_picker_recent') ?? '[]'
+                )
+            ).toEqual([{ name: 'Staging', rpcUrl }])
+        })
+
+        it('keeps a restored custom gateway renameable when initialised without options', async () => {
+            setRemoteProviderFactory(() => asProvider(makeMockProvider()))
+            const rpcUrl = 'https://custom.gateway.test'
+            storage.setKernelDiscovery({ walletType: 'remote', url: rpcUrl })
+            const walletPicker = vi.fn(async () => ({
+                providerId: `remote:${rpcUrl}`,
+                name: 'Staging',
+                type: 'remote',
+                url: rpcUrl,
+            }))
+            const sdk = new DappSDK({ walletPicker })
+
+            await sdk.init()
+            await sdk.connect()
+
+            // Not offered as a registered entry, so the picker shows the saved one
+            expect(walletPicker).toHaveBeenCalledWith([])
+            expect(
+                JSON.parse(
+                    localStorage.getItem('splice_wallet_picker_recent') ?? '[]'
+                )
+            ).toEqual([{ name: 'Staging', rpcUrl }])
+        })
+
+        it('keeps a restored default gateway registered when initialised without options', async () => {
+            setRemoteProviderFactory(() => asProvider(makeMockProvider()))
+            const [{ rpcUrl }] = defaultGatewayList
+            storage.setKernelDiscovery({ walletType: 'remote', url: rpcUrl })
+            const walletPicker = vi.fn(async () => ({
+                providerId: `remote:${rpcUrl}`,
+                name: rpcUrl,
+                type: 'remote',
+                url: rpcUrl,
+            }))
+            const sdk = new DappSDK({ walletPicker })
+
+            await sdk.init()
+            await sdk.connect()
+
+            expect(walletPicker).toHaveBeenCalledWith([
+                expect.objectContaining({ url: rpcUrl }),
+            ])
         })
 
         it('retries after a connection failure and appends HTTP status details', async () => {
