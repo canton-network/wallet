@@ -7,8 +7,8 @@ import type {
     JsonRpcResponse,
 } from '@canton-network/core-types'
 import { logger } from '@/shared/logger'
-import { authContext } from '../../auth-context'
-import type { Vault } from '../../vault'
+import type { AuthContextStore } from '../../auth-context'
+import { type Vault, VaultLockedError } from '../../vault'
 import {
     dappController,
     type DappControllerDeps,
@@ -32,7 +32,8 @@ export interface DappDispatcher {
  */
 export function createDappDispatcher(
     deps: DappControllerDeps,
-    vault: Pick<Vault, 'ready' | 'status'>
+    vault: Pick<Vault, 'ready' | 'status'>,
+    authContext: AuthContextStore
 ): DappDispatcher {
     /** While the vault isn't unlocked, there's no signed-in user. */
     async function requestContext(
@@ -41,12 +42,15 @@ export function createDappDispatcher(
         // Wait for the restore, so a request that wakes the background
         // isn't refused while the vault is still unlocking.
         await vault.ready
-        const locked = vault.status() !== 'unlocked'
-        return {
-            origin,
-            locked,
-            auth: locked ? undefined : await authContext.load(),
+        if (vault.status() === 'unlocked') {
+            try {
+                return { origin, locked: false, auth: await authContext.load() }
+            } catch (error) {
+                // A lock() landed after the status check.
+                if (!(error instanceof VaultLockedError)) throw error
+            }
         }
+        return { origin, locked: true, auth: undefined }
     }
 
     return {

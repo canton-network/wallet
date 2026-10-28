@@ -9,7 +9,6 @@ import {
 import { TransactionService } from '@canton-network/core-wallet-services'
 import type { Session, Store } from '@canton-network/core-wallet-store'
 import { logger } from '@/shared/logger'
-import { authContext } from '../../auth-context'
 import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings'
 import { toSigningDrivers, type UserControllerDeps } from './deps'
 import type { Methods } from './rpc-gen'
@@ -34,6 +33,7 @@ async function requireSession(
 
 export const transactions = ({
     getStore,
+    authContext,
     signingDriver,
     notificationService,
 }: UserControllerDeps): Pick<
