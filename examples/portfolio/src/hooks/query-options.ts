@@ -125,7 +125,7 @@ export const usePendingTransfersV2QueryOptions = (
     const { sdk } = useWalletSdk()
 
     return queryOptions({
-        queryKey: queryKeys.walletConnection.pendingTransfers.forParty(party),
+        queryKey: queryKeys.walletConnection.pendingTransfersV2.forParty(party),
         enabled: !!party && !!sdk,
         queryFn: async () => {
             if (!party || !sdk) {
