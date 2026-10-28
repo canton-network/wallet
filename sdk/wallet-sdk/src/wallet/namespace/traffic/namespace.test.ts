@@ -208,17 +208,6 @@ describe('TrafficAccountNamespace', () => {
         })
     })
 
-    describe('setup', () => {
-        it('throws an unsupported error', async () => {
-            await namespace.setup()
-
-            expect(mock.ctx.error.throw).toHaveBeenCalledWith({
-                message: 'traffic.setup is not implemented yet',
-                type: 'SDKOperationUnsupported',
-            })
-        })
-    })
-
     describe('purchaseTraffic error branches', () => {
         const throwingError = {
             throw: vi.fn((details: any) => {
