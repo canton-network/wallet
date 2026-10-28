@@ -475,12 +475,19 @@ export interface TxChangedExecutedEvent {
 export type StatusFailed = 'failed'
 /**
  *
+ * Why it failed, e.g. the signing provider's rejection reason or the ledger's error.
+ *
+ */
+export type FailureReason = string
+/**
+ *
  * Event emitted when a transaction has failed.
  *
  */
 export interface TxChangedFailedEvent {
     status: StatusFailed
     commandId: CommandId
+    failureReason?: FailureReason
 }
 /**
  *
@@ -509,6 +516,7 @@ export interface MessageSignatureSignedEvent {
 export interface MessageSignatureFailedEvent {
     status: StatusFailed
     messageId: MessageId
+    failureReason?: FailureReason
 }
 /**
  *

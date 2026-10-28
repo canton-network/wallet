@@ -90,6 +90,25 @@ export const Failed: Story = {
         await expect(canvas.getByTestId('activity-status')).toHaveClass(
             /MuiChip-colorError/
         )
+        await expect(
+            canvas.queryByText('Failure reason')
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const FailedWithReason: Story = {
+    args: {
+        status: 'failed',
+        failureReason:
+            'Blockdaemon rejected the signing request (error code M0025)',
+    },
+    play: async ({ canvas }) => {
+        await expect(canvas.getByText('Failure reason')).toBeInTheDocument()
+        await expect(
+            canvas.getByText(
+                'Blockdaemon rejected the signing request (error code M0025)'
+            )
+        ).toBeInTheDocument()
     },
 }
 

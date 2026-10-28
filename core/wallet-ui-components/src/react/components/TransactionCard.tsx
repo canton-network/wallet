@@ -18,6 +18,8 @@ interface TransactionCardProps {
     externalTxId?: string | null
     /** e.g. 'pending', 'signed', 'executed', 'failed'. Shown as a coloured badge */
     status: string
+    /** Why the transaction failed, shown below the status */
+    failureReason?: string | null
     parsed?: ParsedTransactionInfo | null
     createdAt?: string | null
     /** Disables the card, e.g. while the list is being refreshed */
@@ -31,6 +33,7 @@ export const TransactionCard = ({
     commandId,
     externalTxId = null,
     status,
+    failureReason = null,
     parsed = null,
     createdAt = null,
     loading = false,
@@ -67,6 +70,12 @@ export const TransactionCard = ({
                                 />
                             }
                         />
+                        {failureReason && (
+                            <CardDetailRow
+                                label="Failure reason"
+                                value={failureReason}
+                            />
+                        )}
                         <CardDetailRow
                             label="Action type"
                             value={activityType}

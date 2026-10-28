@@ -616,6 +616,11 @@
                     },
                     "commandId": {
                         "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/CommandId"
+                    },
+                    "failureReason": {
+                        "title": "failureReason",
+                        "type": "string",
+                        "description": "Why it failed, e.g. the signing provider's rejection reason or the ledger's error."
                     }
                 },
                 "required": ["status", "commandId"]
@@ -693,6 +698,11 @@
                     },
                     "messageId": {
                         "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/MessageId"
+                    },
+                    "failureReason": {
+                        "title": "failureReason",
+                        "type": "string",
+                        "description": "Why it failed, e.g. the signing provider's rejection reason or the ledger's error."
                     }
                 },
                 "required": ["status", "messageId"]

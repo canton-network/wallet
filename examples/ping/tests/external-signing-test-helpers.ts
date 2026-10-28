@@ -49,7 +49,8 @@ async function postToMock(
 
 export async function setMockBlockdaemonTransactionState(
     txId: string,
-    status: 'signed' | 'rejected' | 'failed'
+    status: 'signed' | 'rejected' | 'failed',
+    metadata?: Record<string, unknown>
 ): Promise<void> {
     const apiUrl = mockApiUrl(process.env.BLOCKDAEMON_API_URL)
     if (!apiUrl) {
@@ -60,6 +61,7 @@ export async function setMockBlockdaemonTransactionState(
         await postToMock(apiUrl, '/_admin/setTransactionState', {
             txId,
             status,
+            metadata,
         })
 
         const txResponse = await postToMock(apiUrl, '/getTransaction', { txId })

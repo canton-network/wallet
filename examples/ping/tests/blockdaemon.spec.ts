@@ -89,15 +89,26 @@ test.describe('Blockdaemon external signing', () => {
         )
         await setMockBlockdaemonTransactionState(
             submission.externalTxId,
-            'rejected'
+            'rejected',
+            {
+                ErrorCode: 'M0025',
+                ErrorProperties: {
+                    DebugMessage: 'blocked by rule/restriction',
+                },
+            }
         )
+        const failureReason =
+            'Blockdaemon rejected the signing request (error code M0025)'
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            { failureReason }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 
     test('fails when Blockdaemon fails signing', async () => {
