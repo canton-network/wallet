@@ -360,18 +360,14 @@ export class LedgerClient {
         retryIntervalMs: number = 2000
     ) {
         await this.init()
-        // Wait for party to appear on participant
-        let partyFound = false
-        let tries = 0
-
-        while (!partyFound && tries < maxTries) {
-            partyFound = await this.checkIfPartyExists(partyId)
-
+        // Wait for party to appear on participant, only sleeping between checks
+        let partyFound = await this.checkIfPartyExists(partyId)
+        for (let tries = 1; !partyFound && tries < maxTries; tries++) {
             await new Promise((resolve) => setTimeout(resolve, retryIntervalMs))
-            tries++
+            partyFound = await this.checkIfPartyExists(partyId)
         }
 
-        if (tries >= maxTries) {
+        if (!partyFound) {
             throw new Error(
                 `timed out waiting for new party to appear after ${maxTries} tries`
             )
