@@ -17,7 +17,8 @@ import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_V2_REGISTRY_PORT } from './_constants.js'
+import { TEST_TOKEN_V2_REGISTRY_PORT } from './common/_constants.js'
+import { assertV2 } from './common/_utils.js'
 
 /*
 Used the TokenStandardV2AllocationIntegrationTest: https://github.com/canton-network/splice/blob/main/apps/app/src/test/scala/org/lfdecentralizedtrust/splice/integration/tests/TokenStandardV2AllocationIntegrationTest.scala
@@ -136,13 +137,12 @@ const aliceBalance = aliceUtxosAfterTap.reduce(
     (sum, u) => sum + Number(u.interfaceViewValue.amount),
     0
 )
-if (aliceBalance < 2_000_000) {
-    stopRegistry()
 
-    throw new Error(
-        `Expected alice to have at least 2000000 Amulet after tap, got ${aliceBalance}`
-    )
-}
+assertV2(
+    aliceBalance >= 2_000_000,
+    `Expected alice to have at least 2000000 Amulet after tap, got ${aliceBalance}`
+)
+
 logger.info(`fund bob`)
 
 const [amuletTapCommand2, amuletTapDisclosedContracts2] = await sdk.amulet.tap(
@@ -166,13 +166,11 @@ const bobBalance = bobUtxosAfterTap.reduce(
     (sum, u) => sum + Number(u.interfaceViewValue.amount),
     0
 )
-if (bobBalance < 2_000_000) {
-    stopRegistry()
 
-    throw new Error(
-        `Expected alice to have at least 2000000 Amulet after tap, got ${bobBalance}`
-    )
-}
+assertV2(
+    bobBalance >= 2_000_000,
+    `Expected alice to have at least 2000000 Amulet after tap, got ${bobBalance}`
+)
 
 logger.info(`minted amulet for alice and bob`)
 
@@ -244,11 +242,7 @@ const activeTradeProposals = await sdk.ledger.acsReader.readJsContracts({
 
 const otcpCid = activeTradeProposals[0].contractId
 
-if (otcpCid === undefined) {
-    stopRegistry()
-
-    throw new Error('Unexpected lack of OTCTradeProposal contract')
-}
+assertV2(!!otcpCid, 'Unexpected lack of OTCTradeProposal contract')
 
 logger.info('Created active trade proposal')
 
@@ -322,21 +316,18 @@ for (const leg of tradeLegs) {
     const legSide = allLegSides.find(
         (ls) => ls.transferLegId === leg.leg.transferLegId
     )
-    if (!legSide) {
-        stopRegistry()
-
-        throw new Error(`No allocation found for leg ${leg.leg.transferLegId}`)
-    }
+    assertV2(
+        legSide !== undefined,
+        `No allocation found for leg ${leg.leg.transferLegId}`
+    )
 
     const actualAmount = new Decimal(legSide.amount)
     const legAmount = new Decimal(leg.leg.amount)
-    if (!actualAmount.equals(legAmount)) {
-        stopRegistry()
 
-        throw new Error(
-            `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount}, expected ${legAmount}`
-        )
-    }
+    assertV2(
+        actualAmount.equals(legAmount),
+        `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount}, expected ${legAmount}`
+    )
 }
 
 const emptyExtraArgs = { context: { values: {} }, meta: { values: {} } }
@@ -441,24 +432,18 @@ const bobBalanceAfter = sumUnlocked(utxosBobV2)
 const aliceNet = aliceBalanceAfter - aliceBalanceBeforeTrade
 const bobNet = bobBalanceAfter - bobBalanceBeforeTrade
 
-if (aliceNet !== bobSendAmount - aliceSendAmount) {
-    stopRegistry()
-
-    throw new Error(
-        `Alice's net balance change was ${aliceNet}, expected ${
-            bobSendAmount - aliceSendAmount
-        }`
-    )
-}
-if (bobNet !== aliceSendAmount - bobSendAmount) {
-    stopRegistry()
-
-    throw new Error(
-        `Bob's net balance change was ${bobNet}, expected ${
-            aliceSendAmount - bobSendAmount
-        }`
-    )
-}
+assertV2(
+    aliceNet === bobSendAmount - aliceSendAmount,
+    `Alice's net balance change was ${aliceNet}, expected ${
+        bobSendAmount - aliceSendAmount
+    }`
+)
+assertV2(
+    bobNet === aliceSendAmount - bobSendAmount,
+    `Bob's net balance change was ${bobNet}, expected ${
+        aliceSendAmount - bobSendAmount
+    }`
+)
 
 logger.info(
     { aliceNet, bobNet },

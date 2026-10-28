@@ -16,7 +16,8 @@ import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_V2_REGISTRY_PORT } from '../_constants.js'
+import { TEST_TOKEN_V2_REGISTRY_PORT } from '../common/_constants.js'
+import { assertV2 } from '../common/_utils.js'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({
@@ -73,11 +74,7 @@ const senderAmuletUtxos = senderUtxos.filter((utxo) => {
     )
 })
 
-if (senderAmuletUtxos.length === 0) {
-    stopRegistry()
-
-    throw new Error('No UTXOs found for Sender')
-}
+assertV2(!!senderAmuletUtxos.length, 'No UTXOs found for Sender')
 
 const transferTestScriptParameters: TransferTestScriptParameters = {
     sdk,
