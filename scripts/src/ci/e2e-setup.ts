@@ -16,6 +16,10 @@ type Suite = {
     project: string
     environments: Environment[]
     databases?: ('sqlite' | 'postgres')[]
+    // The first browser runs in every environment and database, the others
+    // only in the first combination. Browser differences rarely depend on the
+    // network or store, and each extra browser doubles the suite's runtime.
+    browsers?: ('chromium' | 'firefox')[]
 }
 
 const suites: Suite[] = [
@@ -27,6 +31,7 @@ const suites: Suite[] = [
             { network: 'mainnet', instance: 'canton' },
         ],
         databases: ['sqlite', 'postgres'],
+        browsers: ['chromium', 'firefox'],
     },
     {
         name: 'extension',
@@ -84,12 +89,28 @@ function selectE2e(projects: string[]): Record<string, string> {
     }
     for (const suite of selections) {
         outputs[suite.name] = String(suite.environments.length > 0)
+        const combinations = suite.environments.flatMap((environment) =>
+            suite.databases
+                ? suite.databases.map((db) => ({ ...environment, db }))
+                : [environment]
+        )
+        const [browser, ...extraBrowsers] = suite.browsers ?? []
         outputs[`${suite.name}-matrix`] = JSON.stringify({
-            include: suite.environments.flatMap((environment) =>
-                suite.databases
-                    ? suite.databases.map((db) => ({ ...environment, db }))
-                    : [environment]
-            ),
+            include:
+                browser === undefined
+                    ? combinations
+                    : [
+                          ...combinations.map((combination) => ({
+                              ...combination,
+                              browser,
+                          })),
+                          ...(combinations[0] === undefined
+                              ? []
+                              : extraBrowsers.map((extraBrowser) => ({
+                                    ...combinations[0],
+                                    browser: extraBrowser,
+                                }))),
+                      ],
         })
     }
     return outputs
