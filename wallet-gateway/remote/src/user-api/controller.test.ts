@@ -2484,7 +2484,7 @@ describe('userController', () => {
     describe('syncWallets', () => {
         it('syncs wallets and returns the result without emitting when nothing changed', async () => {
             const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier('session-1')
+            const notifier = notificationService.getNotifier('user-1')
             const emitSpy = vi.spyOn(notifier, 'emit')
             const emptyResult = { added: [], updated: [], disabled: [] }
             walletSyncMocks.syncWallets.mockResolvedValue(emptyResult)
@@ -2572,29 +2572,42 @@ describe('userController', () => {
             )
         })
 
-        it('does not emit accountsChanged when only wallets are added', async () => {
-            const store = await createStore(logger, auth)
-            const notifier = notificationService.getNotifier('session-1')
-            const emitSpy = vi.spyOn(notifier, 'emit')
-            walletSyncMocks.syncWallets.mockResolvedValue({
-                added: ['party::added'],
-                updated: [],
-                disabled: [],
-            })
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                auth
-            )
+        it.each([
+            ['added', { added: ['party::added'], updated: [], disabled: [] }],
+            [
+                'updated',
+                { added: [], updated: ['party::updated'], disabled: [] },
+            ],
+            [
+                'disabled',
+                { added: [], updated: [], disabled: ['party::disabled'] },
+            ],
+        ])(
+            'emits accountsChanged when wallets are only %s',
+            async (_, syncResult) => {
+                const store = await createStore(logger, auth)
+                const notifier = notificationService.getNotifier('user-1')
+                const emitSpy = vi.spyOn(notifier, 'emit')
+                walletSyncMocks.syncWallets.mockResolvedValue(syncResult)
+                const controller = createController(
+                    store,
+                    notificationService,
+                    logger,
+                    auth
+                )
 
-            await controller.syncWallets()
+                await controller.syncWallets()
 
-            expect(emitSpy).not.toHaveBeenCalledWith(
-                'accountsChanged',
-                expect.anything()
-            )
-        })
+                expect(emitSpy).toHaveBeenCalledWith(
+                    'accountsChanged',
+                    expect.arrayContaining([
+                        expect.objectContaining({
+                            partyId: primaryWallet.partyId,
+                        }),
+                    ])
+                )
+            }
+        )
     })
 
     describe('isWalletSyncNeeded', () => {

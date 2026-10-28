@@ -1390,7 +1390,8 @@ export const userController = (
             )
             const result = await service.syncWallets()
             if (
-                (result.added.length === 0 && result.updated.length === 0) ||
+                result.added.length === 0 &&
+                result.updated.length === 0 &&
                 result.disabled.length === 0
             ) {
                 return result
