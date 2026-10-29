@@ -41,7 +41,11 @@ import {
     type ConversionRate_Update,
 } from '@canton-network/core-traffic-purchase'
 import type { Numeric, PartyId } from '@canton-network/core-types'
-import { parseAndNormalizeDamlDecimal, sameDecimal, sameInstant } from './pricing.js'
+import {
+    parseAndNormalizeDamlDecimal,
+    sameDecimal,
+    sameInstant,
+} from './pricing.js'
 import type {
     ActiveConversionRate,
     ActiveTrafficPurchaser,
@@ -462,7 +466,10 @@ function conversionRateArguments(
     return {
         paymaster,
         instrumentId: spec.instrumentId,
-        conversionRate: parseAndNormalizeDamlDecimal(spec.conversionRate, 'the conversion rate'),
+        conversionRate: parseAndNormalizeDamlDecimal(
+            spec.conversionRate,
+            'the conversion rate'
+        ),
         // A Daml `Optional` is the value itself, or null for `None`.
         expiresAt: spec.expiresAt?.toISOString() ?? null,
         maxTrafficPerPurchase: optionalDecimal(spec.maxTrafficPerPurchase),
@@ -494,7 +501,10 @@ function conversionRateUpdateArguments(
 function optionalDecimal(value: Numeric | undefined): Numeric | null {
     return value === undefined
         ? null
-        : parseAndNormalizeDamlDecimal(value, 'the maximum traffic per purchase')
+        : parseAndNormalizeDamlDecimal(
+              value,
+              'the maximum traffic per purchase'
+          )
 }
 
 /**
@@ -510,7 +520,10 @@ export function sameConversionRate(
     return (
         sameDecimal(
             onLedger.conversionRate,
-            parseAndNormalizeDamlDecimal(wanted.conversionRate, 'the conversion rate')
+            parseAndNormalizeDamlDecimal(
+                wanted.conversionRate,
+                'the conversion rate'
+            )
         ) &&
         sameOptional(onLedger.expiresAt, wanted.expiresAt, sameInstant) &&
         sameOptional(
@@ -519,7 +532,10 @@ export function sameConversionRate(
             (ledger, value) =>
                 sameDecimal(
                     ledger,
-                    parseAndNormalizeDamlDecimal(value, 'the maximum traffic per purchase')
+                    parseAndNormalizeDamlDecimal(
+                        value,
+                        'the maximum traffic per purchase'
+                    )
                 )
         )
     )
