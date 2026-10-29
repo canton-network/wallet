@@ -77,8 +77,15 @@ pnpm topup <partyId> [bytes]   # defaults to one Amulet's worth of traffic if by
 Writing `pnpm tap-amulet -- <partyId> [amount]` (or `pnpm topup -- …`) works too. pnpm forwards the
 `--` to the script rather than eating it, so the script drops a leading one itself.
 
-## What this isn't
+# Technical Notes
 
-A reference implementation. No tests, no styling to speak of, and the backend scripts are in-memory,
-single-paymaster, LocalNet-only stand-ins for services a real wallet provider would run durably.
-See `sdk/wallet-sdk/src/wallet/namespace/traffic/` for the real SDK surface this exercises.
+It uses the SDK's `TrafficAccountNamespace` (`sdk.traffic`), which exposes four functions this example relies on:
+
+- `setup` — converges the paymaster's on-ledger `TrafficPurchaser` / `ConversionRate` contracts (prices traffic).
+- `purchaseTraffic` — builds the buyer-signed purchase that pays with token-standard holdings and credits traffic on-ledger.
+- `getTraffic` — reads a party's current traffic balance.
+- `topUpTraffic` — applies an off-ledger balance delta (admin-only; used by `scan-topup`/`topup`).
+
+The credit itself is published through the [`TrafficCreditIssuer`](../../damljs/canton-traffic-credit/canton-tea/Canton/Traffic/Credit.daml) interface (`PublishCredit`), which is the contract between Canton's TEA and the selling application.
+
+We propose a ready-made Daml model, [`traffic-purchase-models`](../../damljs/traffic-purchase-models/daml/Tea/TrafficPurchase.daml) (`TrafficPurchaser` + `ConversionRate`), and this example uses it. Wallets are free to implement their own model instead — as long as it exposes the `TrafficCreditIssuer` interface, `purchaseTraffic` works against it unchanged.
