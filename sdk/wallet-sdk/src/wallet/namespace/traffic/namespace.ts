@@ -428,9 +428,7 @@ export class TrafficAccountNamespace {
         paymaster: PartyId
     ): Promise<ActiveTrafficSetup> {
         const contracts = await this.readActiveSetup(paymaster)
-        return this.computeDecimal(() =>
-            trafficSetupOf(paymaster, contracts)
-        )
+        return this.computeDecimal(() => trafficSetupOf(paymaster, contracts))
     }
 
     /**
