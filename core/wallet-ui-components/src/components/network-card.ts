@@ -28,8 +28,9 @@ export class NetworkCardUpdateEvent extends Event {
     }
 }
 
+export
 @customElement('network-card')
-export class NetworkCard extends BaseElement {
+class NetworkCard extends BaseElement {
     @property({ type: Object }) accessor network: PublicNetwork | null = null
     @property({ type: Boolean }) accessor activeSession = false
     @property({ type: String }) accessor accessToken = ''

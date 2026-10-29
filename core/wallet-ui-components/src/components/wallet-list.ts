@@ -13,8 +13,9 @@ import './wallet-card.js'
  * the allocated ones. The cards' `wallet-allocate`, `wallet-edit` and
  * `wallet-set-primary` events bubble out of this element.
  */
+export
 @customElement('wg-wallet-list')
-export class WgWalletList extends BaseElement {
+class WgWalletList extends BaseElement {
     /** The wallets to show. While it is undefined, a loading text is shown */
     @property({ type: Array }) accessor wallets: Wallet[] | undefined =
         undefined

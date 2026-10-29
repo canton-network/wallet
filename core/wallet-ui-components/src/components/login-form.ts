@@ -36,8 +36,9 @@ export class LoginBackEvent extends Event {
     }
 }
 
+export
 @customElement('wg-login-form')
-export class WgLoginForm extends BaseElement {
+class WgLoginForm extends BaseElement {
     /** Available networks to show in the dropdown */
     @property({ type: Array }) accessor networks: PublicNetwork[] = []
 

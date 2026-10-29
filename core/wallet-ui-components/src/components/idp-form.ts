@@ -35,8 +35,9 @@ export class IdpFormBackEvent extends Event {
     }
 }
 
+export
 @customElement('idp-form')
-export class IdpFormComponent extends BaseElement {
+class IdpFormComponent extends BaseElement {
     /** 'add' = creating a new IDP, 'review' = viewing/editing an existing one */
     @property({ type: String })
     accessor mode: 'add' | 'review' = 'add'

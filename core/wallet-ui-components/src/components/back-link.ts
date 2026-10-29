@@ -6,8 +6,9 @@ import { customElement, property } from 'lit/decorators.js'
 import { chevronLeftIcon } from '../icons/index.js'
 import { BaseElement } from '../internal/base-element.js'
 
+export
 @customElement('wg-back-link')
-export class WgBackLink extends BaseElement {
+class WgBackLink extends BaseElement {
     @property() accessor href = ''
 
     @property() accessor label = 'Back'

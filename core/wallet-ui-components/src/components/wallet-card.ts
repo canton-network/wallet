@@ -31,8 +31,9 @@ export class WalletCardSelectEvent extends Event {
     }
 }
 
+export
 @customElement('wg-wallet-card')
-export class WgWalletCard extends BaseElement {
+class WgWalletCard extends BaseElement {
     @property({ type: Object }) accessor wallet: Wallet | null = null
     @property({ type: Boolean }) accessor verified = false
     @property({ type: Boolean }) accessor loading = false

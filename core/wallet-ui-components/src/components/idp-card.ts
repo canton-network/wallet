@@ -28,8 +28,9 @@ export class IdpCardUpdateEvent extends Event {
     }
 }
 
+export
 @customElement('idp-card')
-export class IdpCard extends BaseElement {
+class IdpCard extends BaseElement {
     @property({ type: Object }) accessor idp: Idp | null = null
     @property({ type: Boolean }) accessor readonly = false
 

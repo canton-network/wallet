@@ -21,8 +21,9 @@ export class WalletEditEvent extends Event {
     }
 }
 
+export
 @customElement('wg-wallet-edit-form')
-export class WgWalletEditForm extends WgWalletForm {
+class WgWalletEditForm extends WgWalletForm {
     protected readonly submitLabel = 'Edit'
     protected readonly submittingLabel = 'Editing...'
     protected readonly submittingMessage = 'Editing party, please wait...'
