@@ -3,7 +3,7 @@
 
 import { defineConfig } from 'vitest/config'
 import { standardDecorators } from '../../vite.decorators.js'
-import { browserProject, coverage } from '../../vitest.base.ts'
+import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 import path from 'node:path'
 import { readdirSync, readFileSync } from 'node:fs'
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
@@ -48,6 +48,8 @@ export default defineConfig({
             exclude: ['src/**/*.lit.stories.ts', 'src/vite-env.d.ts'],
         }),
         projects: [
+            // Only for tests that need Node, e.g. to switch the time zone
+            nodeProject({ include: ['src/**/*.node.test.ts'] }),
             browserProject({
                 plugins: [
                     standardDecorators(
@@ -70,7 +72,10 @@ export default defineConfig({
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright({}),
+                        // Pinned so stories can assert on formatted dates
+                        provider: playwright({
+                            contextOptions: { timezoneId: 'Europe/Zurich' },
+                        }),
                         instances: [
                             {
                                 browser: 'chromium',

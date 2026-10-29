@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { customElement, property } from 'lit/decorators.js'
+import { ifDefined } from 'lit/directives/if-defined.js'
 import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
 import type { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
+import { formatDateTime, formatUtcDateTime } from '../date-time'
 
 /** Emitted when the user clicks the "Revoke" button on a api key card */
 export class ApiKeyCardRevokeEvent extends Event {
@@ -151,7 +153,12 @@ export class ApiKeyCard extends BaseElement {
 
                     <div class="meta-row">
                         <p class="meta-title">Created At</p>
-                        <p class="meta-value">${this.apiKey.createdAt}</p>
+                        <p
+                            class="meta-value"
+                            title=${ifDefined(formatUtcDateTime(this.apiKey.createdAt))}
+                        >
+                            ${formatDateTime(this.apiKey.createdAt)}
+                        </p>
                     </div>
                 </div>
             </article>

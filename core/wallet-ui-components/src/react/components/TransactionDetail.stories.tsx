@@ -65,7 +65,9 @@ export const Pending: Story = {
         await expect(
             canvas.getByText('TransferPreapproval_Send')
         ).toBeInTheDocument()
-        await expect(canvas.getByText('2025-06-01 12:34')).toBeInTheDocument()
+        await expect(
+            canvas.getByText('2025-06-01 14:34 UTC+2')
+        ).toHaveAttribute('title', '2025-06-01 12:34:56 UTC')
         await expect(canvas.getByText('alice::1220aa')).toBeInTheDocument()
         await expect(canvas.getByText('pkg:Module:Entity')).toBeInTheDocument()
         await expect(canvas.getByText('ext-tx-1')).toBeInTheDocument()
@@ -76,6 +78,7 @@ export const Pending: Story = {
 
         // Everything with a value can be copied
         for (const name of [
+            'Copy created at timestamp',
             'Copy template',
             'Copy command ID',
             'Copy external transaction ID',
