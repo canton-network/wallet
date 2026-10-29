@@ -45,7 +45,6 @@
         "decimal.js": "catalog:",
         "pino": "catalog:",
         "pino-pretty": "catalog:",
-        "typescript-lru-cache": "catalog:",
         "zod": "catalog:"
     },
     "devDependencies": {
