@@ -3,16 +3,17 @@
 
 import { css, html, nothing, type TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import { ifDefined } from 'lit/directives/if-defined.js'
 import { BaseElement } from '../internal/base-element.js'
 import { cardStyles } from '../styles/card.js'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import {
-    formatActivityDate,
     getActivityAmount,
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
 } from '../internal/activity-utils.js'
+import { formatDateTime, formatUtcDateTime } from '../date-time.js'
 
 /** Emitted when the user clicks an activity card */
 export class TransactionCardReviewEvent extends Event {
@@ -121,7 +122,7 @@ export class WgTransactionCard extends BaseElement {
         label: string,
         value: string | TemplateResult,
         options: {
-            title?: string
+            title?: string | undefined
             truncate?: boolean
             valueClass?: string
         } = {}
@@ -137,7 +138,7 @@ export class WgTransactionCard extends BaseElement {
         return html`
             <div class="field">
                 <span class="label">${label}</span>
-                <span class=${valueClasses} title=${options.title ?? nothing}
+                <span class=${valueClasses} title=${ifDefined(options.title)}
                     >${value}</span
                 >
             </div>
@@ -157,7 +158,7 @@ export class WgTransactionCard extends BaseElement {
     protected render() {
         const activityType = getActivityType(this.parsed)
         const amount = getActivityAmount(this.parsed)
-        const createdAt = formatActivityDate(this.createdAt)
+        const createdAt = formatDateTime(this.createdAt)
 
         return html`
             <button
@@ -203,7 +204,7 @@ export class WgTransactionCard extends BaseElement {
                         truncate: true,
                     })}
                     ${this.renderFieldRow('Created at', createdAt, {
-                        title: createdAt,
+                        title: formatUtcDateTime(this.createdAt),
                         truncate: true,
                     })}
                     ${this.renderFieldRow('Amount', amount, {

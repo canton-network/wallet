@@ -4,12 +4,12 @@
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { Card, CardActionArea, CardContent, Chip, Stack } from '@mui/material'
 import {
-    formatActivityDate,
     getActivityAmount,
     getActivityStatusColor,
     getActivityStatusLabel,
     getActivityType,
 } from '../../internal/activity-utils'
+import { formatDateTime, formatUtcDateTime } from '../../date-time'
 import { CardDetailRow } from './CardDetailRow'
 
 interface TransactionCardProps {
@@ -38,7 +38,7 @@ export const TransactionCard = ({
 }: TransactionCardProps) => {
     const activityType = getActivityType(parsed)
     const amount = getActivityAmount(parsed)
-    const created = formatActivityDate(createdAt)
+    const created = formatDateTime(createdAt)
 
     return (
         <Card variant="outlined" data-testid="transaction-card">
@@ -71,7 +71,11 @@ export const TransactionCard = ({
                             label="Action type"
                             value={activityType}
                         />
-                        <CardDetailRow label="Created at" value={created} />
+                        <CardDetailRow
+                            label="Created at"
+                            value={created}
+                            title={formatUtcDateTime(createdAt)}
+                        />
                         <CardDetailRow label="Amount" value={amount} />
                     </Stack>
                 </CardContent>

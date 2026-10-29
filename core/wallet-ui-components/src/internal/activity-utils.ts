@@ -46,15 +46,6 @@ export function getActivityStatusBadgeClass(status: string): string {
     }
 }
 
-export function formatActivityDate(value: string | null | undefined): string {
-    if (!value) {
-        return 'N/A'
-    }
-
-    const normalized = value.replace('T', ' ')
-    return normalized.length >= 16 ? normalized.slice(0, 16) : normalized
-}
-
 export function getActivityType(parsed: ParsedTransactionInfo | null): string {
     const choiceId = parsed?.choiceId
     return choiceId ? choiceId : 'N/A'

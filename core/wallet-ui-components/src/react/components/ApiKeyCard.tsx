@@ -11,6 +11,7 @@ import {
     Typography,
     Divider,
 } from '@mui/material'
+import { formatDateTime, formatUtcDateTime } from '../../date-time'
 import { CardDetailRow } from './CardDetailRow'
 
 interface ApiKeyCardProps {
@@ -29,7 +30,8 @@ export const ApiKeyCard = ({ apiKey, onRevoke }: ApiKeyCardProps) => {
                     <CardDetailRow label="ID" value={apiKey.id} />
                     <CardDetailRow
                         label="Created At"
-                        value={apiKey.createdAt}
+                        value={formatDateTime(apiKey.createdAt)}
+                        title={formatUtcDateTime(apiKey.createdAt)}
                     />
                 </Stack>
             </CardContent>

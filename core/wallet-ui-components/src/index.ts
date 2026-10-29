@@ -31,6 +31,7 @@ export * from './components/message-detail.js'
 export * from './windows/wallet-picker.js'
 export * from './windows/popup.js'
 
+export * from './date-time.js'
 export * from './handle-errors.js'
 export * from './routing.js'
 export { chevronLeftIcon } from './icons/index.js'
