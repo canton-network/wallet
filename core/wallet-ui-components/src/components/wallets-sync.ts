@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
+import { css, html, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import type UserApiClient from '@canton-network/core-wallet-user-rpc-client'
@@ -82,7 +82,6 @@ export class WgWalletsSync extends BaseElement {
 
     connectedCallback(): void {
         super.connectedCallback()
-        void this.checkWalletSyncNeeded()
     }
 
     private async checkWalletSyncNeeded() {
@@ -125,6 +124,13 @@ export class WgWalletsSync extends BaseElement {
             handleErrorToast(error)
         } finally {
             this.isSyncing = false
+        }
+    }
+
+    protected updated(changed: PropertyValues<this>): void {
+        super.updated(changed)
+        if (changed.has('client')) {
+            void this.checkWalletSyncNeeded()
         }
     }
 
