@@ -290,6 +290,24 @@ describe('SecurosysSigningDriver', () => {
         })
     })
 
+    it('getTransaction passes on the failure reason', async () => {
+        mockClient.getTransaction.mockResolvedValue({
+            txId: 'req-1',
+            status: 'rejected',
+            failureReason: 'Securosys rejected the signing request (EXPIRED)',
+            metadata: { tsbStatus: 'EXPIRED' },
+        } as Transaction)
+
+        const result = await driver
+            .controller(userId)
+            .getTransaction({ txId: 'req-1' })
+
+        expect(result).toMatchObject({
+            status: 'rejected',
+            failureReason: 'Securosys rejected the signing request (EXPIRED)',
+        })
+    })
+
     it('getTransaction returns transaction_not_found when the client throws', async () => {
         mockClient.getTransaction.mockRejectedValue(new Error('not found'))
 
