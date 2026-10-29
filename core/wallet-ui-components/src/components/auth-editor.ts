@@ -30,8 +30,9 @@ export class AuthEditorChangeEvent extends Event {
     }
 }
 
+export
 @customElement('auth-editor')
-export class AuthEditor extends BaseElement {
+class AuthEditor extends BaseElement {
     @property({ type: Object }) accessor auth: Auth | undefined
     @property({ type: Array })
     accessor allowedMethods: AuthMethod[] = [

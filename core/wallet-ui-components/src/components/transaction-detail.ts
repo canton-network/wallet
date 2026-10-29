@@ -29,8 +29,9 @@ export class TransactionDeleteEvent extends Event {
     }
 }
 
+export
 @customElement('wg-transaction-detail')
-export class WgTransactionDetail extends BaseElement {
+class WgTransactionDetail extends BaseElement {
     @property() accessor commandId = ''
 
     @property() accessor externalTxId: string | null = null

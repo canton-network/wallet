@@ -12,8 +12,9 @@ export class CopySuccessEvent extends Event {
     }
 }
 
+export
 @customElement('wg-copy-button')
-export class WgCopyButton extends BaseElement {
+class WgCopyButton extends BaseElement {
     @property({ type: String }) accessor value = ''
     @property({ type: String }) accessor label = 'Copy to clipboard'
 

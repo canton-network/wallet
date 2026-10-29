@@ -21,8 +21,9 @@ export class ErrorPageRefreshEvent extends Event {
     }
 }
 
+export
 @customElement('wg-error-page')
-export class WgErrorPage extends BaseElement {
+class WgErrorPage extends BaseElement {
     @property({ type: String }) accessor mode: ErrorPageMode = 'back'
     @property({ type: String }) accessor title = 'Something went wrong'
     @property({ type: String }) accessor message =
