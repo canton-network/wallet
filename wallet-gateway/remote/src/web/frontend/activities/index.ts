@@ -59,6 +59,11 @@ export class UserUiActivities extends BaseElement {
                 display: flex;
                 flex-direction: column;
                 gap: var(--wg-space-4);
+                transition: opacity 0.2s ease;
+            }
+
+            .activity-list[aria-busy='true'] {
+                opacity: 0.5;
             }
 
             .page-header {
@@ -81,12 +86,15 @@ export class UserUiActivities extends BaseElement {
 
             ${
                 this.loading && !this.transactions.length
-                    ? html`<p class="mb-0 text-body-secondary">
-                          Loading activities...
-                      </p>`
+                    ? html`<wg-loading-state
+                          .text=${'Loading activities...'}
+                      ></wg-loading-state>`
                     : this.transactions.length
                       ? html`
-                            <div class="activity-list">
+                            <div
+                                class="activity-list"
+                                aria-busy=${this.loading}
+                            >
                                 ${this.transactions.map(
                                     (tx) => html`
                                         <wg-transaction-card

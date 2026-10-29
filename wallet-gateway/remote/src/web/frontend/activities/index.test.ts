@@ -108,6 +108,14 @@ describe('UserUiActivities', () => {
         expect(el.loading).toBe(false)
     })
 
+    it('shows a loading indicator while the first page is loading', async () => {
+        mockRequest.mockReturnValue(new Promise(() => {}))
+
+        el = await fixture<UserUiActivities>(componentFixture)
+
+        expect(el.shadowRoot?.querySelector('wg-loading-state')).not.toBeNull()
+    })
+
     it('shows empty state when there are no transactions', async () => {
         mockRequest.mockResolvedValue({ transactions: [] })
 
@@ -199,7 +207,7 @@ describe('UserUiActivities', () => {
         })
     })
 
-    it('disables pagination while a page is loading', async () => {
+    it('disables pagination and marks the list busy while a page is loading', async () => {
         mockRequest.mockResolvedValueOnce({
             transactions: makeTransactions(4),
             nextCursor: 'page-2-cursor',
@@ -218,9 +226,13 @@ describe('UserUiActivities', () => {
         ) as HTMLElement & { disabled: boolean }
         expect(pagination.disabled).toBe(false)
 
+        const activityList = el.shadowRoot?.querySelector('.activity-list')
+        expect(activityList?.getAttribute('aria-busy')).toBe('false')
+
         pagination.dispatchEvent(new PageChangeEvent(2))
         await el.updateComplete
         expect(pagination.disabled).toBe(true)
+        expect(activityList?.getAttribute('aria-busy')).toBe('true')
 
         resolvePage2({
             transactions: [makeTransaction({ id: 'tx-5', commandId: 'cmd-5' })],
@@ -231,6 +243,7 @@ describe('UserUiActivities', () => {
         await el.updateComplete
 
         expect(pagination.disabled).toBe(false)
+        expect(activityList?.getAttribute('aria-busy')).toBe('false')
         expect(mockRequest).toHaveBeenNthCalledWith(2, {
             method: 'listTransactions',
             params: { limit: 4, cursor: 'page-2-cursor' },
