@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing } from 'lit'
+import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { chevronDownIcon } from '../icons/index.js'
@@ -182,7 +182,13 @@ export class AuthEditor extends BaseElement {
 
     connectedCallback(): void {
         super.connectedCallback()
-        this._mode = this._initialMode()
+    }
+
+    protected willUpdate(changed: PropertyValues<this>): void {
+        super.willUpdate(changed)
+        if (!this.hasUpdated) {
+            this._mode = this._initialMode()
+        }
     }
 
     private _hasConfiguredAuth(auth: Auth | undefined): auth is Auth {
