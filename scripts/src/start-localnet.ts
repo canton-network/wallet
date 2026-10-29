@@ -26,7 +26,17 @@ const cantonSupportsMultiSyncFeatureFlag =
     cantonMajor > 3 ||
     (cantonMajor === 3 && cantonMinor > 5) ||
     (cantonMajor === 3 && cantonMinor === 5 && (cantonPatch ?? 0) >= 4)
-const LOCALNET_DIR = path.join(rootDir, '.localnet/docker-compose/localnet')
+// LocalNet normally runs the splice-published images for SUPPORTED_VERSIONS'
+// splice version. To run against a locally-built splice (e.g. a `main` snapshot
+// bundling a Canton version no splice *release* ships yet, like Canton 3.7),
+// point these at the local build:
+//   LOCALNET_COMPOSE_DIR  the splice checkout's cluster/compose/localnet dir
+//   SPLICE_IMAGE_REPO     "" for local images (compose.env otherwise defaults
+//                         to the public ghcr prefix)
+//   SPLICE_IMAGE_TAG      the local image tag, e.g. 0.10.0-<user>-dirty
+const LOCALNET_DIR =
+    process.env.LOCALNET_COMPOSE_DIR ??
+    path.join(rootDir, '.localnet/docker-compose/localnet')
 const GENERATED_COMPOSE_OVERRIDE = path.join(
     rootDir,
     '.temp/start-localnet.override.yaml'
@@ -102,8 +112,14 @@ const composeBase = [
 
 const spliceVersion = SUPPORTED_VERSIONS[network].splice.version
 
-// Set IMAGE_TAG env variable to SPLICE_VERSION
-const env = { ...process.env, IMAGE_TAG: spliceVersion }
+// Set IMAGE_TAG env variable to SPLICE_VERSION (or an override for local images)
+const env = {
+    ...process.env,
+    IMAGE_TAG: process.env.SPLICE_IMAGE_TAG ?? spliceVersion,
+    ...(process.env.SPLICE_IMAGE_REPO !== undefined
+        ? { IMAGE_REPO: process.env.SPLICE_IMAGE_REPO }
+        : {}),
+}
 
 ensureComposeOverride()
 

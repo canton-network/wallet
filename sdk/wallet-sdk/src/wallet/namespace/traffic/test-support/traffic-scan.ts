@@ -37,6 +37,17 @@ import type { TrafficAccountNamespace } from '../namespace.js'
  */
 const trafficCreditIssuerInterfaceId = TrafficCreditIssuer.templateId
 
+/**
+ * The module-qualified tail of a Daml identifier, i.e. everything after the
+ * package part: `Canton.Traffic.Credit:TrafficCreditIssuer`. An identifier can
+ * be qualified either by package *name* (`#canton-traffic-credit:...`, which
+ * `TrafficCreditIssuer.templateId` is) or by package *id* (a hex hash, which
+ * Canton 3.7 reports for an exercised event's `interfaceId`). Matching on this
+ * tail keeps the scan working regardless of which form the ledger returns.
+ */
+const moduleQualifiedName = (identifier: string): string =>
+    identifier.split(':').slice(1).join(':')
+
 /** A credit this scan applied, and what the account came to afterwards. */
 export type AppliedCredit = {
     /** The TEA account the credit named. */
@@ -274,10 +285,15 @@ export class TrafficScan {
 
         // Only the credit-issuing choice, and only on the interface this scan
         // trusts: a choice that merely shares the `PublishCredit` name from some
-        // other interface is not a traffic credit.
+        // other interface is not a traffic credit. The interface is matched by
+        // its module-qualified name so that either a package-name or a
+        // package-id qualified `interfaceId` (Canton 3.7 reports the latter) is
+        // accepted.
         if (
             exercised.choice !== 'PublishCredit' ||
-            exercised.interfaceId !== trafficCreditIssuerInterfaceId ||
+            exercised.interfaceId === undefined ||
+            moduleQualifiedName(exercised.interfaceId) !==
+                moduleQualifiedName(trafficCreditIssuerInterfaceId) ||
             exercised.choiceArgument === undefined
         ) {
             return

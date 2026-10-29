@@ -1,129 +1,107 @@
 export interface paths {
-    '/v2/commands/submit-and-wait': {
+    "/v2/commands/submit-and-wait": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Submits a single composite command and waits for its result.
          *     Propagates the gRPC error of failed submissions including Daml interpretation errors.
          */
-        post: operations['postV2CommandsSubmit-and-wait']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/submit-and-wait-for-transaction': {
+        post: operations["postV2CommandsSubmit-and-wait"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/commands/submit-and-wait-for-transaction": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Submits a single composite command, waits for its result, and returns the transaction.
          *     Propagates the gRPC error of failed submissions including Daml interpretation errors.
          */
-        post: operations['postV2CommandsSubmit-and-wait-for-transaction']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/submit-and-wait-for-reassignment': {
+        post: operations["postV2CommandsSubmit-and-wait-for-transaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/commands/submit-and-wait-for-reassignment": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Submits a single composite reassignment command, waits for its result, and returns the reassignment.
          *     Propagates the gRPC error of failed submission.
          */
-        post: operations['postV2CommandsSubmit-and-wait-for-reassignment']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/submit-and-wait-for-transaction-tree': {
+        post: operations["postV2CommandsSubmit-and-wait-for-reassignment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/commands/async/submit": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Submit a batch of commands and wait for the transaction trees response.
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/commands/submit-and-wait-for-transaction instead.
-         */
-        post: operations['postV2CommandsSubmit-and-wait-for-transaction-tree']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/async/submit': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /** @description Submit a single composite command. */
-        post: operations['postV2CommandsAsyncSubmit']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/async/submit-reassignment': {
+        post: operations["postV2CommandsAsyncSubmit"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/commands/async/submit-reassignment": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /** @description Submit a single reassignment. */
-        post: operations['postV2CommandsAsyncSubmit-reassignment']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/completions': {
+        post: operations["postV2CommandsAsyncSubmit-reassignment"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/commands/completions": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Query completions list (blocking call)
          *
@@ -135,22 +113,22 @@ export interface paths {
          *     Increasing this limit may lead to performance issues and high memory consumption.
          *     Consider using websockets (asyncapi) for better efficiency with larger results.
          */
-        post: operations['postV2CommandsCompletions']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/command-completions': {
+        post: operations["postV2CommandsCompletions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/commands/command-completions": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Query completions list (blocking call)
          *
@@ -162,22 +140,22 @@ export interface paths {
          *     Increasing this limit may lead to performance issues and high memory consumption.
          *     Consider using websockets (asyncapi) for better efficiency with larger results.
          */
-        post: operations['postV2CommandsCommand-completions']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/commands/completion-by-hash': {
+        post: operations["postV2CommandsCommand-completions"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/commands/completion-by-hash": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Look up a completion by its transaction hash.
          *     This is only available for completions received after upgrading to Canton version 3.5.
@@ -188,61 +166,61 @@ export interface paths {
          *     - the completion was populated before upgrading to Canton version 3.5,
          *     - respective completions are all pruned.
          */
-        post: operations['postV2CommandsCompletion-by-hash']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/events/events-by-contract-id': {
+        post: operations["postV2CommandsCompletion-by-hash"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/events/events-by-contract-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Get the create and the consuming exercise event for the contract with the provided ID.
          *     No events will be returned for contracts that have been pruned because they
          *     have already been archived before the latest pruning offset.
          *     If the contract cannot be found for the request, or all the contract-events are filtered, a CONTRACT_EVENTS_NOT_FOUND error will be raised.
          */
-        post: operations['postV2EventsEvents-by-contract-id']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/version': {
+        post: operations["postV2EventsEvents-by-contract-id"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/version": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Read the Ledger API version */
-        get: operations['getV2Version']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/dars/validate': {
+        get: operations["getV2Version"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/dars/validate": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Validates the DAR and checks the upgrade compatibility of the DAR's packages
          *     with the set of the already vetted packages on the target vetting synchronizer.
@@ -251,40 +229,40 @@ export interface paths {
          *     The operation has no effect on the state of the participant or the Canton ledger:
          *     the DAR payload and its packages are not persisted neither are the packages vetted.
          */
-        post: operations['postV2DarsValidate']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/dars': {
+        post: operations["postV2DarsValidate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/dars": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /** @description Upload a DAR to the participant node */
-        post: operations['postV2Dars']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/packages': {
+        post: operations["postV2Dars"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/packages": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Returns the identifiers of all supported packages. */
-        get: operations['getV2Packages']
-        put?: never
+        get: operations["getV2Packages"];
+        put?: never;
         /**
          * @description Behaves the same as /dars. This endpoint will be deprecated and removed in a future release.
          *     Upload a DAR file to the participant.
@@ -293,126 +271,98 @@ export interface paths {
          *     with the set of the already vetted packages on the target vetting synchronizer
          *     See UploadDarFileRequest for details regarding vetting and the target vetting synchronizer.
          */
-        post: operations['postV2Packages']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/packages/{package-id}': {
+        post: operations["postV2Packages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/packages/{package-id}": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Returns the contents of a single package. */
-        get: operations['getV2PackagesPackage-id']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/packages/{package-id}/status': {
+        get: operations["getV2PackagesPackage-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/packages/{package-id}/status": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Returns the status of a single package. */
-        get: operations['getV2PackagesPackage-idStatus']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/package-vetting': {
+        get: operations["getV2PackagesPackage-idStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/package-vetting/list": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description Lists which participant node vetted what packages on which synchronizer.
-         *
-         *     Deprecated since Canton 3.5: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-35 = true`) and will be removed in Canton 3.7. Use POST /v2/package-vetting/list instead.
-         */
-        get: operations['getV2Package-vetting']
-        put?: never
-        /**
-         * @deprecated
-         * @description Update the vetted packages of this participant.
-         *
-         *     Deprecated since Canton 3.5: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-35 = true`) and will be removed in Canton 3.7. Use POST /v2/package-vetting/update instead.
-         */
-        post: operations['postV2Package-vetting']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/package-vetting/list': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Lists which participant node vetted what packages on which synchronizer.
          *     Can be called by any authenticated user.
          */
-        post: operations['postV2Package-vettingList']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/package-vetting/update': {
+        post: operations["postV2Package-vettingList"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/package-vetting/update": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /** @description Update the vetted packages of this participant */
-        post: operations['postV2Package-vettingUpdate']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/parties': {
+        post: operations["postV2Package-vettingUpdate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/parties": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
          * @description List the parties known by the participant.
          *     The list returned contains parties whose ledger access is facilitated by
          *     the participant and the ones maintained elsewhere.
          */
-        get: operations['getV2Parties']
-        put?: never
+        get: operations["getV2Parties"];
+        put?: never;
         /**
          * @description Allocates a new party on a ledger and adds it to the set managed by the participant.
          *     Caller specifies a party identifier suggestion, the actual identifier
@@ -432,22 +382,22 @@ export interface paths {
          *     The party identifier suggestion must be a valid party name. Party names are required to be non-empty US-ASCII strings built from letters, digits, space,
          *     colon, minus and underscore limited to 255 chars
          */
-        post: operations['postV2Parties']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/parties/external/allocate': {
+        post: operations["postV2Parties"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/parties/external/allocate": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Alpha 3.3: Endpoint to allocate a new external party on a synchronizer
          *
@@ -463,68 +413,68 @@ export interface paths {
          *     effectively allocated and ready to use, similarly to the AllocateParty behavior.
          *     For more complex scenarios applications may need to query the party status explicitly (only through the admin API as of now).
          */
-        post: operations['postV2PartiesExternalAllocate']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/parties/participant-id': {
+        post: operations["postV2PartiesExternalAllocate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/parties/participant-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
          * @description Return the identifier of the participant.
          *     All horizontally scaled replicas should return the same id.
          *     daml-on-kv-ledger: returns an identifier supplied on command line at launch time
          *     canton: returns globally unique identifier of the participant
          */
-        get: operations['getV2PartiesParticipant-id']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/parties/{party}': {
+        get: operations["getV2PartiesParticipant-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/parties/{party}": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
          * @description Get the party details of the given parties. Only known parties will be
          *     returned in the list.
          */
-        get: operations['getV2PartiesParty']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
+        get: operations["getV2PartiesParty"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
         /**
          * @description Update selected modifiable participant-local attributes of a party details resource.
          *     Can update the participant's local information for local parties.
          */
-        patch: operations['patchV2PartiesParty']
-        trace?: never
-    }
-    '/v2/parties/external/generate-topology': {
+        patch: operations["patchV2PartiesParty"];
+        trace?: never;
+    };
+    "/v2/parties/external/generate-topology": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Alpha 3.3: Convenience endpoint to generate topology transactions for external signing
          *
@@ -537,22 +487,22 @@ export interface paths {
          *     identity as for signing. More elaborate schemes such as multi-signature
          *     or decentralized parties require you to construct the topology transactions yourself.
          */
-        post: operations['postV2PartiesExternalGenerate-topology']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/state/active-contracts': {
+        post: operations["postV2PartiesExternalGenerate-topology"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/state/active-contracts": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Query active contracts list (blocking call).
          *     Querying active contracts is an expensive operation and if possible should not be repeated often.
@@ -565,6 +515,10 @@ export interface paths {
          *     the client SHOULD begin streaming updates from the update service,
          *     starting at the GetActiveContractsRequest.active_at_offset specified in this request.
          *     Clients SHOULD NOT assume that the set of active contracts they receive reflects the state at the ledger end.
+         *     If the given offset is different than the ledger end, and there are (un)assignments in-flight at the given offset,
+         *     the snapshot may fail with "FAILED_PRECONDITION/PARTICIPANT_PRUNED_DATA_ACCESSED".
+         *     Note that it is ok to request acs snapshots for party migration with offsets other than ledger end, because party
+         *     migration is not concerned with incomplete (un)assignments.
          *
          *     Notice: This endpoint should be used for small results set.
          *     When number of results exceeded node configuration limit (`http-list-max-elements-limit`)
@@ -572,32 +526,28 @@ export interface paths {
          *     Increasing this limit may lead to performance issues and high memory consumption.
          *     Consider using websockets (asyncapi) for better efficiency with larger results.
          */
-        post: operations['postV2StateActive-contracts']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/state/active-contracts-page': {
+        post: operations["postV2StateActive-contracts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/state/active-contracts-page": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
          * @deprecated
-         * @description Returns a page of the snapshot of the active contracts and incomplete (un)assignments at a ledger offset.
-         *     Once all pages are fetched by repeated calls to ``GetActiveContractsPage``,
-         *     the client SHOULD begin retrieving updates from the update service,
-         *     starting at the ``GetActiveContractsPageResponse``.``active_at_offset`` specified in this request.
-         *     Clients SHOULD NOT assume that the set of active contracts they receive reflects the state at the ledger end.
+         * @description Deprecated
          *
-         *     Deprecated since Canton 3.5: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-35 = true`) and will be removed in Canton 3.7. Use POST /v2/state/active-contracts-page instead.
+         *     Use POST version of this endpoint
          */
-        get: operations['getV2StateActive-contracts-page']
-        put?: never
+        get: operations["getV2StateActive-contracts-page"];
+        put?: never;
         /**
          * @description Returns a page of the snapshot of the active contracts and incomplete (un)assignments at a ledger offset.
          *     Once all pages are fetched by repeated calls to ``GetActiveContractsPage``,
@@ -605,76 +555,101 @@ export interface paths {
          *     starting at the ``GetActiveContractsPageResponse``.``active_at_offset`` specified in this request.
          *     Clients SHOULD NOT assume that the set of active contracts they receive reflects the state at the ledger end.
          */
-        post: operations['postV2StateActive-contracts-page']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/state/connected-synchronizers': {
+        post: operations["postV2StateActive-contracts-page"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/state/connected-synchronizers": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Get the list of connected synchronizers at the time of the query. */
-        get: operations['getV2StateConnected-synchronizers']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/state/ledger-end': {
+        get: operations["getV2StateConnected-synchronizers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/state/ledger-end": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
          * @description Get the current ledger end.
          *     Subscriptions started with the returned offset will serve events after this RPC was called.
          */
-        get: operations['getV2StateLedger-end']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/state/latest-pruned-offsets': {
+        get: operations["getV2StateLedger-end"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/state/latest-pruned-offsets": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Get the latest successfully pruned ledger offsets */
-        get: operations['getV2StateLatest-pruned-offsets']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates': {
+        get: operations["getV2StateLatest-pruned-offsets"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/state/convert-record-time-to-offset": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * @description Translate syncrhonizer record time to an offset
+         *     If the requested record time is earlier that the earliest record time known for the given synchronizer
+         *     (either because is is before the connection to the synchronizer was established or because it was already pruned),
+         *     the request fails with RECORD_TIME_NOT_FOUND error.
+         *     If the requested record time is after the latest record time observed for this synchronizer, the request fails with
+         *     RECORD_TIME_NOT_OBSERVED_YET error code. This may be transitional condition until participant node catches up with most recent synchronizer updates.
+         *     In such case the caller may retry this request.
+         */
+        get: operations["getV2StateConvert-record-time-to-offset"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/updates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Read the ledger's filtered update stream for the specified contents and filters.
          *     It returns the event types in accordance with the stream contents selected. Also the selection criteria
@@ -688,226 +663,84 @@ export interface paths {
          *     Increasing this limit may lead to performance issues and high memory consumption.
          *     Consider using websockets (asyncapi) for better efficiency with larger results.
          */
-        post: operations['postV2Updates']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/flats': {
+        post: operations["postV2Updates"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/updates/update-by-offset": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Query flat transactions update list (blocking call).
-         *     Notice: This endpoint should be used for small results set.
-         *     When number of results exceeded node configuration limit (`http-list-max-elements-limit`)
-         *     there will be an error (`413 Content Too Large`) returned.
-         *     Increasing this limit may lead to performance issues and high memory consumption.
-         *     Consider using websockets (asyncapi) for better efficiency with larger results.
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/updates instead.
-         */
-        post: operations['postV2UpdatesFlats']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/trees': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Query update transactions tree list (blocking call).
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/updates instead.
-         *     Notice: This endpoint should be used for small results set.
-         *     When number of results exceeded node configuration limit (`http-list-max-elements-limit`)
-         *     there will be an error (`413 Content Too Large`) returned.
-         *     Increasing this limit may lead to performance issues and high memory consumption.
-         *     Consider using websockets (asyncapi) for better efficiency with larger results.
-         */
-        post: operations['postV2UpdatesTrees']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/transaction-tree-by-offset/{offset}': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description Get transaction tree by offset.
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/updates/update-by-offset instead.
-         */
-        get: operations['getV2UpdatesTransaction-tree-by-offsetOffset']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/transaction-by-offset': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Get transaction by offset.
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/updates/update-by-offset instead.
-         */
-        post: operations['postV2UpdatesTransaction-by-offset']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/update-by-offset': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Lookup an update by its offset.
          *     If there is no update with this offset, or all the events are filtered, an UPDATE_NOT_FOUND error will be raised.
          */
-        post: operations['postV2UpdatesUpdate-by-offset']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/transaction-by-id': {
+        post: operations["postV2UpdatesUpdate-by-offset"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/updates/update-by-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Get transaction by id.
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/updates/update-by-id instead.
-         */
-        post: operations['postV2UpdatesTransaction-by-id']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/update-by-id': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Lookup an update by its ID.
          *     If there is no update with this ID, or all the events are filtered, an UPDATE_NOT_FOUND error will be raised.
          */
-        post: operations['postV2UpdatesUpdate-by-id']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/transaction-tree-by-id/{update-id}': {
+        post: operations["postV2UpdatesUpdate-by-id"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/updates/update-by-hash": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description Get transaction tree by id.
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/updates/update-by-id instead.
-         */
-        get: operations['getV2UpdatesTransaction-tree-by-idUpdate-id']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/update-by-hash': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Look up an update by its transaction hash.
          *     This is only available for updates received after upgrading to Canton version 3.6.
          *     If there is no update with this transaction hash, or all the events are filtered,
          *     or the update was populated before upgrading to Canton version 3.6, an UPDATE_NOT_FOUND error will be raised.
          */
-        post: operations['postV2UpdatesUpdate-by-hash']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/updates/get-updates-page': {
+        post: operations["postV2UpdatesUpdate-by-hash"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/updates/get-updates-page": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Read a page of ledger's filtered updates. It returns the event types in accordance with
          *     the specified contents and filters.
@@ -916,266 +749,233 @@ export interface paths {
          *     - ACS delta: an event is included only if the requesting party is a stakeholder.
          *     - ledger effects: an event is included if the requesting party is a witness.
          */
-        post: operations['postV2UpdatesGet-updates-page']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/users': {
+        post: operations["postV2UpdatesGet-updates-page"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/users": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description List all existing users. */
-        get: operations['getV2Users']
-        put?: never
+        get: operations["getV2Users"];
+        put?: never;
         /** @description Create a new user. */
-        post: operations['postV2Users']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/users/{user-id}': {
+        post: operations["postV2Users"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/users/{user-id}": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Get the user data of a specific user or the authenticated user. */
-        get: operations['getV2UsersUser-id']
-        put?: never
-        post?: never
+        get: operations["getV2UsersUser-id"];
+        put?: never;
+        post?: never;
         /** @description Delete an existing user and all its rights. */
-        delete: operations['deleteV2UsersUser-id']
-        options?: never
-        head?: never
+        delete: operations["deleteV2UsersUser-id"];
+        options?: never;
+        head?: never;
         /** @description Update selected modifiable attribute of a user resource described by the ``User`` message. */
-        patch: operations['patchV2UsersUser-id']
-        trace?: never
-    }
-    '/v2/authenticated-user': {
+        patch: operations["patchV2UsersUser-id"];
+        trace?: never;
+    };
+    "/v2/authenticated-user": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Get the user data of the current authenticated user. */
-        get: operations['getV2Authenticated-user']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/users/{user-id}/rights': {
+        get: operations["getV2Authenticated-user"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/users/{user-id}/rights": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description List the set of all rights granted to a user. */
-        get: operations['getV2UsersUser-idRights']
-        put?: never
+        get: operations["getV2UsersUser-idRights"];
+        put?: never;
         /**
          * @description Grant rights to a user.
          *     Granting rights does not affect the resource version of the corresponding user.
          */
-        post: operations['postV2UsersUser-idRights']
-        delete?: never
-        options?: never
-        head?: never
+        post: operations["postV2UsersUser-idRights"];
+        delete?: never;
+        options?: never;
+        head?: never;
         /**
          * @description Revoke rights from a user.
          *     Revoking rights does not affect the resource version of the corresponding user.
          */
-        patch: operations['patchV2UsersUser-idRights']
-        trace?: never
-    }
-    '/v2/users/{user-id}/identity-provider-id': {
+        patch: operations["patchV2UsersUser-idRights"];
+        trace?: never;
+    };
+    "/v2/users/{user-id}/identity-provider-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
         /** @description Update the assignment of a user from one IDP to another. */
-        patch: operations['patchV2UsersUser-idIdentity-provider-id']
-        trace?: never
-    }
-    '/v2/idps': {
+        patch: operations["patchV2UsersUser-idIdentity-provider-id"];
+        trace?: never;
+    };
+    "/v2/idps": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description List all existing identity provider configurations. */
-        get: operations['getV2Idps']
-        put?: never
+        get: operations["getV2Idps"];
+        put?: never;
         /**
          * @description Create a new identity provider configuration.
          *     The request will fail if the maximum allowed number of separate configurations is reached.
          */
-        post: operations['postV2Idps']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/idps/{idp-id}': {
+        post: operations["postV2Idps"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/idps/{idp-id}": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Get the identity provider configuration data by id. */
-        get: operations['getV2IdpsIdp-id']
-        put?: never
-        post?: never
+        get: operations["getV2IdpsIdp-id"];
+        put?: never;
+        post?: never;
         /** @description Delete an existing identity provider configuration. */
-        delete: operations['deleteV2IdpsIdp-id']
-        options?: never
-        head?: never
+        delete: operations["deleteV2IdpsIdp-id"];
+        options?: never;
+        head?: never;
         /**
          * @description Update selected modifiable attribute of an identity provider config resource described
          *     by the ``IdentityProviderConfig`` message.
          */
-        patch: operations['patchV2IdpsIdp-id']
-        trace?: never
-    }
-    '/v2/interactive-submission/prepare': {
+        patch: operations["patchV2IdpsIdp-id"];
+        trace?: never;
+    };
+    "/v2/interactive-submission/prepare": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /** @description Requires `readAs` scope for the submitting party when LAPI User authorization is enabled */
-        post: operations['postV2Interactive-submissionPrepare']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/interactive-submission/execute': {
+        post: operations["postV2Interactive-submissionPrepare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/interactive-submission/execute": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Execute a prepared submission _asynchronously_ on the ledger.
          *     Requires `actAs` or `executeAs` scope for the submitting party when LAPI User authorization is enabled
          *     Requires a signature of the transaction from the submitting external party.
          */
-        post: operations['postV2Interactive-submissionExecute']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/interactive-submission/executeAndWait': {
+        post: operations["postV2Interactive-submissionExecute"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/interactive-submission/executeAndWait": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /** @description Similar to ExecuteSubmission but _synchronously_ wait for the completion of the transaction */
-        post: operations['postV2Interactive-submissionExecuteandwait']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/interactive-submission/executeAndWaitForTransaction': {
+        post: operations["postV2Interactive-submissionExecuteandwait"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/interactive-submission/executeAndWaitForTransaction": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /** @description Similar to ExecuteSubmissionAndWait but additionally returns the transaction */
-        post: operations['postV2Interactive-submissionExecuteandwaitfortransaction']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/interactive-submission/preferred-package-version': {
+        post: operations["postV2Interactive-submissionExecuteandwaitfortransaction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/interactive-submission/preferred-packages": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        /**
-         * @deprecated
-         * @description Get the preferred package version for constructing a command submission.
-         *
-         *     A preferred package is the highest-versioned package for a provided package-name
-         *     that is vetted by all the participants hosting the provided parties.
-         *
-         *     Ledger API clients should use this endpoint for constructing command submissions
-         *     that are compatible with the provided preferred package, by making informed decisions on:
-         *     - which are the compatible packages that can be used to create contracts
-         *     - which contract or exercise choice argument version can be used in the command
-         *     - which choices can be executed on a template or interface of a contract
-         *
-         *     Can be accessed by any Ledger API client with a valid token when Ledger API authorization is enabled.
-         *
-         *     Deprecated since Canton 3.4: disabled by default since Canton 3.6 (re-enable temporarily with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`) and will be removed in Canton 3.7. Use POST /v2/interactive-submission/preferred-packages instead.
-         */
-        get: operations['getV2Interactive-submissionPreferred-package-version']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/interactive-submission/preferred-packages': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Compute the preferred packages for the vetting requirements in the request.
          *     A preferred package is the highest-versioned package for a provided package-name
@@ -1192,158 +992,187 @@ export interface paths {
          *
          *     Can be accessed by any Ledger API client with a valid token when Ledger API authorization is enabled.
          */
-        post: operations['postV2Interactive-submissionPreferred-packages']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/livez': {
+        post: operations["postV2Interactive-submissionPreferred-packages"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/livez": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Checks if the service is alive */
-        get: operations['getLivez']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/readyz': {
+        get: operations["getLivez"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/readyz": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /** @description Checks if the service is ready to serve requests */
-        get: operations['getReadyz']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/contracts/contract-by-id': {
+        get: operations["getReadyz"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/contracts/contract-by-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Looking up contract data by contract ID.
          *     This endpoint is experimental / alpha, therefore no backwards compatibility is guaranteed.
          *     This endpoint must not be used to look up contracts which entered the participant via party replication
          *     or repair service.
          */
-        post: operations['postV2ContractsContract-by-id']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/jose/jwks/synchronizer/{synchronizer}/party/{party}': {
+        post: operations["postV2ContractsContract-by-id"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/jose/jwks/synchronizer/{synchronizer}/party/{party}": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
          * @description Retrieve public keys as JWKS for a specific party and synchronizer.
          *     This endpoint is experimental / alpha, therefore no backwards compatibility is guaranteed.
          */
-        get: operations['getV2JoseJwks']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/traffic/accounts/{account-id}': {
+        get: operations["getV2JoseJwks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/traffic/accounts/{account-id}": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         /**
          * @description Get account state for a given account ID.
          *     Permissioned only to users having ActAs or ExecuteAs rights for the party ID associated with the account ID.
          *
          *     NOTE: This endpoint is exposed only when traffic enforcement feature is enabled (canton.participants.participant1.traffic-enforcement.enabled = true)
          */
-        get: operations['getV2TrafficAccountsAccount-id']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/traffic/accounts': {
+        get: operations["getV2TrafficAccountsAccount-id"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/traffic/accounts": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
          * @description Update account state for a given account ID.
          *     Permissioned only to Ledger API admin users.
          *
          *     NOTE: This endpoint is exposed only when traffic enforcement feature is enabled (canton.participants.participant1.traffic-enforcement.enabled = true)
          */
-        post: operations['postV2TrafficAccounts']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v2/traffic/events/prune': {
+        post: operations["postV2TrafficAccounts"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/traffic/prune": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         /**
-         * @description Prune events from the event log that are older than a given timestamp.
+         * @description Prune events from the event log and submission correlations that are older than a given timestamp.
+         *     Submission correlations record the account each submission is charged to.
          *     Permissioned only to Ledger API admin users.
+         *     The timestamp must be at least the participant's max deduplication duration in the past
+         *     (7 days by default), otherwise the request is rejected with TRAFFIC_UNSAFE_TO_PRUNE.
          *     WARNING: Affects de-duplication. If an event is pruned, de-duplication UpdateAccount requests on it will NOT be possible.
+         *     WARNING: If a submission's correlation is pruned before its completion arrives, the submission is NOT debited.
          *
          *     NOTE: This endpoint is exposed only when traffic enforcement feature is enabled (canton.participants.participant1.traffic-enforcement.enabled = true)
          */
-        post: operations['postV2TrafficEventsPrune']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
+        post: operations["postV2TrafficPrune"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v2/traffic/events/prune": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * @deprecated
+         * @description Served by POST /v2/traffic/prune, and returns only the number of pruned events.
+         *     Permissioned only to Ledger API admin users.
+         *
+         *     Deprecated since Canton 3.7, disabled by default in Canton 3.8 and removed in Canton 3.9 (disable it earlier with `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-37 = false`). Use POST /v2/traffic/prune instead.
+         *
+         *     NOTE: This endpoint is exposed only when traffic enforcement feature is enabled (canton.participants.participant1.traffic-enforcement.enabled = true)
+         */
+        post: operations["postV2TrafficEventsPrune"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
-export type webhooks = Record<string, never>
+export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         /**
@@ -1358,7 +1187,7 @@ export interface components {
              *
              *     Required
              */
-            synchronizer: string
+            synchronizer: string;
             /**
              * @description TopologyTransactions to onboard the external party
              *     Can contain:
@@ -1371,21 +1200,21 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            onboardingTransactions: components['schemas']['SignedTransaction'][]
+            onboardingTransactions: components["schemas"]["SignedTransaction"][];
             /**
              * @description Optional signatures of the combined hash of all onboarding_transactions
              *     This may be used instead of providing signatures on each individual transaction
              *
              *     Optional: can be empty
              */
-            multiHashSignatures?: components['schemas']['Signature'][]
+            multiHashSignatures?: components["schemas"]["Signature"][];
             /**
              * @description The id of the ``Identity Provider``
              *     If not set, assume the party is managed by the default identity provider.
              *
              *     Optional
              */
-            identityProviderId?: string
+            identityProviderId?: string;
             /**
              * @description When true, this RPC will attempt to wait for the party to be allocated on the synchronizer before returning.
              *     When false, the allocation will happen asynchronously.
@@ -1395,15 +1224,15 @@ export interface components {
              *
              *     Optional
              */
-            waitForAllocation?: boolean
+            waitForAllocation?: boolean;
             /**
              * @description The user who will get the act_as rights to the newly allocated party.
              *     If set to an empty string (the default), no user will get rights to the party.
              *
              *     Optional
              */
-            userId?: string
-        }
+            userId?: string;
+        };
         /** AllocateExternalPartyResponse */
         AllocateExternalPartyResponse: {
             /**
@@ -1411,8 +1240,8 @@ export interface components {
              *
              *     Required
              */
-            partyId: string
-        }
+            partyId: string;
+        };
         /**
          * AllocatePartyRequest
          * @description Required authorization:
@@ -1426,21 +1255,21 @@ export interface components {
              *
              *     Optional
              */
-            partyIdHint?: string
+            partyIdHint?: string;
             /**
              * @description Formerly "display_name"
              *     Participant-local metadata to be stored in the ``PartyDetails`` of this newly allocated party.
              *
              *     Optional
              */
-            localMetadata?: components['schemas']['ObjectMeta']
+            localMetadata?: components["schemas"]["ObjectMeta"];
             /**
              * @description The id of the ``Identity Provider``
              *     If not set, assume the party is managed by the default identity provider or party is not hosted by the participant.
              *
              *     Optional
              */
-            identityProviderId?: string
+            identityProviderId?: string;
             /**
              * @description The synchronizer, on which the party should be allocated.
              *     For backwards compatibility, this field may be omitted, if the participant is connected to only one synchronizer.
@@ -1448,15 +1277,15 @@ export interface components {
              *
              *     Optional
              */
-            synchronizerId?: string
+            synchronizerId?: string;
             /**
              * @description The user who will get the act_as rights to the newly allocated party.
              *     If set to an empty string (the default), no user will get rights to the party.
              *
              *     Optional
              */
-            userId?: string
-        }
+            userId?: string;
+        };
         /** AllocatePartyResponse */
         AllocatePartyResponse: {
             /**
@@ -1464,8 +1293,8 @@ export interface components {
              *
              *     Required
              */
-            partyDetails: components['schemas']['PartyDetails']
-        }
+            partyDetails: components["schemas"]["PartyDetails"];
+        };
         /**
          * ArchivedEvent
          * @description Records that a contract has been archived, and choices may no longer be exercised on it.
@@ -1480,7 +1309,7 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * Format: int32
              * @description The position of this event in the originating transaction or reassignment.
@@ -1490,14 +1319,14 @@ export interface components {
              *
              *     Required
              */
-            nodeId: number
+            nodeId: number;
             /**
              * @description The ID of the archived contract.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description Identifies the template that defines the choice that archived the contract.
              *     This template's package-id may differ from the target contract's package-id
@@ -1507,7 +1336,7 @@ export interface components {
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The parties that are notified of this event. For an ``ArchivedEvent``,
              *     these are the intersection of the stakeholders of the contract in
@@ -1519,13 +1348,13 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            witnessParties: string[]
+            witnessParties: string[];
             /**
              * @description The package name of the contract.
              *
              *     Required
              */
-            packageName: string
+            packageName: string;
             /**
              * @description The interfaces implemented by the target template that have been
              *     matched from the interface filter query.
@@ -1535,15 +1364,15 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            implementedInterfaces?: string[]
-        }
+            implementedInterfaces?: string[];
+        };
         /**
          * AssignCommand
          * @description Assign a contract
          */
         AssignCommand: {
-            value: components['schemas']['AssignCommand1']
-        }
+            value: components["schemas"]["AssignCommand1"];
+        };
         /**
          * AssignCommand
          * @description Assign a contract
@@ -1555,26 +1384,26 @@ export interface components {
              *
              *     Required
              */
-            reassignmentId: string
+            reassignmentId: string;
             /**
              * @description The ID of the source synchronizer
              *     Must be a valid synchronizer id
              *
              *     Required
              */
-            source: string
+            source: string;
             /**
              * @description The ID of the target synchronizer
              *     Must be a valid synchronizer id
              *
              *     Required
              */
-            target: string
-        }
+            target: string;
+        };
         /** CanActAs */
         CanActAs: {
-            value: components['schemas']['CanActAs1']
-        }
+            value: components["schemas"]["CanActAs1"];
+        };
         /** CanActAs */
         CanActAs1: {
             /**
@@ -1582,26 +1411,26 @@ export interface components {
              *
              *     Required
              */
-            party: string
-        }
+            party: string;
+        };
         /**
          * CanActAsAnyParty
          * @description The right of a user to authorize commands as any party on a participant.
          *     Its utility is predominantly for users that act on behalf of many parties.
          */
         CanActAsAnyParty: {
-            value: components['schemas']['CanActAsAnyParty1']
-        }
+            value: components["schemas"]["CanActAsAnyParty1"];
+        };
         /**
          * CanActAsAnyParty
          * @description The right of a user to authorize commands as any party on a participant.
          *     Its utility is predominantly for users that act on behalf of many parties.
          */
-        CanActAsAnyParty1: Record<string, never>
+        CanActAsAnyParty1: Record<string, never>;
         /** CanExecuteAs */
         CanExecuteAs: {
-            value: components['schemas']['CanExecuteAs1']
-        }
+            value: components["schemas"]["CanExecuteAs1"];
+        };
         /** CanExecuteAs */
         CanExecuteAs1: {
             /**
@@ -1612,8 +1441,8 @@ export interface components {
              *
              *     Required
              */
-            party: string
-        }
+            party: string;
+        };
         /**
          * CanExecuteAsAnyParty
          * @description The rights of a user to prepare and execute transactions as any party.
@@ -1621,19 +1450,19 @@ export interface components {
          *     on behalf of many parties.
          */
         CanExecuteAsAnyParty: {
-            value: components['schemas']['CanExecuteAsAnyParty1']
-        }
+            value: components["schemas"]["CanExecuteAsAnyParty1"];
+        };
         /**
          * CanExecuteAsAnyParty
          * @description The rights of a user to prepare and execute transactions as any party.
          *     Its utility is predominantly for users that perform interactive submissions
          *     on behalf of many parties.
          */
-        CanExecuteAsAnyParty1: Record<string, never>
+        CanExecuteAsAnyParty1: Record<string, never>;
         /** CanReadAs */
         CanReadAs: {
-            value: components['schemas']['CanReadAs1']
-        }
+            value: components["schemas"]["CanReadAs1"];
+        };
         /** CanReadAs */
         CanReadAs1: {
             /**
@@ -1641,8 +1470,8 @@ export interface components {
              *
              *     Required
              */
-            party: string
-        }
+            party: string;
+        };
         /**
          * CanReadAsAnyParty
          * @description The rights of a participant's super reader. Its utility is predominantly for
@@ -1650,53 +1479,46 @@ export interface components {
          *     as new parties pop in and out of existence.
          */
         CanReadAsAnyParty: {
-            value: components['schemas']['CanReadAsAnyParty1']
-        }
+            value: components["schemas"]["CanReadAsAnyParty1"];
+        };
         /**
          * CanReadAsAnyParty
          * @description The rights of a participant's super reader. Its utility is predominantly for
          *     feeding external tools, such as PQS, continually without the need to change subscriptions
          *     as new parties pop in and out of existence.
          */
-        CanReadAsAnyParty1: Record<string, never>
+        CanReadAsAnyParty1: Record<string, never>;
         /**
          * Command
          * @description A command can either create a new contract or exercise a choice on an existing contract.
          */
-        Command:
-            | {
-                  CreateAndExerciseCommand: components['schemas']['CreateAndExerciseCommand']
-              }
-            | {
-                  CreateCommand: components['schemas']['CreateCommand']
-              }
-            | {
-                  ExerciseByKeyCommand: components['schemas']['ExerciseByKeyCommand']
-              }
-            | {
-                  ExerciseCommand: components['schemas']['ExerciseCommand']
-              }
+        Command: {
+            CreateAndExerciseCommand: components["schemas"]["CreateAndExerciseCommand"];
+        } | {
+            CreateCommand: components["schemas"]["CreateCommand"];
+        } | {
+            ExerciseByKeyCommand: components["schemas"]["ExerciseByKeyCommand"];
+        } | {
+            ExerciseCommand: components["schemas"]["ExerciseCommand"];
+        };
         /**
          * Command
          * @description A command can either create a new contract or exercise a choice on an existing contract.
          */
-        Command1:
-            | {
-                  AssignCommand: components['schemas']['AssignCommand']
-              }
-            | {
-                  Empty: components['schemas']['Empty2']
-              }
-            | {
-                  UnassignCommand: components['schemas']['UnassignCommand']
-              }
+        Command1: {
+            AssignCommand: components["schemas"]["AssignCommand"];
+        } | {
+            Empty: components["schemas"]["Empty2"];
+        } | {
+            UnassignCommand: components["schemas"]["UnassignCommand"];
+        };
         /**
          * Completion
          * @description A completion represents the status of a submitted command on the ledger: it can be successful or failed.
          */
         Completion: {
-            value: components['schemas']['Completion1']
-        }
+            value: components["schemas"]["Completion1"];
+        };
         /**
          * Completion
          * @description A completion represents the status of a submitted command on the ledger: it can be successful or failed.
@@ -1708,14 +1530,14 @@ export interface components {
              *
              *     Required
              */
-            commandId: string
+            commandId: string;
             /**
              * @description Identifies the exact type of the error.
              *     It uses the same format of conveying error details as it is used for the RPC responses of the APIs.
              *
              *     Optional
              */
-            status?: components['schemas']['JsStatus']
+            status?: components["schemas"]["JsStatus"];
             /**
              * @description The update_id of the transaction or reassignment that resulted from the command with command_id.
              *
@@ -1724,14 +1546,14 @@ export interface components {
              *
              *     Optional
              */
-            updateId?: string
+            updateId?: string;
             /**
              * @description The user-id that was used for the submission, as described in ``commands.proto``.
              *     Must be a valid UserIdString (as described in ``value.proto``).
              *
              *     Required
              */
-            userId: string
+            userId: string;
             /**
              * @description The set of parties on whose behalf the commands were executed.
              *     Contains the ``act_as`` parties from ``commands.proto``
@@ -1741,15 +1563,15 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            actAs: string[]
+            actAs: string[];
             /**
              * @description The submission ID this completion refers to, as described in ``commands.proto``.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Optional
              */
-            submissionId?: string
-            deduplicationPeriod?: components['schemas']['DeduplicationPeriod1']
+            submissionId?: string;
+            deduplicationPeriod?: components["schemas"]["DeduplicationPeriod1"];
             /**
              * @description The Ledger API trace context
              *
@@ -1763,7 +1585,7 @@ export interface components {
              *
              *     Optional
              */
-            traceContext?: components['schemas']['TraceContext']
+            traceContext?: components["schemas"]["TraceContext"];
             /**
              * Format: int64
              * @description May be used in a subsequent CompletionStreamRequest to resume the consumption of this stream at a later time.
@@ -1771,7 +1593,7 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * @description The synchronizer along with its record time.
              *     The synchronizer id provided, in case of
@@ -1782,7 +1604,7 @@ export interface components {
              *
              *     Required
              */
-            synchronizerTime: components['schemas']['SynchronizerTime']
+            synchronizerTime: components["schemas"]["SynchronizerTime"];
             /**
              * Format: int64
              * @description The traffic cost paid by this participant node for the confirmation request
@@ -1810,7 +1632,7 @@ export interface components {
              *
              *     Optional
              */
-            paidTrafficCost?: number
+            paidTrafficCost?: number;
             /**
              * @description The transaction hash signed by the external party for prepared transactions
              *     that were submitted using `InteractiveSubmissionService.ExecuteSubmission`
@@ -1826,22 +1648,19 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            transactionHash?: string
-        }
+            transactionHash?: string;
+        };
         /**
          * CompletionResponse
          * @description Required
          */
-        CompletionResponse:
-            | {
-                  Completion: components['schemas']['Completion']
-              }
-            | {
-                  Empty: components['schemas']['Empty4']
-              }
-            | {
-                  OffsetCheckpoint: components['schemas']['OffsetCheckpoint']
-              }
+        CompletionResponse: {
+            Completion: components["schemas"]["Completion"];
+        } | {
+            Empty: components["schemas"]["Empty4"];
+        } | {
+            OffsetCheckpoint: components["schemas"]["OffsetCheckpoint"];
+        };
         /** CompletionStreamRequest */
         CompletionStreamRequest: {
             /**
@@ -1853,7 +1672,7 @@ export interface components {
              *
              *     Optional
              */
-            userId?: string
+            userId?: string;
             /**
              * @description Non-empty list of parties whose data should be included.
              *     The stream shows only completions of commands for which at least one of the ``act_as`` parties is in the given set of parties.
@@ -1861,7 +1680,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            parties: string[]
+            parties: string[];
             /**
              * Format: int64
              * @description This optional field indicates the minimum offset for completions. This can be used to resume an earlier completion stream.
@@ -1871,12 +1690,12 @@ export interface components {
              *
              *     Optional
              */
-            beginExclusive?: number
-        }
+            beginExclusive?: number;
+        };
         /** CompletionStreamResponse */
         CompletionStreamResponse: {
-            completionResponse?: components['schemas']['CompletionResponse']
-        }
+            completionResponse?: components["schemas"]["CompletionResponse"];
+        };
         /** ConnectedSynchronizer */
         ConnectedSynchronizer: {
             /**
@@ -1884,13 +1703,13 @@ export interface components {
              *
              *     Required
              */
-            synchronizerAlias: string
+            synchronizerAlias: string;
             /**
              * @description The ID of the synchronizer
              *
              *     Required
              */
-            synchronizerId: string
+            synchronizerId: string;
             /**
              * @description The permission on the synchronizer
              *     Set if a party was used in the request, otherwise unspecified.
@@ -1898,12 +1717,19 @@ export interface components {
              *     Optional
              * @enum {string}
              */
-            permission?:
-                | 'PARTICIPANT_PERMISSION_UNSPECIFIED'
-                | 'PARTICIPANT_PERMISSION_SUBMISSION'
-                | 'PARTICIPANT_PERMISSION_CONFIRMATION'
-                | 'PARTICIPANT_PERMISSION_OBSERVATION'
-        }
+            permission?: "PARTICIPANT_PERMISSION_UNSPECIFIED" | "PARTICIPANT_PERMISSION_SUBMISSION" | "PARTICIPANT_PERMISSION_CONFIRMATION" | "PARTICIPANT_PERMISSION_OBSERVATION";
+        };
+        /** ConvertRecordTimeToOffsetResponse */
+        ConvertRecordTimeToOffsetResponse: {
+            /**
+             * Format: int64
+             * @description The participant's offset, the details of the offset field are described in ``community/ledger-api/README.md``.
+             *     Must be a valid absolute offset (positive integer).
+             *
+             *     Required
+             */
+            offset: number;
+        };
         /**
          * CostEstimation
          * @description Estimation of the cost of submitting the prepared transaction
@@ -1917,14 +1743,14 @@ export interface components {
              *
              *     Required
              */
-            estimationTimestamp: string
+            estimationTimestamp: string;
             /**
              * Format: int64
              * @description Estimated traffic cost of the confirmation request associated with the transaction
              *
              *     Required
              */
-            confirmationRequestTrafficCostEstimation: number
+            confirmationRequestTrafficCostEstimation: number;
             /**
              * Format: int64
              * @description Estimated traffic cost of the confirmation response associated with the transaction
@@ -1933,15 +1759,21 @@ export interface components {
              *
              *     Required
              */
-            confirmationResponseTrafficCostEstimation: number
+            confirmationResponseTrafficCostEstimation: number;
             /**
              * Format: int64
              * @description Sum of the fields above
              *
              *     Required
              */
-            totalTrafficCostEstimation: number
-        }
+            totalTrafficCostEstimation: number;
+            /**
+             * @description Estimated cost of re-assigning contracts if necessary
+             *
+             *     Optional: can be empty
+             */
+            reassignmentCosts?: components["schemas"]["ReassignmentCost"][];
+        };
         /**
          * CostEstimationHints
          * @description Hints to improve cost estimation precision of a prepared transaction
@@ -1953,7 +1785,7 @@ export interface components {
              *
              *     Optional
              */
-            disabled?: boolean
+            disabled?: boolean;
             /**
              * @description Details on the keys that will be used to sign the transaction (how many and of which type).
              *     Signature size impacts the cost of the transaction.
@@ -1963,14 +1795,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            expectedSignatures?: (
-                | 'SIGNING_ALGORITHM_SPEC_UNSPECIFIED'
-                | 'SIGNING_ALGORITHM_SPEC_ED25519'
-                | 'SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256'
-                | 'SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_384'
-                | 'SIGNING_ALGORITHM_SPEC_ML_DSA_65'
-            )[]
-        }
+            expectedSignatures?: ("SIGNING_ALGORITHM_SPEC_UNSPECIFIED" | "SIGNING_ALGORITHM_SPEC_ED25519" | "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_256" | "SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_384" | "SIGNING_ALGORITHM_SPEC_ML_DSA_65")[];
+        };
         /**
          * CreateAndExerciseCommand
          * @description Create a contract and exercise a choice on it in the same transaction.
@@ -1983,27 +1809,27 @@ export interface components {
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The arguments required for creating a contract from this template.
              *
              *     Required
              */
-            createArguments: unknown
+            createArguments: unknown;
             /**
              * @description The name of the choice the client wants to exercise.
              *     Must be a valid NameString (as described in ``value.proto``).
              *
              *     Required
              */
-            choice: string
+            choice: string;
             /**
              * @description The argument for this choice.
              *
              *     Required
              */
-            choiceArgument: unknown
-        }
+            choiceArgument: unknown;
+        };
         /**
          * CreateCommand
          * @description Create a new contract instance based on a template.
@@ -2016,24 +1842,24 @@ export interface components {
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The arguments required for creating a contract from this template.
              *
              *     Required
              */
-            createArguments: unknown
-        }
+            createArguments: unknown;
+        };
         /** CreateIdentityProviderConfigRequest */
         CreateIdentityProviderConfigRequest: {
             /** @description Required */
-            identityProviderConfig: components['schemas']['IdentityProviderConfig']
-        }
+            identityProviderConfig: components["schemas"]["IdentityProviderConfig"];
+        };
         /** CreateIdentityProviderConfigResponse */
         CreateIdentityProviderConfigResponse: {
             /** @description Required */
-            identityProviderConfig: components['schemas']['IdentityProviderConfig']
-        }
+            identityProviderConfig: components["schemas"]["IdentityProviderConfig"];
+        };
         /**
          * CreateUserRequest
          * @description RPC requests and responses
@@ -2046,15 +1872,15 @@ export interface components {
              *
              *     Required
              */
-            user: components['schemas']['User']
+            user: components["schemas"]["User"];
             /**
              * @description The rights to be assigned to the user upon creation,
              *     which SHOULD include appropriate rights for the ``user.primary_party``.
              *
              *     Optional: can be empty
              */
-            rights?: components['schemas']['Right'][]
-        }
+            rights?: components["schemas"]["Right"][];
+        };
         /** CreateUserResponse */
         CreateUserResponse: {
             /**
@@ -2062,8 +1888,8 @@ export interface components {
              *
              *     Required
              */
-            user: components['schemas']['User']
-        }
+            user: components["schemas"]["User"];
+        };
         /**
          * CreatedEvent
          * @description Records that a contract has been created, and choices may now be exercised on it.
@@ -2078,7 +1904,7 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * Format: int32
              * @description The position of this event in the originating transaction or reassignment.
@@ -2089,41 +1915,41 @@ export interface components {
              *
              *     Required
              */
-            nodeId: number
+            nodeId: number;
             /**
              * @description The ID of the created contract.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description The template of the created contract.
              *     The identifier uses the package-id reference format.
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The key of the created contract.
              *     This will be set if and only if ``template_id`` defines a contract key.
              *
              *     Optional
              */
-            contractKey?: unknown
+            contractKey?: unknown;
             /**
              * @description The hash of contract_key.
              *     This will be set if and only if ``template_id`` defines a contract key.
              *
              *     Optional: can be empty
              */
-            contractKeyHash?: string
+            contractKeyHash?: string;
             /**
              * @description The arguments that have been used to create the contract.
              *
              *     Required
              */
-            createArgument: unknown
+            createArgument: unknown;
             /**
              * @description Opaque representation of contract create event payload intended for forwarding
              *     to an API server as a contract disclosed as part of a command
@@ -2131,7 +1957,7 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            createdEventBlob?: string
+            createdEventBlob?: string;
             /**
              * @description Interface views specified in the transaction filter.
              *     Includes an ``InterfaceView`` for each interface for which there is a ``InterfaceFilter`` with
@@ -2142,7 +1968,7 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            interfaceViews?: components['schemas']['JsInterfaceView'][]
+            interfaceViews?: components["schemas"]["JsInterfaceView"][];
             /**
              * @description The parties that are notified of this event. When a ``CreatedEvent``
              *     is returned as part of a transaction tree or ledger-effects transaction, this will include all
@@ -2173,32 +1999,32 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            witnessParties: string[]
+            witnessParties: string[];
             /**
              * @description The signatories for this contract as specified by the template.
              *
              *     Required: must be non-empty
              */
-            signatories: string[]
+            signatories: string[];
             /**
              * @description The observers for this contract as specified explicitly by the template or implicitly as choice controllers.
              *     This field never contains parties that are signatories.
              *
              *     Optional: can be empty
              */
-            observers?: string[]
+            observers?: string[];
             /**
              * @description Ledger effective time of the transaction that created the contract.
              *
              *     Required
              */
-            createdAt: string
+            createdAt: string;
             /**
              * @description The package name of the created contract.
              *
              *     Required
              */
-            packageName: string
+            packageName: string;
             /**
              * @description A package-id present in the participant package store that typechecks the contract's argument.
              *     This may differ from the package-id of the template used to create the contract.
@@ -2208,54 +2034,50 @@ export interface components {
              *
              *     Required
              */
-            representativePackageId: string
+            representativePackageId: string;
             /**
              * @description Whether this event would be part of respective ACS_DELTA shaped stream,
              *     and should therefore considered when tracking contract activeness on the client-side.
              *
              *     Required
              */
-            acsDelta: boolean
-        }
-        /** CreatedTreeEvent */
-        CreatedTreeEvent: {
-            value: components['schemas']['CreatedEvent']
-        }
+            acsDelta: boolean;
+        };
         /**
          * CumulativeFilter
          * @description A filter that matches all contracts that are either an instance of one of
          *     the ``template_filters`` or that match one of the ``interface_filters``.
          */
         CumulativeFilter: {
-            identifierFilter?: components['schemas']['IdentifierFilter']
-        }
+            identifierFilter?: components["schemas"]["IdentifierFilter"];
+        };
         /** DeduplicationDuration */
         DeduplicationDuration: {
-            value: components['schemas']['Duration']
-        }
+            value: components["schemas"]["Duration"];
+        };
         /** DeduplicationDuration */
         DeduplicationDuration1: {
-            value: components['schemas']['Duration']
-        }
+            value: components["schemas"]["Duration"];
+        };
         /** DeduplicationDuration */
         DeduplicationDuration2: {
-            value: components['schemas']['Duration']
-        }
+            value: components["schemas"]["Duration"];
+        };
         /** DeduplicationOffset */
         DeduplicationOffset: {
             /** Format: int64 */
-            value: number
-        }
+            value: number;
+        };
         /** DeduplicationOffset */
         DeduplicationOffset1: {
             /** Format: int64 */
-            value: number
-        }
+            value: number;
+        };
         /** DeduplicationOffset */
         DeduplicationOffset2: {
             /** Format: int64 */
-            value: number
-        }
+            value: number;
+        };
         /**
          * DeduplicationPeriod
          * @description Specifies the deduplication period for the change ID.
@@ -2263,16 +2085,13 @@ export interface components {
          *
          *     Optional
          */
-        DeduplicationPeriod:
-            | {
-                  DeduplicationDuration: components['schemas']['DeduplicationDuration']
-              }
-            | {
-                  DeduplicationOffset: components['schemas']['DeduplicationOffset']
-              }
-            | {
-                  Empty: components['schemas']['Empty']
-              }
+        DeduplicationPeriod: {
+            DeduplicationDuration: components["schemas"]["DeduplicationDuration"];
+        } | {
+            DeduplicationOffset: components["schemas"]["DeduplicationOffset"];
+        } | {
+            Empty: components["schemas"]["Empty"];
+        };
         /**
          * DeduplicationPeriod
          * @description The actual deduplication window used for the submission, which is derived from
@@ -2285,32 +2104,26 @@ export interface components {
          *
          *     Optional
          */
-        DeduplicationPeriod1:
-            | {
-                  DeduplicationDuration: components['schemas']['DeduplicationDuration1']
-              }
-            | {
-                  DeduplicationOffset: components['schemas']['DeduplicationOffset1']
-              }
-            | {
-                  Empty: components['schemas']['Empty3']
-              }
+        DeduplicationPeriod1: {
+            DeduplicationDuration: components["schemas"]["DeduplicationDuration1"];
+        } | {
+            DeduplicationOffset: components["schemas"]["DeduplicationOffset1"];
+        } | {
+            Empty: components["schemas"]["Empty3"];
+        };
         /** DeduplicationPeriod */
-        DeduplicationPeriod2:
-            | {
-                  DeduplicationDuration: components['schemas']['DeduplicationDuration2']
-              }
-            | {
-                  DeduplicationOffset: components['schemas']['DeduplicationOffset2']
-              }
-            | {
-                  Empty: components['schemas']['Empty10']
-              }
+        DeduplicationPeriod2: {
+            DeduplicationDuration: components["schemas"]["DeduplicationDuration2"];
+        } | {
+            DeduplicationOffset: components["schemas"]["DeduplicationOffset2"];
+        } | {
+            Empty: components["schemas"]["Empty10"];
+        };
         /**
          * DeleteIdentityProviderConfigResponse
          * @description Does not (yet) contain any data.
          */
-        DeleteIdentityProviderConfigResponse: Record<string, never>
+        DeleteIdentityProviderConfigResponse: Record<string, never>;
         /**
          * DisclosedContract
          * @description An additional contract that is used to resolve
@@ -2325,7 +2138,7 @@ export interface components {
              *
              *     Optional
              */
-            templateId?: string
+            templateId?: string;
             /**
              * @description The contract id
              *
@@ -2333,52 +2146,52 @@ export interface components {
              *
              *     Optional
              */
-            contractId?: string
+            contractId?: string;
             /**
              * @description Opaque byte string containing the complete payload required by the Daml engine
              *     to reconstruct a contract not known to the receiving participant.
              *
              *     Required: must be non-empty
              */
-            createdEventBlob: string
+            createdEventBlob: string;
             /**
              * @description The ID of the synchronizer where the contract is currently assigned
              *
              *     Optional
              */
-            synchronizerId?: string
-        }
+            synchronizerId?: string;
+        };
         /** Duration */
         Duration: {
             /** Format: int64 */
-            seconds: number
+            seconds: number;
             /** Format: int32 */
-            nanos: number
+            nanos: number;
             /** @description This field is automatically added as part of protobuf to json mapping */
-            unknownFields?: components['schemas']['UnknownFieldSet']
-        }
+            unknownFields?: components["schemas"]["UnknownFieldSet"];
+        };
         /** Empty */
-        Empty: Record<string, never>
+        Empty: Record<string, never>;
         /** Empty */
-        Empty1: Record<string, never>
+        Empty1: Record<string, never>;
         /** Empty */
-        Empty10: Record<string, never>
+        Empty10: Record<string, never>;
         /** Empty */
-        Empty2: Record<string, never>
+        Empty2: Record<string, never>;
         /** Empty */
-        Empty3: Record<string, never>
+        Empty3: Record<string, never>;
         /** Empty */
-        Empty4: Record<string, never>
+        Empty4: Record<string, never>;
         /** Empty */
-        Empty5: Record<string, never>
+        Empty5: Record<string, never>;
         /** Empty */
-        Empty6: Record<string, never>
+        Empty6: Record<string, never>;
         /** Empty */
-        Empty7: Record<string, never>
+        Empty7: Record<string, never>;
         /** Empty */
-        Empty8: Record<string, never>
+        Empty8: Record<string, never>;
         /** Empty */
-        Empty9: Record<string, never>
+        Empty9: Record<string, never>;
         /**
          * Event
          * @description Events in transactions can have two primary shapes:
@@ -2392,16 +2205,13 @@ export interface components {
          *     indicates the subset of the requested parties that can see the event
          *     in question.
          */
-        Event:
-            | {
-                  ArchivedEvent: components['schemas']['ArchivedEvent']
-              }
-            | {
-                  CreatedEvent: components['schemas']['CreatedEvent']
-              }
-            | {
-                  ExercisedEvent: components['schemas']['ExercisedEvent']
-              }
+        Event: {
+            ArchivedEvent: components["schemas"]["ArchivedEvent"];
+        } | {
+            CreatedEvent: components["schemas"]["CreatedEvent"];
+        } | {
+            ExercisedEvent: components["schemas"]["ExercisedEvent"];
+        };
         /**
          * EventFormat
          * @description A format for events which defines both which events should be included
@@ -2422,22 +2232,22 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            filtersByParty?: components['schemas']['Map_Filters']
+            filtersByParty?: components["schemas"]["Map_Filters"];
             /**
              * @description Wildcard filters that apply to all the parties existing on the participant. The interpretation of the filters is the same
              *     with the per-party filter as described above.
              *
              *     Optional
              */
-            filtersForAnyParty?: components['schemas']['Filters']
+            filtersForAnyParty?: components["schemas"]["Filters"];
             /**
              * @description If enabled, values served over the API will contain more information than strictly necessary to interpret the data.
              *     In particular, setting the verbose flag to true triggers the ledger to include labels for record fields.
              *
              *     Optional
              */
-            verbose?: boolean
-        }
+            verbose?: boolean;
+        };
         /** ExecuteSubmissionAndWaitResponse */
         ExecuteSubmissionAndWaitResponse: {
             /**
@@ -2446,17 +2256,17 @@ export interface components {
              *
              *     Required
              */
-            updateId: string
+            updateId: string;
             /**
              * Format: int64
              * @description The details of the offset field are described in ``community/ledger-api/README.md``.
              *
              *     Required
              */
-            completionOffset: number
-        }
+            completionOffset: number;
+        };
         /** ExecuteSubmissionResponse */
-        ExecuteSubmissionResponse: Record<string, never>
+        ExecuteSubmissionResponse: Record<string, never>;
         /**
          * ExerciseByKeyCommand
          * @description Exercise a choice on an existing contract specified by its key.
@@ -2469,27 +2279,27 @@ export interface components {
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The key of the contract the client wants to exercise upon.
              *
              *     Required
              */
-            contractKey: unknown
+            contractKey: unknown;
             /**
              * @description The name of the choice the client wants to exercise.
              *     Must be a valid NameString (as described in ``value.proto``)
              *
              *     Required
              */
-            choice: string
+            choice: string;
             /**
              * @description The argument for this choice.
              *
              *     Required
              */
-            choiceArgument: unknown
-        }
+            choiceArgument: unknown;
+        };
         /**
          * ExerciseCommand
          * @description Exercise a choice on an existing contract.
@@ -2503,28 +2313,28 @@ export interface components {
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The ID of the contract the client wants to exercise upon.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description The name of the choice the client wants to exercise.
              *     Must be a valid NameString (as described in ``value.proto``)
              *
              *     Required
              */
-            choice: string
+            choice: string;
             /**
              * @description The argument for this choice.
              *
              *     Required
              */
-            choiceArgument: unknown
-        }
+            choiceArgument: unknown;
+        };
         /**
          * ExercisedEvent
          * @description Records that a choice has been exercised on a target contract.
@@ -2539,7 +2349,7 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * Format: int32
              * @description The position of this event in the originating transaction or reassignment.
@@ -2549,14 +2359,14 @@ export interface components {
              *
              *     Required
              */
-            nodeId: number
+            nodeId: number;
             /**
              * @description The ID of the target contract.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description Identifies the template that defines the executed choice.
              *     This template's package-id may differ from the target contract's package-id
@@ -2566,40 +2376,40 @@ export interface components {
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The interface where the choice is defined, if inherited.
              *     If defined, the identifier uses the package-id reference format.
              *
              *     Optional
              */
-            interfaceId?: string
+            interfaceId?: string;
             /**
              * @description The choice that was exercised on the target contract.
              *     Must be a valid NameString (as described in ``value.proto``).
              *
              *     Required
              */
-            choice: string
+            choice: string;
             /**
              * @description The argument of the exercised choice.
              *
              *     Required
              */
-            choiceArgument: unknown
+            choiceArgument: unknown;
             /**
              * @description The parties that exercised the choice.
              *     Each element must be a valid PartyIdString (as described in ``value.proto``).
              *
              *     Required: must be non-empty
              */
-            actingParties: string[]
+            actingParties: string[];
             /**
              * @description If true, the target contract may no longer be exercised.
              *
              *     Required
              */
-            consuming: boolean
+            consuming: boolean;
             /**
              * @description The parties that are notified of this event. The witnesses of an exercise
              *     node will depend on whether the exercise was consuming or not.
@@ -2620,7 +2430,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            witnessParties: string[]
+            witnessParties: string[];
             /**
              * Format: int32
              * @description Specifies the upper boundary of the node ids of the events in the same transaction that appeared as a result of
@@ -2630,19 +2440,19 @@ export interface components {
              *
              *     Required
              */
-            lastDescendantNodeId: number
+            lastDescendantNodeId: number;
             /**
              * @description The result of exercising the choice.
              *
              *     Optional
              */
-            exerciseResult?: unknown
+            exerciseResult?: unknown;
             /**
              * @description The package name of the contract.
              *
              *     Required
              */
-            packageName: string
+            packageName: string;
             /**
              * @description If the event is consuming, the interfaces implemented by the target template that have been
              *     matched from the interface filter query.
@@ -2652,45 +2462,41 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            implementedInterfaces?: string[]
+            implementedInterfaces?: string[];
             /**
              * @description Whether this event would be part of respective ACS_DELTA shaped stream,
              *     and should therefore considered when tracking contract activeness on the client-side.
              *
              *     Required
              */
-            acsDelta: boolean
-        }
-        /** ExercisedTreeEvent */
-        ExercisedTreeEvent: {
-            value: components['schemas']['ExercisedEvent']
-        }
+            acsDelta: boolean;
+        };
         /**
          * ExperimentalCommandInspectionService
          * @description Whether the Ledger API supports command inspection service
          */
         ExperimentalCommandInspectionService: {
             /** @description Required */
-            supported: boolean
-        }
+            supported: boolean;
+        };
         /**
          * ExperimentalFeatures
          * @description See the feature message definitions for descriptions.
          */
         ExperimentalFeatures: {
             /** @description Optional */
-            staticTime?: components['schemas']['ExperimentalStaticTime']
+            staticTime?: components["schemas"]["ExperimentalStaticTime"];
             /** @description Optional */
-            commandInspectionService?: components['schemas']['ExperimentalCommandInspectionService']
-        }
+            commandInspectionService?: components["schemas"]["ExperimentalCommandInspectionService"];
+        };
         /**
          * ExperimentalStaticTime
          * @description Ledger is in the static time mode and exposes a time service.
          */
         ExperimentalStaticTime: {
             /** @description Required */
-            supported: boolean
-        }
+            supported: boolean;
+        };
         /** FeaturesDescriptor */
         FeaturesDescriptor: {
             /**
@@ -2701,7 +2507,7 @@ export interface components {
              *
              *     Required
              */
-            experimental: components['schemas']['ExperimentalFeatures']
+            experimental: components["schemas"]["ExperimentalFeatures"];
             /**
              * @description If set, then the Ledger API server supports user management.
              *     It is recommended that clients query this field to gracefully adjust their behavior for
@@ -2709,7 +2515,7 @@ export interface components {
              *
              *     Required
              */
-            userManagement: components['schemas']['UserManagementFeature']
+            userManagement: components["schemas"]["UserManagementFeature"];
             /**
              * @description If set, then the Ledger API server supports party management configurability.
              *     It is recommended that clients query this field to gracefully adjust their behavior to
@@ -2717,13 +2523,13 @@ export interface components {
              *
              *     Required
              */
-            partyManagement: components['schemas']['PartyManagementFeature']
+            partyManagement: components["schemas"]["PartyManagementFeature"];
             /**
              * @description It contains the timeouts related to the periodic offset checkpoint emission
              *
              *     Required
              */
-            offsetCheckpoint: components['schemas']['OffsetCheckpointFeature']
+            offsetCheckpoint: components["schemas"]["OffsetCheckpointFeature"];
             /**
              * @description If set, then the Ledger API server supports package listing
              *     configurability. It is recommended that clients query this field to
@@ -2731,20 +2537,20 @@ export interface components {
              *
              *     Required
              */
-            packageFeature: components['schemas']['PackageFeature']
-        }
+            packageFeature: components["schemas"]["PackageFeature"];
+        };
         /** Field */
         Field: {
-            varint?: number[]
-            fixed64?: number[]
-            fixed32?: number[]
-            lengthDelimited?: string[]
-        }
+            varint?: number[];
+            fixed64?: number[];
+            fixed32?: number[];
+            lengthDelimited?: string[];
+        };
         /** FieldMask */
         FieldMask: {
-            paths?: string[]
-            unknownFields: components['schemas']['UnknownFieldSet']
-        }
+            paths?: string[];
+            unknownFields: components["schemas"]["UnknownFieldSet"];
+        };
         /**
          * Filters
          * @description The union of a set of template filters, interface filters, or a wildcard.
@@ -2762,8 +2568,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            cumulative?: components['schemas']['CumulativeFilter'][]
-        }
+            cumulative?: components["schemas"]["CumulativeFilter"][];
+        };
         /** GenerateExternalPartyTopologyRequest */
         GenerateExternalPartyTopologyRequest: {
             /**
@@ -2772,45 +2578,45 @@ export interface components {
              *
              *     Required
              */
-            synchronizer: string
+            synchronizer: string;
             /**
              * @description The actual party id will be constructed from this hint and a fingerprint of the public key
              *
              *     Required
              */
-            partyHint: string
+            partyHint: string;
             /**
              * @description Public key
              *
              *     Required
              */
-            publicKey: components['schemas']['SigningPublicKey']
+            publicKey: components["schemas"]["SigningPublicKey"];
             /**
              * @description If true, then the local participant will only be observing, not confirming. Default false.
              *
              *     Optional
              */
-            localParticipantObservationOnly?: boolean
+            localParticipantObservationOnly?: boolean;
             /**
              * @description Other participant ids which should be confirming for this party
              *
              *     Optional: can be empty
              */
-            otherConfirmingParticipantUids?: string[]
+            otherConfirmingParticipantUids?: string[];
             /**
              * Format: int32
              * @description Confirmation threshold >= 1 for the party. Defaults to all available confirmers (or if set to 0).
              *
              *     Optional
              */
-            confirmationThreshold?: number
+            confirmationThreshold?: number;
             /**
              * @description Other observing participant ids for this party
              *
              *     Optional: can be empty
              */
-            observingParticipantUids?: string[]
-        }
+            observingParticipantUids?: string[];
+        };
         /**
          * GenerateExternalPartyTopologyResponse
          * @description Response message with topology transactions and the multi-hash to be signed.
@@ -2821,13 +2627,13 @@ export interface components {
              *
              *     Required
              */
-            partyId: string
+            partyId: string;
             /**
              * @description The fingerprint of the supplied public key
              *
              *     Required
              */
-            publicKeyFingerprint: string
+            publicKeyFingerprint: string;
             /**
              * @description The serialized topology transactions which need to be signed and submitted as part of the allocate party process
              *     Note that the serialization includes the versioning information. Therefore, the transaction here is serialized
@@ -2836,24 +2642,24 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            topologyTransactions: string[]
+            topologyTransactions: string[];
             /**
              * @description the multi-hash which may be signed instead of each individual transaction
              *
              *     Required: must be non-empty
              */
-            multiHash: string
-        }
+            multiHash: string;
+        };
         /** GetAccountResponse */
         GetAccountResponse: {
             /** @description Required */
-            accountId: string
+            accountId: string;
             /**
              * Format: int64
              * @description Required
              */
-            balance: number
-        }
+            balance: number;
+        };
         /** GetActiveContractsPageRequest */
         GetActiveContractsPageRequest: {
             /**
@@ -2867,14 +2673,14 @@ export interface components {
              *
              *     Optional
              */
-            activeAtOffset?: number
+            activeAtOffset?: number;
             /**
              * @description Format of the contract_entries in the result. In case of CreatedEvent the presentation will be of
              *     TRANSACTION_SHAPE_ACS_DELTA.
              *
              *     Required
              */
-            eventFormat: components['schemas']['EventFormat']
+            eventFormat: components["schemas"]["EventFormat"];
             /**
              * Format: int32
              * @description The result page will contain at most max_page_size entries of the respective active contract snapshot.
@@ -2883,43 +2689,32 @@ export interface components {
              *
              *     Optional
              */
-            maxPageSize?: number
+            maxPageSize?: number;
             /**
              * @description To get the next page of the active contracts snapshot, the ``page_token`` should be set to the
              *     ``next_page_token`` of the last ``GetActiveContractsPageResponse``.
              *     The page token only works if subsequent requests:
              *
              *     - are executed on the same participant,
-             *     - use the same active_at_offset and event_format,
+             *     - use the same active_at_offset, event_format and include_incomplete_reassignments,
              *     - and the participant's store was not pruned to after the active_at_offset.
              *
              *     If not specified, the first page of the active contracts snapshot will be returned.
              *
              *     Optional: can be empty
              */
-            pageToken?: string
-        }
-        /**
-         * GetActiveContractsRequest
-         * @description If the given offset is different than the ledger end, and there are (un)assignments in-flight at the given offset,
-         *     the snapshot may fail with "FAILED_PRECONDITION/PARTICIPANT_PRUNED_DATA_ACCESSED".
-         *     Note that it is ok to request acs snapshots for party migration with offsets other than ledger end, because party
-         *     migration is not concerned with incomplete (un)assignments.
-         */
+            pageToken?: string;
+            /**
+             * @description If this flag is true, the IncompleteAssigned and IncompleteUnassigned events will be included in the stream
+             *     based on the specified event_format.
+             *     If this flag is set to false, Incomplete Reassignments will be omitted.
+             *
+             *     Optional
+             */
+            includeIncompleteReassignments?: boolean;
+        };
+        /** GetActiveContractsRequest */
         GetActiveContractsRequest: {
-            /**
-             * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-parameters-34 = true`; it will be removed in the Canton version 3.7.0.
-             *     Templates to include in the served snapshot, per party.
-             *     Optional, if specified event_format must be unset, if not specified event_format must be set.
-             */
-            filter?: components['schemas']['TransactionFilter']
-            /**
-             * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-parameters-34 = true`; it will be removed in the Canton version 3.7.0.
-             *     If enabled, values served over the API will contain more information than strictly necessary to interpret the data.
-             *     In particular, setting the verbose flag to true triggers the ledger to include labels for record fields.
-             *     Optional, if specified event_format must be unset.
-             */
-            verbose?: boolean
             /**
              * Format: int64
              * @description The offset at which the snapshot of the active contracts will be computed.
@@ -2930,17 +2725,14 @@ export interface components {
              *
              *     Required
              */
-            activeAtOffset: number
+            activeAtOffset: number;
             /**
              * @description Format of the contract_entries in the result. In case of CreatedEvent the presentation will be of
              *     TRANSACTION_SHAPE_ACS_DELTA.
-             *     Optional for backwards compatibility, defaults to an EventFormat where:
              *
-             *     - filters_by_party is the filter.filters_by_party from this request
-             *     - filters_for_any_party is the filter.filters_for_any_party from this request
-             *     - verbose is the verbose field from this request
+             *     Required
              */
-            eventFormat?: components['schemas']['EventFormat']
+            eventFormat: components["schemas"]["EventFormat"];
             /**
              * @description Opaque representation of a continuation token defining a position in the active contracts snapshot.
              *     The prefix of the active contracts snapshot will be omitted up to and including the element from which
@@ -2949,15 +2741,24 @@ export interface components {
              *
              *     - subsequent request must be executed on the same participant with the same version of canton,
              *     - subsequent request must have the same active_at_offset,
-             *     - subsequent request must have the same event_format
+             *     - subsequent request must have the same event_format,
+             *     - subsequent request must have the same include_incomplete_reassignments
              *     - and the participant must not have been pruned after the active_at_offset.
              *
              *     If not specified, the whole active contracts snapshot will be returned.
              *
              *     Optional: can be empty
              */
-            streamContinuationToken?: string
-        }
+            streamContinuationToken?: string;
+            /**
+             * @description If this flag is true, the IncompleteAssigned and IncompleteUnassigned events will be included in the stream
+             *     based on the specified event_format.
+             *     If this flag is set to false, Incomplete Reassignments will be omitted.
+             *
+             *     Optional
+             */
+            includeIncompleteReassignments?: boolean;
+        };
         /** GetCompletionByHashRequest */
         GetCompletionByHashRequest: {
             /**
@@ -2965,8 +2766,8 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            transactionHash: string
-        }
+            transactionHash: string;
+        };
         /** GetCompletionByHashResponse */
         GetCompletionByHashResponse: {
             /**
@@ -2975,7 +2776,7 @@ export interface components {
              *
              *     Optional
              */
-            acceptedCompletion?: components['schemas']['Completion1']
+            acceptedCompletion?: components["schemas"]["Completion1"];
             /**
              * @description Recent rejected completions for the given transaction hash, in descending offset order.
              *     The server may truncate this list if there are too many entries.
@@ -2984,8 +2785,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            lastRejectedCompletions?: components['schemas']['Completion1'][]
-        }
+            lastRejectedCompletions?: components["schemas"]["Completion1"][];
+        };
         /** GetCompletionsRequest */
         GetCompletionsRequest: {
             /**
@@ -2996,7 +2797,7 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            parties?: string[]
+            parties?: string[];
             /**
              * Format: int64
              * @description This optional field indicates the minimum offset for completions. This can be used to resume an earlier completion stream.
@@ -3007,13 +2808,13 @@ export interface components {
              *
              *     Optional
              */
-            beginExclusive?: number
-        }
+            beginExclusive?: number;
+        };
         /** GetConnectedSynchronizersResponse */
         GetConnectedSynchronizersResponse: {
             /** @description Optional: can be empty */
-            connectedSynchronizers?: components['schemas']['ConnectedSynchronizer'][]
-        }
+            connectedSynchronizers?: components["schemas"]["ConnectedSynchronizer"][];
+        };
         /** GetContractRequest */
         GetContractRequest: {
             /**
@@ -3022,7 +2823,7 @@ export interface components {
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description The list of querying parties
              *     The stakeholders of the referenced contract must have an intersection with any of these parties
@@ -3031,8 +2832,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            queryingParties?: string[]
-        }
+            queryingParties?: string[];
+        };
         /** GetContractResponse */
         GetContractResponse: {
             /**
@@ -3049,8 +2850,8 @@ export interface components {
              *
              *     Required
              */
-            createdEvent: components['schemas']['CreatedEvent']
-        }
+            createdEvent: components["schemas"]["CreatedEvent"];
+        };
         /** GetEventsByContractIdRequest */
         GetEventsByContractIdRequest: {
             /**
@@ -3058,19 +2859,19 @@ export interface components {
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description Format of the events in the result, the presentation will be of TRANSACTION_SHAPE_ACS_DELTA.
              *
              *     Required
              */
-            eventFormat: components['schemas']['EventFormat']
-        }
+            eventFormat: components["schemas"]["EventFormat"];
+        };
         /** GetIdentityProviderConfigResponse */
         GetIdentityProviderConfigResponse: {
             /** @description Required */
-            identityProviderConfig: components['schemas']['IdentityProviderConfig']
-        }
+            identityProviderConfig: components["schemas"]["IdentityProviderConfig"];
+        };
         /** GetLatestPrunedOffsetsResponse */
         GetLatestPrunedOffsetsResponse: {
             /**
@@ -3082,7 +2883,7 @@ export interface components {
              *
              *     Optional
              */
-            participantPrunedUpToInclusive?: number
+            participantPrunedUpToInclusive?: number;
             /**
              * Format: int64
              * @description It will always be a non-negative integer.
@@ -3094,8 +2895,8 @@ export interface components {
              *
              *     Optional
              */
-            allDivulgedContractsPrunedUpToInclusive?: number
-        }
+            allDivulgedContractsPrunedUpToInclusive?: number;
+        };
         /** GetLedgerApiVersionResponse */
         GetLedgerApiVersionResponse: {
             /**
@@ -3103,7 +2904,7 @@ export interface components {
              *
              *     Required
              */
-            version: string
+            version: string;
             /**
              * @description The features supported by this Ledger API endpoint.
              *
@@ -3117,8 +2918,8 @@ export interface components {
              *
              *     Required
              */
-            features: components['schemas']['FeaturesDescriptor']
-        }
+            features: components["schemas"]["FeaturesDescriptor"];
+        };
         /** GetLedgerEndResponse */
         GetLedgerEndResponse: {
             /**
@@ -3129,15 +2930,15 @@ export interface components {
              *
              *     Optional
              */
-            offset?: number
+            offset?: number;
             /**
              * @description Final record times observed by this participant for each of the requested synchronizers.
              *     If there is no connection to a sequencer, corresponding record time can be arbitrarily far back in the past.
              *
              *     Optional: can be empty
              */
-            synchronizerTimes?: components['schemas']['SynchronizerTime'][]
-        }
+            synchronizerTimes?: components["schemas"]["SynchronizerTime"][];
+        };
         /** GetPackageStatusResponse */
         GetPackageStatusResponse: {
             /**
@@ -3146,10 +2947,8 @@ export interface components {
              *     Required
              * @enum {string}
              */
-            packageStatus:
-                | 'PACKAGE_STATUS_UNSPECIFIED'
-                | 'PACKAGE_STATUS_REGISTERED'
-        }
+            packageStatus: "PACKAGE_STATUS_UNSPECIFIED" | "PACKAGE_STATUS_REGISTERED";
+        };
         /** GetParticipantIdResponse */
         GetParticipantIdResponse: {
             /**
@@ -3158,8 +2957,8 @@ export interface components {
              *
              *     Required
              */
-            participantId: string
-        }
+            participantId: string;
+        };
         /** GetPartiesResponse */
         GetPartiesResponse: {
             /**
@@ -3168,17 +2967,8 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            partyDetails: components['schemas']['PartyDetails'][]
-        }
-        /** GetPreferredPackageVersionResponse */
-        GetPreferredPackageVersionResponse: {
-            /**
-             * @description Not populated when no preferred package is found
-             *
-             *     Optional
-             */
-            packagePreference?: components['schemas']['PackagePreference']
-        }
+            partyDetails: components["schemas"]["PartyDetails"][];
+        };
         /** GetPreferredPackagesRequest */
         GetPreferredPackagesRequest: {
             /**
@@ -3190,14 +2980,14 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            packageVettingRequirements: components['schemas']['PackageVettingRequirement'][]
+            packageVettingRequirements: components["schemas"]["PackageVettingRequirement"][];
             /**
              * @description The synchronizer whose vetting state should be used for resolving this query.
              *     If not specified, the vetting states of all synchronizers to which the participant is connected are used.
              *
              *     Optional
              */
-            synchronizerId?: string
+            synchronizerId?: string;
             /**
              * @description The timestamp at which the package vetting validity should be computed
              *     on the latest topology snapshot as seen by the participant.
@@ -3205,8 +2995,8 @@ export interface components {
              *
              *     Optional
              */
-            vettingValidAt?: string
-        }
+            vettingValidAt?: string;
+        };
         /** GetPreferredPackagesResponse */
         GetPreferredPackagesResponse: {
             /**
@@ -3220,76 +3010,15 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            packageReferences: components['schemas']['PackageReference'][]
+            packageReferences: components["schemas"]["PackageReference"][];
             /**
              * @description The synchronizer for which the package preferences are computed.
              *     If the synchronizer_id was specified in the request, then it matches the request synchronizer_id.
              *
              *     Required
              */
-            synchronizerId: string
-        }
-        /**
-         * GetTransactionByIdRequest
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         */
-        GetTransactionByIdRequest: {
-            /**
-             * @description The ID of a particular transaction.
-             *     Must be a valid LedgerString (as described in ``value.proto``).
-             *     Required
-             */
-            updateId: string
-            /**
-             * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-             *     The parties whose events the client expects to see.
-             *     Events that are not visible for the parties in this collection will not be present in the response.
-             *     Each element must be a valid PartyIdString (as described in ``value.proto``).
-             *     Optional for backwards compatibility for GetTransactionById request: if defined transaction_format must be
-             *     unset (falling back to defaults).
-             */
-            requestingParties?: string[]
-            /**
-             * @description Optional for GetTransactionById request for backwards compatibility: defaults to a transaction_format, where:
-             *
-             *     - event_format.filters_by_party will have template-wildcard filters for all the requesting_parties
-             *     - event_format.filters_for_any_party is unset
-             *     - event_format.verbose = true
-             *     - transaction_shape = TRANSACTION_SHAPE_ACS_DELTA
-             */
-            transactionFormat?: components['schemas']['TransactionFormat']
-        }
-        /**
-         * GetTransactionByOffsetRequest
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         */
-        GetTransactionByOffsetRequest: {
-            /**
-             * Format: int64
-             * @description The offset of the transaction being looked up.
-             *     Must be a valid absolute offset (positive integer).
-             *     Required
-             */
-            offset: number
-            /**
-             * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-             *     The parties whose events the client expects to see.
-             *     Events that are not visible for the parties in this collection will not be present in the response.
-             *     Each element must be a valid PartyIdString (as described in ``value.proto``).
-             *     Optional for backwards compatibility for GetTransactionByOffset request: if defined transaction_format must be
-             *     unset (falling back to defaults).
-             */
-            requestingParties?: string[]
-            /**
-             * @description Optional for GetTransactionByOffset request for backwards compatibility: defaults to a TransactionFormat, where:
-             *
-             *     - event_format.filters_by_party will have template-wildcard filters for all the requesting_parties
-             *     - event_format.filters_for_any_party is unset
-             *     - event_format.verbose = true
-             *     - transaction_shape = TRANSACTION_SHAPE_ACS_DELTA
-             */
-            transactionFormat?: components['schemas']['TransactionFormat']
-        }
+            synchronizerId: string;
+        };
         /** GetUpdateByHashRequest */
         GetUpdateByHashRequest: {
             /**
@@ -3297,14 +3026,14 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            transactionHash: string
+            transactionHash: string;
             /**
              * @description The format for the update.
              *
              *     Required
              */
-            updateFormat: components['schemas']['UpdateFormat']
-        }
+            updateFormat: components["schemas"]["UpdateFormat"];
+        };
         /** GetUpdateByIdRequest */
         GetUpdateByIdRequest: {
             /**
@@ -3313,14 +3042,14 @@ export interface components {
              *
              *     Required
              */
-            updateId: string
+            updateId: string;
             /**
              * @description The format for the update.
              *
              *     Required
              */
-            updateFormat: components['schemas']['UpdateFormat']
-        }
+            updateFormat: components["schemas"]["UpdateFormat"];
+        };
         /** GetUpdateByOffsetRequest */
         GetUpdateByOffsetRequest: {
             /**
@@ -3330,14 +3059,14 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * @description The format for the update.
              *
              *     Required
              */
-            updateFormat: components['schemas']['UpdateFormat']
-        }
+            updateFormat: components["schemas"]["UpdateFormat"];
+        };
         /** GetUpdatesPageRequest */
         GetUpdatesPageRequest: {
             /**
@@ -3350,7 +3079,7 @@ export interface components {
              *
              *     Optional
              */
-            beginOffsetExclusive?: number
+            beginOffsetExclusive?: number;
             /**
              * Format: int64
              * @description Inclusive upper bound offset of the requested ledger section.
@@ -3359,7 +3088,7 @@ export interface components {
              *
              *     Optional
              */
-            endOffsetInclusive?: number
+            endOffsetInclusive?: number;
             /**
              * Format: int32
              * @description The result page will contain the first max_page_size Updates of all matching updates.
@@ -3368,15 +3097,15 @@ export interface components {
              *
              *     Optional
              */
-            maxPageSize?: number
+            maxPageSize?: number;
             /** @description Required */
-            updateFormat: components['schemas']['UpdateFormat']
+            updateFormat: components["schemas"]["UpdateFormat"];
             /**
              * @description If set, the page will populate the elements in descending order starting from the end_offset_inclusive.
              *
              *      Optional
              */
-            descendingOrder?: boolean
+            descendingOrder?: boolean;
             /**
              * @description To get the next page of updates, the ``page_token`` should be set to the
              *     ``next_page_token`` of the last ``GetUpdatesPageResponse``.
@@ -3392,8 +3121,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            pageToken?: string
-        }
+            pageToken?: string;
+        };
         /** GetUpdatesRequest */
         GetUpdatesRequest: {
             /**
@@ -3404,7 +3133,7 @@ export interface components {
              *     If the participant has been pruned, this parameter must be greater or equal than the pruning offset.
              *     Required
              */
-            beginExclusive: number
+            beginExclusive: number;
             /**
              * Format: int64
              * @description Inclusive higher bound offset of the requested ledger section.
@@ -3416,42 +3145,20 @@ export interface components {
              *
              *     Optional
              */
-            endInclusive?: number
+            endInclusive?: number;
             /**
-             * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-parameters-34 = true`; it will be removed in the Canton version 3.7.0.
-             *     Requesting parties with template filters.
-             *     Template filters must be empty for GetUpdateTrees requests.
-             *     Optional for backwards compatibility, if defined update_format must be unset
-             */
-            filter?: components['schemas']['TransactionFilter']
-            /**
-             * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-parameters-34 = true`; it will be removed in the Canton version 3.7.0.
-             *     If enabled, values served over the API will contain more information than strictly necessary to interpret the data.
-             *     In particular, setting the verbose flag to true triggers the ledger to include labels, record and variant type ids
-             *     for record fields.
-             *     Optional for backwards compatibility, if defined update_format must be unset
-             */
-            verbose?: boolean
-            /**
-             * @description Must be unset for GetUpdateTrees request.
-             *     Optional for backwards compatibility for GetUpdates request: defaults to an UpdateFormat where:
+             * @description The update format for this request
              *
-             *     - include_transactions.event_format.filters_by_party = the filter.filters_by_party on this request
-             *     - include_transactions.event_format.filters_for_any_party = the filter.filters_for_any_party on this request
-             *     - include_transactions.event_format.verbose = the same flag specified on this request
-             *     - include_transactions.transaction_shape = TRANSACTION_SHAPE_ACS_DELTA
-             *     - include_reassignments.filter = the same filter specified on this request
-             *     - include_reassignments.verbose = the same flag specified on this request
-             *     - include_topology_events.include_participant_authorization_events.parties = all the parties specified in filter
+             *     Required
              */
-            updateFormat?: components['schemas']['UpdateFormat']
+            updateFormat: components["schemas"]["UpdateFormat"];
             /**
              * @description If set, the stream will populate the elements in descending order.
              *
              *     Optional
              */
-            descendingOrder?: boolean
-        }
+            descendingOrder?: boolean;
+        };
         /** GetUserResponse */
         GetUserResponse: {
             /**
@@ -3459,8 +3166,8 @@ export interface components {
              *
              *     Required
              */
-            user: components['schemas']['User']
-        }
+            user: components["schemas"]["User"];
+        };
         /**
          * GrantUserRightsRequest
          * @description Add the rights to the set of rights granted to the user.
@@ -3473,21 +3180,21 @@ export interface components {
              *
              *     Required
              */
-            userId: string
+            userId: string;
             /**
              * @description The rights to grant.
              *
              *     Optional: can be empty
              */
-            rights?: components['schemas']['Right'][]
+            rights?: components["schemas"]["Right"][];
             /**
              * @description The id of the ``Identity Provider``
              *     If not set, assume the user is managed by the default identity provider.
              *
              *     Optional
              */
-            identityProviderId?: string
-        }
+            identityProviderId?: string;
+        };
         /** GrantUserRightsResponse */
         GrantUserRightsResponse: {
             /**
@@ -3495,25 +3202,21 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            newlyGrantedRights?: components['schemas']['Right'][]
-        }
+            newlyGrantedRights?: components["schemas"]["Right"][];
+        };
         /**
          * IdentifierFilter
          * @description Required
          */
-        IdentifierFilter:
-            | {
-                  Empty: components['schemas']['Empty1']
-              }
-            | {
-                  InterfaceFilter: components['schemas']['InterfaceFilter']
-              }
-            | {
-                  TemplateFilter: components['schemas']['TemplateFilter']
-              }
-            | {
-                  WildcardFilter: components['schemas']['WildcardFilter']
-              }
+        IdentifierFilter: {
+            Empty: components["schemas"]["Empty1"];
+        } | {
+            InterfaceFilter: components["schemas"]["InterfaceFilter"];
+        } | {
+            TemplateFilter: components["schemas"]["TemplateFilter"];
+        } | {
+            WildcardFilter: components["schemas"]["WildcardFilter"];
+        };
         /**
          * IdentityProviderAdmin
          * @description The right to administer the identity provider that the user is assigned to.
@@ -3521,15 +3224,15 @@ export interface components {
          *     to the same identity provider.
          */
         IdentityProviderAdmin: {
-            value: components['schemas']['IdentityProviderAdmin1']
-        }
+            value: components["schemas"]["IdentityProviderAdmin1"];
+        };
         /**
          * IdentityProviderAdmin
          * @description The right to administer the identity provider that the user is assigned to.
          *     It means, being able to manage users and parties that are also assigned
          *     to the same identity provider.
          */
-        IdentityProviderAdmin1: Record<string, never>
+        IdentityProviderAdmin1: Record<string, never>;
         /** IdentityProviderConfig */
         IdentityProviderConfig: {
             /**
@@ -3538,7 +3241,7 @@ export interface components {
              *
              *     Required
              */
-            identityProviderId: string
+            identityProviderId: string;
             /**
              * @description When set, the callers using JWT tokens issued by this identity provider are denied all access
              *     to the Ledger API.
@@ -3546,7 +3249,7 @@ export interface components {
              *
              *     Optional
              */
-            isDeactivated?: boolean
+            isDeactivated?: boolean;
             /**
              * @description Specifies the issuer of the JWT token.
              *     The issuer value is a case sensitive URL using the https scheme that contains scheme, host,
@@ -3557,7 +3260,7 @@ export interface components {
              *
              *     Required
              */
-            issuer: string
+            issuer: string;
             /**
              * @description The JWKS (JSON Web Key Set) URL.
              *     The Ledger API uses JWKs (JSON Web Keys) from the provided URL to verify that the JWT has been
@@ -3566,7 +3269,7 @@ export interface components {
              *
              *     Required
              */
-            jwksUrl: string
+            jwksUrl: string;
             /**
              * @description Specifies the audience of the JWT token.
              *     When set, the callers using JWT tokens issued by this identity provider are allowed to get an access
@@ -3575,15 +3278,15 @@ export interface components {
              *
              *     Optional
              */
-            audience?: string
-        }
+            audience?: string;
+        };
         /**
          * InterfaceFilter
          * @description This filter matches contracts that implement a specific interface.
          */
         InterfaceFilter: {
-            value: components['schemas']['InterfaceFilter1']
-        }
+            value: components["schemas"]["InterfaceFilter1"];
+        };
         /**
          * InterfaceFilter
          * @description This filter matches contracts that implement a specific interface.
@@ -3593,19 +3296,19 @@ export interface components {
              * @description The interface that a matching contract must implement.
              *     The ``interface_id`` needs to be valid: corresponding interface should be defined in
              *     one of the available packages at the time of the query.
-             *     Both package-name and package-id reference formats for the identifier are supported.
-             *     Note: The package-id reference identifier format is deprecated. We plan to end support for this format in version 3.4.
+             *     Only package-name reference format for the identifier is supported.
+             *     Note: The package-id reference identifier format was removed in version 3.5.
              *
              *     Required
              */
-            interfaceId: string
+            interfaceId: string;
             /**
              * @description Whether to include the interface view on the contract in the returned ``CreatedEvent``.
              *     Use this to access contract data in a uniform manner in your API client.
              *
              *     Optional
              */
-            includeInterfaceView?: boolean
+            includeInterfaceView?: boolean;
             /**
              * @description Whether to include a ``created_event_blob`` in the returned ``CreatedEvent``.
              *     Use this to access the contract create event payload in your API client
@@ -3613,8 +3316,8 @@ export interface components {
              *
              *     Optional
              */
-            includeCreatedEventBlob?: boolean
-        }
+            includeCreatedEventBlob?: boolean;
+        };
         /** JsActiveContract */
         JsActiveContract: {
             /**
@@ -3626,13 +3329,13 @@ export interface components {
              *
              *     Required
              */
-            createdEvent: components['schemas']['CreatedEvent']
+            createdEvent: components["schemas"]["CreatedEvent"];
             /**
              * @description A valid synchronizer id
              *
              *     Required
              */
-            synchronizerId: string
+            synchronizerId: string;
             /**
              * Format: int64
              * @description The reassignment counter of this event.
@@ -3644,19 +3347,19 @@ export interface components {
              *
              *     Required
              */
-            reassignmentCounter: number
-        }
+            reassignmentCounter: number;
+        };
         /** JsArchived */
         JsArchived: {
             /** @description Required */
-            archivedEvent: components['schemas']['ArchivedEvent']
+            archivedEvent: components["schemas"]["ArchivedEvent"];
             /**
              * @description The synchronizer which sequenced the archival of the contract
              *
              *     Required
              */
-            synchronizerId: string
-        }
+            synchronizerId: string;
+        };
         /**
          * JsAssignedEvent
          * @description Records that a contract has been assigned, and it can be used on the target synchronizer.
@@ -3668,14 +3371,14 @@ export interface components {
              *
              *     Required
              */
-            source: string
+            source: string;
             /**
              * @description The ID of the target synchronizer.
              *     Must be a valid synchronizer id.
              *
              *     Required
              */
-            target: string
+            target: string;
             /**
              * @description The ID from the unassigned event.
              *     For correlation capabilities.
@@ -3683,7 +3386,7 @@ export interface components {
              *
              *     Required
              */
-            reassignmentId: string
+            reassignmentId: string;
             /**
              * @description Party on whose behalf the assign command was executed.
              *     Empty if the assignment happened offline via the repair service.
@@ -3691,7 +3394,7 @@ export interface components {
              *
              *     Optional
              */
-            submitter?: string
+            submitter?: string;
             /**
              * Format: int64
              * @description The reassignment counter associated with this assignment on the target synchronizer.
@@ -3701,40 +3404,40 @@ export interface components {
              *
              *     Required
              */
-            reassignmentCounter: number
+            reassignmentCounter: number;
             /**
              * @description The offset of this event refers to the offset of the assignment,
              *     while the node_id is the index of within the batch.
              *
              *     Required
              */
-            createdEvent: components['schemas']['CreatedEvent']
-        }
+            createdEvent: components["schemas"]["CreatedEvent"];
+        };
         /** JsAssignmentEvent */
         JsAssignmentEvent: {
-            source: string
-            target: string
-            reassignmentId: string
-            submitter: string
+            source: string;
+            target: string;
+            reassignmentId: string;
+            submitter: string;
             /** Format: int64 */
-            reassignmentCounter: number
-            createdEvent: components['schemas']['CreatedEvent']
-        }
+            reassignmentCounter: number;
+            createdEvent: components["schemas"]["CreatedEvent"];
+        };
         /** JsCantonError */
         JsCantonError: {
-            code: string
-            cause: string
-            correlationId?: string
-            traceId?: string
-            context: components['schemas']['Map_String']
-            resources?: components['schemas']['Tuple2_String_String'][]
+            code: string;
+            cause: string;
+            correlationId?: string;
+            traceId?: string;
+            context: components["schemas"]["Map_String"];
+            resources?: components["schemas"]["Tuple2_String_String"][];
             /** Format: int32 */
-            errorCategory: number
+            errorCategory: number;
             /** Format: int32 */
-            grpcCodeValue?: number
-            retryInfo?: string
-            definiteAnswer?: boolean
-        }
+            grpcCodeValue?: number;
+            retryInfo?: string;
+            definiteAnswer?: boolean;
+        };
         /**
          * JsCommands
          * @description A composite command that groups multiple commands together.
@@ -3745,7 +3448,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            commands: components['schemas']['Command'][]
+            commands: components["schemas"]["Command"][];
             /**
              * @description Uniquely identifies the command.
              *     The triple (user_id, act_as, command_id) constitutes the change ID for the intended ledger change,
@@ -3755,7 +3458,7 @@ export interface components {
              *
              *     Required
              */
-            commandId: string
+            commandId: string;
             /**
              * @description Set of parties on whose behalf the command should be executed.
              *     If ledger API authorization is enabled, then the authorization metadata must authorize the sender of the request
@@ -3764,7 +3467,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            actAs: string[]
+            actAs: string[];
             /**
              * @description Uniquely identifies the participant user that issued the command.
              *     Must be a valid UserIdString (as described in ``value.proto``).
@@ -3773,7 +3476,7 @@ export interface components {
              *
              *     Optional
              */
-            userId?: string
+            userId?: string;
             /**
              * @description Set of parties on whose behalf (in addition to all parties listed in ``act_as``) contracts can be retrieved.
              *     This affects Daml operations such as ``fetch``, ``fetchByKey``, ``lookupByKey``, ``exercise``, and ``exerciseByKey``.
@@ -3786,15 +3489,15 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            readAs?: string[]
+            readAs?: string[];
             /**
              * @description Identifier of the on-ledger workflow that this command is a part of.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Optional
              */
-            workflowId?: string
-            deduplicationPeriod?: components['schemas']['DeduplicationPeriod']
+            workflowId?: string;
+            deduplicationPeriod?: components["schemas"]["DeduplicationPeriod"];
             /**
              * @description Lower bound for the ledger time assigned to the resulting transaction.
              *     Note: The ledger time of a transaction is assigned as part of command interpretation.
@@ -3804,14 +3507,14 @@ export interface components {
              *
              *     Optional
              */
-            minLedgerTimeAbs?: string
+            minLedgerTimeAbs?: string;
             /**
              * @description Same as min_ledger_time_abs, but specified as a duration, starting from the time the command is received by the server.
              *     Must not be set at the same time as min_ledger_time_abs.
              *
              *     Optional
              */
-            minLedgerTimeRel?: components['schemas']['Duration']
+            minLedgerTimeRel?: components["schemas"]["Duration"];
             /**
              * @description A unique identifier to distinguish completions for different submissions with the same change ID.
              *     Typically a random UUID. Applications are expected to use a different UUID for each retry of a submission
@@ -3822,26 +3525,26 @@ export interface components {
              *
              *     Optional
              */
-            submissionId?: string
+            submissionId?: string;
             /**
              * @description Additional contracts used to resolve contract & contract key lookups.
              *
              *     Optional: can be empty
              */
-            disclosedContracts?: components['schemas']['DisclosedContract'][]
+            disclosedContracts?: components["schemas"]["DisclosedContract"][];
             /**
              * @description Must be a valid synchronizer id
              *
              *     Optional
              */
-            synchronizerId?: string
+            synchronizerId?: string;
             /**
              * @description The package-id selection preference of the client for resolving
              *     package names and interface instances in command submission and interpretation
              *
              *     Optional: can be empty
              */
-            packageIdSelectionPreference?: string[]
+            packageIdSelectionPreference?: string[];
             /**
              * @description Fetches the contract keys into the caches to speed up the command processing.
              *     Each entry specifies a key and a limit on how many contracts to prefetch for that key.
@@ -3851,7 +3554,7 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            prefetchContractKeys?: components['schemas']['PrefetchContractKey'][]
+            prefetchContractKeys?: components["schemas"]["PrefetchContractKey"][];
             /**
              * Format: int32
              * @description The maximum number of passes for the Topology-Aware Package Selection (TAPS).
@@ -3861,8 +3564,8 @@ export interface components {
              *
              *     Optional
              */
-            tapsMaxPasses?: number
-        }
+            tapsMaxPasses?: number;
+        };
         /**
          * JsContractEntry
          * @description For a contract there could be multiple contract_entry-s in the entire snapshot. These together define
@@ -3873,19 +3576,15 @@ export interface components {
          *
          *     Required
          */
-        JsContractEntry:
-            | {
-                  JsActiveContract: components['schemas']['JsActiveContract']
-              }
-            | {
-                  JsEmpty: components['schemas']['JsEmpty']
-              }
-            | {
-                  JsIncompleteAssigned: components['schemas']['JsIncompleteAssigned']
-              }
-            | {
-                  JsIncompleteUnassigned: components['schemas']['JsIncompleteUnassigned']
-              }
+        JsContractEntry: {
+            JsActiveContract: components["schemas"]["JsActiveContract"];
+        } | {
+            JsEmpty: components["schemas"]["JsEmpty"];
+        } | {
+            JsIncompleteAssigned: components["schemas"]["JsIncompleteAssigned"];
+        } | {
+            JsIncompleteUnassigned: components["schemas"]["JsIncompleteUnassigned"];
+        };
         /** JsCreated */
         JsCreated: {
             /**
@@ -3895,16 +3594,16 @@ export interface components {
              *
              *     Required
              */
-            createdEvent: components['schemas']['CreatedEvent']
+            createdEvent: components["schemas"]["CreatedEvent"];
             /**
              * @description The synchronizer which sequenced the creation of the contract
              *
              *     Required
              */
-            synchronizerId: string
-        }
+            synchronizerId: string;
+        };
         /** JsEmpty */
-        JsEmpty: Record<string, never>
+        JsEmpty: Record<string, never>;
         /** JsExecuteSubmissionAndWaitForTransactionRequest */
         JsExecuteSubmissionAndWaitForTransactionRequest: {
             /**
@@ -3914,7 +3613,7 @@ export interface components {
              *
              *     Required
              */
-            preparedTransaction: string
+            preparedTransaction: string;
             /**
              * @description The party(ies) signatures that authorize the prepared submission to be executed by this node.
              *     Each party can provide one or more signatures..
@@ -3923,8 +3622,8 @@ export interface components {
              *
              *     Required
              */
-            partySignatures: components['schemas']['PartySignatures']
-            deduplicationPeriod?: components['schemas']['DeduplicationPeriod2']
+            partySignatures: components["schemas"]["PartySignatures"];
+            deduplicationPeriod?: components["schemas"]["DeduplicationPeriod2"];
             /**
              * @description A unique identifier to distinguish completions for different submissions with the same change ID.
              *     Typically a random UUID. Applications are expected to use a different UUID for each retry of a submission
@@ -3933,13 +3632,13 @@ export interface components {
              *
              *     Required
              */
-            submissionId: string
+            submissionId: string;
             /**
              * @description See [PrepareSubmissionRequest.user_id]
              *
              *     Optional
              */
-            userId?: string
+            userId?: string;
             /**
              * @description The hashing scheme version used when building the hash.
              *     HASHING_SCHEME_VERSION_V4 requires a synchronizer running protocol version 36 or later and is
@@ -3948,18 +3647,14 @@ export interface components {
              *     Required
              * @enum {string}
              */
-            hashingSchemeVersion:
-                | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
-                | 'HASHING_SCHEME_VERSION_V2'
-                | 'HASHING_SCHEME_VERSION_V3'
-                | 'HASHING_SCHEME_VERSION_V4'
+            hashingSchemeVersion: "HASHING_SCHEME_VERSION_UNSPECIFIED" | "HASHING_SCHEME_VERSION_V2" | "HASHING_SCHEME_VERSION_V3" | "HASHING_SCHEME_VERSION_V4";
             /**
              * @description If set will influence the chosen ledger effective time but will not result in a submission delay so any override
              *     should be scheduled to executed within the window allowed by synchronizer.
              *
              *     Optional
              */
-            minLedgerTime?: components['schemas']['MinLedgerTime']
+            minLedgerTime?: components["schemas"]["MinLedgerTime"];
             /**
              * @description If no ``transaction_format`` is provided, a default will be used where ``transaction_shape`` is set to
              *     TRANSACTION_SHAPE_ACS_DELTA, ``event_format`` is defined with ``filters_by_party`` containing wildcard-template
@@ -3969,8 +3664,8 @@ export interface components {
              *
              *     Optional
              */
-            transactionFormat?: components['schemas']['TransactionFormat']
-        }
+            transactionFormat?: components["schemas"]["TransactionFormat"];
+        };
         /** JsExecuteSubmissionAndWaitForTransactionResponse */
         JsExecuteSubmissionAndWaitForTransactionResponse: {
             /**
@@ -3979,8 +3674,8 @@ export interface components {
              *
              *     Required
              */
-            transaction: components['schemas']['JsTransaction']
-        }
+            transaction: components["schemas"]["JsTransaction"];
+        };
         /** JsExecuteSubmissionAndWaitRequest */
         JsExecuteSubmissionAndWaitRequest: {
             /**
@@ -3990,7 +3685,7 @@ export interface components {
              *
              *     Required
              */
-            preparedTransaction: string
+            preparedTransaction: string;
             /**
              * @description The party(ies) signatures that authorize the prepared submission to be executed by this node.
              *     Each party can provide one or more signatures..
@@ -3999,8 +3694,8 @@ export interface components {
              *
              *     Required
              */
-            partySignatures: components['schemas']['PartySignatures']
-            deduplicationPeriod?: components['schemas']['DeduplicationPeriod2']
+            partySignatures: components["schemas"]["PartySignatures"];
+            deduplicationPeriod?: components["schemas"]["DeduplicationPeriod2"];
             /**
              * @description A unique identifier to distinguish completions for different submissions with the same change ID.
              *     Typically a random UUID. Applications are expected to use a different UUID for each retry of a submission
@@ -4009,13 +3704,13 @@ export interface components {
              *
              *     Required
              */
-            submissionId: string
+            submissionId: string;
             /**
              * @description See [PrepareSubmissionRequest.user_id]
              *
              *     Optional
              */
-            userId?: string
+            userId?: string;
             /**
              * @description The hashing scheme version used when building the hash.
              *     HASHING_SCHEME_VERSION_V4 requires a synchronizer running protocol version 36 or later and is
@@ -4024,19 +3719,15 @@ export interface components {
              *     Required
              * @enum {string}
              */
-            hashingSchemeVersion:
-                | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
-                | 'HASHING_SCHEME_VERSION_V2'
-                | 'HASHING_SCHEME_VERSION_V3'
-                | 'HASHING_SCHEME_VERSION_V4'
+            hashingSchemeVersion: "HASHING_SCHEME_VERSION_UNSPECIFIED" | "HASHING_SCHEME_VERSION_V2" | "HASHING_SCHEME_VERSION_V3" | "HASHING_SCHEME_VERSION_V4";
             /**
              * @description If set will influence the chosen ledger effective time but will not result in a submission delay so any override
              *     should be scheduled to executed within the window allowed by synchronizer.
              *
              *     Optional
              */
-            minLedgerTime?: components['schemas']['MinLedgerTime']
-        }
+            minLedgerTime?: components["schemas"]["MinLedgerTime"];
+        };
         /** JsExecuteSubmissionRequest */
         JsExecuteSubmissionRequest: {
             /**
@@ -4046,7 +3737,7 @@ export interface components {
              *
              *     Required
              */
-            preparedTransaction: string
+            preparedTransaction: string;
             /**
              * @description The party(ies) signatures that authorize the prepared submission to be executed by this node.
              *     Each party can provide one or more signatures..
@@ -4055,8 +3746,8 @@ export interface components {
              *
              *     Required
              */
-            partySignatures: components['schemas']['PartySignatures']
-            deduplicationPeriod?: components['schemas']['DeduplicationPeriod2']
+            partySignatures: components["schemas"]["PartySignatures"];
+            deduplicationPeriod?: components["schemas"]["DeduplicationPeriod2"];
             /**
              * @description A unique identifier to distinguish completions for different submissions with the same change ID.
              *     Typically a random UUID. Applications are expected to use a different UUID for each retry of a submission
@@ -4065,13 +3756,13 @@ export interface components {
              *
              *     Required
              */
-            submissionId: string
+            submissionId: string;
             /**
              * @description See [PrepareSubmissionRequest.user_id]
              *
              *     Optional
              */
-            userId?: string
+            userId?: string;
             /**
              * @description The hashing scheme version used when building the hash.
              *     HASHING_SCHEME_VERSION_V4 requires a synchronizer running protocol version 36 or later and is
@@ -4080,19 +3771,15 @@ export interface components {
              *     Required
              * @enum {string}
              */
-            hashingSchemeVersion:
-                | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
-                | 'HASHING_SCHEME_VERSION_V2'
-                | 'HASHING_SCHEME_VERSION_V3'
-                | 'HASHING_SCHEME_VERSION_V4'
+            hashingSchemeVersion: "HASHING_SCHEME_VERSION_UNSPECIFIED" | "HASHING_SCHEME_VERSION_V2" | "HASHING_SCHEME_VERSION_V3" | "HASHING_SCHEME_VERSION_V4";
             /**
              * @description If set will influence the chosen ledger effective time but will not result in a submission delay so any override
              *     should be scheduled to executed within the window allowed by synchronizer.
              *
              *     Optional
              */
-            minLedgerTime?: components['schemas']['MinLedgerTime']
-        }
+            minLedgerTime?: components["schemas"]["MinLedgerTime"];
+        };
         /** JsGetActiveContractsPageResponse */
         JsGetActiveContractsPageResponse: {
             /**
@@ -4100,7 +3787,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            activeContracts: components['schemas']['JsGetActiveContractsResponse'][]
+            activeContracts: components["schemas"]["JsGetActiveContractsResponse"][];
             /**
              * Format: int64
              * @description The active_at_offset which was specified in the request, or the calculated active_at_offset from the actual
@@ -4108,14 +3795,14 @@ export interface components {
              *
              *     Required
              */
-            activeAtOffset: number
+            activeAtOffset: number;
             /**
              * @description If not present this is the last page. If present, this token must be used to get the next page.
              *
              *     Optional: can be empty
              */
-            nextPageToken?: string
-        }
+            nextPageToken?: string;
+        };
         /** JsGetActiveContractsResponse */
         JsGetActiveContractsResponse: {
             /**
@@ -4125,8 +3812,8 @@ export interface components {
              *
              *     Optional
              */
-            workflowId?: string
-            contractEntry?: components['schemas']['JsContractEntry']
+            workflowId?: string;
+            contractEntry?: components["schemas"]["JsContractEntry"];
             /**
              * @description Opaque representation of a continuation token which can be used in the request to bypass the already processed part
              *     of the active contracts snapshot.
@@ -4134,8 +3821,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            streamContinuationToken?: string
-        }
+            streamContinuationToken?: string;
+        };
         /** JsGetEventsByContractIdResponse */
         JsGetEventsByContractIdResponse: {
             /**
@@ -4144,42 +3831,19 @@ export interface components {
              *
              *     Optional
              */
-            created?: components['schemas']['JsCreated']
+            created?: components["schemas"]["JsCreated"];
             /**
              * @description The archive event for the contract with the ``contract_id`` given in the request
              *     provided such an archive event exists and it has not yet been pruned.
              *
              *     Optional
              */
-            archived?: components['schemas']['JsArchived']
-        }
-        /**
-         * JsGetTransactionResponse
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         */
-        JsGetTransactionResponse: {
-            /** @description Required */
-            transaction: components['schemas']['JsTransaction']
-        }
-        /**
-         * JsGetTransactionTreeResponse
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         */
-        JsGetTransactionTreeResponse: {
-            /** @description Required */
-            transaction: components['schemas']['JsTransactionTree']
-        }
+            archived?: components["schemas"]["JsArchived"];
+        };
         /** JsGetUpdateResponse */
         JsGetUpdateResponse: {
-            update?: components['schemas']['Update']
-        }
-        /**
-         * JsGetUpdateTreesResponse
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         */
-        JsGetUpdateTreesResponse: {
-            update?: components['schemas']['Update1']
-        }
+            update?: components["schemas"]["Update"];
+        };
         /** JsGetUpdatesPageResponse */
         JsGetUpdatesPageResponse: {
             /**
@@ -4188,21 +3852,21 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            updates?: components['schemas']['JsGetUpdateResponse'][]
+            updates?: components["schemas"]["JsGetUpdateResponse"][];
             /**
              * Format: int64
              * @description Represents the lower bound of this page.
              *
              *     Required
              */
-            lowestPageOffsetExclusive: number
+            lowestPageOffsetExclusive: number;
             /**
              * Format: int64
              * @description Represents the upper bound of the page.
              *
              *     Required
              */
-            highestPageOffsetInclusive: number
+            highestPageOffsetInclusive: number;
             /**
              * @description If the value is not populated, this is the last page.
              *     If the value is populated, this token can be used to get the next page.
@@ -4212,17 +3876,17 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            nextPageToken?: string
-        }
+            nextPageToken?: string;
+        };
         /** JsGetUpdatesResponse */
         JsGetUpdatesResponse: {
-            update?: components['schemas']['Update']
-        }
+            update?: components["schemas"]["Update"];
+        };
         /** JsIncompleteAssigned */
         JsIncompleteAssigned: {
             /** @description Required */
-            assignedEvent: components['schemas']['JsAssignedEvent']
-        }
+            assignedEvent: components["schemas"]["JsAssignedEvent"];
+        };
         /** JsIncompleteUnassigned */
         JsIncompleteUnassigned: {
             /**
@@ -4235,10 +3899,10 @@ export interface components {
              *
              *     Required
              */
-            createdEvent: components['schemas']['CreatedEvent']
+            createdEvent: components["schemas"]["CreatedEvent"];
             /** @description Required */
-            unassignedEvent: components['schemas']['UnassignedEvent']
-        }
+            unassignedEvent: components["schemas"]["UnassignedEvent"];
+        };
         /**
          * JsInterfaceView
          * @description View of a create event matched by an interface filter.
@@ -4250,7 +3914,7 @@ export interface components {
              *
              *     Required
              */
-            interfaceId: string
+            interfaceId: string;
             /**
              * @description Whether the view was successfully computed, and if not,
              *     the reason for the error. The error is reported using the same rules
@@ -4258,7 +3922,7 @@ export interface components {
              *
              *     Required
              */
-            viewStatus: components['schemas']['JsStatus']
+            viewStatus: components["schemas"]["JsStatus"];
             /**
              * @description The value of the interface's view method on this event.
              *     Set if it was requested in the ``InterfaceFilter`` and it could be
@@ -4266,7 +3930,7 @@ export interface components {
              *
              *     Optional
              */
-            viewValue?: unknown
+            viewValue?: unknown;
             /**
              * @description The package defining the interface implementation used to compute the view.
              *     Can be different from the package that was used to create the contract itself,
@@ -4276,8 +3940,8 @@ export interface components {
              *
              *     Optional
              */
-            implementationPackageId?: string
-        }
+            implementationPackageId?: string;
+        };
         /** JsPrepareSubmissionRequest */
         JsPrepareSubmissionRequest: {
             /**
@@ -4288,7 +3952,7 @@ export interface components {
              *
              *     Optional
              */
-            userId?: string
+            userId?: string;
             /**
              * @description Uniquely identifies the command.
              *     The triple (user_id, act_as, command_id) constitutes the change ID for the intended ledger change,
@@ -4298,7 +3962,7 @@ export interface components {
              *
              *     Required
              */
-            commandId: string
+            commandId: string;
             /**
              * @description Individual elements of this atomic command. Must be non-empty.
              *     Limitation: Only single command transaction are currently supported by the API.
@@ -4306,9 +3970,9 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            commands: components['schemas']['Command'][]
+            commands: components["schemas"]["Command"][];
             /** @description Optional */
-            minLedgerTime?: components['schemas']['MinLedgerTime']
+            minLedgerTime?: components["schemas"]["MinLedgerTime"];
             /**
              * @description Set of parties on whose behalf the command should be executed, if submitted.
              *     If ledger API authorization is enabled, then the authorization metadata must authorize the sender of the request
@@ -4319,7 +3983,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            actAs: string[]
+            actAs: string[];
             /**
              * @description Set of parties on whose behalf (in addition to all parties listed in ``act_as``) contracts can be retrieved.
              *     This affects Daml operations such as ``fetch``, ``fetchByKey``, ``lookupByKey``, ``exercise``, and ``exerciseByKey``.
@@ -4331,27 +3995,27 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            readAs?: string[]
+            readAs?: string[];
             /**
              * @description Additional contracts used to resolve contract & contract key lookups.
              *
              *     Optional: can be empty
              */
-            disclosedContracts?: components['schemas']['DisclosedContract'][]
+            disclosedContracts?: components["schemas"]["DisclosedContract"][];
             /**
              * @description Must be a valid synchronizer id
              *     If not set, a suitable synchronizer that this node is connected to will be chosen
              *
              *     Optional
              */
-            synchronizerId?: string
+            synchronizerId?: string;
             /**
              * @description The package-id selection preference of the client for resolving
              *     package names and interface instances in command submission and interpretation
              *
              *     Optional: can be empty
              */
-            packageIdSelectionPreference?: string[]
+            packageIdSelectionPreference?: string[];
             /**
              * @description When true, the response will contain additional details on how the transaction was encoded and hashed
              *     This can be useful for troubleshooting of hash mismatches. Should only be used for debugging.
@@ -4359,7 +4023,7 @@ export interface components {
              *
              *     Optional
              */
-            verboseHashing?: boolean
+            verboseHashing?: boolean;
             /**
              * @description Fetches the contract keys into the caches to speed up the command processing.
              *     Should only contain contract keys that are expected to be resolved during interpretation of the commands.
@@ -4367,7 +4031,7 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            prefetchContractKeys?: components['schemas']['PrefetchContractKey'][]
+            prefetchContractKeys?: components["schemas"]["PrefetchContractKey"][];
             /**
              * @description Maximum timestamp at which the transaction can be recorded onto the ledger via the synchronizer specified in the `PrepareSubmissionResponse`.
              *     If submitted after it will be rejected even if otherwise valid, in which case it needs to be prepared and signed again
@@ -4379,7 +4043,7 @@ export interface components {
              *
              *     Optional
              */
-            maxRecordTime?: string
+            maxRecordTime?: string;
             /**
              * @description Hints to improve the accuracy of traffic cost estimation.
              *     The estimation logic assumes that this node will be used for the execution of the transaction
@@ -4392,7 +4056,7 @@ export interface components {
              *
              *     Optional
              */
-            estimateTrafficCost?: components['schemas']['CostEstimationHints']
+            estimateTrafficCost?: components["schemas"]["CostEstimationHints"];
             /**
              * Format: int32
              * @description The maximum number of passes for the Topology-Aware Package Selection (TAPS).
@@ -4402,7 +4066,7 @@ export interface components {
              *
              *     Optional
              */
-            tapsMaxPasses?: number
+            tapsMaxPasses?: number;
             /**
              * @description The hashing scheme version to be used when building the hash.
              *     Defaults to HASHING_SCHEME_VERSION_V2.
@@ -4412,12 +4076,8 @@ export interface components {
              *     Optional
              * @enum {string}
              */
-            hashingSchemeVersion?:
-                | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
-                | 'HASHING_SCHEME_VERSION_V2'
-                | 'HASHING_SCHEME_VERSION_V3'
-                | 'HASHING_SCHEME_VERSION_V4'
-        }
+            hashingSchemeVersion?: "HASHING_SCHEME_VERSION_UNSPECIFIED" | "HASHING_SCHEME_VERSION_V2" | "HASHING_SCHEME_VERSION_V3" | "HASHING_SCHEME_VERSION_V4";
+        };
         /**
          * JsPrepareSubmissionResponse
          * @description [docs-entry-end: HashingSchemeVersion]
@@ -4429,7 +4089,7 @@ export interface components {
              *
              *     Required
              */
-            preparedTransaction: string
+            preparedTransaction: string;
             /**
              * @description Hash of the transaction, this is what needs to be signed by the party to authorize the transaction.
              *     Only provided for convenience, clients MUST recompute the hash from the raw transaction if the preparing participant is not trusted.
@@ -4437,7 +4097,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            preparedTransactionHash: string
+            preparedTransactionHash: string;
             /**
              * @description The hashing scheme version used when building the hash.
              *     HASHING_SCHEME_VERSION_V4 is only returned for synchronizers running protocol version 36 or
@@ -4446,11 +4106,7 @@ export interface components {
              *     Required
              * @enum {string}
              */
-            hashingSchemeVersion:
-                | 'HASHING_SCHEME_VERSION_UNSPECIFIED'
-                | 'HASHING_SCHEME_VERSION_V2'
-                | 'HASHING_SCHEME_VERSION_V3'
-                | 'HASHING_SCHEME_VERSION_V4'
+            hashingSchemeVersion: "HASHING_SCHEME_VERSION_UNSPECIFIED" | "HASHING_SCHEME_VERSION_V2" | "HASHING_SCHEME_VERSION_V3" | "HASHING_SCHEME_VERSION_V4";
             /**
              * @description Optional additional details on how the transaction was encoded and hashed. Only set if verbose_hashing = true in the request
              *     Note that there are no guarantees on the stability of the format or content of this field.
@@ -4458,14 +4114,14 @@ export interface components {
              *
              *     Optional
              */
-            hashingDetails?: string
+            hashingDetails?: string;
             /**
              * @description Traffic cost estimation of the prepared transaction
              *
              *     Optional
              */
-            costEstimation?: components['schemas']['CostEstimation']
-        }
+            costEstimation?: components["schemas"]["CostEstimation"];
+        };
         /**
          * JsReassignment
          * @description Complete view of an on-ledger reassignment.
@@ -4477,21 +4133,21 @@ export interface components {
              *
              *     Required
              */
-            updateId: string
+            updateId: string;
             /**
              * @description The ID of the command which resulted in this reassignment. Missing for everyone except the submitting party on the submitting participant.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Optional
              */
-            commandId?: string
+            commandId?: string;
             /**
              * @description The workflow ID used in reassignment command submission. Only set if the ``workflow_id`` for the command was set.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Optional
              */
-            workflowId?: string
+            workflowId?: string;
             /**
              * Format: int64
              * @description The participant's offset. The details of this field are described in ``community/ledger-api/README.md``.
@@ -4499,13 +4155,13 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * @description The collection of reassignment events.
              *
              *     Required: must be non-empty
              */
-            events: components['schemas']['JsReassignmentEvent'][]
+            events: components["schemas"]["JsReassignmentEvent"][];
             /**
              * @description Ledger API trace context
              *
@@ -4519,21 +4175,21 @@ export interface components {
              *
              *     Optional
              */
-            traceContext?: components['schemas']['TraceContext']
+            traceContext?: components["schemas"]["TraceContext"];
             /**
              * @description The time at which the reassignment was recorded. The record time refers to the source/target
              *     synchronizer for an unassign/assign event respectively.
              *
              *     Required
              */
-            recordTime: string
+            recordTime: string;
             /**
              * @description A valid synchronizer id.
              *     Identifies the synchronizer that synchronized this Reassignment.
              *
              *     Required
              */
-            synchronizerId: string
+            synchronizerId: string;
             /**
              * Format: int64
              * @description The traffic cost that this participant node paid for the corresponding (un)assignment request.
@@ -4546,23 +4202,21 @@ export interface components {
              *
              *     Optional
              */
-            paidTrafficCost?: number
-        }
+            paidTrafficCost?: number;
+        };
         /** JsReassignmentEvent */
-        JsReassignmentEvent:
-            | {
-                  JsAssignmentEvent: components['schemas']['JsAssignmentEvent']
-              }
-            | {
-                  JsUnassignedEvent: components['schemas']['JsUnassignedEvent']
-              }
+        JsReassignmentEvent: {
+            JsAssignmentEvent: components["schemas"]["JsAssignmentEvent"];
+        } | {
+            JsUnassignedEvent: components["schemas"]["JsUnassignedEvent"];
+        };
         /** JsStatus */
         JsStatus: {
             /** Format: int32 */
-            code: number
-            message: string
-            details?: components['schemas']['ProtoAny'][]
-        }
+            code: number;
+            message: string;
+            details?: components["schemas"]["ProtoAny"][];
+        };
         /** JsSubmitAndWaitForReassignmentResponse */
         JsSubmitAndWaitForReassignmentResponse: {
             /**
@@ -4571,8 +4225,8 @@ export interface components {
              *
              *     Required
              */
-            reassignment: components['schemas']['JsReassignment']
-        }
+            reassignment: components["schemas"]["JsReassignment"];
+        };
         /**
          * JsSubmitAndWaitForTransactionRequest
          * @description These commands are executed as a single atomic transaction.
@@ -4583,7 +4237,7 @@ export interface components {
              *
              *     Required
              */
-            commands: components['schemas']['JsCommands']
+            commands: components["schemas"]["JsCommands"];
             /**
              * @description If no ``transaction_format`` is provided, a default will be used where ``transaction_shape`` is set to
              *     TRANSACTION_SHAPE_ACS_DELTA, ``event_format`` is defined with ``filters_by_party`` containing wildcard-template
@@ -4591,8 +4245,8 @@ export interface components {
              *
              *     Optional
              */
-            transactionFormat?: components['schemas']['TransactionFormat']
-        }
+            transactionFormat?: components["schemas"]["TransactionFormat"];
+        };
         /** JsSubmitAndWaitForTransactionResponse */
         JsSubmitAndWaitForTransactionResponse: {
             /**
@@ -4601,15 +4255,8 @@ export interface components {
              *
              *     Required
              */
-            transaction: components['schemas']['JsTransaction']
-        }
-        /**
-         * JsSubmitAndWaitForTransactionTreeResponse
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         */
-        JsSubmitAndWaitForTransactionTreeResponse: {
-            transactionTree?: components['schemas']['JsTransactionTree']
-        }
+            transaction: components["schemas"]["JsTransaction"];
+        };
         /** JsTopologyTransaction */
         JsTopologyTransaction: {
             /**
@@ -4618,7 +4265,7 @@ export interface components {
              *
              *     Required
              */
-            updateId: string
+            updateId: string;
             /**
              * Format: int64
              * @description The absolute offset. The details of this field are described in ``community/ledger-api/README.md``.
@@ -4626,14 +4273,14 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * @description A valid synchronizer id.
              *     Identifies the synchronizer that synchronized the topology transaction.
              *
              *     Required
              */
-            synchronizerId: string
+            synchronizerId: string;
             /**
              * @description The time at which the changes in the topology transaction become effective. There is a small delay between a
              *     topology transaction being sequenced and the changes it contains becoming effective. Topology transactions appear
@@ -4641,13 +4288,13 @@ export interface components {
              *
              *     Required
              */
-            recordTime: string
+            recordTime: string;
             /**
              * @description A non-empty list of topology events.
              *
              *     Required: must be non-empty
              */
-            events: components['schemas']['TopologyEvent'][]
+            events: components["schemas"]["TopologyEvent"][];
             /**
              * @description Ledger API trace context
              *
@@ -4661,8 +4308,8 @@ export interface components {
              *
              *     Optional
              */
-            traceContext?: components['schemas']['TraceContext']
-        }
+            traceContext?: components["schemas"]["TraceContext"];
+        };
         /**
          * JsTransaction
          * @description Filtered view of an on-ledger transaction's create and archive events.
@@ -4674,27 +4321,27 @@ export interface components {
              *
              *     Required
              */
-            updateId: string
+            updateId: string;
             /**
              * @description The ID of the command which resulted in this transaction. Missing for everyone except the submitting party.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Optional
              */
-            commandId?: string
+            commandId?: string;
             /**
              * @description The workflow ID used in command submission.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Optional
              */
-            workflowId?: string
+            workflowId?: string;
             /**
              * @description Ledger effective time.
              *
              *     Required
              */
-            effectiveAt: string
+            effectiveAt: string;
             /**
              * @description The collection of events.
              *     Contains:
@@ -4704,7 +4351,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            events: components['schemas']['Event'][]
+            events: components["schemas"]["Event"][];
             /**
              * Format: int64
              * @description The absolute offset. The details of this field are described in ``community/ledger-api/README.md``.
@@ -4712,14 +4359,14 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * @description A valid synchronizer id.
              *     Identifies the synchronizer that synchronized the transaction.
              *
              *     Required
              */
-            synchronizerId: string
+            synchronizerId: string;
             /**
              * @description Ledger API trace context
              *
@@ -4733,14 +4380,14 @@ export interface components {
              *
              *     Optional
              */
-            traceContext?: components['schemas']['TraceContext']
+            traceContext?: components["schemas"]["TraceContext"];
             /**
              * @description The time at which the transaction was recorded. The record time refers to the synchronizer
              *     which synchronized the transaction.
              *
              *     Required
              */
-            recordTime: string
+            recordTime: string;
             /**
              * @description Deprecated: please use ``transaction_hash`` which has the same value.
              *     For transaction externally signed, contains the external transaction hash
@@ -4748,7 +4395,7 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            externalTransactionHash?: string
+            externalTransactionHash?: string;
             /**
              * Format: int64
              * @description The traffic cost that this participant node paid for the confirmation
@@ -4762,7 +4409,7 @@ export interface components {
              *
              *     Optional
              */
-            paidTrafficCost?: number
+            paidTrafficCost?: number;
             /**
              * @description The transaction hash signed by the external party for prepared transactions
              *     that were submitted using `InteractiveSubmissionService.ExecuteSubmission`
@@ -4778,113 +4425,38 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            transactionHash?: string
-        }
-        /**
-         * JsTransactionTree
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         *     Complete view of an on-ledger transaction.
-         */
-        JsTransactionTree: {
-            /**
-             * @description Assigned by the server. Useful for correlating logs.
-             *     Must be a valid LedgerString (as described in ``value.proto``).
-             *     Required
-             */
-            updateId: string
-            /**
-             * @description The ID of the command which resulted in this transaction. Missing for everyone except the submitting party.
-             *     Must be a valid LedgerString (as described in ``value.proto``).
-             *     Optional
-             */
-            commandId?: string
-            /**
-             * @description The workflow ID used in command submission. Only set if the ``workflow_id`` for the command was set.
-             *     Must be a valid LedgerString (as described in ``value.proto``).
-             *     Optional
-             */
-            workflowId?: string
-            /**
-             * @description Ledger effective time.
-             *     Required
-             */
-            effectiveAt: string
-            /**
-             * Format: int64
-             * @description The absolute offset. The details of this field are described in ``community/ledger-api/README.md``.
-             *     Required, it is a valid absolute offset (positive integer).
-             */
-            offset: number
-            /**
-             * @description Changes to the ledger that were caused by this transaction. Nodes of the transaction tree.
-             *     Each key must be a valid node ID (non-negative integer).
-             *     Required
-             */
-            eventsById: components['schemas']['Map_Int_TreeEvent']
-            /**
-             * @description A valid synchronizer id.
-             *     Identifies the synchronizer that synchronized the transaction.
-             *     Required
-             */
-            synchronizerId: string
-            /**
-             * @description Optional; ledger API trace context
-             *
-             *     The trace context transported in this message corresponds to the trace context supplied
-             *     by the client application in a HTTP2 header of the original command submission.
-             *     We typically use a header to transfer this type of information. Here we use message
-             *     body, because it is used in gRPC streams which do not support per message headers.
-             *     This field will be populated with the trace context contained in the original submission.
-             *     If that was not provided, a unique ledger-api-server generated trace context will be used
-             *     instead.
-             */
-            traceContext?: components['schemas']['TraceContext']
-            /**
-             * @description The time at which the transaction was recorded. The record time refers to the synchronizer
-             *     which synchronized the transaction.
-             *     Required
-             */
-            recordTime: string
-        }
+            transactionHash?: string;
+        };
         /**
          * JsUnassignedEvent
          * @description Records that a contract has been unassigned, and it becomes unusable on the source synchronizer
          */
         JsUnassignedEvent: {
-            value: components['schemas']['UnassignedEvent']
-        }
+            value: components["schemas"]["UnassignedEvent"];
+        };
         /**
          * Kind
          * @description Required
          */
-        Kind:
-            | {
-                  CanActAs: components['schemas']['CanActAs']
-              }
-            | {
-                  CanActAsAnyParty: components['schemas']['CanActAsAnyParty']
-              }
-            | {
-                  CanExecuteAs: components['schemas']['CanExecuteAs']
-              }
-            | {
-                  CanExecuteAsAnyParty: components['schemas']['CanExecuteAsAnyParty']
-              }
-            | {
-                  CanReadAs: components['schemas']['CanReadAs']
-              }
-            | {
-                  CanReadAsAnyParty: components['schemas']['CanReadAsAnyParty']
-              }
-            | {
-                  Empty: components['schemas']['Empty8']
-              }
-            | {
-                  IdentityProviderAdmin: components['schemas']['IdentityProviderAdmin']
-              }
-            | {
-                  ParticipantAdmin: components['schemas']['ParticipantAdmin']
-              }
+        Kind: {
+            CanActAs: components["schemas"]["CanActAs"];
+        } | {
+            CanActAsAnyParty: components["schemas"]["CanActAsAnyParty"];
+        } | {
+            CanExecuteAs: components["schemas"]["CanExecuteAs"];
+        } | {
+            CanExecuteAsAnyParty: components["schemas"]["CanExecuteAsAnyParty"];
+        } | {
+            CanReadAs: components["schemas"]["CanReadAs"];
+        } | {
+            CanReadAsAnyParty: components["schemas"]["CanReadAsAnyParty"];
+        } | {
+            Empty: components["schemas"]["Empty8"];
+        } | {
+            IdentityProviderAdmin: components["schemas"]["IdentityProviderAdmin"];
+        } | {
+            ParticipantAdmin: components["schemas"]["ParticipantAdmin"];
+        };
         /** ListIdentityProviderConfigsResponse */
         ListIdentityProviderConfigsResponse: {
             /**
@@ -4892,8 +4464,8 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            identityProviderConfigs: components['schemas']['IdentityProviderConfig'][]
-        }
+            identityProviderConfigs: components["schemas"]["IdentityProviderConfig"][];
+        };
         /** ListKnownPartiesResponse */
         ListKnownPartiesResponse: {
             /**
@@ -4901,15 +4473,15 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            partyDetails: components['schemas']['PartyDetails'][]
+            partyDetails: components["schemas"]["PartyDetails"][];
             /**
              * @description Pagination token to retrieve the next page.
              *     Empty, if there are no further results.
              *
              *     Optional
              */
-            nextPageToken?: string
-        }
+            nextPageToken?: string;
+        };
         /** ListPackagesResponse */
         ListPackagesResponse: {
             /**
@@ -4918,8 +4490,8 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            packageIds: string[]
-        }
+            packageIds: string[];
+        };
         /** ListUserRightsResponse */
         ListUserRightsResponse: {
             /**
@@ -4927,8 +4499,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            rights?: components['schemas']['Right'][]
-        }
+            rights?: components["schemas"]["Right"][];
+        };
         /** ListUsersResponse */
         ListUsersResponse: {
             /**
@@ -4937,15 +4509,15 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            users?: components['schemas']['User'][]
+            users?: components["schemas"]["User"][];
             /**
              * @description Pagination token to retrieve the next page.
              *     Empty, if there are no further results.
              *
              *     Optional
              */
-            nextPageToken?: string
-        }
+            nextPageToken?: string;
+        };
         /** ListVettedPackagesRequest */
         ListVettedPackagesRequest: {
             /**
@@ -4953,13 +4525,13 @@ export interface components {
              *
              *     Optional
              */
-            packageMetadataFilter?: components['schemas']['PackageMetadataFilter']
+            packageMetadataFilter?: components["schemas"]["PackageMetadataFilter"];
             /**
              * @description The topology filter the returned vetted packages set must satisfy.
              *
              *     Optional
              */
-            topologyStateFilter?: components['schemas']['TopologyStateFilter']
+            topologyStateFilter?: components["schemas"]["TopologyStateFilter"];
             /**
              * @description Pagination token to determine the specific page to fetch. Using the token
              *     guarantees that ``VettedPackages`` on a subsequent page are all greater
@@ -4975,7 +4547,7 @@ export interface components {
              *
              *     Optional
              */
-            pageToken?: string
+            pageToken?: string;
             /**
              * Format: int32
              * @description Maximum number of ``VettedPackages`` results to return in a single page.
@@ -4991,8 +4563,8 @@ export interface components {
              *
              *     Optional
              */
-            pageSize?: number
-        }
+            pageSize?: number;
+        };
         /** ListVettedPackagesResponse */
         ListVettedPackagesResponse: {
             /**
@@ -5002,7 +4574,7 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            vettedPackages?: components['schemas']['VettedPackages'][]
+            vettedPackages?: components["schemas"]["VettedPackages"][];
             /**
              * @description Pagination token to retrieve the next page.
              *     Empty string once there are no further results.
@@ -5013,38 +4585,34 @@ export interface components {
              *
              *     Optional
              */
-            nextPageToken?: string
-        }
+            nextPageToken?: string;
+        };
         /** Map_Filters */
         Map_Filters: {
-            [key: string]: components['schemas']['Filters']
-        }
+            [key: string]: components["schemas"]["Filters"];
+        };
         /** Map_Int_Field */
         Map_Int_Field: {
-            [key: string]: components['schemas']['Field']
-        }
-        /** Map_Int_TreeEvent */
-        Map_Int_TreeEvent: {
-            [key: string]: components['schemas']['TreeEvent']
-        }
+            [key: string]: components["schemas"]["Field"];
+        };
         /** Map_String */
         Map_String: {
-            [key: string]: string
-        }
+            [key: string]: string;
+        };
         /** MinLedgerTime */
         MinLedgerTime: {
-            time?: components['schemas']['Time']
-        }
+            time?: components["schemas"]["Time"];
+        };
         /** MinLedgerTimeAbs */
         MinLedgerTimeAbs: {
-            value: string
-        }
+            value: string;
+        };
         /** MinLedgerTimeRel */
         MinLedgerTimeRel: {
-            value: components['schemas']['Duration']
-        }
+            value: components["schemas"]["Duration"];
+        };
         /** NoPrior */
-        NoPrior: Record<string, never>
+        NoPrior: Record<string, never>;
         /**
          * ObjectMeta
          * @description Represents metadata corresponding to a participant resource (e.g. a participant user or participant local information about a party).
@@ -5069,7 +4637,7 @@ export interface components {
              *
              *     Optional
              */
-            resourceVersion?: string
+            resourceVersion?: string;
             /**
              * @description A set of modifiable key-value pairs that can be used to represent arbitrary, client-specific metadata.
              *     Constraints:
@@ -5095,8 +4663,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            annotations?: components['schemas']['Map_String']
-        }
+            annotations?: components["schemas"]["Map_String"];
+        };
         /**
          * OffsetCheckpoint
          * @description OffsetCheckpoints may be used to:
@@ -5105,8 +4673,8 @@ export interface components {
          *     - provide an offset which can be used to restart consumption.
          */
         OffsetCheckpoint: {
-            value: components['schemas']['OffsetCheckpoint1']
-        }
+            value: components["schemas"]["OffsetCheckpoint1"];
+        };
         /**
          * OffsetCheckpoint
          * @description OffsetCheckpoints may be used to:
@@ -5122,14 +4690,14 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * @description The times associated with each synchronizer at this offset.
              *
              *     Optional: can be empty
              */
-            synchronizerTimes?: components['schemas']['SynchronizerTime'][]
-        }
+            synchronizerTimes?: components["schemas"]["SynchronizerTime"][];
+        };
         /**
          * OffsetCheckpoint
          * @description OffsetCheckpoints may be used to:
@@ -5138,18 +4706,8 @@ export interface components {
          *     - provide an offset which can be used to restart consumption.
          */
         OffsetCheckpoint2: {
-            value: components['schemas']['OffsetCheckpoint1']
-        }
-        /**
-         * OffsetCheckpoint
-         * @description OffsetCheckpoints may be used to:
-         *
-         *     - detect time out of commands.
-         *     - provide an offset which can be used to restart consumption.
-         */
-        OffsetCheckpoint3: {
-            value: components['schemas']['OffsetCheckpoint1']
-        }
+            value: components["schemas"]["OffsetCheckpoint1"];
+        };
         /** OffsetCheckpointFeature */
         OffsetCheckpointFeature: {
             /**
@@ -5157,22 +4715,19 @@ export interface components {
              *
              *     Required
              */
-            maxOffsetCheckpointEmissionDelay: components['schemas']['Duration']
-        }
+            maxOffsetCheckpointEmissionDelay: components["schemas"]["Duration"];
+        };
         /**
          * Operation
          * @description Required
          */
-        Operation:
-            | {
-                  Empty: components['schemas']['Empty5']
-              }
-            | {
-                  Unvet: components['schemas']['Unvet']
-              }
-            | {
-                  Vet: components['schemas']['Vet']
-              }
+        Operation: {
+            Empty: components["schemas"]["Empty5"];
+        } | {
+            Unvet: components["schemas"]["Unvet"];
+        } | {
+            Vet: components["schemas"]["Vet"];
+        };
         /** PackageFeature */
         PackageFeature: {
             /**
@@ -5182,8 +4737,8 @@ export interface components {
              *
              *     Required
              */
-            maxVettedPackagesPageSize: number
-        }
+            maxVettedPackagesPageSize: number;
+        };
         /**
          * PackageMetadataFilter
          * @description Filter the VettedPackages by package metadata.
@@ -5201,40 +4756,24 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            packageIds?: string[]
+            packageIds?: string[];
             /**
              * @description If this list is non-empty, any vetted package with a name matching at least
              *     one prefix in this list will match the filter.
              *
              *     Optional: can be empty
              */
-            packageNamePrefixes?: string[]
-        }
-        /** PackagePreference */
-        PackagePreference: {
-            /**
-             * @description The package reference of the preferred package.
-             *
-             *     Required
-             */
-            packageReference: components['schemas']['PackageReference']
-            /**
-             * @description The synchronizer for which the preferred package was computed.
-             *     If the synchronizer_id was specified in the request, then it matches the request synchronizer_id.
-             *
-             *     Required
-             */
-            synchronizerId: string
-        }
+            packageNamePrefixes?: string[];
+        };
         /** PackageReference */
         PackageReference: {
             /** @description Required */
-            packageId: string
+            packageId: string;
             /** @description Required */
-            packageName: string
+            packageName: string;
             /** @description Required */
-            packageVersion: string
-        }
+            packageVersion: string;
+        };
         /**
          * PackageVettingRequirement
          * @description Defines a package-name for which the commonly vetted package with the highest version must be found.
@@ -5245,97 +4784,85 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            parties: string[]
+            parties: string[];
             /**
              * @description The package-name for which the preferred package should be resolved.
              *
              *     Required
              */
-            packageName: string
-        }
+            packageName: string;
+        };
         /**
          * ParticipantAdmin
          * @description The right to administer the participant node.
          */
         ParticipantAdmin: {
-            value: components['schemas']['ParticipantAdmin1']
-        }
+            value: components["schemas"]["ParticipantAdmin1"];
+        };
         /**
          * ParticipantAdmin
          * @description The right to administer the participant node.
          */
-        ParticipantAdmin1: Record<string, never>
+        ParticipantAdmin1: Record<string, never>;
         /** ParticipantAuthorizationAdded */
         ParticipantAuthorizationAdded: {
-            value: components['schemas']['ParticipantAuthorizationAdded1']
-        }
+            value: components["schemas"]["ParticipantAuthorizationAdded1"];
+        };
         /** ParticipantAuthorizationAdded */
         ParticipantAuthorizationAdded1: {
             /** @description Required */
-            partyId: string
+            partyId: string;
             /** @description Required */
-            participantId: string
+            participantId: string;
             /**
              * @description Required
              * @enum {string}
              */
-            participantPermission:
-                | 'PARTICIPANT_PERMISSION_UNSPECIFIED'
-                | 'PARTICIPANT_PERMISSION_SUBMISSION'
-                | 'PARTICIPANT_PERMISSION_CONFIRMATION'
-                | 'PARTICIPANT_PERMISSION_OBSERVATION'
-        }
+            participantPermission: "PARTICIPANT_PERMISSION_UNSPECIFIED" | "PARTICIPANT_PERMISSION_SUBMISSION" | "PARTICIPANT_PERMISSION_CONFIRMATION" | "PARTICIPANT_PERMISSION_OBSERVATION";
+        };
         /** ParticipantAuthorizationChanged */
         ParticipantAuthorizationChanged: {
-            value: components['schemas']['ParticipantAuthorizationChanged1']
-        }
+            value: components["schemas"]["ParticipantAuthorizationChanged1"];
+        };
         /** ParticipantAuthorizationChanged */
         ParticipantAuthorizationChanged1: {
             /** @description Required */
-            partyId: string
+            partyId: string;
             /** @description Required */
-            participantId: string
+            participantId: string;
             /**
              * @description Required
              * @enum {string}
              */
-            participantPermission:
-                | 'PARTICIPANT_PERMISSION_UNSPECIFIED'
-                | 'PARTICIPANT_PERMISSION_SUBMISSION'
-                | 'PARTICIPANT_PERMISSION_CONFIRMATION'
-                | 'PARTICIPANT_PERMISSION_OBSERVATION'
-        }
+            participantPermission: "PARTICIPANT_PERMISSION_UNSPECIFIED" | "PARTICIPANT_PERMISSION_SUBMISSION" | "PARTICIPANT_PERMISSION_CONFIRMATION" | "PARTICIPANT_PERMISSION_OBSERVATION";
+        };
         /** ParticipantAuthorizationOnboarding */
         ParticipantAuthorizationOnboarding: {
-            value: components['schemas']['ParticipantAuthorizationOnboarding1']
-        }
+            value: components["schemas"]["ParticipantAuthorizationOnboarding1"];
+        };
         /** ParticipantAuthorizationOnboarding */
         ParticipantAuthorizationOnboarding1: {
             /** @description Required */
-            partyId: string
+            partyId: string;
             /** @description Required */
-            participantId: string
+            participantId: string;
             /**
              * @description Required
              * @enum {string}
              */
-            participantPermission:
-                | 'PARTICIPANT_PERMISSION_UNSPECIFIED'
-                | 'PARTICIPANT_PERMISSION_SUBMISSION'
-                | 'PARTICIPANT_PERMISSION_CONFIRMATION'
-                | 'PARTICIPANT_PERMISSION_OBSERVATION'
-        }
+            participantPermission: "PARTICIPANT_PERMISSION_UNSPECIFIED" | "PARTICIPANT_PERMISSION_SUBMISSION" | "PARTICIPANT_PERMISSION_CONFIRMATION" | "PARTICIPANT_PERMISSION_OBSERVATION";
+        };
         /** ParticipantAuthorizationRevoked */
         ParticipantAuthorizationRevoked: {
-            value: components['schemas']['ParticipantAuthorizationRevoked1']
-        }
+            value: components["schemas"]["ParticipantAuthorizationRevoked1"];
+        };
         /** ParticipantAuthorizationRevoked */
         ParticipantAuthorizationRevoked1: {
             /** @description Required */
-            partyId: string
+            partyId: string;
             /** @description Required */
-            participantId: string
-        }
+            participantId: string;
+        };
         /**
          * ParticipantAuthorizationTopologyFormat
          * @description A format specifying which participant authorization topology transactions to include and how to render them.
@@ -5347,8 +4874,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            parties?: string[]
-        }
+            parties?: string[];
+        };
         /** PartyDetails */
         PartyDetails: {
             /**
@@ -5357,20 +4884,20 @@ export interface components {
              *
              *     Required
              */
-            party: string
+            party: string;
             /**
              * @description true if party is hosted by the participant and the party shares the same identity provider as the user issuing the request.
              *
              *     Optional
              */
-            isLocal?: boolean
+            isLocal?: boolean;
             /**
              * @description Participant-local metadata of this party.
              *     Modifiable
              *
              *     Optional
              */
-            localMetadata?: components['schemas']['ObjectMeta']
+            localMetadata?: components["schemas"]["ObjectMeta"];
             /**
              * @description The id of the ``Identity Provider``
              *     Optional, if not set, there could be 3 options:
@@ -5381,8 +4908,8 @@ export interface components {
              *
              *     Optional
              */
-            identityProviderId?: string
-        }
+            identityProviderId?: string;
+        };
         /** PartyManagementFeature */
         PartyManagementFeature: {
             /**
@@ -5391,8 +4918,8 @@ export interface components {
              *
              *     Required
              */
-            maxPartiesPageSize: number
-        }
+            maxPartiesPageSize: number;
+        };
         /**
          * PartySignatures
          * @description Additional signatures provided by the submitting parties
@@ -5403,8 +4930,8 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            signatures: components['schemas']['SinglePartySignatures'][]
-        }
+            signatures: components["schemas"]["SinglePartySignatures"][];
+        };
         /**
          * PrefetchContractKey
          * @description Preload contracts
@@ -5417,13 +4944,13 @@ export interface components {
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The key of the contract the client wants to prefetch.
              *
              *     Required
              */
-            contractKey: unknown
+            contractKey: unknown;
             /**
              * Format: int32
              * @description The number of contracts to prefetch for this key, if available.
@@ -5434,28 +4961,28 @@ export interface components {
              *
              *     Optional
              */
-            limit?: number
-        }
+            limit?: number;
+        };
         /** Prior */
         Prior: {
             /** Format: int32 */
-            value: number
-        }
+            value: number;
+        };
         /**
          * PriorTopologySerial
          * @description The serial of last ``VettedPackages`` topology transaction on a given
          *     participant and synchronizer.
          */
         PriorTopologySerial: {
-            serial?: components['schemas']['Serial']
-        }
+            serial?: components["schemas"]["Serial"];
+        };
         /** ProtoAny */
         ProtoAny: {
-            typeUrl: string
-            value: string
-            unknownFields: components['schemas']['UnknownFieldSet']
-            valueDecoded?: string
-        }
+            typeUrl: string;
+            value: string;
+            unknownFields: components["schemas"]["UnknownFieldSet"];
+            valueDecoded?: string;
+        };
         /** PruneEventsRequest */
         PruneEventsRequest: {
             /**
@@ -5464,8 +4991,8 @@ export interface components {
              *
              *     Required
              */
-            beforeOrAt: string
-        }
+            beforeOrAt: string;
+        };
         /** PruneEventsResponse */
         PruneEventsResponse: {
             /**
@@ -5474,26 +5001,46 @@ export interface components {
              *
              *     Required
              */
-            prunedEventCount: number
-        }
+            prunedEventCount: number;
+        };
+        /** PruneRequest */
+        PruneRequest: {
+            /**
+             * @description The timestamp before which events and submission correlations should be pruned.
+             *     Events and submission correlations with a timestamp less than or equal to this value will be pruned.
+             *
+             *     Required
+             */
+            beforeOrAt: string;
+        };
+        /** PruneResponse */
+        PruneResponse: {
+            /**
+             * Format: int32
+             * @description The number of events that were pruned.
+             *
+             *     Required
+             */
+            prunedEventCount: number;
+            /**
+             * Format: int32
+             * @description The number of submission correlations that were pruned.
+             *
+             *     Required
+             */
+            prunedCorrelationCount: number;
+        };
         /**
          * Reassignment
          * @description Complete view of an on-ledger reassignment.
          */
         Reassignment: {
-            value: components['schemas']['JsReassignment']
-        }
-        /**
-         * Reassignment
-         * @description Complete view of an on-ledger reassignment.
-         */
-        Reassignment1: {
-            value: components['schemas']['JsReassignment']
-        }
+            value: components["schemas"]["JsReassignment"];
+        };
         /** ReassignmentCommand */
         ReassignmentCommand: {
-            command?: components['schemas']['Command1']
-        }
+            command?: components["schemas"]["Command1"];
+        };
         /** ReassignmentCommands */
         ReassignmentCommands: {
             /**
@@ -5502,7 +5049,7 @@ export interface components {
              *
              *     Optional
              */
-            workflowId?: string
+            workflowId?: string;
             /**
              * @description Uniquely identifies the participant user that issued the command.
              *     Must be a valid UserIdString (as described in ``value.proto``).
@@ -5511,7 +5058,7 @@ export interface components {
              *
              *     Optional
              */
-            userId?: string
+            userId?: string;
             /**
              * @description Uniquely identifies the command.
              *     The triple (user_id, submitter, command_id) constitutes the change ID for the intended ledger change.
@@ -5520,7 +5067,7 @@ export interface components {
              *
              *     Required
              */
-            commandId: string
+            commandId: string;
             /**
              * @description Party on whose behalf the command should be executed.
              *     If ledger API authorization is enabled, then the authorization metadata must authorize the sender of the request
@@ -5529,7 +5076,7 @@ export interface components {
              *
              *     Required
              */
-            submitter: string
+            submitter: string;
             /**
              * @description A unique identifier to distinguish completions for different submissions with the same change ID.
              *     Typically a random UUID. Applications are expected to use a different UUID for each retry of a submission
@@ -5540,14 +5087,76 @@ export interface components {
              *
              *     Optional
              */
-            submissionId?: string
+            submissionId?: string;
             /**
              * @description Individual elements of this reassignment. Must be non-empty.
              *
              *     Required: must be non-empty
              */
-            commands: components['schemas']['ReassignmentCommand'][]
-        }
+            commands: components["schemas"]["ReassignmentCommand"][];
+        };
+        /**
+         * ReassignmentCost
+         * @description Estimation of re-assignment costs
+         *     This is the cost of re-assigning contracts from another synchronizer if necessary.
+         */
+        ReassignmentCost: {
+            /**
+             * @description The synchronizer the contracts are currently assigned to, and against whose traffic balance
+             *     the unassignment cost is charged
+             *
+             *     Required
+             */
+            sourceSynchronizerId: string;
+            /**
+             * @description The synchronizer the contracts will be re-assigned to, and against whose traffic balance
+             *     the assignment cost is charged
+             *
+             *     Required
+             */
+            targetSynchronizerId: string;
+            /**
+             * @description The contracts that will be unassigned together in this single unassignment request
+             *
+             *     Required: must be non-empty
+             */
+            contractIds: string[];
+            /**
+             * Format: int64
+             * @description Estimated traffic cost of the unassignment confirmation request
+             *
+             *     Required
+             */
+            unassignmentRequestTrafficCostEstimation: number;
+            /**
+             * Format: int64
+             * @description Estimated traffic cost of the unassignment confirmation response
+             *
+             *     Required
+             */
+            unassignmentResponseTrafficCostEstimation: number;
+            /**
+             * Format: int64
+             * @description Estimated traffic cost of the assignment confirmation request
+             *
+             *     Required
+             */
+            assignmentRequestTrafficCostEstimation: number;
+            /**
+             * Format: int64
+             * @description Estimated traffic cost of the assignment confirmation response
+             *
+             *     Required
+             */
+            assignmentResponseTrafficCostEstimation: number;
+            /**
+             * Format: int64
+             * @description Sum of the fields above
+             *
+             *     Required
+             */
+            totalReassignmentCostEstimation: number;
+        };
         /**
          * RevokeUserRightsRequest
          * @description Remove the rights from the set of rights granted to the user.
@@ -5560,21 +5169,21 @@ export interface components {
              *
              *     Required
              */
-            userId: string
+            userId: string;
             /**
              * @description The rights to revoke.
              *
              *     Optional: can be empty
              */
-            rights?: components['schemas']['Right'][]
+            rights?: components["schemas"]["Right"][];
             /**
              * @description The id of the ``Identity Provider``
              *     If not set, assume the user is managed by the default identity provider.
              *
              *     Optional
              */
-            identityProviderId?: string
-        }
+            identityProviderId?: string;
+        };
         /** RevokeUserRightsResponse */
         RevokeUserRightsResponse: {
             /**
@@ -5582,48 +5191,45 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            newlyRevokedRights?: components['schemas']['Right'][]
-        }
+            newlyRevokedRights?: components["schemas"]["Right"][];
+        };
         /**
          * Right
          * @description A right granted to a user.
          */
         Right: {
-            kind?: components['schemas']['Kind']
-        }
+            kind?: components["schemas"]["Kind"];
+        };
         /**
          * Serial
          * @description Optional
          */
-        Serial:
-            | {
-                  Empty: components['schemas']['Empty6']
-              }
-            | {
-                  NoPrior: components['schemas']['NoPrior']
-              }
-            | {
-                  Prior: components['schemas']['Prior']
-              }
+        Serial: {
+            Empty: components["schemas"]["Empty6"];
+        } | {
+            NoPrior: components["schemas"]["NoPrior"];
+        } | {
+            Prior: components["schemas"]["Prior"];
+        };
         /** Signature */
         Signature: {
             /** @description Required */
-            format: string
+            format: string;
             /** @description Required: must be non-empty */
-            signature: string
+            signature: string;
             /**
              * @description The fingerprint/id of the keypair used to create this signature and needed to verify.
              *
              *     Required
              */
-            signedBy: string
+            signedBy: string;
             /**
              * @description The signing algorithm specification used to produce this signature
              *
              *     Required
              */
-            signingAlgorithmSpec: string
-        }
+            signingAlgorithmSpec: string;
+        };
         /** SignedTransaction */
         SignedTransaction: {
             /**
@@ -5631,7 +5237,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            transaction: string
+            transaction: string;
             /**
              * @description Additional signatures for this transaction specifically
              *     Use for transactions that require additional signatures beyond the namespace key signatures
@@ -5639,8 +5245,8 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            signatures?: components['schemas']['Signature'][]
-        }
+            signatures?: components["schemas"]["Signature"][];
+        };
         /** SigningPublicKey */
         SigningPublicKey: {
             /**
@@ -5649,21 +5255,21 @@ export interface components {
              *     Required
              * @example CRYPTO_KEY_FORMAT_DER_X509_SUBJECT_PUBLIC_KEY_INFO
              */
-            format: string
+            format: string;
             /**
              * @description Serialized public key in the format specified above
              *
              *     Required: must be non-empty
              */
-            keyData: string
+            keyData: string;
             /**
              * @description The key specification
              *
              *     Required
              * @example SIGNING_KEY_SPEC_EC_CURVE25519
              */
-            keySpec: string
-        }
+            keySpec: string;
+        };
         /**
          * SinglePartySignatures
          * @description Signatures provided by a single party
@@ -5674,14 +5280,14 @@ export interface components {
              *
              *     Required
              */
-            party: string
+            party: string;
             /**
              * @description Signatures
              *
              *     Required: must be non-empty
              */
-            signatures: components['schemas']['Signature'][]
-        }
+            signatures: components["schemas"]["Signature"][];
+        };
         /**
          * SubmitAndWaitForReassignmentRequest
          * @description This reassignment is executed as a single atomic update.
@@ -5692,15 +5298,15 @@ export interface components {
              *
              *     Required
              */
-            reassignmentCommands: components['schemas']['ReassignmentCommands']
+            reassignmentCommands: components["schemas"]["ReassignmentCommands"];
             /**
              * @description If no event_format provided, the result will contain no events.
              *     The events in the result, will take shape TRANSACTION_SHAPE_ACS_DELTA.
              *
              *     Optional
              */
-            eventFormat?: components['schemas']['EventFormat']
-        }
+            eventFormat?: components["schemas"]["EventFormat"];
+        };
         /** SubmitAndWaitResponse */
         SubmitAndWaitResponse: {
             /**
@@ -5709,15 +5315,15 @@ export interface components {
              *
              *     Required
              */
-            updateId: string
+            updateId: string;
             /**
              * Format: int64
              * @description The details of the offset field are described in ``community/ledger-api/README.md``.
              *
              *     Required
              */
-            completionOffset: number
-        }
+            completionOffset: number;
+        };
         /** SubmitReassignmentRequest */
         SubmitReassignmentRequest: {
             /**
@@ -5725,12 +5331,12 @@ export interface components {
              *
              *     Required
              */
-            reassignmentCommands: components['schemas']['ReassignmentCommands']
-        }
+            reassignmentCommands: components["schemas"]["ReassignmentCommands"];
+        };
         /** SubmitReassignmentResponse */
-        SubmitReassignmentResponse: Record<string, never>
+        SubmitReassignmentResponse: Record<string, never>;
         /** SubmitResponse */
-        SubmitResponse: Record<string, never>
+        SubmitResponse: Record<string, never>;
         /** SynchronizerTime */
         SynchronizerTime: {
             /**
@@ -5738,21 +5344,21 @@ export interface components {
              *
              *     Required
              */
-            synchronizerId: string
+            synchronizerId: string;
             /**
              * @description All commands with a maximum record time below this value MUST be considered lost if their completion has not arrived before this checkpoint.
              *
              *     Required
              */
-            recordTime: string
-        }
+            recordTime: string;
+        };
         /**
          * TemplateFilter
          * @description This filter matches contracts of a specific template.
          */
         TemplateFilter: {
-            value: components['schemas']['TemplateFilter1']
-        }
+            value: components["schemas"]["TemplateFilter1"];
+        };
         /**
          * TemplateFilter
          * @description This filter matches contracts of a specific template.
@@ -5762,12 +5368,12 @@ export interface components {
              * @description A template for which the payload should be included in the response.
              *     The ``template_id`` needs to be valid: corresponding template should be defined in
              *     one of the available packages at the time of the query.
-             *     Both package-name and package-id reference formats for the identifier are supported.
-             *     Note: The package-id reference identifier format is deprecated. We plan to end support for this format in version 3.4.
+             *     Only package-name reference format for the identifier is supported.
+             *     Note: The package-id reference identifier format was removed in version 3.5.
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description Whether to include a ``created_event_blob`` in the returned ``CreatedEvent``.
              *     Use this to access the contract event payload in your API client
@@ -5775,43 +5381,35 @@ export interface components {
              *
              *     Optional
              */
-            includeCreatedEventBlob?: boolean
-        }
+            includeCreatedEventBlob?: boolean;
+        };
         /**
          * Time
          * @description Required
          */
-        Time:
-            | {
-                  Empty: components['schemas']['Empty9']
-              }
-            | {
-                  MinLedgerTimeAbs: components['schemas']['MinLedgerTimeAbs']
-              }
-            | {
-                  MinLedgerTimeRel: components['schemas']['MinLedgerTimeRel']
-              }
+        Time: {
+            Empty: components["schemas"]["Empty9"];
+        } | {
+            MinLedgerTimeAbs: components["schemas"]["MinLedgerTimeAbs"];
+        } | {
+            MinLedgerTimeRel: components["schemas"]["MinLedgerTimeRel"];
+        };
         /** TopologyEvent */
         TopologyEvent: {
-            event?: components['schemas']['TopologyEventEvent']
-        }
+            event?: components["schemas"]["TopologyEventEvent"];
+        };
         /** TopologyEventEvent */
-        TopologyEventEvent:
-            | {
-                  Empty: components['schemas']['Empty7']
-              }
-            | {
-                  ParticipantAuthorizationAdded: components['schemas']['ParticipantAuthorizationAdded']
-              }
-            | {
-                  ParticipantAuthorizationChanged: components['schemas']['ParticipantAuthorizationChanged']
-              }
-            | {
-                  ParticipantAuthorizationOnboarding: components['schemas']['ParticipantAuthorizationOnboarding']
-              }
-            | {
-                  ParticipantAuthorizationRevoked: components['schemas']['ParticipantAuthorizationRevoked']
-              }
+        TopologyEventEvent: {
+            Empty: components["schemas"]["Empty7"];
+        } | {
+            ParticipantAuthorizationAdded: components["schemas"]["ParticipantAuthorizationAdded"];
+        } | {
+            ParticipantAuthorizationChanged: components["schemas"]["ParticipantAuthorizationChanged"];
+        } | {
+            ParticipantAuthorizationOnboarding: components["schemas"]["ParticipantAuthorizationOnboarding"];
+        } | {
+            ParticipantAuthorizationRevoked: components["schemas"]["ParticipantAuthorizationRevoked"];
+        };
         /**
          * TopologyFormat
          * @description A format specifying which topology transactions to include and how to render them.
@@ -5823,8 +5421,8 @@ export interface components {
              *
              *     Optional
              */
-            includeParticipantAuthorizationEvents?: components['schemas']['ParticipantAuthorizationTopologyFormat']
-        }
+            includeParticipantAuthorizationEvents?: components["schemas"]["ParticipantAuthorizationTopologyFormat"];
+        };
         /**
          * TopologyStateFilter
          * @description Filter the vetted packages by the participant and synchronizer that they are
@@ -5847,19 +5445,19 @@ export interface components {
              *
              *     Optional: can be empty
              */
-            participantIds?: string[]
+            participantIds?: string[];
             /**
              * @description If this list is non-empty, only vetted packages from the topology state of
              *     the synchronizers in this list match the filter.
              *
              *     Optional: can be empty
              */
-            synchronizerIds?: string[]
-        }
+            synchronizerIds?: string[];
+        };
         /** TopologyTransaction */
         TopologyTransaction: {
-            value: components['schemas']['JsTopologyTransaction']
-        }
+            value: components["schemas"]["JsTopologyTransaction"];
+        };
         /** TraceContext */
         TraceContext: {
             /**
@@ -5867,43 +5465,17 @@ export interface components {
              *
              *     Optional
              */
-            traceparent?: string
+            traceparent?: string;
             /** @description Optional */
-            tracestate?: string
-        }
+            tracestate?: string;
+        };
         /**
          * Transaction
          * @description Filtered view of an on-ledger transaction's create and archive events.
          */
         Transaction: {
-            value: components['schemas']['JsTransaction']
-        }
-        /**
-         * TransactionFilter
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-parameters-34 = true`; it will be removed in the Canton version 3.7.0.
-         *     Used both for filtering create and archive events as well as for filtering transaction trees.
-         */
-        TransactionFilter: {
-            /**
-             * @description Each key must be a valid PartyIdString (as described in ``value.proto``).
-             *     The interpretation of the filter depends on the transaction-shape being filtered:
-             *
-             *     1. For **transaction trees** (used in GetUpdateTreesResponse for backwards compatibility) all party keys used as
-             *        wildcard filters, and all subtrees whose root has one of the listed parties as an informee are returned.
-             *        If there are ``CumulativeFilter``s, those will control returned ``CreatedEvent`` fields where applicable, but will
-             *        not be used for template/interface filtering.
-             *     2. For **ledger-effects** create and exercise events are returned, for which the witnesses include at least one of
-             *        the listed parties and match the per-party filter.
-             *     3. For **transaction and active-contract-set streams** create and archive events are returned for all contracts whose
-             *        stakeholders include at least one of the listed parties and match the per-party filter.
-             */
-            filtersByParty?: components['schemas']['Map_Filters']
-            /**
-             * @description Wildcard filters that apply to all the parties existing on the participant. The interpretation of the filters is the same
-             *     with the per-party filter as described above.
-             */
-            filtersForAnyParty?: components['schemas']['Filters']
-        }
+            value: components["schemas"]["JsTransaction"];
+        };
         /**
          * TransactionFormat
          * @description A format that specifies what events to include in Daml transactions
@@ -5911,53 +5483,24 @@ export interface components {
          */
         TransactionFormat: {
             /** @description Required */
-            eventFormat: components['schemas']['EventFormat']
+            eventFormat: components["schemas"]["EventFormat"];
             /**
              * @description What transaction shape to use for interpreting the filters of the event format.
              *
              *     Required
              * @enum {string}
              */
-            transactionShape:
-                | 'TRANSACTION_SHAPE_UNSPECIFIED'
-                | 'TRANSACTION_SHAPE_ACS_DELTA'
-                | 'TRANSACTION_SHAPE_LEDGER_EFFECTS'
-        }
-        /**
-         * TransactionTree
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         *     Complete view of an on-ledger transaction.
-         */
-        TransactionTree: {
-            value: components['schemas']['JsTransactionTree']
-        }
-        /**
-         * TreeEvent
-         * @description Deprecated: disabled unless `canton.participants.<participant>.features.deprecated.enable-deprecated-endpoints-34 = true`; it will be removed in the Canton version 3.7.0.
-         *     Each tree event message type below contains a ``witness_parties`` field which
-         *     indicates the subset of the requested parties that can see the event
-         *     in question.
-         *
-         *     Note that transaction trees might contain events with
-         *     _no_ witness parties, which were included simply because they were
-         *     children of events which have witnesses.
-         */
-        TreeEvent:
-            | {
-                  CreatedTreeEvent: components['schemas']['CreatedTreeEvent']
-              }
-            | {
-                  ExercisedTreeEvent: components['schemas']['ExercisedTreeEvent']
-              }
+            transactionShape: "TRANSACTION_SHAPE_UNSPECIFIED" | "TRANSACTION_SHAPE_ACS_DELTA" | "TRANSACTION_SHAPE_LEDGER_EFFECTS";
+        };
         /** Tuple2_String_String */
-        Tuple2_String_String: string[]
+        Tuple2_String_String: string[];
         /**
          * UnassignCommand
          * @description Unassign a contract
          */
         UnassignCommand: {
-            value: components['schemas']['UnassignCommand1']
-        }
+            value: components["schemas"]["UnassignCommand1"];
+        };
         /**
          * UnassignCommand
          * @description Unassign a contract
@@ -5969,22 +5512,35 @@ export interface components {
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description The ID of the source synchronizer
              *     Must be a valid synchronizer id
              *
              *     Required
              */
-            source: string
+            source: string;
             /**
              * @description The ID of the target synchronizer
              *     Must be a valid synchronizer id
              *
              *     Required
              */
-            target: string
-        }
+            target: string;
+            /**
+             * @description The package id used to validate the contract on the source synchronizer.
+             *
+             *     Optional
+             */
+            overrideSourceValidationPackageId?: string;
+            /**
+             * @description The package id used to validate the contract on the target synchronizer. This
+             *     package id will also become the representative package id used in the created event.
+             *
+             *     Optional
+             */
+            overrideTargetValidationPackageId?: string;
+        };
         /**
          * UnassignedEvent
          * @description Records that a contract has been unassigned, and it becomes unusable on the source synchronizer
@@ -5996,35 +5552,35 @@ export interface components {
              *
              *     Required
              */
-            reassignmentId: string
+            reassignmentId: string;
             /**
              * @description The ID of the reassigned contract.
              *     Must be a valid LedgerString (as described in ``value.proto``).
              *
              *     Required
              */
-            contractId: string
+            contractId: string;
             /**
              * @description The template of the reassigned contract.
              *     The identifier uses the package-id reference format.
              *
              *     Required
              */
-            templateId: string
+            templateId: string;
             /**
              * @description The ID of the source synchronizer
              *     Must be a valid synchronizer id
              *
              *     Required
              */
-            source: string
+            source: string;
             /**
              * @description The ID of the target synchronizer
              *     Must be a valid synchronizer id
              *
              *     Required
              */
-            target: string
+            target: string;
             /**
              * @description Party on whose behalf the unassign command was executed.
              *     Empty if the unassignment happened offline via the repair service.
@@ -6032,7 +5588,7 @@ export interface components {
              *
              *     Optional
              */
-            submitter?: string
+            submitter?: string;
             /**
              * Format: int64
              * @description The reassignment counter associated with this unassignment on the source synchronizer.
@@ -6042,27 +5598,28 @@ export interface components {
              *
              *     Required
              */
-            reassignmentCounter: number
+            reassignmentCounter: number;
             /**
              * @description Assignment exclusivity
              *     Before this time (measured on the target synchronizer), only the submitter of the unassignment can initiate the assignment
-             *     Defined for reassigning participants.
+             *     Defined for reassigning participants, up to protocol version 36.
+             *     Starting with protocol version 37, it is not set: any stakeholder can submit the assignment as soon as the unassignment is completed.
              *
              *     Optional
              */
-            assignmentExclusivity?: string
+            assignmentExclusivity?: string;
             /**
              * @description The parties that are notified of this event.
              *
              *     Required: must be non-empty
              */
-            witnessParties: string[]
+            witnessParties: string[];
             /**
              * @description The package name of the contract.
              *
              *     Required
              */
-            packageName: string
+            packageName: string;
             /**
              * Format: int64
              * @description The offset of origin.
@@ -6072,7 +5629,7 @@ export interface components {
              *
              *     Required
              */
-            offset: number
+            offset: number;
             /**
              * Format: int32
              * @description The position of this event in the originating reassignment.
@@ -6082,19 +5639,19 @@ export interface components {
              *
              *     Required
              */
-            nodeId: number
-        }
+            nodeId: number;
+        };
         /** UnknownFieldSet */
         UnknownFieldSet: {
-            fields: components['schemas']['Map_Int_Field']
-        }
+            fields: components["schemas"]["Map_Int_Field"];
+        };
         /**
          * Unvet
          * @description Remove packages from the set of vetted packages
          */
         Unvet: {
-            value: components['schemas']['Unvet1']
-        }
+            value: components["schemas"]["Unvet1"];
+        };
         /**
          * Unvet
          * @description Remove packages from the set of vetted packages
@@ -6108,33 +5665,18 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            packages: components['schemas']['VettedPackagesRef'][]
-        }
+            packages: components["schemas"]["VettedPackagesRef"][];
+        };
         /** Update */
-        Update:
-            | {
-                  OffsetCheckpoint: components['schemas']['OffsetCheckpoint2']
-              }
-            | {
-                  Reassignment: components['schemas']['Reassignment']
-              }
-            | {
-                  TopologyTransaction: components['schemas']['TopologyTransaction']
-              }
-            | {
-                  Transaction: components['schemas']['Transaction']
-              }
-        /** Update */
-        Update1:
-            | {
-                  OffsetCheckpoint: components['schemas']['OffsetCheckpoint3']
-              }
-            | {
-                  Reassignment: components['schemas']['Reassignment1']
-              }
-            | {
-                  TransactionTree: components['schemas']['TransactionTree']
-              }
+        Update: {
+            OffsetCheckpoint: components["schemas"]["OffsetCheckpoint2"];
+        } | {
+            Reassignment: components["schemas"]["Reassignment"];
+        } | {
+            TopologyTransaction: components["schemas"]["TopologyTransaction"];
+        } | {
+            Transaction: components["schemas"]["Transaction"];
+        };
         /** UpdateAccountRequest */
         UpdateAccountRequest: {
             /**
@@ -6146,7 +5688,7 @@ export interface components {
              *
              *     Required
              */
-            accountId: string
+            accountId: string;
             /**
              * Format: int64
              * @description Balance DELTA to apply to the current balance.
@@ -6156,7 +5698,7 @@ export interface components {
              *     Note that setting a negative value may result in a negative balance if the delta is larger than the current balance.
              *     Optional
              */
-            balanceDelta?: number
+            balanceDelta?: number;
             /**
              * @description Identifier of this logical update, used to de-duplicate.
              *     The caller MUST use a distinct id for every distinct update, and MUST reuse the same id when
@@ -6165,8 +5707,8 @@ export interface components {
              *
              *     Required
              */
-            deduplicationId: string
-        }
+            deduplicationId: string;
+        };
         /** UpdateAccountResponse */
         UpdateAccountResponse: {
             /**
@@ -6174,8 +5716,8 @@ export interface components {
              *
              *     Required
              */
-            response: components['schemas']['GetAccountResponse']
-        }
+            response: components["schemas"]["GetAccountResponse"];
+        };
         /**
          * UpdateFormat
          * @description A format specifying what updates to include and how to render them.
@@ -6187,7 +5729,7 @@ export interface components {
              *
              *     Optional
              */
-            includeTransactions?: components['schemas']['TransactionFormat']
+            includeTransactions?: components["schemas"]["TransactionFormat"];
             /**
              * @description Include (un)assignments in the stream.
              *     The events in the result take the shape TRANSACTION_SHAPE_ACS_DELTA.
@@ -6195,15 +5737,15 @@ export interface components {
              *
              *     Optional
              */
-            includeReassignments?: components['schemas']['EventFormat']
+            includeReassignments?: components["schemas"]["EventFormat"];
             /**
              * @description Include topology events in streams.
              *     If unset no topology events are emitted in the stream.
              *
              *     Optional
              */
-            includeTopologyEvents?: components['schemas']['TopologyFormat']
-        }
+            includeTopologyEvents?: components["schemas"]["TopologyFormat"];
+        };
         /** UpdateIdentityProviderConfigRequest */
         UpdateIdentityProviderConfigRequest: {
             /**
@@ -6212,7 +5754,7 @@ export interface components {
              *
              *     Required
              */
-            identityProviderConfig: components['schemas']['IdentityProviderConfig']
+            identityProviderConfig: components["schemas"]["IdentityProviderConfig"];
             /**
              * @description An update mask specifies how and which properties of the ``IdentityProviderConfig`` message are to be updated.
              *     An update mask consists of a set of update paths.
@@ -6227,8 +5769,8 @@ export interface components {
              *
              *     Required
              */
-            updateMask: components['schemas']['FieldMask']
-        }
+            updateMask: components["schemas"]["FieldMask"];
+        };
         /** UpdateIdentityProviderConfigResponse */
         UpdateIdentityProviderConfigResponse: {
             /**
@@ -6236,8 +5778,8 @@ export interface components {
              *
              *     Required
              */
-            identityProviderConfig: components['schemas']['IdentityProviderConfig']
-        }
+            identityProviderConfig: components["schemas"]["IdentityProviderConfig"];
+        };
         /**
          * UpdatePartyDetailsRequest
          * @description Required authorization: ``HasRight(ParticipantAdmin) OR IsAuthenticatedIdentityProviderAdmin(party_details.identity_provider_id)``
@@ -6249,7 +5791,7 @@ export interface components {
              *
              *     Required
              */
-            partyDetails: components['schemas']['PartyDetails']
+            partyDetails: components["schemas"]["PartyDetails"];
             /**
              * @description An update mask specifies how and which properties of the ``PartyDetails`` message are to be updated.
              *     An update mask consists of a set of update paths.
@@ -6274,8 +5816,8 @@ export interface components {
              *
              *     Required
              */
-            updateMask: components['schemas']['FieldMask']
-        }
+            updateMask: components["schemas"]["FieldMask"];
+        };
         /** UpdatePartyDetailsResponse */
         UpdatePartyDetailsResponse: {
             /**
@@ -6283,8 +5825,8 @@ export interface components {
              *
              *     Required
              */
-            partyDetails: components['schemas']['PartyDetails']
-        }
+            partyDetails: components["schemas"]["PartyDetails"];
+        };
         /**
          * UpdateUserIdentityProviderIdRequest
          * @description Required authorization: ``HasRight(ParticipantAdmin)``
@@ -6295,24 +5837,24 @@ export interface components {
              *
              *     Required
              */
-            userId: string
+            userId: string;
             /**
              * @description Current identity provider ID of the user
              *     If omitted, the default IDP is assumed
              *
              *     Optional
              */
-            sourceIdentityProviderId?: string
+            sourceIdentityProviderId?: string;
             /**
              * @description Target identity provider ID of the user
              *     If omitted, the default IDP is assumed
              *
              *     Optional
              */
-            targetIdentityProviderId?: string
-        }
+            targetIdentityProviderId?: string;
+        };
         /** UpdateUserIdentityProviderIdResponse */
-        UpdateUserIdentityProviderIdResponse: Record<string, never>
+        UpdateUserIdentityProviderIdResponse: Record<string, never>;
         /**
          * UpdateUserRequest
          * @description Required authorization: ``HasRight(ParticipantAdmin) OR IsAuthenticatedIdentityProviderAdmin(user.identity_provider_id)``
@@ -6324,7 +5866,7 @@ export interface components {
              *
              *     Required
              */
-            user: components['schemas']['User']
+            user: components["schemas"]["User"];
             /**
              * @description An update mask specifies how and which properties of the ``User`` message are to be updated.
              *     An update mask consists of a set of update paths.
@@ -6347,8 +5889,8 @@ export interface components {
              *
              *     Required
              */
-            updateMask: components['schemas']['FieldMask']
-        }
+            updateMask: components["schemas"]["FieldMask"];
+        };
         /** UpdateUserResponse */
         UpdateUserResponse: {
             /**
@@ -6356,8 +5898,8 @@ export interface components {
              *
              *     Required
              */
-            user: components['schemas']['User']
-        }
+            user: components["schemas"]["User"];
+        };
         /** UpdateVettedPackagesRequest */
         UpdateVettedPackagesRequest: {
             /**
@@ -6367,7 +5909,7 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            changes: components['schemas']['VettedPackagesChange'][]
+            changes: components["schemas"]["VettedPackagesChange"][];
             /**
              * @description If dry_run is true, then the changes are only prepared, but not applied. If
              *     a request would trigger an error when run (e.g. TOPOLOGY_DEPENDENCIES_NOT_VETTED),
@@ -6378,7 +5920,7 @@ export interface components {
              *
              *     Optional
              */
-            dryRun?: boolean
+            dryRun?: boolean;
             /**
              * @description If set, the requested changes will take place on the specified
              *     synchronizer. If synchronizer_id is unset and the participant is only
@@ -6389,7 +5931,7 @@ export interface components {
              *
              *     Optional
              */
-            synchronizerId?: string
+            synchronizerId?: string;
             /**
              * @description The serial of the last ``VettedPackages`` topology transaction of this
              *     participant and on this synchronizer.
@@ -6402,18 +5944,14 @@ export interface components {
              *
              *     Optional
              */
-            expectedTopologySerial?: components['schemas']['PriorTopologySerial']
+            expectedTopologySerial?: components["schemas"]["PriorTopologySerial"];
             /**
              * @description Controls whether potentially unsafe vetting updates are allowed.
              *
              *     Optional: can be empty
              */
-            updateVettedPackagesForceFlags?: (
-                | 'UPDATE_VETTED_PACKAGES_FORCE_FLAG_UNSPECIFIED'
-                | 'UPDATE_VETTED_PACKAGES_FORCE_FLAG_ALLOW_VET_INCOMPATIBLE_UPGRADES'
-                | 'UPDATE_VETTED_PACKAGES_FORCE_FLAG_ALLOW_UNVETTED_DEPENDENCIES'
-            )[]
-        }
+            updateVettedPackagesForceFlags?: ("UPDATE_VETTED_PACKAGES_FORCE_FLAG_UNSPECIFIED" | "UPDATE_VETTED_PACKAGES_FORCE_FLAG_ALLOW_VET_INCOMPATIBLE_UPGRADES" | "UPDATE_VETTED_PACKAGES_FORCE_FLAG_ALLOW_UNVETTED_DEPENDENCIES")[];
+        };
         /** UpdateVettedPackagesResponse */
         UpdateVettedPackagesResponse: {
             /**
@@ -6424,19 +5962,19 @@ export interface components {
              *
              *     Optional
              */
-            pastVettedPackages?: components['schemas']['VettedPackages']
+            pastVettedPackages?: components["schemas"]["VettedPackages"];
             /**
              * @description All vetted packages on this participant and synchronizer, after the specified changes.
              *
              *     Required
              */
-            newVettedPackages: components['schemas']['VettedPackages']
-        }
+            newVettedPackages: components["schemas"]["VettedPackages"];
+        };
         /**
          * UploadDarFileResponse
          * @description A message that is received when the upload operation succeeded.
          */
-        UploadDarFileResponse: Record<string, never>
+        UploadDarFileResponse: Record<string, never>;
         /**
          * User
          * @description Users and rights
@@ -6451,7 +5989,7 @@ export interface components {
              *
              *     Required
              */
-            id: string
+            id: string;
             /**
              * @description The primary party as which this user reads and acts by default on the ledger
              *     *provided* it has the corresponding ``CanReadAs(primary_party)`` or
@@ -6463,7 +6001,7 @@ export interface components {
              *
              *     Optional
              */
-            primaryParty?: string
+            primaryParty?: string;
             /**
              * @description When set, then the user is denied all access to the Ledger API.
              *     Otherwise, the user has access to the Ledger API as per the user's rights.
@@ -6471,7 +6009,7 @@ export interface components {
              *
              *     Optional
              */
-            isDeactivated?: boolean
+            isDeactivated?: boolean;
             /**
              * @description The metadata of this user.
              *     Note that the ``metadata.resource_version`` tracks changes to the properties described by the ``User`` message and not the user's rights.
@@ -6479,14 +6017,14 @@ export interface components {
              *
              *     Optional
              */
-            metadata?: components['schemas']['ObjectMeta']
+            metadata?: components["schemas"]["ObjectMeta"];
             /**
              * @description The ID of the identity provider configured by ``Identity Provider Config``
              *     If not set, assume the user is managed by the default identity provider.
              *
              *     Optional
              */
-            identityProviderId?: string
+            identityProviderId?: string;
             /**
              * @description If set to true, the user may authenticate against the Ledger API by signing
              *     a Party JWT using the primary party's signing key.
@@ -6494,8 +6032,8 @@ export interface components {
              *
              *     Optional
              */
-            primaryPartyAuthentication?: boolean
-        }
+            primaryPartyAuthentication?: boolean;
+        };
         /** UserManagementFeature */
         UserManagementFeature: {
             /**
@@ -6503,7 +6041,7 @@ export interface components {
              *
              *     Required
              */
-            supported: boolean
+            supported: boolean;
             /**
              * Format: int32
              * @description The maximum number of rights that can be assigned to a single user.
@@ -6512,7 +6050,7 @@ export interface components {
              *
              *     Required
              */
-            maxRightsPerUser: number
+            maxRightsPerUser: number;
             /**
              * Format: int32
              * @description The maximum number of users the server can return in a single response (page).
@@ -6521,16 +6059,16 @@ export interface components {
              *
              *     Required
              */
-            maxUsersPageSize: number
-        }
+            maxUsersPageSize: number;
+        };
         /**
          * Vet
          * @description Set vetting bounds of a list of packages. Packages that were not previously
          *     vetted have their bounds added, previous vetting bounds are overwritten.
          */
         Vet: {
-            value: components['schemas']['Vet1']
-        }
+            value: components["schemas"]["Vet1"];
+        };
         /**
          * Vet
          * @description Set vetting bounds of a list of packages. Packages that were not previously
@@ -6546,20 +6084,20 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            packages: components['schemas']['VettedPackagesRef'][]
+            packages: components["schemas"]["VettedPackagesRef"][];
             /**
              * @description The time from which these packages should be vetted, prior lower bounds
              *     are overwritten.
              *     Optional
              */
-            newValidFromInclusive?: string
+            newValidFromInclusive?: string;
             /**
              * @description The time until which these packages should be vetted, prior upper bounds
              *     are overwritten.
              *     Optional
              */
-            newValidUntilExclusive?: string
-        }
+            newValidUntilExclusive?: string;
+        };
         /**
          * VettedPackage
          * @description A package that is vetting on a given participant and synchronizer,
@@ -6572,36 +6110,36 @@ export interface components {
              *
              *     Required
              */
-            packageId: string
+            packageId: string;
             /**
              * @description The time from which this package is vetted. Empty if vetting time has no
              *     lower bound.
              *
              *     Optional
              */
-            validFromInclusive?: string
+            validFromInclusive?: string;
             /**
              * @description The time until which this package is vetted. Empty if vetting time has no
              *     upper bound.
              *
              *     Optional
              */
-            validUntilExclusive?: string
+            validUntilExclusive?: string;
             /**
              * @description Name of this package.
              *     Only available if the package has been uploaded to the current participant.
              *
              *     Optional
              */
-            packageName?: string
+            packageName?: string;
             /**
              * @description Version of this package.
              *     Only available if the package has been uploaded to the current participant.
              *
              *     Optional
              */
-            packageVersion?: string
-        }
+            packageVersion?: string;
+        };
         /**
          * VettedPackages
          * @description The list of packages vetted on a given participant and synchronizer, modelled
@@ -6616,19 +6154,19 @@ export interface components {
              *
              *     Required: must be non-empty
              */
-            packages: components['schemas']['VettedPackage'][]
+            packages: components["schemas"]["VettedPackage"][];
             /**
              * @description Participant on which these packages are vetted.
              *
              *     Required
              */
-            participantId: string
+            participantId: string;
             /**
              * @description Synchronizer on which these packages are vetted.
              *
              *     Required
              */
-            synchronizerId: string
+            synchronizerId: string;
             /**
              * Format: int32
              * @description Serial of last ``VettedPackages`` topology transaction of this participant
@@ -6636,15 +6174,15 @@ export interface components {
              *
              *     Required
              */
-            topologySerial: number
-        }
+            topologySerial: number;
+        };
         /**
          * VettedPackagesChange
          * @description A change to the set of vetted packages.
          */
         VettedPackagesChange: {
-            operation?: components['schemas']['Operation']
-        }
+            operation?: components["schemas"]["Operation"];
+        };
         /**
          * VettedPackagesRef
          * @description A reference to identify one or more packages.
@@ -6665,27 +6203,27 @@ export interface components {
              *
              *     Optional
              */
-            packageId?: string
+            packageId?: string;
             /**
              * @description Package's name must be the same as this field.
              *
              *     Optional
              */
-            packageName?: string
+            packageName?: string;
             /**
              * @description Package's version must be the same as this field.
              *
              *     Optional
              */
-            packageVersion?: string
-        }
+            packageVersion?: string;
+        };
         /**
          * WildcardFilter
          * @description This filter matches all templates.
          */
         WildcardFilter: {
-            value: components['schemas']['WildcardFilter1']
-        }
+            value: components["schemas"]["WildcardFilter1"];
+        };
         /**
          * WildcardFilter
          * @description This filter matches all templates.
@@ -6698,2953 +6236,2621 @@ export interface components {
              *
              *     Optional
              */
-            includeCreatedEventBlob?: boolean
-        }
-    }
-    responses: never
-    parameters: never
-    requestBodies: never
-    headers: never
-    pathItems: never
+            includeCreatedEventBlob?: boolean;
+        };
+    };
+    responses: never;
+    parameters: never;
+    requestBodies: never;
+    headers: never;
+    pathItems: never;
 }
-export type $defs = Record<string, never>
+export type $defs = Record<string, never>;
 export interface operations {
-    'postV2CommandsSubmit-and-wait': {
+    "postV2CommandsSubmit-and-wait": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['JsCommands']
-            }
-        }
+                "application/json": components["schemas"]["JsCommands"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['SubmitAndWaitResponse']
-                }
-            }
+                    "application/json": components["schemas"]["SubmitAndWaitResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2CommandsSubmit-and-wait-for-transaction': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2CommandsSubmit-and-wait-for-transaction": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['JsSubmitAndWaitForTransactionRequest']
-            }
-        }
+                "application/json": components["schemas"]["JsSubmitAndWaitForTransactionRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsSubmitAndWaitForTransactionResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsSubmitAndWaitForTransactionResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2CommandsSubmit-and-wait-for-reassignment': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2CommandsSubmit-and-wait-for-reassignment": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['SubmitAndWaitForReassignmentRequest']
-            }
-        }
+                "application/json": components["schemas"]["SubmitAndWaitForReassignmentRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsSubmitAndWaitForReassignmentResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsSubmitAndWaitForReassignmentResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2CommandsSubmit-and-wait-for-transaction-tree': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['JsCommands']
-            }
-        }
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsSubmitAndWaitForTransactionTreeResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: body */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2CommandsAsyncSubmit: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['JsCommands']
-            }
-        }
+                "application/json": components["schemas"]["JsCommands"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['SubmitResponse']
-                }
-            }
+                    "application/json": components["schemas"]["SubmitResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2CommandsAsyncSubmit-reassignment': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2CommandsAsyncSubmit-reassignment": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['SubmitReassignmentRequest']
-            }
-        }
+                "application/json": components["schemas"]["SubmitReassignmentRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['SubmitReassignmentResponse']
-                }
-            }
+                    "application/json": components["schemas"]["SubmitReassignmentResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2CommandsCompletions: {
         parameters: {
             query?: {
                 /** @description maximum number of elements to return, this param is ignored if is bigger than server setting */
-                limit?: number
+                limit?: number;
                 /** @description timeout to complete and send result if no new elements are received (for open ended streams) */
-                stream_idle_timeout_ms?: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+                stream_idle_timeout_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['CompletionStreamRequest']
-            }
-        }
+                "application/json": components["schemas"]["CompletionStreamRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['CompletionStreamResponse'][]
-                }
-            }
+                    "application/json": components["schemas"]["CompletionStreamResponse"][];
+                };
+            };
             /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter limit, Invalid value for: query parameter stream_idle_timeout_ms */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2CommandsCommand-completions': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2CommandsCommand-completions": {
         parameters: {
             query?: {
                 /** @description maximum number of elements to return, this param is ignored if is bigger than server setting */
-                limit?: number
+                limit?: number;
                 /** @description timeout to complete and send result if no new elements are received (for open ended streams) */
-                stream_idle_timeout_ms?: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+                stream_idle_timeout_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetCompletionsRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetCompletionsRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['CompletionStreamResponse'][]
-                }
-            }
+                    "application/json": components["schemas"]["CompletionStreamResponse"][];
+                };
+            };
             /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter limit, Invalid value for: query parameter stream_idle_timeout_ms */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2CommandsCompletion-by-hash': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2CommandsCompletion-by-hash": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetCompletionByHashRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetCompletionByHashRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetCompletionByHashResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetCompletionByHashResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2EventsEvents-by-contract-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2EventsEvents-by-contract-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetEventsByContractIdRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetEventsByContractIdRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetEventsByContractIdResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsGetEventsByContractIdResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getV2Version: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetLedgerApiVersionResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetLedgerApiVersionResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2DarsValidate: {
         parameters: {
             query?: {
-                synchronizerId?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+                synchronizerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/octet-stream': string
-            }
-        }
+                "application/octet-stream": string;
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
-                content?: never
-            }
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter synchronizerId */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2Dars: {
         parameters: {
             query?: {
-                vetAllPackages?: boolean
-                synchronizerId?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+                vetAllPackages?: boolean;
+                synchronizerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/octet-stream': string
-            }
-        }
+                "application/octet-stream": string;
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UploadDarFileResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UploadDarFileResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter vetAllPackages, Invalid value for: query parameter synchronizerId */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getV2Packages: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ListPackagesResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ListPackagesResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2Packages: {
         parameters: {
             query?: {
-                vetAllPackages?: boolean
-                synchronizerId?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+                vetAllPackages?: boolean;
+                synchronizerId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/octet-stream': string
-            }
-        }
+                "application/octet-stream": string;
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UploadDarFileResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UploadDarFileResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter vetAllPackages, Invalid value for: query parameter synchronizerId */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2PackagesPackage-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2PackagesPackage-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'package-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "package-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    'Canton-Package-Hash': string
-                    [name: string]: unknown
-                }
+                    "Canton-Package-Hash": string;
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/octet-stream': string
-                }
-            }
+                    "application/octet-stream": string;
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2PackagesPackage-idStatus': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2PackagesPackage-idStatus": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'package-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "package-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetPackageStatusResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetPackageStatusResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2Package-vetting': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2Package-vettingList": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['ListVettedPackagesRequest']
-            }
-        }
+                "application/json": components["schemas"]["ListVettedPackagesRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ListVettedPackagesResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ListVettedPackagesResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Package-vetting': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2Package-vettingUpdate": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['UpdateVettedPackagesRequest']
-            }
-        }
+                "application/json": components["schemas"]["UpdateVettedPackagesRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UpdateVettedPackagesResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UpdateVettedPackagesResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Package-vettingList': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['ListVettedPackagesRequest']
-            }
-        }
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['ListVettedPackagesResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: body */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Package-vettingUpdate': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['UpdateVettedPackagesRequest']
-            }
-        }
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['UpdateVettedPackagesResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: body */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getV2Parties: {
         parameters: {
             query?: {
-                'identity-provider-id'?: string
-                'filter-party'?: string
+                "identity-provider-id"?: string;
+                "filter-party"?: string;
                 /** @description maximum number of elements in a returned page */
-                pageSize?: number
+                pageSize?: number;
                 /** @description token - to continue results from a given page, leave empty to start from the beginning of the list, obtain token from the result of previous page */
-                pageToken?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+                pageToken?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ListKnownPartiesResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ListKnownPartiesResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: query parameter identity-provider-id, Invalid value for: query parameter filter-party, Invalid value for: query parameter pageSize, Invalid value for: query parameter pageToken */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2Parties: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['AllocatePartyRequest']
-            }
-        }
+                "application/json": components["schemas"]["AllocatePartyRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['AllocatePartyResponse']
-                }
-            }
+                    "application/json": components["schemas"]["AllocatePartyResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2PartiesExternalAllocate: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['AllocateExternalPartyRequest']
-            }
-        }
+                "application/json": components["schemas"]["AllocateExternalPartyRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['AllocateExternalPartyResponse']
-                }
-            }
+                    "application/json": components["schemas"]["AllocateExternalPartyResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2PartiesParticipant-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2PartiesParticipant-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetParticipantIdResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetParticipantIdResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getV2PartiesParty: {
         parameters: {
             query?: {
-                'identity-provider-id'?: string
-                parties?: string[]
-            }
-            header?: never
+                "identity-provider-id"?: string;
+                parties?: string[];
+            };
+            header?: never;
             path: {
-                party: string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                party: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetPartiesResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetPartiesResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: query parameter identity-provider-id, Invalid value for: query parameter parties */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     patchV2PartiesParty: {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                party: string
-            }
-            cookie?: never
-        }
+                party: string;
+            };
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['UpdatePartyDetailsRequest']
-            }
-        }
+                "application/json": components["schemas"]["UpdatePartyDetailsRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UpdatePartyDetailsResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UpdatePartyDetailsResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2PartiesExternalGenerate-topology': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2PartiesExternalGenerate-topology": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GenerateExternalPartyTopologyRequest']
-            }
-        }
+                "application/json": components["schemas"]["GenerateExternalPartyTopologyRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GenerateExternalPartyTopologyResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GenerateExternalPartyTopologyResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2StateActive-contracts': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2StateActive-contracts": {
         parameters: {
             query?: {
                 /** @description maximum number of elements to return, this param is ignored if is bigger than server setting */
-                limit?: number
+                limit?: number;
                 /** @description timeout to complete and send result if no new elements are received (for open ended streams) */
-                stream_idle_timeout_ms?: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+                stream_idle_timeout_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetActiveContractsRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetActiveContractsRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetActiveContractsResponse'][]
-                }
-            }
+                    "application/json": components["schemas"]["JsGetActiveContractsResponse"][];
+                };
+            };
             /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter limit, Invalid value for: query parameter stream_idle_timeout_ms */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2StateActive-contracts-page': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2StateActive-contracts-page": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetActiveContractsPageRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetActiveContractsPageRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetActiveContractsPageResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsGetActiveContractsPageResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2StateActive-contracts-page': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2StateActive-contracts-page": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetActiveContractsPageRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetActiveContractsPageRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetActiveContractsPageResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsGetActiveContractsPageResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2StateConnected-synchronizers': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2StateConnected-synchronizers": {
         parameters: {
             query?: {
-                party?: string
-                participantId?: string
-                identityProviderId?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+                party?: string;
+                participantId?: string;
+                identityProviderId?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetConnectedSynchronizersResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetConnectedSynchronizersResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: query parameter party, Invalid value for: query parameter participantId, Invalid value for: query parameter identityProviderId */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2StateLedger-end': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2StateLedger-end": {
         parameters: {
             query?: {
-                synchronizer_id?: string[]
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+                synchronizer_id?: string[];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetLedgerEndResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetLedgerEndResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: query parameter synchronizer_id */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2StateLatest-pruned-offsets': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2StateLatest-pruned-offsets": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetLatestPrunedOffsetsResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetLatestPrunedOffsetsResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2StateConvert-record-time-to-offset": {
+        parameters: {
+            query: {
+                "record-time": string;
+                "synchronizer-id"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConvertRecordTimeToOffsetResponse"];
+                };
+            };
+            /** @description Invalid value, Invalid value for: query parameter record-time, Invalid value for: query parameter synchronizer-id */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2Updates: {
         parameters: {
             query?: {
                 /** @description maximum number of elements to return, this param is ignored if is bigger than server setting */
-                limit?: number
+                limit?: number;
                 /** @description timeout to complete and send result if no new elements are received (for open ended streams) */
-                stream_idle_timeout_ms?: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+                stream_idle_timeout_ms?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetUpdatesRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetUpdatesRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetUpdatesResponse'][]
-                }
-            }
+                    "application/json": components["schemas"]["JsGetUpdatesResponse"][];
+                };
+            };
             /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter limit, Invalid value for: query parameter stream_idle_timeout_ms */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    postV2UpdatesFlats: {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2UpdatesUpdate-by-offset": {
         parameters: {
-            query?: {
-                /** @description maximum number of elements to return, this param is ignored if is bigger than server setting */
-                limit?: number
-                /** @description timeout to complete and send result if no new elements are received (for open ended streams) */
-                stream_idle_timeout_ms?: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetUpdatesRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetUpdateByOffsetRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetUpdatesResponse'][]
-                }
-            }
-            /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter limit, Invalid value for: query parameter stream_idle_timeout_ms */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    postV2UpdatesTrees: {
-        parameters: {
-            query?: {
-                /** @description maximum number of elements to return, this param is ignored if is bigger than server setting */
-                limit?: number
-                /** @description timeout to complete and send result if no new elements are received (for open ended streams) */
-                stream_idle_timeout_ms?: number
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['GetUpdatesRequest']
-            }
-        }
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsGetUpdateTreesResponse'][]
-                }
-            }
-            /** @description Invalid value, Invalid value for: body, Invalid value for: query parameter limit, Invalid value for: query parameter stream_idle_timeout_ms */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2UpdatesTransaction-tree-by-offsetOffset': {
-        parameters: {
-            query?: {
-                parties?: string[]
-            }
-            header?: never
-            path: {
-                offset: number
-            }
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsGetTransactionTreeResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: path parameter offset, Invalid value for: query parameter parties */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2UpdatesTransaction-by-offset': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['GetTransactionByOffsetRequest']
-            }
-        }
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsGetTransactionResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsGetUpdateResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2UpdatesUpdate-by-offset': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2UpdatesUpdate-by-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetUpdateByOffsetRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetUpdateByIdRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetUpdateResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsGetUpdateResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2UpdatesTransaction-by-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2UpdatesUpdate-by-hash": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetTransactionByIdRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetUpdateByHashRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetTransactionResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsGetUpdateResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2UpdatesUpdate-by-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2UpdatesGet-updates-page": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetUpdateByIdRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetUpdatesPageRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsGetUpdateResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsGetUpdatesPageResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2UpdatesTransaction-tree-by-idUpdate-id': {
-        parameters: {
-            query?: {
-                parties?: string[]
-            }
-            header?: never
-            path: {
-                'update-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsGetTransactionTreeResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: query parameter parties */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2UpdatesUpdate-by-hash': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['GetUpdateByHashRequest']
-            }
-        }
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsGetUpdateResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: body */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2UpdatesGet-updates-page': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['GetUpdatesPageRequest']
-            }
-        }
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsGetUpdatesPageResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: body */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getV2Users: {
         parameters: {
             query?: {
                 /** @description maximum number of elements in a returned page */
-                pageSize?: number
+                pageSize?: number;
                 /** @description token - to continue results from a given page, leave empty to start from the beginning of the list, obtain token from the result of previous page */
-                pageToken?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+                pageToken?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ListUsersResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ListUsersResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: query parameter pageSize, Invalid value for: query parameter pageToken */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2Users: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['CreateUserRequest']
-            }
-        }
+                "application/json": components["schemas"]["CreateUserRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['CreateUserResponse']
-                }
-            }
+                    "application/json": components["schemas"]["CreateUserResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2UsersUser-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2UsersUser-id": {
         parameters: {
             query?: {
-                'identity-provider-id'?: string
-            }
-            header?: never
+                "identity-provider-id"?: string;
+            };
+            header?: never;
             path: {
-                'user-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "user-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetUserResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetUserResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: query parameter identity-provider-id */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'deleteV2UsersUser-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "deleteV2UsersUser-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'user-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "user-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': Record<string, never>
-                }
-            }
+                    "application/json": Record<string, never>;
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'patchV2UsersUser-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "patchV2UsersUser-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'user-id': string
-            }
-            cookie?: never
-        }
+                "user-id": string;
+            };
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['UpdateUserRequest']
-            }
-        }
+                "application/json": components["schemas"]["UpdateUserRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UpdateUserResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UpdateUserResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2Authenticated-user': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2Authenticated-user": {
         parameters: {
             query?: {
-                'identity-provider-id'?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+                "identity-provider-id"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetUserResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetUserResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: query parameter identity-provider-id */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2UsersUser-idRights': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2UsersUser-idRights": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'user-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "user-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ListUserRightsResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ListUserRightsResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2UsersUser-idRights': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2UsersUser-idRights": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'user-id': string
-            }
-            cookie?: never
-        }
+                "user-id": string;
+            };
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GrantUserRightsRequest']
-            }
-        }
+                "application/json": components["schemas"]["GrantUserRightsRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GrantUserRightsResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GrantUserRightsResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'patchV2UsersUser-idRights': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "patchV2UsersUser-idRights": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'user-id': string
-            }
-            cookie?: never
-        }
+                "user-id": string;
+            };
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['RevokeUserRightsRequest']
-            }
-        }
+                "application/json": components["schemas"]["RevokeUserRightsRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['RevokeUserRightsResponse']
-                }
-            }
+                    "application/json": components["schemas"]["RevokeUserRightsResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'patchV2UsersUser-idIdentity-provider-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "patchV2UsersUser-idIdentity-provider-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'user-id': string
-            }
-            cookie?: never
-        }
+                "user-id": string;
+            };
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['UpdateUserIdentityProviderIdRequest']
-            }
-        }
+                "application/json": components["schemas"]["UpdateUserIdentityProviderIdRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UpdateUserIdentityProviderIdResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UpdateUserIdentityProviderIdResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getV2Idps: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ListIdentityProviderConfigsResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ListIdentityProviderConfigsResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2Idps: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['CreateIdentityProviderConfigRequest']
-            }
-        }
+                "application/json": components["schemas"]["CreateIdentityProviderConfigRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['CreateIdentityProviderConfigResponse']
-                }
-            }
+                    "application/json": components["schemas"]["CreateIdentityProviderConfigResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2IdpsIdp-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2IdpsIdp-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'idp-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "idp-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetIdentityProviderConfigResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetIdentityProviderConfigResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'deleteV2IdpsIdp-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "deleteV2IdpsIdp-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'idp-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "idp-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['DeleteIdentityProviderConfigResponse']
-                }
-            }
+                    "application/json": components["schemas"]["DeleteIdentityProviderConfigResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'patchV2IdpsIdp-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "patchV2IdpsIdp-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'idp-id': string
-            }
-            cookie?: never
-        }
+                "idp-id": string;
+            };
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['UpdateIdentityProviderConfigRequest']
-            }
-        }
+                "application/json": components["schemas"]["UpdateIdentityProviderConfigRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UpdateIdentityProviderConfigResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UpdateIdentityProviderConfigResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Interactive-submissionPrepare': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2Interactive-submissionPrepare": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['JsPrepareSubmissionRequest']
-            }
-        }
+                "application/json": components["schemas"]["JsPrepareSubmissionRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsPrepareSubmissionResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsPrepareSubmissionResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Interactive-submissionExecute': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2Interactive-submissionExecute": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['JsExecuteSubmissionRequest']
-            }
-        }
+                "application/json": components["schemas"]["JsExecuteSubmissionRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ExecuteSubmissionResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ExecuteSubmissionResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Interactive-submissionExecuteandwait': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2Interactive-submissionExecuteandwait": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['JsExecuteSubmissionAndWaitRequest']
-            }
-        }
+                "application/json": components["schemas"]["JsExecuteSubmissionAndWaitRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['ExecuteSubmissionAndWaitResponse']
-                }
-            }
+                    "application/json": components["schemas"]["ExecuteSubmissionAndWaitResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Interactive-submissionExecuteandwaitfortransaction': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2Interactive-submissionExecuteandwaitfortransaction": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['JsExecuteSubmissionAndWaitForTransactionRequest']
-            }
-        }
+                "application/json": components["schemas"]["JsExecuteSubmissionAndWaitForTransactionRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsExecuteSubmissionAndWaitForTransactionResponse']
-                }
-            }
+                    "application/json": components["schemas"]["JsExecuteSubmissionAndWaitForTransactionResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2Interactive-submissionPreferred-package-version': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2Interactive-submissionPreferred-packages": {
         parameters: {
-            query: {
-                parties?: string[]
-                'package-name': string
-                vetting_valid_at?: string
-                'synchronizer-id'?: string
-            }
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['GetPreferredPackageVersionResponse']
-                }
-            }
-            /** @description Invalid value, Invalid value for: query parameter parties, Invalid value for: query parameter package-name, Invalid value for: query parameter vetting_valid_at, Invalid value for: query parameter synchronizer-id */
-            400: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'text/plain': string
-                }
-            }
-            default: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2Interactive-submissionPreferred-packages': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetPreferredPackagesRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetPreferredPackagesRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetPreferredPackagesResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetPreferredPackagesResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getLivez: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK: service is alive */
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
-                content?: never
-            }
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getReadyz: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody?: never
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description OK: readiness message */
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'postV2ContractsContract-by-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "postV2ContractsContract-by-id": {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['GetContractRequest']
-            }
-        }
+                "application/json": components["schemas"]["GetContractRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetContractResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetContractResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     getV2JoseJwks: {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
                 /** @description synchronizer from which to read the public keys */
-                synchronizer: string
+                synchronizer: string;
                 /** @description party for which to retrieve the public keys */
-                party: string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                party: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': {
+                    "application/json": {
                         /**
                          * @description List of JWKs for the specified party and synchronizer.
                          *     Only keys of which the usage allows for Party JWT authentication will be returned.
                          *
                          *     Optional: can be empty
                          */
-                        keys: Record<string, never>[]
-                    }
-                }
-            }
+                        keys: Record<string, never>[];
+                    };
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
-    'getV2TrafficAccountsAccount-id': {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    "getV2TrafficAccountsAccount-id": {
         parameters: {
-            query?: never
-            header?: never
+            query?: never;
+            header?: never;
             path: {
-                'account-id': string
-            }
-            cookie?: never
-        }
-        requestBody?: never
+                "account-id": string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['GetAccountResponse']
-                }
-            }
+                    "application/json": components["schemas"]["GetAccountResponse"];
+                };
+            };
             /** @description Invalid value */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2TrafficAccounts: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['UpdateAccountRequest']
-            }
-        }
+                "application/json": components["schemas"]["UpdateAccountRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['UpdateAccountResponse']
-                }
-            }
+                    "application/json": components["schemas"]["UpdateAccountResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
+    postV2TrafficPrune: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PruneRequest"];
+            };
+        };
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PruneResponse"];
+                };
+            };
+            /** @description Invalid value, Invalid value for: body */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/plain": string;
+                };
+            };
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
     postV2TrafficEventsPrune: {
         parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
         requestBody: {
             content: {
-                'application/json': components['schemas']['PruneEventsRequest']
-            }
-        }
+                "application/json": components["schemas"]["PruneEventsRequest"];
+            };
+        };
         responses: {
             200: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['PruneEventsResponse']
-                }
-            }
+                    "application/json": components["schemas"]["PruneEventsResponse"];
+                };
+            };
             /** @description Invalid value, Invalid value for: body */
             400: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'text/plain': string
-                }
-            }
+                    "text/plain": string;
+                };
+            };
             default: {
                 headers: {
-                    [name: string]: unknown
-                }
+                    [name: string]: unknown;
+                };
                 content: {
-                    'application/json': components['schemas']['JsCantonError']
-                }
-            }
-        }
-    }
+                    "application/json": components["schemas"]["JsCantonError"];
+                };
+            };
+        };
+    };
 }

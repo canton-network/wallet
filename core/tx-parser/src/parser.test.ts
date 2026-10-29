@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
-import type { v3_5, v3_6 } from '@canton-network/core-ledger-client-types'
+import type { v3_5, v3_7 } from '@canton-network/core-ledger-client-types'
 import { vi, describe, it, expect, beforeEach, type Mocked } from 'vitest'
 import { TransactionParser } from './parser.js'
 import eventsByContractIdResponsesJsonMixed from './__tests__/data/mock/mixed-events/eventsByContractIdResponses.json'
@@ -17,14 +17,14 @@ import eventsByContractIdResponsesJsonV1 from './__tests__/data/mock/v1/eventsBy
 
 type JsTransaction =
     | v3_5.components['schemas']['JsTransaction']
-    | v3_6.components['schemas']['JsTransaction']
+    | v3_7.components['schemas']['JsTransaction']
 type CreatedEvent =
     | v3_5.components['schemas']['CreatedEvent']
-    | v3_6.components['schemas']['CreatedEvent']
+    | v3_7.components['schemas']['CreatedEvent']
 const EVENTS_BY_CID_PATH = '/v2/events/events-by-contract-id' as const
 type JsGetEventsByContractIdResponse =
     | v3_5.components['schemas']['JsGetEventsByContractIdResponse']
-    | v3_6.components['schemas']['JsGetEventsByContractIdResponse']
+    | v3_7.components['schemas']['JsGetEventsByContractIdResponse']
 /*oxlint-disable @typescript-eslint/no-explicit-any */
 
 const makeLedgerProviderMock = (
