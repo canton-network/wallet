@@ -12,6 +12,7 @@ import {
     switchWallet,
     tap,
     tapAndCreateAllocation,
+    workerClientId,
 } from './utils'
 
 const BASE_URL = 'http://localhost:8081'
@@ -104,6 +105,7 @@ const setupOtcTrade = async (page: Page) => {
         alice,
         bob,
         charlie,
+        clientId: workerClientId(),
     })
     const otcTradeDetails = await otcTrade.setup()
 

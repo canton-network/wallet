@@ -11,6 +11,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close'
 import type { ReactNode } from 'react'
 import { CopyableIdentifier } from '@components/copyable-identifier'
+import { DescriptionText } from '@components/description-text'
 import { PillButton } from '@components/ui/PillButton'
 import type { TransferActionItem } from '@components/types'
 import { getCounterparty, isReceiver } from '@components/utils'
@@ -107,11 +108,7 @@ export function TransferOfferActionDialogContent({
                 </DetailRow>
 
                 <DetailRow label="Description">
-                    <Typography
-                        sx={{ textAlign: 'right', wordBreak: 'break-word' }}
-                    >
-                        {item.message || '—'}
-                    </Typography>
+                    <DescriptionText value={item.message} />
                 </DetailRow>
 
                 <DetailRow label="Contract ID">

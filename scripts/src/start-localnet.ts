@@ -16,6 +16,8 @@ const GENERATED_COMPOSE_OVERRIDE = path.join(
 
 const CANTON_MAX_COMMANDS_IN_FLIGHT = 256
 
+const SCAN_CACHED_BY_PARTY_TTL = '1s'
+
 // Custom multi-sync bootstrap script
 const CUSTOM_APP_SYNCHRONIZER_SC = path.join(
     rootDir,
@@ -53,6 +55,10 @@ function ensureComposeOverride(network: Network, multiSync: boolean) {
             `        canton.participants.app-provider.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
             `        canton.participants.app-user.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
             `        canton.participants.sv.ledger-api.command-service.max-commands-in-flight = ${CANTON_MAX_COMMANDS_IN_FLIGHT}`,
+            '  splice:',
+            '    environment:',
+            '      ADDITIONAL_CONFIG_SCAN_CACHE: |-',
+            `        canton.scan-apps.scan-app.cache.cached-by-party { ttl = ${SCAN_CACHED_BY_PARTY_TTL}, max-size = 2000 }`,
             ...(multiSync && cantonSupportsMultiSyncFeatureFlag(network)
                 ? [
                       '  multi-sync-startup:',

@@ -93,6 +93,10 @@ export class TransferNamespace {
                     amount: params.amount,
                     instrumentAdmin: asset.admin,
                     instrumentId: asset.id,
+                    ...(params.memo !== undefined ? { memo: params.memo } : {}),
+                    ...(params.expirationDate !== undefined
+                        ? { expirationDate: params.expirationDate }
+                        : {}),
                 },
                 asset.registryUrl
             )

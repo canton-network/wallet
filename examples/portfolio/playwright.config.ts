@@ -21,15 +21,16 @@ export default defineConfig({
     testDir: './tests',
     /* Funds the validator and creates the per-worker ledger users. Runs once. */
     globalSetup: './tests/global-setup.ts',
-    /* Run tests in files in parallel */
-    fullyParallel: false,
+    /*
+     * Run tests in files in parallel. Otherwise the five transfer tests all
+     * land on one worker and the other sits idle for the last ~70s.
+     */
+    fullyParallel: true,
     /* Fail the build on CI if you accidentally left test.only in the source code. */
     forbidOnly: !!process.env.CI,
     /* Retry on CI only */
     retries: process.env.CI ? 2 : 0,
     /*
-     * One spec file per worker (fullyParallel is false above).
-     *
      * These tests mostly wait on the ledger instead of using CPU, so a couple
      * running at once costs almost no extra CPU.
      *
