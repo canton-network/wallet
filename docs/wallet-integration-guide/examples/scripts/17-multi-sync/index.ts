@@ -124,22 +124,14 @@ const testTokenAllocation = allocationsBob.find(
 )
 
 assertV1(!!testTokenAllocation, 'TestToken allocation not found')
-// ── Step 10b: Reassign Bob's TestToken allocation app-synchronizer → global ──
-// TODO #2097 remove after bugfix in canton
-await bobSdk.ledger.internal.reassign({
-    submitter: bob.partyId,
-    contractId: testTokenAllocation.contractId,
-    source: synchronizers.appSynchronizerId,
-    target: synchronizers.globalSynchronizerId,
-})
-logger.info(
-    'Bob: TestToken allocation reassigned app-synchronizer → global ahead of settlement'
-)
 
-// ── Step 10c: Scan for both allocations from the TradingApp's perspective ─────
-// Poll the TradingApp's ACS until Alice's Amulet allocation (leg-0) and Bob's
-// reassigned TestToken allocation (leg-1) have both propagated — this replaces
-// disclosing the TestToken allocation to the TradingApp's settlement participant.
+// ── Step 10b: Scan for both allocations from the TradingApp's perspective ─────
+// Poll the TradingApp's ACS until Alice's Amulet allocation (leg-0, global) and
+// Bob's TestToken allocation (leg-1, app-synchronizer) have both propagated —
+// this replaces disclosing the TestToken allocation to the TradingApp's
+// settlement participant. No explicit reassignment is needed: the TradingApp is
+// hosted on a participant connected to both synchronizers and is a stakeholder
+// of the allocation, so Canton reassigns leg-1 automatically during settlement.
 const allocationsByLeg = await tradingAppSdk.token.v1.allocation.scan({
     partyId: tradingApp.partyId,
     transferLegIds: [legIdAlice, legIdBob],
@@ -147,7 +139,7 @@ const allocationsByLeg = await tradingAppSdk.token.v1.allocation.scan({
 const amuletAllocationCid = allocationsByLeg[legIdAlice].contractId
 const testTokenAllocationCid = allocationsByLeg[legIdBob].contractId
 
-// ── Step 10d: TradingApp settles the OTCTrade ─────────────────────────────────
+// ── Step 10c: TradingApp settles the OTCTrade ─────────────────────────────────
 try {
     await settleOtcTrade(
         setup,
