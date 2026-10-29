@@ -23,12 +23,6 @@
             "require": "./dist/logic/index.cjs",
             "default": "./dist/logic/index.js"
         },
-        "./lit-react": {
-            "types": "./dist/lit-react/index.d.ts",
-            "import": "./dist/lit-react/index.js",
-            "require": "./dist/lit-react/index.cjs",
-            "default": "./dist/lit-react/index.js"
-        },
         "./react": {
             "types": "./dist/react/index.d.ts",
             "import": "./dist/react/index.js",

@@ -3,7 +3,7 @@
 
 import React from 'react'
 import { createComponent } from '@lit/react'
-import { NotFound as NotFoundElement } from '../components/not-found.js'
+import { NotFound as NotFoundElement } from '../../components/not-found.js'
 
 export const NotFound = createComponent({
     tagName: 'not-found',
