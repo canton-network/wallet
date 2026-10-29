@@ -6,6 +6,11 @@ import z from 'zod'
 
 type OriginManagerConstructor = {
     readonly userHandshakeCallback?: (event: MessageEvent) => void
+    /**
+     * Origins trusted up front without a handshake, e.g. the page's own
+     * origin when messaging the same window from a content script.
+     */
+    readonly trustedOrigins?: readonly Location['origin'][]
 }
 
 abstract class OriginManager {
@@ -16,6 +21,9 @@ abstract class OriginManager {
     ) => void
 
     constructor(private options?: OriginManagerConstructor) {
+        options?.trustedOrigins?.forEach((origin) =>
+            this.allowedOrigins.add(origin)
+        )
         // we need to wait for the subclass `super` call to be processed before accessing the sessionStorage key properly
         queueMicrotask(() => this.loadOrigins())
         window.addEventListener('message', this.listener)
@@ -137,7 +145,9 @@ abstract class OriginManager {
             .safeParse(JSON.parse(storageValue))
 
         if (persistedOrigins.success)
-            this.allowedOrigins = new Set(persistedOrigins.data)
+            persistedOrigins.data.forEach((origin) =>
+                this.allowedOrigins.add(origin)
+            )
     }
 
     /**

@@ -29,10 +29,8 @@ export class PingPage {
         await expect(wallet).toBeVisible()
         await expect(picker.getByLabel('Install Canton Wallet')).toHaveCount(0)
 
+        // Extension wallets connect on selection; the picker then closes itself.
         await wallet.click()
-        await picker.getByRole('button', { name: 'Connect' }).click()
-
-        await expect(picker.getByText('Logging in')).toHaveCount(0)
 
         await expect(async () => {
             expect(await this.page.getByTestId('connect-wallet').count()).toBe(

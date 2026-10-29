@@ -9,8 +9,8 @@ import {
     type SpliceMessageEvent,
 } from '@canton-network/core-types'
 
+import { ParentWindowOriginManager } from '@canton-network/core-origin-manager'
 import { createProxyService } from '@webext-core/proxy-service'
-import { parentOriginManager } from '@/utils/legacy-frontend/origin'
 import type { Methods } from '../background/dapp/rpc-gen'
 import type { NotificationRelay } from './notification-relay'
 
@@ -20,6 +20,11 @@ import type { NotificationRelay } from './notification-relay'
  */
 export function jsonRpcProxy(notificationRelay: NotificationRelay) {
     const runtimeId = browser.runtime?.id
+    // The dApp lives in this same window, so its origin is trusted up front:
+    // no handshake partner exists here, and messages stay scoped to it.
+    const pageOriginManager = new ParentWindowOriginManager({
+        trustedOrigins: [location.origin],
+    })
 
     const shouldHandle = (target: string | undefined): boolean => {
         if (!target) return true
@@ -58,7 +63,7 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay) {
                 response: msgResponse,
             }
 
-            parentOriginManager.postMessage(response)
+            pageOriginManager.postMessage(response, location.origin)
 
             if ('result' in msgResponse) {
                 notificationRelay.onResponse(
@@ -77,10 +82,13 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay) {
         // Acknowledge the extension readiness request
         if (msg.type === WalletEvent.SPLICE_WALLET_EXT_READY) {
             if (!shouldHandle(msg.target)) return
-            parentOriginManager.postMessage({
-                type: WalletEvent.SPLICE_WALLET_EXT_ACK,
-                target: msg.target,
-            })
+            pageOriginManager.postMessage(
+                {
+                    type: WalletEvent.SPLICE_WALLET_EXT_ACK,
+                    target: msg.target,
+                } satisfies SpliceMessage,
+                location.origin
+            )
         }
     })
 }

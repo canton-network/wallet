@@ -88,6 +88,21 @@ describe('manager', () => {
             expect(removeEventSpy).toHaveBeenCalledOnce()
         })
 
+        it('should post directly to pre-trusted origins without a handshake', () => {
+            const trustedManager = new ParentWindowOriginManager({
+                trustedOrigins: [exampleOrigin],
+            })
+
+            trustedManager.postMessage('some message', exampleOrigin)
+
+            expect(trustedManager.assert(exampleOrigin)).toBe(true)
+            expect(postMessageSpy).toHaveBeenCalledExactlyOnceWith(
+                'some message',
+                exampleOrigin
+            )
+            trustedManager.removeListener()
+        })
+
         it('should poll message when calling postMessage for the first time', () => {
             parentWindowManager.postMessage('some message', exampleOrigin)
 
