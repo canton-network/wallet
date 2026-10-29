@@ -12,9 +12,168 @@ Networks and IDPs are seeded from the `bootstrap` section on first run. After th
 user (see `server.admin` in [Configure the Wallet Gateway](configure.mdx))
 can manage them at runtime through the User API or User UI.
 
+## Who trusts whom
+
+Authentication in a Wallet Gateway deployment involves three identities:
+
+- the **ledger user**, who may use a network's Ledger API and, through it, the Wallet Gateway,
+- the **API-key principal**, a backend job the Wallet Gateway maps to a user and a network, and
+- the **signing-provider identity**, the credentials the Wallet Gateway holds for each provider.
+
+Each has its own trust anchor and its own verifier. The two views below use OpenID Connect
+terminology: the **OpenID Provider** (identity provider, IdP) issues tokens, the **Relying Party**
+consumes identity and obtains tokens, and the **resource server** is what a token's `aud` names and
+what finally verifies it. Today the Wallet Gateway has no identity of its own: a user logs in to a
+network, and that network's token is also the Wallet Gateway session.
+
+<Note>
+
+This section describes the remote (self-hosted) Wallet Gateway. The browser extension trusts the
+same anchors and uses the same ledger tokens. It adds one local anchor: sessions, the auth context
+and keys live in a vault encrypted with the user's password, so nothing can be used until the
+user unlocks it.
+
+</Note>
+
+### Configured trust
+
+This is what configuration establishes before any user logs in; nothing here changes at runtime.
+An arrow points **from the component that trusts to the anchor it is configured to trust**, and
+the label names the configuration that establishes it. Yellow nodes are anchors (issuers or keys),
+blue is a relying party, green is the resource server.
+
+```mermaid
+flowchart LR
+  classDef anchor fill:#fff3cd,stroke:#b8860b,color:#000
+  classDef rp fill:#d1ecf1,stroke:#0c5460,color:#000
+  classDef rs fill:#d4edda,stroke:#155724,color:#000
+  classDef ext fill:#e2e3e5,stroke:#383d41,color:#000
+
+  WG["Wallet Gateway<br/>Relying Party: verifies every ledger token itself<br/>OAuth client toward network IdPs<br/>issuer of self_signed tokens"]:::rp
+
+  subgraph NETAUTH["Network identity, per network"]
+    direction TB
+    NetIdP["idps[].type = oauth<br/>OpenID Provider<br/>anchor: issuer JWKS (configUrl)"]:::anchor
+    SelfSigned["idps[].type = self_signed · dev only<br/>anchor: auth.clientSecret shared<br/>between WG and participant"]:::anchor
+    SelfIssued["idps[].type = self_issued<br/>anchor: the party key in topology,<br/>held by the signing provider<br/>+ ledger user primary_party_authentication"]:::anchor
+  end
+
+  APIKey["API key<br/>anchor: sha256 digest stored by the WG<br/>maps to userId, email, networkId"]:::anchor
+
+  LAPI["Ledger API / participant<br/>resource server, aud = participant<br/>ledger-api.auth-services (participant config)"]:::rs
+  SP["Signing provider<br/>participant · Fireblocks · Blockdaemon · DFNS · internal store"]:::ext
+  dApp["dApp"]:::ext
+
+  WG -->|"auth.method = authorization_code (users)<br/>adminAuth, serviceAccountAuth = client_credentials<br/>clientId, audience, scope"| NetIdP
+  WG -->|"auth.method = self_signed<br/>issuer, clientSecret, audience<br/>(also allowed for adminAuth)"| SelfSigned
+  WG -->|"auth.method = self_issued<br/>audience = participant id"| SelfIssued
+  WG -->|"API keys<br/>serviceAccountAuth (client_credentials) for the ledger side"| APIKey
+
+  LAPI -->|"jwt-jwks (url)"| NetIdP
+  LAPI -->|"unsafe-jwt-hmac-256"| SelfSigned
+  LAPI -->|"party-jwt"| SelfIssued
+
+  WG -->|"provider credentials (API key, participant)<br/>Blockdaemon additionally needs the user's email"| SP
+  SP -->|"holds the party key"| SelfIssued
+
+  dApp -->|"wallet discovery / configured WG URL"| WG
+  WG -->|"server.allowedOrigins (CORS)<br/>one session per user and dApp origin"| dApp
+```
+
+Key points:
+
+- **The validator decides who its users are.** Each network's `auth` must match the participant's
+  `ledger-api.auth-services`. The Wallet Gateway cannot grant itself ledger access; it only
+  obtains tokens from the anchor the network is configured with.
+- **The Wallet Gateway trusts the same anchors.** It is a Relying Party of the network IdP: on
+  every request it checks the token's signature with the same JWKS, shared secret or party key,
+  plus `iss`, `aud` and the presence of a scope. When a session is created it also checks that
+  `iss`, `aud` and `clientId` match the selected network. A token the participant would reject
+  therefore never reaches the Wallet Gateway's own APIs either.
+- **`self_signed` makes the Wallet Gateway an issuer.** It signs tokens with the network's
+  `clientSecret` (`kid` = network id), which is why it is development only.
+- **`self_issued` moves the anchor to the party key.** The Wallet Gateway verifies the EdDSA
+  signature against the public key of the stored wallet that the token names, and that wallet
+  must be marked as the user's authentication party. The signing provider that holds the key is
+  part of the ledger trust chain, so the participant signing provider cannot be used for it. See
+  [Self-issued access token](self-issued-authentication.mdx).
+- **Signing providers have their own identity.** The Wallet Gateway authenticates to each
+  provider with the credentials you configure. Some providers also need user attributes:
+  Blockdaemon requires an email, which today comes from the ledger token's `email` claim, the
+  IdP's `userinfo` endpoint, or the API key record.
+
+### Runtime verification
+
+Once configured, every user or dApp request carries one JWT, the ledger token, and two
+components verify it in turn: the Wallet Gateway when the request arrives, and the participant
+when the token reaches the Ledger API. Backend jobs present an API key instead and the Wallet
+Gateway obtains a ledger token for them. Tokens are stateless; the Wallet Gateway keeps a
+`Session` per `(user, dApp origin)` to authorize dApp and User API calls and to hand the token to
+the dApp.
+
+```mermaid
+flowchart LR
+  classDef token fill:#fde2e4,stroke:#9d0208,color:#000
+  classDef verifier fill:#d1ecf1,stroke:#0c5460,color:#000
+  classDef holder fill:#e2e3e5,stroke:#383d41,color:#000
+  classDef state fill:#f8f9fa,stroke:#6c757d,stroke-dasharray: 4 2,color:#000
+
+  User(["User"]):::holder
+  Job(["Backend job"]):::holder
+  dApp["dApp"]:::holder
+
+  LT{{"Ledger token (JWT)<br/>iss = network IdP | Wallet Gateway (self_signed) | party (self_issued)<br/>aud = participant<br/>sub → userId (self_issued: sub = party, daml.com.usr → user)"}}:::token
+  Key{{"API key<br/>Authorization: ApiKey …"}}:::token
+
+  WG["Wallet Gateway verifies<br/>JWT: signature vs JWKS, clientSecret or wallet public key · iss · aud · scope<br/>API key: sha256 digest lookup, no JWT<br/>result: userId, email (claim or userinfo)"]:::verifier
+  LAPI["Participant verifies again<br/>per ledger-api.auth-services<br/>result: ledger user and party rights"]:::verifier
+  SP["Signing provider verifies<br/>the Wallet Gateway's provider credentials<br/>(Blockdaemon also needs the user's email)"]:::verifier
+
+  Session["Session (user, origin)<br/>network, accessToken<br/>gates dApp and User API calls"]:::state
+
+  User -->|"authorization_code at the network IdP<br/>(browser, callback URL)"| LT
+  User -->|"self_signed: logs in to the network,<br/>WG signs with clientSecret"| LT
+  SP -->|"self_issued: signs the party JWT (signMessage)"| LT
+  LT -->|"Authorization: Bearer"| WG
+  WG -->|"at login: iss, aud, clientId<br/>must match the selected network"| Session
+  Session -->|"session.accessToken = network.accessToken"| dApp
+  dApp -->|"Authorization: Bearer (dApp API)"| WG
+  WG -->|"forwards the same token"| LAPI
+  dApp -->|"may call the Ledger API directly"| LAPI
+  WG -->|"email (Blockdaemon only)"| SP
+
+  Job --> Key
+  Key -->|"digest lookup → userId, email, networkId"| WG
+  WG -->|"serviceAccountAuth: client_credentials<br/>token for the job"| LT
+```
+
+#### Tokens at a glance
+
+| Credential | Issued by (`iss`) | Audience (`aud`) | Presented by | Verified by | Anchor (from configuration) |
+| --- | --- | --- | --- | --- | --- |
+| Ledger token, `authorization_code` / `client_credentials` | Network IdP (`oauth`) | participant | User UI, dApp (`session.accessToken`), Wallet Gateway | Wallet Gateway (signature, `iss`, `aud`, scope), then participant | IdP JWKS (`configUrl`) / `jwt-jwks` |
+| Ledger token, `self_signed` | Wallet Gateway (`kid` = network id) | participant | User UI, dApp, Wallet Gateway | Wallet Gateway (HS256 with `clientSecret`, `iss`, `aud`), then participant | `auth.clientSecret` / `unsafe-jwt-hmac-256` (dev only) |
+| Ledger token, `self_issued` | the party, signed by the signing provider | participant | User UI, dApp, Wallet Gateway | Wallet Gateway (EdDSA vs the stored wallet's key, `isAuthParty`), then participant | party key in topology / `party-jwt` + `primary_party_authentication` |
+| API key | n/a (pre-shared) | Wallet Gateway | Backend job (`Authorization: ApiKey …`) | Wallet Gateway (sha256 digest) | stored key digest; `serviceAccountAuth` (`client_credentials`) for the ledger token |
+
+<Note>
+
+**Planned: a Wallet Gateway identity separate from the ledger identity.** Today the ledger token
+doubles as the Wallet Gateway session, so a user cannot log in to the Wallet Gateway without
+picking a network, and the email a signing provider needs comes from the network's token.
+[wallet#2467](https://github.com/canton-network/wallet/issues/2467) separates the two: users log
+in to the Wallet Gateway through its own IdP, then connect to one or more networks, each with its
+own ledger token. For dApps, `session.accessToken` and `network.accessToken` carry the same token
+today; after the change `session.accessToken` is the Wallet Gateway credential and only
+`network.accessToken` is the ledger token. This section will be updated when that lands.
+
+</Note>
+
 ## Identity providers
 
-Every network references an IDP by `id`. The Wallet Gateway supports two IDP types.
+Every network references an IDP by `id`. The Wallet Gateway supports three IDP types: `oauth`,
+`self_signed`, and `self_issued`. The first two are described below; for `self_issued`, see
+[Self-issued access token](self-issued-authentication.mdx).
 
 <Warning>
 
