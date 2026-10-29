@@ -49,7 +49,9 @@ pnpm scan-topup        # terminal 2, leave running — watches the ledger and cr
 pnpm dev               # terminal 3 — http://localhost:8081
 ```
 
-`initialize` writes `.env.local` with the paymaster's party id; `serve-paymaster` reads that, starts
+> **Note:** `scan-topup` won't be needed on Canton 3.7, which ships a built-in traffic-purchase service that credits purchases for you.
+
+`initialize` writes `.env.local` with the paymaster's party id;
 the API, and adds its URL to the same file, which `dev` then picks up. Run them in this order the
 first time; after that, `initialize` doesn't need to be re-run unless you want a fresh paymaster.
 
@@ -79,13 +81,22 @@ Writing `pnpm tap-amulet -- <partyId> [amount]` (or `pnpm topup -- …`) works t
 
 # Technical Notes
 
-It uses the SDK's `TrafficAccountNamespace` (`sdk.traffic`), which exposes four functions this example relies on:
+It uses the SDK's `TrafficAccountNamespace` (`sdk.traffic`), which exposes four functions this
+example relies on:
 
-- `setup` — converges the paymaster's on-ledger `TrafficPurchaser` / `ConversionRate` contracts (prices traffic).
-- `purchaseTraffic` — builds the buyer-signed purchase that pays with token-standard holdings and credits traffic on-ledger.
+- `setup` — converges the paymaster's on-ledger `TrafficPurchaser` / `ConversionRate` contracts
+  (prices traffic).
+- `purchaseTraffic` — builds the buyer-signed purchase that pays with token-standard holdings and
+  credits traffic on-ledger.
 - `getTraffic` — reads a party's current traffic balance.
-- `topUpTraffic` — applies an off-ledger balance delta (admin-only; used by `scan-topup`/`topup`).
+- `topUpTraffic` — applies an off-ledger balance delta (admin-only; used by `scan-topup` / `topup`).
 
-The credit itself is published through the [`TrafficCreditIssuer`](../../damljs/canton-traffic-credit/canton-tea/Canton/Traffic/Credit.daml) interface (`PublishCredit`), which is the contract between Canton's TEA and the selling application.
+The credit itself is published through the
+[`TrafficCreditIssuer`](../../damljs/canton-traffic-credit/canton-tea/Canton/Traffic/Credit.daml)
+interface (`PublishCredit`), the contract between Canton's TEA and the selling application.
 
-We propose a ready-made Daml model, [`traffic-purchase-models`](../../damljs/traffic-purchase-models/daml/Tea/TrafficPurchase.daml) (`TrafficPurchaser` + `ConversionRate`), and this example uses it. Wallets are free to implement their own model instead — as long as it exposes the `TrafficCreditIssuer` interface, `purchaseTraffic` works against it unchanged.
+We propose a ready-made Daml model,
+[`traffic-purchase-models`](../../damljs/traffic-purchase-models/daml/Tea/TrafficPurchase.daml)
+(`TrafficPurchaser` + `ConversionRate`), and this example uses it. Wallets are free to implement
+their own model instead — as long as it exposes the `TrafficCreditIssuer` interface,
+`purchaseTraffic` works against it unchanged.
