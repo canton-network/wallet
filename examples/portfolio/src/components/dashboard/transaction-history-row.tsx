@@ -3,6 +3,7 @@
 
 import { Chip, TableCell, TableRow, Typography } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
+import { DateTimeText } from '@components/date-time-text'
 import {
     getTransactionDisplay,
     type TransactionHistoryEntry,
@@ -95,7 +96,7 @@ export function TransactionHistoryRow({
                     color="text.secondary"
                     sx={{ whiteSpace: 'nowrap' }}
                 >
-                    {display.date}
+                    <DateTimeText value={display.date} offset={false} />
                 </Typography>
             </TableCell>
 

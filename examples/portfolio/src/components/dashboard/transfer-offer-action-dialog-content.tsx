@@ -15,7 +15,8 @@ import { DescriptionText } from '@components/description-text'
 import { PillButton } from '@components/ui/PillButton'
 import type { TransferActionItem } from '@components/types'
 import { getCounterparty, isReceiver } from '@components/utils'
-import { formatDateTimeString, formatDistanceToNow } from '@utils/date-format'
+import { formatDistanceToNow } from '@utils/date-format'
+import { DateTimeText } from '@components/date-time-text'
 import { formatAmount } from '@utils/decimal'
 
 interface TransferOfferActionDialogContentProps {
@@ -92,7 +93,7 @@ export function TransferOfferActionDialogContent({
                 <DetailRow label="Expiration">
                     <Box sx={{ textAlign: 'right' }}>
                         <Typography variant="body1">
-                            {formatDateTimeString(item.expiry)}
+                            <DateTimeText value={item.expiry} />
                         </Typography>
                         <Typography variant="body1">
                             {formatDistanceToNow(item.expiry)}
