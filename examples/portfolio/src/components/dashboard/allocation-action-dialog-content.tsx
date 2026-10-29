@@ -29,7 +29,8 @@ import {
     type AggregatedHolding,
 } from '@utils/aggregate-holdings'
 import { formatAmount } from '@utils/decimal'
-import { formatDateTimeString, formatDistanceToNow } from '@utils/date-format'
+import { formatDistanceToNow } from '@utils/date-format'
+import { DateTimeText } from '@components/date-time-text'
 
 interface AllocationActionDialogContentProps {
     item: AllocationActionItem
@@ -122,8 +123,8 @@ export function AllocationActionDialogContent({
                 </DetailRow>
                 <DetailRow label="Allocate Before">
                     <Typography variant="body1">
-                        {formatDateTimeString(item.settlement.allocateBefore)} (
-                        {formatDistanceToNow(item.settlement.allocateBefore)})
+                        <DateTimeText value={item.settlement.allocateBefore} />{' '}
+                        ({formatDistanceToNow(item.settlement.allocateBefore)})
                     </Typography>
                 </DetailRow>
                 <DetailRow label="Settlement Reference">
