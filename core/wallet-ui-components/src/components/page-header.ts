@@ -14,7 +14,7 @@ import { BaseElement } from '../internal/base-element.js'
  */
 @customElement('wg-page-header')
 export class WgPageHeader extends BaseElement {
-    @property() heading = ''
+    @property() accessor heading = ''
 
     static styles = [
         BaseElement.styles,

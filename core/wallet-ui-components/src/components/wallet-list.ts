@@ -16,11 +16,12 @@ import './wallet-card.js'
 @customElement('wg-wallet-list')
 export class WgWalletList extends BaseElement {
     /** The wallets to show. While it is undefined, a loading text is shown */
-    @property({ type: Array }) wallets: Wallet[] | undefined = undefined
+    @property({ type: Array }) accessor wallets: Wallet[] | undefined =
+        undefined
     /** Disables the cards' actions, e.g. while a request is in flight */
-    @property({ type: Boolean }) loading = false
+    @property({ type: Boolean }) accessor loading = false
     /** Wallets of this signing provider can't be edited */
-    @property() nonEditableSigningProviderId = ''
+    @property() accessor nonEditableSigningProviderId = ''
 
     static styles = [
         BaseElement.styles,
