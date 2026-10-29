@@ -11,6 +11,7 @@ import { SDK } from '../../sdk.js'
 import { localNetStaticConfig } from '../../../config.js'
 import { localNetAuth } from './test-support/localnet-auth.js'
 import { TrafficScan } from './test-support/traffic-scan.js'
+import { TrafficPaymasterApi } from './test-support/traffic-paymaster-api.js'
 
 /**
  * The full round trip a wallet provider sets `traffic` up for, against a real
@@ -35,6 +36,26 @@ describe('traffic.setup and traffic.purchaseTraffic on LocalNet', () => {
         const admin = await SDK.create({
             auth,
             ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            // LocalNet's app-user participant connects to both the global
+            // synchronizer -- where Amulet lives -- and an app-synchronizer.
+            // A purchase settles an Amulet transfer in the same transaction it
+            // exercises the paymaster's contracts, so everything has to run on
+            // the global one; with multi-sync the default, the SDK will not
+            // guess between the two.
+            synchronizerId: (synchronizers) => {
+                const global = synchronizers.find((s) =>
+                    s.synchronizerId.startsWith('global-domain::')
+                )
+                if (global === undefined) {
+                    throw new Error(
+                        'No global-domain synchronizer connected; saw ' +
+                            synchronizers
+                                .map((s) => s.synchronizerId)
+                                .join(', ')
+                    )
+                }
+                return global.synchronizerId
+            },
             amulet: {
                 // Needed so preapproval.command.create has a validator party
                 // to default the proposal's provider to; left out, it has
@@ -89,22 +110,14 @@ describe('traffic.setup and traffic.purchaseTraffic on LocalNet', () => {
             })
         }
 
-        // Nothing was there before this call, so its own commands created both
-        // contracts and their ids are not known until they commit.
-        const active = await admin.traffic.readTrafficSetup(paymaster)
-        const trafficPurchaserCid = active.trafficPurchasers[0]?.contractId
-        const conversionRateCid = active.conversionRates[0]?.contractId
-        if (
-            trafficPurchaserCid === undefined ||
-            conversionRateCid === undefined
-        ) {
-            throw new Error(
-                `Traffic setup for paymaster ${paymaster} did not produce a purchaser and a rate`
-            )
-        }
-        const setupDisclosures = await admin.ledger.disclose({
-            contractIds: [trafficPurchaserCid, conversionRateCid],
-            asParty: paymaster,
+        // The paymaster's own off-ledger API, which is how the buyer finds the
+        // rest: the contracts the setup just created, and -- the point of it --
+        // their disclosures, which only the paymaster can produce.
+        const paymasterApi = await TrafficPaymasterApi.start({
+            traffic: admin.traffic,
+            ledgerApiUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            auth,
+            paymaster,
         })
 
         // Amulet refuses to settle a direct transfer to a party that has not
@@ -154,21 +167,20 @@ describe('traffic.setup and traffic.purchaseTraffic on LocalNet', () => {
 
         try {
             // 2. Buy two mebibytes of traffic for the buyer's own account, paid
-            // for in Amulet at the rate the setup just priced it at.
+            // for in Amulet at the rate the setup just priced it at. Nothing of
+            // the paymaster's half is stated: `paymasterApiUrl` is what the
+            // purchaser contract, the receiver, the rate and both disclosures
+            // are read off.
             const trafficAmount = '2097152'
 
             const [purchaseCommand, purchaseDisclosedContracts] =
                 await admin.traffic.purchaseTraffic({
                     purchaser: buyer.partyId,
-                    trafficPurchaserCid,
-                    conversionRateCid,
-                    paymasterReceiver: paymaster,
+                    paymasterApiUrl: paymasterApi.url,
                     instrumentId: 'Amulet',
                     registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
                     targetAccount: buyer.partyId,
                     trafficAmount,
-                    conversionRate: bytesPerAmulet,
-                    disclosedContracts: setupDisclosures,
                 })
 
             await admin.ledger
@@ -194,6 +206,7 @@ describe('traffic.setup and traffic.purchaseTraffic on LocalNet', () => {
             })
         } finally {
             await scan.stop()
+            await paymasterApi.stop()
         }
     })
 })

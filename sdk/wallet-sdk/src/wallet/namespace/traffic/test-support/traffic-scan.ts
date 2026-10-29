@@ -274,10 +274,20 @@ export class TrafficScan {
 
         // Only the credit-issuing choice, and only on the interface this scan
         // trusts: a choice that merely shares the `PublishCredit` name from some
-        // other interface is not a traffic credit.
+        // other interface is not a traffic credit. The ledger reports the
+        // interface id package-*id* qualified (e.g.
+        // `<pkgid>:Canton.Traffic.Credit:TrafficCreditIssuer`), while the
+        // generated companion's id is package-*name* qualified
+        // (`#canton-traffic-credit:...`); comparing the `Module:Entity` part
+        // keeps the match working across both forms and across the package
+        // upgrades that change the id but not the name.
         if (
             exercised.choice !== 'PublishCredit' ||
-            exercised.interfaceId !== trafficCreditIssuerInterfaceId ||
+            exercised.interfaceId === undefined ||
+            !sameQualifiedName(
+                exercised.interfaceId,
+                trafficCreditIssuerInterfaceId
+            ) ||
             exercised.choiceArgument === undefined
         ) {
             return
@@ -328,6 +338,17 @@ export class TrafficScan {
             this.waiters.delete(accountId)
         }
     }
+}
+
+/**
+ * Whether two Daml identifiers name the same `Module:Entity`, whatever package
+ * qualifier they carry. The ledger reports an exercised event's interface id
+ * package-id qualified, while the generated companion's is package-name
+ * qualified; both share the `Module:Entity` tail.
+ */
+function sameQualifiedName(a: string, b: string): boolean {
+    const tail = (id: string): string => id.split(':').slice(1).join(':')
+    return tail(a) === tail(b)
 }
 
 /** The offset of an `Update` that is not a `Transaction`. */
