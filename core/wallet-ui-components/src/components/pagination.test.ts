@@ -89,4 +89,19 @@ describe('wg-pagination', () => {
         expect((buttons[0] as HTMLButtonElement).disabled).toBe(true)
         expect((buttons[1] as HTMLButtonElement).disabled).toBe(false)
     })
+
+    it('disables both buttons when disabled', async () => {
+        const el = await fixture<WgPagination>(
+            html`<wg-pagination
+                .total=${15}
+                .pageSize=${5}
+                .page=${2}
+                .disabled=${true}
+            ></wg-pagination>`
+        )
+
+        const buttons = el.shadowRoot!.querySelectorAll('.page-btn')
+        expect((buttons[0] as HTMLButtonElement).disabled).toBe(true)
+        expect((buttons[1] as HTMLButtonElement).disabled).toBe(true)
+    })
 })

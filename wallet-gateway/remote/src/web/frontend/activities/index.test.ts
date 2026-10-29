@@ -199,6 +199,44 @@ describe('UserUiActivities', () => {
         })
     })
 
+    it('disables pagination while a page is loading', async () => {
+        mockRequest.mockResolvedValueOnce({
+            transactions: makeTransactions(4),
+            nextCursor: 'page-2-cursor',
+            count: 12,
+        })
+        let resolvePage2!: (value: unknown) => void
+        mockRequest.mockReturnValueOnce(
+            new Promise((resolve) => (resolvePage2 = resolve))
+        )
+
+        el = await fixture<UserUiActivities>(componentFixture)
+        await waitUntil(() => el.transactions.length === 4)
+
+        const pagination = el.shadowRoot?.querySelector(
+            'wg-pagination'
+        ) as HTMLElement & { disabled: boolean }
+        expect(pagination.disabled).toBe(false)
+
+        pagination.dispatchEvent(new PageChangeEvent(2))
+        await el.updateComplete
+        expect(pagination.disabled).toBe(true)
+
+        resolvePage2({
+            transactions: [makeTransaction({ id: 'tx-5', commandId: 'cmd-5' })],
+            nextCursor: 'page-3-cursor',
+            count: 12,
+        })
+        await waitUntil(() => !el.loading, 'page 2 loaded')
+        await el.updateComplete
+
+        expect(pagination.disabled).toBe(false)
+        expect(mockRequest).toHaveBeenNthCalledWith(2, {
+            method: 'listTransactions',
+            params: { limit: 4, cursor: 'page-2-cursor' },
+        })
+    })
+
     it('navigates to approve page when a card emits transaction-review', async () => {
         mockRequest.mockResolvedValue({
             transactions: makeTransactions(1),
