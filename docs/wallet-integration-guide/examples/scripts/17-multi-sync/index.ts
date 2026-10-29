@@ -1,10 +1,6 @@
 import { logAllContracts } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
-import {
-    TEST_TOKEN_REGISTRY_PORT,
-    TRADE_AMULET_AMOUNT,
-    TRADE_TOKEN_AMOUNT,
-} from './_constants.js'
+import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
 import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
 import { mintAndTransferTokenToBob } from './_token_setup.js'
 import { allocateTokenForBob } from './_token_allocation.js'
@@ -22,6 +18,8 @@ import { TestToken } from '@canton-network/core-splice-codegen'
 // app-user and app-provider connect to the global + app synchronizers, sv is global-only.
 
 import { configureLogging } from '../utils/configure-logging.js'
+import { TEST_TOKEN_V1_REGISTRY_PORT } from '../common/_constants.js'
+import { assertV1 } from '../common/_utils.js'
 const logger = await configureLogging()
 
 // ── Setup: create SDKs, discover synchronizers, vet DARs, allocate parties ───
@@ -51,7 +49,7 @@ await startRegistry({
         keys: tokenAdmin.keyPair,
     },
     synchronizerId: synchronizers.appSynchronizerId,
-    port: TEST_TOKEN_REGISTRY_PORT,
+    port: TEST_TOKEN_V1_REGISTRY_PORT,
     sdk: tokenAdminSdk,
 })
 
@@ -124,7 +122,8 @@ const allocationsBob = await bobSdk.token.v1.allocation.pending(bob.partyId)
 const testTokenAllocation = allocationsBob.find(
     (a) => a.interfaceViewValue.allocation.transferLegId === legIdBob
 )
-if (!testTokenAllocation) throw new Error('TestToken allocation not found')
+
+assertV1(!!testTokenAllocation, 'TestToken allocation not found')
 // ── Step 10b: Reassign Bob's TestToken allocation app-synchronizer → global ──
 // TODO #2097 remove after bugfix in canton
 await bobSdk.ledger.internal.reassign({

@@ -35,6 +35,10 @@ export const queryKeys = {
             forParty: (party: string | undefined) =>
                 [...walletConnection, 'pendingTransfers', party] as const,
         },
+        pendingTransfersV2: {
+            forParty: (party: string | undefined) =>
+                [...walletConnection, 'pendingTransfers', 'v2', party] as const,
+        },
 
         allocations: {
             all: [...walletConnection, 'allocations'] as const,
@@ -47,7 +51,6 @@ export const queryKeys = {
             forParty: (party: string | undefined) =>
                 [...walletConnection, 'allocationRequests', party] as const,
         },
-
         transactionHistory: {
             all: [...walletConnection, 'transactionHistory'] as const,
             forParty: (party: string | undefined) =>

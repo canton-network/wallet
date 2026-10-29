@@ -29,6 +29,7 @@ export class OTCTrade {
     private alice: PartyId
     private bob: PartyId
     private charlie: PartyId
+    private clientId: string
     private sdk: SDKInterface<'asset'> | null = null
     private expectedAllocationCount = 0
 
@@ -37,11 +38,15 @@ export class OTCTrade {
         alice: PartyId
         bob: PartyId
         charlie: PartyId
+        // Ledger user that submits for the parties above, so it needs to be
+        // able to act as all of them
+        clientId?: string
     }) {
         this.venue = args.venue
         this.alice = args.alice
         this.bob = args.bob
         this.charlie = args.charlie
+        this.clientId = args.clientId ?? 'ledger-api-user'
     }
 
     async setup(): Promise<{
@@ -55,7 +60,7 @@ export class OTCTrade {
             method: 'self_signed',
             issuer: 'unsafe-auth',
             credentials: {
-                clientId: 'ledger-api-user',
+                clientId: this.clientId,
                 clientSecret: 'unsafe',
                 audience: 'https://canton.network.global',
                 scope: '',
@@ -261,7 +266,7 @@ export class OTCTrade {
             method: 'self_signed',
             issuer: 'unsafe-auth',
             credentials: {
-                clientId: 'ledger-api-user',
+                clientId: this.clientId,
                 clientSecret: 'unsafe',
                 audience: 'https://canton.network.global',
                 scope: '',

@@ -10,6 +10,7 @@ import {
     type Theme,
 } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
+import { DescriptionMeta } from '@components/description-text'
 import { normalizeSx } from '@components/ui/utils'
 import { formatDateTimeString, formatDistanceToNow } from '@utils/date-format'
 
@@ -128,6 +129,25 @@ export function OfferPartyBlock({ label, value }: OfferPartyBlockProps) {
         <Box sx={{ minWidth: 0 }}>
             <OfferFieldLabel>{label}</OfferFieldLabel>
             <CopyableIdentifier value={value} maxLength={5} />
+        </Box>
+    )
+}
+
+export function OfferDescriptionBlock({ value }: { value: string }) {
+    return (
+        <Box sx={{ minWidth: 0 }}>
+            <OfferFieldLabel>Description</OfferFieldLabel>
+            <Typography
+                variant="body1"
+                sx={{
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                }}
+            >
+                {value || '—'}
+            </Typography>
+            {value && <DescriptionMeta value={value} sx={{ mt: 0.25 }} />}
         </Box>
     )
 }

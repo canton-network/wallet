@@ -7,8 +7,11 @@ import {
     Alert,
     Box,
     CircularProgress,
+    FormControlLabel,
     IconButton,
     InputAdornment,
+    Radio,
+    RadioGroup,
     TextField,
     Typography,
     type SxProps,
@@ -19,6 +22,7 @@ import { useForm } from '@tanstack/react-form'
 import type { AnyFieldApi } from '@tanstack/react-form'
 import { z } from 'zod'
 import { CopyableIdentifier } from '@components/copyable-identifier'
+import { formatCharacterCount } from '@components/utils'
 import { PillButton } from '@components/ui/PillButton'
 import { usePrimaryAccount } from '@hooks/useAccounts'
 import type { useCreateTransfer } from '@hooks/useCreateTransfer'
@@ -39,7 +43,6 @@ interface TransferFormProps {
 }
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
-const DESCRIPTION_LIMIT = 280
 
 const createDefaultTransferValues = (): TransferFormData => ({
     instrumentId: null,
@@ -47,6 +50,7 @@ const createDefaultTransferValues = (): TransferFormData => ({
     recipient: '',
     memo: '',
     expiry: new Date(Date.now() + SEVEN_DAYS_MS),
+    tokenStandardVersion: 'v1',
 })
 
 const instrumentValidator = z
@@ -61,10 +65,6 @@ const recipientValidator = z
     .string()
     .trim()
     .min(1, 'Recipient address is required')
-
-const memoValidator = z
-    .string()
-    .max(DESCRIPTION_LIMIT, `${DESCRIPTION_LIMIT} characters maximum`)
 
 const expiryValidator = z
     .date()
@@ -116,6 +116,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                     amount: formData.amount,
                     expiry,
                     memo: formData.memo.trim() || undefined,
+                    tokenStandardVersion: formData.tokenStandardVersion,
                 },
                 {
                     onSuccess: () => {
@@ -129,6 +130,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                             memo: formData.memo.trim(),
                             expiry,
                             submittedAt: new Date(),
+                            tokenStandardVersion: formData.tokenStandardVersion,
                         })
                     },
                 }
@@ -200,6 +202,44 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                         />
                     )}
                 </FieldBlock>
+
+                <form.Field
+                    name="tokenStandardVersion"
+                    validators={{
+                        onChange: ({ value }) =>
+                            value
+                                ? undefined
+                                : 'Token standard version is required',
+                    }}
+                >
+                    {(field) => (
+                        <FieldBlock label="Token Standard Version">
+                            <RadioGroup
+                                row
+                                value={field.state.value}
+                                onChange={(e) =>
+                                    field.handleChange(
+                                        e.target
+                                            .value as TransferFormData['tokenStandardVersion']
+                                    )
+                                }
+                            >
+                                <FormControlLabel
+                                    value="v1"
+                                    control={<Radio disabled={disabled} />}
+                                    label="v1"
+                                    sx={{ color: 'text.primary' }}
+                                />
+                                <FormControlLabel
+                                    value="v2"
+                                    control={<Radio disabled={disabled} />}
+                                    label="v2"
+                                    sx={{ color: 'text.primary' }}
+                                />
+                            </RadioGroup>
+                        </FieldBlock>
+                    )}
+                </form.Field>
 
                 <form.Field
                     name="recipient"
@@ -306,50 +346,35 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                     )}
                 </form.Field>
 
-                <form.Field
-                    name="memo"
-                    validators={{
-                        onChange: memoValidator,
-                        onSubmit: memoValidator,
-                    }}
-                >
-                    {(field) => {
-                        const charactersLeft = Math.max(
-                            0,
-                            DESCRIPTION_LIMIT - field.state.value.length
-                        )
-
-                        return (
-                            <FieldBlock label="Description">
-                                <TextField
-                                    value={field.state.value}
-                                    onChange={(event) =>
-                                        field.handleChange(event.target.value)
-                                    }
-                                    disabled={disabled}
-                                    error={hasFieldError(field)}
-                                    helperText={getFieldError(field)}
-                                    multiline
-                                    rows={4}
-                                    slotProps={{
-                                        htmlInput: {
-                                            'aria-label': 'Description',
-                                        },
-                                    }}
-                                    fullWidth
-                                    sx={darkTextFieldSx}
-                                />
-                                <Typography
-                                    sx={{
-                                        mt: 1,
-                                        color: 'text.secondary',
-                                    }}
-                                >
-                                    {charactersLeft} characters left
-                                </Typography>
-                            </FieldBlock>
-                        )
-                    }}
+                <form.Field name="memo">
+                    {(field) => (
+                        <FieldBlock label="Description">
+                            <TextField
+                                value={field.state.value}
+                                onChange={(event) =>
+                                    field.handleChange(event.target.value)
+                                }
+                                disabled={disabled}
+                                multiline
+                                rows={4}
+                                slotProps={{
+                                    htmlInput: {
+                                        'aria-label': 'Description',
+                                    },
+                                }}
+                                fullWidth
+                                sx={darkTextFieldSx}
+                            />
+                            <Typography
+                                sx={{
+                                    mt: 1,
+                                    color: 'text.secondary',
+                                }}
+                            >
+                                {formatCharacterCount(field.state.value)}
+                            </Typography>
+                        </FieldBlock>
+                    )}
                 </form.Field>
 
                 <form.Subscribe

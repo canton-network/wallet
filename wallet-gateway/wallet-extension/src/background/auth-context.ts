@@ -3,22 +3,39 @@
 
 import { type AuthContext, jwtUserId } from '@canton-network/core-wallet-auth'
 import { logger } from '@/shared/logger'
-import { authContextItem } from '@/shared/storage'
+import type { Vault } from './vault'
+
+/** The signed-in user's token and user ID. */
+export interface AuthContextStore {
+    /** Throws `VaultLockedError` while locked, as do the others. */
+    store(token: string): Promise<void>
+    /** `undefined` when nobody is signed in. */
+    load(): Promise<AuthContext | undefined>
+    clear(): Promise<void>
+}
 
 /**
- * The signed-in user's token and user ID, kept in `local:authContext` so it
- * survives a service worker restart.
+ * Keeps the signed-in user's token and user ID in the vault item
+ * `authContext`. It survives a service worker restart and a lock, so the
+ * same user is signed in again after an unlock. A reset deletes it.
  */
-export const authContext = {
-    async store(token: string): Promise<void> {
-        const userId = jwtUserId(token)
-        logger.info('Storing auth context', { userId })
-        await authContextItem.setValue({ userId, accessToken: token })
-    },
-    async load(): Promise<AuthContext | undefined> {
-        return await authContextItem.getValue()
-    },
-    async clear(): Promise<void> {
-        await authContextItem.removeValue()
-    },
+export function createAuthContextStore(
+    vault: Pick<Vault, 'defineItem'>
+): AuthContextStore {
+    const item = vault.defineItem<AuthContext | null>('authContext', {
+        fallback: null,
+    })
+    return {
+        async store(token) {
+            const userId = jwtUserId(token)
+            logger.info('Storing auth context', { userId })
+            await item.setValue({ userId, accessToken: token })
+        },
+        async load() {
+            return (await item.getValue()) ?? undefined
+        },
+        async clear() {
+            await item.removeValue()
+        },
+    }
 }
