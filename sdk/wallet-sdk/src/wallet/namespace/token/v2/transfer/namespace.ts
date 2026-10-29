@@ -8,7 +8,7 @@ import {
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
     type TransferInstructionView as TransferInstructionViewV2,
 } from '@canton-network/core-token-standard-v2'
-import type { TransferParams } from '../../transfer/types.js'
+import { toAccount, type TransferParamsV2 } from '../../transfer/types.js'
 import { ParsedURL, parseAssets } from '../../../utils/url.js'
 import { findAsset } from '../../../asset/index.js'
 
@@ -64,7 +64,7 @@ export class TransferNamespace {
         return [{ ExerciseCommand }, disclosedContracts]
     }
     async create(
-        params: TransferParams
+        params: TransferParamsV2
     ): Promise<PreparedCommand<'ExerciseCommand'>> {
         const assets = parseAssets(
             this.sdkContext.commonCtx,
@@ -83,13 +83,8 @@ export class TransferNamespace {
         const [transferCommand, disclosedContracts] =
             await this.sdkContext.tokenStandardService.v2.transfer.createTransfer(
                 {
-                    sender: this.sdkContext.tokenStandardService.core.toBasicAccount(
-                        params.sender
-                    ),
-                    receiver:
-                        this.sdkContext.tokenStandardService.core.toBasicAccount(
-                            params.recipient
-                        ),
+                    sender: toAccount(params.sender),
+                    receiver: toAccount(params.recipient),
                     amount: params.amount,
                     instrumentAdmin: asset.admin,
                     instrumentId: asset.id,

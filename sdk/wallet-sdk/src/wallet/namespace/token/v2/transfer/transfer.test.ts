@@ -6,12 +6,10 @@ import * as mock from '../../../../__tests__/mocks'
 import type { TokenNamespaceConfig } from '../../index'
 import { ParsedURL } from '../../../utils/url'
 import { TransferNamespace } from './namespace'
-import {
-    type Account,
-    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
-} from '@canton-network/core-token-standard-v2'
-import type { TransferParams } from '../../transfer/types'
+import { TRANSFER_INSTRUCTION_INTERFACE_ID_V2 } from '@canton-network/core-token-standard-v2'
+import type { TransferParamsV2 } from '../../transfer/types'
 import type { PartyId } from '@canton-network/core-types'
+import { toBasicAccount } from '../../utils'
 
 /* oxlint-disable typescript/no-explicit-any */
 const { ctx, mockLogger } = mock
@@ -57,9 +55,17 @@ describe('token transfer namespace', () => {
 
     const registryUrl = new URL('http://registry.com')
 
-    const defaultTransferParams: TransferParams = {
+    const defaultTransferParams: TransferParamsV2 = {
         sender: 'alice::abc',
         recipient: 'bob:def',
+        amount: '100',
+        instrumentId: 'Amulet',
+        registryUrl,
+    }
+
+    const defaultTransferParamsWithAccount: TransferParamsV2 = {
+        sender: toBasicAccount('alice::abc'),
+        recipient: toBasicAccount('bob:def'),
         amount: '100',
         instrumentId: 'Amulet',
         registryUrl,
@@ -166,6 +172,47 @@ describe('token transfer namespace', () => {
                     owner: defaultTransferParams.sender,
                     provider: null,
                 },
+            },
+            parsedRegistryUrl
+        )
+    })
+
+    it('should create transfer command with account input', async () => {
+        const spy1 = mockTokenStandard.registriesToAssets
+        const spy2 = mockTokenStandard.v2.transfer.createTransfer
+        spy1.mockResolvedValue([
+            {
+                admin: 'admin-a',
+                displayName: 'Amulet',
+                id: 'Amulet',
+                registryUrl: 'http://registry.com',
+                symbol: 'CC',
+            },
+            {
+                admin: 'admin-b',
+                displayName: 'TestTokenExt',
+                id: 'TestTokenExt',
+                registryUrl: 'http://registry2.com',
+                symbol: 'TestTokenExt',
+            },
+            {
+                admin: 'admin-b',
+                displayName: 'TestToken',
+                id: 'TestToken',
+                registryUrl: 'http://registry2.com',
+                symbol: 'TestToken',
+            },
+        ])
+        spy2.mockResolvedValue(mockCreateCommandResponse)
+        await transfer.create(defaultTransferParamsWithAccount)
+        expect(spy1).toHaveBeenCalledExactlyOnceWith([parsedRegistryUrl])
+        expect(spy2).toHaveBeenCalledExactlyOnceWith(
+            {
+                amount: defaultTransferParamsWithAccount.amount,
+                instrumentAdmin: 'admin-a',
+                instrumentId: 'Amulet',
+                receiver: defaultTransferParamsWithAccount.recipient,
+                sender: defaultTransferParamsWithAccount.sender,
             },
             parsedRegistryUrl
         )
