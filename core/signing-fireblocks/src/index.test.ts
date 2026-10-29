@@ -295,6 +295,26 @@ describe('FireblocksSigningDriver', () => {
         })
     })
 
+    it('getTransaction passes on the failure reason', async () => {
+        const { controller } = await setupTest()
+        fireblocksHandlerMock.getTransaction.mockResolvedValueOnce({
+            txId: 'tx-1',
+            status: 'rejected',
+            derivationPath: TEST_FIREBLOCKS_DERIVATION_PATH,
+            failureReason:
+                'Fireblocks rejected the signing request (BLOCKED_BY_POLICY)',
+        })
+
+        const result = await controller.getTransaction({ txId: 'tx-1' })
+        throwWhenRpcError(result)
+
+        expect(result).toMatchObject({
+            status: 'rejected',
+            failureReason:
+                'Fireblocks rejected the signing request (BLOCKED_BY_POLICY)',
+        })
+    })
+
     it('getTransaction includes signature and publicKey when returned', async () => {
         const { controller } = await setupTest()
 
