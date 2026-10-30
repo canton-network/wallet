@@ -103,13 +103,16 @@ describe('registerSigningProviders', () => {
             expect(logger.info).toHaveBeenCalledWith(
                 expect.stringContaining('legacy discovery')
             )
-            expect(notices.list().map((notice) => notice.message)).toEqual([
-                'Fireblocks environment variables not fully set. Fireblocks signing provider will be unavailable.',
-                'Blockdaemon environment variables not fully set. Blockdaemon signing provider will be unavailable.',
-                'Securosys environment variables not fully set. Securosys signing provider will be unavailable.',
-                'Dfns environment variables not fully set. Dfns signing provider will be unavailable.',
-                'BitGo environment variables not fully set. BitGo signing provider will be unavailable.',
+            expect(notices.list().map((notice) => notice.id)).toEqual([
+                'signing-provider-unavailable:fireblocks',
+                'signing-provider-unavailable:blockdaemon',
+                'signing-provider-unavailable:securosys',
+                'signing-provider-unavailable:dfns',
+                'signing-provider-unavailable:bitgo',
             ])
+            expect(notices.list()[0].message).toBe(
+                'Fireblocks is unavailable because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set. Set them to use Fireblocks, or add a signingProviders section to the config file to choose the signing providers explicitly.'
+            )
         })
 
         test('does not register wallet kernel when signingStore is unavailable', () => {
@@ -304,7 +307,7 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:fireblocks',
                         severity: 'warning',
                         message:
-                            'Fireblocks environment variables not fully set. Fireblocks signing provider will be unavailable.',
+                            'Fireblocks is unavailable because the environment variables named by signingProviders.fireblocks.apiKeyEnv and secretEnv are not set. Set them, or remove signingProviders.fireblocks.',
                     }),
                 ])
             })
@@ -350,7 +353,7 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:blockdaemon',
                         severity: 'warning',
                         message:
-                            'Blockdaemon environment variables not fully set. Blockdaemon signing provider will be unavailable.',
+                            'Blockdaemon is unavailable because the environment variable named by signingProviders.blockdaemon.apiKeyEnv is not set. Set it, or remove signingProviders.blockdaemon.',
                     }),
                 ])
             })
@@ -491,7 +494,7 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:dfns',
                         severity: 'warning',
                         message:
-                            'Dfns environment variables not fully set. Dfns signing provider will be unavailable.',
+                            'Dfns is unavailable because the environment variables named by signingProviders.dfns.privateKeyEnv and authTokenEnv are not set. Set them, or remove signingProviders.dfns.',
                     }),
                 ])
             })
@@ -541,7 +544,7 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:bitgo',
                         severity: 'warning',
                         message:
-                            'BitGo environment variables not fully set. BitGo signing provider will be unavailable.',
+                            'BitGo is unavailable because the environment variable named by signingProviders.bitgo.accessTokenEnv is not set. Set it, or remove signingProviders.bitgo.',
                     }),
                 ])
             })
@@ -561,7 +564,7 @@ describe('registerSigningProviders', () => {
                     expect.objectContaining({
                         id: 'signing-provider-config:bitgo.enterpriseId',
                         message: expect.stringContaining(
-                            'BitGo enterprise ID is not set'
+                            'signingProviders.bitgo.enterpriseId is not set'
                         ),
                     }),
                 ])
