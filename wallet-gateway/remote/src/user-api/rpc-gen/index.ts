@@ -14,9 +14,11 @@ import type { ListIdps } from './typings.js'
 import type { CreateWallet } from './typings.js'
 import type { StartSelfIssuedLoginSession } from './typings.js'
 import type { GetSelfIssuedLoginMode } from './typings.js'
+import type { ListSelfIssuedSigningProviderKeys } from './typings.js'
 import type { CreateSelfIssuedWallet } from './typings.js'
 import type { AllocateSelfIssuedWallet } from './typings.js'
-import type { CompleteSelfIssuedLogin } from './typings.js'
+import type { SignSelfIssuedAccessToken } from './typings.js'
+import type { GetSignSelfIssuedAccessTokenStatus } from './typings.js'
 import type { RemoveSelfIssuedLoginSession } from './typings.js'
 import type { AllocatePartyForWallet } from './typings.js'
 import type { SetPrimaryWallet } from './typings.js'
@@ -59,9 +61,11 @@ export type Methods = {
     createWallet: CreateWallet
     startSelfIssuedLoginSession: StartSelfIssuedLoginSession
     getSelfIssuedLoginMode: GetSelfIssuedLoginMode
+    listSelfIssuedSigningProviderKeys: ListSelfIssuedSigningProviderKeys
     createSelfIssuedWallet: CreateSelfIssuedWallet
     allocateSelfIssuedWallet: AllocateSelfIssuedWallet
-    completeSelfIssuedLogin: CompleteSelfIssuedLogin
+    signSelfIssuedAccessToken: SignSelfIssuedAccessToken
+    getSignSelfIssuedAccessTokenStatus: GetSignSelfIssuedAccessTokenStatus
     removeSelfIssuedLoginSession: RemoveSelfIssuedLoginSession
     allocatePartyForWallet: AllocatePartyForWallet
     setPrimaryWallet: SetPrimaryWallet
@@ -106,9 +110,13 @@ function buildController(methods: Methods) {
         createWallet: methods.createWallet,
         startSelfIssuedLoginSession: methods.startSelfIssuedLoginSession,
         getSelfIssuedLoginMode: methods.getSelfIssuedLoginMode,
+        listSelfIssuedSigningProviderKeys:
+            methods.listSelfIssuedSigningProviderKeys,
         createSelfIssuedWallet: methods.createSelfIssuedWallet,
         allocateSelfIssuedWallet: methods.allocateSelfIssuedWallet,
-        completeSelfIssuedLogin: methods.completeSelfIssuedLogin,
+        signSelfIssuedAccessToken: methods.signSelfIssuedAccessToken,
+        getSignSelfIssuedAccessTokenStatus:
+            methods.getSignSelfIssuedAccessTokenStatus,
         removeSelfIssuedLoginSession: methods.removeSelfIssuedLoginSession,
         allocatePartyForWallet: methods.allocatePartyForWallet,
         setPrimaryWallet: methods.setPrimaryWallet,

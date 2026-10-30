@@ -278,7 +278,7 @@
                             "keyName": {
                                 "title": "keyName",
                                 "type": "string",
-                                "description": "Name of signing provider's key to use for getting keys."
+                                "description": "Name of signing provider's key to use for the wallet."
                             }
                         },
                         "required": ["partyHint", "signingProviderId"]
@@ -343,7 +343,7 @@
                         "sessionId": {
                             "title": "sessionId",
                             "type": "string",
-                            "description": "Onboarding session id required by the remaining self-issued onboarding methods."
+                            "description": "Self issued login session id returned by startSelfIssuedLoginSession."
                         }
                     },
                     "required": ["sessionId"]
@@ -396,6 +396,41 @@
             "description": "Returns the ledger-user and wallet state needed to select the self-issued login path."
         },
         {
+            "name": "listSelfIssuedSigningProviderKeys",
+            "description": "Lists available keys of a signing provider for the user of a self-issued login session.",
+            "params": [
+                {
+                    "name": "params",
+                    "required": true,
+                    "schema": {
+                        "title": "ListSelfIssuedSigningProviderKeysParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
+                            },
+                            "signingProviderId": {
+                                "title": "signingProviderId",
+                                "type": "string",
+                                "description": "The signing provider whose keys to list."
+                            }
+                        },
+                        "required": ["sessionId", "signingProviderId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ListSigningProviderKeysResult",
+                    "$ref": "#/components/schemas/ListSigningProviderKeysResult"
+                }
+            }
+        },
+        {
             "name": "createSelfIssuedWallet",
             "params": [
                 {
@@ -420,6 +455,11 @@
                                 "title": "signingProviderId",
                                 "type": "string",
                                 "description": "Signing provider used to hold keys of the authentication party."
+                            },
+                            "keyName": {
+                                "title": "keyName",
+                                "type": "string",
+                                "description": "Name of signing provider's key to use for the wallet."
                             }
                         },
                         "required": [
@@ -491,13 +531,13 @@
             "description": "Polls the signing provider, allocates the party, and grants ledger-user rights when signing is complete."
         },
         {
-            "name": "completeSelfIssuedLogin",
+            "name": "signSelfIssuedAccessToken",
             "params": [
                 {
                     "name": "params",
                     "required": true,
                     "schema": {
-                        "title": "CompleteSelfIssuedLoginParams",
+                        "title": "SignSelfIssuedAccessTokenParams",
                         "type": "object",
                         "additionalProperties": false,
                         "properties": {
@@ -519,29 +559,44 @@
             "result": {
                 "name": "result",
                 "schema": {
-                    "title": "CompleteSelfIssuedLoginResult",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "wallet": {
-                            "description": "Wallet configured as the user's authentication party.",
-                            "$ref": "#/components/schemas/Wallet"
-                        },
-                        "accessToken": {
-                            "title": "accessToken",
-                            "type": "string",
-                            "description": "Self-issued access token added to the session."
-                        },
-                        "sessionId": {
-                            "title": "sessionId",
-                            "type": "string",
-                            "description": "Onboarding session id required by the remaining self-issued onboarding methods."
-                        }
-                    },
-                    "required": ["wallet", "accessToken", "sessionId"]
+                    "title": "SignSelfIssuedAccessTokenResult",
+                    "$ref": "#/components/schemas/SignSelfIssuedAccessTokenResult"
                 }
             },
-            "description": "Configures the selected wallet as the authentication party, mints a token, and upgrades the self-issued login session with it."
+            "description": "Generates self issued access token and submits it to the wallet's signing provider for signing. If the provider signs it right away, configures the wallet as the authentication party and upgrades the self-issued login session with the token. Otherwise, returns the messageId to pass to getSignSelfIssuedAccessTokenStatus for polling signature status."
+        },
+        {
+            "name": "getSignSelfIssuedAccessTokenStatus",
+            "params": [
+                {
+                    "name": "params",
+                    "required": true,
+                    "schema": {
+                        "title": "GetSignSelfIssuedAccessTokenStatusParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Self issued login session id returned by startSelfIssuedLoginSession."
+                            },
+                            "messageId": {
+                                "$ref": "#/components/schemas/MessageId"
+                            }
+                        },
+                        "required": ["sessionId", "messageId"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "SignSelfIssuedAccessTokenResult",
+                    "$ref": "#/components/schemas/SignSelfIssuedAccessTokenResult"
+                }
+            },
+            "description": "Polls the signing provider for the self-issued access token returned as awaiting-signature by signSelfIssuedAccessToken. Once it is signed, configures the wallet as the authentication party and upgrades the self-issued login session with the token."
         },
         {
             "name": "removeSelfIssuedLoginSession",
@@ -1500,36 +1555,7 @@
                 "name": "result",
                 "schema": {
                     "title": "ListSigningProviderKeysResult",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "keys": {
-                            "title": "keys",
-                            "type": "array",
-                            "items": {
-                                "title": "key",
-                                "type": "object",
-                                "additionalProperties": false,
-                                "properties": {
-                                    "id": {
-                                        "type": "string",
-                                        "title": "id"
-                                    },
-                                    "name": {
-                                        "type": "string",
-                                        "title": "name"
-                                    },
-                                    "publicKey": {
-                                        "type": "string",
-                                        "title": "publicKey"
-                                    }
-                                },
-                                "required": ["id", "name", "publicKey"]
-                            },
-                            "description": "The list of signing provider's available keys."
-                        }
-                    },
-                    "required": ["keys"]
+                    "$ref": "#/components/schemas/ListSigningProviderKeysResult"
                 }
             }
         },
@@ -1626,6 +1652,113 @@
                 "type": "string",
                 "format": "uuid",
                 "description": "The internal transaction identifier."
+            },
+            "ListSigningProviderKeysResult": {
+                "title": "ListSigningProviderKeysResult",
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                    "keys": {
+                        "title": "keys",
+                        "type": "array",
+                        "items": {
+                            "title": "key",
+                            "type": "object",
+                            "additionalProperties": false,
+                            "properties": {
+                                "id": {
+                                    "type": "string",
+                                    "title": "id"
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "title": "name"
+                                },
+                                "publicKey": {
+                                    "type": "string",
+                                    "title": "publicKey"
+                                }
+                            },
+                            "required": ["id", "name", "publicKey"]
+                        },
+                        "description": "The list of signing provider's available keys."
+                    }
+                },
+                "required": ["keys"]
+            },
+            "SignSelfIssuedAccessTokenResult": {
+                "title": "SignSelfIssuedAccessTokenResult",
+                "oneOf": [
+                    {
+                        "title": "SignSelfIssuedAccessTokenConnected",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "status": {
+                                "title": "signSelfIssuedAccessTokenStatusConnected",
+                                "type": "string",
+                                "const": "connected"
+                            },
+                            "wallet": {
+                                "description": "Wallet configured as the user's authentication party.",
+                                "$ref": "#/components/schemas/Wallet"
+                            },
+                            "accessToken": {
+                                "title": "accessToken",
+                                "type": "string",
+                                "description": "Self-issued access token added to the session."
+                            },
+                            "sessionId": {
+                                "title": "sessionId",
+                                "type": "string",
+                                "description": "Session id required by the remaining self-issued onboarding methods."
+                            }
+                        },
+                        "required": [
+                            "status",
+                            "wallet",
+                            "accessToken",
+                            "sessionId"
+                        ]
+                    },
+                    {
+                        "title": "SignSelfIssuedAccessTokenAwaitingSignature",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "status": {
+                                "title": "signSelfIssuedAccessTokenStatusAwaitingSignature",
+                                "type": "string",
+                                "const": "awaiting-signature"
+                            },
+                            "messageId": {
+                                "$ref": "#/components/schemas/MessageId"
+                            }
+                        },
+                        "required": ["status", "messageId"]
+                    },
+                    {
+                        "title": "SignSelfIssuedAccessTokenFailed",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "status": {
+                                "title": "signSelfIssuedAccessTokenStatusFailed",
+                                "type": "string",
+                                "const": "failed"
+                            },
+                            "messageId": {
+                                "$ref": "#/components/schemas/MessageId"
+                            },
+                            "failureReason": {
+                                "title": "failureReason",
+                                "type": "string",
+                                "description": "Why the signing provider did not sign the access token."
+                            }
+                        },
+                        "required": ["status", "messageId", "failureReason"]
+                    }
+                ]
             },
             "GetTransactionStatusResult": {
                 "title": "GetTransactionStatusResult",

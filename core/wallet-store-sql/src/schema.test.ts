@@ -208,6 +208,7 @@ describe('schema mappers', () => {
         test('round-trips message with signature', () => {
             const message: MessageRaw = {
                 id: 'msg-1',
+                kind: 'regular',
                 status: 'signed',
                 userId: 'user-1',
                 partyId: 'party::ns',
@@ -226,6 +227,7 @@ describe('schema mappers', () => {
         test('round-trips externalTxId and failureReason', () => {
             const message: MessageRaw = {
                 id: 'msg-1',
+                kind: 'regular',
                 status: 'failed',
                 userId: 'user-1',
                 partyId: 'party::ns',
@@ -248,6 +250,7 @@ describe('schema mappers', () => {
         test('maps missing externalTxId and failureReason to null and back to absent', () => {
             const message: MessageRaw = {
                 id: 'msg-1',
+                kind: 'regular',
                 status: 'pending',
                 userId: 'user-1',
                 partyId: 'party::ns',
@@ -265,9 +268,28 @@ describe('schema mappers', () => {
             expect(roundTripped).not.toHaveProperty('failureReason')
         })
 
+        test('round-trips the self-issued-token kind', () => {
+            const message: MessageRaw = {
+                id: 'msg-1',
+                kind: 'self-issued-token',
+                status: 'pending',
+                userId: 'user-1',
+                partyId: 'party::ns',
+                publicKey: 'pk',
+                message: 'header.payload',
+                origin: null,
+                createdAt: new Date('2026-02-01T12:00:00.000Z'),
+            }
+
+            const table = fromMessageRaw(message, 'user-1', 'net-1')
+            expect(table.kind).toBe('self-issued-token')
+            expect(toMessageRaw(table)).toEqual(message)
+        })
+
         test('throws when message userId does not match', () => {
             const message: MessageRaw = {
                 id: 'msg-1',
+                kind: 'regular',
                 status: 'pending',
                 userId: 'other-user',
                 partyId: 'party::ns',

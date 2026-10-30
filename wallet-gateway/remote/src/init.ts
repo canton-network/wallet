@@ -287,14 +287,17 @@ export async function initialize(opts: CliOptions, logger: Logger) {
             'getUser',
             'selfSignedAccessToken',
             'startSelfIssuedLoginSession',
+            'listSigningProviders',
         ],
     }
     const selfIssuedLoginPaths = {
         [config.server.userPath]: [
             'getSelfIssuedLoginMode',
+            'listSelfIssuedSigningProviderKeys',
             'createSelfIssuedWallet',
             'allocateSelfIssuedWallet',
-            'completeSelfIssuedLogin',
+            'signSelfIssuedAccessToken',
+            'getSignSelfIssuedAccessTokenStatus',
             'removeSelfIssuedLoginSession',
         ],
     }

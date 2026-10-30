@@ -10,6 +10,7 @@ import {
     CardActions,
     CardContent,
     Chip,
+    CircularProgress,
     Stack,
     Typography,
 } from '@mui/material'
@@ -54,6 +55,8 @@ interface WalletCardProps {
     onSelect?: (wallet: Wallet) => void
     /** Label of the select button @default 'Select' */
     selectLabel?: string
+    /** Disables the select button and shows progress while selection is in flight */
+    selecting?: boolean
 }
 
 export const WalletCard = ({
@@ -65,6 +68,7 @@ export const WalletCard = ({
     onEdit,
     onSelect,
     selectLabel = 'Select',
+    selecting = false,
 }: WalletCardProps) => {
     const rights = new Set<string>(wallet.rights)
     const shownRights = RIGHTS.filter((right) => rights.has(right))
@@ -86,7 +90,18 @@ export const WalletCard = ({
             <Button
                 key="select"
                 size="small"
-                disabled={loading}
+                variant="outlined"
+                color="inherit"
+                disabled={loading || selecting}
+                startIcon={
+                    selecting ? (
+                        <CircularProgress
+                            size={16}
+                            color="inherit"
+                            aria-hidden
+                        />
+                    ) : undefined
+                }
                 onClick={() => onSelect(wallet)}
             >
                 {selectLabel}
