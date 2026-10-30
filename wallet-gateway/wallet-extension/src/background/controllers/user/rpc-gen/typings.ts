@@ -608,13 +608,13 @@ export type NoticeSeverity = 'info' | 'warning'
 export type NoticeMessage = string
 /**
  *
- * ISO 8601 timestamp of when the notice was first reported.
+ * When the notice was first reported.
  *
  */
 export type NoticeFirstSeenAt = string
 /**
  *
- * ISO 8601 timestamp of when the notice was last reported.
+ * When the notice was last reported.
  *
  */
 export type NoticeLastSeenAt = string
