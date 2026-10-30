@@ -72,7 +72,6 @@ catalog:
     '@storybook/addon-a11y': ^10.6.2
     '@storybook/addon-vitest': ^10.6.2
     '@storybook/react-vite': ^10.6.2
-    '@storybook/web-components-vite': ^10.6.2
     '@swc/core': ^1.16.20
     '@tanstack/devtools-vite': ^0.8.5
     '@tanstack/react-devtools': ^0.10.13

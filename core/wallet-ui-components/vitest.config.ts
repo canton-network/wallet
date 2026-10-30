@@ -45,7 +45,7 @@ const reactDependencies = (): string[] => {
 export default defineConfig({
     test: {
         coverage: coverage({
-            exclude: ['src/**/*.lit.stories.ts', 'src/vite-env.d.ts'],
+            exclude: ['src/vite-env.d.ts'],
         }),
         projects: [
             browserProject({
