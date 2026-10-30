@@ -71,50 +71,75 @@ type ProviderSelection = {
     bitgo: boolean
 }
 
-type UnavailableProvider =
-    | 'walletKernel'
+type ExternalProvider =
     | 'fireblocks'
     | 'blockdaemon'
     | 'securosys'
     | 'dfns'
     | 'bitgo'
 
-// What to do about an enabled but unavailable provider, depending on whether
-// providers are configured in signingProviders (explicit) or not (legacy)
-const UNAVAILABLE_PROVIDER_MESSAGES: Record<
-    UnavailableProvider,
-    { explicit: string; legacy: string }
-> = {
-    walletKernel: {
-        explicit:
-            'The Wallet Kernel signing provider is unavailable because signingStore is not configured. Configure signingStore, or remove signingProviders.walletKernel.',
-        legacy: 'The Wallet Kernel signing provider is unavailable because signingStore is not configured. Configure signingStore.',
-    },
-    fireblocks: {
-        explicit:
-            'Fireblocks is unavailable because the environment variables named by signingProviders.fireblocks.apiKeyEnv and secretEnv are not set. Set them, or remove signingProviders.fireblocks.',
-        legacy: 'Fireblocks is unavailable because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set. Set them to use Fireblocks, or add a signingProviders section to the config file to choose the signing providers explicitly.',
-    },
-    blockdaemon: {
-        explicit:
-            'Blockdaemon is unavailable because the environment variable named by signingProviders.blockdaemon.apiKeyEnv is not set. Set it, or remove signingProviders.blockdaemon.',
-        legacy: 'Blockdaemon is unavailable because BLOCKDAEMON_API_KEY is not set. Set it to use Blockdaemon, or add a signingProviders section to the config file to choose the signing providers explicitly.',
-    },
-    securosys: {
-        explicit:
-            'Securosys is unavailable because signingProviders.securosys.baseUrl is not set. Set it, or remove signingProviders.securosys.',
-        legacy: 'Securosys is unavailable because SECUROSYS_TSB_BASE_URL is not set. Set it to use Securosys, or add a signingProviders section to the config file to choose the signing providers explicitly.',
-    },
-    dfns: {
-        explicit:
-            'Dfns is unavailable because the environment variables named by signingProviders.dfns.privateKeyEnv and authTokenEnv are not set. Set them, or remove signingProviders.dfns.',
-        legacy: 'Dfns is unavailable because DFNS_ORG_ID, DFNS_CRED_ID, DFNS_PRIVATE_KEY and DFNS_AUTH_TOKEN are not all set. Set them to use Dfns, or add a signingProviders section to the config file to choose the signing providers explicitly.',
-    },
-    bitgo: {
-        explicit:
-            'BitGo is unavailable because the environment variable named by signingProviders.bitgo.accessTokenEnv is not set. Set it, or remove signingProviders.bitgo.',
-        legacy: 'BitGo is unavailable because BITGO_ACCESS_TOKEN is not set. Set it to use BitGo, or add a signingProviders section to the config file to choose the signing providers explicitly.',
-    },
+const PROVIDER_NAMES: Record<ExternalProvider, string> = {
+    fireblocks: 'Fireblocks',
+    blockdaemon: 'Blockdaemon',
+    securosys: 'Securosys',
+    dfns: 'Dfns',
+    bitgo: 'BitGo',
+}
+
+// The settings an external provider needs to be available: the configured (or
+// default) environment variable names, plus settings that are read from the
+// environment in legacy mode instead of the config file
+function requiredSettings(
+    signingProviders: SigningProvidersConfig | undefined
+): Record<ExternalProvider, string[]> {
+    const legacy = signingProviders === undefined
+    return {
+        fireblocks: [
+            fireblocksSchema.apiKeyEnv.parse(
+                signingProviders?.fireblocks?.apiKeyEnv
+            ),
+            fireblocksSchema.secretEnv.parse(
+                signingProviders?.fireblocks?.secretEnv
+            ),
+        ],
+        blockdaemon: [
+            blockdaemonSchema.apiKeyEnv.parse(
+                signingProviders?.blockdaemon?.apiKeyEnv
+            ),
+        ],
+        securosys: legacy
+            ? ['SECUROSYS_TSB_BASE_URL']
+            : ['signingProviders.securosys.baseUrl'],
+        dfns: [
+            ...(legacy ? ['DFNS_ORG_ID', 'DFNS_CRED_ID'] : []),
+            dfnsSchema.privateKeyEnv.parse(
+                signingProviders?.dfns?.privateKeyEnv
+            ),
+            dfnsSchema.authTokenEnv.parse(signingProviders?.dfns?.authTokenEnv),
+        ],
+        bitgo: [
+            bitgoSchema.accessTokenEnv.parse(
+                signingProviders?.bitgo?.accessTokenEnv
+            ),
+        ],
+    }
+}
+
+function unavailableProviderMessage(
+    provider: ExternalProvider,
+    settings: string[],
+    explicit: boolean
+): string {
+    const missing = settings.filter((name) => !Env.get(name))
+    const unset = missing.length > 0 ? missing : settings
+    const plural = unset.length > 1
+    const names = plural
+        ? `${unset.slice(0, -1).join(', ')} and ${unset.at(-1)}`
+        : unset[0]
+    const alternative = explicit
+        ? `remove signingProviders.${provider}`
+        : 'add a signingProviders section to the config file to choose the signing providers explicitly'
+    return `${PROVIDER_NAMES[provider]} is unavailable because ${names} ${plural ? 'are' : 'is'} not set. Set ${plural ? 'them' : 'it'}, or ${alternative}.`
 }
 
 function readLegacySecrets(): ProviderSecrets {
@@ -265,18 +290,22 @@ function buildDrivers(
     secrets: ProviderSecrets,
     signingStore: SigningStoreSql | undefined,
     notices: ServerNotices,
-    explicit: boolean
+    signingProviders: SigningProvidersConfig | undefined
 ): SigningDrivers {
     const drivers: SigningDrivers = {}
+    const explicit = signingProviders !== undefined
+    const required = requiredSettings(signingProviders)
 
-    const reportUnavailable = (provider: UnavailableProvider) => {
-        const messages = UNAVAILABLE_PROVIDER_MESSAGES[provider]
+    const reportUnavailable = (provider: ExternalProvider) =>
         notices.report({
             id: `signing-provider-unavailable:${provider}`,
             severity: 'warning',
-            message: explicit ? messages.explicit : messages.legacy,
+            message: unavailableProviderMessage(
+                provider,
+                required[provider],
+                explicit
+            ),
         })
-    }
 
     if (selected.participant) {
         drivers[SigningProvider.PARTICIPANT] = new ParticipantSigningDriver()
@@ -284,7 +313,13 @@ function buildDrivers(
 
     if (selected.walletKernel) {
         if (!signingStore) {
-            reportUnavailable('walletKernel')
+            notices.report({
+                id: 'signing-provider-unavailable:walletKernel',
+                severity: 'warning',
+                message: explicit
+                    ? 'The Wallet Kernel signing provider is unavailable because signingStore is not configured. Configure signingStore, or remove signingProviders.walletKernel.'
+                    : 'The Wallet Kernel signing provider is unavailable because signingStore is not configured. Configure signingStore.',
+            })
         } else {
             drivers[SigningProvider.WALLET_KERNEL] = new InternalSigningDriver(
                 signingStore
@@ -428,7 +463,7 @@ export function registerSigningProviders(
             secrets,
             signingStore,
             notices,
-            false
+            undefined
         )
     }
 
@@ -446,6 +481,6 @@ export function registerSigningProviders(
         secrets,
         signingStore,
         notices,
-        true
+        signingProviders
     )
 }
