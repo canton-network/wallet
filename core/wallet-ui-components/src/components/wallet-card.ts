@@ -6,6 +6,7 @@ import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.js'
 import { PartyLevelRight, type Wallet } from '@canton-network/core-wallet-store'
 import { cardStyles } from '../styles/card.js'
+import './copy-button.js'
 
 export class WalletSetPrimaryEvent extends Event {
     constructor(public wallet: Wallet) {

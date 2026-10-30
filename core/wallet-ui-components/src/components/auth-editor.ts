@@ -568,7 +568,7 @@ class AuthEditor extends BaseElement {
                         ${
                             this.allowedMethods.includes('authorization_code')
                                 ? html`<option
-                                      ?value="authorization_code"
+                                      value="authorization_code"
                                       ?selected=${method === 'authorization_code'}
                                   >
                                       authorization_code

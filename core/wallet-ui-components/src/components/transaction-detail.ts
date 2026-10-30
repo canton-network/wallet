@@ -4,6 +4,7 @@
 import { html, css, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import './back-link.js'
+import './copy-button.js'
 import { BaseElement } from '../internal/base-element.js'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { chevronDownIcon } from '../icons/index.js'
