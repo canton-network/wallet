@@ -107,7 +107,8 @@ function toWalletBalances(
     const byOwner = new Map<string, AggregatedAccountBalance[]>()
 
     for (const b of accountBalances) {
-        const owner = b.account.owner!
+        const owner = b.account.owner
+        if (!owner) continue
         byOwner.set(owner, [...(byOwner.get(owner) ?? []), b])
     }
 
@@ -121,6 +122,7 @@ function toWalletBalances(
                 amount: accounts
                     .reduce((sum, a) => sum.plus(a.totalAmount), new Decimal(0))
                     .toString(),
+                accounts,
             }
         })
         .sort(
