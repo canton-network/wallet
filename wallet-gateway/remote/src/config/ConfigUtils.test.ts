@@ -89,7 +89,7 @@ describe('ConfigUtils.parseConfig notices', () => {
         ])
     })
 
-    it('recommends env variables for inline secrets', () => {
+    it('reports inline secrets with the env field to use', () => {
         const notices = reportedNotices({
             ...withInlineAdminSecret(testConfig),
             store: {
@@ -106,15 +106,13 @@ describe('ConfigUtils.parseConfig notices', () => {
         expect(notices).toEqual([
             expect.objectContaining({
                 id: 'inline-secret:store.connection.password',
-                severity: 'info',
-                message: expect.stringContaining('replace it with passwordEnv'),
+                severity: 'warning',
+                message: expect.stringContaining('Prefer passwordEnv'),
             }),
             expect.objectContaining({
                 id: 'inline-secret:bootstrap.networks[0].adminAuth.clientSecret',
-                severity: 'info',
-                message: expect.stringContaining(
-                    'replace it with clientSecretEnv'
-                ),
+                severity: 'warning',
+                message: expect.stringContaining('Prefer clientSecretEnv'),
             }),
         ])
     })

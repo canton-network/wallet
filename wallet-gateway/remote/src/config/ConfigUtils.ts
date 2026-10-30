@@ -124,8 +124,8 @@ function reportInlineSecret(
 ) {
     notices.report({
         id: `inline-secret:${path}`,
-        severity: 'info',
-        message: `${path} is written in the config file. We recommend to read secrets from environment variables instead: replace it with ${envField}, set to the name of the environment variable that holds the secret.`,
+        severity: 'warning',
+        message: `${path} is written in the config file. Prefer ${envField} so the secret comes from the environment (or a Kubernetes secret) rather than the config file: replace ${path} with ${envField}, set to the name of the environment variable that holds the secret.`,
     })
 }
 
