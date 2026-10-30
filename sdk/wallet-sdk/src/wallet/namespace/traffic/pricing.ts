@@ -64,6 +64,13 @@ export function assetNeededFor(traffic: Numeric, rate: Numeric): Numeric {
         .toFixed()
 }
 
+export function parseAndNormalizeDamlDecimal(
+    value: Numeric,
+    field: string
+): Numeric {
+    return parseAsDamlDecimal(value, field).toFixed()
+}
+
 /** Sums holding amounts the way `ConversionRate_ValidateAssets` does. */
 export function sumAmounts(amounts: Numeric[]): Numeric {
     return amounts
