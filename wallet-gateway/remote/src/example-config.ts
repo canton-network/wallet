@@ -102,7 +102,7 @@ export default {
                         'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
                     scope: 'openid email daml_ledger_api offline_access',
                     clientId: 'example_client_id',
-                    clientSecret: 'unsafe',
+                    clientSecretEnv: 'EXAMPLE_CLIENT_SECRET',
                 },
                 adminAuth: {
                     method: 'self_signed',
@@ -111,7 +111,7 @@ export default {
                     audience:
                         'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
                     clientId: 'example_admin_client_id',
-                    clientSecret: 'unsafe',
+                    clientSecretEnv: 'EXAMPLE_ADMIN_CLIENT_SECRET',
                 },
                 ledgerApi: {
                     baseUrl: 'http://127.0.0.1:2975',
