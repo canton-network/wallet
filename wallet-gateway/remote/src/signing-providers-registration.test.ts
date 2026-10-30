@@ -111,7 +111,7 @@ describe('registerSigningProviders', () => {
                 'signing-provider-unavailable:bitgo',
             ])
             expect(notices.list()[0].message).toBe(
-                'Fireblocks is unavailable because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set. Set them to use Fireblocks, or add a signingProviders section to the config file to choose the signing providers explicitly.'
+                'Fireblocks is unavailable because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set. Set them, or add a signingProviders section to the config file to choose the signing providers explicitly.'
             )
         })
 
@@ -307,9 +307,27 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:fireblocks',
                         severity: 'warning',
                         message:
-                            'Fireblocks is unavailable because the environment variables named by signingProviders.fireblocks.apiKeyEnv and secretEnv are not set. Set them, or remove signingProviders.fireblocks.',
+                            'Fireblocks is unavailable because FIREBLOCKS_SECRET is not set. Set it, or remove signingProviders.fireblocks.',
                     }),
                 ])
+            })
+
+            test('names the configured environment variables when they are missing', () => {
+                registerSigningProviders(
+                    signingProvidersConfigSchema.parse({
+                        fireblocks: {
+                            apiKeyEnv: 'MY_FIREBLOCKS_API_KEY',
+                            secretEnv: 'MY_FIREBLOCKS_SECRET',
+                        },
+                    }),
+                    signingStore,
+                    logger,
+                    notices
+                )
+
+                expect(notices.list()[0].message).toBe(
+                    'Fireblocks is unavailable because MY_FIREBLOCKS_API_KEY and MY_FIREBLOCKS_SECRET are not set. Set them, or remove signingProviders.fireblocks.'
+                )
             })
 
             test('registers with config and secrets', () => {
@@ -353,7 +371,7 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:blockdaemon',
                         severity: 'warning',
                         message:
-                            'Blockdaemon is unavailable because the environment variable named by signingProviders.blockdaemon.apiKeyEnv is not set. Set it, or remove signingProviders.blockdaemon.',
+                            'Blockdaemon is unavailable because BLOCKDAEMON_API_KEY is not set. Set it, or remove signingProviders.blockdaemon.',
                     }),
                 ])
             })
@@ -494,7 +512,7 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:dfns',
                         severity: 'warning',
                         message:
-                            'Dfns is unavailable because the environment variables named by signingProviders.dfns.privateKeyEnv and authTokenEnv are not set. Set them, or remove signingProviders.dfns.',
+                            'Dfns is unavailable because DFNS_AUTH_TOKEN is not set. Set it, or remove signingProviders.dfns.',
                     }),
                 ])
             })
@@ -544,7 +562,7 @@ describe('registerSigningProviders', () => {
                         id: 'signing-provider-unavailable:bitgo',
                         severity: 'warning',
                         message:
-                            'BitGo is unavailable because the environment variable named by signingProviders.bitgo.accessTokenEnv is not set. Set it, or remove signingProviders.bitgo.',
+                            'BitGo is unavailable because BITGO_ACCESS_TOKEN is not set. Set it, or remove signingProviders.bitgo.',
                     }),
                 ])
             })
