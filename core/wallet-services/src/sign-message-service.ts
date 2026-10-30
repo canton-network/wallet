@@ -155,9 +155,7 @@ export class SignMessageService {
             )
         }
 
-        const wallet = (await this.store.getWallets()).find(
-            (w) => w.partyId === pending.partyId
-        )
+        const wallet = await this.store.getWallet(pending.partyId)
         if (!wallet) {
             return await emitFailedAndPersist(
                 `No wallet found for partyId ${pending.partyId} (from message request ${pending.id})`
@@ -278,9 +276,7 @@ export class SignMessageService {
             }
         }
 
-        const wallet = (await this.store.getWallets()).find(
-            (w) => w.partyId === message.partyId
-        )
+        const wallet = await this.store.getWallet(message.partyId)
         if (!wallet) {
             throw new Error(`No wallet found for partyId ${message.partyId}`)
         }

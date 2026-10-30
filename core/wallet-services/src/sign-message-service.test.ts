@@ -84,20 +84,26 @@ function createStore(
     getMessageRaw: ReturnType<typeof vi.fn>
     listMessageRaws: ReturnType<typeof vi.fn>
     removeMessageRaw: ReturnType<typeof vi.fn>
-    getWallets: ReturnType<typeof vi.fn>
+    getWallet: ReturnType<typeof vi.fn>
     setMessageRawStatus: ReturnType<typeof vi.fn>
 } {
     return {
         getMessageRaw: vi.fn().mockResolvedValue(message),
         listMessageRaws: vi.fn().mockResolvedValue([message]),
         removeMessageRaw: vi.fn().mockResolvedValue(undefined),
-        getWallets: vi.fn().mockResolvedValue(wallets),
+        getWallet: vi
+            .fn()
+            .mockImplementation((partyId: string) =>
+                Promise.resolve(
+                    wallets.find((wallet) => wallet.partyId === partyId) ?? null
+                )
+            ),
         setMessageRawStatus: vi.fn().mockResolvedValue(undefined),
     } as unknown as Store & {
         getMessageRaw: ReturnType<typeof vi.fn>
         listMessageRaws: ReturnType<typeof vi.fn>
         removeMessageRaw: ReturnType<typeof vi.fn>
-        getWallets: ReturnType<typeof vi.fn>
+        getWallet: ReturnType<typeof vi.fn>
         setMessageRawStatus: ReturnType<typeof vi.fn>
     }
 }
