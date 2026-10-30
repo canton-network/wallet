@@ -5,67 +5,52 @@ import { z } from 'zod'
 
 export const REDACTED = '*****'
 
-interface JsonSchema {
-    properties?: Record<string, JsonSchema>
-    items?: JsonSchema
-    anyOf?: JsonSchema[]
-    oneOf?: JsonSchema[]
-    allOf?: JsonSchema[]
+interface JsonSchemaField {
     secret?: boolean
 }
 
-// A schema and all union branches it can take
-function branches(schema: JsonSchema): JsonSchema[] {
-    return [
-        schema,
-        ...[
-            ...(schema.anyOf ?? []),
-            ...(schema.oneOf ?? []),
-            ...(schema.allOf ?? []),
-        ].flatMap(branches),
-    ]
-}
-
-function redact(schemas: JsonSchema[], value: unknown): unknown {
-    if (Array.isArray(value)) {
-        const items = schemas.flatMap((schema) =>
-            schema.items ? branches(schema.items) : []
-        )
-        return value.map((item) => redact(items, item))
+/**
+ * Collects the names of all fields described anywhere in a JSON schema, and
+ * the names of the fields marked with `.meta({ secret: true })`.
+ */
+export function collectFieldNames(
+    jsonSchema: unknown,
+    known = new Set<string>(),
+    secret = new Set<string>()
+): { known: Set<string>; secret: Set<string> } {
+    if (jsonSchema !== null && typeof jsonSchema === 'object') {
+        const { properties } = jsonSchema as {
+            properties?: Record<string, JsonSchemaField>
+        }
+        for (const [name, field] of Object.entries(properties ?? {})) {
+            known.add(name)
+            if (field.secret === true) secret.add(name)
+        }
+        for (const child of Object.values(jsonSchema)) {
+            collectFieldNames(child, known, secret)
+        }
     }
-    if (value !== null && typeof value === 'object') {
-        return Object.fromEntries(
-            Object.entries(value).map(([key, entry]) => {
-                const properties = schemas.flatMap((schema) =>
-                    schema.properties?.[key] ? [schema.properties[key]] : []
-                )
-                // Values the schema does not describe, e.g. extra driver
-                // options of the postgres connection, are redacted as well
-                const isSecret =
-                    properties.length === 0 ||
-                    properties.flatMap(branches).some((p) => p.secret === true)
-                return [
-                    key,
-                    isSecret
-                        ? REDACTED
-                        : redact(properties.flatMap(branches), entry),
-                ]
-            })
-        )
-    }
-    return value
+    return { known, secret }
 }
 
 /**
- * Returns a copy of `value` in which every field marked with
- * `.meta({ secret: true })` in `schema`, and every field that `schema` does
- * not describe, is replaced by a placeholder. A field marked as secret in any
- * union branch is redacted.
+ * Returns a copy of `value` in which every field whose name is marked as
+ * secret somewhere in `schema`, and every field whose name `schema` does not
+ * describe at all (e.g. extra postgres driver options), is replaced by a
+ * placeholder.
  */
-export function redactSecrets(schema: z.ZodType, value: unknown): unknown {
-    const jsonSchema = z.toJSONSchema(schema, {
-        io: 'input',
-        unrepresentable: 'any',
-    }) as JsonSchema
-    return redact(branches(jsonSchema), value)
+export function redactSecrets(
+    schema: z.ZodType,
+    value: Record<string, unknown>
+): Record<string, unknown> {
+    const { known, secret } = collectFieldNames(
+        z.toJSONSchema(schema, { io: 'input' })
+    )
+    return JSON.parse(
+        JSON.stringify(value, function (this: unknown, key, entry) {
+            // The root object and array indices are not fields
+            if (key === '' || Array.isArray(this)) return entry
+            return known.has(key) && !secret.has(key) ? entry : REDACTED
+        })
+    )
 }

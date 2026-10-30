@@ -5,50 +5,23 @@ import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
 import { z } from 'zod'
 import { rawConfigSchema } from './Config.js'
-import { REDACTED, redactSecrets } from './redact-secrets.js'
+import { collectFieldNames, REDACTED, redactSecrets } from './redact-secrets.js'
 
 const testConfig = JSON.parse(readFileSync('../test/config.json', 'utf-8'))
 
-interface JsonSchema {
-    properties?: Record<string, JsonSchema>
-    secret?: boolean
-}
-
-// All properties of a JSON schema with the name they are defined under
-function collectProperties(
-    schema: unknown,
-    found: Array<[string, JsonSchema]> = []
-) {
-    if (Array.isArray(schema)) {
-        schema.forEach((entry) => collectProperties(entry, found))
-    } else if (schema !== null && typeof schema === 'object') {
-        for (const [key, value] of Object.entries(schema)) {
-            if (key === 'properties' && value && typeof value === 'object') {
-                found.push(
-                    ...Object.entries(value as Record<string, JsonSchema>)
-                )
-            }
-            collectProperties(value, found)
-        }
-    }
-    return found
-}
-
 describe('redactSecrets', () => {
     it('finds every secret-like field of the config schema marked as secret', () => {
-        const properties = collectProperties(
+        const { known, secret } = collectFieldNames(
             z.toJSONSchema(rawConfigSchema, { io: 'input' })
         )
         // Fails if a secret-like config field is neither an `*Env` reference
         // nor marked with `.meta({ secret: true })` where it is defined
-        const unmarked = properties
-            .filter(
-                ([name, schema]) =>
-                    /secret|password|key|token|cert/i.test(name) &&
-                    !name.endsWith('Env') &&
-                    schema.secret !== true
-            )
-            .map(([name]) => name)
+        const unmarked = [...known].filter(
+            (name) =>
+                /secret|password|key|token|cert/i.test(name) &&
+                !name.endsWith('Env') &&
+                !secret.has(name)
+        )
         expect(unmarked).toEqual([])
     })
 
@@ -141,10 +114,7 @@ describe('redactSecrets', () => {
             },
         })
 
-        const redacted = redactSecrets(rawConfigSchema, rawConfig) as {
-            store: unknown
-            bootstrap: unknown
-        }
+        const redacted = redactSecrets(rawConfigSchema, rawConfig)
 
         expect(redacted.bootstrap).toMatchObject({
             idps: rawConfig.bootstrap.idps,
