@@ -7,7 +7,7 @@ import type { Instruments } from '../types/instruments'
 import { isBasicAccount, type PortfolioHolding } from './holdings'
 import type { Account } from '@canton-network/core-token-standard-v2'
 
-export interface AggregatedWalletBalance {
+export interface AggregatedAccountBalance {
     account: Account
     isBasic: boolean
     totalAmount: string
@@ -21,7 +21,7 @@ export interface AggregatedHolding {
     lockedAmount: string
     availableAmount: string
     numOfHoldings: number
-    accountBalances: AggregatedWalletBalance[]
+    accountBalances: AggregatedAccountBalance[]
     instrument?: {
         name: string
         symbol: string
@@ -92,7 +92,7 @@ export function aggregateHoldings(
 function sumAccount(
     holdings: PortfolioHolding[],
     currentTime: Date
-): AggregatedWalletBalance {
+): AggregatedAccountBalance {
     let total = new Decimal(0)
     let locked = new Decimal(0)
 
@@ -114,8 +114,8 @@ function sumAccount(
 }
 
 function compareAccountBalances(
-    a: AggregatedWalletBalance,
-    b: AggregatedWalletBalance
+    a: AggregatedAccountBalance,
+    b: AggregatedAccountBalance
 ): number {
     if (a.isBasic !== b.isBasic) return a.isBasic ? -1 : 1
     return (
