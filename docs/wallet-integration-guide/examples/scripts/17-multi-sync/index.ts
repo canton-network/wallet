@@ -18,8 +18,8 @@ import { TestToken } from '@canton-network/core-splice-codegen'
 // app-user and app-provider connect to the global + app synchronizers, sv is global-only.
 
 import { configureLogging } from '../utils/configure-logging.js'
-import { TEST_TOKEN_V1_REGISTRY_PORT } from '../common/_constants.js'
-import { assertV1 } from '../common/_utils.js'
+import { TEST_TOKEN_V1_REGISTRY } from '../utils/constants.js'
+import { assertV1 } from '../utils/assert.js'
 const logger = await configureLogging()
 
 // ── Setup: create SDKs, discover synchronizers, vet DARs, allocate parties ───
@@ -49,7 +49,7 @@ await startRegistry({
         keys: tokenAdmin.keyPair,
     },
     synchronizerId: synchronizers.appSynchronizerId,
-    port: TEST_TOKEN_V1_REGISTRY_PORT,
+    port: TEST_TOKEN_V1_REGISTRY.PORT,
     sdk: tokenAdminSdk,
 })
 

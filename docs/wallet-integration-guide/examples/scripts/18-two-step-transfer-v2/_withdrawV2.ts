@@ -1,6 +1,8 @@
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { TransferTestScriptParameters } from './types.js'
-import { assertV2 } from '../common/_utils.js'
+import { assertV2 } from '../utils/assert.js'
+import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+import { TEST_TOKEN_V2_REGISTRY } from '../utils/constants.js'
 
 export default async (args: TransferTestScriptParameters) => {
     const { sdk, sender, receiver, senderKeys, logger } = args
@@ -9,10 +11,8 @@ export default async (args: TransferTestScriptParameters) => {
         await sdk.token.v2.transfer.create({
             sender: sender.partyId,
             recipient: receiver.partyId,
-            instrumentId: 'Amulet',
-            registryUrl: new URL(
-                localNetStaticConfig.LOCALNET_REGISTRY_API_URL
-            ),
+            instrumentId: TestTokenV2.DAR.TestTokenID,
+            registryUrl: TEST_TOKEN_V2_REGISTRY.URL,
             amount: '2000',
         })
 
@@ -46,7 +46,7 @@ export default async (args: TransferTestScriptParameters) => {
         await sdk.token.v2.transfer.withdraw(
             receiverPendingTransfers[0].contractId,
             [sender.partyId],
-            localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+            TEST_TOKEN_V2_REGISTRY.URL
         )
 
     await sdk.ledger
