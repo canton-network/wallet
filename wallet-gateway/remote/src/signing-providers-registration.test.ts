@@ -7,6 +7,7 @@ import type { Logger } from 'pino'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
 import { signingProvidersConfigSchema } from './config/Config.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
+import { ServerNotices } from './notices/server-notices.js'
 
 const providerConstructors = vi.hoisted(() => ({
     bitgo: vi.fn(),
@@ -74,9 +75,11 @@ describe('registerSigningProviders', () => {
         error: vi.fn(),
         child: vi.fn(),
     } as unknown as Logger
+    let notices: ServerNotices
 
     beforeEach(() => {
         vi.clearAllMocks()
+        notices = new ServerNotices(logger)
         // Local .env can already define these. unstubAllEnvs restores
         // that inherited value, so absence tests must start from an empty stub.
         for (const envVar of signingProviderEnvVars) {
@@ -91,7 +94,8 @@ describe('registerSigningProviders', () => {
             const drivers = registerSigningProviders(
                 undefined,
                 signingStore,
-                logger
+                logger,
+                notices
             )
 
             expect(drivers[SigningProvider.PARTICIPANT]).toBeDefined()
@@ -99,20 +103,15 @@ describe('registerSigningProviders', () => {
             expect(logger.info).toHaveBeenCalledWith(
                 expect.stringContaining('legacy discovery')
             )
-            expect(logger.warn).toHaveBeenCalledWith(
-                'Fireblocks environment variables not fully set. Fireblocks signing provider will be unavailable.'
-            )
-            expect(logger.warn).toHaveBeenCalledWith(
-                'Blockdaemon environment variables not fully set. Blockdaemon signing provider will be unavailable.'
-            )
-            expect(logger.warn).toHaveBeenCalledWith(
-                'Securosys environment variables not fully set. Securosys signing provider will be unavailable.'
-            )
-            expect(logger.warn).toHaveBeenCalledWith(
-                'Dfns environment variables not fully set. Dfns signing provider will be unavailable.'
-            )
-            expect(logger.warn).toHaveBeenCalledWith(
-                'BitGo environment variables not fully set. BitGo signing provider will be unavailable.'
+            expect(notices.list().map((notice) => notice.id)).toEqual([
+                'signing-provider-unavailable:fireblocks',
+                'signing-provider-unavailable:blockdaemon',
+                'signing-provider-unavailable:securosys',
+                'signing-provider-unavailable:dfns',
+                'signing-provider-unavailable:bitgo',
+            ])
+            expect(notices.list()[0].message).toBe(
+                'Fireblocks is unavailable because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set. Set them, or add a signingProviders section to the config file to choose the signing providers explicitly.'
             )
         })
 
@@ -120,7 +119,8 @@ describe('registerSigningProviders', () => {
             const drivers = registerSigningProviders(
                 undefined,
                 undefined,
-                logger
+                logger,
+                notices
             )
 
             expect(Object.keys(drivers)).toEqual([SigningProvider.PARTICIPANT])
@@ -148,7 +148,7 @@ describe('registerSigningProviders', () => {
             vi.stubEnv('BITGO_ENTERPRISE_ID', 'bitgo-enterprise')
             vi.stubEnv('BITGO_COIN', 'tcanton')
 
-            registerSigningProviders(undefined, signingStore, logger)
+            registerSigningProviders(undefined, signingStore, logger, notices)
 
             expect(providerConstructors.fireblocks).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -191,7 +191,8 @@ describe('registerSigningProviders', () => {
                 registerSigningProviders(
                     signingProvidersConfigSchema.parse({}),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
             ).toEqual({})
         })
@@ -203,7 +204,8 @@ describe('registerSigningProviders', () => {
                     fireblocks: {},
                 }),
                 signingStore,
-                logger
+                logger,
+                notices
             )
 
             expect(Object.keys(drivers)).toEqual([SigningProvider.PARTICIPANT])
@@ -231,7 +233,8 @@ describe('registerSigningProviders', () => {
                     },
                 }),
                 signingStore,
-                logger
+                logger,
+                notices
             )
 
             expect(providerConstructors.fireblocks).toHaveBeenCalledWith(
@@ -255,7 +258,8 @@ describe('registerSigningProviders', () => {
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({ participant: {} }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.PARTICIPANT]).toBeDefined()
@@ -267,7 +271,8 @@ describe('registerSigningProviders', () => {
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({ walletKernel: {} }),
                     undefined,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.WALLET_KERNEL]).toBeUndefined()
@@ -277,7 +282,8 @@ describe('registerSigningProviders', () => {
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({ walletKernel: {} }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.WALLET_KERNEL]).toBeDefined()
@@ -291,12 +297,36 @@ describe('registerSigningProviders', () => {
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({ fireblocks: {} }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.FIREBLOCKS]).toBeUndefined()
-                expect(logger.warn).toHaveBeenCalledWith(
-                    'Fireblocks environment variables not fully set. Fireblocks signing provider will be unavailable.'
+                expect(notices.list()).toEqual([
+                    expect.objectContaining({
+                        id: 'signing-provider-unavailable:fireblocks',
+                        severity: 'warning',
+                        message:
+                            'Fireblocks is unavailable because FIREBLOCKS_SECRET is not set. Set it, or remove signingProviders.fireblocks.',
+                    }),
+                ])
+            })
+
+            test('names the configured environment variables when they are missing', () => {
+                registerSigningProviders(
+                    signingProvidersConfigSchema.parse({
+                        fireblocks: {
+                            apiKeyEnv: 'MY_FIREBLOCKS_API_KEY',
+                            secretEnv: 'MY_FIREBLOCKS_SECRET',
+                        },
+                    }),
+                    signingStore,
+                    logger,
+                    notices
+                )
+
+                expect(notices.list()[0].message).toBe(
+                    'Fireblocks is unavailable because MY_FIREBLOCKS_API_KEY and MY_FIREBLOCKS_SECRET are not set. Set them, or remove signingProviders.fireblocks.'
                 )
             })
 
@@ -311,7 +341,8 @@ describe('registerSigningProviders', () => {
                         },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.FIREBLOCKS]).toBeDefined()
@@ -330,13 +361,19 @@ describe('registerSigningProviders', () => {
                         blockdaemon: { baseUrl: 'https://blockdaemon.example' },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.BLOCKDAEMON]).toBeUndefined()
-                expect(logger.warn).toHaveBeenCalledWith(
-                    'Blockdaemon environment variables not fully set. Blockdaemon signing provider will be unavailable.'
-                )
+                expect(notices.list()).toEqual([
+                    expect.objectContaining({
+                        id: 'signing-provider-unavailable:blockdaemon',
+                        severity: 'warning',
+                        message:
+                            'Blockdaemon is unavailable because BLOCKDAEMON_API_KEY is not set. Set it, or remove signingProviders.blockdaemon.',
+                    }),
+                ])
             })
 
             test('registers with config and API key', () => {
@@ -350,7 +387,8 @@ describe('registerSigningProviders', () => {
                         },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.BLOCKDAEMON]).toBeDefined()
@@ -387,7 +425,8 @@ describe('registerSigningProviders', () => {
                         },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.SECUROSYS]).toBeDefined()
@@ -409,7 +448,8 @@ describe('registerSigningProviders', () => {
                         securosys: { baseUrl: 'https://securosys.example' },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.SECUROSYS]).toBeDefined()
@@ -432,7 +472,8 @@ describe('registerSigningProviders', () => {
                         },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.SECUROSYS]).toBeDefined()
@@ -461,13 +502,19 @@ describe('registerSigningProviders', () => {
                         dfns: { orgId: 'org-id', credId: 'credential-id' },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.DFNS]).toBeUndefined()
-                expect(logger.warn).toHaveBeenCalledWith(
-                    'Dfns environment variables not fully set. Dfns signing provider will be unavailable.'
-                )
+                expect(notices.list()).toEqual([
+                    expect.objectContaining({
+                        id: 'signing-provider-unavailable:dfns',
+                        severity: 'warning',
+                        message:
+                            'Dfns is unavailable because DFNS_AUTH_TOKEN is not set. Set it, or remove signingProviders.dfns.',
+                    }),
+                ])
             })
 
             test('registers with config and secrets', () => {
@@ -483,7 +530,8 @@ describe('registerSigningProviders', () => {
                         },
                     }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.DFNS]).toBeDefined()
@@ -504,13 +552,19 @@ describe('registerSigningProviders', () => {
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({ bitgo: {} }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.BITGO]).toBeUndefined()
-                expect(logger.warn).toHaveBeenCalledWith(
-                    'BitGo environment variables not fully set. BitGo signing provider will be unavailable.'
-                )
+                expect(notices.list()).toEqual([
+                    expect.objectContaining({
+                        id: 'signing-provider-unavailable:bitgo',
+                        severity: 'warning',
+                        message:
+                            'BitGo is unavailable because BITGO_ACCESS_TOKEN is not set. Set it, or remove signingProviders.bitgo.',
+                    }),
+                ])
             })
 
             test('registers without enterprise ID and warns about limited functionality', () => {
@@ -519,13 +573,19 @@ describe('registerSigningProviders', () => {
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({ bitgo: {} }),
                     signingStore,
-                    logger
+                    logger,
+                    notices
                 )
 
                 expect(drivers[SigningProvider.BITGO]).toBeDefined()
-                expect(logger.warn).toHaveBeenCalledWith(
-                    expect.stringContaining('BitGo enterprise ID is not set')
-                )
+                expect(notices.list()).toEqual([
+                    expect.objectContaining({
+                        id: 'signing-provider-config:bitgo.enterpriseId',
+                        message: expect.stringContaining(
+                            'signingProviders.bitgo.enterpriseId is not set'
+                        ),
+                    }),
+                ])
             })
         })
     })

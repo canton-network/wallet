@@ -181,7 +181,7 @@ $ docker run --network=host --name some-postgres -e POSTGRES_PASSWORD=postgres -
     "store": {
         "connection": {
             "type": "postgres",
-            "password": "postgres",
+            "passwordEnv": "WG_TEST_POSTGRES_PASSWORD",
             "port": 5432,
             "user": "postgres",
             "host": "0.0.0.0",
@@ -191,7 +191,7 @@ $ docker run --network=host --name some-postgres -e POSTGRES_PASSWORD=postgres -
     "signingStore": {
         "connection": {
             "type": "postgres",
-            "password": "postgres",
+            "passwordEnv": "WG_TEST_POSTGRES_PASSWORD",
             "port": 5432,
             "user": "postgres",
             "host": "0.0.0.0",

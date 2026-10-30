@@ -50,7 +50,7 @@ and a Kubernetes secret; see [Deploy](../operate/deploy.mdx#postgresql).
             "host": "db.example.com",
             "port": 5432,
             "user": "wallet_gateway",
-            "password": "secure-password",
+            "passwordEnv": "WALLET_GATEWAY_DB_PASSWORD",
             "database": "wallet_gateway_db"
         }
     }
@@ -73,7 +73,7 @@ Gateway only configures client-side TLS; it never needs the server's private key
             "host": "localhost",
             "port": 5432,
             "user": "postgres",
-            "password": "postgres",
+            "passwordEnv": "POSTGRES_PASSWORD",
             "database": "app_db",
             "ssl": { "rejectUnauthorized": false }
         }
@@ -92,7 +92,7 @@ certificate PEM that signed the server certificate via `ssl.ca`.
             "host": "db.example.com",
             "port": 5432,
             "user": "wallet_gateway",
-            "password": "secure-password",
+            "passwordEnv": "WALLET_GATEWAY_DB_PASSWORD",
             "database": "wallet_gateway_db",
             "ssl": {
                 "rejectUnauthorized": true,

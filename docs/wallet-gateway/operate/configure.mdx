@@ -103,9 +103,10 @@ The `server` section configures binding, ports, and API paths.
 - `requestSizeLimit` (optional, default `"1mb"`): maximum request body size.
 - `requestRateLimit` (optional, default `10000`): maximum requests per minute per IP
   (health endpoints excluded).
-- `admin` (optional): the user ID (JWT `sub` claim) granted admin privileges, which allow
-  managing networks and identity providers at runtime. If omitted, network and IDP
-  management is restricted to the bootstrap configuration.
+- `admin` (optional): the user ID granted admin privileges: the value of the JWT `sub` claim,
+  or of `daml.com.usr` for self-issued tokens. Admins can manage networks and identity
+  providers at runtime and see the [Administration page](#administration-page). If omitted,
+  network and IDP management is restricted to the bootstrap configuration.
 
 ```json
 {
@@ -160,12 +161,16 @@ available:
             "host": "db.example.com",
             "port": 5432,
             "user": "wallet_gateway",
-            "password": "secure-password",
+            "passwordEnv": "WALLET_GATEWAY_DB_PASSWORD",
             "database": "wallet_gateway_db"
         }
     }
 }
 ```
+
+`passwordEnv` names the environment variable that holds the database password. Prefer it over an
+inline `password` so the credential comes from the environment (or a Kubernetes secret) rather
+than the config file.
 
 <Warning>
 
@@ -218,6 +223,24 @@ downgraded to `HASHING_SCHEME_VERSION_V2` if a connected participant still requi
     }
 }
 ```
+
+## Administration page
+
+The User UI has an **Administration** page at `/admin`, shown only to the user configured in
+`server.admin`. It lists notices about the running configuration and shows the configuration
+file as loaded at startup, with inline secrets redacted. Environment variable values are never
+shown.
+
+Notices point out configuration that needs attention, each with the action to take, for example:
+
+- fields without effect such as `server.host` and `server.tls`,
+- secrets written inline (`clientSecret`, `password`) instead of read from an environment
+  variable (`clientSecretEnv`, `passwordEnv`),
+- signing providers that are enabled but unavailable, for example because their environment
+  variables are not set.
+
+Each notice is also logged once at startup. Notices about the configuration disappear after you
+fix the configuration and restart the Wallet Gateway.
 
 ## Next steps
 

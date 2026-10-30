@@ -15,6 +15,7 @@ export class AppLayout extends BaseElement {
     @property({ type: Boolean }) accessor networkConnected = false
     @property({ type: String }) accessor currentPage = ''
     @property({ type: String }) accessor dappApiUrl = ''
+    @property({ type: Boolean }) accessor isAdmin = false
 
     static styles = [
         BaseElement.styles,
@@ -66,6 +67,7 @@ export class AppLayout extends BaseElement {
                 .networkConnected=${this.networkConnected}
                 .currentPage=${this.currentPage}
                 .dappApiUrl=${this.dappApiUrl}
+                .isAdmin=${this.isAdmin}
             ></app-header>
             <div class="container" id="mainContent">
                 <slot></slot>

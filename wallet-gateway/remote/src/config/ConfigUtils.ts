@@ -3,76 +3,170 @@
 
 import { readFileSync, existsSync } from 'fs'
 import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
+import type { ServerNoticeReport } from '../notices/server-notices.js'
 import { Env } from '../env.js'
 import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
 
+export interface LoadedConfig {
+    config: Config
+    // The config as written in the config file, before env vars are resolved
+    rawConfig: RawConfig
+    // Config that works but needs attention, e.g. deprecated fields
+    warnings: ServerNoticeReport[]
+}
+
 export class ConfigUtils {
-    static loadConfigFile(filePath: string): Config {
-        if (existsSync(filePath)) {
-            const rawConfig = rawConfigSchema.parse(
-                JSON.parse(readFileSync(filePath, 'utf-8'))
-            )
-
-            const config = resolveRawConfig(rawConfig)
-
-            /**
-             * Perform extra config validation beyond schema validation.
-             * We want to enforce the following constraints:
-             *
-             * 1. IDP IDs are unique
-             * 2. Network IDs are unique
-             * 3. Self-issued network audiences are unique
-             * 4. Each Network's identityProviderId maps to an existing IDP (in config)
-             * 5. Each Network's auth method is compatible with its IDP type
-             */
-            const duplicateIdpId = hasDuplicateElement(
-                config.bootstrap.idps.map((idp) => idp.id)
-            )
-            if (duplicateIdpId) {
-                throw new Error(
-                    `Non-unique IDP IDs found in config file: ${duplicateIdpId}`
-                )
-            }
-
-            const duplicateNetworkId = hasDuplicateElement(
-                config.bootstrap.networks.map((network) => network.id)
-            )
-            if (duplicateNetworkId) {
-                throw new Error(
-                    `Non-unique Network IDs found in config file: ${duplicateNetworkId}`
-                )
-            }
-
-            const duplicateSelfIssuedAudience = hasDuplicateElement(
-                config.bootstrap.networks
-                    .filter((network) => network.auth.method === 'self_issued')
-                    .map((network) => network.auth.audience)
-            )
-            if (duplicateSelfIssuedAudience) {
-                throw new Error(
-                    `Non-unique self-issued audience found in config file: ${duplicateSelfIssuedAudience}`
-                )
-            }
-
-            const invalidMapping = validateNetworkToIdpMapping(config)
-            if (invalidMapping) {
-                throw new Error(
-                    `Network ${invalidMapping.networkId} references unknown Identity Provider ID ${invalidMapping.idpId}`
-                )
-            }
-
-            const invalidAuthMethod = validateNetworkAuthMethods(config)
-            if (invalidAuthMethod) {
-                throw new Error(
-                    `Network ${invalidAuthMethod.networkId} has invalid auth method ${invalidAuthMethod.invalidAuthMethod} for its Identity Provider`
-                )
-            }
-
-            return config
-        } else {
+    /**
+     * Loads and validates the config file. Invalid configs throw, while
+     * configs that work but need attention are returned as warnings.
+     */
+    static loadConfigFile(filePath: string): LoadedConfig {
+        if (!existsSync(filePath)) {
             throw new Error("Supplied file path doesn't exist " + filePath)
         }
+        return ConfigUtils.parseConfig(
+            JSON.parse(readFileSync(filePath, 'utf-8'))
+        )
     }
+
+    static parseConfig(json: unknown): LoadedConfig {
+        const rawConfig = rawConfigSchema.parse(json)
+        return {
+            config: resolveConfig(rawConfig),
+            rawConfig,
+            warnings: collectWarnings(rawConfig),
+        }
+    }
+}
+
+function collectWarnings(rawConfig: RawConfig): ServerNoticeReport[] {
+    const warnings: ServerNoticeReport[] = []
+
+    if (rawConfig.server.host !== undefined) {
+        warnings.push({
+            id: 'deprecated-config:server.host',
+            severity: 'warning',
+            message:
+                'server.host has no effect, the Wallet Gateway always listens on all network interfaces. Remove server.host from the config file.',
+        })
+    }
+
+    if (rawConfig.server.tls !== undefined) {
+        warnings.push({
+            id: 'deprecated-config:server.tls',
+            severity: 'warning',
+            message:
+                'server.tls has no effect, TLS has to be terminated in front of the Wallet Gateway, e.g. by a load balancer. Remove server.tls from the config file.',
+        })
+    }
+
+    const stores = [
+        ['store', rawConfig.store],
+        ['signingStore', rawConfig.signingStore],
+    ] as const
+    for (const [name, store] of stores) {
+        if (
+            store?.connection.type === 'postgres' &&
+            'password' in store.connection
+        ) {
+            warnings.push(
+                inlineSecretWarning(
+                    `${name}.connection.password`,
+                    'passwordEnv'
+                )
+            )
+        }
+    }
+
+    rawConfig.bootstrap.networks.forEach((network, index) => {
+        const auths = {
+            auth: network.auth,
+            adminAuth: network.adminAuth,
+            serviceAccountAuth: network.serviceAccountAuth,
+        }
+        for (const [name, auth] of Object.entries(auths)) {
+            if (auth && 'clientSecret' in auth) {
+                warnings.push(
+                    inlineSecretWarning(
+                        `bootstrap.networks[${index}].${name}.clientSecret`,
+                        'clientSecretEnv'
+                    )
+                )
+            }
+        }
+    })
+
+    return warnings
+}
+
+function inlineSecretWarning(
+    path: string,
+    envField: string
+): ServerNoticeReport {
+    return {
+        id: `inline-secret:${path}`,
+        severity: 'warning',
+        message: `${path} is written in the config file. Prefer ${envField} so the secret comes from the environment (or a Kubernetes secret) rather than the config file: replace ${path} with ${envField}, set to the name of the environment variable that holds the secret.`,
+    }
+}
+
+function resolveConfig(rawConfig: RawConfig): Config {
+    const config = resolveRawConfig(rawConfig)
+
+    /**
+     * Perform extra config validation beyond schema validation.
+     * We want to enforce the following constraints:
+     *
+     * 1. IDP IDs are unique
+     * 2. Network IDs are unique
+     * 3. Self-issued network audiences are unique
+     * 4. Each Network's identityProviderId maps to an existing IDP (in config)
+     * 5. Each Network's auth method is compatible with its IDP type
+     */
+    const duplicateIdpId = hasDuplicateElement(
+        config.bootstrap.idps.map((idp) => idp.id)
+    )
+    if (duplicateIdpId) {
+        throw new Error(
+            `Non-unique IDP IDs found in config file: ${duplicateIdpId}`
+        )
+    }
+
+    const duplicateNetworkId = hasDuplicateElement(
+        config.bootstrap.networks.map((network) => network.id)
+    )
+    if (duplicateNetworkId) {
+        throw new Error(
+            `Non-unique Network IDs found in config file: ${duplicateNetworkId}`
+        )
+    }
+
+    const duplicateSelfIssuedAudience = hasDuplicateElement(
+        config.bootstrap.networks
+            .filter((network) => network.auth.method === 'self_issued')
+            .map((network) => network.auth.audience)
+    )
+    if (duplicateSelfIssuedAudience) {
+        throw new Error(
+            `Non-unique self-issued audience found in config file: ${duplicateSelfIssuedAudience}`
+        )
+    }
+
+    const invalidMapping = validateNetworkToIdpMapping(config)
+    if (invalidMapping) {
+        throw new Error(
+            `Network ${invalidMapping.networkId} references unknown Identity Provider ID ${invalidMapping.idpId}`
+        )
+    }
+
+    const invalidAuthMethod = validateNetworkAuthMethods(config)
+    if (invalidAuthMethod) {
+        throw new Error(
+            `Network ${invalidAuthMethod.networkId} has invalid auth method ${invalidAuthMethod.invalidAuthMethod} for its Identity Provider`
+        )
+    }
+
+    return config
 }
 
 type RawNetworkAuth = NonNullable<

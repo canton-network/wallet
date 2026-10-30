@@ -12,6 +12,7 @@ import type { Logger } from 'pino'
 import type { KernelInfo } from '../config/Config.js'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
 import { userController } from './controller.js'
+import type { ServerStatusService } from '../notices/server-status-service.js'
 import type { Methods } from './rpc-gen/index.js'
 import type {
     HASHING_SCHEME_VERSION,
@@ -29,7 +30,8 @@ export const user = (
     drivers: Partial<Record<SigningProvider, SigningDriverInterface>>,
     store: Store & AuthAware<Store>,
     hashingSchemeVersion: HASHING_SCHEME_VERSION,
-    adminUserId?: string
+    adminUserId?: string,
+    serverStatus?: ServerStatusService
 ) => {
     app.use(route, (req, res, next) =>
         jsonRpcHandler<Methods>({
@@ -42,7 +44,8 @@ export const user = (
                 drivers,
                 logger,
                 hashingSchemeVersion,
-                adminUserId
+                adminUserId,
+                serverStatus
             ),
             logger,
             paramSchemas,

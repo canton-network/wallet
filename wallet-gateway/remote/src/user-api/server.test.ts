@@ -16,7 +16,7 @@ import { sink } from 'pino-test'
 import { getLogger } from '@logtape/logtape'
 
 const configPath = '../test/config.json'
-const config = ConfigUtils.loadConfigFile(configPath)
+const config = ConfigUtils.loadConfigFile(configPath).config
 
 const store = new StoreInternal(config.bootstrap, getLogger('mock'))
 

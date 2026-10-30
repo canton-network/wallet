@@ -8,9 +8,7 @@
         "format": "pretty"
     },
     "server": {
-        "host": "localhost",
         "port": 3030,
-        "tls": false,
         "dappPath": "/api/v0/dapp",
         "userPath": "/api/v0/user",
         "allowedOrigins": [
@@ -74,14 +72,14 @@
                     "scope": "daml_ledger_api",
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "clientId": "participant_admin",
-                    "clientSecret": "admin-client-secret"
+                    "clientSecretEnv": "WG_TEST_ADMIN_CLIENT_SECRET"
                 },
                 "serviceAccountAuth": {
                     "method": "client_credentials",
                     "scope": "daml_ledger_api",
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "clientId": "service_account",
-                    "clientSecret": "service-account-secret"
+                    "clientSecretEnv": "WG_TEST_SERVICE_ACCOUNT_CLIENT_SECRET"
                 },
                 "ledgerApi": {
                     "baseUrl": "http://127.0.0.1:5003"
@@ -104,7 +102,7 @@
                     "scope": "daml_ledger_api",
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "clientId": "participant_admin",
-                    "clientSecret": "admin-client-secret"
+                    "clientSecretEnv": "WG_TEST_ADMIN_CLIENT_SECRET"
                 },
                 "ledgerApi": {
                     "baseUrl": "http://127.0.0.1:5003"
@@ -119,7 +117,7 @@
                 "auth": {
                     "method": "client_credentials",
                     "clientId": "operator",
-                    "clientSecret": "your-client-secret",
+                    "clientSecretEnv": "WG_TEST_OPERATOR_CLIENT_SECRET",
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "scope": "openid daml_ledger_api offline_access"
                 },
@@ -128,7 +126,7 @@
                     "scope": "daml_ledger_api",
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "clientId": "participant_admin",
-                    "clientSecret": "admin-client-secret"
+                    "clientSecretEnv": "WG_TEST_ADMIN_CLIENT_SECRET"
                 },
                 "ledgerApi": {
                     "baseUrl": "http://127.0.0.1:5003"
@@ -146,7 +144,7 @@
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "scope": "openid daml_ledger_api offline_access",
                     "clientId": "operator",
-                    "clientSecret": "unsafe"
+                    "clientSecretEnv": "WG_TEST_SELF_SIGNED_SECRET"
                 },
                 "adminAuth": {
                     "method": "self_signed",
@@ -154,7 +152,7 @@
                     "scope": "daml_ledger_api",
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "clientId": "participant_admin",
-                    "clientSecret": "admin-client-secret"
+                    "clientSecretEnv": "WG_TEST_ADMIN_CLIENT_SECRET"
                 },
                 "ledgerApi": {
                     "baseUrl": "http://127.0.0.1:5003"
@@ -194,7 +192,7 @@
                     "audience": "https://canton.network.global",
                     "scope": "openid daml_ledger_api offline_access",
                     "clientId": "ledger-api-user",
-                    "clientSecret": "unsafe"
+                    "clientSecretEnv": "WG_TEST_SELF_SIGNED_SECRET"
                 },
                 "adminAuth": {
                     "method": "self_signed",
@@ -202,7 +200,7 @@
                     "scope": "openid daml_ledger_api offline_access",
                     "audience": "https://canton.network.global",
                     "clientId": "ledger-api-user",
-                    "clientSecret": "unsafe"
+                    "clientSecretEnv": "WG_TEST_SELF_SIGNED_SECRET"
                 },
                 "ledgerApi": {
                     "baseUrl": "http://localhost:2975"
@@ -225,7 +223,7 @@
                     "scope": "daml_ledger_api",
                     "audience": "https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
                     "clientId": "participant_admin",
-                    "clientSecret": "admin-client-secret"
+                    "clientSecretEnv": "WG_TEST_ADMIN_CLIENT_SECRET"
                 },
                 "ledgerApi": {
                     "baseUrl": "http://127.0.0.1:5003"

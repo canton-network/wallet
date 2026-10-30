@@ -44,11 +44,11 @@ export const serverConfigSchema = z.object({
                 'Allowed CORS origins, typically corresponding to which external dApps are allowed to connect. Use "*" to allow all origins, or set an array of origin strings.',
         }),
 
-    // @deprecated, the NodeJS server always binds to the localhost interface
+    // @deprecated, the NodeJS server always listens on all network interfaces
     host: z.string().optional().meta({
         deprecated: true,
         description:
-            'The host interface the server binds to. Deprecated as the service always binds to the local machine network interface. Will be removed in a future release.',
+            'The host interface the server binds to. Deprecated as the service always listens on all network interfaces. Will be removed in a future release.',
     }),
     // @deprecated since this field does not actually control TLS termination
     tls: z.boolean().optional().meta({
@@ -72,7 +72,7 @@ export const serverConfigSchema = z.object({
         }),
     admin: z.string().optional().meta({
         description:
-            'The JWT claim (e.g. "sub") identifying the admin user. If set, requests with a matching claim will be granted admin privileges.',
+            'The user ID of the admin user: the value of the JWT "sub" claim, or of "daml.com.usr" for self-issued tokens. If set, requests from this user will be granted admin privileges.',
     }),
     signingWorker: z
         .object({

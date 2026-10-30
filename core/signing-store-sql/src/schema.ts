@@ -176,7 +176,7 @@ export const postgresSchema = z.looseObject({
     host: z.string(),
     port: z.number(),
     user: z.string(),
-    password: z.string(),
+    password: z.string().meta({ secret: true }),
     database: z.string(),
 })
 

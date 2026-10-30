@@ -136,7 +136,7 @@ const program = new Command()
             process.exit(0)
         }
 
-        const config = ConfigUtils.loadConfigFile(opts.config)
+        const config = ConfigUtils.loadConfigFile(opts.config).config
         const configLogging = config.logging ?? {}
 
         const logFormat = opts.logFormat ?? configLogging.format ?? 'pretty'
@@ -166,7 +166,7 @@ let signingDb = new Command('signing-db')
 
 const hasDb = process.argv.slice(2).includes('db')
 if (hasDb) {
-    const config = ConfigUtils.loadConfigFile(options.config)
+    const config = ConfigUtils.loadConfigFile(options.config).config
     setupConsoleSink()
     db = createCLI(config.store, config.bootstrap) as Command
 }
@@ -174,7 +174,7 @@ if (hasDb) {
 const hasSigningDb = process.argv.slice(2).includes('signing-db')
 
 if (hasSigningDb) {
-    const config = ConfigUtils.loadConfigFile(options.config)
+    const config = ConfigUtils.loadConfigFile(options.config).config
     if (config.signingStore) {
         setupConsoleSink()
         signingDb = createSigningCLI(config.signingStore) as Command
