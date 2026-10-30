@@ -72,7 +72,7 @@ export const serverConfigSchema = z.object({
         }),
     admin: z.string().optional().meta({
         description:
-            'The JWT claim (e.g. "sub") identifying the admin user. If set, requests with a matching claim will be granted admin privileges.',
+            'The user ID of the admin user: the value of the JWT "sub" claim, or of "daml.com.usr" for self-issued tokens. If set, requests from this user will be granted admin privileges.',
     }),
     signingWorker: z
         .object({

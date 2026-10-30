@@ -117,7 +117,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     ]
                 },
                 "admin": {
-                    "description": "The JWT claim (e.g. \"sub\") identifying the admin user. If set, requests with a matching claim will be granted admin privileges.",
+                    "description": "The user ID of the admin user: the value of the JWT \"sub\" claim, or of \"daml.com.usr\" for self-issued tokens. If set, requests from this user will be granted admin privileges.",
                     "type": "string"
                 },
                 "signingWorker": {
