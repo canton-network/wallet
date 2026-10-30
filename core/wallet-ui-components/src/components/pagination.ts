@@ -25,6 +25,7 @@ export class WgPagination extends BaseElement {
     @property({ type: Number }) accessor total = 0
     @property({ type: Number }) accessor pageSize = 5
     @property({ type: Number }) accessor page = 1
+    @property({ type: Boolean }) accessor disabled = false
 
     static styles = [
         BaseElement.styles,
@@ -120,7 +121,7 @@ export class WgPagination extends BaseElement {
             <div class="pagination" aria-label="Pagination">
                 <button
                     class="page-btn"
-                    .disabled=${atFirstPage}
+                    .disabled=${this.disabled || atFirstPage}
                     @click=${() => this.updatePage(this.page - 1)}
                     aria-label="Previous page"
                 >
@@ -129,7 +130,7 @@ export class WgPagination extends BaseElement {
                 <span>${start}-${end} of ${this.total}</span>
                 <button
                     class="page-btn"
-                    .disabled=${atLastPage}
+                    .disabled=${this.disabled || atLastPage}
                     @click=${() => this.updatePage(this.page + 1)}
                     aria-label="Next page"
                 >
