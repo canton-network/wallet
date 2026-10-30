@@ -43,11 +43,6 @@ import {
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
 import { ServerNotices } from './notices/server-notices.js'
-import {
-    reportDeprecatedConfig,
-    reportInlineSecrets,
-} from './notices/config-notices.js'
-import { toDisplayConfig } from './config/display-config.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -233,13 +228,13 @@ async function initializeSigningDatabase(
 }
 
 export async function initialize(opts: CliOptions, logger: Logger) {
-    const rawConfig = ConfigUtils.loadRawConfigFile(opts.config)
-    const config = ConfigUtils.resolveConfig(rawConfig)
     const serverNotices = new ServerNotices(
         logger.child({ component: 'server-notices' })
     )
-    reportDeprecatedConfig(rawConfig, serverNotices)
-    reportInlineSecrets(rawConfig, serverNotices)
+    const { config, displayConfig } = ConfigUtils.loadConfigFile(
+        opts.config,
+        serverNotices
+    )
 
     // Use CLI port override or config port
     const port = opts.port ? Number(opts.port) : config.server.port
@@ -383,7 +378,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         store,
         hashingSchemeVersion,
         config.server.admin,
-        { notices: serverNotices, displayConfig: toDisplayConfig(rawConfig) }
+        { notices: serverNotices, displayConfig }
     )
 
     const { userPath, dappPath } = config.server
