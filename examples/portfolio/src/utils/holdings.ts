@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { HoldingView } from '@canton-network/core-token-standard'
+import type { HoldingView as HoldingViewV2 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
 
@@ -25,4 +26,29 @@ export const toOwnedHoldings = (
 ): PrettyContract<HoldingView>[] =>
     contracts.filter(
         (contract) => contract.interfaceViewValue.owner === partyId
+    )
+
+export const toUniquePortfolioHoldingsV2 = (
+    contracts: PrettyContract<HoldingViewV2>[]
+): PrettyContract<HoldingViewV2>[] => {
+    const holdingsByContractId = new Map<
+        string,
+        PrettyContract<HoldingViewV2>
+    >()
+
+    for (const contract of contracts) {
+        if (!holdingsByContractId.has(contract.contractId)) {
+            holdingsByContractId.set(contract.contractId, contract)
+        }
+    }
+
+    return [...holdingsByContractId.values()]
+}
+
+export const toOwnedHoldingsV2 = (
+    contracts: PrettyContract<HoldingViewV2>[],
+    partyId: PartyId
+): PrettyContract<HoldingViewV2>[] =>
+    contracts.filter(
+        (contract) => contract.interfaceViewValue.account.owner === partyId
     )
