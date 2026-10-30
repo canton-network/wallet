@@ -52,6 +52,7 @@ export const redirectToIntendedOrDefault = async (): Promise<void> => {
 export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
     @state() private accessor networkConnected = false
+    @state() private accessor isAdmin = false
     @state() accessor dappApiUrl: string = ''
     @state() accessor showPage = false
 
@@ -66,6 +67,25 @@ export class UserApp extends LitElement {
         super.connectedCallback()
         this.currentOrigin = await detectCurrentOrigin()
         void this.refreshNetworkConnected()
+        void this.refreshIsAdmin()
+    }
+
+    private async refreshIsAdmin(): Promise<void> {
+        const currentOrigin =
+            this.currentOrigin ?? (await detectCurrentOrigin())
+        const accessToken = await stateManager.accessToken.get(currentOrigin)
+        if (!accessToken) {
+            this.isAdmin = false
+            return
+        }
+
+        try {
+            const userClient = await createUserClient(accessToken)
+            const result = await userClient.request({ method: 'getUser' })
+            this.isAdmin = result.isAdmin
+        } catch {
+            this.isAdmin = false
+        }
     }
 
     private async refreshNetworkConnected(): Promise<void> {
@@ -154,6 +174,7 @@ export class UserApp extends LitElement {
                 .networkName=${networkName}
                 .networkConnected=${this.networkConnected}
                 .dappApiUrl=${this.dappApiUrl}
+                .isAdmin=${this.isAdmin}
                 @logout=${this.handleLogout}
                 @copy-dapp-api-url=${this.handleCopyDappApiUrl}
             >
