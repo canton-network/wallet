@@ -17,7 +17,8 @@ import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '@canton-network/core-wallet-services'
-import { userController, type ServerStatusSource } from './controller.js'
+import { userController } from './controller.js'
+import { ServerStatusService } from '../notices/server-status-service.js'
 import { ServerNotices } from '../notices/server-notices.js'
 import { GATEWAY_VERSION } from '../version.js'
 import { getLogger } from '@logtape/logtape'
@@ -221,7 +222,7 @@ function createController(
     context: AuthContext | undefined,
     drivers: Record<string, unknown> = {},
     adminId?: string,
-    serverStatus?: ServerStatusSource
+    serverStatus?: ServerStatusService
 ) {
     return userController(
         kernelInfo,
@@ -498,14 +499,14 @@ describe('userController', () => {
     })
 
     describe('getServerStatus', () => {
-        function createServerStatus(): ServerStatusSource {
+        function createServerStatus(): ServerStatusService {
             const notices = new ServerNotices(logger)
             notices.report({
                 id: 'deprecated-config:server.tls',
                 severity: 'warning',
                 message: 'server.tls is deprecated',
             })
-            return { notices, displayConfig: { server: { tls: true } } }
+            return new ServerStatusService(notices, { server: { tls: true } })
         }
 
         it('rejects non-admin users', async () => {
