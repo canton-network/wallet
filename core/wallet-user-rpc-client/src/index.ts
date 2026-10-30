@@ -595,6 +595,60 @@ export type UserIdentifier = string
 export type IsAdminFlag = boolean
 /**
  *
+ * The version of the Wallet Gateway.
+ *
+ */
+export type GatewayVersion = string
+/**
+ *
+ * Stable identifier of the notice.
+ *
+ */
+export type NoticeId = string
+export type NoticeSeverity = 'info' | 'warning'
+export type NoticeMessage = string
+/**
+ *
+ * Dot-separated path of the config field the notice refers to.
+ *
+ */
+export type NoticeConfigPath = string
+/**
+ *
+ * ISO 8601 timestamp of when the notice was first reported.
+ *
+ */
+export type NoticeFirstSeenAt = string
+/**
+ *
+ * ISO 8601 timestamp of when the notice was last reported.
+ *
+ */
+export type NoticeLastSeenAt = string
+/**
+ *
+ * A notice for server administrators, e.g. about deprecated configuration.
+ *
+ */
+export interface ServerNotice {
+    id: NoticeId
+    severity: NoticeSeverity
+    message: NoticeMessage
+    configPath?: NoticeConfigPath
+    firstSeenAt: NoticeFirstSeenAt
+    lastSeenAt: NoticeLastSeenAt
+}
+export type ServerNotices = ServerNotice[]
+/**
+ *
+ * The configuration as written in the config file, before resolving environment variables, with inline secrets redacted.
+ *
+ */
+export interface DisplayConfig {
+    [key: string]: any
+}
+/**
+ *
  * The generated API key.
  *
  */
@@ -881,6 +935,11 @@ export interface GetUserResult {
     userId: UserIdentifier
     isAdmin: IsAdminFlag
 }
+export interface GetServerStatusResult {
+    version: GatewayVersion
+    notices: ServerNotices
+    config: DisplayConfig
+}
 export interface GeneratedApiKey {
     id: Id
     apiKey: ApiKeyResult
@@ -975,6 +1034,7 @@ export type DeleteTransaction = (
     params: DeleteTransactionParams
 ) => Promise<Null>
 export type GetUser = () => Promise<GetUserResult>
+export type GetServerStatus = () => Promise<GetServerStatusResult>
 export type GenerateApiKey = (
     params: GenerateApiKeyParams
 ) => Promise<GeneratedApiKey>
@@ -1176,6 +1236,11 @@ export type RpcTypes = {
     getUser: {
         params: Params<GetUser>
         result: Result<GetUser>
+    }
+
+    getServerStatus: {
+        params: Params<GetServerStatus>
+        result: Result<GetServerStatus>
     }
 
     generateApiKey: {

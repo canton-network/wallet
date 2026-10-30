@@ -42,6 +42,8 @@ import {
 } from '@canton-network/core-wallet-services'
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
+import { ServerNotices } from './notices/server-notices.js'
+import { toDisplayConfig } from './config/display-config.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -227,7 +229,11 @@ async function initializeSigningDatabase(
 }
 
 export async function initialize(opts: CliOptions, logger: Logger) {
-    const config = ConfigUtils.loadConfigFile(opts.config)
+    const rawConfig = ConfigUtils.loadRawConfigFile(opts.config)
+    const config = ConfigUtils.resolveConfig(rawConfig)
+    const serverNotices = new ServerNotices(
+        logger.child({ component: 'server-notices' })
+    )
 
     // Use CLI port override or config port
     const port = opts.port ? Number(opts.port) : config.server.port
@@ -369,7 +375,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         drivers,
         store,
         hashingSchemeVersion,
-        config.server.admin
+        config.server.admin,
+        { notices: serverNotices, displayConfig: toDisplayConfig(rawConfig) }
     )
 
     const { userPath, dappPath } = config.server

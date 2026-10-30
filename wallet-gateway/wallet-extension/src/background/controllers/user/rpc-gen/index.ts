@@ -39,6 +39,7 @@ import type { GetTransactionStatus } from './typings.js'
 import type { ListTransactions } from './typings.js'
 import type { DeleteTransaction } from './typings.js'
 import type { GetUser } from './typings.js'
+import type { GetServerStatus } from './typings.js'
 import type { GenerateApiKey } from './typings.js'
 import type { ListApiKeys } from './typings.js'
 import type { RemoveApiKey } from './typings.js'
@@ -84,6 +85,7 @@ export type Methods = {
     listTransactions: ListTransactions
     deleteTransaction: DeleteTransaction
     getUser: GetUser
+    getServerStatus: GetServerStatus
     generateApiKey: GenerateApiKey
     listApiKeys: ListApiKeys
     removeApiKey: RemoveApiKey
@@ -131,6 +133,7 @@ function buildController(methods: Methods) {
         listTransactions: methods.listTransactions,
         deleteTransaction: methods.deleteTransaction,
         getUser: methods.getUser,
+        getServerStatus: methods.getServerStatus,
         generateApiKey: methods.generateApiKey,
         listApiKeys: methods.listApiKeys,
         removeApiKey: methods.removeApiKey,
