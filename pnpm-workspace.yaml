@@ -84,6 +84,7 @@ catalog:
     '@tanstack/router-core': ^1.171.39
     '@tanstack/router-plugin': ^1.168.48
     '@testcontainers/postgresql': ^12.2.1
+    '@testing-library/dom': ^10.4.2
     '@tony.ganchev/eslint-plugin-header': ^3.4.4
     '@types/better-sqlite3': ^9.6.0
     '@types/cors': ^2.8.19
@@ -150,6 +151,7 @@ catalog:
     react-dom: ^19.3.1
     react-intersection-observer: ^11.0.1
     rolldown: ^1.2.15
+    shadow-dom-testing-library: ^1.14.2
     sonner: ^2.0.8
     storybook: ^10.6.4
     supertest: ^7.3.1

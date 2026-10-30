@@ -320,6 +320,9 @@ catalogs:
     '@testcontainers/postgresql':
       specifier: ^12.2.1
       version: 12.2.1
+    '@testing-library/dom':
+      specifier: ^10.4.2
+      version: 10.4.2
     '@tony.ganchev/eslint-plugin-header':
       specifier: ^3.4.4
       version: 3.4.4
@@ -518,6 +521,9 @@ catalogs:
     rolldown:
       specifier: ^1.2.15
       version: 1.2.15
+    shadow-dom-testing-library:
+      specifier: ^1.14.2
+      version: 1.14.2
     sonner:
       specifier: ^2.0.8
       version: 2.0.8
@@ -2128,6 +2134,9 @@ importers:
       '@storybook/web-components-vite':
         specifier: 'catalog:'
         version: 10.6.4(lit@3.3.3)(storybook@10.6.4(@types/react@19.3.0)(prettier@3.9.10)(react@19.3.1))(vite@8.3.5(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      '@testing-library/dom':
+        specifier: 'catalog:'
+        version: 10.4.2
       '@types/react':
         specifier: 'catalog:'
         version: 19.3.0
@@ -2149,6 +2158,9 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.3.1(react@19.3.1)
+      shadow-dom-testing-library:
+        specifier: 'catalog:'
+        version: 1.14.2(@testing-library/dom@10.4.2)
       storybook:
         specifier: 'catalog:'
         version: 10.6.4(@types/react@19.3.0)(prettier@3.9.10)(react@19.3.1)
@@ -10775,6 +10787,12 @@ packages:
 
   setprototypeof@1.2.0:
     resolution: {integrity: sha512-E5LDX7Wrp85Kil5bhZv46j8jOeboKq5JMmYM3gVGdGH8xFpPWXUMsNrlODCrkoxMEeNi/XZIwuRvY4XNwYMJpw==}
+
+  shadow-dom-testing-library@1.14.2:
+    resolution: {integrity: sha512-h/eQPIaET73knn2NQ1TpxqVgABfGVMYIuWosr4pbNDNf8LFke9IOkD3jp3KJdVAN4zj2viY/sPKvyXHqHxsicw==}
+    engines: {node: '>= 14', npm: '>= 7'}
+    peerDependencies:
+      '@testing-library/dom': '>= 8'
 
   shebang-command@2.0.0:
     resolution: {integrity: sha512-kHxr2zZpYtdmrN1qDjrrX/Z1rR1kG8Dx+gkpK1G4eXmvXswmcE1hTWBWYUzlraYw1/yZp6YuDY77YtvbN0dmDA==}
@@ -20096,6 +20114,10 @@ snapshots:
   setimmediate@1.0.5: {}
 
   setprototypeof@1.2.0: {}
+
+  shadow-dom-testing-library@1.14.2(@testing-library/dom@10.4.2):
+    dependencies:
+      '@testing-library/dom': 10.4.2
 
   shebang-command@2.0.0:
     dependencies:
