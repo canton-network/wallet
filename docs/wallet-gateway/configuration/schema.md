@@ -81,7 +81,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 },
                 "host": {
                     "deprecated": true,
-                    "description": "The host interface the server binds to. Deprecated as the service always binds to the local machine network interface. Will be removed in a future release.",
+                    "description": "The host interface the server binds to. Deprecated as the service always listens on all network interfaces. Will be removed in a future release.",
                     "type": "string"
                 },
                 "tls": {
