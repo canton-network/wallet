@@ -83,14 +83,22 @@ class WgWalletEditForm extends WgWalletForm {
         return (
             this.hasNoSigningProviders ||
             !this.selectedSigningProvider.length ||
-            this.disabledSigningProviders.includes(
-                this.selectedSigningProvider
-            ) ||
+            this.selectedSigningProviderDisabled ||
             this.publicKeysLoading
         )
     }
 
+    private get selectedSigningProviderDisabled(): boolean {
+        return this.disabledSigningProviders.includes(
+            this.selectedSigningProvider
+        )
+    }
+
     protected get formFields() {
+        // A disabled signing provider shows the placeholder, not its key
+        const publicKey = this.selectedSigningProviderDisabled
+            ? ''
+            : this.selectedPublicKey
         return html`
             <div class="field-group d-flex flex-column">
                 <label for="party-id" class="form-label field-label mb-0">
@@ -164,27 +172,21 @@ class WgWalletEditForm extends WgWalletForm {
                 </label>
                 <div class="select-wrap">
                     <select
-                        .value=${this.selectedPublicKey}
+                        .value=${publicKey}
                         @change=${this.onPublicKeyChange}
                         ?disabled=${this.submitting}
                         class="form-select field-control"
                         id="public-key-id"
                         required
                     >
-                        <option
-                            disabled
-                            .selected=${!this.selectedPublicKey || this.disabledSigningProviders.includes(this.selectedSigningProvider)}
-                            value=""
-                        >
-                            ${this.publicKeysLoading ? nothing : this.disabledSigningProviders.includes(this.selectedSigningProvider) ? 'Select different signing provider' : 'Select public key'}
+                        <option disabled .selected=${!publicKey} value="">
+                            ${this.publicKeysLoading ? nothing : this.selectedSigningProviderDisabled ? 'Select different signing provider' : 'Select public key'}
                         </option>
                         ${this.publicKeys.map(
                             (key) =>
                                 html`<option
                                     value=${key.publicKey}
-                                    .selected=${
-                                        this.selectedPublicKey === key.publicKey
-                                    }
+                                    .selected=${publicKey === key.publicKey}
                                 >
                                     ${key.name} (${key.publicKey})
                                 </option>`

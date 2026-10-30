@@ -6,6 +6,7 @@ import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
 import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
+import './copy-button.js'
 
 /** Emitted when the user clicks an IDP card to review it */
 export class IdpCardReviewEvent extends Event {
