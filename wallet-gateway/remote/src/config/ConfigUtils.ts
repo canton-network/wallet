@@ -8,70 +8,81 @@ import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
 
 export class ConfigUtils {
     static loadConfigFile(filePath: string): Config {
-        if (existsSync(filePath)) {
-            const rawConfig = rawConfigSchema.parse(
-                JSON.parse(readFileSync(filePath, 'utf-8'))
-            )
+        return ConfigUtils.resolveConfig(
+            ConfigUtils.loadRawConfigFile(filePath)
+        )
+    }
 
-            const config = resolveRawConfig(rawConfig)
-
-            /**
-             * Perform extra config validation beyond schema validation.
-             * We want to enforce the following constraints:
-             *
-             * 1. IDP IDs are unique
-             * 2. Network IDs are unique
-             * 3. Self-issued network audiences are unique
-             * 4. Each Network's identityProviderId maps to an existing IDP (in config)
-             * 5. Each Network's auth method is compatible with its IDP type
-             */
-            const duplicateIdpId = hasDuplicateElement(
-                config.bootstrap.idps.map((idp) => idp.id)
-            )
-            if (duplicateIdpId) {
-                throw new Error(
-                    `Non-unique IDP IDs found in config file: ${duplicateIdpId}`
-                )
-            }
-
-            const duplicateNetworkId = hasDuplicateElement(
-                config.bootstrap.networks.map((network) => network.id)
-            )
-            if (duplicateNetworkId) {
-                throw new Error(
-                    `Non-unique Network IDs found in config file: ${duplicateNetworkId}`
-                )
-            }
-
-            const duplicateSelfIssuedAudience = hasDuplicateElement(
-                config.bootstrap.networks
-                    .filter((network) => network.auth.method === 'self_issued')
-                    .map((network) => network.auth.audience)
-            )
-            if (duplicateSelfIssuedAudience) {
-                throw new Error(
-                    `Non-unique self-issued audience found in config file: ${duplicateSelfIssuedAudience}`
-                )
-            }
-
-            const invalidMapping = validateNetworkToIdpMapping(config)
-            if (invalidMapping) {
-                throw new Error(
-                    `Network ${invalidMapping.networkId} references unknown Identity Provider ID ${invalidMapping.idpId}`
-                )
-            }
-
-            const invalidAuthMethod = validateNetworkAuthMethods(config)
-            if (invalidAuthMethod) {
-                throw new Error(
-                    `Network ${invalidAuthMethod.networkId} has invalid auth method ${invalidAuthMethod.invalidAuthMethod} for its Identity Provider`
-                )
-            }
-
-            return config
-        } else {
+    /**
+     * Parses the config file without resolving values from environment
+     * variables, i.e. the config as written by the operator plus defaults.
+     */
+    static loadRawConfigFile(filePath: string): RawConfig {
+        if (!existsSync(filePath)) {
             throw new Error("Supplied file path doesn't exist " + filePath)
         }
+        return rawConfigSchema.parse(
+            JSON.parse(readFileSync(filePath, 'utf-8'))
+        )
+    }
+
+    static resolveConfig(rawConfig: RawConfig): Config {
+        const config = resolveRawConfig(rawConfig)
+
+        /**
+         * Perform extra config validation beyond schema validation.
+         * We want to enforce the following constraints:
+         *
+         * 1. IDP IDs are unique
+         * 2. Network IDs are unique
+         * 3. Self-issued network audiences are unique
+         * 4. Each Network's identityProviderId maps to an existing IDP (in config)
+         * 5. Each Network's auth method is compatible with its IDP type
+         */
+        const duplicateIdpId = hasDuplicateElement(
+            config.bootstrap.idps.map((idp) => idp.id)
+        )
+        if (duplicateIdpId) {
+            throw new Error(
+                `Non-unique IDP IDs found in config file: ${duplicateIdpId}`
+            )
+        }
+
+        const duplicateNetworkId = hasDuplicateElement(
+            config.bootstrap.networks.map((network) => network.id)
+        )
+        if (duplicateNetworkId) {
+            throw new Error(
+                `Non-unique Network IDs found in config file: ${duplicateNetworkId}`
+            )
+        }
+
+        const duplicateSelfIssuedAudience = hasDuplicateElement(
+            config.bootstrap.networks
+                .filter((network) => network.auth.method === 'self_issued')
+                .map((network) => network.auth.audience)
+        )
+        if (duplicateSelfIssuedAudience) {
+            throw new Error(
+                `Non-unique self-issued audience found in config file: ${duplicateSelfIssuedAudience}`
+            )
+        }
+
+        const invalidMapping = validateNetworkToIdpMapping(config)
+        if (invalidMapping) {
+            throw new Error(
+                `Network ${invalidMapping.networkId} references unknown Identity Provider ID ${invalidMapping.idpId}`
+            )
+        }
+
+        const invalidAuthMethod = validateNetworkAuthMethods(config)
+        if (invalidAuthMethod) {
+            throw new Error(
+                `Network ${invalidAuthMethod.networkId} has invalid auth method ${invalidAuthMethod.invalidAuthMethod} for its Identity Provider`
+            )
+        }
+
+        return config
     }
 }
 
