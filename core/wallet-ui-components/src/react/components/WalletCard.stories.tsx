@@ -261,6 +261,9 @@ export const Select: Story = {
         await userEvent.click(
             await findByShadowRole(canvasElement, 'button', { name: 'Select' })
         )
+        await expect(
+            deepQuerySelector(canvasElement, '.spinner-border')
+        ).toBeNull()
         await expect(args.onWalletSelect).toHaveBeenCalledOnce()
         await expect(args.onWalletSelect).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -293,14 +296,21 @@ export const SelectLoading: Story = {
 }
 
 export const Selecting: Story = {
-    args: { onSelect: fn(), selecting: true },
-    play: async ({ canvas, canvasElement }) => {
+    args: { selectLabel: 'Select', selecting: true },
+    play: async ({ args, canvasElement }) => {
+        // Keeps its label next to the spinner
+        const select = await findByShadowRole(canvasElement, 'button', {
+            name: 'Select',
+        })
+        await expect(select).toBeDisabled()
         await expect(
-            canvas.getByRole('button', { name: 'Select' })
-        ).toBeDisabled()
-        await expect(
-            canvasElement.querySelector('.MuiCircularProgress-root')
+            deepQuerySelector(canvasElement, '.spinner-border')
         ).toBeInTheDocument()
+
+        // A user can't click it (pointer-events: none), but nothing is sent
+        // even if it gets clicked
+        select.click()
+        await expect(args.onWalletSelect).not.toHaveBeenCalled()
     },
 }
 

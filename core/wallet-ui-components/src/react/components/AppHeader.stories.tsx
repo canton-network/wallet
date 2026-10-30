@@ -6,6 +6,7 @@ import {
     deepQuerySelector,
     findByShadowRole,
     findByShadowText,
+    queryByShadowRole,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor } from 'storybook/test'
 import { AppHeader } from './AppHeader'
@@ -31,6 +32,14 @@ const menuButton = (canvasElement: HTMLElement) =>
 
 const menuItem = (canvasElement: HTMLElement, name: string | RegExp) =>
     findByShadowRole(canvasElement, 'button', { name })
+
+const findBadges = (root: ParentNode): HTMLElement[] => {
+    const badges = Array.from(root.querySelectorAll<HTMLElement>('.badge'))
+    for (const element of Array.from(root.querySelectorAll<HTMLElement>('*'))) {
+        if (element.shadowRoot) badges.push(...findBadges(element.shadowRoot))
+    }
+    return badges
+}
 
 export const Default: Story = {
     args: {
@@ -175,5 +184,55 @@ export const CopyWithoutDappApiUrl: Story = {
         await waitFor(() => expect(copy).toBeVisible())
         await userEvent.click(copy)
         await expect(args.onCopyDappApiUrl).toHaveBeenCalledOnce()
+    },
+}
+
+export const AdminEntry: Story = {
+    args: { isAdmin: true },
+    play: async ({ canvasElement, userEvent }) => {
+        await userEvent.click(await menuButton(canvasElement))
+        await expect(
+            await menuItem(canvasElement, 'Administration')
+        ).toBeVisible()
+    },
+}
+
+export const NonAdminEntry: Story = {
+    args: { isAdmin: false },
+    play: async ({ canvasElement, userEvent }) => {
+        await userEvent.click(await menuButton(canvasElement))
+        await expect(
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Administration',
+            })
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const AdminWarningBadges: Story = {
+    args: { isAdmin: true, warningCount: 2 },
+    play: async ({ canvasElement, userEvent }) => {
+        await userEvent.click(await menuButton(canvasElement))
+        await waitFor(() => {
+            expect(
+                findBadges(canvasElement).map((badge) =>
+                    badge.textContent?.trim()
+                )
+            ).toEqual(['2', '2'])
+        })
+    },
+}
+
+export const AdminWithoutWarnings: Story = {
+    args: { isAdmin: true, warningCount: 0 },
+    play: async ({ canvasElement }) => {
+        await waitFor(() => expect(findBadges(canvasElement)).toHaveLength(0))
+    },
+}
+
+export const NonAdminWarningBadges: Story = {
+    args: { isAdmin: false, warningCount: 2 },
+    play: async ({ canvasElement }) => {
+        await waitFor(() => expect(findBadges(canvasElement)).toHaveLength(0))
     },
 }
