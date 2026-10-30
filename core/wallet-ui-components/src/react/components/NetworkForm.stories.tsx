@@ -297,67 +297,77 @@ export const SynchronizerId: Story = {
     },
 }
 
-export const ClientCredentialsUserAuth: Story = {
+export const ExistingUserAuth: Story = {
     args: {
         mode: 'review',
         network: makeNetwork({
             ledgerApi: 'http://localhost:9999',
-            auth: clientCredentialsAuth(),
+            auth: { ...clientCredentialsAuth(), identityProviderId: 'idp-2' },
         }),
     },
     play: async ({ args, canvasElement, userEvent }) => {
-        await expect(
-            await field(canvasElement, 'Ledger API Base Url')
-        ).toHaveValue('http://localhost:9999')
-
-        // The ledger API is validated as a URL but saved as entered
-        await userEvent.click(await update(canvasElement))
-        await expect(args.onNetworkEditSave).toHaveBeenCalledOnce()
-        await expect(savedNetwork(args.onNetworkEditSave).ledgerApi).toBe(
-            'http://localhost:9999'
-        )
-
         const userAuth = await authSection(canvasElement, 'Configure user auth')
-        // The current secret isn't shown, and leaving the field empty keeps it
         const secret = await field(userAuth, 'Client Secret')
+        const override = await field(userAuth, 'Identity Provider Id Override')
+        const method = await field(userAuth, 'Method')
+        const withOverride = {
+            ...clientCredentialsAuth(),
+            identityProviderId: 'idp-2',
+        }
+
+        // The current secret isn't shown, and the override is
         await expect(secret).toHaveValue('')
         await expect(secret).toHaveAttribute('placeholder', '********')
         await expect(secret).not.toBeRequired()
         await expect(
             await findByShadowText(userAuth, SECRET_HIDDEN)
         ).toBeVisible()
-        await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual(
-            clientCredentialsAuth()
-        )
-        await fill(userEvent, secret, '')
+        await expect(override).toHaveValue('idp-2')
+        await expect(
+            await findByShadowText(
+                userAuth,
+                'Optional. Uses the network identity provider when empty.'
+            )
+        ).toBeVisible()
+
+        // Saved as is; the ledger API is validated as a URL but saved as entered
         await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual(
-            clientCredentialsAuth()
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({
+                ledgerApi: 'http://localhost:9999',
+                auth: withOverride,
+            })
         )
 
-        // Typing a new one replaces it
+        // Leaving the secret empty, or re-selecting the method, keeps it all
+        await fill(userEvent, secret, '')
+        await userEvent.selectOptions(method, 'client_credentials')
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual(
+            withOverride
+        )
+
+        // Typing a new secret replaces it
         await fill(userEvent, secret, 'new-secret')
         await waitFor(() =>
             expect(queryByShadowText(userAuth, SECRET_HIDDEN)).toBeNull()
         )
         await userEvent.click(await update(canvasElement))
         await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual({
-            ...clientCredentialsAuth(),
+            ...withOverride,
             clientSecret: 'new-secret',
         })
 
-        // The identity provider can be overridden for this auth only
-        const override = await field(userAuth, 'Identity Provider Id Override')
-        await fill(userEvent, override, 'machine-idp')
+        // Clearing the override leaves it out, so the network's provider is used
+        await fill(userEvent, override, '')
         await userEvent.click(await update(canvasElement))
         await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual({
             ...clientCredentialsAuth(),
             clientSecret: 'new-secret',
-            identityProviderId: 'machine-idp',
         })
 
         // Switching methods away and back drops the method's own fields
-        const method = await field(userAuth, 'Method')
+        await fill(userEvent, override, 'machine-idp')
         await userEvent.selectOptions(method, 'authorization_code')
         await waitFor(() =>
             expect(queryByShadowText(userAuth, 'Client Secret')).toBeNull()
@@ -369,44 +379,6 @@ export const ClientCredentialsUserAuth: Story = {
         await expect(
             await field(userAuth, 'Identity Provider Id Override')
         ).toHaveValue('')
-    },
-}
-
-export const IdentityProviderOverride: Story = {
-    args: {
-        mode: 'review',
-        network: makeNetwork({
-            auth: { ...clientCredentialsAuth(), identityProviderId: 'idp-2' },
-        }),
-    },
-    play: async ({ args, canvasElement, userEvent }) => {
-        const userAuth = await authSection(canvasElement, 'Configure user auth')
-        const override = await field(userAuth, 'Identity Provider Id Override')
-        await expect(override).toHaveValue('idp-2')
-        await expect(
-            await findByShadowText(
-                userAuth,
-                'Optional. Uses the network identity provider when empty.'
-            )
-        ).toBeVisible()
-
-        // Re-selecting the method keeps the override
-        await userEvent.selectOptions(
-            await field(userAuth, 'Method'),
-            'client_credentials'
-        )
-        await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual({
-            ...clientCredentialsAuth(),
-            identityProviderId: 'idp-2',
-        })
-
-        // Clearing it leaves it out, so the network's provider is used
-        await fill(userEvent, override, '')
-        await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual(
-            clientCredentialsAuth()
-        )
     },
 }
 
@@ -467,6 +439,9 @@ export const SwitchingUserAuthMethods: Story = {
         })
 
         // Nothing to carry over from self_issued
+        await userEvent.selectOptions(method, 'client_credentials')
+        await expect(await field(userAuth, 'Client Id')).toHaveValue('')
+        await userEvent.selectOptions(method, 'self_issued')
         await userEvent.selectOptions(method, 'authorization_code')
         const clientId = await field(userAuth, 'Client Id')
         await expect(clientId).toHaveValue('')
@@ -477,35 +452,6 @@ export const SwitchingUserAuthMethods: Story = {
             clientId: 'new-client',
             audience: 'aud',
             scope: 'scope',
-        })
-    },
-}
-
-export const SwitchingFromSelfIssuedUserAuth: Story = {
-    args: {
-        mode: 'review',
-        network: makeNetwork({
-            auth: { method: 'self_issued', audience: 'aud', scope: 'scope' },
-        }),
-    },
-    play: async ({ args, canvasElement, userEvent }) => {
-        const userAuth = await authSection(canvasElement, 'Configure user auth')
-        await expect(queryByShadowText(userAuth, 'Client Id')).toBeNull()
-
-        await userEvent.selectOptions(
-            await field(userAuth, 'Method'),
-            'client_credentials'
-        )
-        await expect(await field(userAuth, 'Client Id')).toHaveValue('')
-        await fill(userEvent, await field(userAuth, 'Client Id'), 'client')
-        await fill(userEvent, await field(userAuth, 'Client Secret'), 'secret')
-        await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave).auth).toEqual({
-            method: 'client_credentials',
-            clientId: 'client',
-            audience: 'aud',
-            scope: 'scope',
-            clientSecret: 'secret',
         })
     },
 }
@@ -548,48 +494,58 @@ export const UnsupportedUserAuthMethod: Story = {
     },
 }
 
-export const AddingAdminAuth: Story = {
-    args: { mode: 'review', network: makeNetwork() },
+export const AdminAuth: Story = {
+    args: {
+        mode: 'review',
+        network: makeNetwork({ adminAuth: makeNetwork().auth }),
+    },
     play: async ({ args, canvasElement, userEvent }) => {
         const admin = await authSection(canvasElement, 'Configure admin auth')
-        await expect(
-            await findByShadowText(admin, 'No admin auth configured.')
-        ).toBeVisible()
+        const original = makeNetwork({ adminAuth: makeNetwork().auth })
+        await expect(await findByShadowText(admin, 'client-id')).toBeVisible()
 
+        // Switching to a method with a secret: there was none before editing,
+        // so one has to be entered
         await userEvent.click(
-            await findByShadowRole(admin, 'button', { name: 'Add' })
+            await findByShadowRole(admin, 'button', { name: 'Edit' })
         )
         await userEvent.selectOptions(
             await field(admin, 'Method'),
             'client_credentials'
         )
-        await fill(userEvent, await field(admin, 'Audience'), 'admin-aud')
-        await fill(userEvent, await field(admin, 'Scope'), 'admin-scope')
-        await fill(userEvent, await field(admin, 'Client Id'), 'admin-client')
-        await fill(
-            userEvent,
-            await field(admin, 'Client Secret'),
-            'admin-secret'
-        )
+        const secret = await field(admin, 'Client Secret')
+        await fill(userEvent, secret, '')
+        await expect(secret).toBeRequired()
+        await expect(secret).toHaveAttribute('placeholder', '')
+        await expect(queryByShadowText(admin, SECRET_HIDDEN)).toBeNull()
+        await userEvent.click(await update(canvasElement))
+        await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
 
+        await fill(userEvent, secret, 'admin-secret')
         await userEvent.click(await update(canvasElement))
         await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
-            makeNetwork({ adminAuth: clientCredentialsAuth() })
+            makeNetwork({
+                adminAuth: {
+                    method: 'client_credentials',
+                    audience: 'aud',
+                    scope: 'scope',
+                    clientId: 'client-id',
+                    clientSecret: 'admin-secret',
+                },
+            })
         )
-    },
-}
 
-export const RemovingAdminAuth: Story = {
-    args: {
-        mode: 'review',
-        network: makeNetwork({ adminAuth: clientCredentialsAuth() }),
-    },
-    play: async ({ args, canvasElement, userEvent }) => {
-        const admin = await authSection(canvasElement, 'Configure admin auth')
+        // Cancelling the edit restores the original
+        await userEvent.click(
+            await findByShadowRole(admin, 'button', { name: 'Cancel' })
+        )
         await expect(
-            await findByShadowText(admin, 'admin-client')
+            await findByShadowText(admin, 'authorization_code')
         ).toBeVisible()
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(original)
 
+        // Removing takes it out of the saved network, not just out of sight
         await userEvent.click(
             await findByShadowRole(admin, 'button', { name: 'Remove' })
         )
@@ -599,8 +555,6 @@ export const RemovingAdminAuth: Story = {
                 'Admin auth will be removed after submitting this form.'
             )
         ).toBeVisible()
-
-        // Removed from the saved network, not just hidden
         await userEvent.click(await update(canvasElement))
         await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
             makeNetwork()
@@ -610,12 +564,67 @@ export const RemovingAdminAuth: Story = {
         await userEvent.click(
             await findByShadowRole(admin, 'button', { name: 'Cancel' })
         )
+        await expect(await findByShadowText(admin, 'client-id')).toBeVisible()
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(original)
+    },
+}
+
+export const AddingAdminAuth: Story = {
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const admin = await authSection(canvasElement, 'Configure admin auth')
+        const add = () =>
+            findByShadowRole(admin, 'button', { name: 'Add' }).then((button) =>
+                userEvent.click(button)
+            )
+
+        // Adding starts from the first method, with nothing filled in
+        await add()
+        await expect(await field(admin, 'Method')).toHaveValue(
+            'authorization_code'
+        )
+        await expect(await field(admin, 'Client Id')).toHaveValue('')
+        await userEvent.click(
+            await findByShadowRole(admin, 'button', { name: 'Cancel' })
+        )
         await expect(
-            await findByShadowText(admin, 'admin-client')
+            await findByShadowText(admin, 'No admin auth configured.')
         ).toBeVisible()
+
+        // Any other method also starts empty
+        for (const method of ['client_credentials', 'self_issued']) {
+            await add()
+            await userEvent.selectOptions(await field(admin, 'Method'), method)
+            await expect(await field(admin, 'Audience')).toHaveValue('')
+            await userEvent.click(
+                await findByShadowRole(admin, 'button', { name: 'Cancel' })
+            )
+        }
+
+        await add()
+        await userEvent.selectOptions(
+            await field(admin, 'Method'),
+            'self_signed'
+        )
+        await expect(await field(admin, 'Issuer')).toHaveValue('')
+        await fill(userEvent, await field(admin, 'Audience'), 'admin-aud')
+        await fill(userEvent, await field(admin, 'Scope'), 'admin-scope')
+        await fill(userEvent, await field(admin, 'Client Id'), 'admin-client')
+        await fill(userEvent, await field(admin, 'Issuer'), 'https://iss')
+        await fill(userEvent, await field(admin, 'Client Secret'), 'secret')
         await userEvent.click(await update(canvasElement))
         await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
-            makeNetwork({ adminAuth: clientCredentialsAuth() })
+            makeNetwork({
+                adminAuth: {
+                    method: 'self_signed',
+                    audience: 'admin-aud',
+                    scope: 'admin-scope',
+                    clientId: 'admin-client',
+                    issuer: 'https://iss',
+                    clientSecret: 'secret',
+                },
+            })
         )
     },
 }
@@ -688,58 +697,66 @@ export const AddingServiceAccountAuth: Story = {
     },
 }
 
-export const AddingSelfSignedAdminAuth: Story = {
-    args: { mode: 'review', network: makeNetwork() },
+export const EditingServiceAccountAuth: Story = {
+    args: {
+        mode: 'review',
+        network: makeNetwork({ serviceAccountAuth: clientCredentialsAuth() }),
+    },
     play: async ({ args, canvasElement, userEvent }) => {
-        const admin = await authSection(canvasElement, 'Configure admin auth')
-        const add = () =>
-            findByShadowRole(admin, 'button', { name: 'Add' }).then((button) =>
-                userEvent.click(button)
-            )
-
-        // Adding starts from the first method, with nothing filled in
-        await add()
-        await expect(await field(admin, 'Method')).toHaveValue(
-            'authorization_code'
-        )
-        await expect(await field(admin, 'Client Id')).toHaveValue('')
-        await userEvent.selectOptions(
-            await field(admin, 'Method'),
-            'self_issued'
-        )
-        await waitFor(() =>
-            expect(queryByShadowText(admin, 'Client Id')).toBeNull()
+        const serviceAccount = await authSection(
+            canvasElement,
+            'Configure service account auth'
         )
         await userEvent.click(
-            await findByShadowRole(admin, 'button', { name: 'Cancel' })
+            await findByShadowRole(serviceAccount, 'button', { name: 'Edit' })
         )
+
+        // Editing starts from the current values, with the secret hidden
+        const clientId = await field(serviceAccount, 'Client Id')
+        await expect(clientId).toHaveValue('admin-client')
+        const secret = await field(serviceAccount, 'Client Secret')
+        await expect(secret).toHaveValue('')
+        await expect(secret).toHaveAttribute('placeholder', '********')
+        await expect(secret).not.toBeRequired()
         await expect(
-            await findByShadowText(admin, 'No admin auth configured.')
+            await findByShadowText(serviceAccount, SECRET_HIDDEN)
         ).toBeVisible()
 
-        await add()
-        await userEvent.selectOptions(
-            await field(admin, 'Method'),
-            'self_signed'
-        )
-        await expect(await field(admin, 'Issuer')).toHaveValue('')
-        await fill(userEvent, await field(admin, 'Audience'), 'admin-aud')
-        await fill(userEvent, await field(admin, 'Scope'), 'admin-scope')
-        await fill(userEvent, await field(admin, 'Client Id'), 'admin-client')
-        await fill(userEvent, await field(admin, 'Issuer'), 'https://iss')
-        await fill(userEvent, await field(admin, 'Client Secret'), 'secret')
+        await fill(userEvent, secret, 'new-secret')
         await userEvent.click(await update(canvasElement))
         await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
             makeNetwork({
-                adminAuth: {
-                    method: 'self_signed',
-                    audience: 'admin-aud',
-                    scope: 'admin-scope',
-                    clientId: 'admin-client',
-                    issuer: 'https://iss',
-                    clientSecret: 'secret',
+                serviceAccountAuth: {
+                    ...clientCredentialsAuth(),
+                    clientSecret: 'new-secret',
                 },
             })
+        )
+
+        // Clearing the replacement goes back to the secret from before editing
+        await fill(userEvent, secret, '')
+        await expect(secret).toHaveAttribute('placeholder', '********')
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({ serviceAccountAuth: clientCredentialsAuth() })
+        )
+
+        await fill(userEvent, clientId, 'changed')
+        await userEvent.click(await update(canvasElement))
+        await expect(
+            savedNetwork(args.onNetworkEditSave).serviceAccountAuth.clientId
+        ).toBe('changed')
+
+        // Cancelling restores the original and goes back to the summary
+        await userEvent.click(
+            await findByShadowRole(serviceAccount, 'button', { name: 'Cancel' })
+        )
+        await expect(
+            await findByShadowText(serviceAccount, 'admin-client')
+        ).toBeVisible()
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({ serviceAccountAuth: clientCredentialsAuth() })
         )
     },
 }
@@ -812,110 +829,6 @@ export const OptionalAuthSummaries: Story = {
         await expect(
             await findByShadowRole(serviceAccount, 'button', { name: 'Remove' })
         ).toBeEnabled()
-    },
-}
-
-export const EditingServiceAccountAuth: Story = {
-    args: {
-        mode: 'review',
-        network: makeNetwork({ serviceAccountAuth: clientCredentialsAuth() }),
-    },
-    play: async ({ args, canvasElement, userEvent }) => {
-        const serviceAccount = await authSection(
-            canvasElement,
-            'Configure service account auth'
-        )
-        await userEvent.click(
-            await findByShadowRole(serviceAccount, 'button', { name: 'Edit' })
-        )
-
-        // Editing starts from the current values, with the secret hidden
-        const clientId = await field(serviceAccount, 'Client Id')
-        await expect(clientId).toHaveValue('admin-client')
-        const secret = await field(serviceAccount, 'Client Secret')
-        await expect(secret).toHaveValue('')
-        await expect(secret).toHaveAttribute('placeholder', '********')
-        await expect(secret).not.toBeRequired()
-        await expect(
-            await findByShadowText(serviceAccount, SECRET_HIDDEN)
-        ).toBeVisible()
-
-        await fill(userEvent, secret, 'new-secret')
-        await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
-            makeNetwork({
-                serviceAccountAuth: {
-                    ...clientCredentialsAuth(),
-                    clientSecret: 'new-secret',
-                },
-            })
-        )
-
-        // Clearing the replacement goes back to the secret from before editing
-        await fill(userEvent, secret, '')
-        await expect(secret).toHaveAttribute('placeholder', '********')
-        await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
-            makeNetwork({ serviceAccountAuth: clientCredentialsAuth() })
-        )
-
-        await fill(userEvent, clientId, 'changed')
-        await userEvent.click(await update(canvasElement))
-        await expect(
-            savedNetwork(args.onNetworkEditSave).serviceAccountAuth.clientId
-        ).toBe('changed')
-
-        // Cancelling restores the original and goes back to the summary
-        await userEvent.click(
-            await findByShadowRole(serviceAccount, 'button', { name: 'Cancel' })
-        )
-        await expect(
-            await findByShadowText(serviceAccount, 'admin-client')
-        ).toBeVisible()
-        await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
-            makeNetwork({ serviceAccountAuth: clientCredentialsAuth() })
-        )
-    },
-}
-
-export const EditingAdminAuthMethod: Story = {
-    args: {
-        mode: 'review',
-        network: makeNetwork({ adminAuth: makeNetwork().auth }),
-    },
-    play: async ({ args, canvasElement, userEvent }) => {
-        const admin = await authSection(canvasElement, 'Configure admin auth')
-        await userEvent.click(
-            await findByShadowRole(admin, 'button', { name: 'Edit' })
-        )
-        await userEvent.selectOptions(
-            await field(admin, 'Method'),
-            'client_credentials'
-        )
-
-        // There was no secret before editing, so one has to be entered
-        const secret = await field(admin, 'Client Secret')
-        await fill(userEvent, secret, '')
-        await expect(secret).toBeRequired()
-        await expect(secret).toHaveAttribute('placeholder', '')
-        await expect(queryByShadowText(admin, SECRET_HIDDEN)).toBeNull()
-        await userEvent.click(await update(canvasElement))
-        await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
-
-        await fill(userEvent, secret, 'admin-secret')
-        await userEvent.click(await update(canvasElement))
-        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
-            makeNetwork({
-                adminAuth: {
-                    method: 'client_credentials',
-                    audience: 'aud',
-                    scope: 'scope',
-                    clientId: 'client-id',
-                    clientSecret: 'admin-secret',
-                },
-            })
-        )
     },
 }
 
