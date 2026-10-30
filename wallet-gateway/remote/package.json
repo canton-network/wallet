@@ -55,6 +55,7 @@
         "@canton-network/core-wallet-store-sql": "workspace:",
         "@canton-network/core-wallet-ui-components": "workspace:",
         "@canton-network/core-wallet-user-rpc-client": "workspace:",
+        "@canton-network/core-origin-manager": "workspace:",
         "@commander-js/extra-typings": "catalog:",
         "@logtape/adaptor-pino": "catalog:",
         "@logtape/logtape": "catalog:",

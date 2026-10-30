@@ -16,13 +16,19 @@ import {
     mockRequest,
 } from '../__tests__/test-helpers.js'
 
-const { mockCreateUserClient, showToast, handleErrorToast, setLocationHref } =
-    vi.hoisted(() => ({
-        mockCreateUserClient: vi.fn(),
-        showToast: vi.fn(),
-        handleErrorToast: vi.fn(),
-        setLocationHref: vi.fn(),
-    }))
+const {
+    mockCreateUserClient,
+    showToast,
+    handleErrorToast,
+    setLocationHref,
+    mockCurrentOriginPoll,
+} = vi.hoisted(() => ({
+    mockCreateUserClient: vi.fn(),
+    showToast: vi.fn(),
+    handleErrorToast: vi.fn(),
+    setLocationHref: vi.fn(),
+    mockCurrentOriginPoll: vi.fn<() => Promise<string>>(),
+}))
 
 vi.mock('../index.js', () => ({}))
 vi.mock('../navigation.js', () => ({ setLocationHref }))
@@ -33,7 +39,12 @@ vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         networkId: { get: () => 'network1' },
-        currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        currentOrigin: {
+            get: vi.fn(),
+            set: vi.fn(),
+            clear: vi.fn(),
+            poll: mockCurrentOriginPoll,
+        },
     },
 }))
 vi.mock('../utils.js', () => ({ showToast }))
@@ -78,6 +89,8 @@ describe('UserUiParties', () => {
         showToast.mockReset()
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
+        mockCurrentOriginPoll.mockReset()
+        mockCurrentOriginPoll.mockResolvedValue('browserext')
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockListWalletsFlow([
             makeWallet({

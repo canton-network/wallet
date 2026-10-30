@@ -9,7 +9,6 @@ import {
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import { detectCurrentOrigin } from '../listeners'
 import { LOGIN_PAGE_REDIRECT } from '../constants'
 import {
     fetchOidcDiscovery,
@@ -84,7 +83,7 @@ export class LoginCallback extends LitElement {
                 'OAuth token response'
             )
 
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
 
             stateManager.expirationDate.set(
                 jwtExpiresAt(tokenResponse.access_token).toISOString(),

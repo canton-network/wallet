@@ -28,11 +28,11 @@ import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
 
 import { stateManager } from '@/utils/legacy-frontend/state-manager'
 import { showToast } from '@/utils/legacy-frontend/utils'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
 import { toRelHref } from '@/utils/legacy-frontend/routing'
 
 import '@canton-network/core-wallet-ui-components'
 import '@/utils/legacy-frontend'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/origin'
 
 @customElement('user-ui-parties')
 export class UserUiParties extends BaseElement {

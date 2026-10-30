@@ -22,19 +22,16 @@ const {
     handleErrorToast,
     setLocationHref,
     parsePreparedTransaction,
-    detectCurrentOrigin,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     showToast: vi.fn(),
     handleErrorToast: vi.fn(),
     setLocationHref: vi.fn(),
     parsePreparedTransaction: vi.fn(() => ({ summary: 'parsed' })),
-    detectCurrentOrigin: vi.fn().mockResolvedValue('http://localhost'),
 }))
 
 vi.mock('../index.js', () => ({}))
 vi.mock('../navigation.js', () => ({ setLocationHref }))
-vi.mock('../listeners.js', () => ({ detectCurrentOrigin }))
 vi.mock('../rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -43,6 +40,7 @@ vi.mock('../state-manager.js', () => ({
         accessToken: { get: () => 'test-token' },
         currentOrigin: {
             get: vi.fn().mockReturnValue('http://localhost'),
+            poll: vi.fn().mockResolvedValue('http://localhost'),
             set: vi.fn(),
             clear: vi.fn(),
         },
@@ -109,7 +107,6 @@ describe('UserUiApprove', () => {
         showToast.mockReset()
         handleErrorToast.mockReset()
         setLocationHref.mockReset()
-        detectCurrentOrigin.mockClear()
         parsePreparedTransaction.mockClear()
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         vi.stubGlobal(

@@ -69,9 +69,16 @@ export class ExtensionPage {
         return partyId
     }
 
-    async openNextApproval(): Promise<string> {
+    async openNextApproval(): Promise<string | undefined> {
         await this.page.goto(this.extensionUrl('popup.html'))
-        await this.page.waitForURL(/\/approve\.html\?.*transactionId=/)
+
+        try {
+            await this.page.waitForURL(/\/approve\.html\?.*transactionId=/, {
+                timeout: 10_000,
+            })
+        } catch {
+            return undefined
+        }
 
         const commandId = new URL(this.page.url()).searchParams.get('commandId')
         if (!commandId) {

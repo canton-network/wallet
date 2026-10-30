@@ -29,7 +29,7 @@ export const test = base.extend<ExtensionFixtures>({
     context: async ({ headless }, use) => {
         await access(extensionPath).catch(() => {
             throw new Error(
-                `Extension build not found at ${extensionPath}. Run "pnpm --filter @canton-network/wallet-gateway-extension build" first.`
+                `Extension build not found at ${extensionPath}. Run "pnpm e2e" to build the extension and run e2e tests.`
             )
         })
 
