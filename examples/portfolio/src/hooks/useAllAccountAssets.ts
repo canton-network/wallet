@@ -68,7 +68,7 @@ export const useAllAccountAssets = (): PortfolioAssetsResult => {
             registryInstruments
         ).map((asset) => ({
             ...asset,
-            walletBalances: asset.walletBalances
+            walletBalances: asset.accountBalances
                 .map((balance) => {
                     const account = accountByParty.get(balance.owner)
 
