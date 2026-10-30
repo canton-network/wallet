@@ -2,20 +2,52 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import {
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+} from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
 import { ErrorPage } from './ErrorPage'
 
-const meta: Meta = {
+const meta = {
     title: 'ErrorPage',
     component: ErrorPage,
     args: {
-        onAction: fn(),
+        // Navigating or reloading would tear down the story
+        performDefaultAction: false,
+        onErrorBack: fn(),
+        onErrorRefresh: fn(),
     },
-}
+} satisfies Meta<typeof ErrorPage>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
+
+export const Defaults: Story = {
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowRole(canvasElement, 'alert')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'heading', {
+                level: 1,
+                name: 'Something went wrong',
+            })
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                'An unexpected error occurred while loading this page.'
+            )
+        ).toBeInTheDocument()
+        // Back mode is the default
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Back' })
+        ).toBeInTheDocument()
+    },
+}
 
 export const BackMode: Story = {
     args: {
@@ -23,17 +55,28 @@ export const BackMode: Story = {
         title: 'Unable to load parties',
         message: 'The wallet gateway could not fetch parties for this network.',
     },
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            canvas.getByRole('heading', { level: 1, name: args.title })
+            await findByShadowRole(canvasElement, 'heading', {
+                level: 1,
+                name: 'Unable to load parties',
+            })
         ).toBeInTheDocument()
-        await expect(canvas.getByText(args.message)).toBeInTheDocument()
         await expect(
-            canvas.queryByRole('button', { name: 'Refresh' })
+            await findByShadowText(
+                canvasElement,
+                'The wallet gateway could not fetch parties for this network.'
+            )
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Refresh' })
         ).not.toBeInTheDocument()
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Back' }))
-        await expect(args.onAction).toHaveBeenCalledTimes(1)
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Back' })
+        )
+        await expect(args.onErrorBack).toHaveBeenCalledOnce()
+        await expect(args.onErrorRefresh).not.toHaveBeenCalled()
     },
 }
 
@@ -43,34 +86,27 @@ export const RefreshMode: Story = {
         title: 'Connection lost',
         message: 'Please refresh to reconnect to Wallet Gateway.',
     },
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            canvas.getByRole('heading', { level: 1, name: args.title })
-        ).toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Back' })
-        ).not.toBeInTheDocument()
-
-        await userEvent.click(canvas.getByRole('button', { name: 'Refresh' }))
-        await expect(args.onAction).toHaveBeenCalledTimes(1)
-    },
-}
-
-export const Defaults: Story = {
-    args: {
-        mode: 'refresh',
-    },
-    play: async ({ canvas }) => {
-        await expect(
-            canvas.getByRole('heading', {
+            await findByShadowRole(canvasElement, 'heading', {
                 level: 1,
-                name: 'Something went wrong',
+                name: 'Connection lost',
             })
         ).toBeInTheDocument()
         await expect(
-            canvas.getByText(
-                'An unexpected error occurred while loading this page.'
+            await findByShadowText(
+                canvasElement,
+                'Please refresh to reconnect to Wallet Gateway.'
             )
         ).toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Back' })
+        ).not.toBeInTheDocument()
+
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Refresh' })
+        )
+        await expect(args.onErrorRefresh).toHaveBeenCalledOnce()
+        await expect(args.onErrorBack).not.toHaveBeenCalled()
     },
 }

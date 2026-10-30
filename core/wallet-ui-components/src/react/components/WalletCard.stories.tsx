@@ -1,13 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ComponentProps } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
-import { expect, fn } from 'storybook/test'
+import {
+    deepQuerySelector,
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
+import { expect, fn, waitFor } from 'storybook/test'
 import { WalletCard } from './WalletCard'
 
 const partyId =
     'alice::1220be58c29e65de40bf273be1dc2b266d43a9a002ea5b18955aeef7aac881bb471a'
+
+// The card takes the store's wallet, which also carries the user
+type Wallet = NonNullable<ComponentProps<typeof WalletCard>['wallet']>
+type Rights = Wallet['rights']
 
 const wallet: Wallet = {
     primary: false,
@@ -19,47 +30,63 @@ const wallet: Wallet = {
     networkId: 'canton:devnet',
     signingProviderId: 'wallet-kernel',
     rights: [],
+    userId: 'user-id',
 }
 
-const meta: Meta = {
+const meta = {
     title: 'WalletCard',
     component: WalletCard,
     args: {
         wallet,
-        onAllocate: fn(),
-        onSetPrimary: fn(),
-        onEdit: fn(),
+        onWalletAllocate: fn(),
+        onWalletSetPrimary: fn(),
+        onWalletEdit: fn(),
+        onWalletSelect: fn(),
     },
-}
+} satisfies Meta<typeof WalletCard>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
 export const Unallocated: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        await expect(canvas.getByText('alice')).toBeInTheDocument()
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            canvas.getByRole('button', { name: 'Copy party hint' })
-        ).toBeInTheDocument()
+            await findByShadowText(canvasElement, 'alice')
+        ).toBeVisible()
         await expect(
-            canvas.getByRole('button', { name: 'Copy party ID' })
-        ).toBeInTheDocument()
-        await expect(canvas.getByText('wallet-kernel')).toBeInTheDocument()
+            await findByShadowText(canvasElement, 'wallet-kernel')
+        ).toBeVisible()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Copy party hint',
+            })
+        ).toBeVisible()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Copy party ID',
+            })
+        ).toBeVisible()
 
         // Verified-only actions are hidden
         await expect(
-            canvas.queryByRole('button', { name: 'Set as primary' })
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Set as primary',
+            })
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByRole('button', { name: 'Edit' })
+            queryByShadowRole(canvasElement, 'button', { name: 'Edit' })
         ).not.toBeInTheDocument()
 
         await userEvent.click(
-            canvas.getByRole('button', { name: 'Allocate party' })
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Allocate party',
+            })
         )
-        await expect(args.onAllocate).toHaveBeenCalledTimes(1)
-        await expect(args.onAllocate).toHaveBeenCalledWith(wallet)
+        await expect(args.onWalletAllocate).toHaveBeenCalledOnce()
+        await expect(args.onWalletAllocate).toHaveBeenCalledWith(
+            expect.objectContaining({ wallet: wallet })
+        )
     },
 }
 
@@ -67,21 +94,41 @@ export const ExposesE2eHooks: Story = {
     args: {
         wallet: { ...wallet, externalTxId: 'tx-123' },
     },
-    play: async ({ canvas, canvasElement }) => {
-        // Used by the helpers in wallet-test-utils to find a card and read its party
-        const card = canvas.getByTestId('wallet-card')
-        await expect(card).toHaveAttribute('party-id', partyId)
+    play: async ({ canvasElement }) => {
+        // Used by the e2e helpers to find a card and read its party
+        await waitFor(() =>
+            expect(
+                deepQuerySelector(canvasElement, `[party-id="${partyId}"]`)
+            ).toBeInTheDocument()
+        )
         await expect(
-            canvasElement.querySelector('[data-test-external-tx-id]')
+            deepQuerySelector(canvasElement, '[data-test-external-tx-id]')
         ).toHaveAttribute('data-test-external-tx-id', 'tx-123')
+    },
+}
+
+export const NoWallet: Story = {
+    args: { wallet: null },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(canvasElement, 'No party supplied')
+        ).toBeVisible()
+        await expect(
+            deepQuerySelector(canvasElement, '[party-id]')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button')
+        ).not.toBeInTheDocument()
     },
 }
 
 export const UnallocatedLoading: Story = {
     args: { loading: true },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByRole('button', { name: 'Allocate party' })
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Allocate party',
+            })
         ).toBeDisabled()
     },
 }
@@ -90,82 +137,116 @@ export const UnallocatedDisabled: Story = {
     args: {
         wallet: { ...wallet, disabled: true, reason: 'Key not available' },
     },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('Disabled')).toBeInTheDocument()
-        await expect(canvas.getByText('Key not available')).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByRole('button', { name: 'Allocate party' })
+            await findByShadowText(canvasElement, 'Disabled')
+        ).toBeVisible()
+        await expect(
+            await findByShadowText(canvasElement, 'Key not available')
+        ).toBeVisible()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Allocate party',
+            })
         ).toBeDisabled()
     },
 }
 
 export const Verified: Story = {
     args: { verified: true },
-    play: async ({ args, canvas, userEvent }) => {
-        await expect(canvas.queryByText('PRIMARY')).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Allocate party' })
-        ).not.toBeInTheDocument()
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Set as primary',
+            })
+        )
+        await expect(args.onWalletSetPrimary).toHaveBeenCalledOnce()
+        await expect(args.onWalletSetPrimary).toHaveBeenCalledWith(
+            expect.objectContaining({ wallet: wallet })
+        )
 
         await userEvent.click(
-            canvas.getByRole('button', { name: 'Set as primary' })
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
         )
-        await expect(args.onSetPrimary).toHaveBeenCalledTimes(1)
-        await expect(args.onSetPrimary).toHaveBeenCalledWith(wallet)
+        await expect(args.onWalletEdit).toHaveBeenCalledOnce()
+        await expect(args.onWalletEdit).toHaveBeenCalledWith(
+            expect.objectContaining({ wallet: wallet })
+        )
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Edit' }))
-        await expect(args.onEdit).toHaveBeenCalledTimes(1)
-        await expect(args.onEdit).toHaveBeenCalledWith(wallet)
+        await expect(
+            queryByShadowText(canvasElement, 'PRIMARY')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Allocate party',
+            })
+        ).not.toBeInTheDocument()
     },
 }
 
 export const VerifiedLoading: Story = {
     args: { verified: true, loading: true },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByRole('button', { name: 'Set as primary' })
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Set as primary',
+            })
         ).toBeDisabled()
         await expect(
-            canvas.getByRole('button', { name: 'Edit' })
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
         ).toBeDisabled()
+    },
+}
+
+export const VerifiedNotEditable: Story = {
+    args: { verified: true, editable: false },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Set as primary',
+            })
+        ).toBeEnabled()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        ).not.toBeInTheDocument()
     },
 }
 
 export const Primary: Story = {
     args: { verified: true, wallet: { ...wallet, primary: true } },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('PRIMARY')).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.queryByRole('button', { name: 'Set as primary' })
+            await findByShadowText(canvasElement, 'PRIMARY')
+        ).toBeVisible()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        ).toBeEnabled()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Set as primary',
+            })
         ).not.toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Edit' })
-        ).toBeInTheDocument()
     },
 }
 
 export const VerifiedDisabled: Story = {
-    args: { verified: true, wallet: { ...wallet, disabled: true } },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('Disabled')).toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Set as primary' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Edit' })
-        ).toBeInTheDocument()
+    // A disabled wallet can always be edited, to fix it
+    args: {
+        verified: true,
+        editable: false,
+        wallet: { ...wallet, disabled: true },
     },
-}
-
-export const VerifiedReadOnly: Story = {
-    args: { verified: true, onSetPrimary: undefined, onEdit: undefined },
-    play: async ({ canvas }) => {
-        // Actions whose callback is omitted are hidden
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.queryByRole('button', { name: 'Set as primary' })
-        ).not.toBeInTheDocument()
+            await findByShadowText(canvasElement, 'Disabled')
+        ).toBeVisible()
         await expect(
-            canvas.queryByRole('button', { name: 'Edit' })
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        ).toBeEnabled()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Set as primary',
+            })
         ).not.toBeInTheDocument()
     },
 }
@@ -174,55 +255,73 @@ export const Select: Story = {
     args: {
         verified: true,
         wallet: { ...wallet, primary: true },
-        onSelect: fn(),
+        selectLabel: 'Select',
     },
-    play: async ({ args, canvas, userEvent }) => {
-        // Replaces the badge and every other action
-        await expect(canvas.queryByText('PRIMARY')).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Edit' })
-        ).not.toBeInTheDocument()
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Select' })
+        )
+        await expect(args.onWalletSelect).toHaveBeenCalledOnce()
+        await expect(args.onWalletSelect).toHaveBeenCalledWith(
+            expect.objectContaining({
+                wallet: {
+                    ...wallet,
+                    primary: true,
+                },
+            })
+        )
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Select' }))
-        await expect(args.onSelect).toHaveBeenCalledTimes(1)
-        await expect(args.onSelect).toHaveBeenCalledWith({
-            ...wallet,
-            primary: true,
-        })
+        // Replaces the badge and every other action
+        await expect(
+            queryByShadowText(canvasElement, 'PRIMARY')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        ).not.toBeInTheDocument()
     },
 }
 
-export const SelectWithCustomLabel: Story = {
-    args: { onSelect: fn(), selectLabel: 'Use this party', loading: true },
-    play: async ({ canvas }) => {
+export const SelectLoading: Story = {
+    args: { selectLabel: 'Use this party', loading: true },
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByRole('button', { name: 'Use this party' })
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Use this party',
+            })
         ).toBeDisabled()
     },
 }
 
 export const LongPartyId: Story = {
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         const shown = `${partyId.slice(0, 10)}...${partyId.slice(-10)}`
         // Shortened, with the full ID on hover
-        await expect(canvas.getByText(shown)).toHaveAttribute('title', partyId)
-        await expect(canvas.queryByText(partyId)).not.toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, shown)
+        ).toHaveAttribute('title', partyId)
+        await expect(
+            queryByShadowText(canvasElement, partyId)
+        ).not.toBeInTheDocument()
     },
 }
 
 export const ShortPartyId: Story = {
     args: { wallet: { ...wallet, partyId: 'alice::1220' } },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('alice::1220')).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(canvasElement, 'alice::1220')
+        ).toBeVisible()
     },
 }
 
 export const NoHint: Story = {
     args: { wallet: { ...wallet, hint: '' } },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('-')).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        await expect(await findByShadowText(canvasElement, '-')).toBeVisible()
         await expect(
-            canvas.queryByRole('button', { name: 'Copy party hint' })
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Copy party hint',
+            })
         ).not.toBeInTheDocument()
     },
 }
@@ -233,34 +332,58 @@ export const WithPermissions: Story = {
         wallet: {
             ...wallet,
             // Listed out of order: shown in a fixed order, only those held
-            rights: ['CanReadAs', 'CanActAs'],
+            rights: ['CanReadAs', 'CanActAs'] as Rights,
         },
     },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('Permissions')).toBeInTheDocument()
-        const chips = ['CanActAs', 'CanReadAs'].map((name) =>
-            canvas.getByText(name)
-        )
-        await expect(chips[0]).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
         await expect(
-            chips[0].compareDocumentPosition(chips[1]) &
+            await findByShadowText(canvasElement, 'Permissions')
+        ).toBeVisible()
+        const actAs = await findByShadowText(canvasElement, 'CanActAs')
+        const readAs = await findByShadowText(canvasElement, 'CanReadAs')
+        await expect(
+            actAs.compareDocumentPosition(readAs) &
                 Node.DOCUMENT_POSITION_FOLLOWING
         ).toBeTruthy()
-        await expect(canvas.queryByText('CanExecuteAs')).not.toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'CanExecuteAs')
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const ExecuteAsOnly: Story = {
+    args: { wallet: { ...wallet, rights: ['CanExecuteAs'] as Rights } },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(canvasElement, 'CanExecuteAs')
+        ).toBeVisible()
+        await expect(
+            queryByShadowText(canvasElement, 'CanActAs')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'CanReadAs')
+        ).not.toBeInTheDocument()
     },
 }
 
 export const NoPermissions: Story = {
-    play: async ({ canvas }) => {
-        await expect(canvas.queryByText('Permissions')).not.toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        await findByShadowText(canvasElement, 'alice')
+        await expect(
+            queryByShadowText(canvasElement, 'Permissions')
+        ).not.toBeInTheDocument()
     },
 }
 
 export const ShortReason: Story = {
     args: { wallet: { ...wallet, disabled: true, reason: 'Key revoked' } },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('Reason')).toBeInTheDocument()
-        await expect(canvas.getByText('Key revoked')).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(canvasElement, 'Reason')
+        ).toBeVisible()
+        await expect(
+            await findByShadowText(canvasElement, 'Key revoked')
+        ).toBeVisible()
     },
 }
 
@@ -269,10 +392,26 @@ const longReason =
 
 export const LongReason: Story = {
     args: { wallet: { ...wallet, disabled: true, reason: longReason } },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         // Long reasons wrap in full instead of being truncated
-        const reason = canvas.getByText(longReason)
-        await expect(reason).toBeInTheDocument()
+        const reason = await findByShadowText(canvasElement, longReason)
+        await expect(reason.scrollWidth).toBeLessThanOrEqual(reason.clientWidth)
+    },
+}
+
+export const MultilineReason: Story = {
+    args: {
+        wallet: {
+            ...wallet,
+            disabled: true,
+            reason: 'Key revoked\nAsk an admin to restore it',
+        },
+    },
+    play: async ({ canvasElement }) => {
+        const reason = await findByShadowText(
+            canvasElement,
+            'Key revoked Ask an admin to restore it'
+        )
         await expect(reason.scrollWidth).toBeLessThanOrEqual(reason.clientWidth)
     },
 }
