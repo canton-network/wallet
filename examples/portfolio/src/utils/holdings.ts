@@ -77,14 +77,6 @@ export const toUniquePortfolioHoldings = (
     return [...holdingsByContractId.values()]
 }
 
-// export const toOwnedHoldings = (
-//     contracts: PrettyContract<HoldingView>[],
-//     partyId: PartyId
-// ): PrettyContract<HoldingView>[] =>
-//     contracts.filter(
-//         (contract) => contract.interfaceViewValue.owner === partyId
-// )
-
 export const toOwnedHoldings = (
     holdings: PortfolioHolding[],
     partyId: PartyId
