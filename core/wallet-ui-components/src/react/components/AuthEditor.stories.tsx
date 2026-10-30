@@ -4,7 +4,14 @@
 import { useState, type ComponentProps } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { Auth } from '@canton-network/core-wallet-user-rpc-client'
-import { expect, fn } from 'storybook/test'
+import {
+    deepQuerySelector,
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
+import { expect, fn, waitFor, type Mock } from 'storybook/test'
 import { AuthEditor } from './AuthEditor'
 
 const authorizationCode: Auth = {
@@ -22,73 +29,81 @@ const clientCredentials: Auth = {
     clientSecret: 'existing-secret',
 }
 
+// The labels aren't tied to their inputs, so the inputs are found by test id
+const findInput = (canvasElement: HTMLElement, field: string) =>
+    waitFor(() => {
+        const input = deepQuerySelector(
+            canvasElement,
+            `[data-test-id="auth-editor-${field}-input"]`
+        )
+        expect(input).not.toBeNull()
+        return input as HTMLInputElement
+    })
+
+const queryInput = (canvasElement: HTMLElement, field: string) =>
+    deepQuerySelector(
+        canvasElement,
+        `[data-test-id="auth-editor-${field}-input"]`
+    )
+
+const findMethod = (canvasElement: HTMLElement) =>
+    findByShadowRole(canvasElement, 'combobox')
+
+// The auth reported by the most recent change event
+const lastAuth = (onAuthChange: Mock | undefined) =>
+    onAuthChange?.mock.lastCall?.[0].auth
+
 // The editor is controlled: this keeps the auth it reports, like a parent form
-const Harness = ({
-    initialAuth,
-    onChange,
-    ...props
-}: Omit<ComponentProps<typeof AuthEditor>, 'auth' | 'onChange'> & {
-    initialAuth?: Auth | undefined
-    onChange: (auth: Auth | undefined) => void
-}) => {
-    const [auth, setAuth] = useState<Auth | undefined>(initialAuth)
+const Harness = (props: ComponentProps<typeof AuthEditor>) => {
+    const [auth, setAuth] = useState(props.auth)
     return (
         <AuthEditor
             {...props}
             auth={auth}
-            onChange={(next) => {
-                onChange(next)
-                setAuth(next)
+            onAuthChange={(event) => {
+                props.onAuthChange?.(event)
+                setAuth(event.auth)
             }}
         />
     )
 }
 
-const meta: Meta = {
+const meta = {
     title: 'AuthEditor',
     component: AuthEditor,
-    render: (args) => (
-        <Harness
-            initialAuth={args.initialAuth}
-            allowedMethods={args.allowedMethods}
-            optional={args.optional}
-            {...(args.label !== undefined && { label: args.label })}
-            onChange={args.onChange}
-        />
-    ),
+    render: (args) => <Harness {...args} />,
     args: {
-        onChange: fn(),
+        onAuthChange: fn(),
     },
-}
+} satisfies Meta<typeof AuthEditor>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
 export const Required: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        // Without an optional flag the fields are shown straight away
+    play: async ({ args, canvasElement, userEvent }) => {
+        // Without the optional flag the fields are shown straight away
+        await expect(await findMethod(canvasElement)).toHaveValue(
+            'authorization_code'
+        )
         await expect(
-            canvas.getByRole('combobox', { name: /^Method/ })
-        ).toHaveValue('authorization_code')
-        await expect(
-            canvas.queryByRole('button', { name: 'Add' })
+            queryByShadowRole(canvasElement, 'button', { name: 'Add' })
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByRole('button', { name: 'Cancel' })
+            queryByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        ).not.toBeInTheDocument()
+        await expect(await findInput(canvasElement, 'client-id')).toBeRequired()
+        await expect(
+            queryInput(canvasElement, 'client-secret')
         ).not.toBeInTheDocument()
         await expect(
-            canvas.getByRole('textbox', { name: /^Client Id/ })
-        ).toBeRequired()
-        await expect(
-            canvas.queryByLabelText(/^Client Secret/)
+            queryInput(canvasElement, 'issuer')
         ).not.toBeInTheDocument()
 
-        await userEvent.type(
-            canvas.getByRole('textbox', { name: /^Client Id/ }),
-            'abc'
-        )
-        await expect(args.onChange).toHaveBeenLastCalledWith({
+        await userEvent.type(await findInput(canvasElement, 'client-id'), 'abc')
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toEqual({
             method: 'authorization_code',
             clientId: 'abc',
             audience: '',
@@ -98,149 +113,268 @@ export const Required: Story = {
 }
 
 export const Editing: Story = {
-    args: { initialAuth: authorizationCode },
-    play: async ({ args, canvas, userEvent }) => {
-        const audience = canvas.getByRole('textbox', { name: /^Audience/ })
+    args: { auth: authorizationCode },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const audience = await findInput(canvasElement, 'audience')
         await expect(audience).toHaveValue('aud')
 
         await userEvent.clear(audience)
         await userEvent.type(audience, 'new-aud')
-        await expect(args.onChange).toHaveBeenLastCalledWith({
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toEqual({
             ...authorizationCode,
             audience: 'new-aud',
         })
-        // The edited value is what the controlled field now shows
+
+        const scope = await findInput(canvasElement, 'scope')
+        await userEvent.clear(scope)
+        await userEvent.type(scope, 'new-scope')
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toEqual({
+            ...authorizationCode,
+            audience: 'new-aud',
+            scope: 'new-scope',
+        })
+        // The edited values are what the controlled fields now show
         await expect(audience).toHaveValue('new-aud')
+        await expect(scope).toHaveValue('new-scope')
     },
 }
 
 export const SwitchingMethods: Story = {
-    args: { initialAuth: authorizationCode },
-    play: async ({ args, canvas, userEvent }) => {
-        const method = canvas.getByRole('combobox', { name: /^Method/ })
+    args: { auth: authorizationCode },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const method = await findMethod(canvasElement)
 
         // Shared fields are carried over, and each method shows its own inputs
         await userEvent.selectOptions(method, 'client_credentials')
-        await expect(args.onChange).toHaveBeenLastCalledWith({
+        await expect(lastAuth(args.onAuthChange)).toEqual({
             method: 'client_credentials',
             clientId: 'client-id',
             audience: 'aud',
             scope: 'scope',
             clientSecret: '',
         })
+        await findInput(canvasElement, 'client-secret')
+        await findInput(canvasElement, 'identity-provider-id')
         await expect(
-            canvas.getByLabelText(/^Client Secret/)
+            await findByShadowText(
+                canvasElement,
+                'Optional. Uses the network identity provider when empty.'
+            )
         ).toBeInTheDocument()
         await expect(
-            canvas.getByLabelText('Identity Provider Id Override')
-        ).toBeInTheDocument()
-        await expect(canvas.queryByLabelText(/^Issuer/)).not.toBeInTheDocument()
-
-        await userEvent.selectOptions(method, 'self_signed')
-        await expect(canvas.getByLabelText(/^Issuer/)).toBeInTheDocument()
-        await expect(
-            canvas.getByLabelText(/^Client Secret/)
-        ).toBeInTheDocument()
-        await expect(
-            canvas.queryByLabelText('Identity Provider Id Override')
+            queryInput(canvasElement, 'issuer')
         ).not.toBeInTheDocument()
 
+        await userEvent.selectOptions(method, 'self_signed')
+        await expect(lastAuth(args.onAuthChange)).toEqual({
+            method: 'self_signed',
+            clientId: 'client-id',
+            audience: 'aud',
+            scope: 'scope',
+            issuer: '',
+            clientSecret: '',
+        })
+        await findInput(canvasElement, 'client-secret')
+        const issuer = await findInput(canvasElement, 'issuer')
+        await waitFor(() =>
+            expect(
+                queryInput(canvasElement, 'identity-provider-id')
+            ).not.toBeInTheDocument()
+        )
+
+        await userEvent.type(issuer, 'https://issuer')
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toMatchObject({
+            method: 'self_signed',
+            issuer: 'https://issuer',
+        })
+
+        await userEvent.type(
+            await findInput(canvasElement, 'client-secret'),
+            'signing-secret'
+        )
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toMatchObject({
+            method: 'self_signed',
+            clientSecret: 'signing-secret',
+        })
+
         await userEvent.selectOptions(method, 'self_issued')
-        await expect(args.onChange).toHaveBeenLastCalledWith({
+        await expect(lastAuth(args.onAuthChange)).toEqual({
             method: 'self_issued',
             audience: 'aud',
             scope: 'scope',
         })
+        await waitFor(() =>
+            expect(
+                queryInput(canvasElement, 'client-id')
+            ).not.toBeInTheDocument()
+        )
         await expect(
-            canvas.queryByLabelText(/^Client Id/)
+            queryInput(canvasElement, 'client-secret')
         ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByLabelText(/^Client Secret/)
-        ).not.toBeInTheDocument()
+
+        // Nothing to carry over from self_issued
+        await userEvent.selectOptions(method, 'authorization_code')
+        await expect(lastAuth(args.onAuthChange)).toEqual({
+            method: 'authorization_code',
+            clientId: '',
+            audience: 'aud',
+            scope: 'scope',
+        })
+        await findInput(canvasElement, 'client-id')
+    },
+}
+
+export const SwitchingFromSelfIssued: Story = {
+    args: { auth: { method: 'self_issued', audience: 'aud', scope: 'scope' } },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const method = await findMethod(canvasElement)
+
+        await userEvent.selectOptions(method, 'client_credentials')
+        await expect(lastAuth(args.onAuthChange)).toEqual({
+            method: 'client_credentials',
+            clientId: '',
+            audience: 'aud',
+            scope: 'scope',
+            clientSecret: '',
+        })
+
+        await userEvent.selectOptions(method, 'self_issued')
+        await userEvent.selectOptions(method, 'self_signed')
+        await expect(lastAuth(args.onAuthChange)).toEqual({
+            method: 'self_signed',
+            clientId: '',
+            audience: 'aud',
+            scope: 'scope',
+            issuer: '',
+            clientSecret: '',
+        })
     },
 }
 
 export const OnlyAllowedMethods: Story = {
     args: { allowedMethods: ['client_credentials'] },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         // The first allowed method is the default
-        const method = canvas.getByRole('combobox', { name: /^Method/ })
-        await expect(method).toHaveValue('client_credentials')
-        await expect(canvas.getAllByRole('option')).toHaveLength(1)
+        await expect(await findMethod(canvasElement)).toHaveValue(
+            'client_credentials'
+        )
         await expect(
-            canvas.getByLabelText(/^Client Secret/)
-        ).toBeInTheDocument()
+            await findByShadowRole(canvasElement, 'option')
+        ).toHaveTextContent('client_credentials')
+        await expect(
+            await findInput(canvasElement, 'client-secret')
+        ).toBeRequired()
+    },
+}
+
+export const DefaultsToSelfSigned: Story = {
+    args: { allowedMethods: ['self_signed', 'self_issued'] },
+    play: async ({ canvasElement }) => {
+        await expect(await findMethod(canvasElement)).toHaveValue('self_signed')
+        await expect(await findInput(canvasElement, 'issuer')).toHaveValue('')
+        await findInput(canvasElement, 'client-secret')
+    },
+}
+
+export const DefaultsToSelfIssued: Story = {
+    args: { allowedMethods: ['self_issued'] },
+    play: async ({ canvasElement }) => {
+        await expect(await findMethod(canvasElement)).toHaveValue('self_issued')
+        await findInput(canvasElement, 'audience')
+        await expect(
+            queryInput(canvasElement, 'client-id')
+        ).not.toBeInTheDocument()
     },
 }
 
 export const UnsupportedMethod: Story = {
     args: {
-        initialAuth: {
+        auth: {
             method: 'unexpected_method',
             clientId: 'client-id',
             audience: 'aud',
             scope: 'scope',
-        },
+        } as unknown as Auth,
     },
-    play: async ({ args, canvas, userEvent }) => {
-        // The unknown method stays visible, with a warning, and can be replaced
-        const method = canvas.getByRole('combobox', { name: /^Method/ })
-        await expect(method).toHaveValue('unexpected_method')
+    play: async ({ args, canvasElement, userEvent }) => {
+        // The method select stays usable, with a warning, so it can be fixed
         await expect(
-            canvas.getByText(/Unsupported auth method "unexpected_method"/)
+            await findByShadowText(
+                canvasElement,
+                /Unsupported auth method "unexpected_method"/
+            )
         ).toBeInTheDocument()
 
-        await userEvent.selectOptions(method, 'authorization_code')
-        await expect(args.onChange).toHaveBeenLastCalledWith(authorizationCode)
-        await expect(
-            canvas.queryByText(/Unsupported auth method/)
-        ).not.toBeInTheDocument()
+        await userEvent.selectOptions(
+            await findMethod(canvasElement),
+            'authorization_code'
+        )
+        await expect(lastAuth(args.onAuthChange)).toEqual(authorizationCode)
+        await waitFor(() =>
+            expect(
+                queryByShadowText(canvasElement, /Unsupported auth method/)
+            ).not.toBeInTheDocument()
+        )
     },
 }
 
 export const OptionalEmpty: Story = {
     args: { optional: true },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByText('No auth configured.')
+            await findByShadowText(canvasElement, 'No auth configured.')
         ).toBeInTheDocument()
         await expect(
-            canvas.getByRole('button', { name: 'Add' })
-        ).toBeInTheDocument()
-        await expect(canvas.queryByRole('combobox')).not.toBeInTheDocument()
+            await findByShadowRole(canvasElement, 'button', { name: 'Add' })
+        ).toBeEnabled()
+        await expect(
+            queryByShadowRole(canvasElement, 'combobox')
+        ).not.toBeInTheDocument()
     },
 }
 
-export const OptionalEmptyWithLabel: Story = {
-    // The label is worked into the message
-    args: { optional: true, label: 'admin auth' },
-    play: async ({ canvas }) => {
+export const CustomTexts: Story = {
+    args: {
+        optional: true,
+        emptyText: 'No admin auth configured.',
+    },
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByText('No admin auth configured.')
+            await findByShadowText(canvasElement, 'No admin auth configured.')
         ).toBeInTheDocument()
     },
 }
 
 export const AddAndCancel: Story = {
     args: { optional: true, allowedMethods: ['client_credentials'] },
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.click(canvas.getByRole('button', { name: 'Add' }))
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Add' })
+        )
 
         // Adding starts from the defaults of the first allowed method
-        await expect(
-            canvas.getByRole('combobox', { name: /^Method/ })
-        ).toHaveValue('client_credentials')
-        await expect(args.onChange).not.toHaveBeenCalled()
-
-        await userEvent.type(
-            canvas.getByRole('textbox', { name: /^Client Id/ }),
-            'abc'
+        await expect(await findMethod(canvasElement)).toHaveValue(
+            'client_credentials'
         )
-        await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }))
+        await findInput(canvasElement, 'client-secret')
+        await expect(args.onAuthChange).not.toHaveBeenCalled()
 
-        await expect(args.onChange).toHaveBeenLastCalledWith(undefined)
+        await userEvent.type(await findInput(canvasElement, 'client-id'), 'abc')
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toMatchObject({
+            clientId: 'abc',
+        })
+
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        )
+        await expect(lastAuth(args.onAuthChange)).toBeUndefined()
         await expect(
-            canvas.getByText('No auth configured.')
+            await findByShadowText(canvasElement, 'No auth configured.')
         ).toBeInTheDocument()
     },
 }
@@ -248,175 +382,242 @@ export const AddAndCancel: Story = {
 export const Summary: Story = {
     args: {
         optional: true,
-        initialAuth: {
-            ...clientCredentials,
-            identityProviderId: 'machine-idp',
-        },
+        auth: { ...clientCredentials, identityProviderId: 'machine-idp' },
     },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('Client Id')).toBeInTheDocument()
-        await expect(canvas.getByText('client-id')).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        await findByShadowText(canvasElement, 'Method')
+        await findByShadowText(canvasElement, 'client_credentials')
+        await findByShadowText(canvasElement, 'Client Id')
+        await findByShadowText(canvasElement, 'client-id')
+        await findByShadowText(canvasElement, 'Audience')
+        await findByShadowText(canvasElement, 'aud')
+        await findByShadowText(canvasElement, 'Scope')
+        await findByShadowText(canvasElement, 'scope')
+        await findByShadowText(canvasElement, 'Identity Provider Id')
+        await findByShadowText(canvasElement, 'machine-idp')
         // The secret is never shown
-        await expect(canvas.getByText('********')).toBeInTheDocument()
+        await findByShadowText(canvasElement, 'Client Secret')
+        await findByShadowText(canvasElement, '********')
         await expect(
-            canvas.queryByText('existing-secret')
+            queryByShadowText(canvasElement, 'existing-secret')
+        ).not.toBeInTheDocument()
+
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        ).toBeEnabled()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Remove' })
+        ).toBeEnabled()
+        await expect(
+            queryByShadowRole(canvasElement, 'combobox')
         ).not.toBeInTheDocument()
         await expect(
-            canvas.getByText('Identity Provider Id')
-        ).toBeInTheDocument()
-        await expect(canvas.getByText('machine-idp')).toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Edit' })
-        ).toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Remove' })
-        ).toBeInTheDocument()
-        await expect(canvas.queryByRole('combobox')).not.toBeInTheDocument()
+            queryByShadowText(canvasElement, 'No auth configured.')
+        ).not.toBeInTheDocument()
     },
 }
 
 export const SummaryWithoutSecret: Story = {
     args: {
         optional: true,
-        initialAuth: { ...clientCredentials, clientSecret: '' },
+        auth: {
+            method: 'self_signed',
+            clientId: 'client-id',
+            audience: 'aud',
+            scope: 'scope',
+            issuer: 'https://issuer',
+            clientSecret: '',
+        },
     },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('(not set)')).toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        await findByShadowText(canvasElement, 'Issuer')
+        await findByShadowText(canvasElement, 'https://issuer')
+        await expect(
+            await findByShadowText(canvasElement, '(not set)')
+        ).toBeInTheDocument()
     },
 }
 
 export const EditAndCancelRestores: Story = {
-    args: { optional: true, initialAuth: authorizationCode },
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.click(canvas.getByRole('button', { name: 'Edit' }))
+    args: { optional: true, auth: authorizationCode },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        )
 
-        const clientId = canvas.getByRole('textbox', { name: /^Client Id/ })
+        // Editing starts from the current values
+        await expect(await findMethod(canvasElement)).toHaveValue(
+            'authorization_code'
+        )
+        const clientId = await findInput(canvasElement, 'client-id')
+        await expect(clientId).toHaveValue('client-id')
+
         await userEvent.clear(clientId)
         await userEvent.type(clientId, 'changed')
-        await expect(args.onChange).toHaveBeenLastCalledWith({
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toEqual({
             ...authorizationCode,
             clientId: 'changed',
         })
 
         // Cancelling reports the original again and goes back to the summary
-        await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }))
-        await expect(args.onChange).toHaveBeenLastCalledWith(authorizationCode)
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        )
+        await expect(lastAuth(args.onAuthChange)).toEqual(authorizationCode)
         await expect(
-            canvas.getByRole('button', { name: 'Edit' })
-        ).toBeInTheDocument()
-        await expect(canvas.getByText('client-id')).toBeInTheDocument()
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        ).toBeEnabled()
+        await findByShadowText(canvasElement, 'client-id')
     },
 }
 
 export const RemoveAndRestore: Story = {
-    args: {
-        optional: true,
-        initialAuth: clientCredentials,
-        label: 'admin auth',
-    },
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.click(canvas.getByRole('button', { name: 'Remove' }))
+    args: { optional: true, auth: clientCredentials },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Remove' })
+        )
 
-        await expect(args.onChange).toHaveBeenLastCalledWith(undefined)
-        // The label starts the sentence, so it is capitalised
+        await expect(args.onAuthChange).toHaveBeenCalledOnce()
+        await expect(lastAuth(args.onAuthChange)).toBeUndefined()
         await expect(
-            canvas.getByText(
-                'Admin auth will be removed after submitting this form.'
+            await findByShadowText(
+                canvasElement,
+                'Auth will be removed after submitting this form.'
             )
         ).toBeInTheDocument()
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }))
-        await expect(args.onChange).toHaveBeenLastCalledWith(clientCredentials)
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        )
+        await expect(lastAuth(args.onAuthChange)).toEqual(clientCredentials)
         await expect(
-            canvas.getByRole('button', { name: 'Edit' })
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        ).toBeEnabled()
+    },
+}
+
+export const CustomPendingRemoveText: Story = {
+    args: {
+        optional: true,
+        auth: clientCredentials,
+        pendingRemoveText: 'Admin auth will be removed on save.',
+    },
+    play: async ({ canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Remove' })
+        )
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                'Admin auth will be removed on save.'
+            )
         ).toBeInTheDocument()
     },
 }
 
 export const ExistingSecretIsHidden: Story = {
-    args: { initialAuth: clientCredentials },
-    play: async ({ args, canvas, userEvent }) => {
-        const secret = canvas.getByLabelText(/^Client Secret/)
+    args: { auth: clientCredentials },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const secret = await findInput(canvasElement, 'client-secret')
         // The current secret isn't shown, and leaving the field empty keeps it
         await expect(secret).toHaveValue('')
         await expect(secret).toHaveAttribute('placeholder', '********')
         await expect(secret).not.toBeRequired()
         await expect(
-            canvas.getByText(
+            await findByShadowText(
+                canvasElement,
                 'Current secret is hidden. Enter a new value to replace it.'
             )
         ).toBeInTheDocument()
 
         await userEvent.type(secret, 'new-secret')
-        await expect(args.onChange).toHaveBeenLastCalledWith({
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toEqual({
             ...clientCredentials,
             clientSecret: 'new-secret',
         })
+        await waitFor(() =>
+            expect(
+                queryByShadowText(canvasElement, /Current secret is hidden/)
+            ).not.toBeInTheDocument()
+        )
     },
 }
 
 export const ClearingReplacementKeepsExistingSecret: Story = {
-    args: { optional: true, initialAuth: clientCredentials },
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.click(canvas.getByRole('button', { name: 'Edit' }))
-        const secret = canvas.getByLabelText(/^Client Secret/)
+    args: { optional: true, auth: clientCredentials },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Edit' })
+        )
+        const secret = await findInput(canvasElement, 'client-secret')
 
         await userEvent.type(secret, 'new-secret')
-        await userEvent.clear(secret)
-
-        // Back to the secret from before editing
-        await expect(args.onChange).toHaveBeenLastCalledWith({
-            ...clientCredentials,
-            clientSecret: 'existing-secret',
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toMatchObject({
+            clientSecret: 'new-secret',
         })
+
+        await userEvent.clear(secret)
+        await userEvent.tab()
+        // Back to the secret from before editing
+        await expect(lastAuth(args.onAuthChange)).toEqual(clientCredentials)
+        await expect(secret).toHaveAttribute('placeholder', '********')
     },
 }
 
 export const NewSecretIsRequired: Story = {
     args: { optional: true, allowedMethods: ['client_credentials'] },
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.click(canvas.getByRole('button', { name: 'Add' }))
-        const secret = canvas.getByLabelText(/^Client Secret/)
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Add' })
+        )
+        const secret = await findInput(canvasElement, 'client-secret')
         await expect(secret).toBeRequired()
 
         // A secret that was typed and cleared again isn't mistaken for a hidden one
         await userEvent.type(secret, 'abc')
+        await userEvent.tab()
         await userEvent.clear(secret)
+        await userEvent.tab()
         await expect(secret).toHaveAttribute('placeholder', '')
+        await expect(secret).toBeRequired()
         await expect(
-            canvas.queryByText(/Current secret is hidden/)
+            queryByShadowText(canvasElement, /Current secret is hidden/)
         ).not.toBeInTheDocument()
-        await expect(args.onChange).toHaveBeenLastCalledWith(
-            expect.objectContaining({ clientSecret: '' })
-        )
+        await expect(lastAuth(args.onAuthChange)).toMatchObject({
+            method: 'client_credentials',
+            clientSecret: '',
+        })
     },
 }
 
 export const IdentityProviderOverride: Story = {
-    args: { initialAuth: clientCredentials },
-    play: async ({ args, canvas, userEvent }) => {
-        const override = canvas.getByLabelText('Identity Provider Id Override')
+    args: { auth: clientCredentials },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const override = await findInput(canvasElement, 'identity-provider-id')
         await userEvent.type(override, 'machine-idp')
-        await expect(args.onChange).toHaveBeenLastCalledWith({
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toEqual({
+            ...clientCredentials,
+            identityProviderId: 'machine-idp',
+        })
+
+        // Re-selecting the method keeps the override
+        await userEvent.selectOptions(
+            await findMethod(canvasElement),
+            'client_credentials'
+        )
+        await expect(lastAuth(args.onAuthChange)).toEqual({
             ...clientCredentials,
             identityProviderId: 'machine-idp',
         })
 
         // Clearing it removes the override, so the network's provider is used
         await userEvent.clear(override)
-        await expect(args.onChange).toHaveBeenLastCalledWith(clientCredentials)
-    },
-}
-
-export const ExposesE2eHooks: Story = {
-    play: async ({ canvasElement }) => {
-        // The helpers in wallet-test-utils find the inputs through these attributes
-        const hook = (id: string) =>
-            canvasElement.querySelector(`[data-test-id="${id}"]`)
-        await expect(hook('auth-editor-client-id-input')?.tagName).toBe('INPUT')
-        await expect(hook('auth-editor-audience-input')?.tagName).toBe('INPUT')
-        await expect(hook('auth-editor-scope-input')?.tagName).toBe('INPUT')
-        await expect(hook('auth-editor-method-select')?.tagName).toBe('SELECT')
-        await expect(hook('auth-editor-edit-state')).not.toBeNull()
+        await userEvent.tab()
+        await expect(lastAuth(args.onAuthChange)).toEqual(clientCredentials)
     },
 }

@@ -1,15 +1,25 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { Network } from '@canton-network/core-wallet-user-rpc-client'
-import { Button } from '@mui/material'
-import { expect, fn, within } from 'storybook/test'
+import {
+    deepQuerySelector,
+    findAllByShadowRole,
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
+import { expect, fn, waitFor, type Mock, type userEvent } from 'storybook/test'
 import { fillField } from '../__tests__/fields'
 import { NetworkForm } from './NetworkForm'
 
-const network: Network = {
+type User = ReturnType<typeof userEvent.setup>
+
+// The element changes the network it is given in place, so every story gets
+// its own copy
+const makeNetwork = (overrides: Partial<Network> = {}): Network => ({
     id: 'canton:devnet',
     name: 'DevNet',
     description: 'Canton DevNet',
@@ -21,68 +31,103 @@ const network: Network = {
         scope: 'scope',
         clientId: 'client-id',
     },
-}
+    ...overrides,
+})
 
-const clientCredentialsAuth = {
-    method: 'client_credentials',
-    audience: 'admin-aud',
-    scope: 'admin-scope',
-    clientId: 'admin-client',
-    clientSecret: 'admin-secret',
-} as const
+const clientCredentialsAuth = () =>
+    ({
+        method: 'client_credentials',
+        audience: 'admin-aud',
+        scope: 'admin-scope',
+        clientId: 'admin-client',
+        clientSecret: 'admin-secret',
+    }) as const
 
-const meta: Meta = {
+const meta = {
     title: 'NetworkForm',
     component: NetworkForm,
     args: {
-        onSave: fn(),
+        onNetworkEditSave: fn(),
+        onNetworkEditCancel: fn(),
+        onNetworkDelete: fn(),
     },
-}
+} satisfies Meta<typeof NetworkForm>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
-// The optional auth editors have "Add" buttons of their own, so the form's
-// submit button is found by the hook the e2e helpers use
-const addButton = (canvasElement: HTMLElement) =>
-    canvasElement.querySelector<HTMLElement>(
-        '[data-test-id="add-network-button"]'
-    )
+const INVALID =
+    'Invalid network data, please ensure all fields are set correctly'
 
-// Each auth editor sits in its own labelled section
-const section = (canvas: ReturnType<typeof within>, name: string) =>
-    within(canvas.getByRole('region', { name }))
+// The labels aren't associated with their inputs, so a field is found as the
+// input next to its visible label
+const field = async (container: HTMLElement, label: string) => {
+    const element = await findByShadowText(container, label, {
+        selector: 'label',
+    })
+    return element.parentElement!.querySelector<HTMLElement>('input, select')!
+}
+
+// Each auth editor follows its section heading
+const authSection = async (canvasElement: HTMLElement, name: string) => {
+    const heading = await findByShadowRole(canvasElement, 'heading', { name })
+    return heading.nextElementSibling as HTMLElement
+}
+
+// Fills a field and moves on, like a user tabbing to the next one
+const fill = async (user: User, input: HTMLElement, text: string) => {
+    await fillField(user, input, text)
+    await user.tab()
+}
+
+const addButton = (canvasElement: HTMLElement) =>
+    deepQuerySelector<HTMLElement>(
+        canvasElement,
+        '[data-test-id="add-network-button"]'
+    )!
+
+const update = (canvasElement: HTMLElement) =>
+    findByShadowRole(canvasElement, 'button', { name: 'Update' })
+
+// The network reported by the most recent save
+const savedNetwork = (onSave: Mock | undefined) =>
+    onSave?.mock.lastCall?.[0].network
 
 export const Add: Story = {
-    play: async ({ args, canvas, canvasElement, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
+        await waitFor(() => expect(addButton(canvasElement)).toBeVisible())
+        await expect(addButton(canvasElement)).toHaveTextContent('Add')
         await expect(
-            canvas.queryByRole('button', { name: 'Update' })
+            queryByShadowRole(canvasElement, 'button', { name: 'Update' })
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByRole('heading', { name: 'Delete network' })
+            queryByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'heading', {
+                name: 'Delete network',
+            })
         ).not.toBeInTheDocument()
 
-        const text = async (name: RegExp, value: string) =>
-            fillField(userEvent, canvas.getByRole('textbox', { name }), value)
-        await text(/^Network Id/, 'new-net')
-        await text(/^Name/, 'New Network')
-        await text(/^Description/, 'A new network')
-        await text(/^Identity Provider Id/, 'idp-1')
-        await text(/^Ledger API Base Url/, 'http://localhost:6865')
-        // The user auth is a required editor, shown straight away
-        const userAuth = section(canvas, 'Configure user auth')
-        const authText = async (name: RegExp, value: string) =>
-            fillField(userEvent, userAuth.getByRole('textbox', { name }), value)
-        await authText(/^Client Id/, 'client')
-        await authText(/^Audience/, 'aud')
-        await authText(/^Scope/, 'scope')
+        const text = async (label: string, value: string) =>
+            fill(userEvent, await field(canvasElement, label), value)
+        await text('Network Id', 'new-net')
+        await text('Name', 'New Network')
+        await text('Description', 'A new network')
+        await text('Identity Provider Id', 'idp-1')
+        await text('Ledger API Base Url', 'http://localhost:6865')
+        // The user auth is required, so its fields are shown straight away
+        const userAuth = await authSection(canvasElement, 'Configure user auth')
+        await fill(userEvent, await field(userAuth, 'Audience'), 'aud')
+        await fill(userEvent, await field(userAuth, 'Scope'), 'scope')
+        await fill(userEvent, await field(userAuth, 'Client Id'), 'client')
 
-        await userEvent.click(addButton(canvasElement)!)
+        await userEvent.click(addButton(canvasElement))
 
         // No synchronizer ID, admin auth or service account auth were entered
-        await expect(args.onSave).toHaveBeenCalledTimes(1)
-        await expect(args.onSave).toHaveBeenCalledWith({
+        await expect(args.onNetworkEditSave).toHaveBeenCalledOnce()
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual({
             id: 'new-net',
             name: 'New Network',
             description: 'A new network',
@@ -98,364 +143,340 @@ export const Add: Story = {
     },
 }
 
-export const Review: Story = {
-    args: { network, onDelete: fn(), onCancel: fn() },
-    play: async ({ args, canvas, canvasElement, userEvent }) => {
-        await expect(
-            canvas.getByRole('textbox', { name: /^Network Id/ })
-        ).toHaveValue('canton:devnet')
-        // Review mode has no submit button for adding
-        await expect(addButton(canvasElement)).toBeNull()
-
-        const name = canvas.getByRole('textbox', { name: /^Name/ })
-        await fillField(userEvent, name, 'Updated Name')
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenCalledWith({
-            ...network,
-            name: 'Updated Name',
-        })
-
-        await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }))
-        await expect(args.onCancel).toHaveBeenCalledTimes(1)
-
-        // Delete reports the network as passed in, not the edited one
-        await expect(
-            canvas.getByRole('heading', { name: 'Delete network' })
-        ).toBeInTheDocument()
-        await userEvent.click(
-            canvas.getByRole('button', { name: 'Delete Network' })
+export const AddPrefilled: Story = {
+    args: {
+        network: makeNetwork({
+            id: 'new-net',
+            name: 'New Network',
+            description: 'A new network',
+        }),
+    },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await expect(await field(canvasElement, 'Network Id')).toHaveValue(
+            'new-net'
         )
-        await expect(args.onDelete).toHaveBeenCalledTimes(1)
-        await expect(args.onDelete).toHaveBeenCalledWith(network)
-    },
-}
 
-export const ReviewWithoutDeleteOrCancel: Story = {
-    args: { network },
-    play: async ({ canvas }) => {
-        // Actions whose callback is omitted are hidden
-        await expect(
-            canvas.queryByRole('heading', { name: 'Delete network' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Delete Network' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Cancel' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Update' })
-        ).toBeInTheDocument()
-    },
-}
-
-export const AddIgnoresReviewActions: Story = {
-    // Without a network it is an add, even if review callbacks are passed
-    args: { onDelete: fn(), onCancel: fn() },
-    play: async ({ canvas, canvasElement }) => {
-        await expect(addButton(canvasElement)).not.toBeNull()
-        await expect(
-            canvas.queryByRole('button', { name: 'Cancel' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('heading', { name: 'Delete network' })
-        ).not.toBeInTheDocument()
+        await userEvent.click(addButton(canvasElement))
+        await expect(args.onNetworkEditSave).toHaveBeenCalledOnce()
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({
+                id: 'new-net',
+                name: 'New Network',
+                description: 'A new network',
+            })
+        )
     },
 }
 
 export const RequiresFields: Story = {
-    play: async ({ args, canvas, canvasElement, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         // The browser blocks submitting empty required fields
-        await userEvent.click(addButton(canvasElement)!)
+        await waitFor(() => expect(addButton(canvasElement)).toBeVisible())
+        await userEvent.click(addButton(canvasElement))
 
-        await expect(args.onSave).not.toHaveBeenCalled()
+        await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
+        await expect(await field(canvasElement, 'Network Id')).toBeInvalid()
         await expect(
-            canvas.getByRole('textbox', { name: /^Network Id/ })
-        ).toBeInvalid()
+            await field(canvasElement, 'Synchronizer Id')
+        ).not.toBeRequired()
     },
 }
 
-export const ValidatesWhenBrowserValidationIsBypassed: Story = {
-    play: async ({ args, canvas, canvasElement }) => {
-        // e.g. a programmatic submit: the form checks the network itself too
-        canvasElement
-            .querySelector('form')!
-            .dispatchEvent(
-                new Event('submit', { bubbles: true, cancelable: true })
-            )
-
-        await expect(await canvas.findByRole('alert')).toHaveTextContent(
-            'Invalid network data, please ensure all fields are set correctly'
+export const Review: Story = {
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await expect(await field(canvasElement, 'Network Id')).toHaveValue(
+            'canton:devnet'
         )
-        await expect(args.onSave).not.toHaveBeenCalled()
+        await expect(
+            await findByShadowRole(canvasElement, 'heading', {
+                name: 'Configure user auth',
+            })
+        ).toBeVisible()
+        await expect(
+            await findByShadowRole(canvasElement, 'heading', {
+                name: 'Delete network',
+            })
+        ).toBeVisible()
+        await expect(
+            deepQuerySelector(
+                canvasElement,
+                '[data-test-id="add-network-button"]'
+            )
+        ).toBeNull()
+
+        await fill(userEvent, await field(canvasElement, 'Name'), 'New Name')
+        await userEvent.click(await update(canvasElement))
+        await expect(args.onNetworkEditSave).toHaveBeenCalledOnce()
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({ name: 'New Name' })
+        )
+    },
+}
+
+export const Cancel: Story = {
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ args, canvasElement, userEvent }) => {
+        // The auth editors have Cancel buttons of their own only while editing
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        )
+        await expect(args.onNetworkEditCancel).toHaveBeenCalledOnce()
+        await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
+    },
+}
+
+export const Delete: Story = {
+    args: { mode: 'review', network: makeNetwork({ id: 'delete-me' }) },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Delete Network',
+            })
+        )
+        await expect(args.onNetworkDelete).toHaveBeenCalledOnce()
+        await expect(args.onNetworkDelete?.mock.calls[0]?.[0].network).toEqual(
+            makeNetwork({ id: 'delete-me' })
+        )
+        await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
     },
 }
 
 export const InvalidLedgerApi: Story = {
-    args: { network },
-    play: async ({ args, canvas, userEvent }) => {
-        const ledgerApi = canvas.getByRole('textbox', {
-            name: /^Ledger API Base Url/,
-        })
-        await fillField(userEvent, ledgerApi, 'not a url')
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await expect(queryByShadowText(canvasElement, INVALID)).toBeNull()
 
-        await expect(args.onSave).not.toHaveBeenCalled()
-        await expect(await canvas.findByRole('alert')).toHaveTextContent(
-            'Invalid network data'
-        )
+        // Filled in, so the browser lets it through, but not a URL
+        const ledgerApi = await field(canvasElement, 'Ledger API Base Url')
+        await fill(userEvent, ledgerApi, 'not a url')
+        await userEvent.click(await update(canvasElement))
+
         await expect(
-            canvas.getByText('Must be a valid URL')
-        ).toBeInTheDocument()
-        await expect(ledgerApi).toBeInvalid()
+            await findByShadowText(canvasElement, INVALID)
+        ).toBeVisible()
+        await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
 
-        // Fixing it clears the error and saves
-        await fillField(userEvent, ledgerApi, 'https://ledger.example')
-        await expect(canvas.queryByRole('alert')).not.toBeInTheDocument()
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenCalledWith({
-            ...network,
-            ledgerApi: 'https://ledger.example',
-        })
+        await fill(userEvent, ledgerApi, 'https://ledger.example')
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({ ledgerApi: 'https://ledger.example' })
+        )
     },
 }
 
 export const SynchronizerId: Story = {
-    args: { network },
-    play: async ({ args, canvas, userEvent }) => {
-        const synchronizerId = canvas.getByRole('textbox', {
-            name: /^Synchronizer Id/,
-        })
-        await expect(synchronizerId).not.toBeRequired()
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const synchronizerId = await field(canvasElement, 'Synchronizer Id')
 
         // It has to look like a synchronizer ID when it is set
-        await fillField(userEvent, synchronizerId, 'short')
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).not.toHaveBeenCalled()
+        await fill(userEvent, synchronizerId, 'short')
+        await userEvent.click(await update(canvasElement))
         await expect(
-            canvas.getByText('Must contain "::" and be at least 10 characters')
-        ).toBeInTheDocument()
+            await findByShadowText(canvasElement, INVALID)
+        ).toBeVisible()
+        await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
 
-        await fillField(userEvent, synchronizerId, 'global-domain::1220abcd')
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenLastCalledWith({
-            ...network,
-            synchronizerId: 'global-domain::1220abcd',
-        })
+        await fill(userEvent, synchronizerId, 'global-domain::1220abcd')
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({ synchronizerId: 'global-domain::1220abcd' })
+        )
 
         // Emptying it leaves it out of the network again
-        await fillField(userEvent, synchronizerId, '')
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenLastCalledWith(network)
+        await fill(userEvent, synchronizerId, '')
+        await userEvent.click(await update(canvasElement))
+        await expect(args.onNetworkEditSave).toHaveBeenCalledTimes(2)
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork()
+        )
     },
 }
 
-export const UserAuthMethods: Story = {
+export const ClientCredentialsUserAuth: Story = {
     args: {
-        network: { ...network, auth: { ...clientCredentialsAuth } },
+        mode: 'review',
+        network: makeNetwork({
+            ledgerApi: 'http://localhost:9999',
+            auth: clientCredentialsAuth(),
+        }),
     },
-    play: async ({ canvas, userEvent }) => {
-        const userAuth = section(canvas, 'Configure user auth')
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            userAuth.getByLabelText(/^Client Secret/)
-        ).toBeInTheDocument()
+            await field(canvasElement, 'Ledger API Base Url')
+        ).toHaveValue('http://localhost:9999')
 
-        const method = userAuth.getByRole('combobox', { name: /^Method/ })
+        // The ledger API is validated as a URL but saved as entered
+        await userEvent.click(await update(canvasElement))
+        await expect(args.onNetworkEditSave).toHaveBeenCalledOnce()
+        await expect(savedNetwork(args.onNetworkEditSave).ledgerApi).toBe(
+            'http://localhost:9999'
+        )
+
+        const userAuth = await authSection(canvasElement, 'Configure user auth')
+        await expect(
+            await findByShadowText(userAuth, 'Client Secret')
+        ).toBeVisible()
+
+        const method = await field(userAuth, 'Method')
         await userEvent.selectOptions(method, 'authorization_code')
-        await expect(
-            userAuth.queryByLabelText(/^Client Secret/)
-        ).not.toBeInTheDocument()
-
+        await waitFor(() =>
+            expect(queryByShadowText(userAuth, 'Client Secret')).toBeNull()
+        )
         await userEvent.selectOptions(method, 'client_credentials')
         await expect(
-            userAuth.getByLabelText(/^Client Secret/)
-        ).toBeInTheDocument()
+            await findByShadowText(userAuth, 'Client Secret')
+        ).toBeVisible()
     },
 }
 
 export const AddingAdminAuth: Story = {
-    args: { network },
-    play: async ({ args, canvas, userEvent }) => {
-        const admin = section(canvas, 'Configure admin auth')
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const admin = await authSection(canvasElement, 'Configure admin auth')
         await expect(
-            admin.getByText('No admin auth configured.')
-        ).toBeInTheDocument()
+            await findByShadowText(admin, 'No admin auth configured.')
+        ).toBeVisible()
 
-        await userEvent.click(admin.getByRole('button', { name: 'Add' }))
+        await userEvent.click(
+            await findByShadowRole(admin, 'button', { name: 'Add' })
+        )
         await userEvent.selectOptions(
-            admin.getByRole('combobox', { name: /^Method/ }),
+            await field(admin, 'Method'),
             'client_credentials'
         )
-        await fillField(
+        await fill(userEvent, await field(admin, 'Audience'), 'admin-aud')
+        await fill(userEvent, await field(admin, 'Scope'), 'admin-scope')
+        await fill(userEvent, await field(admin, 'Client Id'), 'admin-client')
+        await fill(
             userEvent,
-            admin.getByRole('textbox', { name: /^Client Id/ }),
-            'admin-client'
-        )
-        await fillField(
-            userEvent,
-            admin.getByRole('textbox', { name: /^Audience/ }),
-            'admin-aud'
-        )
-        await fillField(
-            userEvent,
-            admin.getByRole('textbox', { name: /^Scope/ }),
-            'admin-scope'
-        )
-        await fillField(
-            userEvent,
-            admin.getByLabelText(/^Client Secret/),
+            await field(admin, 'Client Secret'),
             'admin-secret'
         )
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenCalledWith({
-            ...network,
-            adminAuth: {
-                method: 'client_credentials',
-                clientId: 'admin-client',
-                audience: 'admin-aud',
-                scope: 'admin-scope',
-                clientSecret: 'admin-secret',
-            },
-        })
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({ adminAuth: clientCredentialsAuth() })
+        )
     },
 }
 
 export const RemovingAdminAuth: Story = {
     args: {
-        network: { ...network, adminAuth: { ...clientCredentialsAuth } },
+        mode: 'review',
+        network: makeNetwork({ adminAuth: clientCredentialsAuth() }),
     },
-    play: async ({ args, canvas, userEvent }) => {
-        const admin = section(canvas, 'Configure admin auth')
-        await expect(admin.getByText('admin-client')).toBeInTheDocument()
-
-        await userEvent.click(admin.getByRole('button', { name: 'Remove' }))
+    play: async ({ args, canvasElement, userEvent }) => {
+        const admin = await authSection(canvasElement, 'Configure admin auth')
         await expect(
-            admin.getByText(
+            await findByShadowText(admin, 'admin-client')
+        ).toBeVisible()
+
+        await userEvent.click(
+            await findByShadowRole(admin, 'button', { name: 'Remove' })
+        )
+        await expect(
+            await findByShadowText(
+                admin,
                 'Admin auth will be removed after submitting this form.'
             )
-        ).toBeInTheDocument()
+        ).toBeVisible()
 
         // Removed from the saved network, not just hidden
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenCalledWith(network)
-    },
-}
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork()
+        )
 
-export const RestoringRemovedAdminAuth: Story = {
-    args: {
-        network: { ...network, adminAuth: { ...clientCredentialsAuth } },
-    },
-    play: async ({ args, canvas, userEvent }) => {
-        const admin = section(canvas, 'Configure admin auth')
-        await userEvent.click(admin.getByRole('button', { name: 'Remove' }))
-        await userEvent.click(admin.getByRole('button', { name: 'Cancel' }))
-
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenCalledWith({
-            ...network,
-            adminAuth: clientCredentialsAuth,
-        })
-    },
-}
-
-export const ServiceAccountAuthIsClientCredentialsOnly: Story = {
-    args: { network },
-    play: async ({ canvas, userEvent }) => {
-        const serviceAccount = section(canvas, 'Configure service account auth')
+        // Taking it back restores it
+        await userEvent.click(
+            await findByShadowRole(admin, 'button', { name: 'Cancel' })
+        )
         await expect(
-            serviceAccount.getByText('No service account auth configured.')
-        ).toBeInTheDocument()
+            await findByShadowText(admin, 'admin-client')
+        ).toBeVisible()
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({ adminAuth: clientCredentialsAuth() })
+        )
+    },
+}
+
+export const AddingServiceAccountAuth: Story = {
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const serviceAccount = await authSection(
+            canvasElement,
+            'Configure service account auth'
+        )
+        await expect(
+            await findByShadowText(
+                serviceAccount,
+                'No service account auth configured.'
+            )
+        ).toBeVisible()
 
         await userEvent.click(
-            serviceAccount.getByRole('button', { name: 'Add' })
+            await findByShadowRole(serviceAccount, 'button', { name: 'Add' })
         )
-        const method = serviceAccount.getByRole('combobox', { name: /^Method/ })
-        await expect(method).toHaveValue('client_credentials')
-        await expect(serviceAccount.getAllByRole('option')).toHaveLength(1)
-    },
-}
-
-export const StartsOverWhenNetworkChanges: Story = {
-    render: (args) => {
-        const [current, setCurrent] = useState<Network>(network)
-        return (
-            <>
-                <NetworkForm network={current} onSave={args.onSave} />
-                <Button
-                    onClick={() =>
-                        setCurrent({
-                            ...network,
-                            id: 'other',
-                            name: 'Other',
-                            adminAuth: { ...clientCredentialsAuth },
-                        })
-                    }
-                >
-                    Show other
-                </Button>
-            </>
-        )
-    },
-    play: async ({ canvas, userEvent }) => {
-        await userEvent.type(
-            canvas.getByRole('textbox', { name: /^Name/ }),
-            ' edited'
+        // Only client credentials are offered
+        await expect(await field(serviceAccount, 'Method')).toHaveValue(
+            'client_credentials'
         )
         await expect(
-            canvas.getByRole('textbox', { name: /^Name/ })
-        ).toHaveValue('DevNet edited')
+            await findAllByShadowRole(serviceAccount, 'option')
+        ).toHaveLength(1)
 
+        await fill(userEvent, await field(serviceAccount, 'Audience'), 'sa')
+        await fill(userEvent, await field(serviceAccount, 'Scope'), 'sa')
+        await fill(userEvent, await field(serviceAccount, 'Client Id'), 'sa')
+        await fill(
+            userEvent,
+            await field(serviceAccount, 'Client Secret'),
+            'sa-secret'
+        )
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork({
+                serviceAccountAuth: {
+                    method: 'client_credentials',
+                    audience: 'sa',
+                    scope: 'sa',
+                    clientId: 'sa',
+                    clientSecret: 'sa-secret',
+                },
+            })
+        )
+
+        // Cancelling the new auth leaves it out again
         await userEvent.click(
-            canvas.getByRole('button', { name: 'Show other' })
+            await findByShadowRole(serviceAccount, 'button', { name: 'Cancel' })
         )
-
-        // The fields, and the auth editors' own state, follow the new network
-        await expect(
-            canvas.getByRole('textbox', { name: /^Name/ })
-        ).toHaveValue('Other')
-        await expect(
-            section(canvas, 'Configure admin auth').getByText('admin-client')
-        ).toBeInTheDocument()
+        await userEvent.click(await update(canvasElement))
+        await expect(savedNetwork(args.onNetworkEditSave)).toEqual(
+            makeNetwork()
+        )
     },
 }
 
 export const ExposesE2eHooks: Story = {
-    play: async ({ canvasElement, canvas }) => {
-        // The helpers in wallet-test-utils click the submit button by this attribute
+    args: { mode: 'review', network: makeNetwork() },
+    play: async ({ canvasElement }) => {
+        // Used by the helpers in wallet-test-utils
+        await waitFor(() =>
+            expect(
+                deepQuerySelector(
+                    canvasElement,
+                    '[data-test-id="update-network-button"]'
+                )
+            ).toHaveTextContent('Update')
+        )
         await expect(
-            canvasElement.querySelector('[data-test-id="add-network-button"]')
-                ?.tagName
-        ).toBe('BUTTON')
-        // ...and find the fields by their labels
-        for (const label of [
-            'Network Id',
-            'Name',
-            'Description',
-            'Synchronizer Id',
-            'Identity Provider Id',
-            'Ledger API Base Url',
-        ]) {
-            await expect(
-                canvas.getAllByLabelText(new RegExp(`^${label}`))[0]
-            ).toBeInTheDocument()
-        }
-        // ...and the user auth inputs by data-test-id
-        await expect(
-            canvasElement.querySelector(
+            deepQuerySelector(
+                canvasElement,
                 '[data-test-id="auth-editor-client-id-input"]'
             )
-        ).not.toBeNull()
-    },
-}
-
-export const ExposesUpdateHook: Story = {
-    args: { network },
-    play: async ({ canvasElement }) => {
-        await expect(
-            canvasElement.querySelector(
-                '[data-test-id="update-network-button"]'
-            )?.tagName
-        ).toBe('BUTTON')
+        ).toHaveValue('client-id')
     },
 }

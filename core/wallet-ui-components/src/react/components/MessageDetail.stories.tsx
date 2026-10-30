@@ -2,22 +2,28 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, fn, within } from 'storybook/test'
+import {
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
+import { expect, fn } from 'storybook/test'
 import { MessageDetail } from './MessageDetail'
 
 const message = 'Sign in to Example dApp\nNonce: 12345'
 
-const meta: Meta = {
+const meta = {
     title: 'MessageDetail',
     component: MessageDetail,
     args: {
         messageId: 'msg-1',
         message,
         status: 'pending',
-        onApprove: fn(),
-        onReject: fn(),
+        onMessageApprove: fn(),
+        onMessageDelete: fn(),
     },
-}
+} satisfies Meta<typeof MessageDetail>
 
 export default meta
 
@@ -29,99 +35,197 @@ export const Pending: Story = {
         externalTxId: 'ext-1',
         backHref: '/activities/',
     },
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            canvas.getByRole('heading', { name: 'Message Details' })
-        ).toBeInTheDocument()
-        await expect(canvas.getByTestId('activity-status')).toHaveTextContent(
-            'pending'
-        )
-        await expect(
-            canvas.getByText('https://dapp.example')
-        ).toBeInTheDocument()
-        await expect(canvas.getByText('ext-1')).toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Copy external transaction ID' })
+            await findByShadowRole(canvasElement, 'heading', {
+                name: 'Message Details',
+            })
         ).toBeInTheDocument()
         await expect(
-            canvas.getByRole('link', { name: 'Back' })
+            await findByShadowText(canvasElement, 'pending')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'https://dapp.example')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'ext-1')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Copy external transaction ID',
+            })
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'link', { name: 'Back' })
         ).toHaveAttribute('href', '/activities/')
 
         // The message is shown as is, line breaks included
         await expect(
-            canvas.getByText(
+            await findByShadowText(
+                canvasElement,
                 (_, el) => el?.tagName === 'PRE' && el.textContent === message
             )
         ).toBeInTheDocument()
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Approve' }))
-        await expect(args.onApprove).toHaveBeenCalledTimes(1)
-        await expect(args.onApprove).toHaveBeenCalledWith('msg-1')
-        await userEvent.click(canvas.getByRole('button', { name: 'Reject' }))
-        await expect(args.onReject).toHaveBeenCalledTimes(1)
-        await expect(args.onReject).toHaveBeenCalledWith('msg-1')
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Approve',
+            })
+        )
+        await expect(args.onMessageApprove).toHaveBeenCalledOnce()
+        await expect(args.onMessageApprove).toHaveBeenCalledWith(
+            expect.objectContaining({ messageId: 'msg-1' })
+        )
+        await expect(args.onMessageDelete).not.toHaveBeenCalled()
+
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Reject' })
+        )
+        await expect(args.onMessageDelete).toHaveBeenCalledOnce()
+        await expect(args.onMessageDelete).toHaveBeenCalledWith(
+            expect.objectContaining({ messageId: 'msg-1' })
+        )
     },
 }
 
 export const Minimal: Story = {
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
+        await findByShadowRole(canvasElement, 'heading', {
+            name: 'Message Details',
+        })
         // The optional rows and the back link are only shown when set
-        await expect(canvas.queryByText('Requested by')).not.toBeInTheDocument()
         await expect(
-            canvas.queryByText('External transaction ID')
+            queryByShadowText(canvasElement, 'Requested by')
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByRole('button', { name: /^Copy/ })
+            queryByShadowText(canvasElement, 'External transaction ID')
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByRole('link', { name: 'Back' })
+            queryByShadowRole(canvasElement, 'button', { name: /^Copy/ })
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'link', { name: 'Back' })
         ).not.toBeInTheDocument()
     },
 }
 
-export const WithoutRejectCallback: Story = {
-    args: { onReject: undefined },
-    play: async ({ canvas }) => {
+export const AwaitingSignature: Story = {
+    args: {
+        status: 'awaiting-signature',
+        origin: 'https://dapp.example',
+        externalTxId: 'ext-1',
+    },
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.queryByRole('button', { name: 'Reject' })
+            await findByShadowText(canvasElement, 'awaiting-signature')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'Requested by')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'External transaction ID')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'ext-1')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Copy external transaction ID',
+            })
+        ).toBeInTheDocument()
+
+        // Only pending messages have actions
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Approve' })
         ).not.toBeInTheDocument()
         await expect(
-            canvas.getByRole('button', { name: 'Approve' })
-        ).toBeEnabled()
+            queryByShadowRole(canvasElement, 'button', { name: 'Reject' })
+        ).not.toBeInTheDocument()
     },
 }
 
 export const WithoutActions: Story = {
     render: (args) => (
         <>
-            {['signed', 'awaiting-signature', 'failed'].map((status) => (
-                <div key={status} data-testid={status}>
-                    <MessageDetail
-                        messageId="msg-1"
-                        message={message}
-                        status={status}
-                        onApprove={args.onApprove}
-                    />
-                </div>
+            {['signed', 'failed', ''].map((status) => (
+                <MessageDetail key={status} {...args} status={status} />
             ))}
         </>
     ),
-    play: async ({ canvas }) => {
-        // Only pending messages have actions, whatever else is going on
-        await expect(
-            canvas.queryByRole('button', { name: 'Approve' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Reject' })
-        ).not.toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        // Each status is shown, with a fallback label
+        for (const label of ['signed', 'failed', 'Unknown']) {
+            await expect(
+                await findByShadowText(canvasElement, label)
+            ).toBeInTheDocument()
+        }
 
-        // The status is coloured by tone
-        const badge = (id: string) =>
-            within(canvas.getByTestId(id)).getByTestId('activity-status')
-        await expect(badge('signed')).toHaveClass(/MuiChip-colorSuccess/)
-        await expect(badge('awaiting-signature')).toHaveClass(
-            /MuiChip-colorWarning/
-        )
-        await expect(badge('failed')).toHaveClass(/MuiChip-colorError/)
+        // Only pending messages have actions
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Approve' })
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Reject' })
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const Signing: Story = {
+    args: { isSigning: true },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const approve = await findByShadowRole(canvasElement, 'button', {
+            name: 'Approve',
+        })
+        await expect(approve).toBeDisabled()
+        // The message can still be rejected while it is being signed
+        const reject = await findByShadowRole(canvasElement, 'button', {
+            name: 'Reject',
+        })
+        await expect(reject).toBeEnabled()
+
+        await userEvent.click(reject)
+        await expect(args.onMessageDelete).toHaveBeenCalledOnce()
+    },
+}
+
+export const Approving: Story = {
+    args: { isApproving: true },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Approve',
+            })
+        ).toBeDisabled()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Reject' })
+        ).toBeDisabled()
+    },
+}
+
+export const Deleting: Story = {
+    args: { isDeleting: true },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Approve',
+            })
+        ).toBeDisabled()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Reject' })
+        ).toBeDisabled()
+    },
+}
+
+export const Disabled: Story = {
+    args: { disabled: true },
+    play: async ({ canvasElement }) => {
+        const approve = await findByShadowRole(canvasElement, 'button', {
+            name: 'Approve',
+        })
+        const reject = await findByShadowRole(canvasElement, 'button', {
+            name: 'Reject',
+        })
+        await expect(approve).toBeDisabled()
+        await expect(reject).toBeDisabled()
     },
 }
