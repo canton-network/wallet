@@ -27,7 +27,6 @@ describe('ServerNotices', () => {
             id: 'deprecated-config:server.tls',
             severity: 'warning',
             message: 'server.tls is deprecated',
-            configPath: 'server.tls',
         })
 
         expect(notices.list()).toEqual([
@@ -35,7 +34,6 @@ describe('ServerNotices', () => {
                 id: 'deprecated-config:server.tls',
                 severity: 'warning',
                 message: 'server.tls is deprecated',
-                configPath: 'server.tls',
                 firstSeenAt: '2026-01-01T00:00:00.000Z',
                 lastSeenAt: '2026-01-01T00:00:00.000Z',
             },
@@ -71,9 +69,6 @@ describe('ServerNotices', () => {
         notices.report(report)
 
         expect(warn).toHaveBeenCalledTimes(1)
-        expect(warn).toHaveBeenCalledWith(
-            { noticeId: 'a', configPath: undefined },
-            'careful'
-        )
+        expect(warn).toHaveBeenCalledWith({ noticeId: 'a' }, 'careful')
     })
 })

@@ -69,7 +69,6 @@ export function reportDeprecatedConfig(
             severity: 'warning',
             message:
                 `Config field ${path} is deprecated. ${description ?? ''}`.trim(),
-            configPath: path,
         })
     }
 }
@@ -108,7 +107,6 @@ export function reportInlineSecrets(
             id: `inline-secret:${path}`,
             severity: 'warning',
             message: `Config field ${path} contains an inline secret. Inline secrets are deprecated and will be removed in a future release, use ${key}Env to read the secret from an environment variable instead.`,
-            configPath: path,
         })
     }
 }

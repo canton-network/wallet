@@ -222,8 +222,7 @@ function buildDrivers(
     settings: ProviderSettings,
     secrets: ProviderSecrets,
     signingStore: SigningStoreSql | undefined,
-    notices: ServerNotices,
-    explicit: boolean
+    notices: ServerNotices
 ): SigningDrivers {
     const drivers: SigningDrivers = {}
 
@@ -232,7 +231,6 @@ function buildDrivers(
             id: `signing-provider-unavailable:${provider}`,
             severity: 'warning',
             message,
-            ...(explicit && { configPath: `signingProviders.${provider}` }),
         })
 
     if (selected.participant) {
@@ -351,9 +349,6 @@ function buildDrivers(
                     severity: 'warning',
                     message:
                         'BitGo enterprise ID is not set. Wallet creation will fail and restart-safe transaction lookup will be unavailable',
-                    ...(explicit && {
-                        configPath: 'signingProviders.bitgo.enterpriseId',
-                    }),
                 })
             }
             drivers[SigningProvider.BITGO] = new BitGoSigningProvider({
@@ -398,8 +393,7 @@ export function registerSigningProviders(
             legacySettings(),
             secrets,
             signingStore,
-            notices,
-            false
+            notices
         )
     }
 
@@ -416,7 +410,6 @@ export function registerSigningProviders(
         explicitSettings(signingProviders),
         secrets,
         signingStore,
-        notices,
-        true
+        notices
     )
 }

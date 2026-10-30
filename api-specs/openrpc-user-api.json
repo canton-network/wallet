@@ -2476,11 +2476,6 @@
                         "title": "noticeMessage",
                         "type": "string"
                     },
-                    "configPath": {
-                        "title": "noticeConfigPath",
-                        "type": "string",
-                        "description": "Dot-separated path of the config field the notice refers to."
-                    },
                     "firstSeenAt": {
                         "title": "noticeFirstSeenAt",
                         "type": "string",

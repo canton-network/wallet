@@ -95,12 +95,6 @@ export class UserUiAdmin extends BaseElement {
                         >
                             <div>${notice.message}</div>
                             <div class="notice-meta text-body-secondary mt-1">
-                                ${
-                                    notice.configPath
-                                        ? html`<code>${notice.configPath}</code>
-                                              · `
-                                        : ''
-                                }
                                 Last seen
                                 ${new Date(notice.lastSeenAt).toLocaleString()}
                             </div>

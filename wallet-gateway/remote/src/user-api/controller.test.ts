@@ -504,7 +504,6 @@ describe('userController', () => {
                 id: 'deprecated-config:server.tls',
                 severity: 'warning',
                 message: 'server.tls is deprecated',
-                configPath: 'server.tls',
             })
             return { notices, displayConfig: { server: { tls: true } } }
         }
