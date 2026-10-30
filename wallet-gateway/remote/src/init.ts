@@ -287,7 +287,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const drivers = registerSigningProviders(
         config.signingProviders,
         signingStore,
-        logger
+        logger,
+        serverNotices
     )
 
     const allowedPaths = {

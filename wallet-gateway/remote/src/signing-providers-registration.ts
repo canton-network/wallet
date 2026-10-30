@@ -15,6 +15,7 @@ import SecurosysSigningProvider, {
 } from '@canton-network/core-signing-securosys'
 import type { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import type { Logger } from 'pino'
+import type { ServerNotices } from './notices/server-notices.js'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import {
     signingProvidersConfigSchema,
@@ -221,9 +222,18 @@ function buildDrivers(
     settings: ProviderSettings,
     secrets: ProviderSecrets,
     signingStore: SigningStoreSql | undefined,
-    logger: Logger
+    notices: ServerNotices,
+    explicit: boolean
 ): SigningDrivers {
     const drivers: SigningDrivers = {}
+
+    const reportUnavailable = (provider: string, message: string) =>
+        notices.report({
+            id: `signing-provider-unavailable:${provider}`,
+            severity: 'warning',
+            message,
+            ...(explicit && { configPath: `signingProviders.${provider}` }),
+        })
 
     if (selected.participant) {
         drivers[SigningProvider.PARTICIPANT] = new ParticipantSigningDriver()
@@ -231,7 +241,8 @@ function buildDrivers(
 
     if (selected.walletKernel) {
         if (!signingStore) {
-            logger.warn(
+            reportUnavailable(
+                'walletKernel',
                 'Wallet Kernel signing provider is unavailable because signingStore is not configured'
             )
         } else {
@@ -255,7 +266,10 @@ function buildDrivers(
                 }
             )
         } else {
-            logger.warn(providerUnavailableWarning('Fireblocks'))
+            reportUnavailable(
+                'fireblocks',
+                providerUnavailableWarning('Fireblocks')
+            )
         }
     }
 
@@ -268,7 +282,10 @@ function buildDrivers(
                     caip2: settings.blockdaemonCaip2,
                 })
         } else {
-            logger.warn(providerUnavailableWarning('Blockdaemon'))
+            reportUnavailable(
+                'blockdaemon',
+                providerUnavailableWarning('Blockdaemon')
+            )
         }
     }
 
@@ -298,7 +315,10 @@ function buildDrivers(
                     settings.securosysSignatureAlgorithm as TsbSignatureAlgorithm,
             })
         } else {
-            logger.warn(providerUnavailableWarning('Securosys'))
+            reportUnavailable(
+                'securosys',
+                providerUnavailableWarning('Securosys')
+            )
         }
     }
 
@@ -319,16 +339,22 @@ function buildDrivers(
                 },
             })
         } else {
-            logger.warn(providerUnavailableWarning('Dfns'))
+            reportUnavailable('dfns', providerUnavailableWarning('Dfns'))
         }
     }
 
     if (selected.bitgo) {
         if (secrets.bitgoAccessToken) {
             if (!settings.bitgoEnterpriseId) {
-                logger.warn(
-                    'BitGo enterprise ID is not set. Wallet creation will fail and restart-safe transaction lookup will be unavailable'
-                )
+                notices.report({
+                    id: 'signing-provider-config:bitgo.enterpriseId',
+                    severity: 'warning',
+                    message:
+                        'BitGo enterprise ID is not set. Wallet creation will fail and restart-safe transaction lookup will be unavailable',
+                    ...(explicit && {
+                        configPath: 'signingProviders.bitgo.enterpriseId',
+                    }),
+                })
             }
             drivers[SigningProvider.BITGO] = new BitGoSigningProvider({
                 accessToken: secrets.bitgoAccessToken,
@@ -337,7 +363,7 @@ function buildDrivers(
                 coin: settings.bitgoCoin,
             })
         } else {
-            logger.warn(providerUnavailableWarning('BitGo'))
+            reportUnavailable('bitgo', providerUnavailableWarning('BitGo'))
         }
     }
 
@@ -347,7 +373,8 @@ function buildDrivers(
 export function registerSigningProviders(
     signingProviders: SigningProvidersConfig | undefined,
     signingStore: SigningStoreSql | undefined,
-    logger: Logger
+    logger: Logger,
+    notices: ServerNotices
 ): SigningDrivers {
     const secrets =
         signingProviders === undefined
@@ -371,7 +398,8 @@ export function registerSigningProviders(
             legacySettings(),
             secrets,
             signingStore,
-            logger
+            notices,
+            false
         )
     }
 
@@ -388,6 +416,7 @@ export function registerSigningProviders(
         explicitSettings(signingProviders),
         secrets,
         signingStore,
-        logger
+        notices,
+        true
     )
 }
