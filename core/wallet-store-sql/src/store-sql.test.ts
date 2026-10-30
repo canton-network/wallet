@@ -695,6 +695,22 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(afterRemove).toHaveLength(0)
         })
 
+        test('should clear optional auth fields removed on update', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork({
+                ...network,
+                adminAuth: network.auth,
+                serviceAccountAuth: network.auth,
+            })
+
+            await store.updateNetwork(network)
+
+            const fetched = await store.getNetwork('network1')
+            expect(fetched.adminAuth).toBeUndefined()
+            expect(fetched.serviceAccountAuth).toBeUndefined()
+        })
+
         test('should reject a second self-issued network with the same audience', async () => {
             const store = new StoreImpl(db, authContextMock)
             await store.addIdp(selfIssuedIdp)
