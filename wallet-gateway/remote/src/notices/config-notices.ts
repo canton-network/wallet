@@ -73,3 +73,42 @@ export function reportDeprecatedConfig(
         })
     }
 }
+
+// Config fields that accept an inline secret, each has an `*Env` alternative
+const INLINE_SECRET_KEYS = ['clientSecret', 'password']
+
+function* findInlineSecrets(value: unknown, path: string): Generator<string> {
+    if (Array.isArray(value)) {
+        for (const [index, item] of value.entries()) {
+            yield* findInlineSecrets(item, `${path}[${index}]`)
+        }
+    } else if (isRecord(value)) {
+        for (const [key, entry] of Object.entries(value)) {
+            const entryPath = path ? `${path}.${key}` : key
+            if (INLINE_SECRET_KEYS.includes(key) && typeof entry === 'string') {
+                yield entryPath
+            } else {
+                yield* findInlineSecrets(entry, entryPath)
+            }
+        }
+    }
+}
+
+/**
+ * Reports a notice for every secret that is written directly into the config
+ * file instead of being read from an environment variable.
+ */
+export function reportInlineSecrets(
+    rawConfig: RawConfig,
+    notices: ServerNotices
+): void {
+    for (const path of findInlineSecrets(rawConfig, '')) {
+        const key = path.slice(path.lastIndexOf('.') + 1)
+        notices.report({
+            id: `inline-secret:${path}`,
+            severity: 'warning',
+            message: `Config field ${path} contains an inline secret. Inline secrets are deprecated and will be removed in a future release, use ${key}Env to read the secret from an environment variable instead.`,
+            configPath: path,
+        })
+    }
+}
