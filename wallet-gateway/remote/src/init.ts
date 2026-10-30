@@ -381,10 +381,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         config.server.admin,
         {
             notices: serverNotices,
-            displayConfig: redactSecrets(rawConfigSchema, rawConfig) as Record<
-                string,
-                unknown
-            >,
+            displayConfig: redactSecrets(rawConfigSchema, rawConfig),
         }
     )
 
