@@ -13,7 +13,7 @@ import type {
 } from '../sdk.js'
 import type { SDKLogger } from '../logger/logger.js'
 import { SDKErrorHandler } from '../error/handler.js'
-import type { OfflineSDKContext, SDKContext } from '../init/types/context.js'
+import type { SDKContext } from '../init/types/context.js'
 
 const exampleLink = 'http://example.com'
 
@@ -51,11 +51,6 @@ export const ctx: SDKContext = {
     logger: mockLogger,
     error: mockErrorHandler,
     defaultSynchronizerId: '',
-}
-
-export const offlineCtx: OfflineSDKContext = {
-    logger: mockLogger,
-    error: mockErrorHandler,
 }
 
 export const tokenProviderConfig: TokenProviderConfig = {

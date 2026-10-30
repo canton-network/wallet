@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    HashingSchemeVersion,
     PreparedTransaction,
     TopologyTransaction,
     decodeUnknownFields,
 } from '@canton-network/core-ledger-proto'
-import { computePreparedTransaction } from './hashing_scheme_v2.js'
+import {
+    computePreparedTransactionHash,
+    type HashingScheme,
+    type TraversalLimits,
+} from '@canton-network/core-tx-hashing'
 import { fromBase64, toBase64, toHex } from './utils.js'
 export {
     computeSha256CantonHash,
@@ -73,17 +78,43 @@ export const decodeTopologyTransaction = (
 }
 
 /**
- * Computes the hash of a prepared transaction.
+ * Computes the hash of a prepared transaction with
+ * `@canton-network/core-tx-hashing`, under `options.hashingScheme`, V2 by
+ * default.
+ *
+ * A message object is first encoded with this package's bindings: protobuf-ts
+ * writes a lone surrogate as U+FFFD and throws its own error for a value it
+ * cannot encode. A message decoded from bytes holds neither.
  *
  * @param preparedTransaction - The prepared transaction to hash
  * @param format - The format of the output hash (base64 or hex)
- * @param options - Decode options, used when `preparedTransaction` is a base64 string
+ * @param options - The hashing scheme and limits, and decode options that
+ *   apply when `preparedTransaction` is a base64 string. With
+ *   `readUnknownField: false` decoding drops the unknown fields that
+ *   core-tx-hashing refuses otherwise.
  * @returns The computed hash in the specified format
+ * @throws {TxHashingError} For every transaction, scheme or limit that
+ *   `@canton-network/core-tx-hashing` refuses; its README lists them. A
+ *   base64 string is decoded here first: one that is not base64, or not a
+ *   protobuf PreparedTransaction, rejects with the error of `atob` or
+ *   protobuf-ts, and so does an unknown field under
+ *   `readUnknownField: 'throw'`.
  */
 export const hashPreparedTransaction = async (
     preparedTransaction: string | PreparedTransaction,
     format: 'base64' | 'hex' = 'base64',
-    options?: DecodeOptions
+    options?: DecodeOptions & {
+        /**
+         * The scheme the participant hashed with, as its prepare response
+         * names it. V2 by default.
+         */
+        hashingScheme?: HashingScheme | undefined
+        /**
+         * Limits replacing core-tx-hashing's `DEFAULT_LIMITS` one by one, as
+         * its README says
+         */
+        limits?: Partial<TraversalLimits> | undefined
+    }
 ): Promise<string> => {
     let preparedTx: PreparedTransaction
 
@@ -93,7 +124,12 @@ export const hashPreparedTransaction = async (
         preparedTx = preparedTransaction
     }
 
-    const hash = await computePreparedTransaction(preparedTx)
+    // Bytes, so fields that core-tx-hashing's own bindings lack are refused
+    const hash = await computePreparedTransactionHash(
+        PreparedTransaction.toBinary(preparedTx),
+        options?.hashingScheme ?? HashingSchemeVersion.V2,
+        { limits: options?.limits }
+    )
 
     switch (format) {
         case 'base64':

@@ -54,27 +54,17 @@ export async function sha256(
         .then((hash) => new Uint8Array(hash))
 }
 
-/** Utility to concatenate byte arrays or single bytes */
-export async function mkByteArray(
-    ...args: (number | Uint8Array)[]
-): Promise<Uint8Array> {
-    const normalizedArgs: Uint8Array[] = args.map((arg) => {
-        if (typeof arg === 'number') {
-            return new Uint8Array([arg])
-        } else {
-            return arg
-        }
-    })
-
+/** Utility to concatenate byte arrays */
+export async function mkByteArray(...args: Uint8Array[]): Promise<Uint8Array> {
     let totalLength = 0
-    normalizedArgs.forEach((arg) => {
+    args.forEach((arg) => {
         totalLength += arg.length
     })
 
     const mergedArray = new Uint8Array(totalLength)
     let offset = 0
 
-    normalizedArgs.forEach((arg) => {
+    args.forEach((arg) => {
         mergedArray.set(arg, offset)
         offset += arg.length
     })

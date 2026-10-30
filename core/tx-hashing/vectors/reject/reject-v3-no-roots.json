@@ -1,0 +1,13 @@
+{
+    "id": "reject-v3-no-roots",
+    "kind": "reject",
+    "scheme": "HASHING_SCHEME_VERSION_V3",
+    "preparedTransaction": "CgUKAzIuMRKGAhKAAQpYaGFzaC12ZWN0b3JzLW93bmVyOjoxMjIwZWQzYjIxNzQ1NGJiNmRmNzE1MzlkODExOWQ2NzkyMTBlZjUyOGNhOGQzNjcxMTc3OWViMDlkNWQ3MzM3YjA5NRIkMWRiOTE0Y2MtMjU5ZC00NmMwLWExYTAtNDk3YzJlOTcxYjJmGlJ3YWxsZXQ6OjEyMjBlN2IyM2VhNTJlYjVjNjcyZmIwYjFjZGJjOTE2OTIyZmZlZDNkZDc2NzZjMjIzYTYwNTY2NDMxNWUyZDQzZWRkOjozNS0wKiQ4MTY1MzI2NS01NmFhLTQzOGMtYjMxYS0yYzEwYTcwNzVhNmEw7+a/ivrTlwM=",
+    "expected": {
+        "error": "MISSING_FIELD"
+    },
+    "source": {
+        "from": "v3-create-plain",
+        "mutation": "the only root, 0, removed, and node 0 and its seed as well, which leaves the transaction without nodes"
+    }
+}

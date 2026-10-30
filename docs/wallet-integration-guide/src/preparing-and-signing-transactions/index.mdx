@@ -175,6 +175,29 @@ The hash can be computed using the Wallet SDK:
 
 You can then compare the `hash` with the `transaction.preparedTransactionHash` to ensure they match.
 
+### Verifying the Transaction Hash Before Signing
+
+The prepare response provides the hash only for convenience. If you do not trust the validator, also check the hashing scheme, and sign the hash you computed rather than the validator's.
+
+The Wallet SDK's hash method above computes the hash with the `@canton-network/core-tx-hashing` package, under V2. `sdk.utils.hash.preparedTransaction`, which replaces it, also takes V3.
+
+The example below calls the package directly:
+
+{/* include ../../examples/snippets/verify-transaction-hash.ts */}
+```typescript
+// content of the included file, see docs/README.md
+```
+
+- If the computation throws or the two hashes differ, do not sign anything, not even the validator's hash.
+- Compare with the raw 32-byte hash, which `preparedTransactionHash` holds in base64, not with a multihash such as the hash of a topology transaction.
+
+The package also refuses some prepared transactions whose display could differ from what the hash covers, for example:
+
+- two nodes with the same id;
+- a V2 transaction with a field that V2 does not hash, such as a contract key or `maxRecordTime`.
+
+The package's [README](https://github.com/canton-network/wallet/tree/main/core/tx-hashing#readme) lists the errors, the limits and the two fields it accepts although no scheme hashes them.
+
 
 
 ## Visualizing a Transaction
@@ -524,7 +547,7 @@ below you can have a look at different event types and how to potentially visual
 
 ## Signing the Transaction
 
-Once the transaction is validated, the hash retrieved from the prepare step can be signed using the private key of the party.
+Once the transaction is validated and its hash verified (see [Verifying the Transaction Hash Before Signing](#verifying-the-transaction-hash-before-signing)), the hash can be signed using the private key of the party.
 
 Below shows an example in the Wallet SDK and using cURL commands:
 
@@ -586,6 +609,8 @@ Once the transaction is signed, it can be executed on the validator. You can obs
   </Tab>
 
 </Tabs>
+
+The SDK example above signs the validator's `preparedTransactionHash`; to sign the hash you computed instead, see [Verifying the Transaction Hash Before Signing](#verifying-the-transaction-hash-before-signing).
 
 ## Observing the Transaction
 
