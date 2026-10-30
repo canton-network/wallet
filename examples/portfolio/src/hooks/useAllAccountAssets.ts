@@ -7,22 +7,26 @@ import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
+    type AggregatedAccountBalance,
     type AggregatedHolding,
 } from '../utils/aggregate-holdings'
 import { useAccounts } from './useAccounts'
 import { holdingsQueryOptions } from './query-options'
 import { useWalletSdk } from './useWalletSdk'
+import type { PortfolioHolding } from '@utils/holdings'
+import Decimal from 'decimal.js'
 
 export interface PortfolioAssetWalletBalanceView {
-    id: string
+    id: string //wallet partyId
     walletName: string
     isPrimary: boolean
     amount: string
+    accounts: AggregatedAccountBalance[] //party id can have multiple accounts
 }
 
 export interface PortfolioAssetView extends Omit<
     AggregatedHolding,
-    'walletBalances'
+    'accountBalances'
 > {
     walletBalances: PortfolioAssetWalletBalanceView[]
 }
@@ -36,7 +40,7 @@ export interface PortfolioAssetsResult {
 }
 
 export const useAllAccountAssets = (): PortfolioAssetsResult => {
-    const accounts = useAccounts()
+    const wallets = useAccounts()
     const registryInstruments = useInstruments()
     const {
         sdk,
@@ -45,47 +49,34 @@ export const useAllAccountAssets = (): PortfolioAssetsResult => {
     } = useWalletSdk()
 
     const holdingsQueries = useQueries({
-        queries: accounts.map((account) =>
-            holdingsQueryOptions({ partyId: account.partyId, sdk })
+        queries: wallets.map((wallet) =>
+            holdingsQueryOptions({ partyId: wallet.partyId, sdk })
         ),
     })
 
-    const holdings = useMemo(
-        () =>
-            holdingsQueries.flatMap((query) =>
-                query.data && !query.isError ? query.data : []
-            ),
-        [holdingsQueries]
-    )
+    const holdings = useMemo(() => {
+        const byCid = new Map<string, PortfolioHolding>()
+        for (const query of holdingsQueries) {
+            if (!query.data || query.isError) continue
+            for (const holding of query.data)
+                byCid.set(holding.contractId, holding)
+        }
+        return [...byCid.values()]
+    }, [holdingsQueries])
 
     const assets = useMemo(() => {
-        const accountByParty = new Map(
-            accounts.map((account) => [account.partyId, account])
+        const walletByParty = new Map(
+            wallets.map((wallet) => [wallet.partyId, wallet])
         )
 
         return enrichWithInstrumentInfo(
             aggregateHoldings(holdings),
             registryInstruments
-        ).map((asset) => ({
+        ).map(({ accountBalances, ...asset }) => ({
             ...asset,
-            walletBalances: asset.accountBalances
-                .map((balance) => {
-                    const account = accountByParty.get(balance.owner)
-
-                    return {
-                        id: balance.owner,
-                        walletName: account?.hint ?? balance.owner,
-                        isPrimary: Boolean(account?.primary),
-                        amount: balance.totalAmount,
-                    }
-                })
-                .sort(
-                    (a, b) =>
-                        Number(b.isPrimary) - Number(a.isPrimary) ||
-                        a.walletName.localeCompare(b.walletName)
-                ),
+            walletBalances: toWalletBalances(accountBalances, walletByParty),
         }))
-    }, [accounts, holdings, registryInstruments])
+    }, [wallets, holdings, registryInstruments])
 
     const refetch = useCallback(() => {
         void Promise.all(holdingsQueries.map((query) => query.refetch()))
@@ -104,4 +95,37 @@ export const useAllAccountAssets = (): PortfolioAssetsResult => {
         error: error instanceof Error ? error : null,
         refetch,
     }
+}
+
+function toWalletBalances(
+    accountBalances: AggregatedAccountBalance[],
+    walletByParty: Map<
+        string,
+        { partyId: string; hint: string; primary: boolean }
+    >
+) {
+    const byOwner = new Map<string, AggregatedAccountBalance[]>()
+
+    for (const b of accountBalances) {
+        const owner = b.account.owner!
+        byOwner.set(owner, [...(byOwner.get(owner) ?? []), b])
+    }
+
+    return [...byOwner.entries()]
+        .map(([owner, accounts]) => {
+            const wallet = walletByParty.get(owner)
+            return {
+                id: owner,
+                walletName: wallet?.hint ?? owner,
+                isPrimary: Boolean(wallet?.primary),
+                amount: accounts
+                    .reduce((sum, a) => sum.plus(a.totalAmount), new Decimal(0))
+                    .toString(),
+            }
+        })
+        .sort(
+            (a, b) =>
+                Number(b.isPrimary) - Number(a.isPrimary) ||
+                a.walletName.localeCompare(b.walletName)
+        )
 }
