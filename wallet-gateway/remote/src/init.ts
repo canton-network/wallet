@@ -43,6 +43,7 @@ import {
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
 import { ServerNotices } from './notices/server-notices.js'
+import { ServerStatusService } from './notices/server-status-service.js'
 import { redactSecrets } from './config/redact-secrets.js'
 
 let isReady = false
@@ -379,10 +380,10 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         store,
         hashingSchemeVersion,
         config.server.admin,
-        {
-            notices: serverNotices,
-            displayConfig: redactSecrets(rawConfigSchema, rawConfig),
-        }
+        new ServerStatusService(
+            serverNotices,
+            redactSecrets(rawConfigSchema, rawConfig)
+        )
     )
 
     const { userPath, dappPath } = config.server

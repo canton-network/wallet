@@ -11,7 +11,8 @@ import type express from 'express'
 import type { Logger } from 'pino'
 import type { KernelInfo } from '../config/Config.js'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
-import { userController, type ServerStatusSource } from './controller.js'
+import { userController } from './controller.js'
+import type { ServerStatusService } from '../notices/server-status-service.js'
 import type { Methods } from './rpc-gen/index.js'
 import type {
     HASHING_SCHEME_VERSION,
@@ -30,7 +31,7 @@ export const user = (
     store: Store & AuthAware<Store>,
     hashingSchemeVersion: HASHING_SCHEME_VERSION,
     adminUserId?: string,
-    serverStatus?: ServerStatusSource
+    serverStatus?: ServerStatusService
 ) => {
     app.use(route, (req, res, next) =>
         jsonRpcHandler<Methods>({
