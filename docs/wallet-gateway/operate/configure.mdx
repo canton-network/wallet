@@ -168,8 +168,9 @@ available:
 }
 ```
 
-`passwordEnv` names the environment variable that holds the database password. An inline
-`password` is accepted as well, but we recommend keeping secrets out of the configuration file.
+`passwordEnv` names the environment variable that holds the database password. Prefer it over an
+inline `password` so the credential comes from the environment (or a Kubernetes secret) rather
+than the config file.
 
 <Warning>
 
@@ -234,7 +235,7 @@ Notices point out configuration that needs attention, each with the action to ta
 
 - fields without effect such as `server.host` and `server.tls`,
 - secrets written inline (`clientSecret`, `password`) instead of read from an environment
-  variable (`clientSecretEnv`, `passwordEnv`), which we recommend,
+  variable (`clientSecretEnv`, `passwordEnv`),
 - signing providers that are enabled but unavailable, for example because their environment
   variables are not set.
 
