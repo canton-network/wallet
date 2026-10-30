@@ -98,6 +98,7 @@ export const networks = ({
     | 'removeIdp'
     | 'selfSignedAccessToken'
     | 'getUser'
+    | 'getServerStatus'
 > => ({
     addNetwork: async () => {
         throw new Error('Function addNetwork not implemented.')
@@ -128,5 +129,8 @@ export const networks = ({
     },
     getUser: async () => {
         throw new Error('Function getUser not implemented.')
+    },
+    getServerStatus: async () => {
+        throw new Error('Function getServerStatus not implemented.')
     },
 })

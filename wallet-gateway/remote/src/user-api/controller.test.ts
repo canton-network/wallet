@@ -17,7 +17,9 @@ import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '@canton-network/core-wallet-services'
-import { userController } from './controller.js'
+import { userController, type ServerStatusSource } from './controller.js'
+import { ServerNotices } from '../notices/server-notices.js'
+import { GATEWAY_VERSION } from '../version.js'
 import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
@@ -218,7 +220,8 @@ function createController(
     logger: Logger,
     context: AuthContext | undefined,
     drivers: Record<string, unknown> = {},
-    adminId?: string
+    adminId?: string,
+    serverStatus?: ServerStatusSource
 ) {
     return userController(
         kernelInfo,
@@ -229,7 +232,8 @@ function createController(
         drivers,
         logger,
         'HASHING_SCHEME_VERSION_V3',
-        adminId
+        adminId,
+        serverStatus
     )
 }
 
@@ -490,6 +494,60 @@ describe('userController', () => {
             )
 
             await expect(controller.getUser()).rejects.toThrow()
+        })
+    })
+
+    describe('getServerStatus', () => {
+        function createServerStatus(): ServerStatusSource {
+            const notices = new ServerNotices(logger)
+            notices.report({
+                id: 'deprecated-config:server.tls',
+                severity: 'warning',
+                message: 'server.tls is deprecated',
+                configPath: 'server.tls',
+            })
+            return { notices, displayConfig: { server: { tls: true } } }
+        }
+
+        it('rejects non-admin users', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {},
+                adminUserId,
+                createServerStatus()
+            )
+
+            await expect(controller.getServerStatus()).rejects.toThrow(
+                'Unauthorized'
+            )
+        })
+
+        it('returns notices and config for the admin user', async () => {
+            const store = await createStore(logger, adminAuth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId,
+                createServerStatus()
+            )
+
+            await expect(controller.getServerStatus()).resolves.toEqual({
+                version: GATEWAY_VERSION,
+                notices: [
+                    expect.objectContaining({
+                        id: 'deprecated-config:server.tls',
+                        severity: 'warning',
+                    }),
+                ],
+                config: { server: { tls: true } },
+            })
         })
     })
 
