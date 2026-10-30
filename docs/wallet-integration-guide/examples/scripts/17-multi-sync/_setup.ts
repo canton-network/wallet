@@ -17,8 +17,8 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
 } from '../utils/index.js'
 import type { KnownSynchronizers } from '../utils/index.js'
-import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
 import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
+import { TEST_TOKEN_V1_REGISTRY } from '../utils/constants.js'
 
 // Token namespace config that also points the SDK at the local TestToken
 // registry (in addition to the Amulet scan-proxy registry). This lets the
@@ -28,7 +28,7 @@ const TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES = {
     ...TOKEN_NAMESPACE_CONFIG,
     registries: [
         ...(TOKEN_NAMESPACE_CONFIG.registries as URL[]),
-        TEST_TOKEN_REGISTRY_URL,
+        TEST_TOKEN_V1_REGISTRY.URL,
     ],
 }
 

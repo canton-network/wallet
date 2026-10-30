@@ -5,12 +5,18 @@ import z from 'zod'
 import { APIError } from '../common'
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { getTokenRulesFactory } from '../getTokenRulesFactory'
+import { getTransferFactoryContext } from './getTransferFactoryContext'
+
+const accountSchema = z.object({
+    owner: z.string().nullable(),
+    provider: z.string().nullable(),
+    id: z.string(),
+})
 
 export const getTransferFactoryChoiceArgumentsSchema = z.looseObject({
     transfer: z.looseObject({
-        sender: z.string(),
-        receiver: z.string(),
+        sender: accountSchema,
+        receiver: accountSchema,
         transferKind: z
             .union([z.literal('self'), z.literal('offer'), z.literal('direct')])
             .optional(),
@@ -44,24 +50,15 @@ export const getTransferFactory: TExpressOpenApiRequestHandler<
     }
 
     const transfer = parsedChoiceArguments.data.transfer
-    const isToSelf = transfer.sender === transfer.receiver
+    const isToSelf =
+        transfer.sender.owner === transfer.receiver.owner &&
+        transfer.sender.provider === transfer.receiver.provider &&
+        transfer.sender.id === transfer.receiver.id
     const transferKind = transfer.transferKind ?? (isToSelf ? 'self' : 'offer')
 
     try {
-        const factoryData = await getTokenRulesFactory()
         res.json({
-            factoryId: factoryData.contractId,
-            choiceContext: {
-                choiceContextData: {},
-                disclosedContracts: [
-                    {
-                        templateId: factoryData.templateId,
-                        contractId: factoryData.contractId,
-                        createdEventBlob: factoryData.createdEventBlob ?? '',
-                        synchronizerId: factoryData.synchronizerId,
-                    },
-                ],
-            },
+            ...(await getTransferFactoryContext()),
             transferKind,
         })
     } catch (e) {

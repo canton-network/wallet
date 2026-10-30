@@ -4,7 +4,7 @@ import type { SDKInterface } from '@canton-network/wallet-sdk'
 import type { Logger } from 'pino'
 
 export type TransferTestScriptParameters = {
-    sdk: SDKInterface<'amulet' | 'token'>
+    sdk: SDKInterface<'token'>
     sender: GenerateTransactionResponse
     receiver: GenerateTransactionResponse
     senderKeys: KeyPair
