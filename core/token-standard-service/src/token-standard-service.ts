@@ -505,20 +505,18 @@ export class TokenStandardService {
         ]
     }
 
-    static isHoldingLocked(
-        holding: PrettyContract<HoldingView> | PrettyContract<HoldingViewV2>,
+    static checkLock(
+        lock: HoldingView['lock'] | HoldingViewV2['lock'],
+        createdAtTime: string,
         currentTime: Date = new Date()
     ): boolean {
-        const lock = holding.interfaceViewValue.lock
         if (!lock) return false
 
         let expiresAtAbsolute: Date | null = null
         let expiresAtRelative: Date | null = null
 
         if (lock.expiresAfter) {
-            const createdAt = new Date(
-                holding.activeContract.createdEvent.createdAt
-            )
+            const createdAt = new Date(createdAtTime)
 
             // 1 microsecond = 0.001 milliseconds
             const msToAdd = parseInt(lock.expiresAfter.microseconds) / 1000
@@ -547,5 +545,18 @@ export class TokenStandardService {
         }
 
         return currentTime < expiresAt
+    }
+
+    static isHoldingLocked(
+        holding: PrettyContract<HoldingView> | PrettyContract<HoldingViewV2>,
+        currentTime: Date = new Date()
+    ): boolean {
+        const lock = holding.interfaceViewValue.lock
+
+        return TokenStandardService.checkLock(
+            lock,
+            holding.activeContract.createdEvent.createdAt,
+            currentTime
+        )
     }
 }
