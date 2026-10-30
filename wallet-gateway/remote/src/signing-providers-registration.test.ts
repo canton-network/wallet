@@ -303,7 +303,6 @@ describe('registerSigningProviders', () => {
                     expect.objectContaining({
                         id: 'signing-provider-unavailable:fireblocks',
                         severity: 'warning',
-                        configPath: 'signingProviders.fireblocks',
                         message:
                             'Fireblocks environment variables not fully set. Fireblocks signing provider will be unavailable.',
                     }),
@@ -350,7 +349,6 @@ describe('registerSigningProviders', () => {
                     expect.objectContaining({
                         id: 'signing-provider-unavailable:blockdaemon',
                         severity: 'warning',
-                        configPath: 'signingProviders.blockdaemon',
                         message:
                             'Blockdaemon environment variables not fully set. Blockdaemon signing provider will be unavailable.',
                     }),
@@ -492,7 +490,6 @@ describe('registerSigningProviders', () => {
                     expect.objectContaining({
                         id: 'signing-provider-unavailable:dfns',
                         severity: 'warning',
-                        configPath: 'signingProviders.dfns',
                         message:
                             'Dfns environment variables not fully set. Dfns signing provider will be unavailable.',
                     }),
@@ -543,7 +540,6 @@ describe('registerSigningProviders', () => {
                     expect.objectContaining({
                         id: 'signing-provider-unavailable:bitgo',
                         severity: 'warning',
-                        configPath: 'signingProviders.bitgo',
                         message:
                             'BitGo environment variables not fully set. BitGo signing provider will be unavailable.',
                     }),
@@ -564,7 +560,6 @@ describe('registerSigningProviders', () => {
                 expect(notices.list()).toEqual([
                     expect.objectContaining({
                         id: 'signing-provider-config:bitgo.enterpriseId',
-                        configPath: 'signingProviders.bitgo.enterpriseId',
                         message: expect.stringContaining(
                             'BitGo enterprise ID is not set'
                         ),

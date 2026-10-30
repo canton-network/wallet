@@ -10,8 +10,6 @@ export interface ServerNoticeReport {
     id: string
     severity: ServerNoticeSeverity
     message: string
-    // Dot-separated path of the config field the notice refers to, if any
-    configPath?: string
 }
 
 export interface ServerNotice extends ServerNoticeReport {
@@ -46,7 +44,7 @@ export class ServerNotices {
             firstSeenAt: now,
             lastSeenAt: now,
         })
-        const logFields = { noticeId: report.id, configPath: report.configPath }
+        const logFields = { noticeId: report.id }
         if (report.severity === 'warning') {
             this.logger.warn(logFields, report.message)
         } else {

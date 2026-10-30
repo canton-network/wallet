@@ -608,12 +608,6 @@ export type NoticeSeverity = 'info' | 'warning'
 export type NoticeMessage = string
 /**
  *
- * Dot-separated path of the config field the notice refers to.
- *
- */
-export type NoticeConfigPath = string
-/**
- *
  * ISO 8601 timestamp of when the notice was first reported.
  *
  */
@@ -633,7 +627,6 @@ export interface ServerNotice {
     id: NoticeId
     severity: NoticeSeverity
     message: NoticeMessage
-    configPath?: NoticeConfigPath
     firstSeenAt: NoticeFirstSeenAt
     lastSeenAt: NoticeLastSeenAt
 }

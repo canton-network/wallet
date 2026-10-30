@@ -35,14 +35,12 @@ describe('reportDeprecatedConfig', () => {
             expect.objectContaining({
                 id: 'deprecated-config:server.host',
                 severity: 'warning',
-                configPath: 'server.host',
                 message: expect.stringContaining(
                     'Config field server.host is deprecated.'
                 ),
             }),
             expect.objectContaining({
                 id: 'deprecated-config:server.tls',
-                configPath: 'server.tls',
             }),
         ])
     })
@@ -86,7 +84,6 @@ describe('reportInlineSecrets', () => {
             expect.objectContaining({
                 id: 'inline-secret:store.connection.password',
                 severity: 'warning',
-                configPath: 'store.connection.password',
                 message: expect.stringContaining('use passwordEnv'),
             }),
         ])
@@ -124,8 +121,8 @@ describe('reportInlineSecrets', () => {
             notices
         )
 
-        expect(notices.list().map((notice) => notice.configPath)).toEqual([
-            'bootstrap.networks[0].adminAuth.clientSecret',
+        expect(notices.list().map((notice) => notice.id)).toEqual([
+            'inline-secret:bootstrap.networks[0].adminAuth.clientSecret',
         ])
     })
 })

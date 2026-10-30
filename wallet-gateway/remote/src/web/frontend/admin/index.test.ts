@@ -43,7 +43,6 @@ const serverStatus: GetServerStatusResult = {
             id: 'deprecated-config:server.tls',
             severity: 'warning',
             message: 'Config field server.tls is deprecated.',
-            configPath: 'server.tls',
             firstSeenAt: '2026-01-01T00:00:00.000Z',
             lastSeenAt: '2026-01-01T00:00:00.000Z',
         },
