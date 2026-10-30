@@ -30,6 +30,10 @@ export function getInstrumentKey(instrumentId: { admin: string; id: string }) {
     return `${instrumentId.admin}::${instrumentId.id}`
 }
 
+/**
+ * need to aggregate holdings by account rather than party id
+ */
+
 export function aggregateHoldings(
     holdings: PrettyContract<HoldingView>[],
     currentTime: Date = new Date()
