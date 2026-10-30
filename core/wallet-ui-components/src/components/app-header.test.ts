@@ -37,6 +37,20 @@ describe('app-header', () => {
         ).toBe(false)
     })
 
+    it('shows the administration entry only to admins', async () => {
+        const menuLabels = async (isAdmin: boolean) => {
+            const el = await fixture(
+                html`<app-header .isAdmin=${isAdmin}></app-header>`
+            )
+            return Array.from(
+                el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.menu-item')
+            ).map((button) => button.textContent?.trim())
+        }
+
+        expect(await menuLabels(false)).not.toContain('Administration')
+        expect(await menuLabels(true)).toContain('Administration')
+    })
+
     it('dispatches LogoutEvent from the menu', async () => {
         const el = await fixture(html`<app-header></app-header>`)
         const listener = vi.fn()
