@@ -5,7 +5,6 @@ import type {
     TokenStandardEvent,
     Transaction,
 } from '@canton-network/core-tx-parser'
-import { formatDateTimeString } from '@utils/date-format'
 import { formatAmount, toDecimalOrNull } from '@utils/decimal'
 
 export type TransactionFilter = 'all' | 'received' | 'sent'
@@ -96,7 +95,7 @@ export function getTransactionDisplay(
 
     return {
         type: getTransactionType(event, direction),
-        date: formatDateTimeString(transaction.recordTime),
+        date: transaction.recordTime,
         asset: getTransactionAsset(event),
         amount: getTransactionAmount(event),
         direction,
