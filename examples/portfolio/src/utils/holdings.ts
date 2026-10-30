@@ -25,8 +25,9 @@ export const basicAccount = (owner: string): Account => ({
     id: '',
 })
 
-export const isBasicAccount = (account: Account) =>
-    account.provider == null && account.id
+export const isBasicAccount = (account: Account): boolean => {
+    return account.provider == null && account.id === ''
+}
 
 export function mergeHoldings(
     v1: PrettyContract<HoldingView>[],
