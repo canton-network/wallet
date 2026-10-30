@@ -209,7 +209,7 @@ If you only create wallets manually and never rely on sync, some flows may still
 so configure `adminAuth` unless you know your deployment does not need it.
 
 Store `adminAuth` secrets via `clientSecretEnv` and Kubernetes secrets (Helm `oauthSecrets`)
-rather than plain text in config files.
+rather than plain text in config files. An inline `clientSecret` in the config file is deprecated.
 
 ### Service account automation (`serviceAccountAuth`)
 

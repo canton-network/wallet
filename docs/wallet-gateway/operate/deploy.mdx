@@ -217,8 +217,8 @@ store:
         password: '<DB_PASSWORD>'
 ```
 
-Prefer `passwordEnv` over an inline password so the credential comes from the environment (or a
-Kubernetes secret) rather than the config file:
+Use `passwordEnv` instead of an inline password so the credential comes from the environment (or
+a Kubernetes secret) rather than the config file. Inline passwords are deprecated:
 
 ```yaml
 # config YAML for Helm
