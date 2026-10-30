@@ -61,7 +61,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 
 import './index.js'
 import type { UserUiAddParty } from './index.js'
-import { WALLET_STATUS_CODE } from '../index'
+import { WALLET_STATUS_CODE } from '@canton-network/core-wallet-ui-components/logic'
 import type { Key } from '@canton-network/core-signing-lib'
 
 type MockRequestHandler = (request: {
@@ -132,9 +132,11 @@ describe('UserUiAddParty', () => {
     it('renders create party header and form', async () => {
         const el = await renderElement()
 
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Create a new party'
-        )
+        expect(
+            el.shadowRoot
+                ?.querySelector('wg-page-header')
+                ?.shadowRoot?.querySelector('h1')?.textContent
+        ).toBe('Create a new party')
         expect(getCreateForm(el)).not.toBeNull()
     })
 
@@ -196,10 +198,7 @@ describe('UserUiAddParty', () => {
         const el = await renderElement()
         await waitForSigningProviders(el)
 
-        const backBtn = el.shadowRoot?.querySelector(
-            '.page-header button'
-        ) as HTMLButtonElement
-        backBtn.click()
+        el.shadowRoot?.querySelector<HTMLElement>('wg-back-link')?.click()
 
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining('/parties')
