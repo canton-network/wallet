@@ -169,7 +169,7 @@ available:
 ```
 
 `passwordEnv` names the environment variable that holds the database password. An inline
-`password` is still accepted but deprecated.
+`password` is accepted as well, but we recommend keeping secrets out of the configuration file.
 
 <Warning>
 
@@ -230,11 +230,11 @@ The User UI has an **Administration** page at `/admin`, shown only to the user c
 file as loaded at startup, with inline secrets redacted. Environment variable values are never
 shown.
 
-Notices point out configuration that needs attention before a future upgrade, for example:
+Notices point out configuration that needs attention, each with the action to take, for example:
 
-- deprecated fields such as `server.host` and `server.tls`,
+- fields without effect such as `server.host` and `server.tls`,
 - secrets written inline (`clientSecret`, `password`) instead of read from an environment
-  variable (`clientSecretEnv`, `passwordEnv`).
+  variable (`clientSecretEnv`, `passwordEnv`), which we recommend,
 - signing providers that are enabled but unavailable, for example because their environment
   variables are not set.
 
