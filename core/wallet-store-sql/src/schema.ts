@@ -41,8 +41,8 @@ interface NetworkTable {
     userId: UserId | undefined // global if undefined
 
     auth: string // json stringified
-    adminAuth: string | undefined // json stringified
-    serviceAccountAuth: string | undefined // json stringified
+    adminAuth: string | null // json stringified
+    serviceAccountAuth: string | null // json stringified
 }
 
 /**
@@ -258,12 +258,10 @@ export const fromNetwork = (
         userId: userId,
         identityProviderId: network.identityProviderId,
         auth: JSON.stringify(network.auth),
-        adminAuth: network.adminAuth
-            ? JSON.stringify(network.adminAuth)
-            : undefined,
+        adminAuth: network.adminAuth ? JSON.stringify(network.adminAuth) : null,
         serviceAccountAuth: network.serviceAccountAuth
             ? JSON.stringify(network.serviceAccountAuth)
-            : undefined,
+            : null,
     }
 }
 

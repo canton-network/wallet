@@ -104,11 +104,11 @@ describe('schema mappers', () => {
             expect(toNetwork(table)).toEqual(baseNetwork)
         })
 
-        test('omits adminAuth when not set on the domain model', () => {
+        test('stores null adminAuth when not set on the domain model', () => {
             // oxlint-disable-next-line no-unused-vars
             const { adminAuth, ...withoutAdmin } = baseNetwork
             const table = fromNetwork(withoutAdmin)
-            expect(table.adminAuth).toBeUndefined()
+            expect(table.adminAuth).toBeNull()
             expect(toNetwork(table).adminAuth).toBeUndefined()
         })
     })
