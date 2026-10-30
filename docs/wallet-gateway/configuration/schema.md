@@ -198,7 +198,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                             "type": "string"
                                         },
                                         "password": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "secret": true
                                         },
                                         "database": {
                                             "type": "string"
@@ -301,7 +302,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                             "type": "string"
                                         },
                                         "password": {
-                                            "type": "string"
+                                            "type": "string",
+                                            "secret": true
                                         },
                                         "database": {
                                             "type": "string"
@@ -669,7 +671,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "clientSecret": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "secret": true
                                                     }
                                                 },
                                                 "required": [
@@ -701,7 +704,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "clientSecret": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "secret": true
                                                     }
                                                 },
                                                 "required": [
@@ -905,7 +909,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "clientSecret": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "secret": true
                                                     }
                                                 },
                                                 "required": [
@@ -937,7 +942,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "clientSecret": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "secret": true
                                                     }
                                                 },
                                                 "required": [
@@ -1141,7 +1147,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "clientSecret": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "secret": true
                                                     }
                                                 },
                                                 "required": [
@@ -1173,7 +1180,8 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                                                         "type": "string"
                                                     },
                                                     "clientSecret": {
-                                                        "type": "string"
+                                                        "type": "string",
+                                                        "secret": true
                                                     }
                                                 },
                                                 "required": [
