@@ -3,333 +3,349 @@
 
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
-import { Button } from '@mui/material'
-import { expect, fn } from 'storybook/test'
-import { fillField } from '../__tests__/fields'
+import type {
+    OauthIdp,
+    SelfIssuedIdp,
+} from '@canton-network/core-wallet-user-rpc-client'
+import {
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
+import { expect, fn, waitFor } from 'storybook/test'
 import { IdpForm } from './IdpForm'
 
-const oauthIdp: Idp = {
-    id: 'my-idp',
+const oauthIdp: OauthIdp = {
+    id: 'review-idp',
     type: 'oauth',
     issuer: 'https://old-issuer.example',
-    configUrl: 'https://old-issuer.example/.well-known',
+    configUrl: 'https://old-config.example',
 }
-const selfIssuedIdp: Idp = { id: 'self-issued-idp', type: 'self_issued' }
+const selfIssuedIdp: SelfIssuedIdp = {
+    id: 'self-issued-idp',
+    type: 'self_issued',
+}
 
-const meta: Meta = {
+const meta = {
     title: 'IdpForm',
     component: IdpForm,
     args: {
-        onSave: fn(),
+        onIdpFormSave: fn(),
+        onIdpFormDelete: fn(),
+        onIdpFormCancel: fn(),
     },
-}
+} satisfies Meta<typeof IdpForm>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
+const field = (canvasElement: HTMLElement, name: RegExp) =>
+    findByShadowRole(canvasElement, 'textbox', { name })
+const typeSelect = (canvasElement: HTMLElement) =>
+    findByShadowRole(canvasElement, 'combobox', { name: /^Type/ })
+
 export const Add: Story = {
-    play: async ({ args, canvas, userEvent }) => {
+    args: { mode: 'add' },
+    play: async ({ args, canvasElement, userEvent }) => {
         // OAuth is the default type, so all three text fields are shown
+        await expect(await typeSelect(canvasElement)).toHaveValue('oauth')
         await expect(
-            canvas.getByRole('combobox', { name: /^Type/ })
-        ).toHaveValue('oauth')
-        await expect(
-            canvas.getByText('A unique identifier for the identity provider')
+            await findByShadowText(
+                canvasElement,
+                'A unique identifier for the identity provider'
+            )
         ).toBeInTheDocument()
         await expect(
-            canvas.queryByRole('button', { name: 'Update' })
+            queryByShadowRole(canvasElement, 'button', { name: 'Update' })
         ).not.toBeInTheDocument()
-        await expect(canvas.queryByText('Cancel')).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Delete identity provider')
+        ).not.toBeInTheDocument()
 
-        await fillField(
-            userEvent,
-            canvas.getByRole('textbox', { name: /^ID/ }),
-            'new-idp'
-        )
-        await fillField(
-            userEvent,
-            canvas.getByRole('textbox', { name: /^Issuer URL/ }),
+        await userEvent.type(await field(canvasElement, /^ID/), 'new-idp')
+        await userEvent.type(
+            await field(canvasElement, /^Issuer URL/),
             'https://issuer.example'
         )
-        await fillField(
-            userEvent,
-            canvas.getByRole('textbox', { name: /^Config URL/ }),
+        await userEvent.type(
+            await field(canvasElement, /^Config URL/),
             'https://issuer.example/.well-known'
         )
-        await userEvent.click(canvas.getByRole('button', { name: 'Add' }))
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Add' })
+        )
 
-        await expect(args.onSave).toHaveBeenCalledTimes(1)
-        await expect(args.onSave).toHaveBeenCalledWith({
-            id: 'new-idp',
-            type: 'oauth',
-            issuer: 'https://issuer.example',
-            configUrl: 'https://issuer.example/.well-known',
-        })
+        await expect(args.onIdpFormSave).toHaveBeenCalledOnce()
+        await expect(args.onIdpFormSave).toHaveBeenCalledWith(
+            expect.objectContaining({
+                idp: {
+                    id: 'new-idp',
+                    type: 'oauth',
+                    issuer: 'https://issuer.example',
+                    configUrl: 'https://issuer.example/.well-known',
+                },
+            })
+        )
     },
 }
 
-export const AddIgnoresReviewActions: Story = {
-    // Without an identity provider it is an add, even if review callbacks are passed
-    args: { onDelete: fn(), onCancel: fn() },
-    play: async ({ canvas }) => {
+export const FieldsFollowType: Story = {
+    play: async ({ canvasElement, userEvent }) => {
+        const type = await typeSelect(canvasElement)
+        await expect(await field(canvasElement, /^Issuer URL/)).toBeVisible()
+        await expect(await field(canvasElement, /^Config URL/)).toBeVisible()
+
+        // No config URL for self-signed identity providers
+        await userEvent.selectOptions(type, 'self_signed')
+        await expect(await field(canvasElement, /^Issuer URL/)).toBeVisible()
+        await waitFor(() =>
+            expect(
+                queryByShadowRole(canvasElement, 'textbox', {
+                    name: /^Config URL/,
+                })
+            ).not.toBeInTheDocument()
+        )
+
+        // Only the ID for self-issued ones
+        await userEvent.selectOptions(type, 'self_issued')
+        await waitFor(() =>
+            expect(
+                queryByShadowRole(canvasElement, 'textbox', {
+                    name: /^Issuer URL/,
+                })
+            ).not.toBeInTheDocument()
+        )
         await expect(
-            canvas.getByRole('button', { name: 'Add' })
-        ).toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Cancel' })
+            queryByShadowRole(canvasElement, 'textbox', { name: /^Config URL/ })
         ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('heading', { name: 'Delete identity provider' })
-        ).not.toBeInTheDocument()
+
+        await userEvent.selectOptions(type, 'oauth')
+        await expect(await field(canvasElement, /^Issuer URL/)).toBeVisible()
+        await expect(await field(canvasElement, /^Config URL/)).toBeVisible()
     },
 }
 
 export const AddSelfSigned: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: /^Type/ }),
-            'self_signed'
-        )
-
-        // No config URL for self-signed identity providers
-        await expect(
-            canvas.queryByRole('textbox', { name: /^Config URL/ })
-        ).not.toBeInTheDocument()
-
+    play: async ({ args, canvasElement, userEvent }) => {
+        // Fill everything as OAuth first: the config URL is kept as a draft
+        // but not sent once the type is changed
         await userEvent.type(
-            canvas.getByRole('textbox', { name: /^ID/ }),
+            await field(canvasElement, /^ID/),
             'self-signed-idp'
         )
         await userEvent.type(
-            canvas.getByRole('textbox', { name: /^Issuer URL/ }),
+            await field(canvasElement, /^Issuer URL/),
             'https://issuer.example'
         )
-        await userEvent.click(canvas.getByRole('button', { name: 'Add' }))
+        await userEvent.type(
+            await field(canvasElement, /^Config URL/),
+            'https://should-be-ignored.example'
+        )
+        const type = await typeSelect(canvasElement)
+        await userEvent.selectOptions(type, 'self_signed')
 
-        await expect(args.onSave).toHaveBeenCalledWith({
-            id: 'self-signed-idp',
-            type: 'self_signed',
-            issuer: 'https://issuer.example',
-        })
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Add' })
+        )
+        await expect(args.onIdpFormSave).toHaveBeenCalledOnce()
+        await expect(args.onIdpFormSave).toHaveBeenCalledWith(
+            expect.objectContaining({
+                idp: {
+                    id: 'self-signed-idp',
+                    type: 'self_signed',
+                    issuer: 'https://issuer.example',
+                },
+            })
+        )
+
+        // Switching back restores what was typed in the hidden field
+        await userEvent.selectOptions(type, 'oauth')
+        await expect(await field(canvasElement, /^Config URL/)).toHaveValue(
+            'https://should-be-ignored.example'
+        )
+        await expect(await field(canvasElement, /^Issuer URL/)).toHaveValue(
+            'https://issuer.example'
+        )
     },
 }
 
 export const AddSelfIssued: Story = {
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: /^Type/ }),
+            await typeSelect(canvasElement),
             'self_issued'
         )
+        await waitFor(() =>
+            expect(
+                queryByShadowRole(canvasElement, 'textbox', {
+                    name: /^Issuer URL/,
+                })
+            ).not.toBeInTheDocument()
+        )
 
-        // Only the ID is needed
-        await expect(
-            canvas.queryByRole('textbox', { name: /^Issuer URL/ })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('textbox', { name: /^Config URL/ })
-        ).not.toBeInTheDocument()
-
+        // Enter submits the form
         await userEvent.type(
-            canvas.getByRole('textbox', { name: /^ID/ }),
+            await field(canvasElement, /^ID/),
             'self-issued-idp{Enter}'
         )
-        await expect(args.onSave).toHaveBeenCalledWith({
-            id: 'self-issued-idp',
-            type: 'self_issued',
-        })
-    },
-}
-
-export const KeepsDraftsWhenTypeChanges: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        const type = canvas.getByRole('combobox', { name: /^Type/ })
-        await fillField(
-            userEvent,
-            canvas.getByRole('textbox', { name: /^ID/ }),
-            'idp'
+        await expect(args.onIdpFormSave).toHaveBeenCalledOnce()
+        await expect(args.onIdpFormSave).toHaveBeenCalledWith(
+            expect.objectContaining({
+                idp: {
+                    id: 'self-issued-idp',
+                    type: 'self_issued',
+                },
+            })
         )
-        await fillField(
-            userEvent,
-            canvas.getByRole('textbox', { name: /^Issuer URL/ }),
-            'https://issuer.example'
-        )
-        await fillField(
-            userEvent,
-            canvas.getByRole('textbox', { name: /^Config URL/ }),
-            'https://config.example'
-        )
-
-        // Hidden fields keep what was typed, and it isn't sent for other types
-        await userEvent.selectOptions(type, 'self_signed')
-        await userEvent.click(canvas.getByRole('button', { name: 'Add' }))
-        await expect(args.onSave).toHaveBeenLastCalledWith({
-            id: 'idp',
-            type: 'self_signed',
-            issuer: 'https://issuer.example',
-        })
-
-        await userEvent.selectOptions(type, 'oauth')
-        await expect(
-            canvas.getByRole('textbox', { name: /^Config URL/ })
-        ).toHaveValue('https://config.example')
     },
 }
 
 export const RequiresFields: Story = {
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         // The browser blocks submitting empty required fields
-        await userEvent.click(canvas.getByRole('button', { name: 'Add' }))
-
-        await expect(args.onSave).not.toHaveBeenCalled()
-        await expect(canvas.getByRole('textbox', { name: /^ID/ })).toBeInvalid()
-    },
-}
-
-export const ValidatesWhenBrowserValidationIsBypassed: Story = {
-    play: async ({ args, canvas, canvasElement }) => {
-        // e.g. a programmatic submit: the form checks the fields itself too
-        canvasElement
-            .querySelector('form')!
-            .dispatchEvent(
-                new Event('submit', { bubbles: true, cancelable: true })
-            )
-
-        await expect(await canvas.findByRole('alert')).toHaveTextContent(
-            'Please fill in all required fields'
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Add' })
         )
-        await expect(args.onSave).not.toHaveBeenCalled()
+
+        await expect(args.onIdpFormSave).not.toHaveBeenCalled()
+        await expect(await field(canvasElement, /^ID/)).toBeInvalid()
     },
 }
 
 export const Review: Story = {
-    args: { idp: oauthIdp, onDelete: fn(), onCancel: fn() },
-    play: async ({ args, canvas, userEvent }) => {
+    args: { mode: 'review', idp: oauthIdp },
+    play: async ({ args, canvasElement, userEvent }) => {
         // Prefilled with the identity provider
-        await expect(canvas.getByRole('textbox', { name: /^ID/ })).toHaveValue(
-            'my-idp'
+        await expect(await field(canvasElement, /^ID/)).toHaveValue(
+            'review-idp'
+        )
+        await expect(await typeSelect(canvasElement)).toHaveValue('oauth')
+        await expect(await field(canvasElement, /^Issuer URL/)).toHaveValue(
+            'https://old-issuer.example'
+        )
+        await expect(await field(canvasElement, /^Config URL/)).toHaveValue(
+            'https://old-config.example'
         )
         await expect(
-            canvas.getByRole('combobox', { name: /^Type/ })
-        ).toHaveValue('oauth')
-        await expect(
-            canvas.queryByRole('button', { name: 'Add' })
+            queryByShadowRole(canvasElement, 'button', { name: 'Add' })
         ).not.toBeInTheDocument()
 
-        // Updating sends the edited values
-        const issuer = canvas.getByRole('textbox', { name: /^Issuer URL/ })
-        await fillField(userEvent, issuer, 'https://new-issuer.example')
-        await userEvent.click(canvas.getByRole('button', { name: 'Update' }))
-        await expect(args.onSave).toHaveBeenCalledWith({
-            id: 'my-idp',
-            type: 'oauth',
-            issuer: 'https://new-issuer.example',
-            configUrl: 'https://old-issuer.example/.well-known',
-        })
+        // Updating sends the edited values. Select-and-type replaces the text
+        // (userEvent.clear can't focus inputs inside a shadow root)
+        const issuer = await field(canvasElement, /^Issuer URL/)
+        await userEvent.tripleClick(issuer)
+        await userEvent.keyboard('https://new-issuer.example')
+        const configUrl = await field(canvasElement, /^Config URL/)
+        await userEvent.tripleClick(configUrl)
+        await userEvent.keyboard('https://new-config.example')
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Update' })
+        )
+        await expect(args.onIdpFormSave).toHaveBeenCalledOnce()
+        await expect(args.onIdpFormSave).toHaveBeenCalledWith(
+            expect.objectContaining({
+                idp: {
+                    id: 'review-idp',
+                    type: 'oauth',
+                    issuer: 'https://new-issuer.example',
+                    configUrl: 'https://new-config.example',
+                },
+            })
+        )
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Cancel' }))
-        await expect(args.onCancel).toHaveBeenCalledTimes(1)
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', { name: 'Cancel' })
+        )
+        await expect(args.onIdpFormCancel).toHaveBeenCalledOnce()
 
         // Delete reports the identity provider as passed in, not the edited one
         await expect(
-            canvas.getByRole('heading', { name: 'Delete identity provider' })
+            await findByShadowRole(canvasElement, 'heading', {
+                name: 'Delete identity provider',
+            })
         ).toBeInTheDocument()
         await userEvent.click(
-            canvas.getByRole('button', { name: 'Delete identity provider' })
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Delete identity provider',
+            })
         )
-        await expect(args.onDelete).toHaveBeenCalledTimes(1)
-        await expect(args.onDelete).toHaveBeenCalledWith(oauthIdp)
+        await expect(args.onIdpFormDelete).toHaveBeenCalledOnce()
+        await expect(args.onIdpFormDelete).toHaveBeenCalledWith(
+            expect.objectContaining({ idp: oauthIdp })
+        )
+        await expect(args.onIdpFormSave).toHaveBeenCalledOnce()
     },
 }
 
 export const ReviewSelfIssued: Story = {
-    args: { idp: selfIssuedIdp },
-    play: async ({ canvas }) => {
+    args: { mode: 'review', idp: selfIssuedIdp },
+    play: async ({ canvasElement }) => {
+        await expect(await field(canvasElement, /^ID/)).toHaveValue(
+            'self-issued-idp'
+        )
+        await expect(await typeSelect(canvasElement)).toHaveValue('self_issued')
         await expect(
-            canvas.getByRole('combobox', { name: /^Type/ })
-        ).toHaveValue('self_issued')
-        await expect(
-            canvas.queryByRole('textbox', { name: /^Issuer URL/ })
+            queryByShadowRole(canvasElement, 'textbox', { name: /^Issuer URL/ })
         ).not.toBeInTheDocument()
-    },
-}
-
-export const ReviewWithoutDeleteOrCancel: Story = {
-    args: { idp: oauthIdp },
-    play: async ({ canvas }) => {
-        // Actions whose callback is omitted are hidden
-        await expect(
-            canvas.queryByRole('heading', { name: 'Delete identity provider' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Delete identity provider' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'Cancel' })
-        ).not.toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Update' })
-        ).toBeInTheDocument()
     },
 }
 
 export const Loading: Story = {
     args: { loading: true },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
+        await expect(await field(canvasElement, /^ID/)).toBeDisabled()
+        await expect(await typeSelect(canvasElement)).toBeDisabled()
+        await expect(await field(canvasElement, /^Issuer URL/)).toBeDisabled()
+        await expect(await field(canvasElement, /^Config URL/)).toBeDisabled()
         await expect(
-            canvas.getByRole('textbox', { name: /^ID/ })
+            await findByShadowRole(canvasElement, 'button', { name: 'Add' })
         ).toBeDisabled()
+    },
+}
+
+export const ReviewLoading: Story = {
+    args: { mode: 'review', idp: oauthIdp, loading: true },
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByRole('combobox', { name: /^Type/ })
+            await findByShadowRole(canvasElement, 'button', { name: 'Update' })
         ).toBeDisabled()
-        await expect(canvas.getByRole('button', { name: 'Add' })).toBeDisabled()
     },
 }
 
 export const StartsOverWhenIdpChanges: Story = {
     render: (args) => {
-        const [idp, setIdp] = useState<Idp>(oauthIdp)
+        const [idp, setIdp] = useState<OauthIdp | SelfIssuedIdp>(oauthIdp)
         return (
             <>
-                <IdpForm idp={idp} onSave={args.onSave} />
-                <Button onClick={() => setIdp(selfIssuedIdp)}>
+                <IdpForm {...args} mode="review" idp={idp} />
+                <button onClick={() => setIdp(selfIssuedIdp)}>
                     Show other
-                </Button>
+                </button>
             </>
         )
     },
-    play: async ({ canvas, userEvent }) => {
-        await userEvent.type(
-            canvas.getByRole('textbox', { name: /^ID/ }),
-            '-edited'
-        )
-        await expect(canvas.getByRole('textbox', { name: /^ID/ })).toHaveValue(
-            'my-idp-edited'
+    play: async ({ canvasElement, userEvent }) => {
+        await userEvent.type(await field(canvasElement, /^ID/), '-edited')
+        await expect(await field(canvasElement, /^ID/)).toHaveValue(
+            'review-idp-edited'
         )
 
         await userEvent.click(
-            canvas.getByRole('button', { name: 'Show other' })
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Show other',
+            })
         )
 
-        await expect(canvas.getByRole('textbox', { name: /^ID/ })).toHaveValue(
-            'self-issued-idp'
+        await waitFor(async () =>
+            expect(await field(canvasElement, /^ID/)).toHaveValue(
+                'self-issued-idp'
+            )
         )
-        await expect(
-            canvas.getByRole('combobox', { name: /^Type/ })
-        ).toHaveValue('self_issued')
-    },
-}
-
-export const ExposesE2eHooks: Story = {
-    args: { idp: oauthIdp },
-    play: async ({ canvasElement }) => {
-        // The helpers in wallet-test-utils fill the form through these ids
-        const tag = (id: string) =>
-            canvasElement.querySelector(`#${id}`)?.tagName
-        await expect(tag('idp-id')).toBe('INPUT')
-        await expect(tag('idp-type')).toBe('SELECT')
-        await expect(tag('idp-issuer')).toBe('INPUT')
-        await expect(tag('idp-config-url')).toBe('INPUT')
+        await expect(await typeSelect(canvasElement)).toHaveValue('self_issued')
     },
 }

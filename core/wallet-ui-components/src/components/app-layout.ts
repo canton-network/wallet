@@ -5,9 +5,11 @@ import { css, html, unsafeCSS } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import defaultTheme from '../../themes/default.css?inline'
 import { BaseElement } from '../internal/base-element'
+import './app-header.js'
 
+export
 @customElement('app-layout')
-export class AppLayout extends BaseElement {
+class AppLayout extends BaseElement {
     @property({ type: String }) accessor iconSrc: string = '/images/icon.png'
     @property({ type: String }) accessor themeSrc: string | undefined
 

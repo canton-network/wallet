@@ -14,8 +14,9 @@ export class ApiKeyCardRevokeEvent extends Event {
     }
 }
 
+export
 @customElement('api-key-card')
-export class ApiKeyCard extends BaseElement {
+class ApiKeyCard extends BaseElement {
     @property({ type: Object }) accessor apiKey: ApiKey | null = null
 
     static styles = [

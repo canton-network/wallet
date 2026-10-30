@@ -24,8 +24,9 @@ export class TransactionCardReviewEvent extends Event {
     }
 }
 
+export
 @customElement('wg-transaction-card')
-export class WgTransactionCard extends BaseElement {
+class WgTransactionCard extends BaseElement {
     @property() accessor transactionId = ''
 
     @property() accessor commandId = ''

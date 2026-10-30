@@ -45,8 +45,9 @@ export class NetworkDeleteEvent extends Event {
     }
 }
 
+export
 @customElement('network-form')
-export class NetworkForm extends BaseElement {
+class NetworkForm extends BaseElement {
     @property({ type: String })
     accessor mode: 'add' | 'review' = 'add'
 

@@ -23,8 +23,9 @@ export class WalletCreateEvent extends Event {
     }
 }
 
+export
 @customElement('wg-wallet-create-form')
-export class WgWalletCreateForm extends WgWalletForm {
+class WgWalletCreateForm extends WgWalletForm {
     protected readonly submitLabel = 'Add'
     protected readonly submittingLabel = 'Adding...'
     protected readonly submittingMessage = 'Creating party, please wait...'

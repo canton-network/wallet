@@ -58,11 +58,6 @@ export const apps = [
         env_development: sharedEnvDevelopment,
     },
     {
-        name: 'core-wallet-ui-components-sb-lit',
-        script: 'pnpm --filter @canton-network/core-wallet-ui-components dev:lit',
-        env_development: sharedEnvDevelopment,
-    },
-    {
         name: 'core-wallet-ui-components-sb',
         script: 'pnpm --filter @canton-network/core-wallet-ui-components dev',
         env_development: sharedEnvDevelopment,

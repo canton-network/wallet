@@ -30,8 +30,9 @@ export class AuthEditorChangeEvent extends Event {
     }
 }
 
+export
 @customElement('auth-editor')
-export class AuthEditor extends BaseElement {
+class AuthEditor extends BaseElement {
     @property({ type: Object }) accessor auth: Auth | undefined
     @property({ type: Array })
     accessor allowedMethods: AuthMethod[] = [
@@ -567,7 +568,7 @@ export class AuthEditor extends BaseElement {
                         ${
                             this.allowedMethods.includes('authorization_code')
                                 ? html`<option
-                                      ?value="authorization_code"
+                                      value="authorization_code"
                                       ?selected=${method === 'authorization_code'}
                                   >
                                       authorization_code

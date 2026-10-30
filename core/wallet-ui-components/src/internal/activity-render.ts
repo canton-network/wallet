@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { html, nothing } from 'lit'
+import '../components/copy-button.js'
 
 export function renderCopyableValue(
     label: string,
