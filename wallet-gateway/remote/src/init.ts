@@ -43,7 +43,10 @@ import {
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
 import { ServerNotices } from './notices/server-notices.js'
-import { reportDeprecatedConfig } from './notices/config-notices.js'
+import {
+    reportDeprecatedConfig,
+    reportInlineSecrets,
+} from './notices/config-notices.js'
 import { toDisplayConfig } from './config/display-config.js'
 
 let isReady = false
@@ -236,6 +239,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         logger.child({ component: 'server-notices' })
     )
     reportDeprecatedConfig(rawConfig, serverNotices)
+    reportInlineSecrets(rawConfig, serverNotices)
 
     // Use CLI port override or config port
     const port = opts.port ? Number(opts.port) : config.server.port
