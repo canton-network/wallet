@@ -3,69 +3,47 @@
 
 import { readFileSync, existsSync } from 'fs'
 import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
-import type { ServerNotices } from '../notices/server-notices.js'
+import type { ServerNoticeReport } from '../notices/server-notices.js'
 import { Env } from '../env.js'
 import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
 
 export interface LoadedConfig {
     config: Config
-    // The config as written in the config file, with inline secrets redacted
-    displayConfig: Record<string, unknown>
+    // The config as written in the config file, before env vars are resolved
+    rawConfig: RawConfig
+    // Config that works but needs attention, e.g. deprecated fields
+    warnings: ServerNoticeReport[]
 }
 
 export class ConfigUtils {
     /**
      * Loads and validates the config file. Invalid configs throw, while
-     * configs that work but need attention are reported to `notices`.
+     * configs that work but need attention are returned as warnings.
      */
-    static loadConfigFile(
-        filePath: string,
-        notices?: ServerNotices
-    ): LoadedConfig {
+    static loadConfigFile(filePath: string): LoadedConfig {
         if (!existsSync(filePath)) {
             throw new Error("Supplied file path doesn't exist " + filePath)
         }
         return ConfigUtils.parseConfig(
-            JSON.parse(readFileSync(filePath, 'utf-8')),
-            notices
+            JSON.parse(readFileSync(filePath, 'utf-8'))
         )
     }
 
-    static parseConfig(json: unknown, notices?: ServerNotices): LoadedConfig {
+    static parseConfig(json: unknown): LoadedConfig {
         const rawConfig = rawConfigSchema.parse(json)
-        if (notices) {
-            reportConfigNotices(rawConfig, notices)
-        }
         return {
             config: resolveConfig(rawConfig),
-            displayConfig: toDisplayConfig(rawConfig),
+            rawConfig,
+            warnings: collectWarnings(rawConfig),
         }
     }
 }
 
-// Config fields that can hold a secret written directly into the config file.
-// The postgres connection passes unknown fields on to the driver, hence the
-// driver's secret options are listed as well.
-export const SECRET_CONFIG_KEYS = new Set([
-    'clientSecret',
-    'password',
-    'connectionString',
-    'key',
-    'passphrase',
-    'pfx',
-])
+function collectWarnings(rawConfig: RawConfig): ServerNoticeReport[] {
+    const warnings: ServerNoticeReport[] = []
 
-function toDisplayConfig(rawConfig: RawConfig): Record<string, unknown> {
-    return JSON.parse(
-        JSON.stringify(rawConfig, (key, value) =>
-            SECRET_CONFIG_KEYS.has(key) ? '*****' : value
-        )
-    )
-}
-
-function reportConfigNotices(rawConfig: RawConfig, notices: ServerNotices) {
     if (rawConfig.server.host !== undefined) {
-        notices.report({
+        warnings.push({
             id: 'deprecated-config:server.host',
             severity: 'warning',
             message:
@@ -74,7 +52,7 @@ function reportConfigNotices(rawConfig: RawConfig, notices: ServerNotices) {
     }
 
     if (rawConfig.server.tls !== undefined) {
-        notices.report({
+        warnings.push({
             id: 'deprecated-config:server.tls',
             severity: 'warning',
             message:
@@ -91,10 +69,11 @@ function reportConfigNotices(rawConfig: RawConfig, notices: ServerNotices) {
             store?.connection.type === 'postgres' &&
             'password' in store.connection
         ) {
-            reportInlineSecret(
-                notices,
-                `${name}.connection.password`,
-                'passwordEnv'
+            warnings.push(
+                inlineSecretWarning(
+                    `${name}.connection.password`,
+                    'passwordEnv'
+                )
             )
         }
     }
@@ -107,26 +86,28 @@ function reportConfigNotices(rawConfig: RawConfig, notices: ServerNotices) {
         }
         for (const [name, auth] of Object.entries(auths)) {
             if (auth && 'clientSecret' in auth) {
-                reportInlineSecret(
-                    notices,
-                    `bootstrap.networks[${index}].${name}.clientSecret`,
-                    'clientSecretEnv'
+                warnings.push(
+                    inlineSecretWarning(
+                        `bootstrap.networks[${index}].${name}.clientSecret`,
+                        'clientSecretEnv'
+                    )
                 )
             }
         }
     })
+
+    return warnings
 }
 
-function reportInlineSecret(
-    notices: ServerNotices,
+function inlineSecretWarning(
     path: string,
     envField: string
-) {
-    notices.report({
+): ServerNoticeReport {
+    return {
         id: `inline-secret:${path}`,
         severity: 'warning',
         message: `${path} is written in the config file. Prefer ${envField} so the secret comes from the environment (or a Kubernetes secret) rather than the config file: replace ${path} with ${envField}, set to the name of the environment variable that holds the secret.`,
-    })
+    }
 }
 
 function resolveConfig(rawConfig: RawConfig): Config {
