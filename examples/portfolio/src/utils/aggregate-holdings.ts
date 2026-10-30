@@ -3,9 +3,8 @@
 
 import Decimal from 'decimal.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import type { PrettyContract } from '@canton-network/core-tx-parser'
-import type { HoldingView } from '@canton-network/core-token-standard'
 import type { Instruments } from '../types/instruments'
+import type { PortfolioHolding } from './holdings'
 
 export interface AggregatedWalletBalance {
     owner: string
@@ -30,25 +29,21 @@ export function getInstrumentKey(instrumentId: { admin: string; id: string }) {
     return `${instrumentId.admin}::${instrumentId.id}`
 }
 
-/**
- * need to aggregate holdings by account rather than party id
- */
-
 export function aggregateHoldings(
-    holdings: PrettyContract<HoldingView>[],
+    holdings: PortfolioHolding[],
     currentTime: Date = new Date()
 ): Map<string, AggregatedHolding> {
     const aggregated = new Map<string, AggregatedHolding>()
 
     for (const holding of holdings) {
-        const holdingView = holding.interfaceViewValue
-        const key = getInstrumentKey(holdingView.instrumentId)
+        const key = getInstrumentKey(holding.instrumentId)
         const existing = aggregated.get(key)
-        const isLocked = TokenStandardService.isHoldingLocked(
-            holding,
+        const isLocked = TokenStandardService.checkLock(
+            holding.lock,
+            holding.createdAt,
             currentTime
         )
-        const amount = new Decimal(holdingView.amount)
+        const amount = new Decimal(holding.amount)
 
         if (existing) {
             const newTotal = new Decimal(existing.totalAmount).plus(amount)
@@ -60,18 +55,22 @@ export function aggregateHoldings(
             existing.lockedAmount = newLocked.toString()
             existing.availableAmount = newTotal.minus(newLocked).toString()
             existing.numOfHoldings += 1
-            addWalletBalance(existing.walletBalances, holdingView.owner, amount)
+            addWalletBalance(
+                existing.walletBalances,
+                holding.account.owner!,
+                amount
+            )
         } else {
             const lockedAmount = isLocked ? amount : new Decimal(0)
             aggregated.set(key, {
-                instrumentId: holdingView.instrumentId,
+                instrumentId: holding.instrumentId,
                 totalAmount: amount.toString(),
                 lockedAmount: lockedAmount.toString(),
                 availableAmount: amount.minus(lockedAmount).toString(),
                 numOfHoldings: 1,
                 walletBalances: [
                     {
-                        owner: holdingView.owner,
+                        owner: holding.account.owner!,
                         totalAmount: amount.toString(),
                     },
                 ],
