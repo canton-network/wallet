@@ -27,7 +27,7 @@ import {
     preAuthIpRateLimiter,
     rateLimiter,
 } from './middleware/rateLimit.js'
-import type { Config } from './config/Config.js'
+import { type Config, rawConfigSchema } from './config/Config.js'
 import { deriveUrls } from './config/ConfigUtils.js'
 import { existsSync } from 'fs'
 import { GATEWAY_VERSION } from './version.js'
@@ -43,6 +43,7 @@ import {
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
 import { ServerNotices } from './notices/server-notices.js'
+import { redactSecrets } from './config/redact-secrets.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -231,10 +232,10 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const serverNotices = new ServerNotices(
         logger.child({ component: 'server-notices' })
     )
-    const { config, displayConfig } = ConfigUtils.loadConfigFile(
-        opts.config,
-        serverNotices
+    const { config, rawConfig, warnings } = ConfigUtils.loadConfigFile(
+        opts.config
     )
+    warnings.forEach((warning) => serverNotices.report(warning))
 
     // Use CLI port override or config port
     const port = opts.port ? Number(opts.port) : config.server.port
@@ -378,7 +379,13 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         store,
         hashingSchemeVersion,
         config.server.admin,
-        { notices: serverNotices, displayConfig }
+        {
+            notices: serverNotices,
+            displayConfig: redactSecrets(rawConfigSchema, rawConfig) as Record<
+                string,
+                unknown
+            >,
+        }
     )
 
     const { userPath, dappPath } = config.server
