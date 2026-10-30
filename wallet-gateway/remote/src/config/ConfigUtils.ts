@@ -47,7 +47,7 @@ function collectWarnings(rawConfig: RawConfig): ServerNoticeReport[] {
             id: 'deprecated-config:server.host',
             severity: 'warning',
             message:
-                'server.host has no effect, the Wallet Gateway always binds to the local network interface. Remove server.host from the config file.',
+                'server.host has no effect, the Wallet Gateway always listens on all network interfaces. Remove server.host from the config file.',
         })
     }
 
