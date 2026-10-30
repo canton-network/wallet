@@ -274,6 +274,10 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     })
 
     const notificationService = new NotificationService(logger)
+    const serverStatusService = new ServerStatusService(
+        serverNotices,
+        redactSecrets(rawConfigSchema, rawConfig)
+    )
 
     const store = await initializeDatabase(config, logger)
     const signingStore = config.signingStore
@@ -380,10 +384,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         store,
         hashingSchemeVersion,
         config.server.admin,
-        new ServerStatusService(
-            serverNotices,
-            redactSecrets(rawConfigSchema, rawConfig)
-        )
+        serverStatusService
     )
 
     const { userPath, dappPath } = config.server
