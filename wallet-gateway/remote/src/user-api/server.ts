@@ -30,8 +30,8 @@ export const user = (
     drivers: Partial<Record<SigningProvider, SigningDriverInterface>>,
     store: Store & AuthAware<Store>,
     hashingSchemeVersion: HASHING_SCHEME_VERSION,
-    adminUserId?: string,
-    serverStatus?: ServerStatusService
+    adminUserId: string | undefined,
+    serverStatus: ServerStatusService
 ) => {
     app.use(route, (req, res, next) =>
         jsonRpcHandler<Methods>({

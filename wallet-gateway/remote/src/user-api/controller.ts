@@ -115,8 +115,8 @@ export const userController = (
     drivers: SigningDrivers,
     _logger: Logger,
     hashingSchemeVersion: HASHING_SCHEME_VERSION,
-    adminUserId?: string,
-    serverStatus?: ServerStatusService
+    adminUserId: string | undefined,
+    serverStatus: ServerStatusService
 ) => {
     const logger = _logger.child({ component: 'user-controller' })
     const provider = {
@@ -249,9 +249,6 @@ export const userController = (
         },
         getServerStatus: async (): Promise<GetServerStatusResult> => {
             assertAdmin()
-            if (!serverStatus) {
-                throw new Error('Server status is not available')
-            }
             return serverStatus.getStatus()
         },
         addNetwork: async (params: AddNetworkParams) => {

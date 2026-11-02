@@ -222,7 +222,7 @@ function createController(
     context: AuthContext | undefined,
     drivers: Record<string, unknown> = {},
     adminId?: string,
-    serverStatus?: ServerStatusService
+    serverStatus = new ServerStatusService(new ServerNotices(logger), {})
 ) {
     return userController(
         kernelInfo,

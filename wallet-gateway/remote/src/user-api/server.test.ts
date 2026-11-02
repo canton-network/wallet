@@ -7,6 +7,8 @@ import cors from 'cors'
 import express from 'express'
 import request from 'supertest'
 import { user } from './server.js'
+import { ServerNotices } from '../notices/server-notices.js'
+import { ServerStatusService } from '../notices/server-status-service.js'
 import { jwtAuthService } from '../auth/jwt-auth-service.js'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.js'
@@ -21,6 +23,10 @@ const config = ConfigUtils.loadConfigFile(configPath).config
 const store = new StoreInternal(config.bootstrap, getLogger('mock'))
 
 const notificationService = new NotificationService(pino(sink()))
+const serverStatus = new ServerStatusService(
+    new ServerNotices(pino(sink())),
+    {}
+)
 
 test('call listNetworks rpc', async () => {
     const drivers = {}
@@ -39,7 +45,9 @@ test('call listNetworks rpc', async () => {
             notificationService,
             drivers,
             store,
-            'HASHING_SCHEME_VERSION_V3'
+            'HASHING_SCHEME_VERSION_V3',
+            undefined,
+            serverStatus
         )
     )
         .post('/api/v0/user')
@@ -84,7 +92,9 @@ test('selfSignedAccessToken rpc', async () => {
             notificationService,
             drivers,
             store,
-            'HASHING_SCHEME_VERSION_V3'
+            'HASHING_SCHEME_VERSION_V3',
+            undefined,
+            serverStatus
         )
     )
         .post('/api/v0/user')
@@ -128,7 +138,9 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
             notificationService,
             {},
             store,
-            'HASHING_SCHEME_VERSION_V3'
+            'HASHING_SCHEME_VERSION_V3',
+            undefined,
+            serverStatus
         )
     )
         .post('/api/v0/user')
@@ -166,7 +178,9 @@ test('selfSignedAccessToken rpc rejects a mismatched client secret', async () =>
             notificationService,
             {},
             store,
-            'HASHING_SCHEME_VERSION_V3'
+            'HASHING_SCHEME_VERSION_V3',
+            undefined,
+            serverStatus
         )
     )
         .post('/api/v0/user')
