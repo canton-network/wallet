@@ -365,37 +365,35 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     signingWorker.start()
 
     // register dapp API handlers
-    dapp(
-        config.server.dappPath,
+    dapp({
+        route: config.server.dappPath,
         app,
         logger,
         server,
         kernelInfo,
-        dappApiUrl,
-        publicUrl,
-        config.server,
+        dappUrl: dappApiUrl,
+        userUrl: publicUrl,
+        serverConfig: config.server,
         notificationService,
         store,
-        {
-            signingDrivers: drivers,
-        },
-        hashingSchemeVersion
-    )
+        deps: { signingDrivers: drivers },
+        hashingSchemeVersion,
+    })
 
     // register user API handlers
-    user(
-        config.server.userPath,
+    user({
+        route: config.server.userPath,
         app,
         logger,
         kernelInfo,
-        publicUrl,
+        userUrl: publicUrl,
         notificationService,
         drivers,
         store,
         hashingSchemeVersion,
-        config.server.admin,
-        serverStatusService
-    )
+        adminUserId: config.server.admin,
+        serverStatus: serverStatusService,
+    })
 
     const { userPath, dappPath } = config.server
     const isApiPath = (path: string) =>
