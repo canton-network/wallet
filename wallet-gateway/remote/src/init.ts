@@ -8,6 +8,7 @@ import type { Logger } from 'pino'
 import {
     StoreSql,
     bootstrap,
+    upsertIdpsAndNetworks,
     connection,
     migrator,
 } from '@canton-network/core-wallet-store-sql'
@@ -160,6 +161,21 @@ async function initializeDatabase(
     if (!exists) {
         logger.info('Bootstrapping database from config...')
         await bootstrap(db, config.bootstrap)
+    }
+
+    // idps and networks managed by the config file are applied on every start
+    if (config.idps.length > 0 || config.networks.length > 0) {
+        logger.info(
+            {
+                idps: config.idps.map((idp) => idp.id),
+                networks: config.networks.map((network) => network.id),
+            },
+            'Applying identity providers and networks from config...'
+        )
+        await upsertIdpsAndNetworks(db, {
+            idps: config.idps,
+            networks: config.networks,
+        })
     }
 
     return new StoreSql(db)
