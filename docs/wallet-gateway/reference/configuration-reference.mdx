@@ -73,7 +73,7 @@ Gateway only configures client-side TLS; it never needs the server's private key
             "host": "localhost",
             "port": 5432,
             "user": "postgres",
-            "passwordEnv": "POSTGRES_PASSWORD",
+            "passwordEnv": "WALLET_GATEWAY_DB_PASSWORD",
             "database": "app_db",
             "ssl": { "rejectUnauthorized": false }
         }
