@@ -43,11 +43,6 @@ export class UserUiAdmin extends BaseElement {
             .notice-meta {
                 font-size: 0.85rem;
             }
-
-            pre {
-                white-space: pre-wrap;
-                word-break: break-all;
-            }
         `,
     ]
 
@@ -121,30 +116,16 @@ export class UserUiAdmin extends BaseElement {
         }
 
         return html`
-            <h1 class="h4 fw-semibold mb-4">Administration</h1>
+            <h1 class="h4 fw-semibold">Administration</h1>
+            <p class="text-body-secondary mb-4">
+                Wallet Gateway ${this.status.version}
+            </p>
 
             <section>
                 <h2 class="h5 fw-semibold">
                     Notices (${this.status.notices.length})
                 </h2>
                 ${this.renderNotices(this.status)}
-            </section>
-
-            <section>
-                <h2 class="h5 fw-semibold">Configuration</h2>
-                <p class="text-body-secondary">
-                    Wallet Gateway ${this.status.version}. The configuration
-                    file as loaded at startup, before environment variables are
-                    resolved. Inline secrets are redacted.
-                </p>
-                <details>
-                    <summary>Show configuration</summary>
-                    <pre class="mt-2"><code>${JSON.stringify(
-                        this.status.config,
-                        null,
-                        2
-                    )}</code></pre>
-                </details>
             </section>
         `
     }

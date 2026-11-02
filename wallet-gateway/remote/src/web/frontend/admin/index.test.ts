@@ -47,7 +47,6 @@ const serverStatus: GetServerStatusResult = {
             lastSeenAt: '2026-01-01T00:00:00.000Z',
         },
     ],
-    config: { server: { tls: false } },
 }
 
 function mockResponses(isAdmin: boolean) {
@@ -72,7 +71,7 @@ describe('UserUiAdmin', () => {
         document.body.innerHTML = ''
     })
 
-    it('renders notices and the config for the admin user', async () => {
+    it('renders the version and notices for the admin user', async () => {
         mockResponses(true)
 
         const el = await fixture<UserUiAdmin>(componentFixture)
@@ -84,9 +83,7 @@ describe('UserUiAdmin', () => {
         expect(alerts[0].textContent).toContain(
             'Config field server.tls is deprecated.'
         )
-        expect(el.shadowRoot!.querySelector('pre')?.textContent).toContain(
-            '"tls": false'
-        )
+        expect(el.shadowRoot!.textContent).toContain('Wallet Gateway 1.2.3')
     })
 
     it('does not request the server status for other users', async () => {

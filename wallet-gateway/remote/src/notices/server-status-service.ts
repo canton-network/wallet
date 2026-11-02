@@ -9,17 +9,12 @@ import type { ServerNotices } from './server-notices.js'
  * Provides the information shown to server administrators.
  */
 export class ServerStatusService {
-    constructor(
-        private readonly notices: ServerNotices,
-        // The config as loaded at startup, with secrets redacted
-        private readonly displayConfig: Record<string, unknown>
-    ) {}
+    constructor(private readonly notices: ServerNotices) {}
 
     getStatus(): GetServerStatusResult {
         return {
             version: GATEWAY_VERSION,
             notices: this.notices.list(),
-            config: this.displayConfig,
         }
     }
 }

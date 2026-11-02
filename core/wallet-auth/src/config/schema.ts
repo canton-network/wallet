@@ -30,7 +30,7 @@ const clientCredentialsAuthSchema = z.object({
     }),
     scope: z.string(),
     clientId: z.string(),
-    clientSecret: z.string().meta({ secret: true }),
+    clientSecret: z.string(),
 })
 
 const selfSignedAuthSchema = z.object({
@@ -42,7 +42,7 @@ const selfSignedAuthSchema = z.object({
     }),
     scope: z.string(),
     clientId: z.string(),
-    clientSecret: z.string().meta({ secret: true }),
+    clientSecret: z.string(),
 })
 
 const selfIssuedAuthSchema = z.object({

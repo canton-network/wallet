@@ -634,14 +634,6 @@ export interface ServerNotice {
 export type ServerNotices = ServerNotice[]
 /**
  *
- * The configuration as written in the config file, before resolving environment variables, with inline secrets redacted.
- *
- */
-export interface DisplayConfig {
-    [key: string]: any
-}
-/**
- *
  * The generated API key.
  *
  */
@@ -931,7 +923,6 @@ export interface GetUserResult {
 export interface GetServerStatusResult {
     version: GatewayVersion
     notices: ServerNotices
-    config: DisplayConfig
 }
 export interface GeneratedApiKey {
     id: Id

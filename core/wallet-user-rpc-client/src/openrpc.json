@@ -1389,15 +1389,9 @@
                             "items": {
                                 "$ref": "#/components/schemas/ServerNotice"
                             }
-                        },
-                        "config": {
-                            "title": "displayConfig",
-                            "type": "object",
-                            "additionalProperties": true,
-                            "description": "The configuration as written in the config file, before resolving environment variables, with inline secrets redacted."
                         }
                     },
-                    "required": ["version", "notices", "config"]
+                    "required": ["version", "notices"]
                 }
             }
         },

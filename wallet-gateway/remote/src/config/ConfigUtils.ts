@@ -9,8 +9,6 @@ import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
 
 export interface LoadedConfig {
     config: Config
-    // The config as written in the config file, before env vars are resolved
-    rawConfig: RawConfig
     // Config that works but needs attention, e.g. deprecated fields
     warnings: ServerNoticeReport[]
 }
@@ -33,7 +31,6 @@ export class ConfigUtils {
         const rawConfig = rawConfigSchema.parse(json)
         return {
             config: resolveConfig(rawConfig),
-            rawConfig,
             warnings: collectWarnings(rawConfig),
         }
     }

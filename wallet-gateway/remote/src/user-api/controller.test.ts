@@ -222,7 +222,7 @@ function createController(
     context: AuthContext | undefined,
     drivers: Record<string, unknown> = {},
     adminId?: string,
-    serverStatus = new ServerStatusService(new ServerNotices(logger), {})
+    serverStatus = new ServerStatusService(new ServerNotices(logger))
 ) {
     return userController(
         kernelInfo,
@@ -506,7 +506,7 @@ describe('userController', () => {
                 severity: 'warning',
                 message: 'server.tls is deprecated',
             })
-            return new ServerStatusService(notices, { server: { tls: true } })
+            return new ServerStatusService(notices)
         }
 
         it('rejects non-admin users', async () => {
@@ -546,7 +546,6 @@ describe('userController', () => {
                         severity: 'warning',
                     }),
                 ],
-                config: { server: { tls: true } },
             })
         })
     })
