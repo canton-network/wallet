@@ -224,19 +224,8 @@ export class SelfIssuedAuthService {
                 'Primary party authentication is already configured for this user.'
             )
         }
-
-        // If user already exists but has no primaryPartyAuth and primaryParty set, it means either:
-        // - onboarding flow was interrupted before a wallet was allocated, but after user was created
-        // - the user was created outside of onboarding flow
-        if (!existingUser) {
-            await this.ledgerClient.post('/v2/users', {
-                user: {
-                    id: username,
-                    isDeactivated: false,
-                    identityProviderId: '',
-                },
-                rights: [],
-            })
+        if (existingUser) {
+            throw new Error(SELF_ISSUED_LOGIN_UNAVAILABLE)
         }
 
         const wallet = await this.walletAllocator.createWallet(
@@ -261,7 +250,7 @@ export class SelfIssuedAuthService {
             'Created self-issued authentication party'
         )
 
-        return this.toWalletWithSyncedRights(wallet)
+        return wallet
     }
 
     async allocateParty(partyId: string): Promise<Wallet> {
@@ -271,12 +260,12 @@ export class SelfIssuedAuthService {
                 this.authContext(),
                 wallet,
                 wallet.signingProviderId as SigningProvider,
-                { grantRights: false } // TODO still need to grant it
+                { grantRights: false }
             )
             wallet = await this.requireWallet(partyId)
         }
 
-        return this.toWalletWithSyncedRights(wallet)
+        return wallet
     }
 
     async signAccessToken(partyId: string): Promise<AccessTokenSignature> {
@@ -334,9 +323,20 @@ export class SelfIssuedAuthService {
 
         const username = this.session.userId
         const existingUser = await this.getExistingUser()
-        const authPartyWallet = canUserUseSelfIssuedAuth(existingUser)
-            ? this.requireExistingAuthParty(wallet, existingUser.primaryParty)
-            : await this.setUserAuthParty(username, wallet)
+        let authPartyWallet: Wallet
+        if (!existingUser) {
+            authPartyWallet = await this.createUserWithAuthParty(
+                username,
+                wallet
+            )
+        } else if (canUserUseSelfIssuedAuth(existingUser)) {
+            authPartyWallet = this.requireExistingAuthParty(
+                wallet,
+                existingUser.primaryParty
+            )
+        } else {
+            throw new Error(SELF_ISSUED_LOGIN_UNAVAILABLE)
+        }
 
         const accessToken = SelfIssuedTokenService.appendJwtSignature(
             message.message,
@@ -403,6 +403,8 @@ export class SelfIssuedAuthService {
         const existingUser = await this.getExistingUser()
         if (canUserUseSelfIssuedAuth(existingUser)) {
             this.requireExistingAuthParty(wallet, existingUser.primaryParty)
+        } else if (existingUser) {
+            throw new Error(SELF_ISSUED_LOGIN_UNAVAILABLE)
         }
     }
 
@@ -445,10 +447,22 @@ export class SelfIssuedAuthService {
         return wallet
     }
 
-    private async setUserAuthParty(
+    private async createUserWithAuthParty(
         username: string,
         wallet: Wallet
     ): Promise<Wallet> {
+        await this.ledgerClient.post('/v2/users', {
+            user: {
+                id: username,
+                isDeactivated: false,
+                identityProviderId: '',
+            },
+            rights: [],
+        })
+        await this.ledgerClient.waitForPartyAndGrantUserRights(
+            username,
+            wallet.partyId
+        )
         await this.ledgerClient.patch(
             '/v2/users/{user-id}',
             {
@@ -469,17 +483,11 @@ export class SelfIssuedAuthService {
             networkId: wallet.networkId,
             isAuthParty: true,
         })
-        return this.requireWallet(wallet.partyId)
-    }
-
-    private async toWalletWithSyncedRights(wallet: Wallet): Promise<Wallet> {
-        if (wallet.status !== 'allocated') {
-            return wallet
-        }
-
         await this.walletSyncService.syncRights()
-
-        return this.requireWallet(wallet.partyId)
+        return this.requireExistingAuthParty(
+            await this.requireWallet(wallet.partyId),
+            wallet.partyId
+        )
     }
 
     private async requireWallet(partyId: string): Promise<Wallet> {
