@@ -36,19 +36,19 @@ test('call listNetworks rpc', async () => {
 
     const { publicUrl } = deriveUrls(config)
     const response = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
             drivers,
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+        })
     )
         .post('/api/v0/user')
         .send({ jsonrpc: '2.0', id: 0, method: 'listNetworks', params: [] })
@@ -83,19 +83,19 @@ test('selfSignedAccessToken rpc', async () => {
 
     const { publicUrl } = deriveUrls(config)
     const response = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
             drivers,
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+        })
     )
         .post('/api/v0/user')
         .send({
@@ -129,19 +129,19 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
 
     const { publicUrl } = deriveUrls(config)
     const mintResponse = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
-            {},
+            drivers: {},
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+        })
     )
         .post('/api/v0/user')
         .send({
@@ -169,19 +169,19 @@ test('selfSignedAccessToken rpc rejects a mismatched client secret', async () =>
 
     const { publicUrl } = deriveUrls(config)
     const response = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
-            {},
+            drivers: {},
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+        })
     )
         .post('/api/v0/user')
         .send({

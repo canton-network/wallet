@@ -292,18 +292,18 @@ function createController(
     adminId?: string,
     serverStatus = new ServerStatusService(new ServerNotices(logger))
 ) {
-    return userController(
+    return userController({
         kernelInfo,
         userUrl,
         store,
         notificationService,
-        context,
+        authContext: context,
         drivers,
         logger,
-        'HASHING_SCHEME_VERSION_V3',
-        adminId,
-        serverStatus
-    )
+        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        adminUserId: adminId,
+        serverStatus,
+    })
 }
 
 describe('userController', () => {

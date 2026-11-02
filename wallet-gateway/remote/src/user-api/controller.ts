@@ -103,18 +103,31 @@ import {
     type SigningDrivers,
 } from '@canton-network/core-wallet-services'
 
-export const userController = (
-    kernelInfo: KernelInfo,
-    userUrl: string,
-    store: Store,
-    notificationService: NotificationService,
-    authContext: AuthContext | undefined,
-    drivers: SigningDrivers,
-    _logger: Logger,
-    hashingSchemeVersion: HASHING_SCHEME_VERSION,
-    adminUserId: string | undefined,
+export interface UserControllerOptions {
+    kernelInfo: KernelInfo
+    userUrl: string
+    store: Store
+    notificationService: NotificationService
+    authContext: AuthContext | undefined
+    drivers: SigningDrivers
+    logger: Logger
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
+    adminUserId: string | undefined
     serverStatus: ServerStatusService
-) => {
+}
+
+export const userController = ({
+    kernelInfo,
+    userUrl,
+    store,
+    notificationService,
+    authContext,
+    drivers,
+    logger: _logger,
+    hashingSchemeVersion,
+    adminUserId,
+    serverStatus,
+}: UserControllerOptions) => {
     const logger = _logger.child({ component: 'user-controller' })
     const provider = {
         id: kernelInfo.id,
