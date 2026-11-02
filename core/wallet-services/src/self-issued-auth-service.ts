@@ -53,6 +53,10 @@ export type SignedAccessTokenConnection =
       }
     | { status: 'failed'; failureReason: string }
 
+type WalletAllocationOptions = {
+    grantRights?: boolean
+    keyName?: string
+}
 // TODO once wallet allocation service and wallet sync service are moved to core/wallet-services use imported types
 export interface SelfIssuedWalletAllocationService {
     getKeys(
@@ -64,12 +68,13 @@ export interface SelfIssuedWalletAllocationService {
         partyHint: string,
         primary: boolean,
         signingProviderId: SigningProvider,
-        keyName?: string
+        options: WalletAllocationOptions
     ): Promise<Wallet>
     allocateParty(
         authContext: AuthContext,
         wallet: Wallet,
-        signingProviderId: SigningProvider
+        signingProviderId: SigningProvider,
+        options: WalletAllocationOptions
     ): Promise<void>
 }
 
@@ -240,8 +245,8 @@ export class SelfIssuedAuthService {
             true,
             params.signingProviderId,
             {
-                keyName: params.keyName,
                 grantRights: false,
+                ...(params.keyName && { keyName: params.keyName }),
             }
         )
 
