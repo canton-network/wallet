@@ -18,7 +18,8 @@ import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-admin')
 export class UserUiAdmin extends BaseElement {
-    @state() accessor status: GetServerStatusResult | undefined = undefined
+    @state() private accessor status: GetServerStatusResult | undefined =
+        undefined
 
     static styles = [
         BaseElement.styles,

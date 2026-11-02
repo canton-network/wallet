@@ -74,7 +74,10 @@ describe('UserUiAdmin', () => {
         mockResponses()
 
         const el = await fixture<UserUiAdmin>(componentFixture)
-        await waitUntil(() => el.status !== undefined, 'status loaded')
+        await waitUntil(
+            () => el.shadowRoot!.querySelector('.alert') !== null,
+            'notices rendered'
+        )
 
         const alerts = el.shadowRoot!.querySelectorAll('.alert')
         expect(alerts.length).toBe(1)
