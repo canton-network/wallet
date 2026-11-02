@@ -20,7 +20,10 @@ import { getLogger } from '@logtape/logtape'
 const configPath = '../test/config.json'
 const config = ConfigUtils.loadConfigFile(configPath).config
 
-const store = new StoreInternal(config.bootstrap, getLogger('mock'))
+const store = new StoreInternal(
+    { idps: config.idps, networks: config.networks },
+    getLogger('mock')
+)
 
 const notificationService = new NotificationService(pino(sink()))
 const serverStatus = new ServerStatusService(new ServerNotices(pino(sink())))
