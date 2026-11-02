@@ -53,6 +53,7 @@ export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
     @state() private accessor networkConnected = false
     @state() private accessor isAdmin = false
+    @state() private accessor warningCount = 0
     @state() accessor dappApiUrl: string = ''
     @state() accessor showPage = false
 
@@ -96,6 +97,17 @@ export class UserApp extends LitElement {
             ])
             this.networkConnected = networkConnected
             this.isAdmin = isAdmin
+            if (isAdmin) {
+                this.warningCount = await userClient
+                    .request({ method: 'getServerStatus' })
+                    .then(
+                        (status) =>
+                            status.notices.filter(
+                                (notice) => notice.severity === 'warning'
+                            ).length
+                    )
+                    .catch(() => 0)
+            }
         } catch {
             this.networkConnected = false
             this.isAdmin = false
@@ -171,6 +183,7 @@ export class UserApp extends LitElement {
                 .networkConnected=${this.networkConnected}
                 .dappApiUrl=${this.dappApiUrl}
                 .isAdmin=${this.isAdmin}
+                .warningCount=${this.warningCount}
                 @logout=${this.handleLogout}
                 @copy-dapp-api-url=${this.handleCopyDappApiUrl}
             >

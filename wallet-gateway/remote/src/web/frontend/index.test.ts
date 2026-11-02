@@ -310,6 +310,30 @@ describe('UserApp', () => {
         })
     })
 
+    it('passes the number of server warnings to the layout for the admin user', async () => {
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'getUser') return { isAdmin: true }
+            if (method === 'getServerStatus') {
+                return {
+                    version: '1.2.3',
+                    notices: [
+                        { id: 'a', severity: 'warning' },
+                        { id: 'b', severity: 'info' },
+                    ],
+                }
+            }
+            return undefined
+        })
+        el = await fixture<UserApp>(componentFixture)
+
+        await waitUntil(() => {
+            const layout = el.shadowRoot?.querySelector(
+                'app-layout'
+            ) as HTMLElement & { warningCount: number }
+            return layout?.warningCount === 1
+        })
+    })
+
     it('copies the dApp API URL to the clipboard', async () => {
         const writeText = vi.fn().mockResolvedValue(undefined)
         vi.stubGlobal('navigator', {
