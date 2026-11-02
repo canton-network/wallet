@@ -4,15 +4,6 @@
 import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import type { Request } from 'express'
 
-function hasBearerToken(req: Request): boolean {
-    const authHeader = req.headers.authorization
-    if (typeof authHeader === 'string' && authHeader.startsWith('Bearer ')) {
-        return true
-    }
-
-    return typeof req.query.token === 'string' && req.query.token.length > 0
-}
-
 export function ipRateLimitKeyGenerator(req: Request): string {
     return `ip:${ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown')}`
 }
@@ -41,8 +32,9 @@ export function preAuthIpRateLimiter(requestRateLimit: number) {
         windowMs: 1 * 60 * 1000,
         max: requestRateLimit,
         keyGenerator: ipRateLimitKeyGenerator,
-        // Only protect unauthenticated traffic before JWT verification.
-        skip: hasBearerToken,
+        // Apply only if JWT middleware has not attached an authenticated context at end of request.
+        skipSuccessfulRequests: true,
+        requestWasSuccessful: (req) => req.authContext?.userId !== undefined,
         standardHeaders: true,
         legacyHeaders: false,
     })
