@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { type Vault, VaultLockedError } from '../../vault'
+import { type VaultLockState, VaultLockedError } from '../../vault'
 import type { UserControllerDeps } from './deps'
 import { messages } from './messages'
 import { networks } from './networks'
@@ -35,7 +35,7 @@ export const userController = (deps: UserControllerDeps) =>
  */
 export function requireUnlocked<
     T extends Record<string, (...args: never[]) => Promise<unknown>>,
->(vault: Pick<Vault, 'ready' | 'status'>, controller: T): T {
+>(vault: VaultLockState, controller: T): T {
     return Object.fromEntries(
         Object.entries(controller).map(([name, method]) => [
             name,

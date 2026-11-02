@@ -55,6 +55,8 @@ export interface Vault {
     defineItem<T>(key: string, opts: { fallback: T }): VaultItem<T>
 }
 
+export type VaultLockState = Pick<Vault, 'ready' | 'status'>
+
 export interface VaultItem<T> {
     /** Throws `VaultLockedError` when the vault isn't unlocked, as do the others. */
     getValue(): Promise<T>

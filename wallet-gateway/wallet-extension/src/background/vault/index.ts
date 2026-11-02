@@ -10,4 +10,9 @@ export {
     VaultNotFoundError,
     WeakPasswordError,
 } from './errors'
-export { createVault, type Vault, type VaultItem } from './vault'
+export {
+    createVault,
+    type Vault,
+    type VaultItem,
+    type VaultLockState,
+} from './vault'

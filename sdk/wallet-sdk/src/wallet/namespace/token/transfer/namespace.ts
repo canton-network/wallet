@@ -7,7 +7,11 @@ import {
     TRANSFER_INSTRUCTION_INTERFACE_ID,
     type TransferInstructionView,
 } from '@canton-network/core-token-standard'
-import type { TransferAllocationChoiceParams, TransferParams } from './types.js'
+import type {
+    TransferAllocationChoiceParams,
+    TransferParams,
+    TransferParamsV1,
+} from './types.js'
 import type { PreparedCommand } from '../../transactions/types.js'
 import { ProxyDelegationNamespace } from './proxyDelegation.js'
 import { findAsset } from '../../asset/index.js'
@@ -59,6 +63,7 @@ export class TransferNamespace {
         return [{ ExerciseCommand }, disclosedContracts]
     }
 
+    /** @deprecated use sdk.token.v2.transfer.create instead */
     async createV2(
         params: TransferParams
     ): Promise<PreparedCommand<'ExerciseCommand'>> {
@@ -96,7 +101,7 @@ export class TransferNamespace {
     }
 
     async create(
-        params: TransferParams
+        params: TransferParamsV1
     ): Promise<PreparedCommand<'ExerciseCommand'>> {
         const assets = parseAssets(
             this.sdkContext.commonCtx,
