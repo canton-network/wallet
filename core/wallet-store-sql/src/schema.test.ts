@@ -98,8 +98,7 @@ describe('schema mappers', () => {
 
     describe('Network', () => {
         test('round-trips network with adminAuth', () => {
-            const table = fromNetwork(baseNetwork, 'user-1')
-            expect(table.userId).toBe('user-1')
+            const table = fromNetwork(baseNetwork)
             expect(table.synchronizerId).toBeNull()
             expect(toNetwork(table)).toEqual(baseNetwork)
         })

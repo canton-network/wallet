@@ -695,6 +695,23 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(afterRemove).toHaveLength(0)
         })
 
+        test('should share networks with all users', async () => {
+            const adminStore = new StoreImpl(db, authContextMock)
+            await adminStore.addIdp(idp)
+            await adminStore.addNetwork(network)
+
+            const otherStore = new StoreImpl(db, {
+                userId: 'other-user-id',
+                accessToken: 'other-access-token',
+            })
+            const anonymousStore = new StoreImpl(db)
+            expect(await otherStore.listNetworks()).toEqual([network])
+            expect(await anonymousStore.listNetworks()).toEqual([network])
+
+            await otherStore.removeNetwork(network.id)
+            expect(await adminStore.listNetworks()).toEqual([])
+        })
+
         test('should reject a second self-issued network with the same audience', async () => {
             const store = new StoreImpl(db, authContextMock)
             await store.addIdp(selfIssuedIdp)
