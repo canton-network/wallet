@@ -3,9 +3,12 @@
 
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
+import { ifDefined } from 'lit/directives/if-defined.js'
 
 import {
     BaseElement,
+    formatDateTime,
+    formatUtcDateTime,
     handleErrorToast,
 } from '@canton-network/core-wallet-ui-components'
 
@@ -87,7 +90,12 @@ export class UserUiAdmin extends BaseElement {
                             <div>${notice.message}</div>
                             <div class="notice-meta text-body-secondary mt-1">
                                 Last seen
-                                ${new Date(notice.lastSeenAt).toLocaleString()}
+                                <span
+                                    title=${ifDefined(
+                                        formatUtcDateTime(notice.lastSeenAt)
+                                    )}
+                                    >${formatDateTime(notice.lastSeenAt)}</span
+                                >
                             </div>
                         </div>
                     `
