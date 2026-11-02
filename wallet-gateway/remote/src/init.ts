@@ -29,7 +29,7 @@ import {
     rateLimiter,
 } from './middleware/rateLimit.js'
 import type { Config } from './config/Config.js'
-import { deriveUrls } from './config/ConfigUtils.js'
+import { configManagedIds, deriveUrls } from './config/ConfigUtils.js'
 import { existsSync } from 'fs'
 import { GATEWAY_VERSION } from './version.js'
 import { sessionHandler } from './middleware/sessionHandler.js'
@@ -396,6 +396,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         hashingSchemeVersion,
         adminUserId: config.server.admin,
         serverStatus: serverStatusService,
+        configManaged: configManagedIds(config),
     })
 
     const { userPath, dappPath } = config.server

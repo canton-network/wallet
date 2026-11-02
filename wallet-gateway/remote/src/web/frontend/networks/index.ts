@@ -28,6 +28,7 @@ export class UserUiNetworks extends BaseElement {
     @state() accessor networks: PublicNetwork[] = []
     @state() accessor sessions: Session[] = []
     @state() accessor isAdmin = false
+    @state() accessor configManagedIds: string[] = []
     @state() accessor currentPage = 1
 
     private readonly pageSize = 3
@@ -95,6 +96,7 @@ export class UserUiNetworks extends BaseElement {
                 ])
 
             this.networks = networksResult.networks
+            this.configManagedIds = networksResult.configManagedIds ?? []
             this.sessions = sessionsResult.sessions
             this.isAdmin = userResult.isAdmin
 
@@ -145,6 +147,14 @@ export class UserUiNetworks extends BaseElement {
             </div>
 
             ${
+                this.configManagedIds.length > 0
+                    ? html`<p class="text-body-secondary">
+                          Entries managed by the Wallet Gateway config file are
+                          read-only.
+                      </p>`
+                    : ''
+            }
+            ${
                 this.networks.length === 0
                     ? html`<p class="mb-0 text-body-secondary">
                           No networks configured.
@@ -162,7 +172,12 @@ export class UserUiNetworks extends BaseElement {
                                               session?.status === 'connected'
                                           }
                                           .accessToken=${session?.accessToken ?? ''}
-                                          .readonly=${!this.isAdmin}
+                                          .readonly=${
+                                              !this.isAdmin ||
+                                              this.configManagedIds.includes(
+                                                  network.id
+                                              )
+                                          }
                                           @network-review=${this._onReview}
                                       ></network-card>
                                   `

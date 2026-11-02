@@ -378,6 +378,17 @@ function stripDuplicateSlashes(path: string): string {
     return path.replace(/(https?:\/\/)|(\/)+/g, '$1$2')
 }
 
+// Ids of idps and networks defined in the top-level config sections
+export interface ConfigManagedIds {
+    idpIds: ReadonlySet<string>
+    networkIds: ReadonlySet<string>
+}
+
+export const configManagedIds = (config: Config): ConfigManagedIds => ({
+    idpIds: new Set(config.idps.map((idp) => idp.id)),
+    networkIds: new Set(config.networks.map((network) => network.id)),
+})
+
 export const deriveUrls = (config: Config, port?: number): Urls => {
     const serviceUrl = `http://localhost:${port || config.server.port}`
     const publicUrl = config.kernel.publicUrl || serviceUrl
