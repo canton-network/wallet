@@ -45,7 +45,11 @@ describe('utxos namespace', () => {
                 interfaceViewValue: {
                     lock: null,
                 },
-                activeContract: 'contract',
+                activeContract: {
+                    createdEvent: {
+                        createdAt: new Date().toISOString(),
+                    },
+                },
                 fetchedAtOffset: 10,
             },
         ])
