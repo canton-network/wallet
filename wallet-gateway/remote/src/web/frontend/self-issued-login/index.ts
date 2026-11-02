@@ -149,6 +149,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
 
     disconnectedCallback(): void {
         super.disconnectedCallback()
+        this.polling = false
         this.stopPolling()
         document.removeEventListener(
             'visibilitychange',
@@ -284,11 +285,14 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                       this.accessTokenMessageId
                   )
                 : await this.pollPartyAllocation(this.sessionId)
+            if (!this.isConnected) return
             this.pollFailing = false
+            // Reset common interval delay between successful party allocation polling and acces token signature polling
             this.pollDelay = settled
                 ? this.pollIntervalMs
                 : Math.min(this.pollDelay * 1.5, this.pollIntervalMs * 5)
         } catch (error) {
+            if (!this.isConnected) return
             console.error(error)
             this.pollFailing = true
             this.pollDelay = Math.min(
@@ -296,8 +300,10 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                 this.pollIntervalMs * 10
             )
         } finally {
-            this.polling = false
-            this.syncPolling()
+            if (this.isConnected) {
+                this.polling = false
+                this.syncPolling()
+            }
         }
     }
 
@@ -310,6 +316,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
             method: 'getSignSelfIssuedAccessTokenStatus',
             params: { sessionId, messageId },
         })
+        if (!this.isConnected) return true
         if (result.status === 'awaiting-signature') {
             return false
         }
@@ -327,6 +334,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
             method: 'allocateSelfIssuedWallet',
             params: { sessionId, partyId: wallet.partyId },
         })
+        if (!this.isConnected) return true
         await this.handleWalletResult(result.wallet)
         return !this.isAwaitingTopologyTransactionSignature
     }
