@@ -100,18 +100,22 @@ describe('registerSigningProviders', () => {
 
             expect(drivers[SigningProvider.PARTICIPANT]).toBeDefined()
             expect(drivers[SigningProvider.WALLET_KERNEL]).toBeDefined()
-            expect(logger.info).toHaveBeenCalledWith(
-                expect.stringContaining('legacy discovery')
-            )
-            expect(notices.list().map((notice) => notice.id)).toEqual([
-                'signing-provider-unavailable:fireblocks',
-                'signing-provider-unavailable:blockdaemon',
-                'signing-provider-unavailable:securosys',
-                'signing-provider-unavailable:dfns',
-                'signing-provider-unavailable:bitgo',
+        })
+
+        test('warns about legacy mode and only logs unavailable providers', () => {
+            registerSigningProviders(undefined, undefined, logger, notices)
+
+            expect(notices.list()).toEqual([
+                expect.objectContaining({
+                    id: 'signing-providers-legacy-mode',
+                    severity: 'warning',
+                }),
             ])
-            expect(notices.list()[0].message).toBe(
-                'Fireblocks is unavailable because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set. Set them to use Fireblocks, or add a signingProviders section to the config file to choose the signing providers explicitly.'
+            expect(logger.info).toHaveBeenCalledWith(
+                'The Wallet Kernel signing provider is not registered because signingStore is not configured.'
+            )
+            expect(logger.info).toHaveBeenCalledWith(
+                'Fireblocks is not registered because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set.'
             )
         })
 
@@ -186,7 +190,7 @@ describe('registerSigningProviders', () => {
     })
 
     describe('explicit mode (signingProviders present)', () => {
-        test('registers no drivers when the object is empty', () => {
+        test('registers no drivers and warns when the object is empty', () => {
             expect(
                 registerSigningProviders(
                     signingProvidersConfigSchema.parse({}),
@@ -195,6 +199,26 @@ describe('registerSigningProviders', () => {
                     notices
                 )
             ).toEqual({})
+            expect(notices.list()).toEqual([
+                expect.objectContaining({
+                    id: 'signing-providers-none',
+                    severity: 'warning',
+                }),
+            ])
+        })
+
+        test('warns when no listed provider is available', () => {
+            registerSigningProviders(
+                signingProvidersConfigSchema.parse({ fireblocks: {} }),
+                signingStore,
+                logger,
+                notices
+            )
+
+            expect(notices.list().map((notice) => notice.id)).toEqual([
+                'signing-provider-unavailable:fireblocks',
+                'signing-providers-none',
+            ])
         })
 
         test('registers only opted-in providers', () => {
@@ -269,7 +293,10 @@ describe('registerSigningProviders', () => {
         describe('Wallet Kernel', () => {
             test('does not register when signingStore is unavailable', () => {
                 const drivers = registerSigningProviders(
-                    signingProvidersConfigSchema.parse({ walletKernel: {} }),
+                    signingProvidersConfigSchema.parse({
+                        participant: {},
+                        walletKernel: {},
+                    }),
                     undefined,
                     logger,
                     notices
@@ -295,7 +322,10 @@ describe('registerSigningProviders', () => {
                 vi.stubEnv('FIREBLOCKS_API_KEY', 'api-key')
 
                 const drivers = registerSigningProviders(
-                    signingProvidersConfigSchema.parse({ fireblocks: {} }),
+                    signingProvidersConfigSchema.parse({
+                        participant: {},
+                        fireblocks: {},
+                    }),
                     signingStore,
                     logger,
                     notices
@@ -340,6 +370,7 @@ describe('registerSigningProviders', () => {
             test('does not register when the API key is missing', () => {
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({
+                        participant: {},
                         blockdaemon: { baseUrl: 'https://blockdaemon.example' },
                     }),
                     signingStore,
@@ -481,6 +512,7 @@ describe('registerSigningProviders', () => {
 
                 const drivers = registerSigningProviders(
                     signingProvidersConfigSchema.parse({
+                        participant: {},
                         dfns: { orgId: 'org-id', credId: 'credential-id' },
                     }),
                     signingStore,
@@ -532,7 +564,10 @@ describe('registerSigningProviders', () => {
         describe('BitGo', () => {
             test('does not register when access token is missing', () => {
                 const drivers = registerSigningProviders(
-                    signingProvidersConfigSchema.parse({ bitgo: {} }),
+                    signingProvidersConfigSchema.parse({
+                        participant: {},
+                        bitgo: {},
+                    }),
                     signingStore,
                     logger,
                     notices
