@@ -32,15 +32,15 @@ afterEach(() => {
 
 describe('formatDateTime', () => {
     it.each([
-        ['UTC', SUMMER, '01/06/2025, 12:34 UTC'],
-        ['Europe/Zurich', SUMMER, '01/06/2025, 14:34 UTC+2'],
-        ['Europe/Zurich', WINTER, '15/01/2025, 13:34 UTC+1'],
-        ['America/New_York', SUMMER, '01/06/2025, 08:34 UTC-4'],
-        ['America/New_York', WINTER, '15/01/2025, 07:34 UTC-5'],
-        ['Asia/Kolkata', SUMMER, '01/06/2025, 18:04 UTC+5:30'],
-        ['America/St_Johns', SUMMER, '01/06/2025, 10:04 UTC-2:30'],
+        ['UTC', SUMMER, '01/06/2025, 12:34 GMT+0'],
+        ['Europe/Zurich', SUMMER, '01/06/2025, 14:34 GMT+2'],
+        ['Europe/Zurich', WINTER, '15/01/2025, 13:34 GMT+1'],
+        ['America/New_York', SUMMER, '01/06/2025, 08:34 GMT-4'],
+        ['America/New_York', WINTER, '15/01/2025, 07:34 GMT-5'],
+        ['Asia/Kolkata', SUMMER, '01/06/2025, 18:04 GMT+5:30'],
+        ['America/St_Johns', SUMMER, '01/06/2025, 10:04 GMT-2:30'],
         // The local date can differ from the UTC date
-        ['Pacific/Auckland', SUMMER, '02/06/2025, 00:34 UTC+12'],
+        ['Pacific/Auckland', SUMMER, '02/06/2025, 00:34 GMT+12'],
     ])('formats %s %s as %s', (timeZone, value, expected) => {
         useTimeZone(timeZone)
         expect(formatDateTime(value)).toBe(expected)
@@ -49,15 +49,15 @@ describe('formatDateTime', () => {
     it('includes seconds when asked to', () => {
         useTimeZone('Europe/Zurich')
         expect(formatDateTime(SUMMER, { seconds: true })).toBe(
-            '01/06/2025, 14:34:56 UTC+2'
+            '01/06/2025, 14:34:56 GMT+2'
         )
     })
 
     it.each([
-        ['en-US', '06/01/2025, 08:34 AM UTC-4'],
-        ['en-GB', '01/06/2025, 08:34 UTC-4'],
-        ['de-CH', '01.06.2025, 08:34 UTC-4'],
-        ['ja-JP', '2025/06/01 08:34 UTC-4'],
+        ['en-US', '06/01/2025, 08:34 AM GMT-4'],
+        ['en-GB', '01/06/2025, 08:34 GMT-4'],
+        ['de-CH', '01.06.2025, 08:34 GMT-4'],
+        ['ja-JP', '2025/06/01 08:34 GMT-4'],
     ])('orders the fields for %s', (locale, expected) => {
         useTimeZone('America/New_York')
         useLocale(locale)
@@ -69,7 +69,7 @@ describe('formatDateTime', () => {
         ['a Date', new Date(SUMMER)],
     ])('accepts %s', (_, value) => {
         useTimeZone('Europe/Zurich')
-        expect(formatDateTime(value)).toBe('01/06/2025, 14:34 UTC+2')
+        expect(formatDateTime(value)).toBe('01/06/2025, 14:34 GMT+2')
     })
 
     it.each([null, undefined, ''])('shows N/A for %j', (value) => {
