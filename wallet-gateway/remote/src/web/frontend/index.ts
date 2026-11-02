@@ -78,6 +78,7 @@ export class UserApp extends LitElement {
         if (!accessToken) {
             this.networkConnected = false
             this.isAdmin = false
+            this.warningCount = 0
             return
         }
 
@@ -111,6 +112,7 @@ export class UserApp extends LitElement {
         } catch {
             this.networkConnected = false
             this.isAdmin = false
+            this.warningCount = 0
         }
         this.dappApiUrl = await fetchDappApiUrl()
     }
