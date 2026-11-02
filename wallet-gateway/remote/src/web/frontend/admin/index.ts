@@ -57,7 +57,6 @@ export class UserUiAdmin extends BaseElement {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
-            // Fails for other users, the error toast then explains why
             this.status = await userClient.request({
                 method: 'getServerStatus',
             })
