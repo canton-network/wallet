@@ -31,7 +31,7 @@
                     "$ref": "#/components/schemas/Null"
                 }
             },
-            "description": "Adds a new network configuration (similar to EIP-3085)."
+            "description": "Adds a new network configuration (similar to EIP-3085). Fails for networks managed by the config file."
         },
         {
             "name": "removeNetwork",
@@ -60,7 +60,7 @@
                     "$ref": "#/components/schemas/Null"
                 }
             },
-            "description": "Removes a new network configuration (similar to EIP-3085)."
+            "description": "Removes a new network configuration (similar to EIP-3085). Fails for networks managed by the config file."
         },
         {
             "name": "listNetworks",
@@ -78,6 +78,14 @@
                             "items": {
                                 "$ref": "#/components/schemas/PublicNetwork"
                             }
+                        },
+                        "configManagedIds": {
+                            "title": "configManagedIds",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Ids of the entries managed by the config file of the Wallet Gateway. These cannot be changed or removed at runtime. Only returned to the admin user."
                         }
                     },
                     "required": ["networks"]
@@ -173,7 +181,7 @@
         },
         {
             "name": "addIdp",
-            "description": "Adds a new identity provider.",
+            "description": "Adds a new identity provider. Fails for identity providers managed by the config file.",
             "params": [
                 {
                     "name": "params",
@@ -200,7 +208,7 @@
         },
         {
             "name": "removeIdp",
-            "description": "Removes an identity provider. Fails if an existing network is using the identity provider.",
+            "description": "Removes an identity provider. Fails if an existing network is using the identity provider. Also fails for identity providers managed by the config file.",
             "params": [
                 {
                     "name": "params",
@@ -243,6 +251,14 @@
                             "items": {
                                 "$ref": "#/components/schemas/Idp"
                             }
+                        },
+                        "configManagedIds": {
+                            "title": "configManagedIds",
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Ids of the entries managed by the config file of the Wallet Gateway. These cannot be changed or removed at runtime. Only returned to the admin user."
                         }
                     },
                     "required": ["idps"]

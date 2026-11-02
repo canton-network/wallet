@@ -18,6 +18,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { KernelInfo } from '../config/Config.js'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import { userController } from './controller.js'
+import type { ConfigManagedIds } from '../config/ConfigUtils.js'
 import { ServerStatusService } from '../notices/server-status-service.js'
 import { ServerNotices } from '../notices/server-notices.js'
 import { GATEWAY_VERSION } from '../version.js'
@@ -222,7 +223,11 @@ function createController(
     context: AuthContext | undefined,
     drivers: Record<string, unknown> = {},
     adminId?: string,
-    serverStatus = new ServerStatusService(new ServerNotices(logger))
+    serverStatus = new ServerStatusService(new ServerNotices(logger)),
+    configManaged: ConfigManagedIds = {
+        idpIds: new Set(),
+        networkIds: new Set(),
+    }
 ) {
     return userController({
         kernelInfo,
@@ -235,6 +240,7 @@ function createController(
         hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
         adminUserId: adminId,
         serverStatus,
+        configManaged,
     })
 }
 
@@ -882,6 +888,105 @@ describe('userController', () => {
             await expect(controller.listIdps()).resolves.toEqual({
                 idps: [idp],
             })
+        })
+    })
+
+    describe('config-managed idps and networks', () => {
+        const configManaged: ConfigManagedIds = {
+            idpIds: new Set([idp.id]),
+            networkIds: new Set([storeNetwork.id]),
+        }
+
+        async function createAdminController() {
+            const store = await createStore(logger, adminAuth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId,
+                undefined,
+                configManaged
+            )
+            return { store, controller }
+        }
+
+        it('lists the config-managed ids', async () => {
+            const { controller } = await createAdminController()
+
+            await expect(controller.listIdps()).resolves.toMatchObject({
+                configManagedIds: [idp.id],
+            })
+            await expect(controller.listNetworks()).resolves.toMatchObject({
+                configManagedIds: [storeNetwork.id],
+            })
+        })
+
+        it('lists the config-managed ids only for the admin user', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {},
+                adminUserId,
+                undefined,
+                configManaged
+            )
+
+            expect(await controller.listIdps()).not.toHaveProperty(
+                'configManagedIds'
+            )
+            expect(await controller.listNetworks()).not.toHaveProperty(
+                'configManagedIds'
+            )
+        })
+
+        it('rejects changes to config-managed networks', async () => {
+            const { store, controller } = await createAdminController()
+            const updateSpy = vi.spyOn(store, 'updateNetwork')
+            const removeSpy = vi.spyOn(store, 'removeNetwork')
+
+            await expect(
+                controller.addNetwork({
+                    network: {
+                        id: storeNetwork.id,
+                        name: storeNetwork.name,
+                        description: storeNetwork.description,
+                        identityProviderId: storeNetwork.identityProviderId,
+                        ledgerApi: storeNetwork.ledgerApi.baseUrl,
+                        auth: storeNetwork.auth,
+                    },
+                })
+            ).rejects.toThrow(
+                'Network network1 is managed by the config file and cannot be changed at runtime'
+            )
+            await expect(
+                controller.removeNetwork({ networkName: storeNetwork.id })
+            ).rejects.toThrow('is managed by the config file')
+
+            expect(updateSpy).not.toHaveBeenCalled()
+            expect(removeSpy).not.toHaveBeenCalled()
+        })
+
+        it('rejects changes to config-managed idps', async () => {
+            const { store, controller } = await createAdminController()
+            const updateSpy = vi.spyOn(store, 'updateIdp')
+            const removeSpy = vi.spyOn(store, 'removeIdp')
+
+            await expect(
+                controller.addIdp({ idp: { ...idp, issuer: 'http://other' } })
+            ).rejects.toThrow(
+                'Identity provider idp1 is managed by the config file and cannot be changed at runtime'
+            )
+            await expect(
+                controller.removeIdp({ identityProviderId: idp.id })
+            ).rejects.toThrow('is managed by the config file')
+
+            expect(updateSpy).not.toHaveBeenCalled()
+            expect(removeSpy).not.toHaveBeenCalled()
         })
     })
 

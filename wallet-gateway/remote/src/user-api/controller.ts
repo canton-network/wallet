@@ -75,6 +75,7 @@ import {
     assertIsConnected,
 } from '@canton-network/core-wallet-auth'
 import type { KernelInfo } from '../config/Config.js'
+import type { ConfigManagedIds } from '../config/ConfigUtils.js'
 import {
     isRpcError,
     SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
@@ -117,6 +118,7 @@ export interface UserControllerOptions {
     hashingSchemeVersion: HASHING_SCHEME_VERSION
     adminUserId: string | undefined
     serverStatus: ServerStatusService
+    configManaged: ConfigManagedIds
 }
 
 export const userController = ({
@@ -130,6 +132,7 @@ export const userController = ({
     hashingSchemeVersion,
     adminUserId,
     serverStatus,
+    configManaged,
 }: UserControllerOptions) => {
     const logger = _logger.child({ component: 'user-controller' })
     const provider = {
@@ -142,6 +145,19 @@ export const userController = ({
     function isAdmin(): boolean {
         const userId = authContext?.userId
         return !!adminUserId && !!userId && userId === adminUserId
+    }
+
+    function assertNotConfigManaged(
+        kind: 'Network' | 'Identity provider',
+        id: string
+    ): void {
+        const ids =
+            kind === 'Network' ? configManaged.networkIds : configManaged.idpIds
+        if (ids.has(id)) {
+            throw new Error(
+                `${kind} ${id} is managed by the config file and cannot be changed at runtime`
+            )
+        }
     }
 
     function assertAdmin(): void {
@@ -267,6 +283,7 @@ export const userController = ({
         addNetwork: async (params: AddNetworkParams) => {
             assertAdmin()
             const { network } = params
+            assertNotConfigManaged('Network', network.id)
 
             const ledgerApi = {
                 baseUrl: network.ledgerApi ?? '',
@@ -331,6 +348,7 @@ export const userController = ({
         },
         removeNetwork: async (params: RemoveNetworkParams) => {
             assertAdmin()
+            assertNotConfigManaged('Network', params.networkName)
             await store.removeNetwork(params.networkName)
             return null
         },
@@ -338,6 +356,9 @@ export const userController = ({
             const networks = await store.listNetworks()
             return {
                 networks: networks.map(toPublicNetwork),
+                ...(isAdmin() && {
+                    configManagedIds: [...configManaged.networkIds],
+                }),
             }
         },
         getNetwork: async (
@@ -407,6 +428,7 @@ export const userController = ({
         addIdp: async (params: AddIdpParams) => {
             assertAdmin()
             const validatedIdp = idpSchema.parse(params.idp)
+            assertNotConfigManaged('Identity provider', validatedIdp.id)
 
             // TODO: Add an explicit updateIdp method to the User API spec and controller
             const existingIdps = await store.listIdps()
@@ -422,11 +444,18 @@ export const userController = ({
         },
         removeIdp: async (params: RemoveIdpParams) => {
             assertAdmin()
+            assertNotConfigManaged(
+                'Identity provider',
+                params.identityProviderId
+            )
             logger.info(`Removing IDP ${params.identityProviderId}`)
             await store.removeIdp(params.identityProviderId)
             return null
         },
-        listIdps: async () => ({ idps: await store.listIdps() }),
+        listIdps: async () => ({
+            idps: await store.listIdps(),
+            ...(isAdmin() && { configManagedIds: [...configManaged.idpIds] }),
+        }),
         createWallet: async (params: CreateWalletParams) => {
             const { signingProviderId, primary, partyHint } = params
 

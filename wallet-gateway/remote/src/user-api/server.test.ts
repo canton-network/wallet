@@ -27,6 +27,10 @@ const store = new StoreInternal(
 
 const notificationService = new NotificationService(pino(sink()))
 const serverStatus = new ServerStatusService(new ServerNotices(pino(sink())))
+const configManaged = {
+    idpIds: new Set<string>(),
+    networkIds: new Set<string>(),
+}
 
 test('call listNetworks rpc', async () => {
     const drivers = {}
@@ -48,6 +52,7 @@ test('call listNetworks rpc', async () => {
             hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
             adminUserId: undefined,
             serverStatus,
+            configManaged,
         })
     )
         .post('/api/v0/user')
@@ -95,6 +100,7 @@ test('selfSignedAccessToken rpc', async () => {
             hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
             adminUserId: undefined,
             serverStatus,
+            configManaged,
         })
     )
         .post('/api/v0/user')
@@ -141,6 +147,7 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
             hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
             adminUserId: undefined,
             serverStatus,
+            configManaged,
         })
     )
         .post('/api/v0/user')
@@ -181,6 +188,7 @@ test('selfSignedAccessToken rpc rejects a mismatched client secret', async () =>
             hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
             adminUserId: undefined,
             serverStatus,
+            configManaged,
         })
     )
         .post('/api/v0/user')
