@@ -537,6 +537,26 @@ describe('UserUiSelfIssuedLogin', () => {
                 pollsAfterRemoval
             )
         })
+
+        it('ignores an in-flight allocation response after the element is removed', async () => {
+            let resolveAllocation!: (
+                result: AllocateSelfIssuedWalletResult
+            ) => void
+            const allocationResponse =
+                new Promise<AllocateSelfIssuedWalletResult>((resolve) => {
+                    resolveAllocation = resolve
+                })
+            allocateWalletRequest.mockReturnValue(allocationResponse)
+
+            await createPendingParty()
+            el?.remove()
+            resolveAllocation({ wallet: allocatedWallet })
+            await allocationResponse
+            await Promise.resolve()
+
+            expect(signAccessTokenRequest).not.toHaveBeenCalled()
+            expect(redirectToIntendedOrDefault).not.toHaveBeenCalled()
+        })
     })
 
     it('shows the primary-party wallet when login mode is select', async () => {
@@ -904,6 +924,32 @@ describe('UserUiSelfIssuedLogin', () => {
             expect(getAccessTokenStatusRequest).toHaveBeenCalledTimes(
                 pollsAfterRemoval
             )
+        })
+
+        it('ignores an in-flight login status response after the element is removed', async () => {
+            let resolveStatus!: (
+                result: SignSelfIssuedAccessTokenResult
+            ) => void
+            const statusResponse = new Promise<SignSelfIssuedAccessTokenResult>(
+                (resolve) => {
+                    resolveStatus = resolve
+                }
+            )
+            getAccessTokenStatusRequest.mockReturnValue(statusResponse)
+
+            await selectAuthParty()
+            await vi.waitFor(() =>
+                expect(getAccessTokenStatusRequest).toHaveBeenCalled()
+            )
+
+            el?.remove()
+            resolveStatus(connected)
+            await statusResponse
+            await Promise.resolve()
+
+            expect(accessTokenSet).not.toHaveBeenCalled()
+            expect(shareUserSession).not.toHaveBeenCalled()
+            expect(redirectToIntendedOrDefault).not.toHaveBeenCalled()
         })
     })
 })

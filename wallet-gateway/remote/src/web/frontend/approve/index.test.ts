@@ -346,6 +346,63 @@ describe('UserUiApprove', () => {
         )
     })
 
+    it('ignores an in-flight transaction status response after the element is removed', async () => {
+        let resolveStatus!: (result: { status: 'signed' }) => void
+        const statusResponse = new Promise<{ status: 'signed' }>((resolve) => {
+            resolveStatus = resolve
+        })
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'getTransaction') {
+                return makeTransaction({
+                    status: 'awaiting-signature',
+                    externalTxId: 'ext-1',
+                })
+            }
+            if (method === 'listWallets') {
+                return [
+                    makeWallet({
+                        primary: true,
+                        partyId: 'alice::1220abc',
+                        rights: [PartyLevelRight.CanActAs],
+                    }),
+                ]
+            }
+            if (method === 'getTransactionStatus') {
+                return statusResponse
+            }
+            return undefined
+        })
+
+        const element = document.createElement('user-ui-approve') as ApproveUi
+        element.pollIntervalMs = 10
+        document.body.appendChild(element)
+        el = element
+
+        await waitUntil(() => el.status === 'awaiting-signature')
+        await waitUntil(
+            () =>
+                mockRequest.mock.calls.some(
+                    (call) => call[0]?.method === 'getTransactionStatus'
+                ),
+            'poll fired'
+        )
+        const transactionLoadsBeforeRemoval = mockRequest.mock.calls.filter(
+            (call) => call[0]?.method === 'getTransaction'
+        ).length
+
+        el.remove()
+        resolveStatus({ status: 'signed' })
+        await statusResponse
+        await Promise.resolve()
+
+        expect(el.status).toBe('awaiting-signature')
+        expect(
+            mockRequest.mock.calls.filter(
+                (call) => call[0]?.method === 'getTransaction'
+            )
+        ).toHaveLength(transactionLoadsBeforeRemoval)
+    })
+
     it('does not delete when reject confirmation is cancelled', async () => {
         vi.stubGlobal(
             'confirm',

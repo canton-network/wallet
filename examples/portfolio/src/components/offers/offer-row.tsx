@@ -9,6 +9,7 @@ import type {
     TransferActionItem,
 } from '@components/types'
 import {
+    OfferDescriptionBlock,
     OfferDetailBlock,
     OfferExpirationBlock,
     OfferFieldLabel,
@@ -30,6 +31,7 @@ interface OfferRowProps {
 
 export function OfferRow({ offer, onClick }: OfferRowProps) {
     const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+        if (event.target !== event.currentTarget) return
         if (event.key === 'Enter' || event.key === ' ') {
             event.preventDefault()
             onClick()
@@ -58,13 +60,23 @@ export function OfferRow({ offer, onClick }: OfferRowProps) {
 
 function getOfferRowLabel(offer: OfferItem) {
     if (isTransferOffer(offer)) {
-        const message = offer.source.message ? `: ${offer.source.message}` : ''
+        const message = offer.source.message
+            ? `: ${truncateLabel(offer.source.message)}`
+            : ''
         return `Transfer Offer for ${formatAmount(offer.source.amount)} ${
             offer.source.instrumentId.id
         }${message}`
     }
 
     return 'Allocation Request'
+}
+
+const MAX_LABEL_MESSAGE_LENGTH = 50
+
+function truncateLabel(message: string) {
+    return message.length > MAX_LABEL_MESSAGE_LENGTH
+        ? `${message.slice(0, MAX_LABEL_MESSAGE_LENGTH)}…`
+        : message
 }
 
 function isTransferOffer(offer: OfferItem): offer is TransferOfferItem {
@@ -84,7 +96,7 @@ function TransferOfferRow({
             : { label: 'Recipient', value: item.receiver }
 
     return (
-        <OfferRowGrid columns={5}>
+        <OfferRowGrid columns={6}>
             <OfferDetailBlock label="Type" value="Transfer Offer" />
             <OfferDetailBlock
                 label="Amount"
@@ -95,6 +107,7 @@ function TransferOfferRow({
                 label={counterparty.label}
                 value={counterparty.value}
             />
+            <OfferDescriptionBlock value={item.message} />
             <StatusBlock status={offer.status} />
         </OfferRowGrid>
     )

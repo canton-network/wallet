@@ -221,6 +221,9 @@ export const lightPortfolioTokens: ThemeOptions = {
 export const portfolioComponents: ThemeOptions['components'] = {
     MuiCssBaseline: {
         styleOverrides: (theme) => ({
+            html: {
+                colorScheme: theme.palette.mode,
+            },
             body: {
                 backgroundColor: theme.palette.background.default,
                 color: theme.palette.text.primary,

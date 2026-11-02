@@ -62,6 +62,7 @@ export class ApproveUi extends BaseElement {
 
     disconnectedCallback(): void {
         super.disconnectedCallback()
+        this.polling = false
         this.stopPolling()
         document.removeEventListener(
             'visibilitychange',
@@ -142,7 +143,11 @@ export class ApproveUi extends BaseElement {
     }
 
     private syncPolling() {
-        if (this.status === 'awaiting-signature' && !document.hidden) {
+        if (
+            this.isConnected &&
+            this.status === 'awaiting-signature' &&
+            !document.hidden
+        ) {
             this.startPolling()
         } else {
             this.stopPolling()
@@ -179,9 +184,11 @@ export class ApproveUi extends BaseElement {
                 },
             })
 
+            if (!this.isConnected) return
             if (res.status !== this.status) {
                 this.pollDelay = this.pollIntervalMs
                 await this.updateState()
+                if (!this.isConnected) return
                 return
             }
 
@@ -190,14 +197,17 @@ export class ApproveUi extends BaseElement {
                 this.pollIntervalMs * 5
             )
         } catch (err) {
+            if (!this.isConnected) return
             console.error(err)
             this.pollDelay = Math.min(
                 this.pollDelay * 2,
                 this.pollIntervalMs * 10
             )
         } finally {
-            this.polling = false
-            this.syncPolling()
+            if (this.isConnected) {
+                this.polling = false
+                this.syncPolling()
+            }
         }
     }
 

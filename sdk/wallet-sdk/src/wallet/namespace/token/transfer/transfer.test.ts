@@ -8,7 +8,7 @@ import { ParsedURL } from '../../utils/url'
 import { TransferNamespace } from './namespace'
 import type { ProxyDelegationCommandArgs } from './proxyDelegation'
 import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
-import type { TransferAllocationChoiceParams, TransferParams } from './types'
+import type { TransferAllocationChoiceParams, TransferParamsV1 } from './types'
 /* oxlint-disable typescript/no-explicit-any */
 const { ctx, mockLogger } = mock
 
@@ -48,7 +48,7 @@ describe('token transfer namespace', () => {
         transferInstructionCid: 'cid',
         registryUrl,
     }
-    const defaultTransferParams: TransferParams = {
+    const defaultTransferParams: TransferParamsV1 = {
         sender: 'alice::abc',
         recipient: 'bob:def',
         amount: '100',

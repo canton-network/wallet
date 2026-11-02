@@ -34,18 +34,24 @@ import '@canton-network/core-wallet-ui-components'
 
 @customElement('user-ui-self-issued-login')
 export class UserUiSelfIssuedLogin extends BaseElement {
-    // TODO rename / comment for better clarity
     @state() private accessor submitting = false
+    // wallet for onboarding
     @state() private accessor wallet: Wallet | undefined
+    // wallets that can be used to request self issued token for
     @state() private accessor authWallets: Wallet[] = []
     @state() private accessor loginMode: 'create' | 'select' | undefined
+    // True once the server-side login mode and initial wallet state have loaded.
     @state() private accessor onboardingReady = false
     @state() private accessor onboardingError: string | undefined
     @state() private accessor sessionLoaded = false
+    // Signing request currently awaiting approval, its presence enables polling.
     @state() private accessor accessTokenMessageId: string | undefined
+    // Terminal failure reported by the access-token signing operation, i.e. token expired before getting signed
     @state() private accessor loginFailure: string | undefined
     @state() private accessor loggingIn = false
+    // Indicates that the latest poll failed, polling continues with backoff.
     @state() private accessor pollFailing = false
+    // Baseline polling interval
     @state() accessor pollIntervalMs = 3000
     @state() private accessor selectedSigningProvider = ''
     @state() private accessor publicKeys: KeysList = []
@@ -55,9 +61,12 @@ export class UserUiSelfIssuedLogin extends BaseElement {
 
     private origin: string | undefined
     private sessionId: string | undefined
+    // wallet selected for creating self issued token
     private loginWallet: Wallet | undefined
     private pollTimer: ReturnType<typeof setTimeout> | null = null
+    // Current polling delay, increased while an operation remains pending.
     private pollDelay = 3000
+    // Prevents overlapping polling requests.
     private polling = false
 
     private readonly keySigningProviders: string[] = [
@@ -149,6 +158,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
 
     disconnectedCallback(): void {
         super.disconnectedCallback()
+        this.polling = false
         this.stopPolling()
         document.removeEventListener(
             'visibilitychange',
@@ -284,11 +294,14 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                       this.accessTokenMessageId
                   )
                 : await this.pollPartyAllocation(this.sessionId)
+            if (!this.isConnected) return
             this.pollFailing = false
+            // Reset common interval delay between successful party allocation polling and acces token signature polling
             this.pollDelay = settled
                 ? this.pollIntervalMs
                 : Math.min(this.pollDelay * 1.5, this.pollIntervalMs * 5)
         } catch (error) {
+            if (!this.isConnected) return
             console.error(error)
             this.pollFailing = true
             this.pollDelay = Math.min(
@@ -296,8 +309,10 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                 this.pollIntervalMs * 10
             )
         } finally {
-            this.polling = false
-            this.syncPolling()
+            if (this.isConnected) {
+                this.polling = false
+                this.syncPolling()
+            }
         }
     }
 
@@ -310,6 +325,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
             method: 'getSignSelfIssuedAccessTokenStatus',
             params: { sessionId, messageId },
         })
+        if (!this.isConnected) return true
         if (result.status === 'awaiting-signature') {
             return false
         }
@@ -327,6 +343,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
             method: 'allocateSelfIssuedWallet',
             params: { sessionId, partyId: wallet.partyId },
         })
+        if (!this.isConnected) return true
         await this.handleWalletResult(result.wallet)
         return !this.isAwaitingTopologyTransactionSignature
     }

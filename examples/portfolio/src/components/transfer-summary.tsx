@@ -3,6 +3,7 @@
 
 import { Box, Typography } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
+import { DescriptionText } from '@components/description-text'
 import { PillButton } from '@components/ui/PillButton'
 import { formatDateTime } from '@utils/date-format'
 import type { SubmittedTransfer } from './transfer-types'
@@ -70,7 +71,10 @@ export const TransferSummary: React.FC<TransferSummaryProps> = ({
                     }
                 />
                 {transfer.memo && (
-                    <SummaryRow label="Description" value={transfer.memo} />
+                    <SummaryRow
+                        label="Description"
+                        value={<DescriptionText value={transfer.memo} />}
+                    />
                 )}
             </Box>
 

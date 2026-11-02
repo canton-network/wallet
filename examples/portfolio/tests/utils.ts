@@ -252,7 +252,7 @@ export const openTransferOfferDialog = async (
     const offerRow = opts.message
         ? page.getByRole('button', {
               name: new RegExp(
-                  `Open Transfer Offer.*${escapeRegExp(opts.message)}`
+                  `Open Transfer Offer.*${escapeRegExp(opts.message.slice(0, 50))}`
               ),
           })
         : page
@@ -285,7 +285,7 @@ export const expectTransferOfferGone = async (
     const offerRow = opts.message
         ? page.getByRole('button', {
               name: new RegExp(
-                  `Open Transfer Offer.*${escapeRegExp(opts.message)}`
+                  `Open Transfer Offer.*${escapeRegExp(opts.message.slice(0, 50))}`
               ),
           })
         : page

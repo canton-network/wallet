@@ -131,7 +131,8 @@ for (const version of [
             // Verify alice's holdings on the wallet detail page.
             await expectWalletBalance(dappPage, alice, '1234')
 
-            const message = testMessage('accept transfer test')
+            const message =
+                `${testMessage('accept transfer test')} ${'long description '.repeat(100)}`.trim()
             await gotoDashboard(dappPage)
 
             // No offers yet, so the sidebar badge is hidden.
@@ -159,6 +160,15 @@ for (const version of [
                 amount: '321',
                 message,
             })
+
+            await expect(
+                dialog.getByRole('region', { name: 'Description' })
+            ).toHaveText(message)
+            await expect(
+                dialog.getByText(
+                    `${message.length.toLocaleString('en-US')} characters`
+                )
+            ).toBeVisible()
 
             await wg.approveTransaction(() =>
                 dialog.getByRole('button', { name: 'Accept' }).click()
