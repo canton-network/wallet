@@ -23,7 +23,7 @@ export function AddPartyPage() {
     return (
         <>
             <PageHeader heading="Create a new party">
-                <BackLink onClick={goBack} />
+                <BackLink label="Back to Parties" onClick={goBack} />
             </PageHeader>
 
             <WalletCreateForm
