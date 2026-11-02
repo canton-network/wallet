@@ -49,9 +49,8 @@ const serverStatus: GetServerStatusResult = {
     ],
 }
 
-function mockResponses(isAdmin: boolean) {
+function mockResponses() {
     mockRequest.mockImplementation(async ({ method }: { method: string }) => {
-        if (method === 'getUser') return { userId: 'user', isAdmin }
         if (method === 'getServerStatus') return serverStatus
         throw new Error(`Unexpected method ${method}`)
     })
@@ -72,7 +71,7 @@ describe('UserUiAdmin', () => {
     })
 
     it('renders the version and notices for the admin user', async () => {
-        mockResponses(true)
+        mockResponses()
 
         const el = await fixture<UserUiAdmin>(componentFixture)
         await waitUntil(() => el.status !== undefined, 'status loaded')
@@ -84,20 +83,6 @@ describe('UserUiAdmin', () => {
             'Config field server.tls is deprecated.'
         )
         expect(el.shadowRoot!.textContent).toContain('Wallet Gateway 1.2.3')
-    })
-
-    it('does not request the server status for other users', async () => {
-        mockResponses(false)
-
-        const el = await fixture<UserUiAdmin>(componentFixture)
-        await waitUntil(() => el.isAdmin === false, 'user loaded')
-
-        expect(mockRequest).not.toHaveBeenCalledWith({
-            method: 'getServerStatus',
-        })
-        expect(el.shadowRoot!.textContent).toContain(
-            'Only the admin user can view this page.'
-        )
     })
 
     it('shows an error toast when loading fails', async () => {

@@ -19,7 +19,6 @@ import { detectCurrentOrigin } from '../listeners.js'
 @customElement('user-ui-admin')
 export class UserUiAdmin extends BaseElement {
     @state() accessor status: GetServerStatusResult | undefined = undefined
-    @state() accessor isAdmin: boolean | undefined = undefined
 
     static styles = [
         BaseElement.styles,
@@ -57,13 +56,10 @@ export class UserUiAdmin extends BaseElement {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
-            const { isAdmin } = await userClient.request({ method: 'getUser' })
-            this.isAdmin = isAdmin
-            if (isAdmin) {
-                this.status = await userClient.request({
-                    method: 'getServerStatus',
-                })
-            }
+            // Fails for other users, the error toast then explains why
+            this.status = await userClient.request({
+                method: 'getServerStatus',
+            })
         } catch (error) {
             handleErrorToast(error)
         }
@@ -101,16 +97,6 @@ export class UserUiAdmin extends BaseElement {
     }
 
     protected render() {
-        if (this.isAdmin === undefined) {
-            return html``
-        }
-
-        if (!this.isAdmin) {
-            return html`<p class="mb-0 text-body-secondary">
-                Only the admin user can view this page.
-            </p>`
-        }
-
         if (!this.status) {
             return html``
         }
