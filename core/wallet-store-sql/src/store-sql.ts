@@ -761,21 +761,10 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async listNetworks(): Promise<Array<Network>> {
-        let query = this.db.selectFrom('networks').selectAll()
-
-        if (this.authContext) {
-            const userId = this.assertConnected()
-            query = query.where((eb) =>
-                eb.or([
-                    eb('userId', 'is', null), // Global networks
-                    eb('userId', '=', userId), // User-specific networks
-                ])
-            )
-        } else {
-            query = query.where('userId', 'is', null) // Only global networks
-        }
-
-        const networks = await query.execute()
+        const networks = await this.db
+            .selectFrom('networks')
+            .selectAll()
+            .execute()
         return networks.map((table) => toNetwork(table))
     }
 
@@ -788,8 +777,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             ).map(toNetwork)
             assertUniqueSelfIssuedAudience(existing, network, network.id)
 
-            // An update keeps the owner of the network
-            const { userId: _userId, ...networkEntry } = fromNetwork(network)
+            const networkEntry = fromNetwork(network)
             this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')
@@ -800,7 +788,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async addNetwork(network: Network): Promise<void> {
-        const userId = this.authContext?.userId
         const idps = await this.listIdps()
         const networkIdp = idps.find(
             (idp) => idp.id === network.identityProviderId
@@ -829,7 +816,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
             await trx
                 .insertInto('networks')
-                .values(fromNetwork(network, userId))
+                .values(fromNetwork(network))
                 .execute()
         })
     }

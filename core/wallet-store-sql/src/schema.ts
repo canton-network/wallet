@@ -39,8 +39,6 @@ interface NetworkTable {
     description: string
     ledgerApiBaseUrl: string
     identityProviderId: string
-    userId: UserId | null // global if null
-
     auth: string // json stringified
     adminAuth: string | null // json stringified
     serviceAccountAuth: string | null // json stringified
@@ -247,17 +245,13 @@ export const toNetwork = (table: NetworkTable): Network => {
     }
 }
 
-export const fromNetwork = (
-    network: Network,
-    userId?: UserId
-): NetworkTable => {
+export const fromNetwork = (network: Network): NetworkTable => {
     return {
         name: network.name,
         id: network.id,
         synchronizerId: network.synchronizerId ?? null,
         description: network.description,
         ledgerApiBaseUrl: network.ledgerApi.baseUrl,
-        userId: userId ?? null,
         identityProviderId: network.identityProviderId,
         auth: JSON.stringify(network.auth),
         adminAuth: network.adminAuth ? JSON.stringify(network.adminAuth) : null,
