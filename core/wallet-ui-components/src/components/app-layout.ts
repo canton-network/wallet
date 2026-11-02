@@ -16,6 +16,7 @@ export class AppLayout extends BaseElement {
     @property({ type: String }) accessor currentPage = ''
     @property({ type: String }) accessor dappApiUrl = ''
     @property({ type: Boolean }) accessor isAdmin = false
+    @property({ type: Number }) accessor warningCount = 0
 
     static styles = [
         BaseElement.styles,
@@ -68,6 +69,7 @@ export class AppLayout extends BaseElement {
                 .currentPage=${this.currentPage}
                 .dappApiUrl=${this.dappApiUrl}
                 .isAdmin=${this.isAdmin}
+                .warningCount=${this.warningCount}
             ></app-header>
             <div class="container" id="mainContent">
                 <slot></slot>

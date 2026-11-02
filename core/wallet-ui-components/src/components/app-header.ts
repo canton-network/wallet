@@ -28,6 +28,8 @@ export class AppHeader extends BaseElement {
     @property({ type: Boolean }) accessor networkConnected = false
     @property({ type: String }) accessor dappApiUrl: string = ''
     @property({ type: Boolean }) accessor isAdmin = false
+    // Number of server warnings, shown to the admin user
+    @property({ type: Number }) accessor warningCount = 0
 
     @state() private accessor menuOpen = false
     @state() private accessor darkMode =
@@ -256,6 +258,19 @@ export class AppHeader extends BaseElement {
         this.dispatchEvent(new LogoutEvent())
     }
 
+    private warningBadge() {
+        if (!this.isAdmin || this.warningCount === 0) return ''
+        const label = `${this.warningCount} server ${
+            this.warningCount === 1 ? 'warning' : 'warnings'
+        }`
+        return html`<span
+            class="badge rounded-pill text-bg-warning"
+            title=${label}
+            aria-label=${label}
+            >${this.warningCount}</span
+        >`
+    }
+
     private copyDappApiUrl() {
         this.menuOpen = false
         this.dispatchEvent(new CopyDappApiUrlEvent())
@@ -301,6 +316,7 @@ export class AppHeader extends BaseElement {
                         >
                             ${menuIcon}
                         </span>
+                        ${this.warningBadge()}
                     </button>
 
                     <div class="dropdown ${this.menuOpen ? 'open' : ''}">
@@ -350,6 +366,7 @@ export class AppHeader extends BaseElement {
                                               this.navigateTo('/admin/')}
                                       >
                                           <span>Administration</span>
+                                          ${this.warningBadge()}
                                       </button>
                                   `
                                 : ''
