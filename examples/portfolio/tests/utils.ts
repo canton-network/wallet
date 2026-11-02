@@ -238,10 +238,10 @@ export const fillAndSubmitTransfer = async (
     await expect(
         dialog.getByRole('heading', { name: 'Transfer Summary' })
     ).toBeVisible({ timeout: 15000 })
-    // Date and expiration, e.g. "2025-06-01 14:34 UTC+2"
+    // Date and expiration, e.g. "06/01/2025, 02:34 PM UTC+2" in en-US
     await expect(
         dialog.getByText(
-            /^\d{4}-\d{2}-\d{2} \d{2}:\d{2} UTC([+-]\d{1,2}(:\d{2})?)?$/
+            /^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}\s[AP]M UTC([+-]\d{1,2}(:\d{2})?)?$/
         )
     ).toHaveCount(2)
     await dialog.getByRole('button', { name: 'Close', exact: true }).click()

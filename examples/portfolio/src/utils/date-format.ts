@@ -28,8 +28,9 @@ export function isExpired(expiry: string): boolean {
 }
 
 /**
- * Formats a date in the viewer's time zone in a fixed format with its UTC
- * offset, e.g. "2025-06-01 14:34 UTC+2"
+ * Formats a date in the viewer's time zone and locale with two-digit fields
+ * and its UTC offset, e.g. "06/01/2025, 02:34 PM UTC+2" in en-US or
+ * "01.06.2025, 14:34 UTC+2" in de-CH
  */
 export function formatDateTimeString(
     date: string,
@@ -40,11 +41,14 @@ export function formatDateTimeString(
         return date
     }
 
-    const day = `${parsedDate.getFullYear()}-${pad(parsedDate.getMonth() + 1)}-${pad(parsedDate.getDate())}`
-    const time = `${pad(parsedDate.getHours())}:${pad(parsedDate.getMinutes())}`
-    return offset
-        ? `${day} ${time} ${formatUtcOffset(parsedDate)}`
-        : `${day} ${time}`
+    const local = new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+    }).format(parsedDate)
+    return offset ? `${local} ${formatUtcOffset(parsedDate)}` : local
 }
 
 /** The exact time in UTC, e.g. "2025-06-01 12:34:56 UTC", for a tooltip */
