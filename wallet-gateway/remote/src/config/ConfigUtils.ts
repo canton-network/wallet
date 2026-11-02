@@ -6,6 +6,10 @@ import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
 import type { ServerNoticeReport } from '../notices/server-notices.js'
 import { Env } from '../env.js'
 import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
+import type {
+    BootstrapConfig,
+    Network,
+} from '@canton-network/core-wallet-store'
 
 export interface LoadedConfig {
     config: Config
@@ -149,14 +153,14 @@ function resolveConfig(rawConfig: RawConfig): Config {
         )
     }
 
-    const invalidMapping = validateNetworkToIdpMapping(config)
+    const invalidMapping = validateNetworkToIdpMapping(config.bootstrap)
     if (invalidMapping) {
         throw new Error(
             `Network ${invalidMapping.networkId} references unknown Identity Provider ID ${invalidMapping.idpId}`
         )
     }
 
-    const invalidAuthMethod = validateNetworkAuthMethods(config)
+    const invalidAuthMethod = validateNetworkAuthMethods(config.bootstrap)
     if (invalidAuthMethod) {
         throw new Error(
             `Network ${invalidAuthMethod.networkId} has invalid auth method ${invalidAuthMethod.invalidAuthMethod} for its Identity Provider`
@@ -212,21 +216,20 @@ function resolvePostgressPassword(s: RawConfig['store']): Config['store'] {
     }
 }
 
-function resolveRawConfig(rawConfig: RawConfig): Config {
-    const rawNetworks = rawConfig.bootstrap.networks
-    const networks: Config['bootstrap']['networks'] = rawNetworks.map((n) => {
-        return {
-            ...n,
-            auth: resolveRawNetworkAuth(n.auth),
-            adminAuth: n.adminAuth
-                ? resolveRawNetworkAuth(n.adminAuth)
-                : undefined,
-            serviceAccountAuth: n.serviceAccountAuth
-                ? resolveRawNetworkAuth(n.serviceAccountAuth)
-                : undefined,
-        }
-    })
+type RawNetwork = RawConfig['bootstrap']['networks'][number]
 
+function resolveRawNetwork(n: RawNetwork): Network {
+    return {
+        ...n,
+        auth: resolveRawNetworkAuth(n.auth),
+        adminAuth: n.adminAuth ? resolveRawNetworkAuth(n.adminAuth) : undefined,
+        serviceAccountAuth: n.serviceAccountAuth
+            ? resolveRawNetworkAuth(n.serviceAccountAuth)
+            : undefined,
+    }
+}
+
+function resolveRawConfig(rawConfig: RawConfig): Config {
     const store: Config['store'] = resolvePostgressPassword(rawConfig.store)
 
     const signingStore: Config['signingStore'] = rawConfig.signingStore
@@ -239,7 +242,7 @@ function resolveRawConfig(rawConfig: RawConfig): Config {
         signingStore,
         bootstrap: {
             ...rawConfig.bootstrap,
-            networks,
+            networks: rawConfig.bootstrap.networks.map(resolveRawNetwork),
         },
     }
 }
@@ -255,9 +258,9 @@ function hasDuplicateElement(list: string[]): string | undefined {
 }
 
 function validateNetworkToIdpMapping(
-    config: Config
+    section: BootstrapConfig
 ): { networkId: string; idpId: string } | undefined {
-    for (const network of config.bootstrap.networks) {
+    for (const network of section.networks) {
         const authConfigurations = [
             network.auth,
             network.adminAuth,
@@ -273,7 +276,7 @@ function validateNetworkToIdpMapping(
         ])
 
         for (const idpId of idpIds) {
-            const idp = config.bootstrap.idps.find((idp) => idp.id === idpId)
+            const idp = section.idps.find((idp) => idp.id === idpId)
 
             if (typeof idp === 'undefined') {
                 return { networkId: network.id, idpId }
@@ -289,14 +292,14 @@ const SUPPORTED_IDP_METHODS = {
 }
 
 function validateNetworkAuthMethods(
-    config: Config
+    section: BootstrapConfig
 ): { networkId: string; invalidAuthMethod: string } | undefined {
-    for (const network of config.bootstrap.networks) {
+    for (const network of section.networks) {
         const networkAuthIdpId = resolveAuthIdentityProviderId(
             network.auth,
             network.identityProviderId
         )
-        const networkAuthIdp = config.bootstrap.idps.find(
+        const networkAuthIdp = section.idps.find(
             (idp) => idp.id === networkAuthIdpId
         )!
 
@@ -316,7 +319,7 @@ function validateNetworkAuthMethods(
                 auth?.method === 'client_credentials' &&
                 auth.identityProviderId
             ) {
-                const idp = config.bootstrap.idps.find(
+                const idp = section.idps.find(
                     (idp) => idp.id === auth.identityProviderId
                 )!
                 if (idp.type !== 'oauth') {
