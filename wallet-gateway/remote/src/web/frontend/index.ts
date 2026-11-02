@@ -66,43 +66,39 @@ export class UserApp extends LitElement {
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
         this.currentOrigin = await detectCurrentOrigin()
-        void this.refreshNetworkConnected()
-        void this.refreshIsAdmin()
+        void this.loadHeaderState()
     }
 
-    private async refreshIsAdmin(): Promise<void> {
+    // Loads what the header shows for the logged-in user
+    private async loadHeaderState(): Promise<void> {
         const currentOrigin =
             this.currentOrigin ?? (await detectCurrentOrigin())
         const accessToken = await stateManager.accessToken.get(currentOrigin)
         if (!accessToken) {
+            this.networkConnected = false
             this.isAdmin = false
             return
         }
 
         try {
             const userClient = await createUserClient(accessToken)
-            const result = await userClient.request({ method: 'getUser' })
-            this.isAdmin = result.isAdmin
+            const [networkConnected, isAdmin] = await Promise.all([
+                userClient
+                    .request({ method: 'listSessions' })
+                    .then(
+                        (result) => result.sessions?.[0]?.status === 'connected'
+                    )
+                    .catch(() => false),
+                userClient
+                    .request({ method: 'getUser' })
+                    .then((result) => result.isAdmin)
+                    .catch(() => false),
+            ])
+            this.networkConnected = networkConnected
+            this.isAdmin = isAdmin
         } catch {
+            this.networkConnected = false
             this.isAdmin = false
-        }
-    }
-
-    private async refreshNetworkConnected(): Promise<void> {
-        const currentOrigin =
-            this.currentOrigin ?? (await detectCurrentOrigin())
-        const accessToken = await stateManager.accessToken.get(currentOrigin)
-        if (!accessToken) {
-            this.networkConnected = false
-            return
-        }
-
-        try {
-            const userClient = await createUserClient(accessToken)
-            const result = await userClient.request({ method: 'listSessions' })
-            this.networkConnected = result.sessions?.[0]?.status === 'connected'
-        } catch {
-            this.networkConnected = false
         }
         this.dappApiUrl = await fetchDappApiUrl()
     }
