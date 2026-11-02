@@ -74,7 +74,10 @@ export default defineConfig({
                         headless: true,
                         // Pinned so stories can assert on formatted dates
                         provider: playwright({
-                            contextOptions: { timezoneId: 'Europe/Zurich' },
+                            contextOptions: {
+                                locale: 'en-US',
+                                timezoneId: 'Europe/Zurich',
+                            },
                         }),
                         instances: [
                             {

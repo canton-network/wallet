@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { formatDateTime, formatUtcDateTime } from './date-time.js'
 
 const SUMMER = '2025-06-01T12:34:56Z'
@@ -10,21 +10,37 @@ const WINTER = '2025-01-15T12:34:56Z'
 // Node applies a changed TZ to dates created afterwards
 const useTimeZone = (timeZone: string) => vi.stubEnv('TZ', timeZone)
 
+// The formatter uses the runtime's default locale, which Node can't change
+const NativeDateTimeFormat = Intl.DateTimeFormat
+const useLocale = (locale: string) =>
+    vi.spyOn(Intl, 'DateTimeFormat').mockImplementation(
+        class extends NativeDateTimeFormat {
+            constructor(_?: unknown, options?: Intl.DateTimeFormatOptions) {
+                super(locale, options)
+            }
+        }
+    )
+
+beforeEach(() => {
+    useLocale('en-GB')
+})
+
 afterEach(() => {
     vi.unstubAllEnvs()
+    vi.restoreAllMocks()
 })
 
 describe('formatDateTime', () => {
     it.each([
-        ['UTC', SUMMER, '2025-06-01 12:34 UTC'],
-        ['Europe/Zurich', SUMMER, '2025-06-01 14:34 UTC+2'],
-        ['Europe/Zurich', WINTER, '2025-01-15 13:34 UTC+1'],
-        ['America/New_York', SUMMER, '2025-06-01 08:34 UTC-4'],
-        ['America/New_York', WINTER, '2025-01-15 07:34 UTC-5'],
-        ['Asia/Kolkata', SUMMER, '2025-06-01 18:04 UTC+5:30'],
-        ['America/St_Johns', SUMMER, '2025-06-01 10:04 UTC-2:30'],
+        ['UTC', SUMMER, '01/06/2025, 12:34 UTC'],
+        ['Europe/Zurich', SUMMER, '01/06/2025, 14:34 UTC+2'],
+        ['Europe/Zurich', WINTER, '15/01/2025, 13:34 UTC+1'],
+        ['America/New_York', SUMMER, '01/06/2025, 08:34 UTC-4'],
+        ['America/New_York', WINTER, '15/01/2025, 07:34 UTC-5'],
+        ['Asia/Kolkata', SUMMER, '01/06/2025, 18:04 UTC+5:30'],
+        ['America/St_Johns', SUMMER, '01/06/2025, 10:04 UTC-2:30'],
         // The local date can differ from the UTC date
-        ['Pacific/Auckland', SUMMER, '2025-06-02 00:34 UTC+12'],
+        ['Pacific/Auckland', SUMMER, '02/06/2025, 00:34 UTC+12'],
     ])('formats %s %s as %s', (timeZone, value, expected) => {
         useTimeZone(timeZone)
         expect(formatDateTime(value)).toBe(expected)
@@ -33,8 +49,19 @@ describe('formatDateTime', () => {
     it('includes seconds when asked to', () => {
         useTimeZone('Europe/Zurich')
         expect(formatDateTime(SUMMER, { seconds: true })).toBe(
-            '2025-06-01 14:34:56 UTC+2'
+            '01/06/2025, 14:34:56 UTC+2'
         )
+    })
+
+    it.each([
+        ['en-US', '06/01/2025, 08:34 AM UTC-4'],
+        ['en-GB', '01/06/2025, 08:34 UTC-4'],
+        ['de-CH', '01.06.2025, 08:34 UTC-4'],
+        ['ja-JP', '2025/06/01 08:34 UTC-4'],
+    ])('orders the fields for %s', (locale, expected) => {
+        useTimeZone('America/New_York')
+        useLocale(locale)
+        expect(formatDateTime(SUMMER)).toBe(expected)
     })
 
     it.each([
@@ -42,7 +69,7 @@ describe('formatDateTime', () => {
         ['a Date', new Date(SUMMER)],
     ])('accepts %s', (_, value) => {
         useTimeZone('Europe/Zurich')
-        expect(formatDateTime(value)).toBe('2025-06-01 14:34 UTC+2')
+        expect(formatDateTime(value)).toBe('01/06/2025, 14:34 UTC+2')
     })
 
     it.each([null, undefined, ''])('shows N/A for %j', (value) => {

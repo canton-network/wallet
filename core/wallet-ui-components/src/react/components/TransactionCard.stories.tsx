@@ -40,9 +40,9 @@ export const Default: Story = {
             canvas.getByText('TransferPreapproval_Send')
         ).toBeInTheDocument()
         await expect(canvas.getByText('100.0 CC')).toBeInTheDocument()
-        // Shown in the viewer's time zone (pinned in vitest.config.ts), with UTC as tooltip
+        // Shown in the viewer's locale and time zone (pinned in vitest.config.ts), with UTC as tooltip
         await expect(
-            canvas.getByText('2025-06-01 14:34 UTC+2')
+            canvas.getByText('06/01/2025, 02:34 PM UTC+2')
         ).toHaveAttribute('title', '2025-06-01 12:34:56 UTC')
         await expect(
             canvas.queryByText('External transaction ID')

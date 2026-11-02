@@ -66,7 +66,7 @@ export const Pending: Story = {
             canvas.getByText('TransferPreapproval_Send')
         ).toBeInTheDocument()
         await expect(
-            canvas.getByText('2025-06-01 14:34 UTC+2')
+            canvas.getByText('06/01/2025, 02:34 PM UTC+2')
         ).toHaveAttribute('title', '2025-06-01 12:34:56 UTC')
         await expect(canvas.getByText('alice::1220aa')).toBeInTheDocument()
         await expect(canvas.getByText('pkg:Module:Entity')).toBeInTheDocument()

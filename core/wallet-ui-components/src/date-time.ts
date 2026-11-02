@@ -19,10 +19,10 @@ function formatUtcOffset(date: Date): string {
 }
 
 /**
- * Formats a timestamp in the viewer's time zone in a fixed, locale-independent
- * format with its UTC offset, e.g. "2025-06-01 14:34 UTC+2", so it can be
- * shared as is. Returns "N/A" for a missing value and an unparsable string as
- * is.
+ * Formats a timestamp in the viewer's time zone and locale with two-digit
+ * fields and its UTC offset, e.g. "06/01/2025, 02:34 PM UTC+2" in en-US or
+ * "01.06.2025, 14:34 UTC+2" in de-CH. Returns "N/A" for a missing value and
+ * an unparsable string as is.
  */
 export function formatDateTime(
     value: DateTimeValue,
@@ -37,9 +37,15 @@ export function formatDateTime(
         return String(value)
     }
 
-    const day = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
-    const time = `${pad(date.getHours())}:${pad(date.getMinutes())}${seconds ? `:${pad(date.getSeconds())}` : ''}`
-    return `${day} ${time} ${formatUtcOffset(date)}`
+    const local = new Intl.DateTimeFormat(undefined, {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        ...(seconds && { second: '2-digit' }),
+    }).format(date)
+    return `${local} ${formatUtcOffset(date)}`
 }
 
 /** The exact time in UTC with seconds, e.g. "2025-06-01 12:34:56 UTC", for tooltips */
