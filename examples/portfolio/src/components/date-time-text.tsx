@@ -8,7 +8,7 @@ import {
 
 interface DateTimeTextProps {
     value: string | Date
-    /** Shows the UTC offset, e.g. "UTC+2" @default true */
+    /** Shows the UTC offset, e.g. "GMT+2" @default true */
     offset?: boolean
 }
 
