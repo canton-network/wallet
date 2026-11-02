@@ -38,6 +38,7 @@ import type {
     Null,
     ListTransactionsResult,
     GetUserResult,
+    GetServerStatusResult,
     GetNetworkParams,
     GetNetworkResult,
     SelfSignedAccessTokenParams,
@@ -95,6 +96,7 @@ import type {
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import { randomBytes, createHash, timingSafeEqual } from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
+import type { ServerStatusService } from '../notices/server-status-service.js'
 import {
     TransactionService,
     logDynamically,
@@ -113,7 +115,8 @@ export const userController = (
     drivers: SigningDrivers,
     _logger: Logger,
     hashingSchemeVersion: HASHING_SCHEME_VERSION,
-    adminUserId?: string
+    adminUserId: string | undefined,
+    serverStatus: ServerStatusService
 ) => {
     const logger = _logger.child({ component: 'user-controller' })
     const provider = {
@@ -243,6 +246,10 @@ export const userController = (
                 userId: authContext.userId,
                 isAdmin: isAdmin(),
             }
+        },
+        getServerStatus: async (): Promise<GetServerStatusResult> => {
+            assertAdmin()
+            return serverStatus.getStatus()
         },
         addNetwork: async (params: AddNetworkParams) => {
             assertAdmin()

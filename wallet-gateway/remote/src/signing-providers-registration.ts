@@ -15,6 +15,7 @@ import SecurosysSigningProvider, {
 } from '@canton-network/core-signing-securosys'
 import type { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import type { Logger } from 'pino'
+import type { ServerNotices } from './notices/server-notices.js'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import {
     signingProvidersConfigSchema,
@@ -70,8 +71,52 @@ type ProviderSelection = {
     bitgo: boolean
 }
 
-function providerUnavailableWarning(name: string) {
-    return `${name} environment variables not fully set. ${name} signing provider will be unavailable.`
+type UnavailableProvider =
+    | 'walletKernel'
+    | 'fireblocks'
+    | 'blockdaemon'
+    | 'securosys'
+    | 'dfns'
+    | 'bitgo'
+
+// Why an enabled provider is unavailable, depending on whether providers are
+// configured in signingProviders (explicit) or not (legacy). Legacy mode
+// enables every provider, so an unavailable provider there is usually just
+// unused: it is logged, but only reported as a notice in explicit mode
+const UNAVAILABLE_PROVIDER_MESSAGES: Record<
+    UnavailableProvider,
+    { explicit: string; legacy: string }
+> = {
+    walletKernel: {
+        explicit:
+            'The Wallet Kernel signing provider is unavailable because signingStore is not configured. Configure signingStore, or remove signingProviders.walletKernel.',
+        legacy: 'The Wallet Kernel signing provider is not registered because signingStore is not configured.',
+    },
+    fireblocks: {
+        explicit:
+            'Fireblocks is unavailable because the environment variables named by signingProviders.fireblocks.apiKeyEnv and secretEnv are not set. Set them, or remove signingProviders.fireblocks.',
+        legacy: 'Fireblocks is not registered because FIREBLOCKS_API_KEY and FIREBLOCKS_SECRET are not set.',
+    },
+    blockdaemon: {
+        explicit:
+            'Blockdaemon is unavailable because the environment variable named by signingProviders.blockdaemon.apiKeyEnv is not set. Set it, or remove signingProviders.blockdaemon.',
+        legacy: 'Blockdaemon is not registered because BLOCKDAEMON_API_KEY is not set.',
+    },
+    securosys: {
+        explicit:
+            'Securosys is unavailable because signingProviders.securosys.baseUrl is not set. Set it, or remove signingProviders.securosys.',
+        legacy: 'Securosys is not registered because SECUROSYS_TSB_BASE_URL is not set.',
+    },
+    dfns: {
+        explicit:
+            'Dfns is unavailable because the environment variables named by signingProviders.dfns.privateKeyEnv and authTokenEnv are not set. Set them, or remove signingProviders.dfns.',
+        legacy: 'Dfns is not registered because DFNS_ORG_ID, DFNS_CRED_ID, DFNS_PRIVATE_KEY and DFNS_AUTH_TOKEN are not all set.',
+    },
+    bitgo: {
+        explicit:
+            'BitGo is unavailable because the environment variable named by signingProviders.bitgo.accessTokenEnv is not set. Set it, or remove signingProviders.bitgo.',
+        legacy: 'BitGo is not registered because BITGO_ACCESS_TOKEN is not set.',
+    },
 }
 
 function readLegacySecrets(): ProviderSecrets {
@@ -221,9 +266,24 @@ function buildDrivers(
     settings: ProviderSettings,
     secrets: ProviderSecrets,
     signingStore: SigningStoreSql | undefined,
-    logger: Logger
+    notices: ServerNotices,
+    logger: Logger,
+    explicit: boolean
 ): SigningDrivers {
     const drivers: SigningDrivers = {}
+
+    const reportUnavailable = (provider: UnavailableProvider) => {
+        const messages = UNAVAILABLE_PROVIDER_MESSAGES[provider]
+        if (explicit) {
+            notices.report({
+                id: `signing-provider-unavailable:${provider}`,
+                severity: 'warning',
+                message: messages.explicit,
+            })
+        } else {
+            logger.info(messages.legacy)
+        }
+    }
 
     if (selected.participant) {
         drivers[SigningProvider.PARTICIPANT] = new ParticipantSigningDriver()
@@ -231,9 +291,7 @@ function buildDrivers(
 
     if (selected.walletKernel) {
         if (!signingStore) {
-            logger.warn(
-                'Wallet Kernel signing provider is unavailable because signingStore is not configured'
-            )
+            reportUnavailable('walletKernel')
         } else {
             drivers[SigningProvider.WALLET_KERNEL] = new InternalSigningDriver(
                 signingStore
@@ -255,7 +313,7 @@ function buildDrivers(
                 }
             )
         } else {
-            logger.warn(providerUnavailableWarning('Fireblocks'))
+            reportUnavailable('fireblocks')
         }
     }
 
@@ -268,7 +326,7 @@ function buildDrivers(
                     caip2: settings.blockdaemonCaip2,
                 })
         } else {
-            logger.warn(providerUnavailableWarning('Blockdaemon'))
+            reportUnavailable('blockdaemon')
         }
     }
 
@@ -298,7 +356,7 @@ function buildDrivers(
                     settings.securosysSignatureAlgorithm as TsbSignatureAlgorithm,
             })
         } else {
-            logger.warn(providerUnavailableWarning('Securosys'))
+            reportUnavailable('securosys')
         }
     }
 
@@ -319,16 +377,20 @@ function buildDrivers(
                 },
             })
         } else {
-            logger.warn(providerUnavailableWarning('Dfns'))
+            reportUnavailable('dfns')
         }
     }
 
     if (selected.bitgo) {
         if (secrets.bitgoAccessToken) {
             if (!settings.bitgoEnterpriseId) {
-                logger.warn(
-                    'BitGo enterprise ID is not set. Wallet creation will fail and restart-safe transaction lookup will be unavailable'
-                )
+                notices.report({
+                    id: 'signing-provider-config:bitgo.enterpriseId',
+                    severity: 'warning',
+                    message: explicit
+                        ? 'BitGo wallet creation will fail and restart-safe transaction lookup is unavailable because signingProviders.bitgo.enterpriseId is not set. Set it to your BitGo enterprise ID.'
+                        : 'BitGo wallet creation will fail and restart-safe transaction lookup is unavailable because BITGO_ENTERPRISE_ID is not set. Set it to your BitGo enterprise ID.',
+                })
             }
             drivers[SigningProvider.BITGO] = new BitGoSigningProvider({
                 accessToken: secrets.bitgoAccessToken,
@@ -337,7 +399,7 @@ function buildDrivers(
                 coin: settings.bitgoCoin,
             })
         } else {
-            logger.warn(providerUnavailableWarning('BitGo'))
+            reportUnavailable('bitgo')
         }
     }
 
@@ -347,7 +409,8 @@ function buildDrivers(
 export function registerSigningProviders(
     signingProviders: SigningProvidersConfig | undefined,
     signingStore: SigningStoreSql | undefined,
-    logger: Logger
+    logger: Logger,
+    notices: ServerNotices
 ): SigningDrivers {
     const secrets =
         signingProviders === undefined
@@ -355,9 +418,12 @@ export function registerSigningProviders(
             : readExplicitSecrets(signingProviders)
 
     if (signingProviders === undefined) {
-        logger.info(
-            'signingProviders is omitted, using legacy discovery from environment variables'
-        )
+        notices.report({
+            id: 'signing-providers-legacy-mode',
+            severity: 'warning',
+            message:
+                'The config file has no signingProviders section, so signing providers are discovered from environment variables and the participant signing provider is always enabled. This legacy mode is deprecated and will be removed. Add a signingProviders section to choose the signing providers explicitly.',
+        })
         return buildDrivers(
             {
                 participant: true,
@@ -371,11 +437,13 @@ export function registerSigningProviders(
             legacySettings(),
             secrets,
             signingStore,
-            logger
+            notices,
+            logger,
+            false
         )
     }
 
-    return buildDrivers(
+    const drivers = buildDrivers(
         {
             participant: signingProviders.participant !== undefined,
             walletKernel: signingProviders.walletKernel !== undefined,
@@ -388,6 +456,21 @@ export function registerSigningProviders(
         explicitSettings(signingProviders),
         secrets,
         signingStore,
-        logger
+        notices,
+        logger,
+        true
     )
+
+    // Legacy mode always registers the participant provider, so only an
+    // explicit configuration can end up without any provider
+    if (Object.keys(drivers).length === 0) {
+        notices.report({
+            id: 'signing-providers-none',
+            severity: 'warning',
+            message:
+                'No signing provider is available, so no wallets can be created or used. Add at least one provider to signingProviders and make sure its settings are complete.',
+        })
+    }
+
+    return drivers
 }

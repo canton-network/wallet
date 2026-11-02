@@ -103,9 +103,10 @@ The `server` section configures binding, ports, and API paths.
 - `requestSizeLimit` (optional, default `"1mb"`): maximum request body size.
 - `requestRateLimit` (optional, default `10000`): maximum requests per minute per IP
   (health endpoints excluded).
-- `admin` (optional): the user ID (JWT `sub` claim) granted admin privileges, which allow
-  managing networks and identity providers at runtime. If omitted, network and IDP
-  management is restricted to the bootstrap configuration.
+- `admin` (optional): the user ID granted admin privileges: the value of the JWT `sub` claim,
+  or of `daml.com.usr` for self-issued tokens. Admins can manage networks and identity
+  providers at runtime and see the [Administration page](#administration-page). If omitted,
+  network and IDP management is restricted to the bootstrap configuration.
 
 ```json
 {
@@ -160,12 +161,16 @@ available:
             "host": "db.example.com",
             "port": 5432,
             "user": "wallet_gateway",
-            "password": "secure-password",
+            "passwordEnv": "WALLET_GATEWAY_DB_PASSWORD",
             "database": "wallet_gateway_db"
         }
     }
 }
 ```
+
+`passwordEnv` names the environment variable that holds the database password. Prefer it over an
+inline `password` so the credential comes from the environment (or a Kubernetes secret) rather
+than the config file.
 
 <Warning>
 
@@ -218,6 +223,13 @@ downgraded to `HASHING_SCHEME_VERSION_V2` if a connected participant still requi
     }
 }
 ```
+
+## Administration page
+
+The admin user (see `server.admin`) can use the **Administration** page at `/admin` in the User UI
+to check that the Wallet Gateway is configured correctly. It shows notices about anything that
+needs attention, such as deprecated configuration options or signing providers that are
+unavailable.
 
 ## Next steps
 
