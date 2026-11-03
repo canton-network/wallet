@@ -695,6 +695,25 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(afterRemove).toHaveLength(0)
         })
 
+        test('should remove networks of other users and without an owner', async () => {
+            // e.g. from bootstrap or the config file
+            const withoutOwner = new StoreImpl(db)
+            await withoutOwner.addIdp(idp)
+            await withoutOwner.addNetwork(network)
+            const otherUser = new StoreImpl(db, {
+                userId: 'other-user-id',
+                accessToken: 'other-access-token',
+            })
+            await otherUser.addNetwork({ ...network, id: 'network2' })
+
+            const store = new StoreImpl(db, authContextMock)
+            await store.removeNetwork(network.id)
+            await store.removeNetwork('network2')
+
+            const rows = await db.selectFrom('networks').select('id').execute()
+            expect(rows).toEqual([])
+        })
+
         test('should clear optional auth fields removed on update', async () => {
             const store = new StoreImpl(db, authContextMock)
             await store.addIdp(idp)
