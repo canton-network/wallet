@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { base64url, calculateJwkThumbprint, type JWK } from 'jose'
+import { jwtExpiresAt } from './auth-utils.js'
 
 export type SelfIssuedTokenClaimsInputs = {
     audience: string
@@ -51,6 +52,15 @@ export class SelfIssuedTokenService {
             },
         })
         return `${header}.${payload}`
+    }
+
+    // Tells whether the token prepared by prepareForSigning has expired. A token without expiry counts as expired
+    static isSigningInputExpired(signingInput: string): boolean {
+        try {
+            return jwtExpiresAt(`${signingInput}.`).getTime() <= Date.now()
+        } catch {
+            return true
+        }
     }
 
     // returns full JWT string

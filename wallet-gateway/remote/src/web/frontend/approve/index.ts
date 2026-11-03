@@ -25,6 +25,8 @@ import type {
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import { detectCurrentOrigin } from '../listeners.js'
 
+const POLL_INTERVAL_MS = 3000
+
 @customElement('user-ui-approve')
 export class ApproveUi extends BaseElement {
     @state() accessor isApproving = false
@@ -46,22 +48,22 @@ export class ApproveUi extends BaseElement {
     @state() accessor externalTxId: string | null = null
     @state() accessor failureReason: string | null = null
     @state() accessor isSigning = false
-    @state() accessor pollIntervalMs = 3000
     private pollTimer: ReturnType<typeof setTimeout> | null = null
-    private pollDelay = 3000
+    private pollDelay = POLL_INTERVAL_MS
     private polling = false
 
     connectedCallback(): void {
         super.connectedCallback()
         const url = new URL(window.location.href)
         this.transactionId = url.searchParams.get('transactionId') || ''
-        this.pollDelay = this.pollIntervalMs
+        this.pollDelay = POLL_INTERVAL_MS
         document.addEventListener('visibilitychange', this.onVisibilityChange)
         void this.updateState()
     }
 
     disconnectedCallback(): void {
         super.disconnectedCallback()
+        this.polling = false
         this.stopPolling()
         document.removeEventListener(
             'visibilitychange',
@@ -136,13 +138,17 @@ export class ApproveUi extends BaseElement {
         if (document.hidden) {
             this.stopPolling()
         } else {
-            this.pollDelay = this.pollIntervalMs
+            this.pollDelay = POLL_INTERVAL_MS
             this.syncPolling()
         }
     }
 
     private syncPolling() {
-        if (this.status === 'awaiting-signature' && !document.hidden) {
+        if (
+            this.isConnected &&
+            this.status === 'awaiting-signature' &&
+            !document.hidden
+        ) {
             this.startPolling()
         } else {
             this.stopPolling()
@@ -179,25 +185,26 @@ export class ApproveUi extends BaseElement {
                 },
             })
 
+            if (!this.isConnected) return
             if (res.status !== this.status) {
-                this.pollDelay = this.pollIntervalMs
+                this.pollDelay = POLL_INTERVAL_MS
                 await this.updateState()
                 return
             }
 
             this.pollDelay = Math.min(
                 this.pollDelay * 1.5,
-                this.pollIntervalMs * 5
+                POLL_INTERVAL_MS * 5
             )
         } catch (err) {
+            if (!this.isConnected) return
             console.error(err)
-            this.pollDelay = Math.min(
-                this.pollDelay * 2,
-                this.pollIntervalMs * 10
-            )
+            this.pollDelay = Math.min(this.pollDelay * 2, POLL_INTERVAL_MS * 10)
         } finally {
-            this.polling = false
-            this.syncPolling()
+            if (this.isConnected) {
+                this.polling = false
+                this.syncPolling()
+            }
         }
     }
 
