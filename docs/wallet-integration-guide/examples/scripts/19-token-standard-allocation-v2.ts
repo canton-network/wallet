@@ -152,6 +152,20 @@ await sdk.ledger
     .sign(adminKeys.privateKey)
     .execute({ partyId: admin.partyId })
 
+// Wait for the holding to be synced before attempting transfer
+const result = await poll('admin holdings to be available', async () => {
+    const holdings = await sdk.token.v2.utxos.list({
+        partyId: admin.partyId,
+    })
+    return holdings.filter(
+        (u) =>
+            u.interfaceViewValue.instrumentId.admin === admin.partyId &&
+            u.interfaceViewValue.instrumentId.id === TestTokenV2.DAR.TestTokenID
+    )
+})
+
+console.log('RESULT', result)
+
 const [fundAliceCommand, fundAliceDisclosedContracts] =
     await sdk.token.v2.transfer.create({
         sender: admin.partyId,
@@ -226,6 +240,18 @@ await sdk.ledger
     })
     .sign(adminKeys.privateKey)
     .execute({ partyId: admin.partyId })
+
+// Wait for the holding to be synced before attempting transfer
+await poll('admin holdings to be available for bob transfer', async () => {
+    const holdings = await sdk.token.v2.utxos.list({
+        partyId: admin.partyId,
+    })
+    return holdings.filter(
+        (u) =>
+            u.interfaceViewValue.instrumentId.admin === admin.partyId &&
+            u.interfaceViewValue.instrumentId.id === TestTokenV2.DAR.TestTokenID
+    )
+})
 
 const [fundBobCommand, fundBobDisclosedContracts] =
     await sdk.token.v2.transfer.create({
