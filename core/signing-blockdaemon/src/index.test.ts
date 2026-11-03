@@ -190,6 +190,63 @@ describe('BlockdaemonSigningDriver', () => {
         })
     })
 
+    test.each([
+        {
+            name: 'policy rejection with error code',
+            status: 'rejected',
+            metadata: {
+                ErrorCode: 'M0025',
+                ErrorProperties: {
+                    DebugMessage:
+                        'eval policy evaluate: M0025 blocked by rule/restriction',
+                },
+            },
+            failureReason:
+                'Blockdaemon rejected the signing request (error code M0025)',
+        },
+        {
+            name: 'failure without error code',
+            status: 'failed',
+            metadata: { ErrorProperties: { rule: 'max-amount' } },
+            failureReason: 'Blockdaemon failed to sign the transaction',
+        },
+        {
+            name: 'no error metadata',
+            status: 'rejected',
+            metadata: undefined,
+            failureReason: 'Blockdaemon rejected the signing request',
+        },
+    ] as const)(
+        'getTransaction derives failureReason from $name',
+        async ({ status, metadata, failureReason }) => {
+            mockClient.getTransaction.mockResolvedValue({
+                txId: 'tx-1',
+                status,
+                ...(metadata && { metadata }),
+            } as Transaction)
+
+            const result = await driver
+                .controller(userId)
+                .getTransaction({ txId: 'tx-1' })
+
+            expect(result).toMatchObject({ status, failureReason })
+        }
+    )
+
+    test('getTransaction sets no failureReason for a signed transaction', async () => {
+        mockClient.getTransaction.mockResolvedValue({
+            txId: 'tx-1',
+            status: 'signed',
+            metadata: { ErrorCode: 'M0025' },
+        } as Transaction)
+
+        const result = await driver
+            .controller(userId)
+            .getTransaction({ txId: 'tx-1' })
+
+        expect(result).not.toHaveProperty('failureReason')
+    })
+
     test('getTransactions calls client.getTransactions with correct params', async () => {
         const getTransactionsParams = {
             txIds: ['tx-id-1', 'tx-id-2'],
@@ -361,6 +418,7 @@ describe('BlockdaemonSigningDriver', () => {
                     txId: 'tx-1',
                     status: 'failed',
                     metadata: { reason: 'rejected' },
+                    failureReason: 'Blockdaemon failed to sign the transaction',
                 },
             ],
         })

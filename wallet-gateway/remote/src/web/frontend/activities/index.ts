@@ -102,6 +102,11 @@ export class UserUiActivities extends BaseElement {
                                             .commandId=${tx.commandId}
                                             .externalTxId=${tx.externalTxId ?? null}
                                             .status=${tx.status}
+                                            .failureReason=${
+                                                tx.status === 'failed'
+                                                    ? (tx.failureReason ?? null)
+                                                    : null
+                                            }
                                             .parsed=${
                                                 this.parsedTransactions.get(
                                                     tx.id

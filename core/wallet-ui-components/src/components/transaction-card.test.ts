@@ -55,4 +55,32 @@ describe('wg-transaction-card', () => {
 
         expect(listener).not.toHaveBeenCalled()
     })
+
+    it('shows the failure reason when set', async () => {
+        const el = await fixture(
+            html`<wg-transaction-card
+                transactionId="tx-1"
+                commandId="cmd-1"
+                status="failed"
+                .failureReason=${'Signing provider returned status: rejected'}
+            ></wg-transaction-card>`
+        )
+
+        expect(el.shadowRoot!.textContent).toContain('Failure reason')
+        expect(el.shadowRoot!.textContent).toContain(
+            'Signing provider returned status: rejected'
+        )
+    })
+
+    it('hides the failure reason row when unset', async () => {
+        const el = await fixture(
+            html`<wg-transaction-card
+                transactionId="tx-1"
+                commandId="cmd-1"
+                status="executed"
+            ></wg-transaction-card>`
+        )
+
+        expect(el.shadowRoot!.textContent).not.toContain('Failure reason')
+    })
 })

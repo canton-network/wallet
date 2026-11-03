@@ -237,12 +237,18 @@ export class SignMessageService {
         }
 
         if (result.status === 'failed' || result.status === 'rejected') {
-            const failureReason = `Signing provider returned status: ${result.status}`
+            const failureReason =
+                result.failureReason ??
+                `Signing provider returned status: ${result.status}`
             await this.store.setMessageRawStatus(pending.id, 'failed', {
                 failureReason,
                 ...(result.txId && { externalTxId: result.txId }),
             })
-            this.notify(pending, { status: 'failed', messageId: pending.id })
+            this.notify(pending, {
+                status: 'failed',
+                messageId: pending.id,
+                failureReason,
+            })
             return {
                 publicKey: wallet.publicKey,
                 status: 'failed',
@@ -331,12 +337,18 @@ export class SignMessageService {
             signingResult.status === 'failed' ||
             signingResult.status === 'rejected'
         ) {
-            const failureReason = `Signing provider returned status: ${signingResult.status}`
+            const failureReason =
+                signingResult.failureReason ??
+                `Signing provider returned status: ${signingResult.status}`
             await this.store.setMessageRawStatus(message.id, 'failed', {
                 externalTxId: message.externalTxId,
                 failureReason,
             })
-            this.notify(message, { status: 'failed', messageId: message.id })
+            this.notify(message, {
+                status: 'failed',
+                messageId: message.id,
+                failureReason,
+            })
             return {
                 status: 'failed',
                 externalTxId: message.externalTxId,

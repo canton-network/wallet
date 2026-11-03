@@ -35,6 +35,8 @@ export class WgTransactionCard extends BaseElement {
 
     @property() accessor status = ''
 
+    @property() accessor failureReason: string | null = null
+
     @property({ type: Object }) accessor parsed: ParsedTransactionInfo | null =
         null
 
@@ -199,6 +201,18 @@ export class WgTransactionCard extends BaseElement {
                             valueClass: 'status-value',
                         }
                     )}
+                    ${
+                        this.failureReason
+                            ? this.renderFieldRow(
+                                  'Failure reason',
+                                  this.failureReason,
+                                  {
+                                      title: this.failureReason,
+                                      truncate: true,
+                                  }
+                              )
+                            : nothing
+                    }
                     ${this.renderFieldRow('Action type', activityType, {
                         title: activityType,
                         truncate: true,

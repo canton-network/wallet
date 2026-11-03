@@ -269,6 +269,45 @@ describe('UserUiActivities', () => {
         )
     })
 
+    it('passes the failure reason to the card', async () => {
+        mockRequest.mockResolvedValue({
+            transactions: [
+                {
+                    ...makeTransactions(1)[0],
+                    status: 'failed',
+                    failureReason: 'Signing provider returned status: rejected',
+                },
+            ],
+        })
+
+        el = await fixture<UserUiActivities>(componentFixture)
+        await waitUntil(() => el.transactions.length === 1)
+
+        const card = el.shadowRoot?.querySelector('wg-transaction-card')
+        expect(card?.failureReason).toBe(
+            'Signing provider returned status: rejected'
+        )
+    })
+
+    it('does not pass a failure reason for a transaction that has not failed', async () => {
+        mockRequest.mockResolvedValue({
+            transactions: [
+                {
+                    ...makeTransactions(1)[0],
+                    status: 'signed',
+                    failureReason:
+                        'Ledger did not confirm the submission, it may still be processing',
+                },
+            ],
+        })
+
+        el = await fixture<UserUiActivities>(componentFixture)
+        await waitUntil(() => el.transactions.length === 1)
+
+        const card = el.shadowRoot?.querySelector('wg-transaction-card')
+        expect(card?.failureReason).toBeNull()
+    })
+
     it('calls handleErrorToast when listing transactions fails', async () => {
         mockRequest.mockRejectedValue(new Error('list failed'))
 

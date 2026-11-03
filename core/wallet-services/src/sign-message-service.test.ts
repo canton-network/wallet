@@ -675,9 +675,39 @@ describe('SignMessageService', () => {
                     expect(emit).toHaveBeenCalledWith('messageSignature', {
                         status: 'failed',
                         messageId: 'msg-1',
+                        failureReason: `Signing provider returned status: ${status}`,
                     })
                 }
             )
+
+            it('stores the failure reason reported by the driver', async () => {
+                const { store, service } = createDfnsService(
+                    vi.fn().mockResolvedValue({
+                        status: 'rejected',
+                        txId: 'dfns-sig-1',
+                        failureReason: 'Rejected by policy',
+                    })
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    'msg-1',
+                    'regular'
+                )
+
+                expect(result).toMatchObject({
+                    status: 'failed',
+                    failureReason: 'Rejected by policy',
+                })
+                expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                    'msg-1',
+                    'failed',
+                    {
+                        failureReason: 'Rejected by policy',
+                        externalTxId: 'dfns-sig-1',
+                    }
+                )
+            })
 
             it('stores the driver error as the failure reason and throws it', async () => {
                 const { store, service } = createDfnsService(
@@ -866,10 +896,43 @@ describe('SignMessageService', () => {
                 )
                 expect(emit).toHaveBeenCalledExactlyOnceWith(
                     'messageSignature',
-                    { status: 'failed', messageId: 'msg-1' }
+                    {
+                        status: 'failed',
+                        messageId: 'msg-1',
+                        failureReason: `Signing provider returned status: ${providerStatus}`,
+                    }
                 )
             }
         )
+
+        it('stores the failure reason reported by the driver when polling', async () => {
+            const { store, service } = createDfnsService(
+                vi.fn().mockResolvedValue({
+                    txId: 'dfns-sig-1',
+                    status: 'rejected',
+                    failureReason: 'Rejected by policy',
+                })
+            )
+
+            const result = await service.refreshMessage(
+                authContext,
+                'msg-1',
+                'regular'
+            )
+
+            expect(result).toMatchObject({
+                status: 'failed',
+                failureReason: 'Rejected by policy',
+            })
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'msg-1',
+                'failed',
+                {
+                    externalTxId: 'dfns-sig-1',
+                    failureReason: 'Rejected by policy',
+                }
+            )
+        })
 
         it('keeps awaiting-signature when the provider is still pending', async () => {
             const { store, service } = createDfnsService(

@@ -8,6 +8,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     keyLabelFromPublicKey,
     mapTsbStatus,
+    tsbFailureReason,
     normalizePublicKey,
     normalizeSignature,
     SigningAPIClient,
@@ -133,6 +134,17 @@ describe('SigningAPIClient', () => {
         expect(mapTsbStatus('REJECTED')).toBe('rejected')
         expect(mapTsbStatus('EXPIRED')).toBe('rejected')
         expect(mapTsbStatus('CANCELLED')).toBe('rejected')
+    })
+
+    it('explains rejected and failed TSB statuses', () => {
+        expect(tsbFailureReason('EXPIRED')).toBe(
+            'Securosys rejected the signing request (EXPIRED)'
+        )
+        expect(tsbFailureReason('FAILED')).toBe(
+            'Securosys failed to sign the transaction (FAILED)'
+        )
+        expect(tsbFailureReason('APPROVED')).toBeUndefined()
+        expect(tsbFailureReason('EXECUTED')).toBeUndefined()
     })
 
     it('uses key-management and key-operation API keys on the right endpoints', async () => {
@@ -917,6 +929,8 @@ describe('SigningAPIClient', () => {
             {
                 txId: 'req-2',
                 status: 'failed',
+                failureReason:
+                    'Securosys failed to sign the transaction (FAILED)',
                 metadata: {
                     tsbStatus: 'FAILED',
                 },
@@ -1087,6 +1101,8 @@ describe('SigningAPIClient', () => {
                 txId: 'req-1',
                 status: 'rejected',
                 publicKey,
+                failureReason:
+                    'Securosys rejected the signing request (CANCELLED)',
                 metadata: {
                     keyIdentifier: { id: 'wallet-key', publicKey },
                     signatureAlgorithm: 'EDDSA',
