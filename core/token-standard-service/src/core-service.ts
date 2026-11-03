@@ -10,6 +10,7 @@ import {
     type Account,
     TokenStandardClient as TokenStandardClientV2,
     type HoldingView as HoldingViewV2,
+    HOLDING_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
 import type { PartyId } from '@canton-network/core-types'
 import { ACSReader, type AcsOptions } from '@canton-network/core-acs-reader'
@@ -115,6 +116,7 @@ export class CoreService {
         limit?: number
         offset?: number
         continueUntilCompletion?: boolean
+        excludeCids?: ReadonlySet<string>
     }) {
         if (opts.inputUtxos?.length) return opts.inputUtxos
 
@@ -124,22 +126,23 @@ export class CoreService {
         const now = new Date()
         const holdings = (
             await this.listContractsByInterface<HoldingViewV2>(
-                '#splice-api-token-holding-v2:Splice.Api.Token.HoldingV2:Holding',
+                HOLDING_INTERFACE_ID_V2,
                 party,
                 opts.limit,
                 opts.offset,
-                opts.continueUntilCompletion ?? false
+                opts.continueUntilCompletion ?? true
             )
         ).filter(
             (h) =>
                 h.interfaceViewValue.instrumentId.admin ===
                     opts.instrumentAdmin &&
-                h.interfaceViewValue.instrumentId.id == opts.instrumentId &&
+                h.interfaceViewValue.instrumentId.id === opts.instrumentId &&
                 this.isSameAccount(
                     opts.account,
                     h.interfaceViewValue.account
                 ) &&
-                !TokenStandardService.isHoldingLocked(h, now)
+                !TokenStandardService.isHoldingLocked(h, now) &&
+                !opts.excludeCids?.has(h.contractId)
         )
 
         return opts.amount
