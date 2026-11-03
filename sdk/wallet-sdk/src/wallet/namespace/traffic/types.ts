@@ -65,13 +65,61 @@ export type PurchaseTrafficAmount =
       }
     | { trafficAmount?: never; conversionRate?: never }
 
-/** What `purchaseTraffic` takes. */
-export type PurchaseTrafficParams = {
+/**
+ * How much is being bought, if specified, Empty otherwise).
+ *
+ */
+export type ResolvablePurchaseTrafficAmount =
+    | {
+          /** As {@link PurchaseTrafficAmount}: whole bytes, no exponent. */
+          trafficAmount: Numeric
+          /**
+           * As {@link PurchaseTrafficAmount}, but optional: left out, the rate
+           * the paymaster serves for `instrumentId` is used.
+           */
+          conversionRate?: Numeric | undefined
+      }
+    | { trafficAmount?: never; conversionRate?: never }
+
+/** What every purchase takes, however the paymaster's half is arrived at. */
+type PurchaseTrafficCommon = {
     /**
      * The party paying, whose key signs the submission. Owns every holding
      * spent, and is the sender of the settling transfer.
      */
     purchaser: PartyId
+    /**
+     * The instrument to pay with, by its token-standard instrument id
+     */
+    instrumentId: string
+    /**
+     * Base URL of the *token* registry's off-ledger API, e.g. scan's.
+     */
+    registryUrl: URLInput
+    /**
+     * The TEA account to credit, as the model's `AccountId`.
+     */
+    targetAccount: string
+    /**
+     * Contract ids of the `Splice.Api.Token.HoldingV1:Holding` contracts to
+     * spend. Must be owned by `purchaser` and of `instrumentId`.
+     *
+     */
+    inputUtxos?: ContractIdString[]
+    /** The deadline the registry must settle by. Ten minutes out when left out. */
+    executeBefore?: Date
+    /**
+     * The paymaster's `TrafficPurchaser` and `ConversionRate` as disclosures (optional).
+     */
+    disclosedContracts?: LedgerCommonSchemas['DisclosedContract'][]
+}
+
+/**
+ * The paymaster's half of a purchase, stated by the caller.
+ *
+ */
+type StatedPaymasterTerms = {
+    paymasterApiUrl?: undefined
     /**
      * Contract id of the paymaster's
      * `#traffic-purchase-models:Tea.TrafficPurchase:TrafficPurchaser`, the
@@ -96,43 +144,28 @@ export type PurchaseTrafficParams = {
      * contract makes the ledger reject the purchase.
      */
     paymasterReceiver: PartyId
-    /**
-     * The instrument to pay with, by its token-standard instrument id -- the
-     * registry's own symbol for it, e.g. `'Amulet'`, **not** a contract id and
-     * not the `{ admin, id }` pair. It is looked up against the registries the
-     * namespace was extended with, which is where the admin party comes from.
-     */
-    instrumentId: string
-    /** Base URL of the registry's off-ledger API, e.g. scan's. */
-    registryUrl: URLInput
-    /**
-     * The TEA account to credit, as the model's `AccountId`.
-     *
-     * Need not correspond to `purchaser`: a wallet provider may buy on a user's
-     * behalf. Non-empty and at most 255 UTF-16 code units, which the model's
-     * `AccountId` enforces too. As of Canton 3.5 this is a party id
-     * (`hint::fingerprint`), which is why `topUpTraffic` and `getTraffic` take
-     * the same value; Canton intends to decouple the two, so it is a plain
-     * string here, not a `PartyId`.
-     */
-    targetAccount: string
-    /**
-     * Contract ids of the `Splice.Api.Token.HoldingV1:Holding` contracts to
-     * spend. Must be owned by `purchaser` and of `instrumentId`.
-     *
-     * Left out, enough of the purchaser's unlocked holdings are selected to
-     * cover the cost. Named `inputUtxos` for consistency with
-     * `token.transfer.create`.
-     */
-    inputUtxos?: ContractIdString[]
-    /** The deadline the registry must settle by. Ten minutes out when left out. */
-    executeBefore?: Date
-    /**
-     * The paymaster's `TrafficPurchaser` and `ConversionRate` as disclosures.
-     *
-     * Both are signed by the paymaster alone, so a submission naming them has to
-     * carry them; only a party that can read them can produce the blobs, which
-     * makes producing these the paymaster's job rather than the buyer's.
-     */
-    disclosedContracts?: LedgerCommonSchemas['DisclosedContract'][]
 } & PurchaseTrafficAmount
+
+/**
+ * The paymaster's half of a purchase, fetched from the paymaster itself.
+ *
+ */
+type FetchedPaymasterTerms = {
+    /**
+     * Base URL of the paymaster's traffic-purchase off-ledger API, e.g.
+     * `https://paymaster.example`.
+     */
+    paymasterApiUrl: URLInput
+    /** As {@link StatedPaymasterTerms}. Served by the paymaster when left out. */
+    trafficPurchaserCid?: ContractIdString | undefined
+    /** As {@link StatedPaymasterTerms}. Served by the paymaster when left out. */
+    conversionRateCid?: ContractIdString | undefined
+    /** As {@link StatedPaymasterTerms}. Served by the paymaster when left out. */
+    paymasterReceiver?: PartyId | undefined
+} & ResolvablePurchaseTrafficAmount
+
+/**
+ * What `purchaseTraffic` takes.
+ */
+export type PurchaseTrafficParams = PurchaseTrafficCommon &
+    (StatedPaymasterTerms | FetchedPaymasterTerms)
