@@ -178,4 +178,62 @@ describe('upsertIdpsAndNetworks', () => {
         ])
         expect(networks[0]?.adminAuth).toBeNull()
     })
+
+    test('keeps wallets and sessions of networks it takes over', async () => {
+        await bootstrap(db, bootstrapConfig)
+        await db
+            .insertInto('wallets')
+            .values({
+                primary: 1,
+                partyId: 'party::1',
+                hint: 'hint',
+                publicKey: 'pk',
+                namespace: 'ns',
+                networkId: 'net-1',
+                signingProviderId: 'internal',
+                userId: 'alice',
+                externalTxId: null,
+                topologyTransactions: null,
+                status: null,
+                disabled: 0,
+                reason: null,
+                isAuthParty: 0,
+            })
+            .execute()
+        await db
+            .insertInto('sessions')
+            .values({
+                id: 'session-1',
+                origin: 'http://localhost',
+                network: 'net-1',
+                accessToken: 'token',
+                userId: 'alice',
+            })
+            .execute()
+
+        const [network] = bootstrapConfig.networks
+        const changed = { ...network, name: 'Changed by config' }
+        // Twice, like two starts with the same config
+        await upsertIdpsAndNetworks(db, {
+            ...bootstrapConfig,
+            networks: [changed],
+        })
+        await upsertIdpsAndNetworks(db, {
+            ...bootstrapConfig,
+            networks: [changed],
+        })
+
+        const wallets = await db
+            .selectFrom('wallets')
+            .select('partyId')
+            .execute()
+        const sessions = await db.selectFrom('sessions').select('id').execute()
+        const networks = await db
+            .selectFrom('networks')
+            .select(['id', 'name'])
+            .execute()
+        expect(wallets).toEqual([{ partyId: 'party::1' }])
+        expect(sessions).toEqual([{ id: 'session-1' }])
+        expect(networks).toEqual([{ id: 'net-1', name: 'Changed by config' }])
+    })
 })
