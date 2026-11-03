@@ -14,6 +14,7 @@ import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
     type AllocationRequestView as AllocationRequestViewV2,
     type OffLedger,
+    AllocationInstruction,
 } from '@canton-network/core-token-standard-v2'
 import {
     REQUESTED_AT_SKEW_MS,
@@ -93,6 +94,7 @@ export class AllocationService {
                     instrumentAdmin: admin,
                     instrumentId,
                     amount,
+                    excludeCids: used,
                 })
 
                 cids.forEach((c) => used.add(c))
@@ -274,6 +276,60 @@ export class AllocationService {
             choiceArgument: choiceArgs,
         }
         return [exercise, choiceContext.disclosedContracts]
+    }
+
+    async fetchAllocationInstructionChoiceContext(
+        action: 'accept' | 'withdraw',
+        allocationInstructionCid: string,
+        registryUrl: URL,
+        excludeDebugFields: boolean = true
+    ): Promise<AllocationChoiceContextV2> {
+        return this.core
+            .getTokenStandardClientV2(registryUrl)
+            .post(
+                `/registry/allocation-instruction/v2/{allocationInstructionId}/choice-contexts/${action}`,
+                { excludeDebugFields: excludeDebugFields },
+                { path: { allocationInstructionId: allocationInstructionCid } }
+            )
+    }
+
+    async createAllocationInstructionChoice(
+        action: 'accept' | 'withdraw',
+        allocationInstructionCid: string,
+        actors: PartyId[],
+        registryUrl: URL,
+        excludeDebugFields: boolean = true,
+        prefetched?: AllocationChoiceContextV2
+    ): Promise<[ExerciseCommand, DisclosedContract[]]> {
+        const ctx =
+            prefetched ??
+            (await this.fetchAllocationInstructionChoiceContext(
+                action,
+                allocationInstructionCid,
+                registryUrl,
+                excludeDebugFields
+            ))
+
+        return [
+            {
+                templateId: ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
+                contractId: allocationInstructionCid,
+                choice:
+                    action === 'accept'
+                        ? AllocationInstruction.AllocationInstruction_Accept
+                              .choiceName
+                        : AllocationInstruction.AllocationInstruction_Withdraw
+                              .choiceName,
+                choiceArgument: {
+                    actors,
+                    extraArgs: {
+                        context: ctx.choiceContextData,
+                        meta: { values: {} },
+                    },
+                },
+            },
+            ctx.disclosedContracts ?? [],
+        ]
     }
 
     async fetchSettlementFactory(
