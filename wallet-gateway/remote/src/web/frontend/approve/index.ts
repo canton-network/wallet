@@ -188,7 +188,6 @@ export class ApproveUi extends BaseElement {
             if (res.status !== this.status) {
                 this.pollDelay = this.pollIntervalMs
                 await this.updateState()
-                if (!this.isConnected) return
                 return
             }
 
