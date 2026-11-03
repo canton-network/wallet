@@ -1359,26 +1359,32 @@ describe('userController', () => {
             })
         })
 
-        it('lists the config-managed ids only for the admin user', async () => {
-            const store = await createStore(logger, auth)
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                auth,
-                {},
-                adminUserId,
-                undefined,
-                configManaged
-            )
+        it.each([
+            ['another user', auth],
+            ['an unauthenticated caller', undefined],
+        ])(
+            'does not list the config-managed ids for %s',
+            async (_, context) => {
+                const store = await createStore(logger, context)
+                const controller = createController(
+                    store,
+                    notificationService,
+                    logger,
+                    context,
+                    {},
+                    adminUserId,
+                    undefined,
+                    configManaged
+                )
 
-            expect(await controller.listIdps()).not.toHaveProperty(
-                'configManagedIds'
-            )
-            expect(await controller.listNetworks()).not.toHaveProperty(
-                'configManagedIds'
-            )
-        })
+                expect(await controller.listIdps()).not.toHaveProperty(
+                    'configManagedIds'
+                )
+                expect(await controller.listNetworks()).not.toHaveProperty(
+                    'configManagedIds'
+                )
+            }
+        )
 
         it('rejects changes to config-managed networks', async () => {
             const { store, controller } = await createAdminController()
