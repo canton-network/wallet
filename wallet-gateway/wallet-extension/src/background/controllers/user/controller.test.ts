@@ -8,8 +8,9 @@ import {
     SigningProvider,
     verifySignedTxHash,
     type SigningDriverInterface,
+    type SigningDriverStore,
 } from '@canton-network/core-signing-lib'
-import { WxtStore } from '@canton-network/core-signing-store-wxt'
+import { fingerprintPublicKey } from '@canton-network/core-types'
 import {
     NotificationService,
     subscribeNotifications,
@@ -23,7 +24,10 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { fakeAuthContext } from '@/__tests__/fake-auth-context'
+import { createWalletStore, loadAuthedStore } from '../../store'
+import { createVaultSigningStore } from '../../store/signing-store'
 import { createTestWalletStore } from '../../store/test-store'
+import { createVault, type Vault, VaultLockedError } from '../../vault'
 import { userController } from '.'
 
 const networkId = 'canton:local-oauth'
@@ -120,7 +124,7 @@ describe('userController transactions', () => {
 
     let service: NotificationService
     let store: Store
-    let signingStore: WxtStore
+    let signingStore: SigningDriverStore
     let controller: ReturnType<typeof userController>
     let postWithRetry: ReturnType<typeof vi.spyOn>
     let sessionSink: { send: ReturnType<typeof vi.fn>; close: () => void }
@@ -149,7 +153,9 @@ describe('userController transactions', () => {
 
         service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
         store = createTestWalletStore(authContext)
-        signingStore = new WxtStore(authContext.userId)
+        const vault = createVault({ iterations: 1000 })
+        await vault.create('abcde1')
+        signingStore = createVaultSigningStore(vault)
         await signingStore.setSigningKey(authContext.userId, {
             id: 'key-1',
             name: wallet.hint,
@@ -453,5 +459,299 @@ describe('userController transactions', () => {
             `No driver found for ${SigningProvider.PARTICIPANT}`
         )
         expect(sessionSink.send).not.toHaveBeenCalled()
+    })
+})
+
+describe('userController wallets', () => {
+    const password = 'abcde1'
+    const origin = 'https://dapp.example'
+    const topology = {
+        partyId: 'party::topology',
+        publicKeyFingerprint: 'topology',
+        multiHash: btoa('h'.repeat(32)),
+        topologyTransactions: ['tx-1'],
+    }
+    const createParams = (partyHint: string) => ({
+        partyHint,
+        signingProviderId: SigningProvider.WALLET_KERNEL,
+    })
+
+    let vault: Vault
+    let service: NotificationService
+    let signingStore: SigningDriverStore
+    const newSink = () => ({
+        send: vi.fn<(event: string, args: unknown[]) => void>(),
+        close: vi.fn(),
+    })
+    let sink: ReturnType<typeof newSink>
+    let generateTopology: ReturnType<typeof vi.spyOn>
+    let allocateExternalParty: ReturnType<typeof vi.spyOn>
+    let waitForPartyAndGrantUserRights: ReturnType<typeof vi.spyOn>
+    let getSynchronizerId: ReturnType<typeof vi.spyOn>
+
+    const inMemoryStore = () => {
+        const store = createTestWalletStore(authContext)
+        return async () => store
+    }
+    // The same wiring as startBackground().
+    const vaultStore = () => {
+        const holder = createWalletStore(vault)
+        const authContextStore = fakeAuthContext(authContext)
+        return async () => loadAuthedStore(await holder.get(), authContextStore)
+    }
+
+    async function setup(getStore: () => Promise<Store>) {
+        const controller = userController({
+            getStore,
+            authContext: fakeAuthContext(authContext),
+            signingDriver: new InternalSigningDriver(signingStore),
+            notificationService: service,
+        })
+        const session = await controller.addSession({ origin, networkId })
+        subscribeNotifications(
+            service,
+            { sessionId: session.id, userId: authContext.userId },
+            sink
+        )
+        return controller
+    }
+
+    const accountsChangedEvents = () =>
+        sink.send.mock.calls
+            .filter(([event]) => event === 'accountsChanged')
+            .map(([, args]) => (args as unknown[])[0])
+
+    const lockAndUnlock = async () => {
+        await vault.lock()
+        await vault.unlock(password)
+    }
+
+    beforeEach(async () => {
+        fakeBrowser.reset()
+        vault = createVault({ iterations: 1000 })
+        await vault.create(password)
+        signingStore = createVaultSigningStore(vault)
+        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        sink = newSink()
+
+        generateTopology = vi
+            .spyOn(LedgerClient.prototype, 'generateTopology')
+            .mockResolvedValue(topology)
+        allocateExternalParty = vi
+            .spyOn(LedgerClient.prototype, 'allocateExternalParty')
+            // Each key has its own namespace, so every call gets its own ID.
+            .mockImplementation(async (_synchronizerId, _txs, [signature]) => ({
+                partyId: `party::${signature!.signedBy}`,
+            }))
+        waitForPartyAndGrantUserRights = vi
+            .spyOn(LedgerClient.prototype, 'waitForPartyAndGrantUserRights')
+            .mockResolvedValue(undefined)
+        getSynchronizerId = vi
+            .spyOn(LedgerClient.prototype, 'getSynchronizerId')
+            .mockResolvedValue('ledger-synchronizer')
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
+    })
+
+    it('creates, signs and stores a party', async () => {
+        const controller = await setup(inMemoryStore())
+
+        const { wallet } = await controller.createWallet(createParams('alice'))
+
+        const [key] = await signingStore.listSigningKeys(authContext.userId)
+        expect(wallet).toMatchObject({
+            hint: 'alice',
+            signingProviderId: SigningProvider.WALLET_KERNEL,
+            status: 'allocated',
+            primary: true,
+            publicKey: key!.publicKey,
+            networkId,
+        })
+        const [, , [signature]] = allocateExternalParty.mock.calls[0] as [
+            string,
+            unknown,
+            { signature: string; signedBy: string }[],
+        ]
+        expect(
+            verifySignedTxHash(
+                topology.multiHash,
+                key!.publicKey,
+                signature!.signature
+            )
+        ).toBe(true)
+        expect(signature!.signedBy).toBe(
+            await fingerprintPublicKey(key!.publicKey)
+        )
+        expect(waitForPartyAndGrantUserRights).toHaveBeenCalledWith(
+            authContext.userId,
+            wallet.partyId
+        )
+        expect(getSynchronizerId).not.toHaveBeenCalled()
+        expect(await controller.listWallets({})).toEqual([wallet])
+        expect(accountsChangedEvents()).toEqual([[wallet]])
+    })
+
+    it('names the key after keyName, or else after partyHint', async () => {
+        const controller = await setup(inMemoryStore())
+
+        await controller.createWallet({
+            ...createParams('alice'),
+            keyName: 'alice-key',
+        })
+        await controller.createWallet(createParams('bob'))
+
+        const keys = await signingStore.listSigningKeys(authContext.userId)
+        expect(keys.map((key) => key.name).sort()).toEqual(['alice-key', 'bob'])
+    })
+
+    it('rejects another signing provider before it creates a key', async () => {
+        const controller = await setup(inMemoryStore())
+
+        await expect(
+            controller.createWallet({
+                partyHint: 'alice',
+                signingProviderId: SigningProvider.PARTICIPANT,
+            })
+        ).rejects.toThrow(
+            `Signing provider ${SigningProvider.PARTICIPANT} not supported`
+        )
+
+        expect(await signingStore.listSigningKeys(authContext.userId)).toEqual(
+            []
+        )
+        expect(generateTopology).not.toHaveBeenCalled()
+    })
+
+    it("falls back to the ledger's synchronizer", async () => {
+        const getStore = inMemoryStore()
+        const controller = await setup(getStore)
+        const store = await getStore()
+        const network = await store.getCurrentNetwork()
+        await store.updateNetwork({ ...network, synchronizerId: undefined })
+
+        await controller.createWallet(createParams('alice'))
+
+        expect(getSynchronizerId).toHaveBeenCalledTimes(1)
+        expect(generateTopology).toHaveBeenCalledWith(
+            'ledger-synchronizer',
+            expect.any(String),
+            'alice'
+        )
+        expect(allocateExternalParty).toHaveBeenCalledWith(
+            'ledger-synchronizer',
+            expect.anything(),
+            expect.anything()
+        )
+    })
+
+    it('stores nothing when the allocation fails', async () => {
+        const controller = await setup(inMemoryStore())
+        allocateExternalParty.mockRejectedValueOnce(
+            new Error('allocation failed')
+        )
+
+        await expect(
+            controller.createWallet(createParams('alice'))
+        ).rejects.toThrow('allocation failed')
+
+        expect(await controller.listWallets({})).toEqual([])
+        expect(accountsChangedEvents()).toEqual([])
+    })
+
+    it('keeps concurrent creations through a reload', async () => {
+        const getStore = vaultStore()
+        const controller = await setup(getStore)
+
+        const created = await Promise.all([
+            controller.createWallet(createParams('alice')),
+            controller.createWallet(createParams('bob')),
+        ])
+        await lockAndUnlock()
+
+        const wallets = await controller.listWallets({})
+        expect(wallets.map((wallet) => wallet.hint).sort()).toEqual([
+            'alice',
+            'bob',
+        ])
+        expect(wallets.filter((wallet) => wallet.primary)).toHaveLength(1)
+        const keys = await signingStore.listSigningKeys(authContext.userId)
+        expect(keys.map((key) => key.publicKey).sort()).toEqual(
+            created.map(({ wallet }) => wallet.publicKey).sort()
+        )
+    })
+
+    it('stops before signing when the vault locks during topology', async () => {
+        const controller = await setup(vaultStore())
+        const pendingTopology = Promise.withResolvers<typeof topology>()
+        generateTopology.mockReturnValueOnce(pendingTopology.promise)
+
+        const creating = controller.createWallet(createParams('alice'))
+        await vi.waitFor(() => expect(generateTopology).toHaveBeenCalled())
+        await lockAndUnlock()
+        pendingTopology.resolve(topology)
+
+        await expect(creating).rejects.toBeInstanceOf(VaultLockedError)
+        expect(allocateExternalParty).not.toHaveBeenCalled()
+        expect(
+            await signingStore.listSigningTransactions(authContext.userId)
+        ).toEqual([])
+        expect(
+            await signingStore.listSigningKeys(authContext.userId)
+        ).toHaveLength(1)
+        expect(await controller.listWallets({})).toEqual([])
+    })
+
+    it('stops before allocation when the vault locks during signing', async () => {
+        const controller = await setup(vaultStore())
+        const getSigningKeyByPublicKey =
+            signingStore.getSigningKeyByPublicKey.bind(signingStore)
+        const keyRead = Promise.withResolvers<void>()
+        const release = Promise.withResolvers<void>()
+        vi.spyOn(signingStore, 'getSigningKeyByPublicKey').mockImplementation(
+            async (publicKey) => {
+                const key = await getSigningKeyByPublicKey(publicKey)
+                keyRead.resolve()
+                await release.promise
+                return key
+            }
+        )
+
+        const creating = controller.createWallet(createParams('alice'))
+        await keyRead.promise
+        await lockAndUnlock()
+        release.resolve()
+
+        await expect(creating).rejects.toBeInstanceOf(VaultLockedError)
+        expect(
+            await signingStore.listSigningTransactions(authContext.userId)
+        ).toHaveLength(1)
+        expect(allocateExternalParty).not.toHaveBeenCalled()
+        expect(await controller.listWallets({})).toEqual([])
+    })
+
+    it('switches the primary wallet', async () => {
+        const controller = await setup(inMemoryStore())
+        const { wallet: first } = await controller.createWallet(
+            createParams('alice')
+        )
+        const { wallet: second } = await controller.createWallet(
+            createParams('bob')
+        )
+        sink.send.mockClear()
+
+        await expect(
+            controller.setPrimaryWallet({ partyId: second.partyId })
+        ).resolves.toBeNull()
+
+        const wallets = await controller.listWallets({})
+        expect(
+            wallets.map(({ partyId, primary }) => ({ partyId, primary }))
+        ).toEqual([
+            { partyId: first.partyId, primary: false },
+            { partyId: second.partyId, primary: true },
+        ])
+        expect(accountsChangedEvents()).toEqual([wallets])
     })
 })
