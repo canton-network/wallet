@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
 import type { Logger } from 'pino'
@@ -83,30 +83,29 @@ describe('SelfIssuedAuthService', () => {
         info: vi.fn(),
         warn: vi.fn(),
     } as unknown as Logger
-    let store: {
-        getWallet: ReturnType<typeof vi.fn>
-        getWallets: ReturnType<typeof vi.fn>
-        updateWallet: ReturnType<typeof vi.fn>
-        getCurrentNetwork: ReturnType<typeof vi.fn>
-        upgradeSelfIssuedLoginSession: ReturnType<typeof vi.fn>
-        setMessageRaw: ReturnType<typeof vi.fn>
-        getMessageRaw: ReturnType<typeof vi.fn>
-        setMessageRawStatus: ReturnType<typeof vi.fn>
-    }
-    let signMessageService: {
-        sign: ReturnType<typeof vi.fn>
-        refreshMessage: ReturnType<typeof vi.fn>
-    }
-    let walletAllocator: {
-        createWallet: ReturnType<typeof vi.fn>
-        allocateParty: ReturnType<typeof vi.fn>
-        getKeys: ReturnType<typeof vi.fn>
-    }
-    let ledgerClient: {
-        get: ReturnType<typeof vi.fn>
-        post: ReturnType<typeof vi.fn>
-        patch: ReturnType<typeof vi.fn>
-    }
+    let store: Mocked<
+        Pick<
+            Store,
+            | 'getWallet'
+            | 'getWallets'
+            | 'updateWallet'
+            | 'getCurrentNetwork'
+            | 'upgradeSelfIssuedLoginSession'
+            | 'setMessageRaw'
+            | 'getMessageRaw'
+            | 'setMessageRawStatus'
+        >
+    >
+    let signMessageService: Mocked<
+        Pick<SignMessageService, 'sign' | 'refreshMessage'>
+    >
+    let walletAllocator: Mocked<
+        Pick<
+            SelfIssuedWalletAllocationService,
+            'createWallet' | 'allocateParty' | 'getKeys'
+        >
+    >
+    let ledgerClient: Mocked<Pick<LedgerClient, 'get' | 'post' | 'patch'>>
 
     beforeEach(() => {
         signMessageService = {
