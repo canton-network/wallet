@@ -128,7 +128,7 @@
                     "required": ["network"]
                 }
             },
-            "description": "Returns full network configuration including auth details. Admin only."
+            "description": "Returns full network configuration including auth details. Admin only. The client secrets of networks managed by the config file are returned empty."
         },
         {
             "name": "selfSignedAccessToken",
@@ -1151,7 +1151,7 @@
         },
         {
             "name": "addSession",
-            "description": "Adds a network session.",
+            "description": "Adds a network session. The client secrets of the session network are returned empty.",
             "params": [
                 {
                     "name": "params",
@@ -1197,6 +1197,7 @@
         },
         {
             "name": "listSessions",
+            "description": "Lists the sessions of the user. The client secrets of the session networks are returned empty.",
             "params": [],
             "result": {
                 "name": "result",

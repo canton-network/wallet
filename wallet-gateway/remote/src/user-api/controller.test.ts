@@ -950,6 +950,40 @@ describe('userController', () => {
             }
         )
 
+        it('does not return the secrets of config-managed networks', async () => {
+            const { controller } = await createAdminController()
+
+            const { network } = await controller.getNetwork({
+                networkId: storeNetwork.id,
+            })
+
+            expect(network.adminAuth).toMatchObject({
+                method: 'client_credentials',
+                clientId: storeNetwork.adminAuth?.clientId,
+                clientSecret: '',
+            })
+        })
+
+        it('returns the secrets of networks managed at runtime', async () => {
+            const store = await createStore(logger, adminAuth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId
+            )
+
+            const { network } = await controller.getNetwork({
+                networkId: storeNetwork.id,
+            })
+
+            expect(network.adminAuth).toMatchObject({
+                clientSecret: 'admin-secret',
+            })
+        })
+
         it('rejects changes to config-managed networks', async () => {
             const { store, controller } = await createAdminController()
             const updateSpy = vi.spyOn(store, 'updateNetwork')
@@ -2119,7 +2153,7 @@ describe('userController', () => {
             expect(mockNetworkStatus).toHaveBeenCalled()
         })
 
-        it('includes adminAuth in listSessions for the admin user', async () => {
+        it('includes adminAuth without secrets in listSessions for the admin user', async () => {
             const store = await createStore(logger, adminAuth, {
                 withSession: false,
             })
@@ -2144,8 +2178,36 @@ describe('userController', () => {
                 adminAuth: expect.objectContaining({
                     method: 'client_credentials',
                     clientId: 'admin-cid',
-                    clientSecret: 'admin-secret',
+                    clientSecret: '',
                 }),
+            })
+        })
+
+        it('does not return the client secret of the session network', async () => {
+            const selfSigned = {
+                method: 'self_signed',
+                issuer: 'issuer',
+                audience: 'aud',
+                scope: 'scope',
+                clientId: 'cid',
+                clientSecret: 'signing-key',
+            } as const
+            const store = await createStore(logger, auth)
+            await store.updateNetwork({ ...storeNetwork, auth: selfSigned })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {},
+                adminUserId
+            )
+
+            const result = await controller.listSessions()
+
+            expect(result.sessions[0].network.auth).toEqual({
+                ...selfSigned,
+                clientSecret: '',
             })
         })
 
