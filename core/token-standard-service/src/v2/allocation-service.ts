@@ -289,7 +289,7 @@ export class AllocationService {
             .post(
                 `/registry/allocation-instruction/v2/{allocationInstructionId}/choice-contexts/${action}`,
                 { excludeDebugFields: excludeDebugFields },
-                { path: { allocationInstructionCid: allocationInstructionCid } }
+                { path: { allocationInstructionId: allocationInstructionCid } }
             )
     }
 
@@ -328,7 +328,7 @@ export class AllocationService {
                     },
                 },
             },
-            ctx.disclosedContracts,
+            ctx.disclosedContracts ?? [],
         ]
     }
 
