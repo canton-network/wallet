@@ -37,6 +37,7 @@
         "@logtape/testing": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
+        "jose": "catalog:",
         "playwright": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",

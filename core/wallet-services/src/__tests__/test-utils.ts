@@ -3,6 +3,7 @@
 
 import { vi } from 'vitest'
 import { createLogRecorder } from '@logtape/testing/recorder'
+import { base64url } from 'jose'
 
 import { configure } from '@logtape/logtape'
 import type { Logger } from 'pino'
@@ -25,22 +26,20 @@ export function encodeBase64(
 ): string {
     const bytes =
         typeof value === 'string' ? new TextEncoder().encode(value) : value
-    const encoded = btoa(bytesToBinary(bytes))
     return encoding === 'base64'
-        ? encoded
-        : encoded.replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/, '')
+        ? btoa(bytesToBinary(bytes))
+        : base64url.encode(bytes)
 }
 
 export function decodeBase64(
     value: string,
     encoding: 'base64' | 'base64url' = 'base64'
 ): Uint8Array {
-    const standard =
-        encoding === 'base64'
-            ? value
-            : value.replaceAll('-', '+').replaceAll('_', '/')
-    const padded = standard.padEnd(
-        standard.length + ((4 - (standard.length % 4)) % 4),
+    if (encoding === 'base64url') {
+        return base64url.decode(value)
+    }
+    const padded = value.padEnd(
+        value.length + ((4 - (value.length % 4)) % 4),
         '='
     )
     return binaryToBytes(atob(padded))
