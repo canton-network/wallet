@@ -340,9 +340,11 @@ export const userController = ({
     /**
      * Session responses always include user auth for the UI.
      * Privileged credentials are included only for the admin user.
+     * Client secrets are never included, a self_signed secret lets the
+     * caller sign tokens for any user.
      */
     function toSessionNetwork(network: Network): ApiNetwork {
-        const dto = toNetworkDto(network)
+        const dto = toNetworkDto(network, true)
         if (isAdmin()) {
             return dto
         }
@@ -500,7 +502,12 @@ export const userController = ({
         ): Promise<GetNetworkResult> => {
             assertAdmin()
             const network = await store.getNetwork(params.networkId)
-            return { network: toNetworkDto(network) }
+            return {
+                network: toNetworkDto(
+                    network,
+                    configManaged.networkIds.has(network.id)
+                ),
+            }
         },
         selfSignedAccessToken: async (
             params: SelfSignedAccessTokenParams
@@ -1579,7 +1586,8 @@ export const userController = ({
     })
 }
 
-function toAuthDto(auth: Auth): ApiNetwork['auth'] {
+function toAuthDto(auth: Auth, redactSecrets: boolean): ApiNetwork['auth'] {
+    const clientSecret = (secret: string) => (redactSecrets ? '' : secret)
     switch (auth.method) {
         case 'authorization_code':
             return {
@@ -1597,7 +1605,7 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
                 audience: auth.audience,
                 scope: auth.scope,
                 clientId: auth.clientId,
-                clientSecret: auth.clientSecret,
+                clientSecret: clientSecret(auth.clientSecret),
             }
         case 'self_signed':
             return {
@@ -1605,7 +1613,7 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
                 audience: auth.audience,
                 scope: auth.scope,
                 clientId: auth.clientId,
-                clientSecret: auth.clientSecret,
+                clientSecret: clientSecret(auth.clientSecret),
                 issuer: auth.issuer,
             }
         case 'self_issued':
@@ -1617,7 +1625,12 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     }
 }
 
-function toNetworkDto(network: Network): ApiNetwork {
+/**
+ * @param redactSecrets returns the client secrets empty. Secrets of
+ * config-managed networks usually come from environment variables of the
+ * Wallet Gateway.
+ */
+function toNetworkDto(network: Network, redactSecrets: boolean): ApiNetwork {
     return {
         id: network.id,
         name: network.name,
@@ -1625,12 +1638,17 @@ function toNetworkDto(network: Network): ApiNetwork {
         synchronizerId: network.synchronizerId,
         identityProviderId: network.identityProviderId,
         ledgerApi: network.ledgerApi.baseUrl,
-        auth: toAuthDto(network.auth),
+        auth: toAuthDto(network.auth, redactSecrets),
         ...(network.adminAuth
-            ? { adminAuth: toAuthDto(network.adminAuth) }
+            ? { adminAuth: toAuthDto(network.adminAuth, redactSecrets) }
             : {}),
         ...(network.serviceAccountAuth
-            ? { serviceAccountAuth: toAuthDto(network.serviceAccountAuth) }
+            ? {
+                  serviceAccountAuth: toAuthDto(
+                      network.serviceAccountAuth,
+                      redactSecrets
+                  ),
+              }
             : {}),
     }
 }
