@@ -6,6 +6,10 @@ import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
 import type { ServerNoticeReport } from '../notices/server-notices.js'
 import { Env } from '../env.js'
 import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
+import type {
+    BootstrapConfig,
+    Network,
+} from '@canton-network/core-wallet-store'
 
 export interface LoadedConfig {
     config: Config
@@ -75,23 +79,38 @@ function collectWarnings(rawConfig: RawConfig): ServerNoticeReport[] {
         }
     }
 
-    rawConfig.bootstrap.networks.forEach((network, index) => {
-        const auths = {
-            auth: network.auth,
-            adminAuth: network.adminAuth,
-            serviceAccountAuth: network.serviceAccountAuth,
-        }
-        for (const [name, auth] of Object.entries(auths)) {
-            if (auth && 'clientSecret' in auth) {
-                warnings.push(
-                    inlineSecretWarning(
-                        `bootstrap.networks[${index}].${name}.clientSecret`,
-                        'clientSecretEnv'
-                    )
-                )
+    if (rawConfig.bootstrap !== undefined) {
+        warnings.push({
+            id: 'deprecated-config:bootstrap',
+            severity: 'warning',
+            message:
+                'bootstrap is deprecated, its entries are only written to an empty database and later changes are ignored. Move bootstrap.idps to idps and bootstrap.networks to networks, keeping their ids, and remove bootstrap.',
+        })
+    }
+
+    const networkSections = [
+        ['networks', rawConfig.networks],
+        ['bootstrap.networks', rawConfig.bootstrap?.networks ?? []],
+    ] as const
+    for (const [section, networks] of networkSections) {
+        networks.forEach((network, index) => {
+            const auths = {
+                auth: network.auth,
+                adminAuth: network.adminAuth,
+                serviceAccountAuth: network.serviceAccountAuth,
             }
-        }
-    })
+            for (const [name, auth] of Object.entries(auths)) {
+                if (auth && 'clientSecret' in auth) {
+                    warnings.push(
+                        inlineSecretWarning(
+                            `${section}[${index}].${name}.clientSecret`,
+                            'clientSecretEnv'
+                        )
+                    )
+                }
+            }
+        })
+    }
 
     return warnings
 }
@@ -114,60 +133,75 @@ function resolveConfig(rawConfig: RawConfig): Config {
      * Perform extra config validation beyond schema validation.
      * We want to enforce the following constraints:
      *
-     * 1. IDP IDs are unique
-     * 2. Network IDs are unique
-     * 3. Self-issued network audiences are unique
-     * 4. Each Network's identityProviderId maps to an existing IDP (in config)
+     * 1. IDP IDs are unique within idps and within bootstrap.idps
+     * 2. Network IDs are unique within networks and within bootstrap.networks
+     * 3. Self-issued network audiences are unique within networks and within
+     *    bootstrap.networks
+     * 4. Each Network's identityProviderId maps to an existing IDP in the
+     *    same section, i.e. networks only reference idps
      * 5. Each Network's auth method is compatible with its IDP type
+     *
+     * An id may be used in both idps and bootstrap.idps (or networks and
+     * bootstrap.networks), in which case the top-level entry takes over the
+     * bootstrap entry when the database is bootstrapped. Self-issued
+     * audiences across sections are checked against the database when the
+     * entries are written, since it may hold other networks anyway.
      */
-    const duplicateIdpId = hasDuplicateElement(
-        config.bootstrap.idps.map((idp) => idp.id)
-    )
-    if (duplicateIdpId) {
-        throw new Error(
-            `Non-unique IDP IDs found in config file: ${duplicateIdpId}`
-        )
-    }
+    const sections = [
+        { idps: config.idps, networks: config.networks },
+        config.bootstrap,
+    ]
 
-    const duplicateNetworkId = hasDuplicateElement(
-        config.bootstrap.networks.map((network) => network.id)
-    )
-    if (duplicateNetworkId) {
-        throw new Error(
-            `Non-unique Network IDs found in config file: ${duplicateNetworkId}`
+    for (const section of sections) {
+        const duplicateSelfIssuedAudience = hasDuplicateElement(
+            section.networks
+                .filter((network) => network.auth.method === 'self_issued')
+                .map((network) => network.auth.audience)
         )
-    }
+        if (duplicateSelfIssuedAudience) {
+            throw new Error(
+                `Non-unique self-issued audience found in config file: ${duplicateSelfIssuedAudience}`
+            )
+        }
 
-    const duplicateSelfIssuedAudience = hasDuplicateElement(
-        config.bootstrap.networks
-            .filter((network) => network.auth.method === 'self_issued')
-            .map((network) => network.auth.audience)
-    )
-    if (duplicateSelfIssuedAudience) {
-        throw new Error(
-            `Non-unique self-issued audience found in config file: ${duplicateSelfIssuedAudience}`
+        const duplicateIdpId = hasDuplicateElement(
+            section.idps.map((idp) => idp.id)
         )
-    }
+        if (duplicateIdpId) {
+            throw new Error(
+                `Non-unique IDP IDs found in config file: ${duplicateIdpId}`
+            )
+        }
 
-    const invalidMapping = validateNetworkToIdpMapping(config)
-    if (invalidMapping) {
-        throw new Error(
-            `Network ${invalidMapping.networkId} references unknown Identity Provider ID ${invalidMapping.idpId}`
+        const duplicateNetworkId = hasDuplicateElement(
+            section.networks.map((network) => network.id)
         )
-    }
+        if (duplicateNetworkId) {
+            throw new Error(
+                `Non-unique Network IDs found in config file: ${duplicateNetworkId}`
+            )
+        }
 
-    const invalidAuthMethod = validateNetworkAuthMethods(config)
-    if (invalidAuthMethod) {
-        throw new Error(
-            `Network ${invalidAuthMethod.networkId} has invalid auth method ${invalidAuthMethod.invalidAuthMethod} for its Identity Provider`
-        )
+        const invalidMapping = validateNetworkToIdpMapping(section)
+        if (invalidMapping) {
+            throw new Error(
+                `Network ${invalidMapping.networkId} references unknown Identity Provider ID ${invalidMapping.idpId}`
+            )
+        }
+
+        const invalidAuthMethod = validateNetworkAuthMethods(section)
+        if (invalidAuthMethod) {
+            throw new Error(
+                `Network ${invalidAuthMethod.networkId} has invalid auth method ${invalidAuthMethod.invalidAuthMethod} for its Identity Provider`
+            )
+        }
     }
 
     return config
 }
 
 type RawNetworkAuth = NonNullable<
-    RawConfig['bootstrap']['networks'][number]['adminAuth']
+    NonNullable<RawConfig['bootstrap']>['networks'][number]['adminAuth']
 >
 type NetworkAuth = NonNullable<
     Config['bootstrap']['networks'][number]['adminAuth']
@@ -212,20 +246,21 @@ function resolvePostgressPassword(s: RawConfig['store']): Config['store'] {
     }
 }
 
+type RawNetwork = NonNullable<RawConfig['bootstrap']>['networks'][number]
+
+function resolveRawNetwork(n: RawNetwork): Network {
+    return {
+        ...n,
+        auth: resolveRawNetworkAuth(n.auth),
+        adminAuth: n.adminAuth ? resolveRawNetworkAuth(n.adminAuth) : undefined,
+        serviceAccountAuth: n.serviceAccountAuth
+            ? resolveRawNetworkAuth(n.serviceAccountAuth)
+            : undefined,
+    }
+}
+
 function resolveRawConfig(rawConfig: RawConfig): Config {
-    const rawNetworks = rawConfig.bootstrap.networks
-    const networks: Config['bootstrap']['networks'] = rawNetworks.map((n) => {
-        return {
-            ...n,
-            auth: resolveRawNetworkAuth(n.auth),
-            adminAuth: n.adminAuth
-                ? resolveRawNetworkAuth(n.adminAuth)
-                : undefined,
-            serviceAccountAuth: n.serviceAccountAuth
-                ? resolveRawNetworkAuth(n.serviceAccountAuth)
-                : undefined,
-        }
-    })
+    const bootstrap = rawConfig.bootstrap ?? { idps: [], networks: [] }
 
     const store: Config['store'] = resolvePostgressPassword(rawConfig.store)
 
@@ -237,9 +272,10 @@ function resolveRawConfig(rawConfig: RawConfig): Config {
         ...rawConfig,
         store,
         signingStore,
+        networks: rawConfig.networks.map(resolveRawNetwork),
         bootstrap: {
-            ...rawConfig.bootstrap,
-            networks,
+            ...bootstrap,
+            networks: bootstrap.networks.map(resolveRawNetwork),
         },
     }
 }
@@ -255,9 +291,9 @@ function hasDuplicateElement(list: string[]): string | undefined {
 }
 
 function validateNetworkToIdpMapping(
-    config: Config
+    section: BootstrapConfig
 ): { networkId: string; idpId: string } | undefined {
-    for (const network of config.bootstrap.networks) {
+    for (const network of section.networks) {
         const authConfigurations = [
             network.auth,
             network.adminAuth,
@@ -273,7 +309,7 @@ function validateNetworkToIdpMapping(
         ])
 
         for (const idpId of idpIds) {
-            const idp = config.bootstrap.idps.find((idp) => idp.id === idpId)
+            const idp = section.idps.find((idp) => idp.id === idpId)
 
             if (typeof idp === 'undefined') {
                 return { networkId: network.id, idpId }
@@ -289,14 +325,14 @@ const SUPPORTED_IDP_METHODS = {
 }
 
 function validateNetworkAuthMethods(
-    config: Config
+    section: BootstrapConfig
 ): { networkId: string; invalidAuthMethod: string } | undefined {
-    for (const network of config.bootstrap.networks) {
+    for (const network of section.networks) {
         const networkAuthIdpId = resolveAuthIdentityProviderId(
             network.auth,
             network.identityProviderId
         )
-        const networkAuthIdp = config.bootstrap.idps.find(
+        const networkAuthIdp = section.idps.find(
             (idp) => idp.id === networkAuthIdpId
         )!
 
@@ -316,7 +352,7 @@ function validateNetworkAuthMethods(
                 auth?.method === 'client_credentials' &&
                 auth.identityProviderId
             ) {
-                const idp = config.bootstrap.idps.find(
+                const idp = section.idps.find(
                     (idp) => idp.id === auth.identityProviderId
                 )!
                 if (idp.type !== 'oauth') {
@@ -341,6 +377,17 @@ interface Urls {
 function stripDuplicateSlashes(path: string): string {
     return path.replace(/(https?:\/\/)|(\/)+/g, '$1$2')
 }
+
+// Ids of idps and networks defined in the top-level config sections
+export interface ConfigManagedIds {
+    idpIds: ReadonlySet<string>
+    networkIds: ReadonlySet<string>
+}
+
+export const configManagedIds = (config: Config): ConfigManagedIds => ({
+    idpIds: new Set(config.idps.map((idp) => idp.id)),
+    networkIds: new Set(config.networks.map((network) => network.id)),
+})
 
 export const deriveUrls = (config: Config, port?: number): Urls => {
     const serviceUrl = `http://localhost:${port || config.server.port}`

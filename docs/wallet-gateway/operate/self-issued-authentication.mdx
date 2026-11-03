@@ -49,44 +49,42 @@ To use self-issued token auth configure a network with following properties:
 
 ```json
 {
-    "bootstrap": {
-        "idps": [
-            {
-                "id": "idp-oauth",
-                "type": "oauth",
-                "issuer": "https://auth.example.com",
-                "configUrl": "https://auth.example.com/.well-known/openid-configuration"
+    "idps": [
+        {
+            "id": "idp-oauth",
+            "type": "oauth",
+            "issuer": "https://auth.example.com",
+            "configUrl": "https://auth.example.com/.well-known/openid-configuration"
+        },
+        {
+            "id": "idp-self-issued",
+            "type": "self_issued"
+        }
+    ],
+    "networks": [
+        {
+            "id": "canton:self-issued",
+            "name": "Self issued",
+            "identityProviderId": "idp-self-issued",
+            "synchronizerId": "<SYNCHRONIZER_ID>",
+            "auth": {
+                "method": "self_issued",
+                "audience": "<PARTICIPANT_ID>",
+                "scope": "openid daml_ledger_api offline_access"
             },
-            {
-                "id": "idp-self-issued",
-                "type": "self_issued"
+            "adminAuth": {
+                "method": "client_credentials",
+                "identityProviderId": "idp-oauth",
+                "audience": "https://daml.com/jwt/aud/participant/<PARTICIPANT_ID>",
+                "scope": "daml_ledger_api",
+                "clientId": "participant_admin",
+                "clientSecretEnv": "ADMIN_CLIENT_SECRET"
+            },
+            "ledgerApi": {
+                "baseUrl": "https://ledger.example.com"
             }
-        ],
-        "networks": [
-            {
-                "id": "canton:self-issued",
-                "name": "Self issued",
-                "identityProviderId": "idp-self-issued",
-                "synchronizerId": "<SYNCHRONIZER_ID>",
-                "auth": {
-                    "method": "self_issued",
-                    "audience": "<PARTICIPANT_ID>",
-                    "scope": "openid daml_ledger_api offline_access"
-                },
-                "adminAuth": {
-                    "method": "client_credentials",
-                    "identityProviderId": "idp-oauth",
-                    "audience": "https://daml.com/jwt/aud/participant/<PARTICIPANT_ID>",
-                    "scope": "daml_ledger_api",
-                    "clientId": "participant_admin",
-                    "clientSecret": "<ADMIN_CLIENT_SECRET>"
-                },
-                "ledgerApi": {
-                    "baseUrl": "https://ledger.example.com"
-                }
-            }
-        ]
-    }
+        }
+    ]
 }
 ```
 

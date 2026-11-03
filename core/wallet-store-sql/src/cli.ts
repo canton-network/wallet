@@ -8,14 +8,19 @@ import type {
     StoreConfig,
     BootstrapConfig,
 } from '@canton-network/core-wallet-store'
-import { bootstrap } from './bootstrap.js'
+import { bootstrap, upsertIdpsAndNetworks } from './bootstrap.js'
 import { getLogger } from '@logtape/logtape'
 
 const logger = getLogger(['core', 'wallet-store-sql', 'cli'])
 
+/**
+ * @param bootstrapConfig IDPs and networks that are only inserted
+ * @param configIdpsAndNetworks IDPs and networks that are inserted or updated
+ */
 export function createCLI(
     config: StoreConfig,
-    bootstrapConfig?: BootstrapConfig
+    bootstrapConfig: BootstrapConfig,
+    configIdpsAndNetworks: BootstrapConfig
 ): Command {
     const program = new Command()
 
@@ -76,13 +81,25 @@ export function createCLI(
         .command('bootstrap')
         .description('Bootstrap DB from config')
         .action(async () => {
-            if (!bootstrapConfig) {
-                throw new Error(
-                    'Bootstrap config (idps/networks) is required for the bootstrap command'
-                )
-            }
             const db = connection(config)
-            await bootstrap(db, bootstrapConfig)
+            // Like on start, the deprecated bootstrap section is only written
+            // to an empty database
+            const idp = await db
+                .selectFrom('idps')
+                .select('id')
+                .executeTakeFirst()
+            const network = await db
+                .selectFrom('networks')
+                .select('id')
+                .executeTakeFirst()
+            if (idp || network) {
+                logger.info(
+                    'Skipping the bootstrap section, the database already contains identity providers or networks'
+                )
+            } else {
+                await bootstrap(db, bootstrapConfig)
+            }
+            await upsertIdpsAndNetworks(db, configIdpsAndNetworks)
             await db.destroy()
         })
 

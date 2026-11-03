@@ -8,6 +8,7 @@ import type { Logger } from 'pino'
 import {
     StoreSql,
     bootstrap,
+    upsertIdpsAndNetworks,
     connection,
     migrator,
 } from '@canton-network/core-wallet-store-sql'
@@ -28,7 +29,7 @@ import {
     rateLimiter,
 } from './middleware/rateLimit.js'
 import type { Config } from './config/Config.js'
-import { deriveUrls } from './config/ConfigUtils.js'
+import { configManagedIds, deriveUrls } from './config/ConfigUtils.js'
 import { existsSync } from 'fs'
 import { GATEWAY_VERSION } from './version.js'
 import { sessionHandler } from './middleware/sessionHandler.js'
@@ -122,11 +123,13 @@ async function initializeDatabase(
                         Number(networksCount.rows[0]?.rowCount ?? 0) > 0
                 }
 
+                // Like the db bootstrap command, only bootstrap if both are
+                // empty. Bootstrap fails for existing rows, and the admin may
+                // have removed all networks at runtime.
                 if (
                     !idpsExists ||
                     !networksExists ||
-                    !idpsHasRows ||
-                    !networksHasRows
+                    (!idpsHasRows && !networksHasRows)
                 ) {
                     logger.warn(
                         'Database exists but required tables are missing or empty. Attempting to bootstrap...'
@@ -159,6 +162,21 @@ async function initializeDatabase(
     if (!exists) {
         logger.info('Bootstrapping database from config...')
         await bootstrap(db, config.bootstrap)
+    }
+
+    // idps and networks managed by the config file are applied on every start
+    if (config.idps.length > 0 || config.networks.length > 0) {
+        logger.info(
+            {
+                idps: config.idps.map((idp) => idp.id),
+                networks: config.networks.map((network) => network.id),
+            },
+            'Applying identity providers and networks from config...'
+        )
+        await upsertIdpsAndNetworks(db, {
+            idps: config.idps,
+            networks: config.networks,
+        })
     }
 
     return new StoreSql(db)
@@ -349,37 +367,36 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     signingWorker.start()
 
     // register dapp API handlers
-    dapp(
-        config.server.dappPath,
+    dapp({
+        route: config.server.dappPath,
         app,
         logger,
         server,
         kernelInfo,
-        dappApiUrl,
-        publicUrl,
-        config.server,
+        dappUrl: dappApiUrl,
+        userUrl: publicUrl,
+        serverConfig: config.server,
         notificationService,
         store,
-        {
-            signingDrivers: drivers,
-        },
-        hashingSchemeVersion
-    )
+        deps: { signingDrivers: drivers },
+        hashingSchemeVersion,
+    })
 
     // register user API handlers
-    user(
-        config.server.userPath,
+    user({
+        route: config.server.userPath,
         app,
         logger,
         kernelInfo,
-        publicUrl,
+        userUrl: publicUrl,
         notificationService,
         drivers,
         store,
         hashingSchemeVersion,
-        config.server.admin,
-        serverStatusService
-    )
+        adminUserId: config.server.admin,
+        serverStatus: serverStatusService,
+        configManaged: configManagedIds(config),
+    })
 
     const { userPath, dappPath } = config.server
     const isApiPath = (path: string) =>

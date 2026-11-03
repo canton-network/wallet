@@ -50,4 +50,23 @@ describe('network-card', () => {
         expect(el.shadowRoot?.textContent).toContain('CONNECTED')
         expect(el.shadowRoot?.querySelector('wg-copy-button')).not.toBeNull()
     })
+
+    it('marks config-managed networks with a badge', async () => {
+        const network = makePublicNetwork()
+        const el = await fixture(
+            html`<network-card .network=${network}></network-card>`
+        )
+        expect(el.shadowRoot?.querySelector('.badge-config')).toBeNull()
+
+        const managed = await fixture(
+            html`<network-card
+                .network=${network}
+                .configManaged=${true}
+                .readonly=${true}
+            ></network-card>`
+        )
+        expect(
+            managed.shadowRoot?.querySelector('.badge-config')?.textContent
+        ).toBe('CONFIG FILE')
+    })
 })

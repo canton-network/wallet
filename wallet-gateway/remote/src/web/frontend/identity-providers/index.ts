@@ -24,6 +24,7 @@ import { detectCurrentOrigin } from '../listeners.js'
 export class UserUiIdentityProviders extends BaseElement {
     @state() accessor idps: Idp[] = []
     @state() accessor isAdmin = false
+    @state() accessor configManagedIds: string[] = []
     @state() accessor currentPage = 1
 
     private readonly pageSize = 4
@@ -87,6 +88,7 @@ export class UserUiIdentityProviders extends BaseElement {
             ])
 
             this.idps = idpsResult.idps
+            this.configManagedIds = idpsResult.configManagedIds ?? []
             this.isAdmin = userResult.isAdmin
 
             const maxPage = Math.max(
@@ -136,6 +138,14 @@ export class UserUiIdentityProviders extends BaseElement {
             </div>
 
             ${
+                this.configManagedIds.length > 0
+                    ? html`<p class="text-body-secondary">
+                          Entries marked CONFIG FILE are managed by the Wallet
+                          Gateway config file and are read-only.
+                      </p>`
+                    : ''
+            }
+            ${
                 this.idps.length === 0
                     ? html`<p class="mb-0 text-body-secondary">
                           No identity providers configured.
@@ -146,7 +156,15 @@ export class UserUiIdentityProviders extends BaseElement {
                                   (idp) => html`
                                       <idp-card
                                           .idp=${idp}
-                                          .readonly=${!this.isAdmin}
+                                          .readonly=${
+                                              !this.isAdmin ||
+                                              this.configManagedIds.includes(
+                                                  idp.id
+                                              )
+                                          }
+                                          .configManaged=${this.configManagedIds.includes(
+                                              idp.id
+                                          )}
                                           @idp-review=${this._onReview}
                                       ></idp-card>
                                   `

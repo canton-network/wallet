@@ -34,6 +34,7 @@ export class NetworkCard extends BaseElement {
     @property({ type: Boolean }) accessor activeSession = false
     @property({ type: String }) accessor accessToken = ''
     @property({ type: Boolean }) accessor readonly = false
+    @property({ type: Boolean }) accessor configManaged = false
 
     static styles = [
         BaseElement.styles,
@@ -84,6 +85,11 @@ export class NetworkCard extends BaseElement {
                 letter-spacing: 0.04em;
                 background: rgba(var(--wg-success-rgb), 0.14);
                 color: var(--wg-success);
+            }
+
+            .badge-config {
+                background: var(--wg-badge-bg);
+                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -169,6 +175,15 @@ export class NetworkCard extends BaseElement {
                         this.activeSession
                             ? html`<span class="badge-connected"
                                   >CONNECTED</span
+                              >`
+                            : ''
+                    }
+                    ${
+                        this.configManaged
+                            ? html`<span
+                                  class="wg-badge badge-config"
+                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
+                                  >CONFIG FILE</span
                               >`
                             : ''
                     }

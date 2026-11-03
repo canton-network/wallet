@@ -159,11 +159,11 @@ export function mockListWalletsFlow(
 
 export function mockNetworksPageFlow(
     networks: PublicNetwork[],
-    options: { isAdmin?: boolean } = {}
+    options: { isAdmin?: boolean; configManagedIds?: string[] } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listNetworks') {
-            return { networks }
+            return { networks, configManagedIds: options.configManagedIds }
         }
         if (method === 'listSessions') {
             return { sessions: [] }
@@ -232,11 +232,11 @@ export function mockReviewNetworkFlow(
 
 export function mockIdpsPageFlow(
     idps: Idp[],
-    options: { isAdmin?: boolean } = {}
+    options: { isAdmin?: boolean; configManagedIds?: string[] } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listIdps') {
-            return { idps }
+            return { idps, configManagedIds: options.configManagedIds }
         }
         if (method === 'getUser') {
             return {

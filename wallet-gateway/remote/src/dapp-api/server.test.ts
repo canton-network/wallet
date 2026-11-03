@@ -18,7 +18,10 @@ import { getLogger } from '@logtape/logtape'
 const configPath = '../test/config.json'
 const config = ConfigUtils.loadConfigFile(configPath).config
 
-const store = new StoreInternal(config.bootstrap, getLogger('mock'))
+const store = new StoreInternal(
+    { idps: config.idps, networks: config.networks },
+    getLogger('mock')
+)
 
 const notificationService = new NotificationService(pino(sink()))
 
@@ -29,20 +32,20 @@ test('call connect rpc', async () => {
     const server = createServer(app)
     const { dappApiUrl, publicUrl } = deriveUrls(config)
     const response = await request(
-        dapp(
-            '/api/v0/dapp',
+        dapp({
+            route: '/api/v0/dapp',
             app,
-            pino(sink()),
+            logger: pino(sink()),
             server,
-            config.kernel,
-            dappApiUrl,
-            publicUrl,
-            config.server,
+            kernelInfo: config.kernel,
+            dappUrl: dappApiUrl,
+            userUrl: publicUrl,
+            serverConfig: config.server,
             notificationService,
             store,
-            { signingDrivers: {} },
-            'HASHING_SCHEME_VERSION_V3'
-        )
+            deps: { signingDrivers: {} },
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        })
     )
         .post('/api/v0/dapp')
         .send({ jsonrpc: '2.0', id: 0, method: 'connect', params: [] })
@@ -78,20 +81,20 @@ test('streams session & user notifications over SSE until logout', async () => {
     })
     const server = createServer(app)
     const { dappApiUrl, publicUrl } = deriveUrls(config)
-    dapp(
-        '/api/v0/dapp',
+    dapp({
+        route: '/api/v0/dapp',
         app,
-        pino(sink()),
+        logger: pino(sink()),
         server,
-        config.kernel,
-        dappApiUrl,
-        publicUrl,
-        config.server,
-        service,
+        kernelInfo: config.kernel,
+        dappUrl: dappApiUrl,
+        userUrl: publicUrl,
+        serverConfig: config.server,
+        notificationService: service,
         store,
-        { signingDrivers: {} },
-        'HASHING_SCHEME_VERSION_V3'
-    )
+        deps: { signingDrivers: {} },
+        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+    })
 
     const sessionNotifier = service.getNotifier('sse-session')
     const userNotifier = service.getNotifier('sse-user')

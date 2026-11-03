@@ -172,18 +172,18 @@ function createController(
     requestOrigin: string | null = origin,
     deps?: DappControllerDeps
 ) {
-    return dappController(
+    return dappController({
         kernelInfo,
         dappUrl,
         userUrl,
         store,
         notificationService,
         logger,
-        requestOrigin,
-        deps || { signingDrivers: {} },
-        'HASHING_SCHEME_VERSION_V3',
-        context
-    )
+        origin: requestOrigin,
+        deps: deps || { signingDrivers: {} },
+        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        context,
+    })
 }
 
 describe('dappController', () => {

@@ -75,6 +75,7 @@ import {
     assertIsConnected,
 } from '@canton-network/core-wallet-auth'
 import type { KernelInfo } from '../config/Config.js'
+import type { ConfigManagedIds } from '../config/ConfigUtils.js'
 import {
     isRpcError,
     SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
@@ -106,18 +107,33 @@ import {
     type SigningDrivers,
 } from '@canton-network/core-wallet-services'
 
-export const userController = (
-    kernelInfo: KernelInfo,
-    userUrl: string,
-    store: Store,
-    notificationService: NotificationService,
-    authContext: AuthContext | undefined,
-    drivers: SigningDrivers,
-    _logger: Logger,
-    hashingSchemeVersion: HASHING_SCHEME_VERSION,
-    adminUserId: string | undefined,
+export interface UserControllerOptions {
+    kernelInfo: KernelInfo
+    userUrl: string
+    store: Store
+    notificationService: NotificationService
+    authContext: AuthContext | undefined
+    drivers: SigningDrivers
+    logger: Logger
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
+    adminUserId: string | undefined
     serverStatus: ServerStatusService
-) => {
+    configManaged: ConfigManagedIds
+}
+
+export const userController = ({
+    kernelInfo,
+    userUrl,
+    store,
+    notificationService,
+    authContext,
+    drivers,
+    logger: _logger,
+    hashingSchemeVersion,
+    adminUserId,
+    serverStatus,
+    configManaged,
+}: UserControllerOptions) => {
     const logger = _logger.child({ component: 'user-controller' })
     const provider = {
         id: kernelInfo.id,
@@ -129,6 +145,19 @@ export const userController = (
     function isAdmin(): boolean {
         const userId = authContext?.userId
         return !!adminUserId && !!userId && userId === adminUserId
+    }
+
+    function assertNotConfigManaged(
+        kind: 'Network' | 'Identity provider',
+        id: string
+    ): void {
+        const ids =
+            kind === 'Network' ? configManaged.networkIds : configManaged.idpIds
+        if (ids.has(id)) {
+            throw new Error(
+                `${kind} ${id} is managed by the config file and cannot be changed at runtime`
+            )
+        }
     }
 
     function assertAdmin(): void {
@@ -190,9 +219,11 @@ export const userController = (
     /**
      * Session responses always include user auth for the UI.
      * Privileged credentials are included only for the admin user.
+     * Client secrets are never included, a self_signed secret lets the
+     * caller sign tokens for any user.
      */
     function toSessionNetwork(network: Network): ApiNetwork {
-        const dto = toNetworkDto(network)
+        const dto = toNetworkDto(network, true)
         if (isAdmin()) {
             return dto
         }
@@ -254,6 +285,7 @@ export const userController = (
         addNetwork: async (params: AddNetworkParams) => {
             assertAdmin()
             const { network } = params
+            assertNotConfigManaged('Network', network.id)
 
             const ledgerApi = {
                 baseUrl: network.ledgerApi ?? '',
@@ -318,6 +350,7 @@ export const userController = (
         },
         removeNetwork: async (params: RemoveNetworkParams) => {
             assertAdmin()
+            assertNotConfigManaged('Network', params.networkName)
             await store.removeNetwork(params.networkName)
             return null
         },
@@ -325,6 +358,9 @@ export const userController = (
             const networks = await store.listNetworks()
             return {
                 networks: networks.map(toPublicNetwork),
+                ...(isAdmin() && {
+                    configManagedIds: [...configManaged.networkIds],
+                }),
             }
         },
         getNetwork: async (
@@ -332,7 +368,12 @@ export const userController = (
         ): Promise<GetNetworkResult> => {
             assertAdmin()
             const network = await store.getNetwork(params.networkId)
-            return { network: toNetworkDto(network) }
+            return {
+                network: toNetworkDto(
+                    network,
+                    configManaged.networkIds.has(network.id)
+                ),
+            }
         },
         selfSignedAccessToken: async (
             params: SelfSignedAccessTokenParams
@@ -394,6 +435,7 @@ export const userController = (
         addIdp: async (params: AddIdpParams) => {
             assertAdmin()
             const validatedIdp = idpSchema.parse(params.idp)
+            assertNotConfigManaged('Identity provider', validatedIdp.id)
 
             // TODO: Add an explicit updateIdp method to the User API spec and controller
             const existingIdps = await store.listIdps()
@@ -409,11 +451,18 @@ export const userController = (
         },
         removeIdp: async (params: RemoveIdpParams) => {
             assertAdmin()
+            assertNotConfigManaged(
+                'Identity provider',
+                params.identityProviderId
+            )
             logger.info(`Removing IDP ${params.identityProviderId}`)
             await store.removeIdp(params.identityProviderId)
             return null
         },
-        listIdps: async () => ({ idps: await store.listIdps() }),
+        listIdps: async () => ({
+            idps: await store.listIdps(),
+            ...(isAdmin() && { configManagedIds: [...configManaged.idpIds] }),
+        }),
         createWallet: async (params: CreateWalletParams) => {
             const { signingProviderId, primary, partyHint } = params
 
@@ -1736,7 +1785,8 @@ export const userController = (
     })
 }
 
-function toAuthDto(auth: Auth): ApiNetwork['auth'] {
+function toAuthDto(auth: Auth, redactSecrets: boolean): ApiNetwork['auth'] {
+    const clientSecret = (secret: string) => (redactSecrets ? '' : secret)
     switch (auth.method) {
         case 'authorization_code':
             return {
@@ -1754,7 +1804,7 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
                 audience: auth.audience,
                 scope: auth.scope,
                 clientId: auth.clientId,
-                clientSecret: auth.clientSecret,
+                clientSecret: clientSecret(auth.clientSecret),
             }
         case 'self_signed':
             return {
@@ -1762,7 +1812,7 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
                 audience: auth.audience,
                 scope: auth.scope,
                 clientId: auth.clientId,
-                clientSecret: auth.clientSecret,
+                clientSecret: clientSecret(auth.clientSecret),
                 issuer: auth.issuer,
             }
         case 'self_issued':
@@ -1774,7 +1824,12 @@ function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     }
 }
 
-function toNetworkDto(network: Network): ApiNetwork {
+/**
+ * @param redactSecrets returns the client secrets empty. Secrets of
+ * config-managed networks usually come from environment variables of the
+ * Wallet Gateway.
+ */
+function toNetworkDto(network: Network, redactSecrets: boolean): ApiNetwork {
     return {
         id: network.id,
         name: network.name,
@@ -1782,12 +1837,17 @@ function toNetworkDto(network: Network): ApiNetwork {
         synchronizerId: network.synchronizerId,
         identityProviderId: network.identityProviderId,
         ledgerApi: network.ledgerApi.baseUrl,
-        auth: toAuthDto(network.auth),
+        auth: toAuthDto(network.auth, redactSecrets),
         ...(network.adminAuth
-            ? { adminAuth: toAuthDto(network.adminAuth) }
+            ? { adminAuth: toAuthDto(network.adminAuth, redactSecrets) }
             : {}),
         ...(network.serviceAccountAuth
-            ? { serviceAccountAuth: toAuthDto(network.serviceAccountAuth) }
+            ? {
+                  serviceAccountAuth: toAuthDto(
+                      network.serviceAccountAuth,
+                      redactSecrets
+                  ),
+              }
             : {}),
     }
 }

@@ -81,4 +81,22 @@ describe('idp-card', () => {
         expect(listener.mock.calls[0][0]).toBeInstanceOf(IdpCardReviewEvent)
         expect((listener.mock.calls[0][0] as IdpCardReviewEvent).idp).toBe(idp)
     })
+
+    it('marks config-managed identity providers with a badge', async () => {
+        const el = await fixture<IdpCard>(
+            html`<idp-card .idp=${makeIdp()}></idp-card>`
+        )
+        expect(el.shadowRoot?.querySelector('.badge-config')).toBeNull()
+
+        const managed = await fixture<IdpCard>(
+            html`<idp-card
+                .idp=${makeIdp()}
+                .configManaged=${true}
+                .readonly=${true}
+            ></idp-card>`
+        )
+        expect(
+            managed.shadowRoot?.querySelector('.badge-config')?.textContent
+        ).toBe('CONFIG FILE')
+    })
 })
