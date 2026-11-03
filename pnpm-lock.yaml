@@ -1739,6 +1739,9 @@ importers:
       '@canton-network/core-ledger-proto':
         specifier: 'workspace:'
         version: link:../ledger-proto
+      '@canton-network/core-tx-hashing':
+        specifier: 'workspace:'
+        version: link:../tx-hashing
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
