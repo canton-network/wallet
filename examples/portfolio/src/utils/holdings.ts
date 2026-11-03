@@ -21,7 +21,7 @@ export interface PortfolioHolding {
 
 export const basicAccount = (owner: string): Account => ({
     owner,
-    provider: 'null',
+    provider: null,
     id: '',
 })
 

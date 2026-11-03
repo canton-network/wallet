@@ -288,15 +288,17 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                 error={hasFieldError(field)}
                                 helperText={getFieldError(field)}
                             />
-                            <Typography
-                                variant="body2"
-                                sx={{ mt: 0.75, color: 'text.secondary' }}
+                            <form.Subscribe
+                                selector={(state) => state.values.instrumentId}
                             >
-                                Available balance:{' '}
-                                {selectedInstrument
-                                    ? `${selectedInstrument.availableAmount} ${selectedInstrument.symbol}`
-                                    : '—'}
-                            </Typography>
+                                {(instrumentId) => (
+                                    <AvailableBalance
+                                        partyId={primaryParty}
+                                        instrumentId={instrumentId}
+                                        symbol={selectedInstrument?.symbol}
+                                    />
+                                )}
+                            </form.Subscribe>
                         </FieldBlock>
                     )}
                 </form.Field>
@@ -564,4 +566,24 @@ const hasFieldError = (field: AnyFieldApi) =>
 const getFieldError = (field: AnyFieldApi) => {
     if (!hasFieldError(field)) return undefined
     return field.state.meta.errors[0]?.message
+}
+
+function AvailableBalance({
+    partyId,
+    instrumentId,
+    symbol,
+}: {
+    partyId: string | undefined
+    instrumentId: TransferFormData['instrumentId']
+    symbol: string | undefined
+}) {
+    const balance = useInstrumentAvailableBalance(partyId, instrumentId)
+    return (
+        <Typography variant="body2" sx={{ mt: 0.75, color: 'text.secondary' }}>
+            Available balance:{' '}
+            {instrumentId && symbol
+                ? `${balance?.availableAmount ?? '0'} ${symbol}`
+                : '-'}
+        </Typography>
+    )
 }
