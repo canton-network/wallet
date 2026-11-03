@@ -75,6 +75,9 @@ export const buildAuthorization = async (
         state: btoa(JSON.stringify(statePayload)),
         code_challenge: challenge,
         code_challenge_method: 'S256',
+        // Without this the IDP silently reuses its own session, so logging
+        // out of the gateway would not let the user sign in as someone else
+        prompt: 'login',
     })
 
     return `${config.authorization_endpoint}?${urlParams.toString()}`
