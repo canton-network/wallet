@@ -835,7 +835,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async removeNetwork(networkId: string): Promise<void> {
-        const userId = this.assertConnected()
+        this.assertConnected()
         await this.db.transaction().execute(async (trx) => {
             const network = await trx
                 .selectFrom('networks')
@@ -844,11 +844,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .executeTakeFirst()
             if (!network) {
                 throw new Error(`Network ${networkId} does not exists`)
-            }
-            if (network.userId !== userId) {
-                throw new Error(
-                    `Network ${networkId} is not owned by user ${userId}`
-                )
             }
             await trx
                 .deleteFrom('networks')
