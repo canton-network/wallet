@@ -2241,6 +2241,9 @@ importers:
       '@canton-network/core-token-standard-v2':
         specifier: 'workspace:'
         version: link:../../../core/token-standard-v2
+      '@canton-network/core-tx-hashing':
+        specifier: 'workspace:'
+        version: link:../../../core/tx-hashing
       '@canton-network/core-tx-parser':
         specifier: 'workspace:'
         version: link:../../../core/tx-parser
