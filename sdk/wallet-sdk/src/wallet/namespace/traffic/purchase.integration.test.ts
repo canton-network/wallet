@@ -1,0 +1,233 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import { randomUUID } from 'node:crypto'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { describe, expect, it } from 'vitest'
+import { packageId } from '@canton-network/core-traffic-purchase'
+import { SDK } from '../../sdk.js'
+import { localNetStaticConfig } from '../../../config.js'
+import { localNetAuth } from './test-support/localnet-auth.js'
+import { TrafficScan } from './test-support/traffic-scan.js'
+import { TrafficPaymasterApi } from './test-support/traffic-paymaster-api.js'
+
+/**
+ * The full round trip a wallet provider sets `traffic` up for, against a real
+ * splice LocalNet (`pnpm run start:localnet` from the repo root; it needs to be
+ * running with the traffic-enforcement config `scripts/src/start-localnet.ts`
+ * adds for the app-user participant, and `pnpm generate:traffic-purchase` run
+ * once so the model's DAR and bindings exist on disk):
+ *
+ *  1. `traffic.setup` converges a paymaster onto selling traffic for Amulet.
+ *  2. `traffic.purchaseTraffic` buys traffic for a user account, paid for by an
+ *     external party signing for itself.
+ *  3. A `TrafficScan` -- standing in for the participant TEA -- notices the
+ *     `PublishCredit` exercise the purchase makes on the participant's own
+ *     update stream and applies it to the account with `topUpTraffic`.
+ *  4. `traffic.getTraffic` reads the balance back, independently of what the
+ *     scan reported, to confirm it is the participant's own account that moved.
+ */
+describe('traffic.setup and traffic.purchaseTraffic on LocalNet', () => {
+    it('buys traffic for a user account, and the scan tops the balance up', async () => {
+        const auth = localNetAuth(localNetStaticConfig.LOCALNET_USER_ID)
+
+        const admin = await SDK.create({
+            auth,
+            ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            // LocalNet's app-user participant connects to both the global
+            // synchronizer -- where Amulet lives -- and an app-synchronizer.
+            // A purchase settles an Amulet transfer in the same transaction it
+            // exercises the paymaster's contracts, so everything has to run on
+            // the global one; with multi-sync the default, the SDK will not
+            // guess between the two.
+            synchronizerId: (synchronizers) => {
+                const global = synchronizers.find((s) =>
+                    s.synchronizerId.startsWith('global-domain::')
+                )
+                if (global === undefined) {
+                    throw new Error(
+                        'No global-domain synchronizer connected; saw ' +
+                            synchronizers
+                                .map((s) => s.synchronizerId)
+                                .join(', ')
+                    )
+                }
+                return global.synchronizerId
+            },
+            amulet: {
+                // Needed so preapproval.command.create has a validator party
+                // to default the proposal's provider to; left out, it has
+                // nothing to fall back to and throws.
+                validatorUrl: localNetStaticConfig.LOCALNET_APP_VALIDATOR_URL,
+                scanApiUrl: localNetStaticConfig.LOCALNET_SCAN_API_URL,
+                registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+                auth,
+            },
+            asset: {
+                registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
+                auth,
+            },
+            traffic: {
+                registries: [localNetStaticConfig.LOCALNET_REGISTRY_API_URL],
+                auth,
+            },
+        })
+
+        const darBytes = await fs.readFile(await trafficPurchaseDarPath())
+        await admin.ledger.dar.upload(darBytes, packageId)
+
+        const amuletAsset = await admin.asset.find(
+            'Amulet',
+            localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+        )
+        // ConversionRateSpec.instrumentId is the model's two-field InstrumentId,
+        // not the richer AssetBody asset.find returns -- the extra fields are
+        // rejected outright if sent as part of the Daml record.
+        const amulet = { admin: amuletAsset.admin, id: amuletAsset.id }
+
+        const suffix = randomUUID().slice(0, 8)
+        const bytesPerAmulet = '1048576' // a mebibyte of traffic per Amulet
+
+        // 1. Set a paymaster up to sell traffic for Amulet. A paymaster is a
+        // participant-hosted party, so its setup is submitted directly rather
+        // than through the interactive-submission flow an external party needs.
+        const paymaster = await admin.party.internal.allocate({
+            partyHint: `traffic_paymaster_${suffix}`,
+        })
+
+        const setup = await admin.traffic.setup({
+            paymaster,
+            conversionRates: [
+                { instrumentId: amulet, conversionRate: bytesPerAmulet },
+            ],
+        })
+        if (setup.commands.length > 0) {
+            await admin.ledger.internal.submit({
+                commands: setup.commands,
+                actAs: [paymaster],
+            })
+        }
+
+        // The paymaster's own off-ledger API, which is how the buyer finds the
+        // rest: the contracts the setup just created, and -- the point of it --
+        // their disclosures, which only the paymaster can produce.
+        const paymasterApi = await TrafficPaymasterApi.start({
+            traffic: admin.traffic,
+            ledgerApiUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            auth,
+            paymaster,
+        })
+
+        // Amulet refuses to settle a direct transfer to a party that has not
+        // pre-approved one, so the paymaster needs one before it can be paid.
+        const preapprovalCommand =
+            await admin.amulet.preapproval.command.create({
+                parties: { receiver: paymaster },
+            })
+        await admin.ledger.internal.submit({
+            commands: [preapprovalCommand],
+            actAs: [paymaster],
+        })
+        await admin.amulet.preapproval.fetchStatus(paymaster)
+
+        // The buyer: an external party, since a purchase's execute step needs
+        // partySignatures -- a locally hosted party has no key of its own to
+        // sign one with.
+        const buyerKeys = admin.keys.generate()
+        const buyer = await admin.party.external
+            .create(buyerKeys.publicKey, {
+                partyHint: `traffic_buyer_${suffix}`,
+            })
+            .sign(buyerKeys.privateKey)
+            .execute()
+
+        const [tapCommand, tapDisclosedContracts] = await admin.amulet.tap(
+            buyer.partyId,
+            '10'
+        )
+        await admin.ledger
+            .prepare({
+                partyId: buyer.partyId,
+                commands: tapCommand,
+                disclosedContracts: tapDisclosedContracts,
+            })
+            .sign(buyerKeys.privateKey)
+            .execute({ partyId: buyer.partyId })
+
+        // 3. The scan: started before the purchase, so it is following the
+        // stream by the time the purchase's transaction commits.
+        const scan = await TrafficScan.start({
+            ledgerApiUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            auth,
+            traffic: admin.traffic,
+            parties: [paymaster, buyer.partyId],
+        })
+
+        try {
+            // 2. Buy two mebibytes of traffic for the buyer's own account, paid
+            // for in Amulet at the rate the setup just priced it at. Nothing of
+            // the paymaster's half is stated: `paymasterApiUrl` is what the
+            // purchaser contract, the receiver, the rate and both disclosures
+            // are read off.
+            const trafficAmount = '2097152'
+
+            const [purchaseCommand, purchaseDisclosedContracts] =
+                await admin.traffic.purchaseTraffic({
+                    purchaser: buyer.partyId,
+                    paymasterApiUrl: paymasterApi.url,
+                    instrumentId: 'Amulet',
+                    registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+                    targetAccount: buyer.partyId,
+                    trafficAmount,
+                })
+
+            await admin.ledger
+                .prepare({
+                    partyId: buyer.partyId,
+                    commands: purchaseCommand,
+                    disclosedContracts: purchaseDisclosedContracts,
+                })
+                .sign(buyerKeys.privateKey)
+                .execute({ partyId: buyer.partyId })
+
+            // 3. Wait for the scan to have applied the credit...
+            const credit = await scan.waitForCredit(buyer.partyId)
+            expect(credit.balanceDelta).toBe(2_097_152)
+
+            // 4. ...and confirm it against the participant's own account,
+            // independently of what the scan reported.
+            await expect(
+                admin.traffic.getTraffic(buyer.partyId)
+            ).resolves.toEqual({
+                accountId: buyer.partyId,
+                balance: credit.balance,
+            })
+        } finally {
+            await scan.stop()
+            await paymasterApi.stop()
+        }
+    })
+})
+
+/**
+ * `damljs/traffic-purchase-models/.daml/dist/traffic-purchase-models-1.0.0.dar`,
+ * which `pnpm generate:traffic-purchase` builds. Gitignored, like the rest of
+ * the Daml layer's output -- run that once before this test if it is missing.
+ */
+async function trafficPurchaseDarPath(): Promise<string> {
+    const here = path.dirname(fileURLToPath(import.meta.url))
+    const darPath = path.join(
+        here,
+        '../../../../../../damljs/traffic-purchase-models/.daml/dist/traffic-purchase-models-1.0.0.dar'
+    )
+    try {
+        await fs.access(darPath)
+    } catch {
+        throw new Error(
+            `Missing ${darPath}. Run "pnpm generate:traffic-purchase" from the repo root first.`
+        )
+    }
+    return darPath
+}
