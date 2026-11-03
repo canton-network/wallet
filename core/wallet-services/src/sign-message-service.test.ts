@@ -162,7 +162,7 @@ describe('SignMessageService', () => {
             await expect(
                 service.getMessage('missing', 'regular')
             ).rejects.toThrow(
-                'Message signing request not found with id: missing'
+                'Message signing request of kind regular not found with id: missing'
             )
         })
 
@@ -176,7 +176,7 @@ describe('SignMessageService', () => {
             await expect(
                 service.getMessage('token-msg', 'regular')
             ).rejects.toThrow(
-                'Message signing request not found with id: token-msg'
+                'Message signing request of kind regular not found with id: token-msg'
             )
         })
     })
@@ -257,7 +257,7 @@ describe('SignMessageService', () => {
             await expect(
                 service.deleteMessage(authContext, 'token-msg', 'regular')
             ).rejects.toThrow(
-                'Message signing request not found with id: token-msg'
+                'Message signing request of kind regular not found with id: token-msg'
             )
             expect(store.removeMessageRaw).not.toHaveBeenCalled()
             expect(emit).not.toHaveBeenCalled()
@@ -273,7 +273,7 @@ describe('SignMessageService', () => {
             await expect(
                 service.sign(authContext, 'missing', 'regular')
             ).rejects.toThrow(
-                'Message signing request not found with id: missing'
+                'Message signing request of kind regular not found with id: missing'
             )
         })
 
@@ -296,7 +296,7 @@ describe('SignMessageService', () => {
             await expect(
                 service.sign(authContext, 'msg-1', 'regular')
             ).rejects.toThrow(
-                'Message signing request not found with id: msg-1'
+                'Message signing request of kind regular not found with id: msg-1'
             )
             expect(signMessage).not.toHaveBeenCalled()
             expect(store.setMessageRawStatus).not.toHaveBeenCalled()
@@ -732,7 +732,7 @@ describe('SignMessageService', () => {
             await expect(
                 service.refreshMessage(authContext, 'missing', 'regular')
             ).rejects.toThrow(
-                'Message signing request not found with id: missing'
+                'Message signing request of kind regular not found with id: missing'
             )
         })
 
@@ -751,7 +751,7 @@ describe('SignMessageService', () => {
             await expect(
                 service.refreshMessage(authContext, 'msg-1', 'regular')
             ).rejects.toThrow(
-                'Message signing request not found with id: msg-1'
+                'Message signing request of kind regular not found with id: msg-1'
             )
             expect(getTransaction).not.toHaveBeenCalled()
             expect(store.setMessageRawStatus).not.toHaveBeenCalled()
