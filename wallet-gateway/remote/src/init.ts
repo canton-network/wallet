@@ -123,11 +123,13 @@ async function initializeDatabase(
                         Number(networksCount.rows[0]?.rowCount ?? 0) > 0
                 }
 
+                // Like the db bootstrap command, only bootstrap if both are
+                // empty. Bootstrap fails for existing rows, and the admin may
+                // have removed all networks at runtime.
                 if (
                     !idpsExists ||
                     !networksExists ||
-                    !idpsHasRows ||
-                    !networksHasRows
+                    (!idpsHasRows && !networksHasRows)
                 ) {
                     logger.warn(
                         'Database exists but required tables are missing or empty. Attempting to bootstrap...'
