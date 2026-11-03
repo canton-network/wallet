@@ -161,7 +161,6 @@ describe('UserUiSelfIssuedLogin', () => {
 
     afterEach(() => {
         document.body.innerHTML = ''
-        vi.clearAllMocks()
     })
 
     async function renderCreateForm() {
