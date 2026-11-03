@@ -17,7 +17,8 @@ export const fillField = async (
     field: HTMLElement,
     text: string
 ) => {
-    await user.tripleClick(field)
+    field.focus()
+    field.select()
     await user.keyboard('{Backspace}')
     if (text) await user.keyboard(text)
     fireEvent.change(field)

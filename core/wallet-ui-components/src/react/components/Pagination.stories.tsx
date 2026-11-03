@@ -166,3 +166,11 @@ export const Controlled: Story = {
         ).toBeVisible()
     },
 }
+
+export const Disabled: Story = {
+    args: { total: 15, pageSize: 5, page: 2, disabled: true },
+    play: async ({ canvasElement }) => {
+        await expect(await previous(canvasElement)).toBeDisabled()
+        await expect(await next(canvasElement)).toBeDisabled()
+    },
+}
