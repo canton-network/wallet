@@ -37,7 +37,7 @@ export class SignMessageService {
         const message = await this.store.getMessageRaw(messageId)
         if (!message || message.kind !== kind) {
             throw new Error(
-                `Message signing request not found with id: ${messageId}`
+                `Message signing request of kind ${kind} not found with id: ${messageId}`
             )
         }
         return message
