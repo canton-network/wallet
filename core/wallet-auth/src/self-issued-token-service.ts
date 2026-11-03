@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { base64url, calculateJwkThumbprint, decodeJwt, type JWK } from 'jose'
+import { base64url, calculateJwkThumbprint, type JWK } from 'jose'
+import { jwtExpiresAt } from './auth-utils.js'
 
 export type SelfIssuedTokenClaimsInputs = {
     audience: string
@@ -56,9 +57,7 @@ export class SelfIssuedTokenService {
     // Tells whether the token prepared by prepareForSigning has expired. A token without expiry counts as expired
     static isSigningInputExpired(signingInput: string): boolean {
         try {
-            // decodeJwt expects three segments, the signature segment is not read
-            const exp = decodeJwt(`${signingInput}.`).exp
-            return typeof exp !== 'number' || exp * 1000 <= Date.now()
+            return jwtExpiresAt(`${signingInput}.`).getTime() <= Date.now()
         } catch {
             return true
         }
