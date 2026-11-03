@@ -130,10 +130,11 @@ describe('UserUiNetworks', () => {
 
         const cards = Array.from(
             el.shadowRoot!.querySelectorAll('network-card')
-        ) as unknown as Array<{ readonly: boolean }>
+        ) as unknown as Array<{ readonly: boolean; configManaged: boolean }>
         expect(cards.map((card) => card.readonly)).toEqual([true, false])
+        expect(cards.map((card) => card.configManaged)).toEqual([true, false])
         expect(el.shadowRoot?.textContent?.replace(/\s+/g, ' ')).toContain(
-            'Entries managed by the Wallet Gateway config file are read-only.'
+            'Entries marked CONFIG FILE are managed by the Wallet Gateway config file and are read-only.'
         )
     })
 
