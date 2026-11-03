@@ -17,6 +17,8 @@ import { showToast } from '../utils'
 import type { GetSignMessageStatusResult } from '@canton-network/core-wallet-user-rpc-client'
 import { detectCurrentOrigin } from '../listeners.js'
 
+const POLL_INTERVAL_MS = 3000
+
 @customElement('user-ui-sign-message')
 export class UserUiSignMessage extends BaseElement {
     @state() accessor messageId = ''
@@ -31,16 +33,15 @@ export class UserUiSignMessage extends BaseElement {
     @state() accessor isSigning = false
     @state() accessor loadError: string | null = null
     @state() accessor isLoading = true
-    @state() accessor pollIntervalMs = 3000
     private pollTimer: ReturnType<typeof setTimeout> | null = null
-    private pollDelay = 3000
+    private pollDelay = POLL_INTERVAL_MS
     private polling = false
 
     connectedCallback(): void {
         super.connectedCallback()
         const url = new URL(window.location.href)
         this.messageId = url.searchParams.get('messageId') || ''
-        this.pollDelay = this.pollIntervalMs
+        this.pollDelay = POLL_INTERVAL_MS
         document.addEventListener('visibilitychange', this.onVisibilityChange)
         void this.load()
     }
@@ -112,7 +113,7 @@ export class UserUiSignMessage extends BaseElement {
         if (document.hidden) {
             this.stopPolling()
         } else {
-            this.pollDelay = this.pollIntervalMs
+            this.pollDelay = POLL_INTERVAL_MS
             this.syncPolling()
         }
     }
@@ -157,7 +158,7 @@ export class UserUiSignMessage extends BaseElement {
             })
 
             if (res.status !== this.status) {
-                this.pollDelay = this.pollIntervalMs
+                this.pollDelay = POLL_INTERVAL_MS
                 await this.updateState()
                 if (res.status === 'signed') {
                     showToast('', 'Message signed successfully', 'success')
@@ -168,14 +169,11 @@ export class UserUiSignMessage extends BaseElement {
 
             this.pollDelay = Math.min(
                 this.pollDelay * 1.5,
-                this.pollIntervalMs * 5
+                POLL_INTERVAL_MS * 5
             )
         } catch (err) {
             console.error(err)
-            this.pollDelay = Math.min(
-                this.pollDelay * 2,
-                this.pollIntervalMs * 10
-            )
+            this.pollDelay = Math.min(this.pollDelay * 2, POLL_INTERVAL_MS * 10)
         } finally {
             this.polling = false
             this.syncPolling()

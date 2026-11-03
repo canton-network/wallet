@@ -32,6 +32,8 @@ import { setLocationHref } from '../navigation.js'
 
 import '@canton-network/core-wallet-ui-components'
 
+const POLL_INTERVAL_MS = 3000
+
 @customElement('user-ui-self-issued-login')
 export class UserUiSelfIssuedLogin extends BaseElement {
     @state() private accessor submitting = false
@@ -51,8 +53,6 @@ export class UserUiSelfIssuedLogin extends BaseElement {
     @state() private accessor loggingIn = false
     // Indicates that the latest poll failed, polling continues with backoff.
     @state() private accessor pollFailing = false
-    // Baseline polling interval
-    @state() accessor pollIntervalMs = 3000
     @state() private accessor selectedSigningProvider = ''
     @state() private accessor publicKeys: KeysList = []
     @state() private accessor publicKeysLoading = false
@@ -65,7 +65,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
     private loginWallet: Wallet | undefined
     private pollTimer: ReturnType<typeof setTimeout> | null = null
     // Current polling delay, increased while an operation remains pending.
-    private pollDelay = 3000
+    private pollDelay = POLL_INTERVAL_MS
     // Prevents overlapping polling requests.
     private polling = false
 
@@ -102,7 +102,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
-        this.pollDelay = this.pollIntervalMs
+        this.pollDelay = POLL_INTERVAL_MS
         document.addEventListener('visibilitychange', this.onVisibilityChange)
         this.origin = await detectCurrentOrigin()
         this.sessionId = stateManager.selfIssuedLoginSessionId.get(this.origin)
@@ -239,7 +239,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
         if (document.hidden) {
             this.stopPolling()
         } else {
-            this.pollDelay = this.pollIntervalMs
+            this.pollDelay = POLL_INTERVAL_MS
             this.syncPolling()
         }
     }
@@ -298,16 +298,13 @@ export class UserUiSelfIssuedLogin extends BaseElement {
             this.pollFailing = false
             // Reset common interval delay between successful party allocation polling and acces token signature polling
             this.pollDelay = settled
-                ? this.pollIntervalMs
-                : Math.min(this.pollDelay * 1.5, this.pollIntervalMs * 5)
+                ? POLL_INTERVAL_MS
+                : Math.min(this.pollDelay * 1.5, POLL_INTERVAL_MS * 5)
         } catch (error) {
             if (!this.isConnected) return
             console.error(error)
             this.pollFailing = true
-            this.pollDelay = Math.min(
-                this.pollDelay * 2,
-                this.pollIntervalMs * 10
-            )
+            this.pollDelay = Math.min(this.pollDelay * 2, POLL_INTERVAL_MS * 10)
         } finally {
             if (this.isConnected) {
                 this.polling = false

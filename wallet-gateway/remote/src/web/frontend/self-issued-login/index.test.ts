@@ -90,6 +90,7 @@ import './index.js'
 import type { UserUiSelfIssuedLogin } from './index.js'
 
 const accessToken = `header.${btoa(JSON.stringify({ exp: 2_000_000_000 }))}.sig`
+const POLL_INTERVAL_MS = 3000
 const listSigningProvidersRequest = vi.fn()
 const getLoginModeRequest = vi.fn()
 const listSigningProviderKeysRequest = vi.fn()
@@ -110,12 +111,7 @@ const selfIssuedApiRequests = [
 ]
 
 async function advanceTimersByTime(ms: number) {
-    vi.useFakeTimers()
-    try {
-        await vi.advanceTimersByTimeAsync(ms)
-    } finally {
-        vi.useRealTimers()
-    }
+    await vi.advanceTimersByTimeAsync(ms)
 }
 
 function routeSelfIssuedApiRequest({
@@ -376,7 +372,6 @@ describe('UserUiSelfIssuedLogin', () => {
     })
 
     describe('party awaiting signing provider approval', () => {
-        const POLL_MS = 20
         const pendingWallet = makeWallet({
             partyId: 'alice::namespace',
             status: 'initialized',
@@ -397,6 +392,7 @@ describe('UserUiSelfIssuedLogin', () => {
         let loginResult: SignSelfIssuedAccessTokenResult
 
         beforeEach(() => {
+            vi.useFakeTimers()
             allocationResult = { wallet: pendingWallet }
             loginResult = connected
             getLoginModeRequest.mockResolvedValue({ mode: 'create' })
@@ -410,24 +406,24 @@ describe('UserUiSelfIssuedLogin', () => {
         afterEach(() => {
             el?.remove()
             el = undefined
+            vi.useRealTimers()
         })
 
         async function createPendingParty() {
             el = await fixture<UserUiSelfIssuedLogin>(
-                html`<user-ui-self-issued-login
-                    .pollIntervalMs=${POLL_MS}
-                ></user-ui-self-issued-login>`
+                html`<user-ui-self-issued-login></user-ui-self-issued-login>`
             )
-            await waitUntil(
-                () =>
-                    el?.shadowRoot?.querySelector('wg-wallet-create-form') !==
-                    null
+            await vi.waitFor(() =>
+                expect(
+                    el?.shadowRoot?.querySelector('wg-wallet-create-form')
+                ).not.toBeNull()
             )
             el.shadowRoot
                 ?.querySelector('wg-wallet-create-form')
                 ?.dispatchEvent(
                     new WalletCreateEvent('auth-party', 'dfns', false)
                 )
+            await advanceTimersByTime(POLL_INTERVAL_MS)
             await vi.waitFor(() =>
                 expect(allocateWalletRequest).toHaveBeenCalled()
             )
@@ -450,6 +446,7 @@ describe('UserUiSelfIssuedLogin', () => {
             })
 
             allocationResult = { wallet: allocatedWallet }
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
             await vi.waitFor(() =>
                 expect(redirectToIntendedOrDefault).toHaveBeenCalledOnce()
             )
@@ -460,7 +457,7 @@ describe('UserUiSelfIssuedLogin', () => {
             expect(el?.shadowRoot?.querySelector('wg-wallet-card')).toBeNull()
             expect(el?.shadowRoot?.textContent).toContain('Logging in...')
             const pollsAfterAllocation = allocateWalletRequest.mock.calls.length
-            await advanceTimersByTime(POLL_MS * 5)
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
             expect(allocateWalletRequest).toHaveBeenCalledTimes(
                 pollsAfterAllocation
             )
@@ -475,6 +472,7 @@ describe('UserUiSelfIssuedLogin', () => {
 
             await createPendingParty()
 
+            await advanceTimersByTime(POLL_INTERVAL_MS)
             await vi.waitFor(() =>
                 expect(getAccessTokenStatusRequest).toHaveBeenCalled()
             )
@@ -491,8 +489,10 @@ describe('UserUiSelfIssuedLogin', () => {
             await vi.waitFor(() =>
                 expect(handleErrorToast).toHaveBeenCalledWith(error)
             )
-            await waitUntil(
-                () => el?.shadowRoot?.querySelector('wg-wallet-card') !== null
+            await vi.waitFor(() =>
+                expect(
+                    el?.shadowRoot?.querySelector('wg-wallet-card')
+                ).not.toBeNull()
             )
             el?.shadowRoot
                 ?.querySelector('wg-wallet-card')
@@ -509,18 +509,19 @@ describe('UserUiSelfIssuedLogin', () => {
             allocationResult = {
                 wallet: { ...pendingWallet, status: 'removed' },
             }
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
             await vi.waitFor(() =>
                 expect(handleErrorToast).toHaveBeenCalledWith(
                     new Error('Party allocation was rejected')
                 )
             )
-            await waitUntil(
-                () =>
-                    el?.shadowRoot?.querySelector('wg-wallet-create-form') !==
-                    null
+            await vi.waitFor(() =>
+                expect(
+                    el?.shadowRoot?.querySelector('wg-wallet-create-form')
+                ).not.toBeNull()
             )
             const pollsAfterRejection = allocateWalletRequest.mock.calls.length
-            await advanceTimersByTime(POLL_MS * 5)
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
             expect(allocateWalletRequest).toHaveBeenCalledTimes(
                 pollsAfterRejection
             )
@@ -531,7 +532,7 @@ describe('UserUiSelfIssuedLogin', () => {
 
             el?.remove()
             const pollsAfterRemoval = allocateWalletRequest.mock.calls.length
-            await advanceTimersByTime(POLL_MS * 5)
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
 
             expect(allocateWalletRequest).toHaveBeenCalledTimes(
                 pollsAfterRemoval
@@ -657,10 +658,7 @@ describe('UserUiSelfIssuedLogin', () => {
     })
 
     describe('access token awaiting signing provider approval', () => {
-        const POLL_MS = 20
-        const pollingFixture = html`<user-ui-self-issued-login
-            .pollIntervalMs=${POLL_MS}
-        ></user-ui-self-issued-login>`
+        const pollingFixture = html`<user-ui-self-issued-login></user-ui-self-issued-login>`
         const authWallet = makeWallet({
             partyId: 'alice::namespace',
             status: 'allocated',
@@ -689,6 +687,7 @@ describe('UserUiSelfIssuedLogin', () => {
         let statusResult: SignSelfIssuedAccessTokenResult
 
         beforeEach(() => {
+            vi.useFakeTimers()
             loginResult = awaitingSignature
             statusResult = awaitingSignature
             getLoginModeRequest.mockResolvedValue({
@@ -704,16 +703,20 @@ describe('UserUiSelfIssuedLogin', () => {
         afterEach(() => {
             el?.remove()
             el = undefined
+            vi.useRealTimers()
         })
 
         async function selectAuthParty() {
             el = await fixture<UserUiSelfIssuedLogin>(pollingFixture)
-            await waitUntil(
-                () => el?.shadowRoot?.querySelector('wg-wallet-card') !== null
+            await vi.waitFor(() =>
+                expect(
+                    el?.shadowRoot?.querySelector('wg-wallet-card')
+                ).not.toBeNull()
             )
             el.shadowRoot
                 ?.querySelector('wg-wallet-card')
                 ?.dispatchEvent(new WalletCardSelectEvent(authWallet))
+            await advanceTimersByTime(POLL_INTERVAL_MS)
         }
 
         it('polls the access token signature status and completes the login once signed', async () => {
@@ -735,6 +738,7 @@ describe('UserUiSelfIssuedLogin', () => {
             })
 
             statusResult = connected
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
             await vi.waitFor(() =>
                 expect(redirectToIntendedOrDefault).toHaveBeenCalledOnce()
             )
@@ -756,15 +760,18 @@ describe('UserUiSelfIssuedLogin', () => {
             )
 
             statusResult = failed
-            await waitUntil(
-                () => el?.shadowRoot?.querySelector('[role="alert"]') !== null
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
+            await vi.waitFor(() =>
+                expect(
+                    el?.shadowRoot?.querySelector('[role="alert"]')
+                ).not.toBeNull()
             )
             expect(
                 el?.shadowRoot?.querySelector('[role="alert"]')?.textContent
             ).toContain('Signing provider returned status: rejected')
             const pollsAfterFailure =
                 getAccessTokenStatusRequest.mock.calls.length
-            await advanceTimersByTime(POLL_MS * 5)
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
             expect(getAccessTokenStatusRequest).toHaveBeenCalledTimes(
                 pollsAfterFailure
             )
@@ -805,13 +812,15 @@ describe('UserUiSelfIssuedLogin', () => {
 
             await selectAuthParty()
 
-            await waitUntil(
-                () => el?.shadowRoot?.querySelector('[role="alert"]') !== null
+            await vi.waitFor(() =>
+                expect(
+                    el?.shadowRoot?.querySelector('[role="alert"]')
+                ).not.toBeNull()
             )
             expect(
                 el?.shadowRoot?.querySelector('[role="alert"]')?.textContent
             ).toContain('Signing provider returned status: rejected')
-            await advanceTimersByTime(POLL_MS * 5)
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
             expect(getAccessTokenStatusRequest).not.toHaveBeenCalled()
         })
 
@@ -819,13 +828,16 @@ describe('UserUiSelfIssuedLogin', () => {
             selfIssuedAccessTokenMessageIdGet.mockReturnValue('login-message-1')
 
             el = await fixture<UserUiSelfIssuedLogin>(pollingFixture)
+            await advanceTimersByTime(POLL_INTERVAL_MS)
 
             await vi.waitFor(() =>
                 expect(getAccessTokenStatusRequest).toHaveBeenCalled()
             )
             expect(signAccessTokenRequest).not.toHaveBeenCalled()
-            await waitUntil(() =>
-                el?.shadowRoot?.textContent?.includes('Waiting for approval')
+            await vi.waitFor(() =>
+                expect(el?.shadowRoot?.textContent).toContain(
+                    'Waiting for approval'
+                )
             )
         })
 
@@ -845,7 +857,8 @@ describe('UserUiSelfIssuedLogin', () => {
                 if (statusError) throw statusError
                 return statusResult
             })
-            await waitUntil(() => notice() !== null)
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
+            await vi.waitFor(() => expect(notice()).not.toBeNull())
             expect(notice()?.textContent).toContain(
                 'An error occurred while checking the approval'
             )
@@ -854,8 +867,9 @@ describe('UserUiSelfIssuedLogin', () => {
             )
 
             statusError = undefined
-            await waitUntil(() => notice() === null, undefined, {
-                timeout: POLL_MS * 30,
+            await advanceTimersByTime(POLL_INTERVAL_MS * 10)
+            await vi.waitFor(() => expect(notice()).toBeNull(), {
+                timeout: POLL_INTERVAL_MS * 10,
             })
             expect(el?.shadowRoot?.textContent).toContain(
                 'Waiting for approval'
@@ -891,12 +905,13 @@ describe('UserUiSelfIssuedLogin', () => {
                 setHidden(true)
                 const pollsWhileHidden =
                     getAccessTokenStatusRequest.mock.calls.length
-                await advanceTimersByTime(POLL_MS * 5)
+                await advanceTimersByTime(POLL_INTERVAL_MS * 5)
                 expect(getAccessTokenStatusRequest).toHaveBeenCalledTimes(
                     pollsWhileHidden
                 )
 
                 setHidden(false)
+                await advanceTimersByTime(POLL_INTERVAL_MS)
                 await vi.waitFor(() =>
                     expect(
                         getAccessTokenStatusRequest.mock.calls.length
@@ -904,6 +919,7 @@ describe('UserUiSelfIssuedLogin', () => {
                 )
 
                 statusResult = connected
+                await advanceTimersByTime(POLL_INTERVAL_MS * 5)
                 await vi.waitFor(() =>
                     expect(redirectToIntendedOrDefault).toHaveBeenCalledOnce()
                 )
@@ -919,7 +935,7 @@ describe('UserUiSelfIssuedLogin', () => {
             el?.remove()
             const pollsAfterRemoval =
                 getAccessTokenStatusRequest.mock.calls.length
-            await advanceTimersByTime(POLL_MS * 5)
+            await advanceTimersByTime(POLL_INTERVAL_MS * 5)
 
             expect(getAccessTokenStatusRequest).toHaveBeenCalledTimes(
                 pollsAfterRemoval
