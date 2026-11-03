@@ -6,11 +6,11 @@ import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { Box, Button, Chip, Collapse, Stack, Typography } from '@mui/material'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import {
-    formatActivityDate,
     getActivityStatusColor,
     getActivityStatusLabel,
     getActivityType,
 } from '../../internal/activity-utils'
+import { formatDateTime, formatUtcDateTime } from '../../date-time'
 import { ApprovalActions } from './ApprovalActions'
 import { BackLink } from './BackLink'
 import { CardDetailRow } from './CardDetailRow'
@@ -112,7 +112,16 @@ export const TransactionDetail = ({
                 />
                 <CardDetailRow
                     label="Created at"
-                    value={formatActivityDate(createdAt)}
+                    value={formatDateTime(createdAt)}
+                    title={formatUtcDateTime(createdAt)}
+                    action={
+                        createdAt ? (
+                            <CopyButton
+                                value={createdAt}
+                                label="Copy created at timestamp"
+                            />
+                        ) : undefined
+                    }
                 />
                 <CardDetailRow
                     label="Signatories"

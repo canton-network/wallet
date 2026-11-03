@@ -42,6 +42,8 @@ import {
 } from '@canton-network/core-wallet-services'
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
+import { ServerNotices } from './notices/server-notices.js'
+import { ServerStatusService } from './notices/server-status-service.js'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined
@@ -227,7 +229,11 @@ async function initializeSigningDatabase(
 }
 
 export async function initialize(opts: CliOptions, logger: Logger) {
-    const config = ConfigUtils.loadConfigFile(opts.config)
+    const serverNotices = new ServerNotices(
+        logger.child({ component: 'server-notices' })
+    )
+    const { config, warnings } = ConfigUtils.loadConfigFile(opts.config)
+    warnings.forEach((warning) => serverNotices.report(warning))
 
     // Use CLI port override or config port
     const port = opts.port ? Number(opts.port) : config.server.port
@@ -265,6 +271,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     })
 
     const notificationService = new NotificationService(logger)
+    const serverStatusService = new ServerStatusService(serverNotices)
 
     const store = await initializeDatabase(config, logger)
     const signingStore = config.signingStore
@@ -275,7 +282,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     const drivers = registerSigningProviders(
         config.signingProviders,
         signingStore,
-        logger
+        logger,
+        serverNotices
     )
 
     const allowedPaths = {
@@ -372,7 +380,8 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         drivers,
         store,
         hashingSchemeVersion,
-        config.server.admin
+        config.server.admin,
+        serverStatusService
     )
 
     const { userPath, dappPath } = config.server

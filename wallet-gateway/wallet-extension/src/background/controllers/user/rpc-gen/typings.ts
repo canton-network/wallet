@@ -624,6 +624,45 @@ export type UserIdentifier = string
 export type IsAdminFlag = boolean
 /**
  *
+ * The version of the Wallet Gateway.
+ *
+ */
+export type GatewayVersion = string
+/**
+ *
+ * Stable identifier of the notice.
+ *
+ */
+export type NoticeId = string
+export type NoticeSeverity = 'info' | 'warning'
+export type NoticeMessage = string
+/**
+ *
+ * When the notice was first reported.
+ *
+ */
+export type NoticeFirstSeenAt = string
+/**
+ *
+ * When the notice was last reported.
+ *
+ */
+export type NoticeLastSeenAt = string
+/**
+ *
+ * A notice for server administrators, e.g. about deprecated configuration.
+ *
+ */
+export interface ServerNotice {
+    id: NoticeId
+    severity: NoticeSeverity
+    message: NoticeMessage
+    firstSeenAt: NoticeFirstSeenAt
+    lastSeenAt: NoticeLastSeenAt
+}
+export type ServerNotices = ServerNotice[]
+/**
+ *
  * The generated API key.
  *
  */
@@ -910,6 +949,10 @@ export interface GetUserResult {
     userId: UserIdentifier
     isAdmin: IsAdminFlag
 }
+export interface GetServerStatusResult {
+    version: GatewayVersion
+    notices: ServerNotices
+}
 export interface GeneratedApiKey {
     id: Id
     apiKey: ApiKeyResult
@@ -1007,6 +1050,7 @@ export type DeleteTransaction = (
     params: DeleteTransactionParams
 ) => Promise<Null>
 export type GetUser = () => Promise<GetUserResult>
+export type GetServerStatus = () => Promise<GetServerStatusResult>
 export type GenerateApiKey = (
     params: GenerateApiKeyParams
 ) => Promise<GeneratedApiKey>

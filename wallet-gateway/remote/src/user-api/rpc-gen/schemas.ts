@@ -1083,6 +1083,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
         required: ['transactionId'],
     }),
     getUser: noParams,
+    getServerStatus: noParams,
     generateApiKey: z.fromJSONSchema({
         title: 'GenerateApiKeyParams',
         type: 'object',

@@ -573,6 +573,9 @@ export const userController = (
         getUser: async () => {
             throw new Error('Function getUser not implemented.')
         },
+        getServerStatus: async () => {
+            throw new Error('Function getServerStatus not implemented.')
+        },
         generateApiKey: async () => {
             throw new Error('Function generateApiKey not implemented.')
         },

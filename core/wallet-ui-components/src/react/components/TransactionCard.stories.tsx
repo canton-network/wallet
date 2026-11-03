@@ -40,8 +40,10 @@ export const Default: Story = {
             canvas.getByText('TransferPreapproval_Send')
         ).toBeInTheDocument()
         await expect(canvas.getByText('100.0 CC')).toBeInTheDocument()
-        // Only the date and time up to the minute are shown
-        await expect(canvas.getByText('2025-06-01 12:34')).toBeInTheDocument()
+        // Shown in the viewer's locale and time zone (pinned in vitest.config.ts), with UTC as tooltip
+        await expect(
+            canvas.getByText('06/01/2025, 02:34 PM GMT+2')
+        ).toHaveAttribute('title', '2025-06-01 12:34:56 UTC')
         await expect(
             canvas.queryByText('External transaction ID')
         ).not.toBeInTheDocument()

@@ -9,7 +9,7 @@ interface CardDetailRowProps {
     /** Text is truncated with an ellipsis; any other node (e.g. chips) is right-aligned and wraps */
     value: ReactNode
     /** Tooltip for a text value. Defaults to the value; set it when `value` is shortened */
-    title?: string
+    title?: string | undefined
     /** Renders the value in the secondary text colour, e.g. for masked values */
     muted?: boolean
     /** Rendered after the value, e.g. a copy button */

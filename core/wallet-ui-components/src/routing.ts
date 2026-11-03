@@ -17,6 +17,7 @@ export const ALLOWED_ROUTES = [
     '/identity-providers/review',
     '/identity-providers',
     '/activities',
+    '/admin',
     '/approve',
     '/sign-message',
     '/',

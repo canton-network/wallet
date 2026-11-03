@@ -10,7 +10,7 @@ import {
 } from './Config.js'
 
 test('config from json file', async () => {
-    const resp = ConfigUtils.loadConfigFile('../test/config.json')
+    const resp = ConfigUtils.loadConfigFile('../test/config.json').config
     expect(resp.bootstrap.networks[0].name).toBe('Local (OAuth IDP)')
     expect(resp.bootstrap.networks[0].ledgerApi.baseUrl).toBe(
         'http://127.0.0.1:5003'
@@ -45,7 +45,9 @@ test('config from json file', async () => {
 })
 
 test('signingStore is optional', () => {
-    const config = { ...ConfigUtils.loadConfigFile('../test/config.json') }
+    const config = {
+        ...ConfigUtils.loadConfigFile('../test/config.json').config,
+    }
     delete config.signingStore
 
     expect(configSchema.parse(config).signingStore).toBeUndefined()
@@ -53,7 +55,7 @@ test('signingStore is optional', () => {
 })
 
 test('signingProviders is optional and opt-in by presence', () => {
-    const config = ConfigUtils.loadConfigFile('../test/config.json')
+    const config = ConfigUtils.loadConfigFile('../test/config.json').config
 
     expect(configSchema.parse(config).signingProviders).toBeUndefined()
     expect(rawConfigSchema.parse(config).signingProviders).toBeUndefined()
