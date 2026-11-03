@@ -25,9 +25,6 @@ export const useInstrumentAvailableBalance = (
 
     return useMemo(() => {
         if (!instrumentId || !partyId || !holdings) {
-            console.log(
-                `[balance] no input: ${partyId} ${instrumentId} ${holdings}`
-            )
             return null
         }
         const sender = account ?? basicAccount(partyId)
@@ -45,8 +42,5 @@ export const useInstrumentAvailableBalance = (
 }
 
 function sameAccount(a: Account, b: Account): boolean {
-    console.log(
-        ` owner check: ${a.owner === b.owner}, provider checkL ${a.provider === b.provider} id check ${a.id === b.id} `
-    )
     return a.owner === b.owner && a.provider === b.provider && a.id === b.id
 }
