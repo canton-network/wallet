@@ -33,7 +33,8 @@
         "vitest": "catalog:"
     },
     "dependencies": {
-        "@canton-network/core-ledger-proto": "workspace:"
+        "@canton-network/core-ledger-proto": "workspace:",
+        "@canton-network/core-tx-hashing": "workspace:"
     },
     "files": [
         "dist/**"

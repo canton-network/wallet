@@ -1,0 +1,13 @@
+{
+    "id": "reject-v3-empty",
+    "kind": "reject",
+    "scheme": "HASHING_SCHEME_VERSION_V3",
+    "preparedTransaction": "",
+    "expected": {
+        "error": "DECODE_FAILED"
+    },
+    "source": {
+        "from": "v3-create-plain",
+        "mutation": "every byte cut off"
+    }
+}
