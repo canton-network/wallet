@@ -1,17 +1,24 @@
 import type { TransferTestScriptParameters } from './types.js'
 import { assertV2 } from '../utils/assert.js'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
-import { TEST_TOKEN_V2_REGISTRY } from '../utils/constants.js'
 
 export default async (args: TransferTestScriptParameters) => {
-    const { sdk, sender, receiver, senderKeys, receiverKeys, logger } = args
+    const {
+        sdk,
+        sender,
+        receiver,
+        senderKeys,
+        receiverKeys,
+        registryUrl,
+        logger,
+    } = args
 
     const [transferCommand, transferDisclosedContracts] =
         await sdk.token.v2.transfer.create({
             sender: sender.partyId,
             recipient: receiver.partyId,
             instrumentId: TestTokenV2.DAR.TestTokenID,
-            registryUrl: TEST_TOKEN_V2_REGISTRY.URL,
+            registryUrl,
             amount: '2000',
         })
 
@@ -42,7 +49,7 @@ export default async (args: TransferTestScriptParameters) => {
         await sdk.token.v2.transfer.reject(
             receiverPendingTransfers[0].contractId,
             [receiver.partyId],
-            TEST_TOKEN_V2_REGISTRY.URL
+            registryUrl
         )
 
     await sdk.ledger

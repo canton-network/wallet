@@ -18,19 +18,6 @@ import {
 } from '../utils/index.js'
 import type { KnownSynchronizers } from '../utils/index.js'
 import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
-import { TEST_TOKEN_V1_REGISTRY } from '../utils/constants.js'
-
-// Token namespace config that also points the SDK at the local TestToken
-// registry (in addition to the Amulet scan-proxy registry). This lets the
-// wallet SDK resolve TestToken via the CIP-56 metadata API and fetch its
-// transfer/allocation choice contexts over HTTP.
-const TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES = {
-    ...TOKEN_NAMESPACE_CONFIG,
-    registries: [
-        ...(TOKEN_NAMESPACE_CONFIG.registries as URL[]),
-        TEST_TOKEN_V1_REGISTRY.URL,
-    ],
-}
 
 export type PartyInfo = Omit<
     GenerateTransactionResponse,
@@ -103,32 +90,32 @@ export async function setupMultiSyncTrade(
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
                 amulet: AMULET_NAMESPACE_CONFIG,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
                 asset: ASSET_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,

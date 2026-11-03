@@ -20,23 +20,16 @@ import { assertV2 } from '../utils/assert.js'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 const logger = await configureLogging()
 
-const sdk = await SDK.create({
+const basicSdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
     synchronizerId: localNetGlobalSynchronizer,
-    token: {
-        ...TOKEN_NAMESPACE_CONFIG,
-        registries: [
-            ...TOKEN_NAMESPACE_CONFIG.registries,
-            new URL(TEST_TOKEN_V2_REGISTRY.URL),
-        ],
-    },
 })
 
-await TestTokenV2.utils.vetDar(sdk)
+await TestTokenV2.utils.vetDar(basicSdk)
 
-const adminKeys = sdk.keys.generate()
-const admin = await sdk.party.external
+const adminKeys = basicSdk.keys.generate()
+const admin = await basicSdk.party.external
     .create(adminKeys.publicKey, {
         partyHint: 'admin',
         isAdmin: true,
@@ -44,12 +37,22 @@ const admin = await sdk.party.external
     .sign(adminKeys.privateKey)
     .execute()
 
-await startRegistry({
-    sdk,
+const registryPort = await startRegistry({
+    sdk: basicSdk,
     port: TEST_TOKEN_V2_REGISTRY.PORT,
     operator: {
         party: admin.partyId,
         keys: adminKeys,
+    },
+})
+const registryUrl = new URL(TEST_TOKEN_V2_REGISTRY.URL)
+registryUrl.port = registryPort.toString()
+
+// Register the bound URL only after startup, since port 0 selects a free port.
+const sdk = await basicSdk.extend({
+    token: {
+        ...TOKEN_NAMESPACE_CONFIG,
+        registries: [...TOKEN_NAMESPACE_CONFIG.registries, registryUrl],
     },
 })
 
@@ -98,7 +101,7 @@ const [fundSenderCommand, fundSenderDisclosedContracts] =
         sender: admin.partyId,
         recipient: sender.partyId,
         instrumentId: TestTokenV2.DAR.TestTokenID,
-        registryUrl: TEST_TOKEN_V2_REGISTRY.URL,
+        registryUrl,
         amount: '10000',
     })
 
@@ -128,7 +131,7 @@ const [acceptFundingCommand, acceptFundingDisclosedContracts] =
     await sdk.token.v2.transfer.accept(
         fundingTransfer.contractId,
         [sender.partyId],
-        TEST_TOKEN_V2_REGISTRY.URL
+        registryUrl
     )
 
 await sdk.ledger
@@ -157,6 +160,7 @@ const transferTestScriptParameters: TransferTestScriptParameters = {
     senderKeys,
     receiver,
     receiverKeys,
+    registryUrl,
     logger,
 }
 

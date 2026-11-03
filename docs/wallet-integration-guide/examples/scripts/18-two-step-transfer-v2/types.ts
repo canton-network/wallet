@@ -9,5 +9,6 @@ export type TransferTestScriptParameters = {
     receiver: GenerateTransactionResponse
     senderKeys: KeyPair
     receiverKeys: KeyPair
+    registryUrl: URL
     logger: Logger
 }

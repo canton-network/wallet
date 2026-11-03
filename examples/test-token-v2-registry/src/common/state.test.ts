@@ -217,7 +217,7 @@ describe('RegistryState', () => {
 
     describe('default config', () => {
         it('should have expected default values', () => {
-            expect(defaultConfig.port).toBe(5635)
+            expect(defaultConfig.port).toBe(0)
             expect(defaultConfig.synchronizerId).toBe('')
             expect(defaultConfig.operator.party).toBe('')
             expect(defaultConfig.operator.keys).toBeDefined()

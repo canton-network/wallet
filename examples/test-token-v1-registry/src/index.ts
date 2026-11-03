@@ -22,15 +22,9 @@ import {
     type RegistryConfig,
     RegistryState,
     defaultConfig,
-    DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT,
 } from './common/state.js'
 
-export {
-    RegistryState,
-    defaultConfig,
-    DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT,
-    type RegistryConfig,
-}
+export { RegistryState, defaultConfig, type RegistryConfig }
 
 let server: Server
 
@@ -64,20 +58,31 @@ export const startRegistry = async (config?: Partial<RegistryConfig>) => {
         })
     }
 
-    server = app
-        .use(cors())
-        .use(express.json())
-        .use(metadataAPIRouter)
-        .use(transferInstructionAPIRouter)
-        .use(allocationAPIRouter)
-        .use(allocationInstructionAPIRouter)
-        .use(utilitiesAPIRouter)
-        .use(errorMiddleware)
-        .listen(RegistryState.instance.port, () =>
-            console.info(
-                `api listening on http://localhost:${RegistryState.instance.port}`
-            )
-        )
+    return await new Promise<number>((resolve) => {
+        server = app
+            .use(cors())
+            .use(express.json())
+            .use(metadataAPIRouter)
+            .use(transferInstructionAPIRouter)
+            .use(allocationAPIRouter)
+            .use(allocationInstructionAPIRouter)
+            .use(utilitiesAPIRouter)
+            .use(errorMiddleware)
+            .listen(RegistryState.instance.port, () => {
+                const serverAddress = server.address()
+                if (
+                    typeof serverAddress !== 'string' &&
+                    serverAddress &&
+                    'port' in serverAddress
+                ) {
+                    RegistryState.instance.port = serverAddress.port
+                }
+                console.info(
+                    `api listening on port ${RegistryState.instance.port}`
+                )
+                resolve(RegistryState.instance.port)
+            })
+    })
 }
 
 export const stopRegistry = () => {

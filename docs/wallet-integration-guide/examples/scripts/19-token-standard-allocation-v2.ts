@@ -42,19 +42,15 @@ async function poll<T>(
 
 const logger = pino({ name: 'v2-token-standard-allocation', level: 'info' })
 
-const sdk = await SDK.create({
+const basicSdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
     // LocalNet may run both the global and an app synchronizer; the SDK refuses
     // to guess, so target the global one explicitly.
     synchronizerId: localNetGlobalSynchronizer,
-    token: {
-        auth: TOKEN_NAMESPACE_CONFIG_SIMPLE.auth,
-        registries: [TEST_TOKEN_V2_REGISTRY.URL],
-    },
 })
 
-await TestTokenV2.utils.vetDar(sdk)
+await TestTokenV2.utils.vetDar(basicSdk)
 
 // This example needs uploaded .dar for splice-token-test-trading-app
 // It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script
@@ -75,7 +71,7 @@ const tradingDarPath = path.join(
 
 //upload dar
 const darBytes = await fs.readFile(tradingDarPath)
-await sdk.ledger.dar.upload(darBytes, TRADING_APP_V2_PACKAGE_ID)
+await basicSdk.ledger.dar.upload(darBytes, TRADING_APP_V2_PACKAGE_ID)
 
 logger.info('trading dar uploaded')
 
@@ -84,8 +80,8 @@ const bobSendAmount = 20
 
 const allocatedParties = await Promise.all(
     ['v2-04-alice', 'v2-04-bob', 'v2-04-venue'].map(async (partyHint) => {
-        const partyKeys = sdk.keys.generate()
-        const party = await sdk.party.external
+        const partyKeys = basicSdk.keys.generate()
+        const party = await basicSdk.party.external
             .create(partyKeys.publicKey, {
                 partyHint,
             })
@@ -105,8 +101,8 @@ const allocatedParties = await Promise.all(
     })
 )
 
-const adminKeys = sdk.keys.generate()
-const admin = await sdk.party.external
+const adminKeys = basicSdk.keys.generate()
+const admin = await basicSdk.party.external
     .create(adminKeys.publicKey, {
         partyHint: 'admin',
         isAdmin: true,
@@ -114,12 +110,22 @@ const admin = await sdk.party.external
     .sign(adminKeys.privateKey)
     .execute()
 
-await startRegistry({
-    sdk,
+const registryPort = await startRegistry({
+    sdk: basicSdk,
     port: TEST_TOKEN_V2_REGISTRY.PORT,
     operator: {
         party: admin.partyId,
         keys: adminKeys,
+    },
+})
+const registryUrl = new URL(TEST_TOKEN_V2_REGISTRY.URL)
+registryUrl.port = registryPort.toString()
+
+// Register the bound URL only after startup, since port 0 selects a free port.
+const sdk = await basicSdk.extend({
+    token: {
+        auth: TOKEN_NAMESPACE_CONFIG_SIMPLE.auth,
+        registries: [registryUrl],
     },
 })
 
@@ -171,7 +177,7 @@ const [fundAliceCommand, fundAliceDisclosedContracts] =
         sender: admin.partyId,
         recipient: alice.partyId,
         instrumentId: TestTokenV2.DAR.TestTokenID,
-        registryUrl: TEST_TOKEN_V2_REGISTRY.URL,
+        registryUrl,
         amount: '2000000',
     })
 
@@ -199,7 +205,7 @@ const [acceptFundingCommand, acceptFundingDisclosedContracts] =
     await sdk.token.v2.transfer.accept(
         fundingTransfer.contractId,
         [alice.partyId],
-        TEST_TOKEN_V2_REGISTRY.URL
+        registryUrl
     )
 
 await sdk.ledger
@@ -258,7 +264,7 @@ const [fundBobCommand, fundBobDisclosedContracts] =
         sender: admin.partyId,
         recipient: bob.partyId,
         instrumentId: TestTokenV2.DAR.TestTokenID,
-        registryUrl: TEST_TOKEN_V2_REGISTRY.URL,
+        registryUrl,
         amount: '2000000',
     })
 
@@ -286,7 +292,7 @@ const [acceptBobFundingCommand, acceptBobFundingDisclosedContracts] =
     await sdk.token.v2.transfer.accept(
         bobFundingTransfer.contractId,
         [bob.partyId],
-        TEST_TOKEN_V2_REGISTRY.URL
+        registryUrl
     )
 
 await sdk.ledger
@@ -486,7 +492,7 @@ const finalizedAllocation: FinalizedAllocation[] = allocations.map(
 
 const { factoryId, choiceContext } =
     await sdk.token.v2.allocation.settlement.factory({
-        registryUrl: TEST_TOKEN_V2_REGISTRY.URL,
+        registryUrl,
         args: {
             settlement,
             transferLegs: tradeLegs.map((t) => t.leg),
