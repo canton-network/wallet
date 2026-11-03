@@ -91,8 +91,9 @@ describe('UserUiIdentityProviders', () => {
 
         const cards = Array.from(
             el.shadowRoot!.querySelectorAll('idp-card')
-        ) as unknown as Array<{ readonly: boolean }>
+        ) as unknown as Array<{ readonly: boolean; configManaged: boolean }>
         expect(cards.map((card) => card.readonly)).toEqual([false, true])
+        expect(cards.map((card) => card.configManaged)).toEqual([false, true])
     })
 
     it('shows empty state when there are no identity providers', async () => {

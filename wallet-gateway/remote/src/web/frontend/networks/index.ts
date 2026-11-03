@@ -149,8 +149,8 @@ export class UserUiNetworks extends BaseElement {
             ${
                 this.configManagedIds.length > 0
                     ? html`<p class="text-body-secondary">
-                          Entries managed by the Wallet Gateway config file are
-                          read-only.
+                          Entries marked CONFIG FILE are managed by the Wallet
+                          Gateway config file and are read-only.
                       </p>`
                     : ''
             }
@@ -178,6 +178,9 @@ export class UserUiNetworks extends BaseElement {
                                                   network.id
                                               )
                                           }
+                                          .configManaged=${this.configManagedIds.includes(
+                                              network.id
+                                          )}
                                           @network-review=${this._onReview}
                                       ></network-card>
                                   `
