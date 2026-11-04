@@ -13,10 +13,11 @@ import type { TokenNamespaceConfig } from '../../namespace'
 import type { PartyId } from '@canton-network/core-types'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PreparedCommand } from '../../../transactions/types.js'
-import { parseAssets, ParsedURL } from '../../../utils/url.js'
+import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.js'
 import {
     actorsFor,
     sameSettlement,
+    type AllocationChoiceContextV2,
     type AllocationChoiceParams,
     type AllocationContextParams,
     type AllocationInstructionCreateParams,
@@ -217,25 +218,38 @@ export class AllocationNamespace {
 
         withdraw: async (
             allocationInstructionCid: string,
-            actors: PartyId[]
+            actors: PartyId[],
+            registryUrl: URLInput,
+            excludeDebugFields: boolean = true,
+            prefetched?: AllocationChoiceContextV2
         ): Promise<PreparedCommand> => {
             const [command, dc] =
-                this.service.createWithdrawAllocationInstruction(
+                await this.service.createAllocationInstructionChoice(
+                    'withdraw',
                     allocationInstructionCid,
-                    actors
+                    actors,
+                    new ParsedURL(this.sdkContext.commonCtx, registryUrl),
+                    excludeDebugFields,
+                    prefetched
                 )
-
             return [{ ExerciseCommand: command }, dc]
         },
 
         accept: async (
             allocationInstructionCid: string,
-            actors: PartyId[]
+            actors: PartyId[],
+            registryUrl: URLInput,
+            excludeDebugFields: boolean = true,
+            prefetched?: AllocationChoiceContextV2
         ): Promise<PreparedCommand> => {
             const [command, dc] =
-                this.service.createAcceptAllocationInstruction(
+                await this.service.createAllocationInstructionChoice(
+                    'accept',
                     allocationInstructionCid,
-                    actors
+                    actors,
+                    new ParsedURL(this.sdkContext.commonCtx, registryUrl),
+                    excludeDebugFields,
+                    prefetched
                 )
 
             return [{ ExerciseCommand: command }, dc]

@@ -8,10 +8,13 @@ import {
     AuthTokenProvider,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import { createExtensionWallet } from './create-wallet'
+import { createKernelWallet } from './create-wallet'
 import { toSigningDrivers, type UserControllerDeps } from './deps'
 import type { Methods } from './rpc-gen'
-import type { CreateWalletParams } from './rpc-gen/typings'
+import type {
+    CreateWalletParams,
+    SetPrimaryWalletParams,
+} from './rpc-gen/typings'
 
 export const wallets = ({
     getStore,
@@ -35,6 +38,7 @@ export const wallets = ({
         const store = await getStore()
         const network = await store.getCurrentNetwork()
 
+        // TODO(#2498): kernel driver only.
         if (
             params.signingProviderId !== SigningProvider.WALLET_KERNEL ||
             signingDriver.signingProvider !== SigningProvider.WALLET_KERNEL
@@ -61,8 +65,9 @@ export const wallets = ({
             baseUrl: new URL(network.ledgerApi.baseUrl),
             accessTokenProvider: adminTokenProvider,
         })
-        const wallet = await createExtensionWallet({
+        const wallet = await createKernelWallet({
             authContext: context,
+            keyName: params.keyName,
             ledgerClient,
             networkId: network.id,
             partyHint: params.partyHint,
@@ -81,8 +86,14 @@ export const wallets = ({
     allocatePartyForWallet: async () => {
         throw new Error('Function allocatePartyForWallet not implemented.')
     },
-    setPrimaryWallet: async () => {
-        throw new Error('Function setPrimaryWallet not implemented.')
+    setPrimaryWallet: async (params: SetPrimaryWalletParams) => {
+        const context = assertConnected(await authContext.load())
+        const store = await getStore()
+        await store.setPrimaryWallet(params.partyId)
+        notificationService
+            .getNotifier(context.userId)
+            .emit('accountsChanged', await store.getWallets())
+        return null
     },
     removeWallet: async () => {
         throw new Error('Function removeWallet not implemented.')

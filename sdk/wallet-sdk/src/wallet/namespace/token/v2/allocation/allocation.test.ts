@@ -46,6 +46,7 @@ const mockTokenStandard = {
             createAllocationsForRequest: vi.fn(),
             createAllocationRequestChoice: vi.fn(),
             fetchSettlementFactory: vi.fn(),
+            createAllocationInstructionChoice: vi.fn(),
         },
     },
 }
@@ -368,14 +369,23 @@ describe('allocation namespace', () => {
         it('should create withdraw allocation instruction', async () => {
             const spy =
                 mockTokenStandard.v2.allocation
-                    .createWithdrawAllocationInstruction
+                    .createAllocationInstructionChoice
             spy.mockReturnValue(mockServiceResponse)
 
-            const result = await allocation.instruction.withdraw('cid1', [
-                'alice::abc',
-            ])
+            const result = await allocation.instruction.withdraw(
+                'cid1',
+                ['alice::abc'],
+                new URL('http://registry.com')
+            )
 
-            expect(spy).toHaveBeenCalledExactlyOnceWith('cid1', ['alice::abc'])
+            expect(spy).toHaveBeenCalledExactlyOnceWith(
+                'withdraw',
+                'cid1',
+                ['alice::abc'],
+                new URL('http://registry.com'),
+                true,
+                undefined
+            )
             expect(result).toStrictEqual([
                 { ExerciseCommand: mockServiceResponse[0] },
                 ['mock-contract'],
@@ -385,14 +395,23 @@ describe('allocation namespace', () => {
         it('should create accept allocation instruction', async () => {
             const spy =
                 mockTokenStandard.v2.allocation
-                    .createAcceptAllocationInstruction
+                    .createAllocationInstructionChoice
             spy.mockReturnValue(mockServiceResponse)
 
-            const result = await allocation.instruction.accept('cid1', [
-                'alice::abc',
-            ])
+            const result = await allocation.instruction.accept(
+                'cid1',
+                ['alice::abc'],
+                new URL('http://registry.com')
+            )
 
-            expect(spy).toHaveBeenCalledExactlyOnceWith('cid1', ['alice::abc'])
+            expect(spy).toHaveBeenCalledExactlyOnceWith(
+                'accept',
+                'cid1',
+                ['alice::abc'],
+                new URL('http://registry.com'),
+                true,
+                undefined
+            )
             expect(result).toStrictEqual([
                 { ExerciseCommand: mockServiceResponse[0] },
                 ['mock-contract'],

@@ -66,6 +66,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 import './index.js'
 import type { ApproveUi } from './index.js'
 
+const POLL_INTERVAL_MS = 3000
+
 function mockApproveState(
     transaction = makeTransaction(),
     wallet = makeWallet({
@@ -212,7 +214,7 @@ describe('UserUiApprove', () => {
             history.replaceState({}, '', '?transactionId=tx-1&closeafteraction')
             mockApproveState()
             el = await fixture<ApproveUi>(componentFixture)
-            await waitUntil(() => el.commandId === 'cmd-1')
+            await vi.waitFor(() => expect(el.commandId).toBe('cmd-1'))
         })
 
         it('closes the window after approve when opened from a dApp', async () => {
@@ -284,7 +286,7 @@ describe('UserUiApprove', () => {
     })
 
     it('starts polling when sign returns pending', async () => {
-        // vi.useFakeTimers()
+        vi.useFakeTimers()
         let txStatus = 'pending'
 
         // mockApproveState()
@@ -319,24 +321,24 @@ describe('UserUiApprove', () => {
         })
 
         const element = document.createElement('user-ui-approve') as ApproveUi
-        element.pollIntervalMs = 10
         document.body.appendChild(element)
         el = element
 
-        await waitUntil(() => el.commandId === 'cmd-1')
+        await vi.waitFor(() => expect(el.commandId).toBe('cmd-1'))
 
         el.shadowRoot
             ?.querySelector('wg-transaction-detail')
             ?.dispatchEvent(new TransactionApproveEvent('cmd-1'))
 
-        await waitUntil(() => el.status === 'awaiting-signature')
+        await vi.waitFor(() => expect(el.status).toBe('awaiting-signature'))
+        await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS)
 
-        await waitUntil(
-            () =>
+        await vi.waitFor(() =>
+            expect(
                 mockRequest.mock.calls.some(
                     (c) => c[0]?.method === 'getTransactionStatus'
-                ),
-            'poll fired'
+                )
+            ).toBe(true)
         )
         expect(mockRequest).toHaveBeenCalledWith(
             expect.objectContaining({
@@ -344,6 +346,64 @@ describe('UserUiApprove', () => {
                 params: expect.objectContaining({ partyId: 'alice::1220abc' }),
             })
         )
+    })
+
+    it('ignores an in-flight transaction status response after the element is removed', async () => {
+        vi.useFakeTimers()
+        let resolveStatus!: (result: { status: 'signed' }) => void
+        const statusResponse = new Promise<{ status: 'signed' }>((resolve) => {
+            resolveStatus = resolve
+        })
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'getTransaction') {
+                return makeTransaction({
+                    status: 'awaiting-signature',
+                    externalTxId: 'ext-1',
+                })
+            }
+            if (method === 'listWallets') {
+                return [
+                    makeWallet({
+                        primary: true,
+                        partyId: 'alice::1220abc',
+                        rights: [PartyLevelRight.CanActAs],
+                    }),
+                ]
+            }
+            if (method === 'getTransactionStatus') {
+                return statusResponse
+            }
+            return undefined
+        })
+
+        const element = document.createElement('user-ui-approve') as ApproveUi
+        document.body.appendChild(element)
+        el = element
+
+        await vi.waitFor(() => expect(el.status).toBe('awaiting-signature'))
+        await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS)
+        await vi.waitFor(() =>
+            expect(
+                mockRequest.mock.calls.some(
+                    (call) => call[0]?.method === 'getTransactionStatus'
+                )
+            ).toBe(true)
+        )
+        const transactionLoadsBeforeRemoval = mockRequest.mock.calls.filter(
+            (call) => call[0]?.method === 'getTransaction'
+        ).length
+
+        el.remove()
+        resolveStatus({ status: 'signed' })
+        await statusResponse
+        await Promise.resolve()
+
+        expect(el.status).toBe('awaiting-signature')
+        expect(
+            mockRequest.mock.calls.filter(
+                (call) => call[0]?.method === 'getTransaction'
+            )
+        ).toHaveLength(transactionLoadsBeforeRemoval)
     })
 
     it('does not delete when reject confirmation is cancelled', async () => {
@@ -373,7 +433,7 @@ describe('UserUiApprove', () => {
             })
             mockApproveState(txWithFailure)
             el = await fixture<ApproveUi>(componentFixture)
-            await waitUntil(() => el.commandId === 'cmd-1')
+            await vi.waitFor(() => expect(el.commandId).toBe('cmd-1'))
 
             const warnings = el.shadowRoot?.querySelectorAll('.alert-warning')
             const hasFailureText = Array.from(warnings || []).some((node) =>
@@ -525,7 +585,6 @@ describe('UserUiApprove', () => {
             const element = document.createElement(
                 'user-ui-approve'
             ) as ApproveUi
-            element.pollIntervalMs = 10
             document.body.appendChild(element)
             el = element
 
@@ -536,21 +595,31 @@ describe('UserUiApprove', () => {
                     (c) => c[0]?.method === 'getTransactionStatus'
                 ).length
 
-            await waitUntil(() => pollCount() > 0, 'poll started')
+            hidden = true
+            document.dispatchEvent(new Event('visibilitychange'))
+            vi.useFakeTimers()
+            hidden = false
+            document.dispatchEvent(new Event('visibilitychange'))
+
+            await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS)
+            await vi.waitFor(() => expect(pollCount()).toBeGreaterThan(0))
 
             hidden = true
             document.dispatchEvent(new Event('visibilitychange'))
 
-            await new Promise((r) => setTimeout(r, 30))
+            await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 2)
             const whileHidden = pollCount()
 
-            await new Promise((r) => setTimeout(r, 60))
+            await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS * 5)
             expect(pollCount()).toBe(whileHidden)
 
             hidden = false
             document.dispatchEvent(new Event('visibilitychange'))
 
-            await waitUntil(() => pollCount() > whileHidden, 'poll resumed')
+            await vi.advanceTimersByTimeAsync(POLL_INTERVAL_MS)
+            await vi.waitFor(() =>
+                expect(pollCount()).toBeGreaterThan(whileHidden)
+            )
         })
     })
 })
