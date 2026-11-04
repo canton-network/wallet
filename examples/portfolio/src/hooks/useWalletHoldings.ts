@@ -3,8 +3,6 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import type { PrettyContract } from '@canton-network/core-tx-parser'
-import type { HoldingView } from '@canton-network/core-token-standard'
 import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
@@ -13,10 +11,11 @@ import {
 } from '../utils/aggregate-holdings'
 import { holdingsQueryOptions } from './query-options'
 import { useWalletSdk } from './useWalletSdk'
+import type { PortfolioHolding } from '@utils/holdings'
 
 export interface WalletHoldingsResult {
     instruments: AggregatedHolding[]
-    holdings: PrettyContract<HoldingView>[]
+    holdings: PortfolioHolding[]
     isLoading: boolean
     isError: boolean
     error: Error | null
