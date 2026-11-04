@@ -471,10 +471,7 @@ export class SelfIssuedAuthService {
             isAuthParty: true,
         })
         await this.walletSyncService.syncRights()
-        return this.requireExistingAuthParty(
-            await this.requireWallet(wallet.partyId),
-            wallet.partyId
-        )
+        return this.requireWallet(wallet.partyId)
     }
 
     private async requireWallet(partyId: string): Promise<Wallet> {
