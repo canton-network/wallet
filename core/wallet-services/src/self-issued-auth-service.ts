@@ -451,33 +451,19 @@ export class SelfIssuedAuthService {
         username: string,
         wallet: Wallet
     ): Promise<Wallet> {
+        await this.ledgerClient.waitForParty(wallet.partyId)
         await this.ledgerClient.post('/v2/users', {
             user: {
                 id: username,
                 isDeactivated: false,
                 identityProviderId: '',
+                primaryParty: wallet.partyId,
+                primaryPartyAuthentication: true,
             },
-            rights: [],
+            rights: [
+                { kind: { CanActAs: { value: { party: wallet.partyId } } } },
+            ],
         })
-        await this.ledgerClient.waitForPartyAndGrantUserRights(
-            username,
-            wallet.partyId
-        )
-        await this.ledgerClient.patch(
-            '/v2/users/{user-id}',
-            {
-                user: {
-                    id: username,
-                    primaryParty: wallet.partyId,
-                    primaryPartyAuthentication: true,
-                },
-                updateMask: {
-                    paths: ['primary_party', 'primary_party_authentication'],
-                    unknownFields: { fields: {} },
-                },
-            },
-            { path: { 'user-id': username } }
-        )
         await this.store.updateWallet({
             partyId: wallet.partyId,
             networkId: wallet.networkId,
