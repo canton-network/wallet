@@ -63,5 +63,10 @@ export function getTransferActions(
             if (!action || groups.length === 0) return []
             return [{ action, ...actionAvailability(groups, party) }]
         })
+        .filter(
+            (a) =>
+                a.status === 'available' ||
+                a.groups.some((group) => group.includes(party))
+        )
         .sort((a, b) => ORDER.indexOf(a.action) - ORDER.indexOf(b.action))
 }
