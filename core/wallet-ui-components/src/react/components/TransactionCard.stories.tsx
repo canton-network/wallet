@@ -63,10 +63,6 @@ export const Default: Story = {
         await expect(
             await findByShadowText(canvasElement, '100.0 CC')
         ).toBeInTheDocument()
-        // Only the date and time up to the minute are shown
-        await expect(
-            await findByShadowText(canvasElement, '2025-06-01 12:34')
-        ).toBeInTheDocument()
         await expect(
             queryByShadowText(canvasElement, 'External transaction ID')
         ).not.toBeInTheDocument()

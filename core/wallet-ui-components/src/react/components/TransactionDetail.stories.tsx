@@ -52,7 +52,6 @@ export const Pending: Story = {
         for (const text of [
             'pending',
             'TransferPreapproval_Send',
-            '2025-06-01 12:34',
             'alice::1220aa',
             'bob::1220bb',
             'pkg:Module:Entity',

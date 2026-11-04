@@ -191,9 +191,8 @@ export const AdminEntry: Story = {
     args: { isAdmin: true },
     play: async ({ canvasElement, userEvent }) => {
         await userEvent.click(await menuButton(canvasElement))
-        await expect(
-            await menuItem(canvasElement, 'Administration')
-        ).toBeVisible()
+        const admin = await menuItem(canvasElement, 'Administration')
+        await waitFor(() => expect(admin).toBeVisible())
     },
 }
 

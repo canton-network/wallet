@@ -17,9 +17,13 @@ export const fillField = async (
     field: HTMLElement,
     text: string
 ) => {
+    // user-event keeps its own record of the selection from the last time it
+    // typed into the field, so the selection has to go through it too
     field.focus()
-    field.select()
-    await user.keyboard('{Backspace}')
-    if (text) await user.keyboard(text)
+    await user.type(field, `{Backspace}${text}`, {
+        skipClick: true,
+        initialSelectionStart: 0,
+        initialSelectionEnd: (field as HTMLInputElement).value.length,
+    })
     fireEvent.change(field)
 }
