@@ -102,7 +102,7 @@ export class KernelWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         existingWallet: Wallet,
-        options: WalletAllocationOptions
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         const driver = this.signingDriver.controller(userId)
         const signingCallback = async (hash: string) => {

@@ -35,13 +35,13 @@ export interface WalletAllocator {
         email: string | undefined,
         partyHint: PartyHint,
         primary: Primary,
-        options: WalletAllocationOptions
+        options?: WalletAllocationOptions
     ): Promise<Wallet>
     allocateParty(
         userId: UserId,
         email: string | undefined,
         existingWallet: Wallet,
-        options: WalletAllocationOptions
+        options?: WalletAllocationOptions
     ): Promise<void>
     getKeys(userId: UserId): Promise<Keys | null | void>
 }

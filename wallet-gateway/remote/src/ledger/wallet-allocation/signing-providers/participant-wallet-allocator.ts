@@ -60,7 +60,7 @@ export class ParticipantWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         existingWallet: Wallet,
-        options: WalletAllocationOptions
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         const party =
             options.grantRights === false

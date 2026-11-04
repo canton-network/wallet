@@ -442,7 +442,7 @@ describe('WalletAllocationService', () => {
     })
 
     describe('Participant', () => {
-        it('createWallet allocates new party and adds wallet', async () => {
+        it('createWallet allocates a new party, grants rights by default, and adds the wallet', async () => {
             const expectedParty = createAllocatedParty(
                 'alice::participant1',
                 'alice',
@@ -546,7 +546,7 @@ describe('WalletAllocationService', () => {
             expect(mockStore.addWallet).not.toHaveBeenCalled()
         })
 
-        it('allocateParty allocates party and updates store', async () => {
+        it('allocateParty allocates the party, grants rights by default, and updates the store', async () => {
             const expectedParty = createAllocatedParty(
                 'alice::participant1',
                 'alice',
@@ -579,7 +579,7 @@ describe('WalletAllocationService', () => {
     })
 
     describe('Wallet Gateway', () => {
-        it('createWallet initializes new wallet and adds to store', async () => {
+        it('createWallet allocates a new external party, grants rights by default, and adds the wallet', async () => {
             const expectedParty = createAllocatedParty(
                 'bob::fingerprint',
                 'bob',
@@ -599,6 +599,15 @@ describe('WalletAllocationService', () => {
                 SigningProvider.WALLET_KERNEL
             )
 
+            expect(
+                mockPartyAllocator.allocatePartyAndGrantRights
+            ).toHaveBeenCalledWith(
+                authContext.userId,
+                'bob',
+                'new-public-key',
+                expect.any(Function)
+            )
+            expect(mockPartyAllocator.allocateParty).not.toHaveBeenCalled()
             expect(mockStore.addWallet).toHaveBeenCalledWith(
                 expect.objectContaining({
                     partyId: 'bob::fingerprint',

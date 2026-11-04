@@ -366,6 +366,7 @@ describe('SelfIssuedAuthService', () => {
                 { grantRights: false }
             )
             expect(wallet).toEqual(pendingWallet)
+            expect(ledgerClient.waitForParty).not.toHaveBeenCalled()
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(syncRights).not.toHaveBeenCalled()
         })
@@ -386,18 +387,6 @@ describe('SelfIssuedAuthService', () => {
                 SigningProvider.FIREBLOCKS,
                 { grantRights: false, keyName: 'vault-1' }
             )
-        })
-
-        it('rejects onboarding when the ledger user already exists without self-issued authentication', async () => {
-            ledgerClient.get.mockResolvedValue({ user: { id: 'alice' } })
-
-            await expect(
-                createService().createWallet({
-                    partyHint: 'my-party',
-                    signingProviderId: SigningProvider.WALLET_KERNEL,
-                })
-            ).rejects.toThrow(SELF_ISSUED_LOGIN_UNAVAILABLE)
-            expect(walletAllocator.createWallet).not.toHaveBeenCalled()
         })
 
         it('returns an allocated wallet without granting or syncing rights', async () => {
@@ -435,6 +424,7 @@ describe('SelfIssuedAuthService', () => {
         })
 
         it.each([
+            ['no self-issued authentication fields', {}],
             [
                 'only primary party authentication',
                 { primaryPartyAuthentication: true },
@@ -480,7 +470,7 @@ describe('SelfIssuedAuthService', () => {
     })
 
     describe('allocateParty', () => {
-        it('polls a pending wallet without granting rights once it is allocated', async () => {
+        it('allocates a pending wallet without granting or syncing rights and returns the refreshed wallet', async () => {
             const pendingWallet = createWallet({
                 signingProviderId: SigningProvider.FIREBLOCKS,
             })
@@ -506,10 +496,11 @@ describe('SelfIssuedAuthService', () => {
                 SigningProvider.FIREBLOCKS,
                 { grantRights: false }
             )
+            expect(syncRights).not.toHaveBeenCalled()
             expect(wallet).toEqual(allocatedWallet)
         })
 
-        it('returns an already allocated wallet', async () => {
+        it('returns an already allocated wallet without allocating or syncing rights', async () => {
             const allocatedWallet = createWallet({ status: 'allocated' })
             store.getWallet.mockResolvedValueOnce(allocatedWallet)
 
@@ -518,17 +509,26 @@ describe('SelfIssuedAuthService', () => {
             )
 
             expect(walletAllocator.allocateParty).not.toHaveBeenCalled()
+            expect(syncRights).not.toHaveBeenCalled()
             expect(wallet).toEqual(allocatedWallet)
         })
 
-        it('does not sync rights when signing is still pending', async () => {
-            store.getWallet.mockResolvedValue(createWallet())
+        it('returns the wallet unchanged while signing is still pending', async () => {
+            const pendingWallet = createWallet()
+            store.getWallet.mockResolvedValue(pendingWallet)
 
-            const wallet = await createService().allocateParty('alice::ns')
+            const wallet = await createService().allocateParty(
+                pendingWallet.partyId
+            )
 
-            expect(walletAllocator.allocateParty).toHaveBeenCalled()
+            expect(walletAllocator.allocateParty).toHaveBeenCalledWith(
+                expect.objectContaining({ userId: 'alice' }),
+                pendingWallet,
+                pendingWallet.signingProviderId,
+                { grantRights: false }
+            )
             expect(syncRights).not.toHaveBeenCalled()
-            expect(wallet.status).toBe('initialized')
+            expect(wallet).toEqual(pendingWallet)
         })
 
         it('throws when the wallet is missing', async () => {

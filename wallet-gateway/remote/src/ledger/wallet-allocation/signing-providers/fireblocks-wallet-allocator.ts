@@ -141,7 +141,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         userId: UserId,
         email: string | undefined,
         existingWallet: Wallet,
-        options: WalletAllocationOptions
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         if (
             !existingWallet.externalTxId ||

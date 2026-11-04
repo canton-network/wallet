@@ -113,7 +113,7 @@ export class BitGoWalletAllocator implements WalletAllocator {
         userId: UserId,
         _email: string | undefined,
         existingWallet: Wallet,
-        options: WalletAllocationOptions
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         if (
             !existingWallet.externalTxId ||
