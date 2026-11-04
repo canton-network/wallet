@@ -22,6 +22,12 @@ export type PreparedCommands = [
     PreparedCommand[1],
 ]
 
+export type AllocationRequestAcceptResult = {
+    allocate: PreparedCommand[]
+    accept: PreparedCommand | null
+    skipped: PartyId[]
+}
+
 export type AllocationInstructionCreateParams = {
     settlement: SettlementInfo
     allocationSpecification: AllocationSpecification

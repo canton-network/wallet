@@ -825,6 +825,175 @@ describe('AllocationService', () => {
         })
     })
 
+    describe('createAllocationsForRequestForLoggedInParty', () => {
+        const makeRequest = (
+            specs: AllocationSpecification[]
+        ): AllocationRequestViewV2 =>
+            ({
+                settlement: makeSettlement(),
+                allocations: specs,
+            }) as AllocationRequestViewV2
+
+        const makeAllocationCommand = (
+            inputHoldingCids: string[]
+        ): AllocationFactory_AllocateV2 => ({
+            settlement: makeSettlement(),
+            allocation: makeAllocationSpec(),
+            requestedAt: new Date().toISOString(),
+            inputHoldingCids:
+                inputHoldingCids as unknown as AllocationFactory_AllocateV2['inputHoldingCids'],
+            actors: [],
+            extraArgs: { context: { values: {} }, meta: { values: {} } },
+        })
+
+        it('throws when request has no allocation for account', async () => {
+            const { service } = makeService()
+
+            const dcA: DisclosedContractV2 = {
+                contractId: 'disc-a',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+            const dcShared: DisclosedContractV2 = {
+                contractId: 'disc-shared',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+
+            vi.spyOn(service, 'createAllocation')
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-1',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-1']),
+                    },
+                    [dcA, dcShared],
+                ])
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-2',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-2']),
+                    },
+                    [dcShared],
+                ])
+
+            const specA = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'alice::owner' }),
+            })
+            const specB = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'bob::owner' }),
+            })
+
+            const registry = vi.fn().mockResolvedValue(registryUrl)
+
+            await expect(
+                service.createAllocationsForRequestForLoggedInParty({
+                    requestCid: 'request-cid',
+                    request: makeRequest([specA, specB]),
+                    registry,
+                    partyId: 'badParty',
+                })
+            ).rejects.toThrow(
+                `Request request-cid has no allocation for account badParty`
+            )
+        })
+
+        it('creates allocations', async () => {
+            const { service } = makeService()
+
+            const dcA: DisclosedContractV2 = {
+                contractId: 'disc-a',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+            const dcShared: DisclosedContractV2 = {
+                contractId: 'disc-shared',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+
+            const allocateCmd = {
+                templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                contractId: 'factory-1',
+                choice: 'AllocationFactory_Allocate',
+                choiceArgument: makeAllocationCommand(['cid-1']),
+            }
+
+            vi.spyOn(service, 'createAllocation')
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-1',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-1']),
+                    },
+                    [dcA, dcShared],
+                ])
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-2',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-2']),
+                    },
+                    [dcShared],
+                ])
+
+            const specA = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'alice::owner' }),
+            })
+            const specB = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'bob::owner' }),
+            })
+
+            const registry = vi.fn().mockResolvedValue(registryUrl)
+
+            const r = await service.createAllocationsForRequestForLoggedInParty(
+                {
+                    requestCid: 'request-cid',
+                    request: makeRequest([specA, specB]),
+                    registry,
+                    partyId: 'bob::owner',
+                }
+            )
+
+            expect(r).toStrictEqual({
+                allocate: [[allocateCmd, [dcA, dcShared]]],
+                accept: [
+                    {
+                        templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+                        contractId: 'request-cid',
+                        choice: 'AllocationRequest_Accept',
+                        choiceArgument: {
+                            actors: ['bob::owner'],
+                            extraArgs: {
+                                context: { values: {} },
+                                meta: { values: {} },
+                            },
+                        },
+                    },
+                    [],
+                ],
+                skipped: [],
+            })
+            expect(registry).toHaveBeenCalledTimes(1)
+            expect(service.createAllocation).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    spec: specB,
+                    actors: ['bob::owner'],
+                }),
+                registryUrl
+            )
+        })
+    })
+
     describe('createAllocationInstructionChoice', () => {
         it('builds AllocationInstruction_Accept using a prefetched context, without a registry call', async () => {
             const { service, tokenClient } = makeService()
