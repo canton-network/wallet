@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { SigningDriverStore } from '@canton-network/core-signing-lib'
-import { WxtStore } from '@canton-network/core-signing-store-wxt'
 import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import type { AuthContextStore } from '../auth-context'
+import type { Vault } from '../vault'
+import { createVaultSigningStore } from './signing-store'
 
 export { createWalletStore } from './wallet-store'
 
@@ -19,8 +20,10 @@ export async function loadAuthedStore(
     return store.withAuthContext(await authContext.load())
 }
 
-export function createSigningStore(): SigningDriverStore {
+export function createSigningStore(
+    vault: Pick<Vault, 'defineItem'>
+): SigningDriverStore {
     // Signing keys are stored for this browser profile and remain available
     // when the user logs out or signs in again.
-    return new WxtStore('extension-user')
+    return createVaultSigningStore(vault)
 }

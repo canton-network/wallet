@@ -3242,9 +3242,6 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../../core/signing-lib
-      '@canton-network/core-signing-store-wxt':
-        specifier: 'workspace:'
-        version: link:../../core/signing-store-wxt
       '@canton-network/core-types':
         specifier: 'workspace:'
         version: link:../../core/types

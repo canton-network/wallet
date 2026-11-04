@@ -23,6 +23,7 @@ export interface UserControllerDeps {
     notificationService: INotificationService
 }
 
+// TODO(#2498/#2406): use the HD-wallet driver.
 /** The signing drivers by provider. Only the wallet kernel is supported. */
 export const toSigningDrivers = (
     signingDriver: SigningDriverInterface
