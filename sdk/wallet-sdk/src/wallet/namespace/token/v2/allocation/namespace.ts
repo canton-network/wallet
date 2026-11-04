@@ -326,7 +326,6 @@ export class AllocationNamespace {
          * registry serves them. When any admin is skipped, `accept` is `null`,
          * since the request cannot be fully accepted.
          *
-         * @param params - The allocation request and the party accepting it.
          * @returns The prepared allocate commands, the prepared accept command
          * (or `null`), and the skipped admins.
          * @throws If the request has no `ARA_Accept` action, or if accepting is
