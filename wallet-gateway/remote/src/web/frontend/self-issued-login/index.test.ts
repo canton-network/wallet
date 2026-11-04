@@ -66,11 +66,11 @@ vi.mock('../state-manager.js', () => ({
         },
         currentOrigin: {
             poll: vi.fn().mockResolvedValue('https://app.example'),
-            selfIssuedAccessTokenMessageId: {
-                get: selfIssuedAccessTokenMessageIdGet,
-                set: selfIssuedAccessTokenMessageIdSet,
-                clear: selfIssuedAccessTokenMessageIdClear,
-            },
+        },
+        selfIssuedAccessTokenMessageId: {
+            get: selfIssuedAccessTokenMessageIdGet,
+            set: selfIssuedAccessTokenMessageIdSet,
+            clear: selfIssuedAccessTokenMessageIdClear,
         },
     },
 }))
