@@ -6,7 +6,7 @@ import {
     PageHeader,
     WalletList,
     WalletsSync,
-} from '@canton-network/core-wallet-ui-components/lit-react'
+} from '@canton-network/core-wallet-ui-components/react'
 import { useToast } from '@canton-network/core-wallet-ui-components/react'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
 import Add from '@mui/icons-material/Add'
