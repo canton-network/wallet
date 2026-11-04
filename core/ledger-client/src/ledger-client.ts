@@ -345,6 +345,34 @@ export class LedgerClient {
     }
 
     /**
+     * Waits until a party is known to the participant.
+     *
+     * @param partyId The ID of the party to wait for.
+     * @param maxTries Optional max number of retries with default 30. May be increased if expecting heavy load.
+     * @param retryIntervalMs Optional interval between retries to verify that party exists with default 2000ms. May be increased if expecting heavy load.
+     * @returns A promise that resolves when the party exists.
+     */
+    public async waitForParty(
+        partyId: PartyId,
+        maxTries: number = 30,
+        retryIntervalMs: number = 2000
+    ): Promise<void> {
+        await this.init()
+        // Wait for party to appear on participant, only sleeping between checks
+        let partyFound = await this.checkIfPartyExists(partyId)
+        for (let tries = 1; !partyFound && tries < maxTries; tries++) {
+            await new Promise((resolve) => setTimeout(resolve, retryIntervalMs))
+            partyFound = await this.checkIfPartyExists(partyId)
+        }
+
+        if (!partyFound) {
+            throw new Error(
+                `timed out waiting for new party to appear after ${maxTries} tries`
+            )
+        }
+    }
+
+    /**
      * Grants a user the right to act as a party, while ensuring the party exists.
      *
      * @param userId The ID of the user to grant rights to.
@@ -359,19 +387,7 @@ export class LedgerClient {
         maxTries: number = 30,
         retryIntervalMs: number = 2000
     ) {
-        await this.init()
-        // Wait for party to appear on participant, only sleeping between checks
-        let partyFound = await this.checkIfPartyExists(partyId)
-        for (let tries = 1; !partyFound && tries < maxTries; tries++) {
-            await new Promise((resolve) => setTimeout(resolve, retryIntervalMs))
-            partyFound = await this.checkIfPartyExists(partyId)
-        }
-
-        if (!partyFound) {
-            throw new Error(
-                `timed out waiting for new party to appear after ${maxTries} tries`
-            )
-        }
+        await this.waitForParty(partyId, maxTries, retryIntervalMs)
 
         const result = await this.grantRights(userId, {
             actAs: [partyId],
