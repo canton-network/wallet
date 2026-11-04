@@ -58,6 +58,11 @@ export class UserUiActivities extends BaseElement {
                 display: flex;
                 flex-direction: column;
                 gap: var(--wg-space-4);
+                transition: opacity 0.2s ease;
+            }
+
+            .activity-list[aria-busy='true'] {
+                opacity: 0.5;
             }
 
             .page-header {
@@ -80,12 +85,15 @@ export class UserUiActivities extends BaseElement {
 
             ${
                 this.loading && !this.transactions.length
-                    ? html`<p class="mb-0 text-body-secondary">
-                          Loading activities...
-                      </p>`
+                    ? html`<wg-loading-state
+                          .text=${'Loading activities...'}
+                      ></wg-loading-state>`
                     : this.transactions.length
                       ? html`
-                            <div class="activity-list">
+                            <div
+                                class="activity-list"
+                                aria-busy=${this.loading}
+                            >
                                 ${this.transactions.map(
                                     (tx) => html`
                                         <wg-transaction-card
@@ -112,6 +120,7 @@ export class UserUiActivities extends BaseElement {
                                                   .total=${this.totalTransactionCount}
                                                   .pageSize=${this.pageSize}
                                                   .page=${this.currentPage}
+                                                  .disabled=${this.loading}
                                                   @page-change=${this._onPageChange}
                                               ></wg-pagination>
                                           </div>
@@ -128,7 +137,7 @@ export class UserUiActivities extends BaseElement {
 
     connectedCallback(): void {
         super.connectedCallback()
-        void this.updateTransactions()
+        void this.updateTransactions(this.currentPage)
     }
 
     private _onReview(e: TransactionCardReviewEvent) {
@@ -140,10 +149,10 @@ export class UserUiActivities extends BaseElement {
         const targetPage = e.detail.page
         if (targetPage === this.currentPage || targetPage < 1) return
         this.currentPage = targetPage
-        void this.updateTransactions()
+        void this.updateTransactions(targetPage)
     }
 
-    private async updateTransactions() {
+    private async updateTransactions(page: number) {
         this.loading = true
         try {
             const currentOrigin = await stateManager.currentOrigin.poll()
@@ -151,7 +160,7 @@ export class UserUiActivities extends BaseElement {
                 await stateManager.accessToken.get(currentOrigin)
             )
 
-            const currentCursor = this.pageCursors[this.currentPage - 1]
+            const currentCursor = this.pageCursors[page - 1]
 
             const result = await userClient.request({
                 method: 'listTransactions',
@@ -167,7 +176,7 @@ export class UserUiActivities extends BaseElement {
             this.totalTransactionCount = result.count ?? 0
 
             if (result.nextCursor) {
-                this.pageCursors[this.currentPage] = result.nextCursor
+                this.pageCursors[page] = result.nextCursor
             }
 
             this.parsedTransactions = new Map(
