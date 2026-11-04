@@ -9,7 +9,6 @@ export const apps = [
     {
         name: 'remote',
         script: 'pnpm nx run @canton-network/wallet-gateway-remote:start',
-        env_development: sharedEnvDevelopment,
     },
     {
         name: 'mock-oauth2-server',
