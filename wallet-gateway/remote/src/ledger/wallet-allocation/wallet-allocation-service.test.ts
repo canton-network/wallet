@@ -576,6 +576,12 @@ describe('WalletAllocationService', () => {
                 status: 'allocated',
             })
         })
+
+        it('getKeys rejects because participant parties have no signing provider keys', async () => {
+            await expect(
+                service.getKeys(authContext, SigningProvider.PARTICIPANT)
+            ).rejects.toThrow('Method not implemented')
+        })
     })
 
     describe('Wallet Gateway', () => {
@@ -938,7 +944,7 @@ describe('WalletAllocationService', () => {
 
             expect(result.status).toBe('initialized')
             expect(
-                mockPartyAllocator.allocatePartyWithExistingWallet
+                mockPartyAllocator.allocatePartyWithExistingWalletAndGrantRights
             ).not.toHaveBeenCalled()
             expect(mockStore.addWallet).toHaveBeenCalled()
         })
@@ -970,11 +976,34 @@ describe('WalletAllocationService', () => {
                 expect(result.status).toBe('removed')
                 expect(result.reason).toBe(expectedReason)
                 expect(
-                    mockPartyAllocator.allocatePartyWithExistingWallet
+                    mockPartyAllocator.allocatePartyWithExistingWalletAndGrantRights
                 ).not.toHaveBeenCalled()
                 expect(mockStore.addWallet).toHaveBeenCalled()
             }
         )
+
+        it('createWallet stores empty topology transactions when the party allocator returns none', async () => {
+            mockPartyAllocator.generateTopologyTransactions.mockResolvedValue({
+                partyId: 'alice::fingerprint',
+                publicKeyFingerprint: 'fingerprint',
+                multiHash: 'multi-hash',
+            } as GenerateTransactionResponse)
+            const serviceWithFireblocks = createService({
+                [SigningProvider.FIREBLOCKS]: createFireblocksDriver({
+                    signTransactionResult: { status: 'pending', txId: 'tx-1' },
+                }),
+            })
+
+            const result = await serviceWithFireblocks.createWallet(
+                authContext,
+                'alice',
+                false,
+                SigningProvider.FIREBLOCKS,
+                { keyName: FIREBLOCKS_VAULT_NAME }
+            )
+
+            expect(result.topologyTransactions).toBe('')
+        })
 
         it('throws when getKeys returns a signing error', async () => {
             const serviceWithFireblocks = createService({
@@ -1236,7 +1265,7 @@ describe('WalletAllocationService', () => {
             expect(result.externalTxId).toBe('tx-1')
             expect(result.partyId).toBe('alice::fingerprint')
             expect(
-                mockPartyAllocator.allocatePartyWithExistingWallet
+                mockPartyAllocator.allocatePartyWithExistingWalletAndGrantRights
             ).not.toHaveBeenCalled()
             expect(mockStore.addWallet).toHaveBeenCalled()
         })
