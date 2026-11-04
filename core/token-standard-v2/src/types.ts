@@ -66,6 +66,7 @@ export type {
     AllocationRequest_Reject,
     AllocationRequest_Withdraw,
     AllocationRequestInterface,
+    AllocationRequestAction,
 } from '@daml.js/splice-api-token-allocation-request-v2-1.0.0/lib/Splice/Api/Token/AllocationRequestV2/module.js'
 
 export type {
