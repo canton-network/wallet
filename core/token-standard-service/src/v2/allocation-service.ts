@@ -217,17 +217,20 @@ export class AllocationService {
     }
 
     createAllocationRequestChoice(
-        action: 'withdraw' | 'reject',
+        action: 'withdraw' | 'reject' | 'accept',
         allocationRequestCid: string,
         actors: PartyId[]
     ): [ExerciseCommand, DisclosedContract[]] {
+        const choice = {
+            accept: 'AllocationRequest_Accept',
+            reject: 'AllocationRequest_Reject',
+            withdraw: 'AllocationRequest_Withdraw',
+        }[action]
+
         const exercise: ExerciseCommand = {
             templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
             contractId: allocationRequestCid,
-            choice:
-                action === 'reject'
-                    ? 'AllocationRequest_Reject'
-                    : 'AllocationRequest_Withdraw',
+            choice,
             choiceArgument: { actors, extraArgs: EMPTY_EXTRA_ARGS() },
         }
         return [exercise, []]
@@ -344,12 +347,16 @@ export class AllocationService {
             })
     }
 
+    /**
+     *
+     * @deprecated use createAllocationsForRequestForLoggedInParty
+     */
     async createAllocationsForRequest(opts: {
         requestCid: string
         request: AllocationRequestViewV2
         registry: (admin: PartyId) => Promise<URL>
         actors?: PartyId[]
-    }): Promise<[ExerciseCommand[], DisclosedContract[]]> {
+    }): Promise<AllocationRequestAcceptResult> {
         const used = new Set<string>()
         const results: [ExerciseCommand, DisclosedContract[]][] = []
 
@@ -412,5 +419,65 @@ export class AllocationService {
         )
 
         return [results.map(([c]) => c), [...dcs.values()]]
+    }
+
+    async createAllocationsForRequestForLoggedInParty(opts: {
+        requestCid: string
+        request: AllocationRequestViewV2
+        registry: (admin: PartyId) => Promise<URL | null>
+        partyId: PartyId
+    }): Promise<{
+        allocate: [ExerciseCommand, DisclosedContract[]][]
+        accept: [ExerciseCommand, DisclosedContract[]] | null
+        skipped: PartyId[]
+    }> {
+        const specs = opts.request.allocations.filter(
+            (p) => p.authorizer.owner === opts.partyId
+        )
+
+        if (specs.length === 0) {
+            throw new Error(
+                `Request ${opts.requestCid} has no allocation for account ${opts.partyId}`
+            )
+        }
+
+        const used = new Set<string>()
+        const allocate: [ExerciseCommand, DisclosedContract[]][] = []
+        const skipped: PartyId[] = []
+
+        for (const spec of opts.request.allocations) {
+            const registryUrl = await opts.registry(spec.admin)
+            if (!registryUrl) {
+                skipped.push(spec.admin)
+                continue
+            }
+            const [cmd, dcs] = await this.createAllocation(
+                {
+                    settlement: opts.request.settlement,
+                    spec,
+                    admin: spec.admin,
+                    actors: [opts.partyId],
+                    excludeCids: used,
+                },
+                registryUrl
+            )
+
+            for (const cid of (cmd.choiceArgument as AllocationFactory_Allocate)
+                .inputHoldingCids) {
+                used.add(cid as unknown as string)
+            }
+            allocate.push([cmd, dcs])
+        }
+
+        const accept =
+            skipped.length === 0
+                ? this.createAllocationRequestChoice(
+                      'accept',
+                      opts.requestCid,
+                      [opts.partyId]
+                  )
+                : null
+
+        return { allocate, accept, skipped }
     }
 }
