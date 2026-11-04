@@ -349,14 +349,16 @@ export class AllocationService {
 
     /**
      *
-     * @deprecated use createAllocationsForRequestForLoggedInParty
+     * @deprecated Use {@link createAllocationsForRequestForLoggedInParty}
+     * instead, which creates only the allocations owned by a given party and
+     * reports allocations whose registry could not be resolved
      */
     async createAllocationsForRequest(opts: {
         requestCid: string
         request: AllocationRequestViewV2
         registry: (admin: PartyId) => Promise<URL>
         actors?: PartyId[]
-    }): Promise<AllocationRequestAcceptResult> {
+    }): Promise<[ExerciseCommand[], DisclosedContract[]]> {
         const used = new Set<string>()
         const results: [ExerciseCommand, DisclosedContract[]][] = []
 
@@ -421,6 +423,30 @@ export class AllocationService {
         return [results.map(([c]) => c), [...dcs.values()]]
     }
 
+    /**
+     * Prepares the commands for a party to accept an allocation request.
+     *
+     * Creates one `AllocationFactory_Allocate` command for each allocation in the
+     * request that the party owns, followed by an `AllocationRequest_Accept`
+     * command. Holdings used as inputs by one allocation are excluded from later
+     * allocations, so no holding is spent twice within the same request.
+     *
+     * If no registry serves an allocation's instrument admin, that allocation is
+     * skipped and its admin is added to `skipped`. In that case `accept` is
+     * `null`, because the request cannot be accepted until every allocation
+     * exists.
+     *
+     * @param opts.requestCid - Contract ID of the allocation request.
+     * @param opts.request - The allocation request's interface view.
+     * @param opts.registry - Resolves an instrument admin to its registry URL,
+     * or `null` if no registry serves that admin.
+     * @param opts.partyId - The party accepting the request. Only allocations
+     * this party owns are created, and it acts on every command.
+     * @returns The allocate commands with their disclosed contracts, the accept
+     * command with its disclosed contracts (or `null` if any allocation was
+     * skipped), and the admins whose allocations were skipped.
+     * @throws If the request contains no allocations owned by `partyId`.
+     */
     async createAllocationsForRequestForLoggedInParty(opts: {
         requestCid: string
         request: AllocationRequestViewV2
@@ -445,7 +471,7 @@ export class AllocationService {
         const allocate: [ExerciseCommand, DisclosedContract[]][] = []
         const skipped: PartyId[] = []
 
-        for (const spec of opts.request.allocations) {
+        for (const spec of specs) {
             const registryUrl = await opts.registry(spec.admin)
             if (!registryUrl) {
                 skipped.push(spec.admin)

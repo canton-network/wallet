@@ -8,3 +8,4 @@ export * from './interface-ids.const.js'
 export * as OffLedger from './generated-clients/index.js'
 
 export * from './models/index.js'
+export * from './utils.js'
