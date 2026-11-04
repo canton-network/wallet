@@ -17,7 +17,6 @@ import type { GetServerStatusResult } from '@canton-network/core-wallet-user-rpc
 import { createUserClient } from '../rpc-client'
 import '../index'
 import { stateManager } from '../state-manager'
-import { detectCurrentOrigin } from '../listeners.js'
 
 @customElement('user-ui-admin')
 export class UserUiAdmin extends BaseElement {
@@ -56,7 +55,7 @@ export class UserUiAdmin extends BaseElement {
 
     private async loadData() {
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -91,9 +90,7 @@ export class UserUiAdmin extends BaseElement {
                             <div class="notice-meta text-body-secondary mt-1">
                                 Last seen
                                 <span
-                                    title=${ifDefined(
-                                        formatUtcDateTime(notice.lastSeenAt)
-                                    )}
+                                    title=${ifDefined(formatUtcDateTime(notice.lastSeenAt))}
                                     >${formatDateTime(notice.lastSeenAt)}</span
                                 >
                             </div>
