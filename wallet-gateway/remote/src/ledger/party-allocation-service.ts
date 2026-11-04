@@ -227,6 +227,10 @@ export class PartyAllocationService {
     /**
      * Allocates a party using topology transactions signed by an existing
      * wallet and grants user rights to it.
+     * @param namespace The namespace of the wallet.
+     * @param transactions The topology transactions.
+     * @param signature A transaction signature from the signing provider.
+     * @param userId The ID of the user.
      */
     async allocatePartyWithExistingWalletAndGrantRights(
         namespace: string,
