@@ -244,7 +244,7 @@ export class PartyAllocationService {
     }
 
     /**
-     * @param hint If set, the participant grants this user act-as rights as part of the allocation.
+     * @param hint A hint for the party ID.
      * @param userId If set, the participant grants this user act-as rights as part of the allocation.
      */
     private async allocateInternalParty(
