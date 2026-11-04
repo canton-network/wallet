@@ -176,7 +176,7 @@ describe('PartyAllocationService', () => {
         expect(mockLedgerGrantUserRights).not.toHaveBeenCalled()
     })
 
-    it('allocates a party and grants user rights', async () => {
+    it('allocates an internal party and grants user rights via the allocation request', async () => {
         mockLedgerGet.mockResolvedValueOnce({
             participantId: 'participant1::participantid',
         })
@@ -191,10 +191,13 @@ describe('PartyAllocationService', () => {
             partyId: 'party1::participantid',
             namespace: 'participantid',
         })
-        expect(mockLedgerGrantUserRights).toHaveBeenCalledWith(
-            'user1',
-            'party1::participantid'
-        )
+        expect(mockLedgerPost).toHaveBeenCalledWith('/v2/parties', {
+            partyIdHint: 'party1',
+            identityProviderId: '',
+            synchronizerId: 'sync-id',
+            userId: 'user1',
+        })
+        expect(mockLedgerGrantUserRights).not.toHaveBeenCalled()
     })
 
     it('allocates an external party and grants user rights', async () => {
@@ -219,21 +222,21 @@ describe('PartyAllocationService', () => {
         )
     })
 
-    it('propagates a user-rights grant failure after allocating the party', async () => {
-        mockLedgerGet.mockResolvedValueOnce({
-            participantId: 'participant1::participantid',
-        })
-        mockLedgerPost.mockResolvedValueOnce({
-            partyDetails: { party: 'party1::participantid' },
-        })
+    it('propagates a user-rights grant failure after allocating an external party', async () => {
+        const signingCallback = vi.fn().mockResolvedValue('mysignedhash')
         mockLedgerGrantUserRights.mockRejectedValueOnce(
             new Error('grant failed')
         )
 
         await expect(
-            service.allocatePartyAndGrantRights('user1', 'party1')
+            service.allocatePartyAndGrantRights(
+                'user1',
+                'party2',
+                'mypublickey',
+                signingCallback
+            )
         ).rejects.toThrow('grant failed')
-        expect(mockLedgerPost).toHaveBeenCalledOnce()
+        expect(mockAllocateExternalParty).toHaveBeenCalledOnce()
     })
 
     it('grants user rights without allocating a party', async () => {

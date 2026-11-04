@@ -98,12 +98,16 @@ export class PartyAllocationService {
         publicKey?: string,
         signingCallback?: SigningCbFn
     ): Promise<AllocatedParty> {
-        const party =
-            publicKey !== undefined && signingCallback !== undefined
-                ? await this.allocateParty(hint, publicKey, signingCallback)
-                : await this.allocateParty(hint)
-        await this.grantUserRights(userId, party.partyId)
-        return party
+        if (publicKey !== undefined && signingCallback !== undefined) {
+            const party = await this.allocateExternalParty(
+                hint,
+                publicKey,
+                signingCallback
+            )
+            await this.grantUserRights(userId, party.partyId)
+            return party
+        }
+        return this.allocateInternalParty(hint, userId)
     }
 
     /**
@@ -239,7 +243,14 @@ export class PartyAllocationService {
         return partyId
     }
 
-    private async allocateInternalParty(hint: string): Promise<AllocatedParty> {
+    /**
+     * @param hint If set, the participant grants this user act-as rights as part of the allocation.
+     * @param userId If set, the participant grants this user act-as rights as part of the allocation.
+     */
+    private async allocateInternalParty(
+        hint: string,
+        userId?: string
+    ): Promise<AllocatedParty> {
         const { participantId } = await this.ledgerClient.getWithRetry(
             '/v2/parties/participant-id'
         )
@@ -258,6 +269,7 @@ export class PartyAllocationService {
             synchronizerId:
                 this.synchronizerId ??
                 (await this.ledgerClient.getSynchronizerId()),
+            ...(userId && { userId }),
         })
 
         if (!res.partyDetails?.party) {
