@@ -1,0 +1,13 @@
+{
+    "id": "reject-v3-value-without-kind",
+    "kind": "reject",
+    "scheme": "HASHING_SCHEME_VERSION_V3",
+    "preparedTransaction": "CoMECgMyLjESATAa1AMKATDCPs0DCsoDCgMyLjESQjAwOWE3N2MwMDg1YTcxYzk4YzI0YTZjNmVhN2FiOGE3YWU5MGQ3ZmMzMWJjMjFlMGY4NmJhYTgzMThmNjc0YjJjNhoMaGFzaC12ZWN0b3JzIlYKQDdhYzA2NTBlZjRkMzg2YTQyYmNiYzdmZTEyOWY0MTgwNmRhYTA0MDYzZmYwOTcwYTVhM2NkZDZmNGY4MjllNjgSC0hhc2hWZWN0b3JzGgVQbGFpbiplcmMKVgpAN2FjMDY1MGVmNGQzODZhNDJiY2JjN2ZlMTI5ZjQxODA2ZGFhMDQwNjNmZjA5NzBhNWEzY2RkNmY0ZjgyOWU2OBILSGFzaFZlY3RvcnMaBVBsYWluEgkKBW93bmVyEgAyWGhhc2gtdmVjdG9ycy1vd25lcjo6MTIyMGVkM2IyMTc0NTRiYjZkZjcxNTM5ZDgxMTlkNjc5MjEwZWY1MjhjYThkMzY3MTE3NzllYjA5ZDVkNzMzN2IwOTU6WGhhc2gtdmVjdG9ycy1vd25lcjo6MTIyMGVkM2IyMTc0NTRiYjZkZjcxNTM5ZDgxMTlkNjc5MjEwZWY1MjhjYThkMzY3MTE3NzllYjA5ZDVkNzMzN2IwOTUiIhIgIBv2ga8gs1C86pyFLUsbekIamkj8RD3nOz9QOTqJy/UShgISgAEKWGhhc2gtdmVjdG9ycy1vd25lcjo6MTIyMGVkM2IyMTc0NTRiYjZkZjcxNTM5ZDgxMTlkNjc5MjEwZWY1MjhjYThkMzY3MTE3NzllYjA5ZDVkNzMzN2IwOTUSJDFkYjkxNGNjLTI1OWQtNDZjMC1hMWEwLTQ5N2MyZTk3MWIyZhpSd2FsbGV0OjoxMjIwZTdiMjNlYTUyZWI1YzY3MmZiMGIxY2RiYzkxNjkyMmZmZWQzZGQ3Njc2YzIyM2E2MDU2NjQzMTVlMmQ0M2VkZDo6MzUtMCokODE2NTMyNjUtNTZhYS00MzhjLWIzMWEtMmMxMGE3MDc1YTZhMO/mv4r605cD",
+    "expected": {
+        "error": "INVALID_VALUE"
+    },
+    "source": {
+        "from": "v3-create-plain",
+        "mutation": "the party in the argument of node 0 removed, which leaves its Value empty"
+    }
+}

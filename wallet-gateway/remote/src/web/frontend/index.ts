@@ -52,6 +52,8 @@ export const redirectToIntendedOrDefault = async (): Promise<void> => {
 export class UserApp extends LitElement {
     @state() accessor currentOrigin: string | null = null
     @state() private accessor networkConnected = false
+    @state() private accessor isAdmin = false
+    @state() private accessor warningCount = 0
     @state() accessor dappApiUrl: string = ''
     @state() accessor showPage = false
 
@@ -65,24 +67,52 @@ export class UserApp extends LitElement {
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
         this.currentOrigin = await stateManager.currentOrigin.poll()
-        void this.refreshNetworkConnected()
+        void this.loadHeaderState()
     }
 
-    private async refreshNetworkConnected(): Promise<void> {
+    // Loads what the header shows for the logged-in user
+    private async loadHeaderState(): Promise<void> {
         const currentOrigin =
             this.currentOrigin ?? (await stateManager.currentOrigin.poll())
         const accessToken = await stateManager.accessToken.get(currentOrigin)
         if (!accessToken) {
             this.networkConnected = false
+            this.isAdmin = false
+            this.warningCount = 0
             return
         }
 
         try {
             const userClient = await createUserClient(accessToken)
-            const result = await userClient.request({ method: 'listSessions' })
-            this.networkConnected = result.sessions?.[0]?.status === 'connected'
+            const [networkConnected, isAdmin] = await Promise.all([
+                userClient
+                    .request({ method: 'listSessions' })
+                    .then(
+                        (result) => result.sessions?.[0]?.status === 'connected'
+                    )
+                    .catch(() => false),
+                userClient
+                    .request({ method: 'getUser' })
+                    .then((result) => result.isAdmin)
+                    .catch(() => false),
+            ])
+            this.networkConnected = networkConnected
+            this.isAdmin = isAdmin
+            if (isAdmin) {
+                this.warningCount = await userClient
+                    .request({ method: 'getServerStatus' })
+                    .then(
+                        (status) =>
+                            status.notices.filter(
+                                (notice) => notice.severity === 'warning'
+                            ).length
+                    )
+                    .catch(() => 0)
+            }
         } catch {
             this.networkConnected = false
+            this.isAdmin = false
+            this.warningCount = 0
         }
         this.dappApiUrl = await fetchDappApiUrl()
     }
@@ -153,6 +183,8 @@ export class UserApp extends LitElement {
                 .networkName=${networkName}
                 .networkConnected=${this.networkConnected}
                 .dappApiUrl=${this.dappApiUrl}
+                .isAdmin=${this.isAdmin}
+                .warningCount=${this.warningCount}
                 @logout=${this.handleLogout}
                 @copy-dapp-api-url=${this.handleCopyDappApiUrl}
             >

@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    HashingSchemeVersion,
     PreparedTransaction,
     TopologyTransaction,
     decodeUnknownFields,
 } from '@canton-network/core-ledger-proto'
-import { computePreparedTransaction } from './hashing_scheme_v2.js'
+import {
+    computePreparedTransactionHash,
+    type HashingScheme,
+    type HashOptions,
+} from '@canton-network/core-tx-hashing'
 import { fromBase64, toBase64, toHex } from './utils.js'
 export {
     computeSha256CantonHash,
@@ -74,16 +79,19 @@ export const decodeTopologyTransaction = (
 
 /**
  * Computes the hash of a prepared transaction.
+ * With `readUnknownField: false`, unknown fields are dropped before hashing instead of refused.
  *
  * @param preparedTransaction - The prepared transaction to hash
  * @param format - The format of the output hash (base64 or hex)
- * @param options - Decode options, used when `preparedTransaction` is a base64 string
+ * @param options - Decode options, used when `preparedTransaction` is a base64 string,
+ *   and the `hashingScheme` (V2 by default) and `limits` passed to core-tx-hashing
  * @returns The computed hash in the specified format
  */
 export const hashPreparedTransaction = async (
     preparedTransaction: string | PreparedTransaction,
     format: 'base64' | 'hex' = 'base64',
-    options?: DecodeOptions
+    options?: DecodeOptions &
+        HashOptions & { hashingScheme?: HashingScheme | undefined }
 ): Promise<string> => {
     let preparedTx: PreparedTransaction
 
@@ -93,7 +101,12 @@ export const hashPreparedTransaction = async (
         preparedTx = preparedTransaction
     }
 
-    const hash = await computePreparedTransaction(preparedTx)
+    // Bytes, so fields that core-tx-hashing's own bindings lack are refused
+    const hash = await computePreparedTransactionHash(
+        PreparedTransaction.toBinary(preparedTx),
+        options?.hashingScheme ?? HashingSchemeVersion.V2,
+        { limits: options?.limits }
+    )
 
     switch (format) {
         case 'base64':

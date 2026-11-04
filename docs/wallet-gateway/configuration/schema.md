@@ -81,7 +81,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                 },
                 "host": {
                     "deprecated": true,
-                    "description": "The host interface the server binds to. Deprecated as the service always binds to the local machine network interface. Will be removed in a future release.",
+                    "description": "The host interface the server binds to. Deprecated as the service always listens on all network interfaces. Will be removed in a future release.",
                     "type": "string"
                 },
                 "tls": {
@@ -117,7 +117,7 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                     ]
                 },
                 "admin": {
-                    "description": "The JWT claim (e.g. \"sub\") identifying the admin user. If set, requests with a matching claim will be granted admin privileges.",
+                    "description": "The user ID of the admin user: the value of the JWT \"sub\" claim, or of \"daml.com.usr\" for self-issued tokens. If set, requests from this user will be granted admin privileges.",
                     "type": "string"
                 },
                 "signingWorker": {

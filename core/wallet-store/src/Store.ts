@@ -126,8 +126,11 @@ export interface ListTransactionsOptions {
     limit?: number
 }
 
+export type MessageRawKind = 'regular' | 'self-issued-token'
+
 export interface MessageRaw {
     id: string
+    kind: MessageRawKind
     status: 'pending' | 'awaiting-signature' | 'signed' | 'failed'
     userId: string
     partyId: PartyId
@@ -290,7 +293,7 @@ export interface Store {
         updates?: MessageRawStatusUpdate
     ): Promise<void>
     getMessageRaw(messageId: string): Promise<MessageRaw | undefined>
-    listMessageRaws(): Promise<Array<MessageRaw>>
+    listMessageRaws(kind: MessageRawKind): Promise<Array<MessageRaw>>
     removeMessageRaw(messageId: string): Promise<void>
 
     // API Key methods

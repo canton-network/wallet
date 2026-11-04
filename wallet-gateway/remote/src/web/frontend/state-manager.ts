@@ -183,6 +183,28 @@ export class StateManager {
             ),
     }
 
+    selfIssuedAccessTokenMessageId = {
+        get: (origin: string) =>
+            this.getWithStorage(
+                'selfIssuedAccessTokenMessageId',
+                origin,
+                sessionStorage
+            ),
+        set: (messageId: string, origin: string) =>
+            this.setWithStorage(
+                'selfIssuedAccessTokenMessageId',
+                messageId,
+                origin,
+                sessionStorage
+            ),
+        clear: (origin: string) =>
+            this.clearWithStorage(
+                'selfIssuedAccessTokenMessageId',
+                origin,
+                sessionStorage
+            ),
+    }
+
     async clearAuthState(origin: string): Promise<void> {
         await this.accessToken.clear(origin)
         this.networkId.clear(origin)
@@ -190,6 +212,7 @@ export class StateManager {
         this.intendedPage.clear(origin)
         this.sessionId.clear(origin)
         this.selfIssuedLoginSessionId.clear(origin)
+        this.selfIssuedAccessTokenMessageId.clear(origin)
     }
 
     async revokeAccessToken(origin: string): Promise<void> {

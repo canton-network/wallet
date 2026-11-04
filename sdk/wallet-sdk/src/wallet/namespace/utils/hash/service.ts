@@ -1,29 +1,69 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PreparedTransaction } from '@canton-network/core-ledger-proto'
+import {
+    HashingSchemeVersion,
+    PreparedTransaction,
+} from '@canton-network/core-ledger-proto'
+import {
+    computePreparedTransactionHash,
+    type HashingScheme,
+    type HashOptions,
+    TxHashingError,
+} from '@canton-network/core-tx-hashing'
 import type { OfflineSDKContext } from '../../../sdk.js'
-import { PreparedTransactionEncoder } from './util/encoder/preparedTransactionEncoder.js'
+import { Converter } from './converter.js'
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,
 } from '@canton-network/core-tx-visualizer'
 
 export class HashNamespace {
-    private readonly encodePreparedTransaction: PreparedTransactionEncoder
-    constructor(private readonly ctx: OfflineSDKContext) {
-        this.encodePreparedTransaction = new PreparedTransactionEncoder(ctx)
-    }
+    constructor(private readonly ctx: OfflineSDKContext) {}
 
     /**
      * @deprecated use preparedTransaction
      */
-    public async preparedTransacation(value: PreparedTransaction | string) {
-        return await this.encodePreparedTransaction.hash(value)
+    public async preparedTransacation(
+        value: PreparedTransaction | string
+    ): Promise<Converter> {
+        return await this.preparedTransaction(value)
     }
 
-    public async preparedTransaction(value: PreparedTransaction | string) {
-        return await this.encodePreparedTransaction.hash(value)
+    /**
+     * Computes the hash of a prepared transaction with `@canton-network/core-tx-hashing`.
+     *
+     * @param value - The prepared transaction, or its bytes in base64 as the JSON API returns them
+     * @param scheme - The hashing scheme the participant used, V2 by default
+     * @param options - `limits` overrides core-tx-hashing's `DEFAULT_LIMITS`
+     * @throws {SDKError} `BadRequest`, with the `TxHashingError` as `context.originalError`, when the input is refused
+     */
+    public async preparedTransaction(
+        value: PreparedTransaction | string,
+        scheme: HashingScheme = HashingSchemeVersion.V2,
+        options?: HashOptions
+    ): Promise<Converter> {
+        try {
+            // Bytes, so fields core-tx-hashing's own bindings lack are refused
+            const input =
+                typeof value === 'string'
+                    ? value
+                    : PreparedTransaction.toBinary(value)
+            const hash = await computePreparedTransactionHash(
+                input,
+                scheme,
+                options
+            )
+            return new Converter(hash)
+        } catch (error) {
+            if (!(error instanceof TxHashingError)) throw error
+            const at = error.path === undefined ? '' : ` at ${error.path}`
+            this.ctx.error.throw({
+                type: 'BadRequest',
+                message: `prepared transaction refused: ${error.code}${at}: ${error.message}`,
+                originalError: error,
+            })
+        }
     }
 
     /**

@@ -201,6 +201,18 @@ export const SelectWithCustomLabel: Story = {
     },
 }
 
+export const Selecting: Story = {
+    args: { onSelect: fn(), selecting: true },
+    play: async ({ canvas, canvasElement }) => {
+        await expect(
+            canvas.getByRole('button', { name: 'Select' })
+        ).toBeDisabled()
+        await expect(
+            canvasElement.querySelector('.MuiCircularProgress-root')
+        ).toBeInTheDocument()
+    },
+}
+
 export const LongPartyId: Story = {
     play: async ({ canvas }) => {
         const shown = `${partyId.slice(0, 10)}...${partyId.slice(-10)}`
