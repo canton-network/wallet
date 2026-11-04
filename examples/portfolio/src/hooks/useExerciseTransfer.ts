@@ -24,6 +24,7 @@ export const useExerciseTransfer = () => {
             instrumentId: { admin: string; id: string }
             instructionChoice: 'Accept' | 'Reject' | 'Withdraw'
             version: TokenStandardVersion
+            actors?: PartyId[]
         }) => {
             if (!sdk) {
                 throw new Error('Wallet SDK is not ready')
@@ -56,21 +57,21 @@ export const useExerciseTransfer = () => {
                     case 'Accept':
                         preparedCommand = await sdk.token.v2.transfer.accept(
                             args.contractId,
-                            [args.party],
+                            args.actors ?? [args.party],
                             new URL(registryUrl)
                         )
                         break
                     case 'Reject':
                         preparedCommand = await sdk.token.v2.transfer.reject(
                             args.contractId,
-                            [args.party],
+                            args.actors ?? [args.party],
                             new URL(registryUrl)
                         )
                         break
                     case 'Withdraw':
                         preparedCommand = await sdk.token.v2.transfer.withdraw(
                             args.contractId,
-                            [args.party],
+                            args.actors ?? [args.party],
                             new URL(registryUrl)
                         )
                         break

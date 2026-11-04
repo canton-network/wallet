@@ -19,6 +19,7 @@ import {
     useExerciseTransfer,
 } from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
+import type { TransferActionAvailability } from '@utils/transfer-actions'
 
 interface ActionRequiredDialogProps {
     item: ActionItem | null
@@ -66,8 +67,12 @@ export function ActionRequiredDialog({
 
     const handleTransferAction = (
         transferItem: TransferActionItem,
-        action: 'Accept' | 'Reject' | 'Withdraw'
+        availability: Extract<
+            TransferActionAvailability,
+            { status: 'available' }
+        >
     ) => {
+        const action = availability.action
         exerciseTransferMutation.mutate(
             {
                 party: transferItem.currentPartyId as PartyId,
@@ -75,6 +80,7 @@ export function ActionRequiredDialog({
                 instrumentId: transferItem.instrumentId,
                 instructionChoice: action,
                 version: transferActionVersion(transferItem),
+                actors: availability.actors,
             },
             {
                 onSuccess: () => {
