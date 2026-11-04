@@ -12,14 +12,16 @@ import type {
     TransferLegWithAllocation,
 } from '@components/types'
 import { AllocationActionDialogContent } from '@components/dashboard/allocation-action-dialog-content'
-import { TransferOfferActionDialogContent } from '@components/dashboard/transfer-offer-action-dialog-content'
+import {
+    TransferOfferActionDialogContent,
+    type AvailableTransferAction,
+} from '@components/dashboard/transfer-offer-action-dialog-content'
 import { useCreateAllocation } from '@hooks/useCreateAllocation'
 import {
     transferActionVersion,
     useExerciseTransfer,
 } from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
-import type { TransferActionAvailability } from '@utils/transfer-actions'
 
 interface ActionRequiredDialogProps {
     item: ActionItem | null
@@ -67,10 +69,7 @@ export function ActionRequiredDialog({
 
     const handleTransferAction = (
         transferItem: TransferActionItem,
-        availability: Extract<
-            TransferActionAvailability,
-            { status: 'available' }
-        >
+        availability: AvailableTransferAction
     ) => {
         const action = availability.action
         exerciseTransferMutation.mutate(
