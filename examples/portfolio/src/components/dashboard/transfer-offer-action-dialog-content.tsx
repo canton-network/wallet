@@ -222,7 +222,7 @@ export function TransferOfferActionDialogContent({
                                     color="inherit"
                                 ></CircularProgress>
                             ) : (
-                                availability.status
+                                availability.action
                             )}
                         </PillButton>
                     ))}
