@@ -6,6 +6,7 @@ import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
 import type { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
+import './copy-button.js'
 
 /** Emitted when the user clicks a network card to review it */
 export class NetworkCardReviewEvent extends Event {
@@ -28,8 +29,9 @@ export class NetworkCardUpdateEvent extends Event {
     }
 }
 
+export
 @customElement('network-card')
-export class NetworkCard extends BaseElement {
+class NetworkCard extends BaseElement {
     @property({ type: Object }) accessor network: PublicNetwork | null = null
     @property({ type: Boolean }) accessor activeSession = false
     @property({ type: String }) accessor accessToken = ''

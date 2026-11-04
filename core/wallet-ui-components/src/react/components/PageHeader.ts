@@ -3,10 +3,10 @@
 
 import React from 'react'
 import { createComponent } from '@lit/react'
-import { WgBackLink as WgBackLinkElement } from '../components/back-link.js'
+import { WgPageHeader as WgPageHeaderElement } from '../../components/page-header.js'
 
-export const BackLink = createComponent({
-    tagName: 'wg-back-link',
-    elementClass: WgBackLinkElement,
+export const PageHeader = createComponent({
+    tagName: 'wg-page-header',
+    elementClass: WgPageHeaderElement,
     react: React,
 })

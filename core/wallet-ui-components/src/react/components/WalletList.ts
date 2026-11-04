@@ -3,12 +3,12 @@
 
 import React from 'react'
 import { createComponent, type EventName } from '@lit/react'
-import { WgWalletList as WgWalletListElement } from '../components/wallet-list.js'
+import { WgWalletList as WgWalletListElement } from '../../components/wallet-list.js'
 import type {
     WalletAllocateEvent,
     WalletCardEditEvent,
     WalletSetPrimaryEvent,
-} from '../components/wallet-card.js'
+} from '../../components/wallet-card.js'
 
 export const WalletList = createComponent({
     tagName: 'wg-wallet-list',

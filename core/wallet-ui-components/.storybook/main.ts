@@ -14,12 +14,6 @@ const config: StorybookConfig = {
             },
         },
     },
-    refs: {
-        lit: {
-            title: 'Lit (legacy)',
-            url: process.env.LIT_STORYBOOK_URL ?? 'http://localhost:6007',
-        },
-    },
 }
 
 export default config

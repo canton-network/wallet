@@ -26,8 +26,9 @@ export class MessageDeleteEvent extends Event {
     }
 }
 
+export
 @customElement('wg-message-detail')
-export class WgMessageDetail extends BaseElement {
+class WgMessageDetail extends BaseElement {
     @property() accessor messageId = ''
 
     @property() accessor message = ''

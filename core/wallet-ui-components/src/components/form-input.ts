@@ -21,8 +21,9 @@ export class FormInputChangedEvent extends Event {
 /**
  * An individual input field in the network form
  */
+export
 @customElement('form-input')
-export class FormInput extends BaseElement {
+class FormInput extends BaseElement {
     @property({ type: String }) accessor label = ''
     @property({ type: String }) accessor value = ''
     @property({ type: String }) accessor text = ''

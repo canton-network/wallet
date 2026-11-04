@@ -20,8 +20,9 @@ export class CopyDappApiUrlEvent extends Event {
     }
 }
 
+export
 @customElement('app-header')
-export class AppHeader extends BaseElement {
+class AppHeader extends BaseElement {
     @property({ type: String }) accessor iconSrc: string = 'images/icon.png'
     @property({ type: String }) accessor networkName: string =
         'No network connected'

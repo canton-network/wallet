@@ -7,6 +7,12 @@ import type {
     SelfIssuedIdp,
     SelfSignedIdp,
 } from '@canton-network/core-wallet-user-rpc-client'
+import {
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
 import { IdpCard } from './IdpCard'
 
@@ -28,90 +34,132 @@ const selfIssuedIdp: SelfIssuedIdp = {
     type: 'self_issued',
 }
 
-const meta: Meta = {
+const meta = {
     title: 'IdpCard',
     component: IdpCard,
     args: {
         idp: oauthIdp,
-        onReview: fn(),
+        onIdpReview: fn(),
     },
-}
+} satisfies Meta<typeof IdpCard>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
 export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        // Hook used by the e2e helpers in wallet-test-utils
-        await expect(canvas.getByTestId('idp-card')).toBeInTheDocument()
-        await expect(canvas.getByText('oauth')).toBeInTheDocument()
-        await expect(canvas.getByText(oauthIdp.issuer)).toBeInTheDocument()
-        await expect(canvas.getByText(oauthIdp.configUrl)).toBeInTheDocument()
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            canvas.getByRole('button', { name: 'Copy issuer URL' })
+            await findByShadowText(canvasElement, 'Type')
         ).toBeInTheDocument()
         await expect(
-            canvas.getByRole('button', { name: 'Copy config URL' })
+            await findByShadowText(canvasElement, 'oauth')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'Issuer')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, oauthIdp.issuer)
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'Config URL')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, oauthIdp.configUrl)
         ).toBeInTheDocument()
 
-        await userEvent.click(canvas.getByRole('button', { name: 'my-idp' }))
-        await expect(args.onReview).toHaveBeenCalledTimes(1)
-        await expect(args.onReview).toHaveBeenCalledWith(oauthIdp)
+        // Clicking anywhere on the card opens it for review
+        await userEvent.click(await findByShadowText(canvasElement, 'my-idp'))
+        await expect(args.onIdpReview).toHaveBeenCalledOnce()
+        await expect(args.onIdpReview).toHaveBeenCalledWith(
+            expect.objectContaining({ idp: oauthIdp })
+        )
     },
 }
 
-export const WholeCardIsClickable: Story = {
-    play: async ({ canvas, canvasElement }) => {
-        const card = canvas.getByRole('article')
-        const reviewButton = canvas.getByRole('button', { name: 'my-idp' })
-        const copyButton = canvas.getByRole('button', {
-            name: 'Copy issuer URL',
+export const CopyButtons: Story = {
+    play: async ({ args, canvasElement, userEvent }) => {
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Copy issuer URL',
+            })
+        ).toBeInTheDocument()
+        const copyConfigUrl = await findByShadowRole(canvasElement, 'button', {
+            name: 'Copy config URL',
         })
 
-        // userEvent doesn't hit-test, so check what is actually under the pointer
-        const topElementAt = (el: Element, x = 0.5, y = 0.5) => {
-            const rect = el.getBoundingClientRect()
-            return canvasElement.ownerDocument.elementFromPoint(
-                rect.left + rect.width * x,
-                rect.top + rect.height * y
-            )
-        }
-
-        // Clicking the card body lands on the review button's overlay...
-        await expect(topElementAt(card, 0.5, 0.9)).toBe(reviewButton)
-        // ...but the copy buttons stay on top of it
-        await expect(copyButton.contains(topElementAt(copyButton))).toBe(true)
+        // Copying doesn't open the identity provider
+        await userEvent.click(copyConfigUrl)
+        await expect(args.onIdpReview).not.toHaveBeenCalled()
     },
 }
 
 export const SelfSigned: Story = {
     args: { idp: selfSignedIdp },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('self_signed')).toBeInTheDocument()
-        await expect(canvas.getByText(selfSignedIdp.issuer)).toBeInTheDocument()
-        await expect(canvas.queryByText('Config URL')).not.toBeInTheDocument()
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(canvasElement, 'self_signed')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, selfSignedIdp.issuer)
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Config URL')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Copy config URL',
+            })
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const OauthWithoutConfigUrl: Story = {
+    args: { idp: { ...oauthIdp, configUrl: '' } },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(canvasElement, oauthIdp.issuer)
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Config URL')
+        ).not.toBeInTheDocument()
     },
 }
 
 export const SelfIssued: Story = {
     args: { idp: selfIssuedIdp },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('self_issued')).toBeInTheDocument()
-        await expect(canvas.queryByText('Issuer')).not.toBeInTheDocument()
-        await expect(canvas.queryByText('Config URL')).not.toBeInTheDocument()
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.queryByRole('button', { name: /^Copy/ })
+            await findByShadowText(canvasElement, 'self_issued')
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Issuer')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Config URL')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', { name: /^Copy/ })
         ).not.toBeInTheDocument()
     },
 }
 
 export const ReadOnly: Story = {
-    args: { onReview: undefined },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('my-idp')).toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'my-idp' })
-        ).not.toBeInTheDocument()
+    args: { readonly: true },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(await findByShadowText(canvasElement, 'my-idp'))
+        await expect(args.onIdpReview).not.toHaveBeenCalled()
+    },
+}
+
+export const NoIdp: Story = {
+    args: { idp: null },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const placeholder = await findByShadowText(
+            canvasElement,
+            'No identity provider supplied'
+        )
+        await userEvent.click(placeholder)
+        await expect(args.onIdpReview).not.toHaveBeenCalled()
     },
 }

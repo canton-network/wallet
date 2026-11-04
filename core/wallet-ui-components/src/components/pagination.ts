@@ -20,8 +20,9 @@ export class PageChangeEvent extends CustomEvent<{ page: number }> {
     }
 }
 
+export
 @customElement('wg-pagination')
-export class WgPagination extends BaseElement {
+class WgPagination extends BaseElement {
     @property({ type: Number }) accessor total = 0
     @property({ type: Number }) accessor pageSize = 5
     @property({ type: Number }) accessor page = 1

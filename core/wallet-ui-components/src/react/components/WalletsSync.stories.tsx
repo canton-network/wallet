@@ -3,80 +3,73 @@
 
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { expect, fn, screen, waitFor, within } from 'storybook/test'
+import { findByShadowRole } from 'shadow-dom-testing-library'
+import { expect, fn, waitFor, within } from 'storybook/test'
 import { ToastProvider } from '../contexts/ToastProvider'
 import { useErrorToast } from '../hooks/useErrorToast'
 import { useToast } from '../hooks/useToast'
 import { WalletsSync } from './WalletsSync'
 
-const meta: Meta = {
+const meta = {
     title: 'WalletsSync',
     component: WalletsSync,
     args: {
-        onSync: fn(),
+        onWalletsSync: fn(),
     },
-}
+} satisfies Meta<typeof WalletsSync>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
 export const UpToDate: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        const button = canvas.getByRole('button', { name: 'Refresh parties' })
+    play: async ({ args, canvasElement, userEvent }) => {
+        const button = await findByShadowRole(canvasElement, 'button', {
+            name: 'Refresh parties',
+        })
         await expect(button).toBeEnabled()
 
         await userEvent.click(button)
-        await expect(args.onSync).toHaveBeenCalledTimes(1)
+        await expect(args.onWalletsSync).toHaveBeenCalledOnce()
     },
 }
 
 export const SyncNeeded: Story = {
     args: { syncNeeded: true },
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         await userEvent.click(
-            canvas.getByRole('button', {
+            await findByShadowRole(canvasElement, 'button', {
                 name: 'Refresh parties (changes available)',
             })
         )
-        await expect(args.onSync).toHaveBeenCalledTimes(1)
+        await expect(args.onWalletsSync).toHaveBeenCalledOnce()
     },
 }
 
 export const Syncing: Story = {
     args: { syncNeeded: true, syncing: true },
-    play: async ({ args, canvas }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         // Syncing takes precedence over the "changes available" label
-        const button = canvas.getByRole('button', {
+        const button = await findByShadowRole(canvasElement, 'button', {
             name: 'Syncing parties...',
         })
         await expect(button).toBeDisabled()
-        await expect(args.onSync).not.toHaveBeenCalled()
+
+        await userEvent.click(button)
+        await expect(args.onWalletsSync).not.toHaveBeenCalled()
     },
 }
 
 export const Disabled: Story = {
     args: { disabled: true },
-    play: async ({ args, canvas }) => {
-        await expect(
-            canvas.getByRole('button', { name: 'Refresh parties' })
-        ).toBeDisabled()
-        await expect(args.onSync).not.toHaveBeenCalled()
-    },
-}
+    play: async ({ args, canvasElement, userEvent }) => {
+        const button = await findByShadowRole(canvasElement, 'button', {
+            name: 'Refresh parties',
+        })
+        await expect(button).toBeDisabled()
 
-export const ShowsTooltip: Story = {
-    args: { syncNeeded: true },
-    play: async ({ canvas, userEvent }) => {
-        // The button is wrapped, so hovering it works even while disabled
-        await userEvent.hover(
-            canvas.getByRole('button', {
-                name: 'Refresh parties (changes available)',
-            })
-        )
-        await expect(await screen.findByRole('tooltip')).toHaveTextContent(
-            'Refresh parties (changes available)'
-        )
+        await userEvent.click(button)
+        await expect(args.onWalletsSync).not.toHaveBeenCalled()
     },
 }
 
@@ -108,7 +101,11 @@ const SyncContainer = ({ fail = false }: { fail?: boolean }) => {
     }
 
     return (
-        <WalletsSync syncNeeded={syncNeeded} syncing={syncing} onSync={sync} />
+        <WalletsSync
+            syncNeeded={syncNeeded}
+            syncing={syncing}
+            onWalletsSync={sync}
+        />
     )
 }
 
@@ -118,14 +115,16 @@ export const AppFlow: Story = {
             <SyncContainer />
         </ToastProvider>
     ),
-    play: async ({ canvas, canvasElement, userEvent }) => {
+    play: async ({ canvasElement, userEvent }) => {
         await userEvent.click(
-            canvas.getByRole('button', {
+            await findByShadowRole(canvasElement, 'button', {
                 name: 'Refresh parties (changes available)',
             })
         )
         await expect(
-            canvas.getByRole('button', { name: 'Syncing parties...' })
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Syncing parties...',
+            })
         ).toBeDisabled()
 
         // The result is reported through a toast and the button settles
@@ -136,11 +135,11 @@ export const AppFlow: Story = {
         await expect(toast).toHaveTextContent(
             'Added: 1, Updated: 1, Disabled: 1.'
         )
-        await waitFor(() =>
-            expect(
-                canvas.getByRole('button', { name: 'Refresh parties' })
-            ).toBeEnabled()
-        )
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Refresh parties',
+            })
+        ).toBeEnabled()
     },
 }
 
@@ -150,9 +149,9 @@ export const AppFlowFailure: Story = {
             <SyncContainer fail />
         </ToastProvider>
     ),
-    play: async ({ canvas, canvasElement, userEvent }) => {
+    play: async ({ canvasElement, userEvent }) => {
         await userEvent.click(
-            canvas.getByRole('button', {
+            await findByShadowRole(canvasElement, 'button', {
                 name: 'Refresh parties (changes available)',
             })
         )
@@ -162,9 +161,9 @@ export const AppFlowFailure: Story = {
         )
         await expect(alert).toHaveTextContent('sync failed')
         // Still out of sync, and the button can be used again
-        await waitFor(() =>
+        await waitFor(async () =>
             expect(
-                canvas.getByRole('button', {
+                await findByShadowRole(canvasElement, 'button', {
                     name: 'Refresh parties (changes available)',
                 })
             ).toBeEnabled()

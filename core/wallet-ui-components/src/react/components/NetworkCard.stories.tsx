@@ -3,7 +3,14 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
-import { expect, fn } from 'storybook/test'
+import {
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
+import { expect, fn, type Mock } from 'storybook/test'
+import type { NetworkCardReviewEvent } from '../../components/network-card'
 import { NetworkCard } from './NetworkCard'
 
 const network: PublicNetwork = {
@@ -18,111 +25,137 @@ const network: PublicNetwork = {
     clientId: 'client-1',
 }
 
-const meta: Meta = {
+const { synchronizerId: _, ...rest } = network
+const withoutSynchronizer: PublicNetwork = { ...rest, identityProviderId: '' }
+
+const meta = {
     title: 'NetworkCard',
     component: NetworkCard,
     args: {
         network,
-        onReview: fn(),
+        onNetworkReview: fn(),
     },
-}
+} satisfies Meta<typeof NetworkCard>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
+/** The event passed to the first onNetworkReview call */
+const reviewEvent = (onNetworkReview: Mock | undefined) =>
+    onNetworkReview?.mock.calls[0]?.[0] as NetworkCardReviewEvent
+
 export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        // Hook used by the e2e helpers in wallet-test-utils
-        await expect(canvas.getByTestId('network-card')).toBeInTheDocument()
-        await expect(canvas.getByText('canton:devnet')).toBeInTheDocument()
-        await expect(canvas.getByText('authorization_code')).toBeInTheDocument()
-        await expect(canvas.getByText('idp-1')).toBeInTheDocument()
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            canvas.getByText(network.synchronizerId!)
+            await findByShadowText(canvasElement, 'DevNet')
         ).toBeInTheDocument()
         await expect(
-            canvas.getByRole('button', { name: 'Copy synchronizer ID' })
+            await findByShadowText(canvasElement, 'canton:devnet')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'authorization_code')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'Synchronizer')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, network.synchronizerId!)
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Copy synchronizer ID',
+            })
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'Identity provider')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'idp-1')
         ).toBeInTheDocument()
 
         // Session-only content is hidden
-        await expect(canvas.queryByText('CONNECTED')).not.toBeInTheDocument()
-        await expect(canvas.queryByText('[private]')).not.toBeInTheDocument()
         await expect(
-            canvas.queryByRole('button', { name: 'Copy access token' })
+            queryByShadowText(canvasElement, 'CONNECTED')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, '[private]')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Copy access token',
+            })
         ).not.toBeInTheDocument()
 
-        await userEvent.click(canvas.getByRole('button', { name: 'DevNet' }))
-        await expect(args.onReview).toHaveBeenCalledTimes(1)
-        await expect(args.onReview).toHaveBeenCalledWith(network)
-    },
-}
-
-export const WholeCardIsClickable: Story = {
-    play: async ({ canvas, canvasElement }) => {
-        const card = canvas.getByRole('article')
-        const reviewButton = canvas.getByRole('button', { name: 'DevNet' })
-        const copyButton = canvas.getByRole('button', {
-            name: 'Copy synchronizer ID',
-        })
-
-        // userEvent doesn't hit-test, so check what is actually under the pointer
-        const topElementAt = (el: Element, x = 0.5, y = 0.5) => {
-            const rect = el.getBoundingClientRect()
-            return canvasElement.ownerDocument.elementFromPoint(
-                rect.left + rect.width * x,
-                rect.top + rect.height * y
-            )
-        }
-
-        // Clicking the card body lands on the review button's overlay...
-        await expect(topElementAt(card, 0.5, 0.9)).toBe(reviewButton)
-        // ...but the copy button stays on top of it
-        await expect(copyButton.contains(topElementAt(copyButton))).toBe(true)
+        // Clicking anywhere on the card asks to review the network
+        await userEvent.click(await findByShadowRole(canvasElement, 'article'))
+        await expect(args.onNetworkReview).toHaveBeenCalledOnce()
+        await expect(reviewEvent(args.onNetworkReview).network).toEqual(network)
     },
 }
 
 export const ActiveSession: Story = {
     args: { activeSession: true, accessToken: 'secret-token' },
-    play: async ({ args, canvas }) => {
-        await expect(canvas.getByText('CONNECTED')).toBeInTheDocument()
-        await expect(canvas.getByText('Access Token')).toBeInTheDocument()
-        // The token itself is never rendered
-        await expect(canvas.getByText('[private]')).toBeInTheDocument()
-        await expect(canvas.queryByText('secret-token')).not.toBeInTheDocument()
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByRole('button', { name: 'Copy access token' })
+            await findByShadowText(canvasElement, 'CONNECTED')
         ).toBeInTheDocument()
-        await expect(args.onReview).not.toHaveBeenCalled()
+        await expect(
+            await findByShadowText(canvasElement, 'Access Token')
+        ).toBeInTheDocument()
+        // The token itself is never rendered
+        await expect(
+            await findByShadowText(canvasElement, '[private]')
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'secret-token')
+        ).not.toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Copy access token',
+            })
+        ).toBeInTheDocument()
     },
 }
 
 export const ReadOnly: Story = {
-    args: { onReview: undefined },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('DevNet')).toBeInTheDocument()
-        await expect(
-            canvas.queryByRole('button', { name: 'DevNet' })
-        ).not.toBeInTheDocument()
+    args: { readonly: true },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(await findByShadowText(canvasElement, 'DevNet'))
+        await expect(args.onNetworkReview).not.toHaveBeenCalled()
     },
 }
 
 export const Minimal: Story = {
     args: {
-        network: {
-            ...network,
-            synchronizerId: undefined,
-            identityProviderId: '',
-        },
+        network: withoutSynchronizer,
     },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByText('canton:devnet')).toBeInTheDocument()
-        await expect(canvas.queryByText('Synchronizer')).not.toBeInTheDocument()
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.queryByRole('button', { name: 'Copy synchronizer ID' })
+            await findByShadowText(canvasElement, 'canton:devnet')
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Synchronizer')
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByText('Identity provider')
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'Copy synchronizer ID',
+            })
         ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Identity provider')
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const NoNetwork: Story = {
+    args: { network: null },
+    play: async ({ args, canvasElement, userEvent }) => {
+        const placeholder = await findByShadowText(
+            canvasElement,
+            'No network supplied'
+        )
+        await userEvent.click(placeholder)
+        await expect(args.onNetworkReview).not.toHaveBeenCalled()
     },
 }
