@@ -110,23 +110,6 @@ const SpliceTarget = z
         'Optional routing key for browser-extension messaging. When present, only the matching extension should handle the message.'
     )
 
-const SpliceMessageHandshakeSchemas = [
-    z.object({
-        type: z.literal(WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN),
-        origin: z.url(),
-    }),
-    z.object({
-        type: z.literal(WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK),
-        origin: z.url(),
-    }),
-] as const
-
-export const SpliceMessageHandshake = z.discriminatedUnion(
-    'type',
-    SpliceMessageHandshakeSchemas
-)
-export type SpliceMessageHandshake = z.infer<typeof SpliceMessageHandshake>
-
 export const SpliceMessage = z.discriminatedUnion('type', [
     z.object({
         type: z.literal(WalletEvent.SPLICE_WALLET_REQUEST),
@@ -155,7 +138,13 @@ export const SpliceMessage = z.discriminatedUnion('type', [
         token: z.string(),
         sessionId: z.string(),
     }),
-    ...SpliceMessageHandshakeSchemas,
+    z.object({
+        type: z.literal(WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN),
+        origin: z.url(),
+    }),
+    z.object({
+        type: z.literal(WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK),
+    }),
 ])
 export type SpliceMessage = z.infer<typeof SpliceMessage>
 

@@ -1,31 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SpliceMessageHandshake, WalletEvent } from '@canton-network/core-types'
-import z from 'zod'
-
-type OriginManagerConstructor = {
-    readonly userHandshakeCallback?: (event: MessageEvent) => void
-    /**
-     * Origins trusted up front without a handshake, e.g. the page's own
-     * origin when messaging the same window from a content script.
-     */
-    readonly trustedOrigins?: readonly Location['origin'][]
-}
+import { OriginHandshake, OriginHandshakeMessage } from './types'
 
 abstract class OriginManager {
     protected allowedOrigins: Set<Location['origin']> = new Set()
-    protected abstract readonly messageToReceive: WalletEvent
-    protected abstract readonly classHandshakeCallback: (
-        event: MessageEvent
-    ) => void
+    protected abstract readonly messageToReceive: OriginHandshakeMessage
+    protected abstract readonly handshakeCallback: (event: MessageEvent) => void
 
-    constructor(private options?: OriginManagerConstructor) {
-        options?.trustedOrigins?.forEach((origin) =>
-            this.allowedOrigins.add(origin)
-        )
-        // we need to wait for the subclass `super` call to be processed before accessing the sessionStorage key properly
-        queueMicrotask(() => this.loadOrigins())
+    constructor() {
         window.addEventListener('message', this.listener)
     }
 
@@ -34,22 +17,21 @@ abstract class OriginManager {
      */
     protected get messageToSend() {
         return this.messageToReceive ===
-            WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
-            ? WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
-            : WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+            OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+            ? OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+            : OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
     }
 
     /**
      * Creates a listener function that validates incoming handshake messages before invoking the callback.
      */
     protected listenerFactory =
-        (callback: (cbEvent: MessageEvent) => void) =>
-        (event: MessageEvent) => {
-            const parsedData = SpliceMessageHandshake.safeParse(event.data)
+        (callback: (event: MessageEvent) => void) => (event: MessageEvent) => {
+            const parsedData = OriginHandshake.safeParse(event.data)
             if (
                 !parsedData.success ||
                 event.origin !== parsedData.data.origin ||
-                parsedData.data.type !== this.messageToReceive
+                parsedData.data.message !== this.messageToReceive
             )
                 return
             callback(event)
@@ -60,9 +42,7 @@ abstract class OriginManager {
      */
     private listener = this.listenerFactory((event) => {
         this.allowedOrigins.add(event.origin)
-        this.saveOrigins()
-        this.classHandshakeCallback(event)
-        this.options?.userHandshakeCallback?.(event)
+        this.handshakeCallback(event)
     })
 
     /**
@@ -74,7 +54,7 @@ abstract class OriginManager {
     }) {
         ;(options?.window ?? window).postMessage(
             {
-                type: this.messageToSend,
+                message: this.messageToSend,
                 origin: window.location.origin,
             },
             options.origin
@@ -96,30 +76,14 @@ abstract class OriginManager {
     }
 
     /**
-     * Posts a message only when the target origin is trusted. Sends message to all trusted origins if not specified.
+     * Posts a message only when the target origin is trusted.
      */
     protected postMessageFactory =
-        (options?: Partial<{ origin: Location['origin']; window: Window }>) =>
+        (options: { origin: Location['origin']; window: Window }) =>
         (message: unknown) => {
-            const establishedWindow = options?.window ?? window
-            if (!options?.origin) {
-                this.allowedOrigins.forEach((origin) => {
-                    establishedWindow.postMessage(message, origin)
-                })
-                return
-            }
-            if (!this.assert(options.origin)) {
-                console.warn(
-                    "Can't send the message as the origin is not trusted.",
-                    {
-                        message,
-                        origin: options.origin,
-                    }
-                )
-                return
-            }
+            if (!this.assert(options.origin)) return
 
-            establishedWindow.postMessage(message, options.origin)
+            options.window.postMessage(message, options.origin)
         }
 
     /**
@@ -129,46 +93,15 @@ abstract class OriginManager {
         message: unknown,
         origin: Location['origin']
     ) => void
-
-    private get sessionStorageKey() {
-        return this.messageToReceive
-    }
-
-    /**
-     * Uses Session Storage to get previously saved origins. Does nothing if the value can't be found or properly parsed.
-     */
-    private loadOrigins() {
-        const storageValue = sessionStorage.getItem(this.sessionStorageKey)
-        if (!storageValue) return
-        const persistedOrigins = z
-            .array(z.url())
-            .safeParse(JSON.parse(storageValue))
-
-        if (persistedOrigins.success)
-            persistedOrigins.data.forEach((origin) =>
-                this.allowedOrigins.add(origin)
-            )
-    }
-
-    /**
-     * Users Session Storage to save current state of origin set.
-     */
-    private saveOrigins() {
-        const storageValue = [...this.allowedOrigins.values()]
-        sessionStorage.setItem(
-            this.sessionStorageKey,
-            JSON.stringify(storageValue)
-        )
-    }
 }
 
 export class ParentWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
-    protected readonly classHandshakeCallback = (event: MessageEvent) => {
+    protected readonly handshakeCallback = (event: MessageEvent) => {
         const associatedIntervalID = this.intervalMap.get(event.origin)
         if (associatedIntervalID) {
             clearInterval(associatedIntervalID)
@@ -193,27 +126,19 @@ export class ParentWindowOriginManager extends OriginManager {
     }
 
     /**
-     * Sends a message from the parent window to a trusted origin. If the connection hasn't been established yet, poll for handshake and postMessage upon success. Post message to all trusted origins if none was specified.
+     * Sends a message from the parent window to a trusted origin. If the connection hasn't been established yet, poll for handshake and postMessage upon success.
      */
-    public postMessage = (message: unknown, origin?: Location['origin']) => {
-        // origin is given and trusted or we're looping over all trusted origins
-        if (
-            (origin && this.assert(origin)) ||
-            (!origin && this.allowedOrigins.size)
-        ) {
-            this.postMessageFactory({
-                origin: origin ?? '',
-            })(message)
+    public postMessage = (message: unknown, origin: Location['origin']) => {
+        const postMessageFunction = this.postMessageFactory({
+            window,
+            origin,
+        })
+        if (this.assert(origin)) {
+            postMessageFunction(message)
             return
         }
-
-        if (!origin) return
-        // origin not registered as trusted
         const eventListener = this.listenerFactory(() => {
-            this.postMessageFactory({
-                window,
-                origin,
-            })(message)
+            postMessageFunction(message)
             window.removeEventListener('message', eventListener)
         })
         window.addEventListener('message', eventListener)
@@ -223,23 +148,16 @@ export class ParentWindowOriginManager extends OriginManager {
 
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
 
-    private parentWindow: Window
-
-    constructor(
-        private readonly childOptions?: {
-            parentWindow?: Window
-        } & OriginManagerConstructor
-    ) {
-        super(childOptions)
-        this.parentWindow = childOptions?.parentWindow ?? window.opener
+    constructor(private readonly parentWindow: Window = window.opener) {
+        super()
     }
 
     /**
      * Replies to parent handshake messages and then removes the listener.
      */
-    protected readonly classHandshakeCallback = (event: MessageEvent) => {
+    protected readonly handshakeCallback = (event: MessageEvent) => {
         this.handshake({
             window: this.parentWindow,
             origin: event.origin,
@@ -250,24 +168,11 @@ export class ChildWindowOriginManager extends OriginManager {
     /**
      * Sends a message to the parent window if it exists.
      */
-    public readonly postMessage = (
-        message: unknown,
-        origin?: Window['origin']
-    ) => {
-        if (!this.parentWindow) {
-            console.warn(
-                "Can't send a message since no window was specified.",
-                {
-                    parentWindow: this.parentWindow,
-                    origin,
-                    message,
-                }
-            )
-            return
-        }
+    public readonly postMessage = (message: unknown) => {
+        if (!this.parentWindow) return
         this.postMessageFactory({
             window: this.parentWindow,
-            ...(origin ? { origin } : {}),
+            origin: this.parentWindow.origin,
         })(message)
     }
 }
