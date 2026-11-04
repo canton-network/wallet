@@ -38,22 +38,21 @@ abstract class OriginManager {
      */
     protected get messageToSend() {
         return this.messageToReceive ===
-            WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
-            ? WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
-            : WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+            OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+            ? OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+            : OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
     }
 
     /**
      * Creates a listener function that validates incoming handshake messages before invoking the callback.
      */
     protected listenerFactory =
-        (callback: (cbEvent: MessageEvent) => void) =>
-        (event: MessageEvent) => {
-            const parsedData = SpliceMessageHandshake.safeParse(event.data)
+        (callback: (event: MessageEvent) => void) => (event: MessageEvent) => {
+            const parsedData = OriginHandshake.safeParse(event.data)
             if (
                 !parsedData.success ||
                 event.origin !== parsedData.data.origin ||
-                parsedData.data.type !== this.messageToReceive
+                parsedData.data.message !== this.messageToReceive
             )
                 return
             callback(event)
@@ -78,7 +77,7 @@ abstract class OriginManager {
     }) {
         ;(options?.window ?? window).postMessage(
             {
-                type: this.messageToSend,
+                message: this.messageToSend,
                 origin: window.location.origin,
             },
             options.origin
@@ -104,7 +103,7 @@ abstract class OriginManager {
      * @returns Boolean which indicates if message was sent or not
      */
     protected postMessageFactory =
-        (options?: Partial<{ origin: Location['origin']; window: Window }>) =>
+        (options: { origin: Location['origin']; window: Window }) =>
         (message: unknown) => {
             const establishedWindow = options?.window ?? window
             if (!options?.origin) {
@@ -186,7 +185,7 @@ export class ParentWindowOriginManager extends OriginManager {
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
-    protected readonly classHandshakeCallback = (event: MessageEvent) => {
+    protected readonly handshakeCallback = (event: MessageEvent) => {
         const associatedIntervalID = this.intervalMap.get(event.origin)
         if (associatedIntervalID) {
             clearInterval(associatedIntervalID)
@@ -256,7 +255,7 @@ export class ParentWindowOriginManager extends OriginManager {
 
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
 
     private parentWindow: Window
 
@@ -273,7 +272,7 @@ export class ChildWindowOriginManager extends OriginManager {
     /**
      * Replies to parent handshake messages and then removes the listener.
      */
-    protected readonly classHandshakeCallback = (event: MessageEvent) => {
+    protected readonly handshakeCallback = (event: MessageEvent) => {
         this.handshake({
             window: this.parentWindow,
             origin: event.origin,
@@ -301,7 +300,7 @@ export class ChildWindowOriginManager extends OriginManager {
         }
         this.postMessageFactory({
             window: this.parentWindow,
-            ...(origin ? { origin } : {}),
+            origin: this.parentWindow.origin,
         })(message)
     }
 }
