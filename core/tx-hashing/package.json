@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-tx-hashing",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "type": "module",
     "description": "Recompute Canton prepared transaction hashes for hashing schemes V2 and V3",
     "license": "Apache-2.0",
