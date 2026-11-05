@@ -169,6 +169,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
 
             createTransferMutation.mutate(
                 {
+                    loggedInParty: primaryParty,
                     sender: accounts.sender,
                     receiver: accounts.receiver,
                     instrumentId,
@@ -657,7 +658,6 @@ export const TransferForm: React.FC<TransferFormProps> = ({
 }
 
 interface AutoSelectSenderAccountProps {
-    // TanStack Form's component API is difficult to name cleanly here.
     // oxlint-disable-next-line typescript/no-explicit-any
     form: any
     isV2: boolean

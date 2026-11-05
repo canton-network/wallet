@@ -12,6 +12,7 @@ import type { AssetBody } from '@canton-network/wallet-sdk'
 import type { Account } from '@canton-network/core-token-standard-v2'
 
 export interface CreateTransferArgs {
+    loggedInParty: PartyId
     sender: Account
     receiver: Account
     instrumentId: { admin: PartyId; id: string }
@@ -57,11 +58,8 @@ export const useCreateTransfer = () => {
                 args.tokenStandardVersion
             )
 
-            const actor = args.sender.owner ?? args.sender.provider
-            if (!actor) {
-                throw new Error(
-                    'Sender account has neither an owner nor a provider'
-                )
+            if (args.sender.owner !== args.loggedInParty) {
+                throw new Error(`Sender account must belong to logged in party`)
             }
 
             const preparedCommand =
@@ -85,7 +83,7 @@ export const useCreateTransfer = () => {
                           memo: args.memo,
                       })
 
-            await submitViaProvider(preparedCommand, actor)
+            await submitViaProvider(preparedCommand, args.loggedInParty)
         },
         onSuccess: () => {
             // Refetch in the background so broad holdings/history refreshes do
