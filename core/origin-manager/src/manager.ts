@@ -11,6 +11,7 @@ type OriginManagerConstructor = {
      * origin when messaging the same window from a content script.
      */
     readonly trustedOrigins?: readonly Location['origin'][]
+    readonly logger: Console
 }
 
 abstract class OriginManager {
@@ -19,6 +20,7 @@ abstract class OriginManager {
     protected abstract readonly classHandshakeCallback: (
         event: MessageEvent
     ) => void
+    protected readonly _logger: OriginManagerConstructor['logger']
 
     /**
      * IMPORTANT: each child constructor must call `this.loadOrigins()` AFTER calling `super()`.
@@ -27,6 +29,7 @@ abstract class OriginManager {
         options?.trustedOrigins?.forEach((origin) =>
             this.allowedOrigins.add(origin)
         )
+        this._logger = options?.logger ?? console
         window.addEventListener('message', this.listener)
     }
 
@@ -110,7 +113,7 @@ abstract class OriginManager {
                 return
             }
             if (!this.assert(options.origin)) {
-                console.warn(
+                this._logger.warn(
                     "Can't send the message as the origin is not trusted.",
                     {
                         message,
@@ -140,7 +143,12 @@ abstract class OriginManager {
      */
     protected loadOrigins() {
         const storageValue = sessionStorage.getItem(this.sessionStorageKey)
-        if (!storageValue) return
+        if (!storageValue) {
+            this._logger.info(
+                'Skipping loading origins from session storage as no entries were found.'
+            )
+            return
+        }
         const persistedOrigins = z
             .array(z.url())
             .safeParse(JSON.parse(storageValue))
@@ -204,17 +212,28 @@ export class ParentWindowOriginManager extends OriginManager {
         origin?: Location['origin']
     ) => {
         // origin is given and trusted or we're looping over all trusted origins
-        if (
-            (origin && this.assert(origin)) ||
-            (!origin && this.allowedOrigins.size)
-        ) {
+        const isOriginTrusted = origin && this.assert(origin)
+        const isNoOriginGivenAndAnyOriginsTrusted =
+            !origin && this.allowedOrigins.size
+        if (isOriginTrusted || isNoOriginGivenAndAnyOriginsTrusted) {
+            if (isNoOriginGivenAndAnyOriginsTrusted) {
+                console.info(
+                    'No given origin is trusted, looping over all trusted origins instead'
+                )
+            }
             this.postMessageFactory({
                 origin: origin ?? '',
             })(message)
             return
         }
 
-        if (!origin) return
+        if (!origin) {
+            this._logger.warn(
+                'No origin given and no origin trusted to post the message, skipping...',
+                { message }
+            )
+            return
+        }
         // origin not registered as trusted
         const eventListener = this.listenerFactory(() => {
             this.postMessageFactory({
@@ -263,7 +282,7 @@ export class ChildWindowOriginManager extends OriginManager {
         origin?: Window['origin']
     ) => {
         if (!this.parentWindow) {
-            console.warn(
+            this._logger.warn(
                 "Can't send a message since no window was specified.",
                 {
                     parentWindow: this.parentWindow,
