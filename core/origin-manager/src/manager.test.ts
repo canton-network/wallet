@@ -167,6 +167,15 @@ describe('manager', () => {
         })
 
         it('should successfully load origins from session storage', () => {
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
             expect(sessionStorage.getItem).toHaveBeenCalledExactlyOnceWith(
                 WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
             )

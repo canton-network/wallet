@@ -11,23 +11,23 @@ type OriginManagerConstructor = {
      * origin when messaging the same window from a content script.
      */
     readonly trustedOrigins?: readonly Location['origin'][]
-    readonly logger: Console
+    readonly logger?: Console
 }
 
 abstract class OriginManager {
-    protected allowedOrigins: Set<Location['origin']> = new Set()
+    protected trustedOrigins: Set<Location['origin']> = new Set()
     protected abstract readonly messageToReceive: WalletEvent
     protected abstract readonly classHandshakeCallback: (
         event: MessageEvent
     ) => void
-    protected readonly _logger: OriginManagerConstructor['logger']
+    protected readonly _logger: Console
 
     /**
      * IMPORTANT: each child constructor must call `this.loadOrigins()` AFTER calling `super()`.
      */
     constructor(private options?: OriginManagerConstructor) {
         options?.trustedOrigins?.forEach((origin) =>
-            this.allowedOrigins.add(origin)
+            this.trustedOrigins.add(origin)
         )
         this._logger = options?.logger ?? console
         window.addEventListener('message', this.listener)
@@ -63,7 +63,7 @@ abstract class OriginManager {
      * Validates and processes incoming handshake messages.
      */
     private listener = this.listenerFactory((event) => {
-        this.allowedOrigins.add(event.origin)
+        this.trustedOrigins.add(event.origin)
         this.saveOrigins()
         this.classHandshakeCallback(event)
         this.options?.userHandshakeCallback?.(event)
@@ -89,7 +89,7 @@ abstract class OriginManager {
      * Returns true when the origin has completed handshake validation.
      */
     public assert(origin: Location['origin']) {
-        return this.allowedOrigins.has(origin)
+        return this.trustedOrigins.has(origin)
     }
 
     /**
@@ -101,16 +101,18 @@ abstract class OriginManager {
 
     /**
      * Posts a message only when the target origin is trusted. Sends message to all trusted origins if not specified.
+     * @returns Boolean which indicates if message was sent or not
      */
     protected postMessageFactory =
         (options?: Partial<{ origin: Location['origin']; window: Window }>) =>
         (message: unknown) => {
             const establishedWindow = options?.window ?? window
             if (!options?.origin) {
-                this.allowedOrigins.forEach((origin) => {
+                this._logger.info('Sending message to all trusted origins')
+                this.trustedOrigins.forEach((origin) => {
                     establishedWindow.postMessage(message, origin)
                 })
-                return
+                return true
             }
             if (!this.assert(options.origin)) {
                 this._logger.warn(
@@ -120,10 +122,11 @@ abstract class OriginManager {
                         origin: options.origin,
                     }
                 )
-                return
+                return false
             }
 
             establishedWindow.postMessage(message, options.origin)
+            return true
         }
 
     /**
@@ -155,7 +158,7 @@ abstract class OriginManager {
 
         if (persistedOrigins.success)
             persistedOrigins.data.forEach((origin) =>
-                this.allowedOrigins.add(origin)
+                this.trustedOrigins.add(origin)
             )
     }
 
@@ -163,7 +166,7 @@ abstract class OriginManager {
      * Users Session Storage to save current state of origin set.
      */
     private saveOrigins() {
-        const storageValue = [...this.allowedOrigins.values()]
+        const storageValue = [...this.trustedOrigins.values()]
         sessionStorage.setItem(
             this.sessionStorageKey,
             JSON.stringify(storageValue)
@@ -205,7 +208,7 @@ export class ParentWindowOriginManager extends OriginManager {
     }
 
     /**
-     * Sends a message from the parent window to a trusted origin. If the connection hasn't been established yet, poll for handshake and postMessage upon success. Post message to all trusted origins if none was specified.
+     * Sends a message from the parent window to a trusted origin. If the connection hasn't been established yet, poll for handshake and postMessage upon success. Post message to all trusted origins if none were specified.
      */
     public readonly postMessage = (
         message: unknown,
@@ -214,7 +217,7 @@ export class ParentWindowOriginManager extends OriginManager {
         // origin is given and trusted or we're looping over all trusted origins
         const isOriginTrusted = origin && this.assert(origin)
         const isNoOriginGivenAndAnyOriginsTrusted =
-            !origin && this.allowedOrigins.size
+            !origin && this.trustedOrigins.size
         if (isOriginTrusted || isNoOriginGivenAndAnyOriginsTrusted) {
             if (isNoOriginGivenAndAnyOriginsTrusted) {
                 console.info(
@@ -236,11 +239,11 @@ export class ParentWindowOriginManager extends OriginManager {
         }
         // origin not registered as trusted
         const eventListener = this.listenerFactory(() => {
-            this.postMessageFactory({
+            const sent = this.postMessageFactory({
                 window,
                 origin,
             })(message)
-            window.removeEventListener('message', eventListener)
+            if (sent) window.removeEventListener('message', eventListener)
         })
         window.addEventListener('message', eventListener)
         this.poll(origin)
@@ -254,7 +257,7 @@ export class ChildWindowOriginManager extends OriginManager {
     private parentWindow: Window
 
     constructor(
-        private readonly childOptions?: {
+        childOptions?: {
             parentWindow?: Window
         } & OriginManagerConstructor
     ) {
