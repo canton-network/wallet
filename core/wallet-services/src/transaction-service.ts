@@ -640,13 +640,21 @@ export class TransactionService {
 
         let result: TxChangedExecutedEvent['payload']
         try {
+            const submissionId = crypto.randomUUID()
+            this.logger.info('Executing transaction with submissionId', {
+                submissionId,
+                transactionId: transaction.id,
+                commandId: transaction.commandId,
+                externalTxId: transaction.externalTxId,
+            })
+
             result = await ledgerClient.postWithRetry(
                 '/v2/interactive-submission/executeAndWait',
                 {
                     userId,
                     preparedTransaction: transaction.preparedTransaction,
                     hashingSchemeVersion: this.hashingSchemeVersion,
-                    submissionId: crypto.randomUUID(),
+                    submissionId,
                     deduplicationPeriod: {
                         Empty: {},
                     },
