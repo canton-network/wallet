@@ -21,9 +21,24 @@ const auth: TokenProviderConfig = {
     },
 }
 
+const initialSdk = await SDK.create({
+    auth,
+    ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+})
+
+const synchronizers = await initialSdk.ledger.connectedSynchronizers()
+
+const globalSynchronizer = synchronizers.connectedSynchronizers?.find((sync) =>
+    sync.synchronizerAlias.includes('global')
+)
+
 const defaultSdk = await SDK.create({
     auth,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+    synchronizerId:
+        globalSynchronizer?.synchronizerId ??
+        synchronizers.connectedSynchronizers?.[0]?.synchronizerId ??
+        '',
 })
 
 export default defaultSdk

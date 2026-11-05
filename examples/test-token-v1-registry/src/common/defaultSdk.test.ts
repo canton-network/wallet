@@ -6,7 +6,16 @@ import { beforeEach } from 'node:test'
 import { describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
-    const create = vi.fn()
+    const create = vi.fn().mockResolvedValue({
+        ledger: {
+            connectedSynchronizers: () => [
+                {
+                    synchronizerAlias: 'global-domain',
+                    synchronizerId: 'id',
+                },
+            ],
+        },
+    })
 
     return {
         create,
@@ -30,7 +39,7 @@ describe('defaultSdk', () => {
     it('should create a default instance of wallet-sdk', async () => {
         await import('./defaultSdk')
 
-        expect(mocks.create).toHaveBeenCalledExactlyOnceWith({
+        expect(mocks.create).toHaveBeenLastCalledWith({
             auth: {
                 method: 'self_signed',
                 issuer: 'unsafe-auth',
@@ -42,6 +51,7 @@ describe('defaultSdk', () => {
                 },
             },
             ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            synchronizerId: '',
         })
     })
 })

@@ -1,18 +1,24 @@
-import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import type { TransferTestScriptParameters } from './types.js'
-import { assertV2 } from '../common/_utils.js'
+import { assertV2 } from '../utils/assert.js'
+import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 
 export default async (args: TransferTestScriptParameters) => {
-    const { sdk, sender, receiver, senderKeys, receiverKeys, logger } = args
+    const {
+        sdk,
+        sender,
+        receiver,
+        senderKeys,
+        receiverKeys,
+        registryUrl,
+        logger,
+    } = args
 
     const [transferCommand, transferDisclosedContracts] =
         await sdk.token.v2.transfer.create({
             sender: sender.partyId,
             recipient: receiver.partyId,
-            instrumentId: 'Amulet',
-            registryUrl: new URL(
-                localNetStaticConfig.LOCALNET_REGISTRY_API_URL
-            ),
+            instrumentId: TestTokenV2.DAR.TestTokenID,
+            registryUrl,
             amount: '2000',
         })
 
@@ -43,7 +49,7 @@ export default async (args: TransferTestScriptParameters) => {
         await sdk.token.v2.transfer.accept(
             receiverPendingTransfers[0].contractId,
             [receiver.partyId],
-            localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+            registryUrl
         )
 
     await sdk.ledger
@@ -64,16 +70,17 @@ export default async (args: TransferTestScriptParameters) => {
         'Receiver UTXOs after accepting transfer instruction'
     )
 
-    const receiverAmuletUtxos = receiverUtxos.filter((utxo) => {
+    const receiverTestTokenUtxos = receiverUtxos.filter((utxo) => {
         return (
             utxo.interfaceViewValue.amount === '2000.0000000000' &&
-            utxo.interfaceViewValue.instrumentId.id === 'Amulet'
+            utxo.interfaceViewValue.instrumentId.id ===
+                TestTokenV2.DAR.TestTokenID
         )
     })
 
     assertV2(
-        receiverAmuletUtxos.length > 0,
-        'No Amulet UTXOs found for Receiver after accepting transfer instruction'
+        receiverTestTokenUtxos.length > 0,
+        'No TestTokenV2 UTXOs found for Receiver after accepting transfer instruction'
     )
 
     logger.info('Two step transfer process completed successfully')

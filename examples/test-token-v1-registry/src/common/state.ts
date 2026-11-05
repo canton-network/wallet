@@ -12,9 +12,8 @@ export interface RegistryConfig {
         keys: ReturnType<SDKInterface['keys']['generate']>
     }
     port: number
+    logger: Console
 }
-
-export const DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT = 5634
 
 const createDefaultConfig = (): RegistryConfig => ({
     sdk: defaultSdk,
@@ -23,7 +22,8 @@ const createDefaultConfig = (): RegistryConfig => ({
         party: '',
         keys: defaultSdk.keys.generate(),
     },
-    port: DEFAULT_TEST_TOKEN_V1_REGISTRY_PORT,
+    port: 0,
+    logger: console,
 })
 
 export const defaultConfig: RegistryConfig = createDefaultConfig()
@@ -36,6 +36,7 @@ export class RegistryState implements RegistryConfig {
     synchronizerId!: RegistryConfig['synchronizerId']
     operator!: RegistryConfig['operator']
     port!: RegistryConfig['port']
+    logger!: RegistryConfig['logger']
 
     private static _instance: RegistryState | null = null
 
