@@ -18,7 +18,8 @@
         }
     },
     "dependencies": {
-        "zod": "catalog:"
+        "zod": "catalog:",
+        "@canton-network/core-types": "workspace:"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
@@ -26,7 +27,6 @@
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
-        "@canton-network/core-types": "workspace:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "tsdown": "catalog:",
