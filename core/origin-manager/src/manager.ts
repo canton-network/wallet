@@ -128,7 +128,7 @@ abstract class OriginManager {
      */
     public abstract postMessage: (
         message: unknown,
-        origin: Location['origin']
+        origin?: Location['origin']
     ) => void
 
     private get sessionStorageKey() {
@@ -199,7 +199,10 @@ export class ParentWindowOriginManager extends OriginManager {
     /**
      * Sends a message from the parent window to a trusted origin. If the connection hasn't been established yet, poll for handshake and postMessage upon success. Post message to all trusted origins if none was specified.
      */
-    public postMessage = (message: unknown, origin?: Location['origin']) => {
+    public readonly postMessage = (
+        message: unknown,
+        origin?: Location['origin']
+    ) => {
         // origin is given and trusted or we're looping over all trusted origins
         if (
             (origin && this.assert(origin)) ||
