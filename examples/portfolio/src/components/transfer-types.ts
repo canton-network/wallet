@@ -3,6 +3,7 @@
 
 import type { InstrumentId } from '@canton-network/core-token-standard'
 import type { TokenStandardVersion } from '../types/instruments'
+import type { Account } from '@canton-network/core-token-standard-v2'
 
 export interface SelectableInstrument {
     instrumentId: InstrumentId
@@ -17,6 +18,9 @@ export interface TransferFormData {
     tokenStandardVersion: TokenStandardVersion
     amount: string
     recipient: string
+    recipientProvider: string
+    recipientAccountId: string
+    senderAccount: Account | null
     memo: string
     expiry: Date | null
 }

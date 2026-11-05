@@ -9,10 +9,11 @@ import { queryKeys } from './query-keys'
 import { useWalletSdk } from './useWalletSdk'
 import type { TokenStandardVersion } from '../types/instruments'
 import type { AssetBody } from '@canton-network/wallet-sdk'
+import type { Account } from '@canton-network/core-token-standard-v2'
 
 export interface CreateTransferArgs {
-    sender: string
-    receiver: string
+    sender: Account
+    receiver: Account
     instrumentId: { admin: PartyId; id: string }
     amount: string
     expiry: Date
@@ -56,21 +57,35 @@ export const useCreateTransfer = () => {
                 args.tokenStandardVersion
             )
 
-            const params = {
-                sender: args.sender,
-                recipient: args.receiver,
-                amount: args.amount,
-                instrumentId: args.instrumentId.id,
-                registryUrl: new URL(registryUrl),
-                expirationDate: args.expiry,
-                memo: args.memo,
+            const actor = args.sender.owner ?? args.sender.provider
+            if (!actor) {
+                throw new Error(
+                    'Sender account has neither an owner nor a provider'
+                )
             }
 
             const preparedCommand =
                 version.used === 'v2'
-                    ? await sdk.token.v2.transfer.create(params)
-                    : await sdk.token.v1.transfer.create(params)
-            await submitViaProvider(preparedCommand, args.sender)
+                    ? await sdk.token.v2.transfer.create({
+                          sender: args.sender,
+                          recipient: args.receiver,
+                          amount: args.amount,
+                          instrumentId: args.instrumentId.id,
+                          registryUrl: new URL(registryUrl),
+                          expirationDate: args.expiry,
+                          memo: args.memo,
+                      })
+                    : await sdk.token.v1.transfer.create({
+                          sender: v1Party(args.sender, 'sender'),
+                          recipient: v1Party(args.receiver, 'receiver'),
+                          amount: args.amount,
+                          instrumentId: args.instrumentId.id,
+                          registryUrl: new URL(registryUrl),
+                          expirationDate: args.expiry,
+                          memo: args.memo,
+                      })
+
+            await submitViaProvider(preparedCommand, actor)
         },
         onSuccess: () => {
             // Refetch in the background so broad holdings/history refreshes do
@@ -105,4 +120,16 @@ const resolveTransferVersion = (
             : 'v1'
 
     return { requested, used, fallback: used !== requested }
+}
+
+function v1Party(account: Account, role: 'sender' | 'receiver'): PartyId {
+    if (account.owner == null) {
+        throw new Error(`v1 transfers require a ${role} owner`)
+    }
+    if (account.provider != null || account.id !== '') {
+        throw new Error(
+            `v1 transfers only support basic accounts, but the ${role} account has a provider or account ID`
+        )
+    }
+    return account.owner
 }

@@ -145,3 +145,20 @@ export function enrichWithInstrumentInfo(
         }
     })
 }
+
+export function getSenderAccounts(
+    aggregated: Iterable<AggregatedHolding>
+): Account[] {
+    const byKey = new Map<string, AggregatedAccountBalance>()
+    for (const holding of aggregated) {
+        for (const balance of holding.accountBalances) {
+            // Skip accounts whose holdings are all locked, since they can't send anything
+            if (new Decimal(balance.availableAmount).lte(0)) continue
+            const key = getAccountKey(balance.account)
+            if (!byKey.has(key)) byKey.set(key, balance)
+        }
+    }
+    return [...byKey.values()]
+        .sort(compareAccountBalances)
+        .map((b) => b.account)
+}

@@ -1,15 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import CloseIcon from '@mui/icons-material/Close'
 import {
     Alert,
     Box,
+    Button,
     CircularProgress,
     FormControlLabel,
     IconButton,
     InputAdornment,
+    MenuItem,
     Radio,
     RadioGroup,
     TextField,
@@ -21,13 +23,17 @@ import { DateTimePicker } from '@mui/x-date-pickers'
 import { useForm } from '@tanstack/react-form'
 import type { AnyFieldApi } from '@tanstack/react-form'
 import { z } from 'zod'
+import type { Account } from '@canton-network/core-token-standard-v2'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { formatCharacterCount } from '@components/utils'
 import { PillButton } from '@components/ui/PillButton'
 import { usePrimaryAccount } from '@hooks/useAccounts'
 import type { useCreateTransfer } from '@hooks/useCreateTransfer'
 import { useInstrumentAvailableBalance } from '@hooks/useInstrumentAvailableBalance'
+import { useSenderAccounts } from '@hooks/useSenderAccounts'
+import { getAccountKey } from '@utils/aggregate-holdings'
 import { toDecimalOrNull } from '@utils/decimal'
+import { basicAccount } from '@utils/holdings'
 import { InstrumentSelect } from './instrument-select'
 import type {
     SelectableInstrument,
@@ -42,12 +48,17 @@ interface TransferFormProps {
     onSubmitted: (transfer: SubmittedTransfer) => void
 }
 
+type TokenStandardVersion = TransferFormData['tokenStandardVersion']
+
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
 const createDefaultTransferValues = (): TransferFormData => ({
     instrumentId: null,
     amount: '',
     recipient: '',
+    recipientProvider: '',
+    recipientAccountId: '',
+    senderAccount: null,
     memo: '',
     expiry: new Date(Date.now() + SEVEN_DAYS_MS),
     tokenStandardVersion: 'v1',
@@ -66,6 +77,17 @@ const recipientValidator = z
     .trim()
     .min(1, 'Recipient address is required')
 
+const senderAccountValidator = ({
+    value,
+    fieldApi,
+}: {
+    value: Account | null
+    fieldApi: AnyFieldApi
+}) =>
+    fieldApi.form.getFieldValue('tokenStandardVersion') === 'v2' && !value
+        ? 'Please select an account'
+        : undefined
+
 const expiryValidator = z
     .date()
     .nullable()
@@ -82,6 +104,36 @@ const expiryValidator = z
         'Expiration date must be in the future'
     )
 
+/**
+ * Builds the sender and receiver accounts for a transfer. v1 has no notion of
+ * accounts, so both sides use the party's basic account. v2 uses the selected
+ * sender account and the receiver's account details, if given.
+ */
+const buildTransferAccounts = (
+    formData: TransferFormData,
+    primaryParty: string
+): { sender: Account; receiver: Account } | null => {
+    const recipient = formData.recipient.trim()
+
+    if (formData.tokenStandardVersion === 'v1') {
+        return {
+            sender: basicAccount(primaryParty),
+            receiver: basicAccount(recipient),
+        }
+    }
+
+    if (!formData.senderAccount) return null
+
+    return {
+        sender: formData.senderAccount,
+        receiver: {
+            owner: recipient,
+            provider: formData.recipientProvider.trim() || null,
+            id: formData.recipientAccountId.trim(),
+        },
+    }
+}
+
 export const TransferForm: React.FC<TransferFormProps> = ({
     initialValues,
     createTransferMutation,
@@ -90,8 +142,10 @@ export const TransferForm: React.FC<TransferFormProps> = ({
 }) => {
     const primaryAccount = usePrimaryAccount()
     const primaryParty = primaryAccount?.partyId
+    const senderAccounts = useSenderAccounts(primaryParty)
     const [selectedInstrument, setSelectedInstrument] =
         useState<SelectableInstrument | null>(null)
+    const [showRecipientAccount, setShowRecipientAccount] = useState(false)
 
     const defaultValues = useMemo(
         () => initialValues ?? createDefaultTransferValues(),
@@ -105,17 +159,22 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                 return
             }
 
+            const accounts = buildTransferAccounts(formData, primaryParty)
+            if (!accounts) return
+
             const instrumentId = formData.instrumentId
             const expiry = formData.expiry
+            const recipient = formData.recipient.trim()
+            const memo = formData.memo.trim()
 
             createTransferMutation.mutate(
                 {
-                    sender: primaryParty,
-                    receiver: formData.recipient.trim(),
+                    sender: accounts.sender,
+                    receiver: accounts.receiver,
                     instrumentId,
                     amount: formData.amount,
                     expiry,
-                    memo: formData.memo.trim() || undefined,
+                    memo: memo || undefined,
                     tokenStandardVersion: formData.tokenStandardVersion,
                 },
                 {
@@ -126,8 +185,8 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                             instrumentSymbol: selectedInstrument?.symbol,
                             instrumentName: selectedInstrument?.name,
                             amount: formData.amount,
-                            recipient: formData.recipient.trim(),
-                            memo: formData.memo.trim(),
+                            recipient,
+                            memo,
                             expiry,
                             submittedAt: new Date(),
                             tokenStandardVersion: formData.tokenStandardVersion,
@@ -140,6 +199,24 @@ export const TransferForm: React.FC<TransferFormProps> = ({
 
     const mutationError = createTransferMutation.error
     const disabled = createTransferMutation.isPending
+
+    const handleVersionChange = (next: TokenStandardVersion) => {
+        form.setFieldValue('tokenStandardVersion', next)
+        if (next === 'v1') {
+            form.setFieldValue('senderAccount', null)
+            form.setFieldValue('recipientProvider', '')
+            form.setFieldValue('recipientAccountId', '')
+            setShowRecipientAccount(false)
+        }
+    }
+
+    const toggleRecipientAccount = () => {
+        if (showRecipientAccount) {
+            form.setFieldValue('recipientProvider', '')
+            form.setFieldValue('recipientAccountId', '')
+        }
+        setShowRecipientAccount((s) => !s)
+    }
 
     const handleInstrumentChange = (
         instrument: SelectableInstrument | null
@@ -194,125 +271,299 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                     </Alert>
                 )}
 
-                <FieldBlock label="Wallet address">
-                    {primaryParty && (
-                        <CopyableIdentifier
-                            value={primaryParty}
-                            maxLength={24}
-                        />
-                    )}
-                </FieldBlock>
-
-                <form.Field
-                    name="tokenStandardVersion"
-                    validators={{
-                        onChange: ({ value }) =>
-                            value
-                                ? undefined
-                                : 'Token standard version is required',
-                    }}
+                <form.Subscribe
+                    selector={(state) => ({
+                        version: state.values.tokenStandardVersion,
+                        senderAccount: state.values.senderAccount,
+                        instrumentId: state.values.instrumentId,
+                    })}
                 >
-                    {(field) => (
-                        <FieldBlock label="Token Standard Version">
-                            <RadioGroup
-                                row
-                                value={field.state.value}
-                                onChange={(e) =>
-                                    field.handleChange(
-                                        e.target
-                                            .value as TransferFormData['tokenStandardVersion']
-                                    )
-                                }
-                            >
-                                <FormControlLabel
-                                    value="v1"
-                                    control={<Radio disabled={disabled} />}
-                                    label="v1"
-                                    sx={{ color: 'text.primary' }}
+                    {({ version, senderAccount, instrumentId }) => {
+                        const isV2 = version === 'v2'
+
+                        // In v2, balances depend on the selected account. Until
+                        // one is selected, hide the balance and skip the balance
+                        // check instead of showing the basic account's balance,
+                        // which would be misleading. The senderAccount validator
+                        // still blocks submission.
+                        const balanceAccount = isV2
+                            ? (senderAccount ?? undefined)
+                            : undefined
+                        const balanceInstrumentId =
+                            isV2 && !senderAccount ? null : instrumentId
+
+                        return (
+                            <>
+                                <AutoSelectSenderAccount
+                                    form={form}
+                                    isV2={isV2}
+                                    senderAccount={senderAccount}
+                                    senderAccounts={senderAccounts}
                                 />
-                                <FormControlLabel
-                                    value="v2"
-                                    control={<Radio disabled={disabled} />}
-                                    label="v2"
-                                    sx={{ color: 'text.primary' }}
-                                />
-                            </RadioGroup>
-                        </FieldBlock>
-                    )}
-                </form.Field>
 
-                <form.Field
-                    name="recipient"
-                    validators={{
-                        onChange: recipientValidator,
-                        onSubmit: recipientValidator,
-                    }}
-                >
-                    {(field) => (
-                        <FieldBlock label="Recipient Address">
-                            <TextField
-                                value={field.state.value}
-                                onChange={(event) =>
-                                    field.handleChange(event.target.value)
-                                }
-                                onBlur={field.handleBlur}
-                                disabled={disabled}
-                                error={hasFieldError(field)}
-                                helperText={getFieldError(field)}
-                                slotProps={{
-                                    htmlInput: {
-                                        'aria-label': 'Recipient Address',
-                                    },
-                                }}
-                                fullWidth
-                                sx={darkTextFieldSx}
-                            />
-                        </FieldBlock>
-                    )}
-                </form.Field>
+                                <FieldBlock label="Token Standard Version">
+                                    <RadioGroup
+                                        row
+                                        value={version}
+                                        onChange={(event) =>
+                                            handleVersionChange(
+                                                event.target
+                                                    .value as TokenStandardVersion
+                                            )
+                                        }
+                                    >
+                                        <FormControlLabel
+                                            value="v1"
+                                            control={
+                                                <Radio disabled={disabled} />
+                                            }
+                                            label="v1"
+                                            sx={{ color: 'text.primary' }}
+                                        />
+                                        <FormControlLabel
+                                            value="v2"
+                                            control={
+                                                <Radio disabled={disabled} />
+                                            }
+                                            label="v2"
+                                            sx={{ color: 'text.primary' }}
+                                        />
+                                    </RadioGroup>
+                                </FieldBlock>
 
-                <form.Field
-                    name="instrumentId"
-                    validators={{
-                        onChange: instrumentValidator,
-                        onSubmit: instrumentValidator,
-                    }}
-                >
-                    {(field) => (
-                        <FieldBlock label="Select asset">
-                            <InstrumentSelect
-                                partyId={primaryParty}
-                                value={field.state.value}
-                                onChange={handleInstrumentChange}
-                                disabled={disabled}
-                                error={hasFieldError(field)}
-                                helperText={getFieldError(field)}
-                            />
-                            <form.Subscribe
-                                selector={(state) => state.values.instrumentId}
-                            >
-                                {(instrumentId) => (
-                                    <AvailableBalance
-                                        partyId={primaryParty}
-                                        instrumentId={instrumentId}
-                                        symbol={selectedInstrument?.symbol}
-                                    />
+                                {isV2 ? (
+                                    <form.Field
+                                        name="senderAccount"
+                                        validators={{
+                                            onChange: senderAccountValidator,
+                                            onSubmit: senderAccountValidator,
+                                        }}
+                                    >
+                                        {(field) => (
+                                            <FieldBlock label="Wallet address">
+                                                <TextField
+                                                    select
+                                                    value={
+                                                        field.state.value
+                                                            ? getAccountKey(
+                                                                  field.state
+                                                                      .value
+                                                              )
+                                                            : ''
+                                                    }
+                                                    onChange={(event) =>
+                                                        field.handleChange(
+                                                            senderAccounts.find(
+                                                                (a) =>
+                                                                    getAccountKey(
+                                                                        a
+                                                                    ) ===
+                                                                    event.target
+                                                                        .value
+                                                            ) ?? null
+                                                        )
+                                                    }
+                                                    onBlur={field.handleBlur}
+                                                    disabled={
+                                                        disabled ||
+                                                        senderAccounts.length ===
+                                                            0
+                                                    }
+                                                    error={hasFieldError(field)}
+                                                    helperText={
+                                                        getFieldError(field) ??
+                                                        (senderAccounts.length ===
+                                                        0
+                                                            ? 'No accounts with available holdings'
+                                                            : undefined)
+                                                    }
+                                                    slotProps={{
+                                                        htmlInput: {
+                                                            'aria-label':
+                                                                'Wallet address',
+                                                        },
+                                                    }}
+                                                    fullWidth
+                                                    sx={darkTextFieldSx}
+                                                >
+                                                    {senderAccounts.map(
+                                                        (account) => (
+                                                            <MenuItem
+                                                                key={getAccountKey(
+                                                                    account
+                                                                )}
+                                                                value={getAccountKey(
+                                                                    account
+                                                                )}
+                                                            >
+                                                                {formatAccount(
+                                                                    account
+                                                                )}
+                                                            </MenuItem>
+                                                        )
+                                                    )}
+                                                </TextField>
+                                            </FieldBlock>
+                                        )}
+                                    </form.Field>
+                                ) : (
+                                    <FieldBlock label="Wallet address">
+                                        {primaryParty && (
+                                            <CopyableIdentifier
+                                                value={primaryParty}
+                                                maxLength={24}
+                                            />
+                                        )}
+                                    </FieldBlock>
                                 )}
-                            </form.Subscribe>
-                        </FieldBlock>
-                    )}
-                </form.Field>
 
-                <form.Subscribe selector={(state) => state.values.instrumentId}>
-                    {(selectedInstrumentId) => (
-                        <AmountField
-                            form={form}
-                            primaryParty={primaryParty}
-                            selectedInstrumentId={selectedInstrumentId}
-                            selectedInstrument={selectedInstrument}
-                            disabled={disabled}
-                        />
-                    )}
+                                <form.Field
+                                    name="recipient"
+                                    validators={{
+                                        onChange: recipientValidator,
+                                        onSubmit: recipientValidator,
+                                    }}
+                                >
+                                    {(field) => (
+                                        <FieldBlock label="Recipient Address">
+                                            <TextField
+                                                value={field.state.value}
+                                                onChange={(event) =>
+                                                    field.handleChange(
+                                                        event.target.value
+                                                    )
+                                                }
+                                                onBlur={field.handleBlur}
+                                                disabled={disabled}
+                                                error={hasFieldError(field)}
+                                                helperText={getFieldError(
+                                                    field
+                                                )}
+                                                slotProps={{
+                                                    htmlInput: {
+                                                        'aria-label':
+                                                            'Recipient Address',
+                                                    },
+                                                }}
+                                                fullWidth
+                                                sx={darkTextFieldSx}
+                                            />
+                                            {isV2 && (
+                                                <Box sx={{ mt: 1 }}>
+                                                    <Button
+                                                        variant="text"
+                                                        size="small"
+                                                        onClick={
+                                                            toggleRecipientAccount
+                                                        }
+                                                        disabled={disabled}
+                                                        sx={{ px: 0 }}
+                                                    >
+                                                        {showRecipientAccount
+                                                            ? 'Use default account'
+                                                            : 'Specify account'}
+                                                    </Button>
+                                                </Box>
+                                            )}
+                                        </FieldBlock>
+                                    )}
+                                </form.Field>
+
+                                {isV2 && showRecipientAccount && (
+                                    <Box sx={{ display: 'grid', gap: 2 }}>
+                                        <form.Field name="recipientProvider">
+                                            {(field) => (
+                                                <TextField
+                                                    placeholder="Provider party ID (optional)"
+                                                    value={field.state.value}
+                                                    onChange={(event) =>
+                                                        field.handleChange(
+                                                            event.target.value
+                                                        )
+                                                    }
+                                                    disabled={disabled}
+                                                    slotProps={{
+                                                        htmlInput: {
+                                                            'aria-label':
+                                                                'Recipient provider party ID',
+                                                        },
+                                                    }}
+                                                    fullWidth
+                                                    sx={darkTextFieldSx}
+                                                />
+                                            )}
+                                        </form.Field>
+                                        <form.Field name="recipientAccountId">
+                                            {(field) => (
+                                                <TextField
+                                                    placeholder="Account ID (optional)"
+                                                    value={field.state.value}
+                                                    onChange={(event) =>
+                                                        field.handleChange(
+                                                            event.target.value
+                                                        )
+                                                    }
+                                                    disabled={disabled}
+                                                    slotProps={{
+                                                        htmlInput: {
+                                                            'aria-label':
+                                                                'Recipient account ID',
+                                                        },
+                                                    }}
+                                                    fullWidth
+                                                    sx={darkTextFieldSx}
+                                                />
+                                            )}
+                                        </form.Field>
+                                    </Box>
+                                )}
+
+                                <form.Field
+                                    name="instrumentId"
+                                    validators={{
+                                        onChange: instrumentValidator,
+                                        onSubmit: instrumentValidator,
+                                    }}
+                                >
+                                    {(field) => (
+                                        <FieldBlock label="Select asset">
+                                            <InstrumentSelect
+                                                partyId={primaryParty}
+                                                value={field.state.value}
+                                                onChange={
+                                                    handleInstrumentChange
+                                                }
+                                                disabled={disabled}
+                                                error={hasFieldError(field)}
+                                                helperText={getFieldError(
+                                                    field
+                                                )}
+                                            />
+                                            <AvailableBalance
+                                                partyId={primaryParty}
+                                                instrumentId={
+                                                    balanceInstrumentId
+                                                }
+                                                account={balanceAccount}
+                                                symbol={
+                                                    selectedInstrument?.symbol
+                                                }
+                                            />
+                                        </FieldBlock>
+                                    )}
+                                </form.Field>
+
+                                <AmountField
+                                    form={form}
+                                    primaryParty={primaryParty}
+                                    selectedInstrumentId={balanceInstrumentId}
+                                    selectedInstrument={selectedInstrument}
+                                    account={balanceAccount}
+                                    disabled={disabled}
+                                />
+                            </>
+                        )
+                    }}
                 </form.Subscribe>
 
                 <form.Field
@@ -367,12 +618,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                 fullWidth
                                 sx={darkTextFieldSx}
                             />
-                            <Typography
-                                sx={{
-                                    mt: 1,
-                                    color: 'text.secondary',
-                                }}
-                            >
+                            <Typography sx={{ mt: 1, color: 'text.secondary' }}>
                                 {formatCharacterCount(field.state.value)}
                             </Typography>
                         </FieldBlock>
@@ -410,6 +656,35 @@ export const TransferForm: React.FC<TransferFormProps> = ({
     )
 }
 
+interface AutoSelectSenderAccountProps {
+    // TanStack Form's component API is difficult to name cleanly here.
+    // oxlint-disable-next-line typescript/no-explicit-any
+    form: any
+    isV2: boolean
+    senderAccount: Account | null
+    senderAccounts: Account[]
+}
+
+/**
+ * Preselects the sender account in v2 when the party has exactly one. This is
+ * an effect rather than part of the version change handler so it also works
+ * when holdings finish loading after the user has already picked v2. It renders
+ * nothing; it's a component only so the effect can run inside form.Subscribe.
+ */
+const AutoSelectSenderAccount: React.FC<AutoSelectSenderAccountProps> = ({
+    form,
+    isV2,
+    senderAccount,
+    senderAccounts,
+}) => {
+    useEffect(() => {
+        if (isV2 && !senderAccount && senderAccounts.length === 1) {
+            form.setFieldValue('senderAccount', senderAccounts[0])
+        }
+    }, [isV2, senderAccount, senderAccounts, form])
+    return null
+}
+
 interface FieldBlockProps {
     label: string
     children: React.ReactNode
@@ -438,6 +713,7 @@ interface AmountFieldProps {
     primaryParty: string | undefined
     selectedInstrumentId: TransferFormData['instrumentId']
     selectedInstrument: SelectableInstrument | null
+    account?: Account
     disabled: boolean
 }
 
@@ -446,11 +722,13 @@ const AmountField: React.FC<AmountFieldProps> = ({
     primaryParty,
     selectedInstrumentId,
     selectedInstrument,
+    account,
     disabled,
 }) => {
     const availableHolding = useInstrumentAvailableBalance(
         primaryParty,
-        selectedInstrumentId
+        selectedInstrumentId,
+        account
     )
     const availableBalance = availableHolding?.availableAmount ?? '0'
 
@@ -522,6 +800,39 @@ const AmountField: React.FC<AmountFieldProps> = ({
     )
 }
 
+interface AvailableBalanceProps {
+    partyId: string | undefined
+    instrumentId: TransferFormData['instrumentId']
+    account?: Account
+    symbol: string | undefined
+}
+
+const AvailableBalance: React.FC<AvailableBalanceProps> = ({
+    partyId,
+    instrumentId,
+    account,
+    symbol,
+}) => {
+    const balance = useInstrumentAvailableBalance(
+        partyId,
+        instrumentId,
+        account
+    )
+    return (
+        <Typography variant="body2" sx={{ mt: 0.75, color: 'text.secondary' }}>
+            Available balance:{' '}
+            {instrumentId && symbol
+                ? `${balance?.availableAmount ?? '0'} ${symbol}`
+                : '—'}
+        </Typography>
+    )
+}
+
+const formatAccount = (account: Account) =>
+    account.provider
+        ? `${account.id || 'Default'} (via ${account.provider})`
+        : account.id || 'Default account'
+
 const darkTextFieldSx: SxProps<Theme> = {
     '& .MuiInputBase-root, & .MuiPickersInputBase-root': {
         minHeight: 48,
@@ -566,24 +877,4 @@ const hasFieldError = (field: AnyFieldApi) =>
 const getFieldError = (field: AnyFieldApi) => {
     if (!hasFieldError(field)) return undefined
     return field.state.meta.errors[0]?.message
-}
-
-function AvailableBalance({
-    partyId,
-    instrumentId,
-    symbol,
-}: {
-    partyId: string | undefined
-    instrumentId: TransferFormData['instrumentId']
-    symbol: string | undefined
-}) {
-    const balance = useInstrumentAvailableBalance(partyId, instrumentId)
-    return (
-        <Typography variant="body2" sx={{ mt: 0.75, color: 'text.secondary' }}>
-            Available balance:{' '}
-            {instrumentId && symbol
-                ? `${balance?.availableAmount ?? '0'} ${symbol}`
-                : '-'}
-        </Typography>
-    )
 }
