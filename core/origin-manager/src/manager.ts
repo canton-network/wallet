@@ -20,12 +20,13 @@ abstract class OriginManager {
         event: MessageEvent
     ) => void
 
+    /**
+     * IMPORTANT: each child constructor must call `this.loadOrigins()` AFTER calling `super()`.
+     */
     constructor(private options?: OriginManagerConstructor) {
         options?.trustedOrigins?.forEach((origin) =>
             this.allowedOrigins.add(origin)
         )
-        // we need to wait for the subclass `super` call to be processed before accessing the sessionStorage key properly
-        queueMicrotask(() => this.loadOrigins())
         window.addEventListener('message', this.listener)
     }
 
@@ -135,9 +136,9 @@ abstract class OriginManager {
     }
 
     /**
-     * Uses Session Storage to get previously saved origins. Does nothing if the value can't be found or properly parsed.
+     * Uses Session Storage to get previously saved origins. Relies on `this.messageToReceive` to work properly, hence it must be called after invoking child `super` call. Does nothing if the value can't be found or properly parsed.
      */
-    private loadOrigins() {
+    protected loadOrigins() {
         const storageValue = sessionStorage.getItem(this.sessionStorageKey)
         if (!storageValue) return
         const persistedOrigins = z
@@ -165,6 +166,7 @@ abstract class OriginManager {
 export class ParentWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
         WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
@@ -174,7 +176,9 @@ export class ParentWindowOriginManager extends OriginManager {
             clearInterval(associatedIntervalID)
             this.intervalMap.delete(event.origin)
         }
+        this.loadOrigins()
     }
+
     private intervalMap = new Map<
         Location['origin'],
         ReturnType<typeof setInterval>
@@ -234,6 +238,7 @@ export class ChildWindowOriginManager extends OriginManager {
     ) {
         super(childOptions)
         this.parentWindow = childOptions?.parentWindow ?? window.opener
+        this.loadOrigins()
     }
 
     /**
