@@ -485,6 +485,9 @@ catalogs:
     oxlint:
       specifier: ^1.90.0
       version: 1.90.0
+    oxlint-tsgolint:
+      specifier: ^7.0.2005
+      version: 7.0.2005
     pg:
       specifier: ^8.23.1
       version: 8.23.1
@@ -606,7 +609,7 @@ importers:
         version: 21.2.4
       '@nx/oxlint':
         specifier: 'catalog:'
-        version: 24.0.3(@babel/traverse@7.29.12(supports-color@10.2.2))(@swc/core@1.16.21(@swc/helpers@0.5.23))(@typescript/typescript6@6.0.2)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(nx@24.0.3(@swc/core@1.16.21(@swc/helpers@0.5.23)))(oxlint@1.90.0)(supports-color@10.2.2)
+        version: 24.0.3(@babel/traverse@7.29.12(supports-color@10.2.2))(@swc/core@1.16.21(@swc/helpers@0.5.23))(@typescript/typescript6@6.0.2)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(nx@24.0.3(@swc/core@1.16.21(@swc/helpers@0.5.23)))(oxlint@1.90.0(oxlint-tsgolint@7.0.2005))(supports-color@10.2.2)
       '@nx/playwright':
         specifier: 'catalog:'
         version: 24.0.3(@babel/traverse@7.29.12(supports-color@10.2.2))(@playwright/test@1.64.1)(@swc/core@1.16.21(@swc/helpers@0.5.23))(@zkochan/js-yaml@0.0.7)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(nx@24.0.3(@swc/core@1.16.21(@swc/helpers@0.5.23)))(supports-color@10.2.2)
@@ -657,7 +660,10 @@ importers:
         version: 0.75.0
       oxlint:
         specifier: 'catalog:'
-        version: 1.90.0
+        version: 1.90.0(oxlint-tsgolint@7.0.2005)
+      oxlint-tsgolint:
+        specifier: 'catalog:'
+        version: 7.0.2005
       pino-pretty:
         specifier: 'catalog:'
         version: 13.2.0
@@ -6004,6 +6010,36 @@ packages:
     cpu: [x64]
     os: [win32]
 
+  '@oxlint-tsgolint/darwin-arm64@7.0.2005':
+    resolution: {integrity: sha512-VqDZxcZVjlonNLuuvraVNgDQt+1ndwa4yJo8OqsK4HYh/61ba9IlMStCVfi/aaIqRoDhNbAKC8gdcTrXqnb+Ug==}
+    cpu: [arm64]
+    os: [darwin]
+
+  '@oxlint-tsgolint/darwin-x64@7.0.2005':
+    resolution: {integrity: sha512-4kUfLRNYoVpv0Tm3jPYrvxyfOc/LmdvFC3pKZ4tL6K7lA7K/VS81SAtmxRzbYXYSyb3SBWhwsuX+df4neqzxxA==}
+    cpu: [x64]
+    os: [darwin]
+
+  '@oxlint-tsgolint/linux-arm64@7.0.2005':
+    resolution: {integrity: sha512-rhUNcPsBlKvhXtrbhbBUidtRBRdJ8fbEHN9H5Q5N59gby18ruGuDA7KUxl7oRnUzp797uykYQhkBDm+0KpfK/Q==}
+    cpu: [arm64]
+    os: [linux]
+
+  '@oxlint-tsgolint/linux-x64@7.0.2005':
+    resolution: {integrity: sha512-tKs9yinDQZOHygM0e8EJnjTU3mzJtdfkOZP6Udu82iLMePUSHOhTJ9zzU/mSd1hQxURI4LTRRiFhfzC+PzwdNA==}
+    cpu: [x64]
+    os: [linux]
+
+  '@oxlint-tsgolint/win32-arm64@7.0.2005':
+    resolution: {integrity: sha512-VYPnu1gjfbSv+ROhuyNfMs382D4zQU2ZRc8Uc3nuEZo1k2kf+1KfTrg4hrlWh73h9GI+dUWyo+DYCQzUBlPwcQ==}
+    cpu: [arm64]
+    os: [win32]
+
+  '@oxlint-tsgolint/win32-x64@7.0.2005':
+    resolution: {integrity: sha512-ekU89cTGy9fpQzuvxIsFHrnoP8XoFjGIRgPEW6eqgY2NYjGy9pwpjF79o04WXRMJFKRrcaVqkZXUUBdLsqpQDw==}
+    cpu: [x64]
+    os: [win32]
+
   '@oxlint/binding-android-arm-eabi@1.90.0':
     resolution: {integrity: sha512-sgfalb1HuxYjiAa4wESZ626z1FGusqNcXYHyB5oIOEprS2sbPg0UYEfo83uF1GNG70DIfZxHkXuE6KFrlSdn8Q==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -10141,6 +10177,10 @@ packages:
       vite-plus:
         optional: true
 
+  oxlint-tsgolint@7.0.2005:
+    resolution: {integrity: sha512-6ccPGu4u4J9bwYPHXBFPee3RZrX3BboRdU7k14zRDDB1lvN3O7J/vPRFdaEfa1+CWx4xnQQOp4ctoaF66oO0uw==}
+    hasBin: true
+
   oxlint@1.90.0:
     resolution: {integrity: sha512-RkTN9EmgIUpLuhNoLhO3OliMGJlvb3Dk7XVjBZnfoMCHrVpuz5ESd97klfiyYeV7XfA2lNLnDCPMkUI+Qw5How==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -14113,7 +14153,7 @@ snapshots:
   '@nx/nx-win32-x64-msvc@24.0.3':
     optional: true
 
-  '@nx/oxlint@24.0.3(@babel/traverse@7.29.12(supports-color@10.2.2))(@swc/core@1.16.21(@swc/helpers@0.5.23))(@typescript/typescript6@6.0.2)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(nx@24.0.3(@swc/core@1.16.21(@swc/helpers@0.5.23)))(oxlint@1.90.0)(supports-color@10.2.2)':
+  '@nx/oxlint@24.0.3(@babel/traverse@7.29.12(supports-color@10.2.2))(@swc/core@1.16.21(@swc/helpers@0.5.23))(@typescript/typescript6@6.0.2)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(nx@24.0.3(@swc/core@1.16.21(@swc/helpers@0.5.23)))(oxlint@1.90.0(oxlint-tsgolint@7.0.2005))(supports-color@10.2.2)':
     dependencies:
       '@nx/devkit': 24.0.3(nx@24.0.3(@swc/core@1.16.21(@swc/helpers@0.5.23)))
       '@nx/eslint-plugin': 24.0.3(@babel/traverse@7.29.12(supports-color@10.2.2))(@swc/core@1.16.21(@swc/helpers@0.5.23))(@typescript/typescript6@6.0.2)(eslint@9.39.4(jiti@2.7.0)(supports-color@10.2.2))(nx@24.0.3(@swc/core@1.16.21(@swc/helpers@0.5.23)))(supports-color@10.2.2)
@@ -14121,7 +14161,7 @@ snapshots:
       picocolors: 1.1.1
       tslib: 2.9.1
     optionalDependencies:
-      oxlint: 1.90.0
+      oxlint: 1.90.0(oxlint-tsgolint@7.0.2005)
     transitivePeerDependencies:
       - '@babel/traverse'
       - '@swc-node/register'
@@ -14695,6 +14735,24 @@ snapshots:
     optional: true
 
   '@oxfmt/binding-win32-x64-msvc@0.75.0':
+    optional: true
+
+  '@oxlint-tsgolint/darwin-arm64@7.0.2005':
+    optional: true
+
+  '@oxlint-tsgolint/darwin-x64@7.0.2005':
+    optional: true
+
+  '@oxlint-tsgolint/linux-arm64@7.0.2005':
+    optional: true
+
+  '@oxlint-tsgolint/linux-x64@7.0.2005':
+    optional: true
+
+  '@oxlint-tsgolint/win32-arm64@7.0.2005':
+    optional: true
+
+  '@oxlint-tsgolint/win32-x64@7.0.2005':
     optional: true
 
   '@oxlint/binding-android-arm-eabi@1.90.0':
@@ -19366,7 +19424,16 @@ snapshots:
       '@oxfmt/binding-win32-ia32-msvc': 0.75.0
       '@oxfmt/binding-win32-x64-msvc': 0.75.0
 
-  oxlint@1.90.0:
+  oxlint-tsgolint@7.0.2005:
+    optionalDependencies:
+      '@oxlint-tsgolint/darwin-arm64': 7.0.2005
+      '@oxlint-tsgolint/darwin-x64': 7.0.2005
+      '@oxlint-tsgolint/linux-arm64': 7.0.2005
+      '@oxlint-tsgolint/linux-x64': 7.0.2005
+      '@oxlint-tsgolint/win32-arm64': 7.0.2005
+      '@oxlint-tsgolint/win32-x64': 7.0.2005
+
+  oxlint@1.90.0(oxlint-tsgolint@7.0.2005):
     optionalDependencies:
       '@oxlint/binding-android-arm-eabi': 1.90.0
       '@oxlint/binding-android-arm64': 1.90.0
@@ -19387,6 +19454,7 @@ snapshots:
       '@oxlint/binding-win32-arm64-msvc': 1.90.0
       '@oxlint/binding-win32-ia32-msvc': 1.90.0
       '@oxlint/binding-win32-x64-msvc': 1.90.0
+      oxlint-tsgolint: 7.0.2005
 
   p-limit@2.3.0:
     dependencies:
