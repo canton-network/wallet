@@ -237,7 +237,10 @@ export type RequestArgs<
 > = M extends keyof T
     ? T[M]['params'] extends never
         ? { method: M }
-        : { method: M; params: T[M]['params'] }
+        : // TODO try to find a nicer way to make connect work without breaking change in api, or comment it if can't
+          undefined extends T[M]['params']
+          ? { method: M; params?: T[M]['params'] }
+          : { method: M; params: T[M]['params'] }
     : never
 
 export enum WALLET_DISABLED_REASON {

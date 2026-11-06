@@ -10,7 +10,23 @@ const noParams = z.union([z.undefined(), z.tuple([]), z.strictObject({})])
 
 export const paramSchemas: Record<string, z.ZodType> = {
     status: noParams,
-    connect: noParams,
+    connect: z
+        .fromJSONSchema({
+            title: 'connectParams',
+            type: 'object',
+            description: 'Request to connect to the wallet provider.',
+            additionalProperties: { type: 'null' },
+            properties: {
+                requestedScopes: {
+                    title: 'requestedScopes',
+                    type: 'array',
+                    description:
+                        'Ledger API access token scopes requested by the dApp, for the user to approve.',
+                    items: { title: 'requestedScope', type: 'string' },
+                },
+            },
+        })
+        .optional(),
     disconnect: noParams,
     isConnected: noParams,
     getActiveNetwork: noParams,

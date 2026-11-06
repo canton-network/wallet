@@ -8,6 +8,7 @@ export type {
     WalletPickerEntry,
     WalletPickerResult,
     WalletPickerFn,
+    WalletPickerOptions,
 } from '@canton-network/core-wallet-discovery'
 
 export type {

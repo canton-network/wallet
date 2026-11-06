@@ -8,6 +8,7 @@ import type {
 import { WalletEvent, type SpliceMessage } from '@canton-network/core-types'
 import type {
     AccountsChangedEvent,
+    ConnectParams,
     ConnectResult,
     RpcTypes as DappRpcTypes,
     LedgerApiParams,
@@ -63,8 +64,8 @@ export class DappClient {
 
     // ── RPC convenience methods ────────────────────────────
 
-    async connect(): Promise<ConnectResult> {
-        return this.provider.request({ method: 'connect' })
+    async connect(params?: ConnectParams): Promise<ConnectResult> {
+        return this.provider.request({ method: 'connect', params })
     }
 
     async status(): Promise<StatusEvent> {

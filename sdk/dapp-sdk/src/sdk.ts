@@ -28,6 +28,7 @@ import type {
 } from '@canton-network/core-splice-provider'
 import type {
     StatusEvent,
+    ConnectParams,
     ConnectResult,
     PrepareExecuteParams,
     PrepareExecuteAndWaitResult,
@@ -60,6 +61,15 @@ export interface DappSDKConnectOptions<
 > {
     defaultAdapters?: TDefaultAdapter[]
     additionalAdapters?: ProviderAdapter[] | undefined
+    enableSuggestedWallets?: boolean
+}
+
+export interface DappSDKConnectParams extends ConnectParams {
+    /** @deprecated Pass to `init()` instead. */
+    defaultAdapters?: ProviderAdapter[]
+    /** @deprecated Pass to `init()` instead. */
+    additionalAdapters?: ProviderAdapter[] | undefined
+    /** @deprecated Pass to `init()` instead. */
     enableSuggestedWallets?: boolean
 }
 
@@ -349,6 +359,8 @@ export class DappSDK {
         // are registered even if discovery was already created by an earlier call
         // (e.g. status() on cold start). Serialize behind the existing initPromise
         // to avoid concurrent discovery mutations.
+        // TODO: a single rejected ensureDiscovery() leaves initPromise rejected,
+        //  so every later init()/status()/connect() fails until page reload.
         this.initPromise = this.initPromise
             ? this.initPromise.then(() =>
                   this.ensureDiscovery(this.configuredAdapters)
@@ -357,14 +369,33 @@ export class DappSDK {
         await this.initPromise
     }
 
-    async connect(): Promise<ConnectResult>
-    /** @deprecated Pass options to `init()` instead. */
-    async connect(options: DappSDKConnectOptions): Promise<ConnectResult>
-    async connect(options?: DappSDKConnectOptions): Promise<ConnectResult> {
-        // Prefer init({ ... }) once at startup. Passing options here remains supported
-        // for older call sites; it is equivalent to init(options) then connect().
-        if (options) {
-            await this.init(options)
+    /**
+     * Opens the wallet picker and connects to the selected wallet.
+     *
+     * `params.requestedScopes` are Ledger API access token scopes the dApp asks
+     * the user to approve; they are passed to the wallet picker and sent with
+     * the wallet's `connect` request.
+     *
+     * Deprecated adapter options in `params` are forwarded to `init()`.
+     */
+    async connect(params?: DappSDKConnectParams): Promise<ConnectResult> {
+        // Before requestedScopes, connect(options) took only init options, and any
+        // passed object (including {}) meant init(options) then connect(). The
+        // init options are now deprecated fields, so the argument decides:
+        // - undefined                         -> init()
+        // - {}                                -> init({}), as before
+        // - { requestedScopes } only          -> init(), keeps init() config intact
+        // - requestedScopes + any init option -> init(initOptions)
+        // init({}) is kept for {} because it resets the config to default adapters.
+        // TODO: find a cleaner API for this, or check whether the deprecated
+        //  init options can be removed from connect().
+        const { requestedScopes, ...initOptions } = params ?? {}
+        const hasInitOptions =
+            params !== undefined &&
+            (Object.keys(params).length === 0 ||
+                Object.keys(initOptions).length > 0)
+        if (hasInitOptions) {
+            await this.init(initOptions)
         } else {
             await this.init()
         }
@@ -391,7 +422,12 @@ export class DappSDK {
                 }
             })
 
-        const initialSelection = await this.walletPicker(entries)
+        const initialSelection = await this.walletPicker(entries, {
+            requestedScopes,
+        })
+        const connectParams: ConnectParams | undefined = requestedScopes
+            ? { requestedScopes }
+            : undefined
         const connectionAttempts = new EventTarget()
 
         return new Promise<ConnectResult>((resolve, reject) => {
@@ -424,7 +460,7 @@ export class DappSDK {
                 try {
                     // creates provider based on the adapter
                     // provider stores (and reads from storage) the session token and the access token
-                    await discovery.connect(targetId)
+                    await discovery.connect(targetId, connectParams)
 
                     const session = discovery.getActiveSession()
                     if (!session) {

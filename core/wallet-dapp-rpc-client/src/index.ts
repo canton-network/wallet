@@ -6,6 +6,14 @@ import type { RequestArgs, RequestPayload } from '@canton-network/core-types'
 import type { RpcTransport } from '@canton-network/core-rpc-transport'
 
 /* oxlint-disable no-unused-vars */
+export type RequestedScope = string
+/**
+ *
+ * Ledger API access token scopes requested by the dApp, for the user to approve.
+ *
+ */
+export type RequestedScopes = RequestedScope[]
+type AlwaysFalse = any
 /**
  *
  * The unique identifier of the command associated with the transaction.
@@ -21,7 +29,6 @@ type AlwaysTrue = any
 export interface CreateCommandPayload {
     [key: string]: any
 }
-type AlwaysFalse = any
 export interface CreateCommand {
     CreateCommand: CreateCommandPayload
 }
@@ -498,6 +505,14 @@ export interface MessageSignatureFailedEvent {
 }
 /**
  *
+ * Request to connect to the wallet provider.
+ *
+ */
+export interface ConnectParams {
+    requestedScopes?: RequestedScopes
+}
+/**
+ *
  * Structure representing the request for prepare and execute calls
  *
  */
@@ -599,7 +614,7 @@ export type MessageSignatureEvent =
  */
 
 export type Status = () => Promise<StatusEvent>
-export type Connect = () => Promise<ConnectResult>
+export type Connect = (params?: ConnectParams) => Promise<ConnectResult>
 export type Disconnect = () => Promise<Null>
 export type IsConnected = () => Promise<ConnectResult>
 export type GetActiveNetwork = () => Promise<Network>

@@ -3,6 +3,7 @@
 
 import type { Provider } from '@canton-network/core-splice-provider'
 import type {
+    ConnectParams,
     ProviderId,
     RpcTypes as DappRpcTypes,
 } from '@canton-network/core-wallet-dapp-rpc-client'
@@ -141,8 +142,13 @@ export class DiscoveryClient {
      * - If `providerId` is provided, connects directly to that wallet.
      * - If omitted and a `walletPicker` was configured, opens the picker.
      * - If omitted and no picker is configured, throws.
+     *
+     * `params` are forwarded to the provider's `connect` request.
      */
-    async connect(providerId?: ProviderId): Promise<void> {
+    async connect(
+        providerId?: ProviderId,
+        params?: ConnectParams
+    ): Promise<void> {
         let targetId = providerId
 
         if (!targetId) {
@@ -166,7 +172,9 @@ export class DiscoveryClient {
                 }
             })
 
-            const picked = await this.config.walletPicker(entries)
+            const picked = await this.config.walletPicker(entries, {
+                requestedScopes: params?.requestedScopes,
+            })
             targetId = picked.providerId
         }
 
@@ -182,7 +190,7 @@ export class DiscoveryClient {
 
         try {
             const provider = adapter.provider()
-            await provider.request({ method: 'connect' })
+            await provider.request({ method: 'connect', params })
             this.session = { providerId: targetId, adapter, provider }
             persistSession(targetId)
             this.events.emit('discovery:connected', { providerId: targetId })

@@ -244,6 +244,64 @@ describe('dappController', () => {
             })
         })
 
+        it('adds requested scopes to userUrl when unauthenticated', async () => {
+            const store = await createStore(logger, auth, {
+                withSession: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            const result = await controller.connect({
+                requestedScopes: ['ledger:read', 'l:pkg:#pkg-one'],
+            })
+
+            const url = new URL(result.userUrl!)
+            expect(`${url.origin}${url.pathname}`).toBe(`${userUrl}/login/`)
+            expect(url.searchParams.getAll('requestedScopes')).toEqual([
+                'ledger:read',
+                'l:pkg:#pkg-one',
+            ])
+        })
+
+        it('omits query string when requested scopes are empty', async () => {
+            const store = await createStore(logger, auth, {
+                withSession: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            const result = await controller.connect({ requestedScopes: [] })
+
+            expect(result.userUrl).toBe(`${userUrl}/login/`)
+        })
+
+        it('adds requested scopes to userUrl when connected', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const result = await controller.connect({
+                requestedScopes: ['ledger:read'],
+            })
+
+            expect(result).toMatchObject({
+                isConnected: true,
+                userUrl: `${userUrl}/login/?requestedScopes=ledger%3Aread`,
+            })
+        })
+
         it('connects and emits statusChanged and connected', async () => {
             const store = await createStore(logger, auth)
             const notifier = notificationService.getNotifier('session-1')

@@ -19,7 +19,16 @@
         },
         {
             "name": "connect",
-            "params": [],
+            "params": [
+                {
+                    "name": "params",
+                    "required": false,
+                    "schema": {
+                        "title": "connectParams",
+                        "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/ConnectRequest"
+                    }
+                }
+            ],
             "result": {
                 "name": "result",
                 "schema": {
@@ -762,6 +771,23 @@
                     }
                 },
                 "required": ["provider", "connection"]
+            },
+            "ConnectRequest": {
+                "title": "ConnectRequest",
+                "type": "object",
+                "description": "Request to connect to the wallet provider.",
+                "additionalProperties": false,
+                "properties": {
+                    "requestedScopes": {
+                        "title": "requestedScopes",
+                        "type": "array",
+                        "description": "Ledger API access token scopes requested by the dApp, for the user to approve.",
+                        "items": {
+                            "title": "requestedScope",
+                            "type": "string"
+                        }
+                    }
+                }
             },
             "SignMessageRequest": {
                 "title": "SignMessageRequest",

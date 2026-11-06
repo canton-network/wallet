@@ -45,7 +45,12 @@ test('call connect rpc', async () => {
         )
     )
         .post('/api/v0/dapp')
-        .send({ jsonrpc: '2.0', id: 0, method: 'connect', params: [] })
+        .send({
+            jsonrpc: '2.0',
+            id: 0,
+            method: 'connect',
+            params: { requestedScopes: ['ledger:read', 'l:pkg:#pkg-one'] },
+        })
         .set('Accept', 'application/json')
 
     expect(response.statusCode).toBe(200)
@@ -56,7 +61,8 @@ test('call connect rpc', async () => {
             isConnected: false,
             isNetworkConnected: false,
             networkReason: 'Unauthenticated',
-            userUrl: 'http://localhost:3030/login/',
+            userUrl:
+                'http://localhost:3030/login/?requestedScopes=ledger%3Aread&requestedScopes=l%3Apkg%3A%23pkg-one',
         },
     })
 })
