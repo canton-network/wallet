@@ -365,7 +365,6 @@ for (const version of [
                 dialog.getByRole('button', { name: 'Accept' }).click()
             )
             await expectWalletBalance(dappPage, bob, '50')
-            contexts.stop()
             console.log(contexts)
             expect(contexts.usedVersion('accept')).toEqual({
                 v1: false,
