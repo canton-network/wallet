@@ -329,11 +329,6 @@ for (const version of [
         test('lists a dual interface offer once and acts through v2', async ({
             page: dappPage,
         }) => {
-            test.skip(
-                !supportsTokenStandardV2(),
-                'Token standard v2 requires splice 0.8.3+'
-            )
-
             const { wg, api, bob } = await setupTransferTest(dappPage)
 
             await tap(dappPage, wg, '300')
@@ -365,11 +360,11 @@ for (const version of [
                 dialog.getByRole('button', { name: 'Accept' }).click()
             )
             await expectWalletBalance(dappPage, bob, '50')
-            console.log(contexts)
-            expect(contexts.usedVersion('accept')).toEqual({
-                v1: false,
-                v2: true,
-            })
+
+            const expected = supportsTokenStandardV2()
+                ? { v1: false, v2: true }
+                : { v1: true, v2: false }
+            expect(contexts.usedVersion('accept')).toEqual(expected)
         })
     })
 }
