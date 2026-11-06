@@ -130,7 +130,7 @@ export class CoreService {
                 party,
                 opts.limit,
                 opts.offset,
-                opts.continueUntilCompletion ?? true
+                opts.continueUntilCompletion ?? false
             )
         ).filter(
             (h) =>
