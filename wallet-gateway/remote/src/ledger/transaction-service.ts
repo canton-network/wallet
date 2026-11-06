@@ -446,13 +446,23 @@ export class TransactionService {
         const { partyId, signature, signedBy } = executeParams
         const { commandId } = transaction
 
-        const result = await ledgerClient.postWithRetry(
-            '/v2/interactive-submission/executeAndWait',
-            {
+        const buildExecuteAndWaitParams = () => {
+            const submissionId = crypto.randomUUID()
+            this.logger.info(
+                {
+                    submissionId,
+                    transactionId: transaction.id,
+                    commandId: transaction.commandId,
+                    externalTxId: transaction.externalTxId,
+                },
+                'Executing transaction with submissionId'
+            )
+
+            return {
                 userId,
                 preparedTransaction: transaction.preparedTransaction,
                 hashingSchemeVersion: this.hashingSchemeVersion,
-                submissionId: commandId,
+                submissionId,
                 deduplicationPeriod: {
                     Empty: {},
                 },
@@ -473,6 +483,11 @@ export class TransactionService {
                     ],
                 },
             } as Types['JsExecuteSubmissionAndWaitRequest']
+        }
+
+        const result = await ledgerClient.postWithRetry(
+            '/v2/interactive-submission/executeAndWait',
+            buildExecuteAndWaitParams
         )
 
         logDynamically(this.logger, 'Externally signed execution result', {
