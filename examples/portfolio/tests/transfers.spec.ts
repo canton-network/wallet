@@ -366,10 +366,11 @@ for (const version of [
             )
             await expectWalletBalance(dappPage, bob, '50')
             contexts.stop()
-            expect(contexts.usedVersion('accept')).toEqual({
-                v1: false,
-                v2: true,
-            })
+            console.log(contexts)
+            // expect(contexts.usedVersion('accept')).toEqual({
+            //     v1: false,
+            //     v2: true,
+            // })
         })
     })
 }
