@@ -13,6 +13,7 @@ import { WindowMessages } from './components/WindowMessages'
 import { Signing } from './components/Signing'
 import { useStatus } from './hooks/useStatus'
 import Holdings from './components/Holdings'
+import { ScopedToken } from './components/ScopedToken'
 
 function App() {
     const { errorMsg, setErrorMsg } = useContext(ErrorContext)
@@ -42,6 +43,22 @@ function App() {
         }
     }, [connectResult])
 
+    function handleConnect(params?: sdk.ConnectParams) {
+        console.log('Connecting to Wallet...', params)
+        setLoading(true)
+        connect(params)
+            .then(() => {
+                setLoading(false)
+                setErrorMsg('')
+                void status()
+            })
+            .catch((err) => {
+                console.log(err)
+                setLoading(false)
+                setErrorMsg(err instanceof Error ? err.message : String(err))
+            })
+    }
+
     return (
         <div>
             <h1>Example dApp</h1>
@@ -70,25 +87,7 @@ function App() {
                         <button
                             data-testid="connect-wallet"
                             disabled={loading}
-                            onClick={() => {
-                                console.log('Connecting to Wallet...')
-                                setLoading(true)
-                                connect()
-                                    .then(() => {
-                                        setLoading(false)
-                                        setErrorMsg('')
-                                        void status()
-                                    })
-                                    .catch((err) => {
-                                        console.log(err)
-                                        setLoading(false)
-                                        setErrorMsg(
-                                            err instanceof Error
-                                                ? err.message
-                                                : String(err)
-                                        )
-                                    })
-                            }}
+                            onClick={() => handleConnect()}
                         >
                             connect to Wallet
                         </button>
@@ -152,6 +151,12 @@ function App() {
                         onClick={() => setActiveTab('windowMessages')}
                     >
                         Window Messages
+                    </button>
+                    <button
+                        className={activeTab === 'scopedToken' ? 'active' : ''}
+                        onClick={() => setActiveTab('scopedToken')}
+                    >
+                        Scoped Token
                     </button>
                     {connectResult?.isConnected && (
                         <button
@@ -218,6 +223,18 @@ function App() {
                         }}
                     >
                         <WindowMessages />
+                    </div>
+                    <div
+                        style={{
+                            display:
+                                activeTab === 'scopedToken' ? 'block' : 'none',
+                        }}
+                    >
+                        <ScopedToken
+                            connectResult={connectResult}
+                            loading={loading}
+                            onConnect={handleConnect}
+                        />
                     </div>
                     <div
                         style={{
