@@ -504,3 +504,18 @@ export const recordTransferChoiceContexts = (page: Page) => {
         },
     }
 }
+
+export const amuletSupportsApi = async (api: string): Promise<boolean> => {
+    const REGISTRY = 'http://scan.localhost:4000'
+    const response = await fetch(`${REGISTRY}/registry/metadata/v1/instruments`)
+    if (!response.ok) throw new Error(`Registry metadata unavailable`)
+    const { instruments } = (await response.json()) as {
+        instruments: { id: string; supportedApis?: Record<string, number> }[]
+    }
+    return instruments.some(
+        (i) => i.id === 'Amulet' && i.supportedApis?.[api] != null
+    )
+}
+
+export const amuletSupportsTransferV2 = () =>
+    amuletSupportsApi('splice-api-token-transfer-instruction-v2')

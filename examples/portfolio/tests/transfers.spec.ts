@@ -23,9 +23,9 @@ import {
     setupRegistry,
     switchWallet,
     tap,
-    supportsTokenStandardV2,
     selectTransferVersion,
     recordTransferChoiceContexts,
+    amuletSupportsTransferV2,
 } from './utils'
 import type { TokenStandardVersion } from '../src/types/instruments'
 
@@ -72,10 +72,12 @@ for (const version of [
     'v2',
 ] as const satisfies readonly TokenStandardVersion[]) {
     test.describe(`dashboard transfer flow ${version}`, () => {
-        test.skip(
-            version === 'v2' && !supportsTokenStandardV2(),
-            'Token standard v2 requires splice 0.8.3+'
-        )
+        test.beforeEach(async () => {
+            test.skip(
+                version === 'v2' && !(await amuletSupportsTransferV2),
+                'Registry does not support token standard v2 transfers'
+            )
+        })
 
         const testMessage = (label: string) =>
             `${label} ${version} ${Date.now()}`
@@ -361,7 +363,7 @@ for (const version of [
             )
             await expectWalletBalance(dappPage, bob, '50')
 
-            const expected = supportsTokenStandardV2()
+            const expected = (await amuletSupportsTransferV2())
                 ? { v1: false, v2: true }
                 : { v1: true, v2: false }
             expect(contexts.usedVersion('accept')).toEqual(expected)
