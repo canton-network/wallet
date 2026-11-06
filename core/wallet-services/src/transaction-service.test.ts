@@ -98,6 +98,13 @@ const ledgerClient = {
     getSynchronizerId: vi.fn(),
 } as unknown as LedgerClient
 
+// postWithRetry takes either a body or a factory that builds one per attempt;
+// evaluate the factory so tests can assert on the body that would be sent.
+function resolvePostBody(mock: ReturnType<typeof vi.fn>, call = -1): unknown {
+    const body = mock.mock.calls.at(call)![1]
+    return typeof body === 'function' ? body() : body
+}
+
 const network: Network = {
     id: 'network1',
     name: 'testnet',
@@ -1295,20 +1302,7 @@ describe('TransactionService', () => {
 
                     expect(postWithRetry).toHaveBeenCalledWith(
                         '/v2/interactive-submission/executeAndWait',
-                        expect.objectContaining({
-                            userId: authContext.userId,
-
-                            preparedTransaction:
-                                pendingTransaction.preparedTransaction,
-                            submissionId: expect.any(String),
-                            partySignatures: expect.objectContaining({
-                                signatures: [
-                                    expect.objectContaining({
-                                        party: wallet.partyId,
-                                    }),
-                                ],
-                            }),
-                        }),
+                        expect.any(Function),
                         {
                             retries: 20,
                             delayMs: 3000,
@@ -1322,6 +1316,15 @@ describe('TransactionService', () => {
                             ],
                         }
                     )
+                    expect(resolvePostBody(postWithRetry)).toMatchObject({
+                        userId: authContext.userId,
+                        preparedTransaction:
+                            pendingTransaction.preparedTransaction,
+                        submissionId: expect.any(String),
+                        partySignatures: {
+                            signatures: [{ party: wallet.partyId }],
+                        },
+                    })
                     expect(store.setTransactionStatus).toHaveBeenCalledWith(
                         pendingTransaction.id,
                         'executed',
@@ -1410,28 +1413,71 @@ describe('TransactionService', () => {
                 })
                 expect(postWithRetry).toHaveBeenCalledWith(
                     '/v2/interactive-submission/executeAndWait',
-                    expect.objectContaining({
-                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-                        partySignatures: {
-                            signatures: [
-                                {
-                                    party: wallet.partyId,
-                                    signatures: [
-                                        {
-                                            signature: 'kernel-signature',
-                                            signedBy: wallet.namespace,
-                                            format: 'SIGNATURE_FORMAT_CONCAT',
-                                            signingAlgorithmSpec:
-                                                'SIGNING_ALGORITHM_SPEC_ED25519',
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    }),
+                    expect.any(Function),
                     expect.any(Object)
                 )
+                expect(resolvePostBody(postWithRetry)).toMatchObject({
+                    hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                    partySignatures: {
+                        signatures: [
+                            {
+                                party: wallet.partyId,
+                                signatures: [
+                                    {
+                                        signature: 'kernel-signature',
+                                        signedBy: wallet.namespace,
+                                        format: 'SIGNATURE_FORMAT_CONCAT',
+                                        signingAlgorithmSpec:
+                                            'SIGNING_ALGORITHM_SPEC_ED25519',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                })
                 expect(result).toEqual({ updateId: 'kernel-update-1' })
+            })
+
+            it('builds a fresh submissionId for every executeAndWait attempt', async () => {
+                const store = createStore(signedWithExternal)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.FIREBLOCKS]: createDriver({
+                            getTransaction: vi.fn().mockResolvedValue({
+                                status: 'signed',
+                                signature: 'sig',
+                            }),
+                        }),
+                    },
+                    notifier
+                )
+                const postWithRetry = vi
+                    .fn()
+                    .mockResolvedValue({ updateId: 'external-update-1' })
+
+                await service.execute(
+                    authContext.userId,
+                    walletWithProvider(SigningProvider.FIREBLOCKS),
+                    signedWithExternal,
+                    executeParams,
+                    { postWithRetry } as unknown as LedgerClient,
+                    authContext,
+                    network
+                )
+
+                // Simulate what postWithRetry does on each retry attempt
+                const buildBody = postWithRetry.mock.calls[0]![1] as () => {
+                    submissionId: string
+                }
+                const first = buildBody()
+                const second = buildBody()
+
+                expect(first.submissionId).not.toBe(second.submissionId)
+                expect({ ...first, submissionId: undefined }).toEqual({
+                    ...second,
+                    submissionId: undefined,
+                })
             })
 
             it('throws when the wallet-kernel fallback returns no signature', async () => {
