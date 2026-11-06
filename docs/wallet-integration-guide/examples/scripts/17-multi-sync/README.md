@@ -19,7 +19,7 @@ pnpm script:fetch:localnet
 pnpm start:localnet
 
 # Step 3: Run the example
-pnpm workspace docs-wallet-integration-guide-examples run-17
+pnpm --filter docs-wallet-integration-guide-examples run-17
 
 # Step 4: Stop when done (from the repository root)
 pnpm stop:localnet
@@ -51,9 +51,9 @@ the **global** synchronizer and Canton **automatically reassigns** the app-synch
 allocation to global as part of the atomic settlement. `TradingApp` is a stakeholder
 (observer) of the allocation, which is what authorizes that reassignment.
 
-After settlement, Alice moves the received `TestToken` holding from the global synchronizer back to the app-synchronizer and transfers it to **Charlie** there. This final step shows that a settled holding can be re-used across synchronizers and still be settled with registry-based single-party transfers.
+After settlement, Alice transfers the received `TestToken` holding to **Charlie** on the app-synchronizer. The holding is sitting on the global synchronizer at that point, but because the submission targets the app-synchronizer Canton reassigns it automatically — no explicit reassignment call is made. This final step shows that a settled holding can be re-used across synchronizers and still be settled with registry-based single-party transfers.
 
-The whole flow uses **single-party submissions only** (no multi-party signing) and is settled atomically by the TradingApp.
+The whole flow uses **single-party submissions only** (no multi-party signing), is settled atomically by the TradingApp, and relies entirely on Canton's **automatic reassignment** — the example issues no explicit `unassign`/`assign` commands.
 
 ## Topology & DAR vetting
 
