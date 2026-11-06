@@ -39,8 +39,8 @@ export function getTransferActions(
 ): TransferActionAvailability[] {
     const party: PartyId = item.currentPartyId
 
-    //v1 offers, act as current party
-    if (!item.availableActions) {
+    //if no v2 view, v1 has no available actions to fall back to role based rule
+    if (!item.versions.includes('v2')) {
         const actions: TransferAction[] =
             item.receiver === party
                 ? ['Accept', 'Reject']
@@ -56,7 +56,7 @@ export function getTransferActions(
     }
 
     return decodeAvailableActions<TransferInstructionAction>(
-        item.availableActions
+        item.availableActions ?? []
     )
         .flatMap(([key, groups]): TransferActionAvailability[] => {
             const action = ACTION_BY_TAG[key.tag]
