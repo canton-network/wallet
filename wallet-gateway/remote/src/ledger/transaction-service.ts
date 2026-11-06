@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Logger } from 'pino'
-import { LedgerClient, Types } from '@canton-network/core-ledger-client'
+import {
+    defaultRetryableOptions,
+    isJsCantonError,
+    LedgerClient,
+    Types,
+} from '@canton-network/core-ledger-client'
 import {
     Store,
     Transaction,
@@ -24,7 +29,7 @@ import {
     ExecuteResult,
     SignParams,
 } from '../user-api/rpc-gen/typings.js'
-import { UserId } from '../dapp-api/rpc-gen/typings.js'
+import { TxChangedExecutedEvent, UserId } from '../dapp-api/rpc-gen/typings.js'
 import { Notifier } from '../notification/NotificationService.js'
 import {
     ledgerPrepareParams,
@@ -446,49 +451,70 @@ export class TransactionService {
         const { partyId, signature, signedBy } = executeParams
         const { commandId } = transaction
 
-        const buildExecuteAndWaitParams = () => {
-            const submissionId = crypto.randomUUID()
-            this.logger.info(
-                {
+        let result: TxChangedExecutedEvent['payload']
+        try {
+            const buildExecuteAndWaitParams = () => {
+                const submissionId = crypto.randomUUID()
+                this.logger.info(
+                    {
+                        submissionId,
+                        transactionId: transaction.id,
+                        commandId: transaction.commandId,
+                        externalTxId: transaction.externalTxId,
+                    },
+                    'Executing transaction with submissionId'
+                )
+
+                return {
+                    userId,
+                    preparedTransaction: transaction.preparedTransaction,
+                    hashingSchemeVersion: this.hashingSchemeVersion,
                     submissionId,
-                    transactionId: transaction.id,
-                    commandId: transaction.commandId,
-                    externalTxId: transaction.externalTxId,
-                },
-                'Executing transaction with submissionId'
+                    deduplicationPeriod: {
+                        Empty: {},
+                    },
+                    partySignatures: {
+                        signatures: [
+                            {
+                                party: partyId,
+                                signatures: [
+                                    {
+                                        signature,
+                                        signedBy,
+                                        format: 'SIGNATURE_FORMAT_CONCAT',
+                                        signingAlgorithmSpec:
+                                            'SIGNING_ALGORITHM_SPEC_ED25519',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                } as Types['JsExecuteSubmissionAndWaitRequest']
+            }
+
+            result = await ledgerClient.postWithRetry(
+                '/v2/interactive-submission/executeAndWait',
+                buildExecuteAndWaitParams
             )
-
-            return {
-                userId,
-                preparedTransaction: transaction.preparedTransaction,
-                hashingSchemeVersion: this.hashingSchemeVersion,
-                submissionId,
-                deduplicationPeriod: {
-                    Empty: {},
-                },
-                partySignatures: {
-                    signatures: [
-                        {
-                            party: partyId,
-                            signatures: [
-                                {
-                                    signature,
-                                    signedBy,
-                                    format: 'SIGNATURE_FORMAT_CONCAT',
-                                    signingAlgorithmSpec:
-                                        'SIGNING_ALGORITHM_SPEC_ED25519',
-                                },
-                            ],
-                        },
-                    ],
-                },
-            } as Types['JsExecuteSubmissionAndWaitRequest']
+        } catch (err: unknown) {
+            // Only a definitive ledger rejection is final; timeouts, retryable codes
+            // and duplicates may have gone through, so leave those `signed`.
+            if (
+                isJsCantonError(err) &&
+                ![
+                    ...defaultRetryableOptions.cantonErrorKeys,
+                    'DUPLICATE_COMMAND',
+                    'DUPLICATE_CONFIRMATION_REQUEST_UUID',
+                ].includes(err.code)
+            ) {
+                await this.store.setTransactionStatus(transaction.id, 'failed')
+                this.notifier.emit('txChanged', {
+                    ...transaction,
+                    status: 'failed',
+                })
+            }
+            throw err
         }
-
-        const result = await ledgerClient.postWithRetry(
-            '/v2/interactive-submission/executeAndWait',
-            buildExecuteAndWaitParams
-        )
 
         logDynamically(this.logger, 'Externally signed execution result', {
             info: { transactionId: transaction.id },
