@@ -25,6 +25,7 @@ import {
     tap,
     supportsTokenStandardV2,
     selectTransferVersion,
+    recordTransferChoiceContexts,
 } from './utils'
 import type { TokenStandardVersion } from '../src/types/instruments'
 
@@ -323,6 +324,52 @@ for (const version of [
             await wg.approveTransaction(() =>
                 dialog.getByRole('button', { name: 'Accept' }).click()
             )
+        })
+
+        test('lists a dual interface offer once and acts through v2', async ({
+            page: dappPage,
+        }) => {
+            test.skip(
+                version === 'v2' && !supportsTokenStandardV2(),
+                'Token standard v2 requires splice 0.8.3+'
+            )
+
+            const { wg, api, bob } = await setupTransferTest(dappPage)
+
+            await tap(dappPage, wg, '300')
+            const message = testMessage('dual interface test')
+            await openTransferDialog(dappPage)
+            await fillAndSubmitTransfer(dappPage, wg, {
+                amount: '50',
+                recipient: bob,
+                message,
+                version,
+            })
+
+            await switchWallet(api, bob)
+            await gotoDashboard(dappPage)
+
+            await expectOffersBadgeCount(dappPage, 1)
+            await expect(
+                dappPage.getByRole('button', {
+                    name: new RegExp(`Open Transfer Offer.*${message}`),
+                })
+            ).toHaveCount(1, { timeout: 15000 })
+
+            const dialog = await openTransferOfferDialog(dappPage, {
+                amount: '50',
+                message,
+            })
+            const contexts = recordTransferChoiceContexts(dappPage)
+            await wg.approveTransaction(() =>
+                dialog.getByRole('button', { name: 'Accept' }).click()
+            )
+            await expectWalletBalance(dappPage, bob, '50')
+            contexts.stop()
+            expect(contexts.usedVersion('accept')).toEqual({
+                v1: false,
+                v2: true,
+            })
         })
     })
 }
