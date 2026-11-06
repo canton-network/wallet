@@ -12,7 +12,10 @@ import type {
     TransferLegWithAllocation,
 } from '@components/types'
 import { AllocationActionDialogContent } from '@components/dashboard/allocation-action-dialog-content'
-import { TransferOfferActionDialogContent } from '@components/dashboard/transfer-offer-action-dialog-content'
+import {
+    TransferOfferActionDialogContent,
+    type AvailableTransferAction,
+} from '@components/dashboard/transfer-offer-action-dialog-content'
 import { useCreateAllocation } from '@hooks/useCreateAllocation'
 import {
     transferActionVersion,
@@ -66,8 +69,9 @@ export function ActionRequiredDialog({
 
     const handleTransferAction = (
         transferItem: TransferActionItem,
-        action: 'Accept' | 'Reject' | 'Withdraw'
+        availability: AvailableTransferAction
     ) => {
+        const action = availability.action
         exerciseTransferMutation.mutate(
             {
                 party: transferItem.currentPartyId as PartyId,
@@ -75,6 +79,7 @@ export function ActionRequiredDialog({
                 instrumentId: transferItem.instrumentId,
                 instructionChoice: action,
                 version: transferActionVersion(transferItem),
+                actors: availability.actors,
             },
             {
                 onSuccess: () => {
