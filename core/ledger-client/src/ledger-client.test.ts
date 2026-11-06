@@ -457,6 +457,49 @@ describe('LedgerClient', () => {
                 )
             ).resolves.toMatchObject({ user: { id: 'alice' } })
         })
+
+        it('postWithRetry rebuilds a lazy body on every attempt', async () => {
+            fetchMock
+                .mockResolvedValueOnce(
+                    jsonResponse(grpcError('SEQUENCER_REQUEST_FAILED'), 503)
+                )
+                .mockResolvedValueOnce(
+                    jsonResponse(grpcError('SEQUENCER_REQUEST_FAILED'), 503)
+                )
+                .mockResolvedValueOnce(
+                    jsonResponse({
+                        newlyGrantedRights: [{ kind: 'CanActAs' }],
+                    })
+                )
+
+            let attempt = 0
+            const buildBody = vi.fn(() => ({
+                identityProviderId: `idp-${++attempt}`,
+                userId: 'alice',
+                rights: [],
+            }))
+
+            await expect(
+                createLedgerClient().postWithRetry(
+                    '/v2/users/{user-id}/rights',
+                    buildBody,
+                    { retries: 3, delayMs: 1, cantonErrorKeys: [] },
+                    { path: { 'user-id': 'alice' } }
+                )
+            ).resolves.toMatchObject({ newlyGrantedRights: expect.any(Array) })
+
+            expect(buildBody).toHaveBeenCalledTimes(3)
+            const sentBodies = await Promise.all(
+                fetchMock.mock.calls.map(async ([request]) =>
+                    JSON.parse(await (request as Request).text())
+                )
+            )
+            expect(sentBodies.map((b) => b.identityProviderId)).toEqual([
+                'idp-1',
+                'idp-2',
+                'idp-3',
+            ])
+        })
     })
 
     describe('is valid get endpoint', () => {
