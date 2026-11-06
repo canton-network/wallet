@@ -131,6 +131,8 @@ export type PrepareSubmissionResponse =
 // Any options the client accepts besides body/params
 type ExtraPostOpts = Omit<FetchOptions<paths>, 'body' | 'params'>
 
+const isBodyFactory = <T>(b: T | (() => T)): b is () => T =>
+    typeof b === 'function'
 export class LedgerClient {
     // privately manage the active connected version and associated client codegen
     private readonly clients: ClientsByVersion
@@ -553,7 +555,7 @@ export class LedgerClient {
 
     public async postWithRetry<Path extends PostEndpoint>(
         path: Path,
-        body: PostRequest<Path>,
+        body: PostRequest<Path> | (() => PostRequest<Path>),
         retryOptions: RetryableOptions = defaultRetryableOptions,
         params?: {
             path?: Record<string, string>
@@ -561,15 +563,20 @@ export class LedgerClient {
         },
         additionalOptions?: ExtraPostOpts
     ): Promise<PostResponse<Path>> {
+        let lastBody: PostRequest<Path> | undefined
+
         return await retryable(
-            () => this.post(path, body, params, additionalOptions),
+            () => {
+                lastBody = isBodyFactory(body) ? body() : body
+                return this.post(path, lastBody, params, additionalOptions)
+            },
             retryOptions,
             this.logger
         ).catch((e) => {
             this.logger.warn(
                 `Error in postWithRetry for path ${path} with body retry options ${JSON.stringify(retryOptions)}`
             )
-            this.logger.debug(JSON.stringify(body))
+            this.logger.debug(JSON.stringify({ body: lastBody }))
             throw asJsCantonError(e)
         })
     }

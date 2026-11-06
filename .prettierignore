@@ -16,3 +16,4 @@ core/wallet-dapp-remote-rpc-client/docs/*
 damljs/*
 .wxt
 .output
+.claude/
