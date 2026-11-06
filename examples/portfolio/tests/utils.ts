@@ -494,7 +494,7 @@ export const recordTransferChoiceContexts = (page: Page) => {
         usedVersion: (action: 'accept' | 'reject' | 'withdraw') => {
             const pattern = (v: string) =>
                 new RegExp(
-                    `/transfer-instruction/${v}[^/]+/choice-contexts/${action}`
+                    `/transfer-instruction/${v}/[^/]+/choice-contexts/${action}`
                 )
 
             return {

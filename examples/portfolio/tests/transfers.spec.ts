@@ -330,7 +330,7 @@ for (const version of [
             page: dappPage,
         }) => {
             test.skip(
-                version === 'v2' && !supportsTokenStandardV2(),
+                !supportsTokenStandardV2(),
                 'Token standard v2 requires splice 0.8.3+'
             )
 
@@ -367,10 +367,10 @@ for (const version of [
             await expectWalletBalance(dappPage, bob, '50')
             contexts.stop()
             console.log(contexts)
-            // expect(contexts.usedVersion('accept')).toEqual({
-            //     v1: false,
-            //     v2: true,
-            // })
+            expect(contexts.usedVersion('accept')).toEqual({
+                v1: false,
+                v2: true,
+            })
         })
     })
 }
