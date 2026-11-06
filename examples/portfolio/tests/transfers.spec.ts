@@ -74,7 +74,7 @@ for (const version of [
     test.describe(`dashboard transfer flow ${version}`, () => {
         test.beforeEach(async () => {
             test.skip(
-                version === 'v2' && !(await amuletSupportsTransferV2),
+                version === 'v2' && !(await amuletSupportsTransferV2()),
                 'Registry does not support token standard v2 transfers'
             )
         })
