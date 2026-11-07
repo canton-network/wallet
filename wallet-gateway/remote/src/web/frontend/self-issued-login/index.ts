@@ -25,7 +25,6 @@ import { jwtExpiresAt } from '@canton-network/core-wallet-auth'
 import { createUserClient } from '../rpc-client.js'
 import { showToast } from '../utils.js'
 import { stateManager } from '../state-manager.js'
-import { detectCurrentOrigin } from '../listeners.js'
 import { redirectToIntendedOrDefault, shareUserSession } from '../index.js'
 import { LOGIN_PAGE_REDIRECT } from '../constants.js'
 import { setLocationHref } from '../navigation.js'
@@ -102,9 +101,9 @@ export class UserUiSelfIssuedLogin extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
+        this.origin = await stateManager.currentOrigin.poll()
         this.pollDelay = POLL_INTERVAL_MS
         document.addEventListener('visibilitychange', this.onVisibilityChange)
-        this.origin = await detectCurrentOrigin()
         this.sessionId = stateManager.selfIssuedLoginSessionId.get(this.origin)
         this.sessionLoaded = true
         if (!this.sessionId) {

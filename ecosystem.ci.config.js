@@ -8,7 +8,7 @@
 export const apps = [
     {
         name: 'remote',
-        script: 'pnpm --filter @canton-network/wallet-gateway-remote start',
+        script: 'pnpm nx run @canton-network/wallet-gateway-remote:start',
     },
     {
         name: 'mock-oauth2-server',

@@ -23,7 +23,6 @@ import type {
     GetTransactionStatusResult,
 } from '@canton-network/core-wallet-user-rpc-client'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
-import { detectCurrentOrigin } from '../listeners.js'
 
 const POLL_INTERVAL_MS = 3000
 
@@ -88,7 +87,7 @@ export class ApproveUi extends BaseElement {
     }
 
     private async updateState() {
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         const userClient = await createUserClient(
             await stateManager.accessToken.get(currentOrigin)
         )
@@ -173,7 +172,7 @@ export class ApproveUi extends BaseElement {
         this.polling = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -243,7 +242,7 @@ export class ApproveUi extends BaseElement {
         this.isSigning = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -273,7 +272,7 @@ export class ApproveUi extends BaseElement {
         this.isApproving = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -304,7 +303,7 @@ export class ApproveUi extends BaseElement {
         this.isDeleting = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )

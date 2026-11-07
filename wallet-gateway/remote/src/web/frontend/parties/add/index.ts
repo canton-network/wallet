@@ -17,7 +17,6 @@ import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
-import { detectCurrentOrigin } from '../../listeners.js'
 import { UserUiAddOrEditParty } from '../common.js'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
@@ -32,7 +31,7 @@ export class UserUiAddParty extends UserUiAddOrEditParty {
         this.submitting = true
 
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
