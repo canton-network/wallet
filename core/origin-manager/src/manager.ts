@@ -178,6 +178,11 @@ export class ParentWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
         WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
 
+    constructor(options?: OriginManagerConstructor) {
+        super(options)
+        this.loadOrigins()
+    }
+
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
@@ -187,7 +192,6 @@ export class ParentWindowOriginManager extends OriginManager {
             clearInterval(associatedIntervalID)
             this.intervalMap.delete(event.origin)
         }
-        this.loadOrigins()
     }
 
     private intervalMap = new Map<
@@ -220,7 +224,7 @@ export class ParentWindowOriginManager extends OriginManager {
             !origin && this.trustedOrigins.size
         if (isOriginTrusted || isNoOriginGivenAndAnyOriginsTrusted) {
             if (isNoOriginGivenAndAnyOriginsTrusted) {
-                console.info(
+                this._logger.info(
                     'No given origin is trusted, looping over all trusted origins instead'
                 )
             }
