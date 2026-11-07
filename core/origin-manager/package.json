@@ -18,7 +18,8 @@
         }
     },
     "dependencies": {
-        "zod": "catalog:"
+        "zod": "catalog:",
+        "@canton-network/core-types": "workspace:"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
