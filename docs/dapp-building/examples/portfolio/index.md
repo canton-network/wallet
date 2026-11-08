@@ -47,11 +47,23 @@ The app uses a simple configuration file, `config.json`. `amulet.validatorUrl` m
     - When a registry omits `partyId`, the app discovers the registry admin party from the registry metadata endpoint.
 - Configured registries from `amulet.registry` and `token.registries` are combined with registries saved in browser storage, with saved entries overriding matching configured parties.
 
+## Network defaults
+
+The example above is the file shape. DevNet, TestNet, and MainNet each have a config next to this page:
+
+- [config.devnet.json](config.devnet.json)
+- [config.testnet.json](config.testnet.json)
+- [config.mainnet.json](config.mainnet.json)
+
+Copy the file for your network to `config.json` and replace both `validatorUrl` values with your own Validator API. `https://validator.example.invalid` does not resolve. This repo does not publish a validator URL for these networks.
+
+`amulet.registry` is one Digital Asset Scan URL for Canton Coin. The other Scan URLs for that same DSO party are in [api-specs/assets.json](https://github.com/canton-network/wallet/blob/main/api-specs/assets.json). `token.registries` lists every other registry in that file, one entry per URL. When several instruments share a URL, `name` is the party hint.
+
 ## Deployment
 
 ### Docker
 
-To start the UI with Docker, create a `config.json` in your chosen directory and set the Amulet and token configuration. Then, run the container:
+To start the UI with Docker, copy one of the network files to `config.json` in your chosen directory and set both `validatorUrl` values. Then, run the container:
 
 ```sh
 docker run --rm \
@@ -83,7 +95,7 @@ config:
               partyId: 'party-hint::fingerprint' # (optional)
 ```
 
-Then
+For DevNet, TestNet, or MainNet, use `amulet` and `token` from the matching config file instead of the localhost values.
 
 ```sh
 helm upgrade --install portfolio ghcr.io/digital-asset/splice-portfolio/helm/splice-portfolio:1.5.0 -f values.yaml
@@ -93,10 +105,4 @@ helm upgrade --install portfolio ghcr.io/digital-asset/splice-portfolio/helm/spl
 
 The UI is accessible on http://localhost:3333.
 
-When the Splice Portfolio UI opens, the UI will immediately inform you that a "Registry Configuration Required. No token registries are configured. You need to add at least one registry to use the portfolio."
-Click "Go to Settings" where you should add the registry information for the tokens that you want to use.
-
-For Canton Coin on MainNet, you can use the information below. For other networks, search for "Amulet" on [this page of assets](https://github.com/canton-network/wallet/blob/main/api-specs/assets.json).
-
-- Party ID: DSO::1220b1431ef217342db44d516bb9befde802be7d8899637d290895fa58880f19accc
-- Registry URL: any of the Super Validator's Scan URLs from the [Ecosystem website page](https://canton.foundation/sv-network-status-2/)
+Registries from the mounted `config.json` show up in Settings. A registry saved in the browser overrides a configured party with the same id.
