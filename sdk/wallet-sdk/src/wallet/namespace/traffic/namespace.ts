@@ -240,7 +240,6 @@ export class TrafficAccountNamespace {
         instrumentId: string,
         registryUrl: PurchaseTrafficParams['registryUrl']
     ) {
-        const purchaseCtx = this.ctx
         const assets = parseAssets(
             this.ctx,
             await purchaseCtx.tokenStandardService.registriesToAssets(
