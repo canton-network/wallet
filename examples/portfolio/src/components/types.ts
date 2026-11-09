@@ -21,7 +21,6 @@ import type { TokenStandardVersion } from '../types/instruments'
 interface ActionItemBase {
     contractId: string
     currentPartyId: string
-    expiry: string
 }
 
 export interface TransferActionItem extends ActionItemBase {
@@ -38,6 +37,7 @@ export interface TransferActionItem extends ActionItemBase {
     senderAccount?: Account
     receiverAccount?: Account
     availableActions?: TransferInstructionViewV2['availableActions']
+    expiry: string
 }
 
 export interface TransferLegWithAllocation {
@@ -51,6 +51,7 @@ export interface AllocationActionItem extends ActionItemBase {
     kind: 'allocation'
     settlement: SettlementInfo
     transferLegs: TransferLegWithAllocation[]
+    expiry: string
 }
 
 export type ActionItem =
@@ -70,6 +71,7 @@ export interface AllocationRequestV2ActionItem extends ActionItemBase {
     allSpecs: AllocationSpecification[]
     availableActions: AllocationRequestViewV2['availableActions']
     meta: AllocationRequestViewV2['meta']
+    expiry: string | null
 }
 
 export interface AllocationV2ActionItem extends ActionItemBase {
@@ -83,6 +85,7 @@ export interface AllocationV2ActionItem extends ActionItemBase {
     numIterations: number
     availableActions: AllocationViewV2['availableActions']
     meta: AllocationViewV2['meta']
+    expiry: string | null
 }
 
 export interface AllocationInstructionV2ActionItem extends ActionItemBase {
@@ -95,4 +98,5 @@ export interface AllocationInstructionV2ActionItem extends ActionItemBase {
     expiresAt: string | null
     availableActions: AllocationInstruction['availableActions']
     meta: AllocationInstruction['meta']
+    expiry: string | null
 }
