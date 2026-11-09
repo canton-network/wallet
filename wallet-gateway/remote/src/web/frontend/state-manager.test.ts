@@ -22,6 +22,45 @@ describe('stateManager', async () => {
         await stateManager.clearAuthState(origin)
     })
 
+    it('preserves shared-origin storage on startup and auth cleanup', async () => {
+        const sharedEntries = {
+            splice_wallet_kernel_session: 'sdk-session',
+            splice_wallet_kernel_discovery: 'sdk-discovery',
+            splice_wallet_picker_recent: 'recent-wallet',
+            splice_wallet_picker_suggested_entries: 'suggested-wallets',
+            'oidc.user:https://issuer.example:client': 'host-session',
+            'app.preferences': 'dark-mode',
+        }
+        const networkKey = StateManager.localStorageKey('networkId', origin)
+
+        try {
+            for (const [key, value] of Object.entries(sharedEntries)) {
+                localStorage.setItem(key, value)
+            }
+            localStorage.setItem(networkKey, 'net-1')
+
+            const newInstance = new StateManager()
+
+            for (const [key, value] of Object.entries(sharedEntries)) {
+                expect(localStorage.getItem(key)).toBe(value)
+            }
+            expect(localStorage.getItem(networkKey)).toBe('net-1')
+            expect(newInstance.networkId.get(origin)).toBe('net-1')
+
+            await newInstance.clearAuthState(origin)
+
+            for (const [key, value] of Object.entries(sharedEntries)) {
+                expect(localStorage.getItem(key)).toBe(value)
+            }
+            expect(localStorage.getItem(networkKey)).toBeNull()
+        } finally {
+            for (const key of Object.keys(sharedEntries)) {
+                localStorage.removeItem(key)
+            }
+            localStorage.removeItem(networkKey)
+        }
+    })
+
     it('stores and reads accessToken in memory and localStorage', async () => {
         await stateManager.accessToken.set('token-abc', origin)
 

@@ -15,15 +15,6 @@ export class StateManager {
         return `${VERSION_PREFIX}.${origin}.${item}`
     }
 
-    constructor() {
-        // delete any old storage entries not corresponding to the current version
-        for (const key in localStorage) {
-            if (!key.startsWith(VERSION_PREFIX)) {
-                localStorage.removeItem(key)
-            }
-        }
-    }
-
     private state: Map<string, string> = new Map()
 
     private getWithStorage(
