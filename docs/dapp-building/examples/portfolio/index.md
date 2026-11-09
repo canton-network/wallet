@@ -67,8 +67,8 @@ To start the UI with Docker, copy one of the network files to `config.json` in y
 
 ```sh
 docker run --rm \
-    -p 3333:80 \
-    -v "config.json:/usr/share/nginx/html:ro" \
+    -p 3333:8080 \
+    -v "config.json:/usr/share/nginx/html/config.json:ro" \
     ghcr.io/digital-asset/splice-portfolio/docker/splice-portfolio:v1.5.0
 ```
 
