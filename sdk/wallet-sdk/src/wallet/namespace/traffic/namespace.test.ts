@@ -201,7 +201,7 @@ describe('TrafficAccountNamespace', () => {
 
             expect(command.ExerciseCommand.choiceArgument).toEqual(
                 expect.objectContaining({
-                    // `None` tells the choice to spend the holdings in full.
+                    // null tells the choice to spend the holdings in full.
                     requestedTrafficAmount: null,
                 })
             )
