@@ -11,6 +11,13 @@ import {
 const NAMESPACE = 'com.splice.wallet'
 const VERSION_PREFIX = `${NAMESPACE}.v1`
 
+/** What is needed to end the user's session at an OAuth IDP on logout */
+export interface OAuthIdpSession {
+    configUrl: string
+    clientId: string
+    idToken?: string | undefined
+}
+
 export class StateManager {
     static localStorageKey(item: string, origin: string): string {
         return `${VERSION_PREFIX}.${origin}.${item}`
@@ -110,6 +117,35 @@ export class StateManager {
         },
     }
 
+    // Holds the id token, so it is stored encrypted like the access token
+    oauthIdpSession = {
+        get: async (origin: string): Promise<OAuthIdpSession | undefined> => {
+            const key = StateManager.localStorageKey('oauthIdpSession', origin)
+            const stored = localStorage.getItem(key)
+            if (!stored) {
+                return undefined
+            }
+            try {
+                return JSON.parse(await decryptString(stored))
+            } catch (error) {
+                localStorage.removeItem(key)
+                console.warn(error)
+                return undefined
+            }
+        },
+        set: async (session: OAuthIdpSession, origin: string) => {
+            localStorage.setItem(
+                StateManager.localStorageKey('oauthIdpSession', origin),
+                await encryptString(JSON.stringify(session))
+            )
+        },
+        clear: (origin: string) => {
+            localStorage.removeItem(
+                StateManager.localStorageKey('oauthIdpSession', origin)
+            )
+        },
+    }
+
     networkId = {
         get: (origin: string) => this.getWithStorage('networkId', origin),
         set: (networkId: string, origin: string) =>
@@ -196,6 +232,7 @@ export class StateManager {
 
     async clearAuthState(origin: string): Promise<void> {
         await this.accessToken.clear(origin)
+        this.oauthIdpSession.clear(origin)
         this.networkId.clear(origin)
         this.expirationDate.clear(origin)
         this.intendedPage.clear(origin)

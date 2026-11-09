@@ -26,6 +26,7 @@ import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
 import { setLocationHref } from '../navigation.js'
 import { detectCurrentOrigin } from '../listeners.js'
+import { closeIfReturningFromIdpLogout } from '../idp-logout.js'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -94,6 +95,7 @@ export class LoginUI extends BaseElement {
 
     async connectedCallback() {
         super.connectedCallback()
+        if (closeIfReturningFromIdpLogout()) return
         try {
             // Connecting needs both, so fetch them together and publish them update once both are resolved
 
