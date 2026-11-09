@@ -14,6 +14,7 @@ import type {
     AllocationV2ActionItem,
     AllocationInstructionV2ActionItem,
 } from '@components/types'
+import Decimal from 'decimal.js'
 
 export const ownsAuthorizer = (
     spec: AllocationSpecification,
@@ -116,4 +117,95 @@ export function toAllocationInstructionV2Items(
                 meta: view.meta,
             }
         })
+}
+
+export function dropV1Duplicates<T extends { contractId: string }>(
+    v1Items: T[],
+    v2Items: ReadonlyArray<{ contractId: string }>
+): T[] {
+    const v2Cids = new Set(v2Items.map((i) => i.contractId))
+    return v1Items.filter((i) => !v2Cids.has(i.contractId))
+}
+
+export interface InstrumentAmount {
+    admin: string
+    instrumentId: string
+    amount: Decimal
+}
+
+const instrumentKey = (admin: string, instrumentId: string) =>
+    JSON.stringify([admin, instrumentId])
+
+function sumByInstrument(
+    entries: Array<{ admin: string; instrumentId: string; amount: Decimal }>
+): InstrumentAmount[] {
+    const sums = new Map<string, InstrumentAmount>()
+    for (const e of entries) {
+        const key = instrumentKey(e.admin, e.instrumentId)
+        const current = sums.get(key)
+        sums.set(key, {
+            admin: e.admin,
+            instrumentId: e.instrumentId,
+            amount: (current?.amount ?? new Decimal(0)).plus(e.amount),
+        })
+    }
+
+    return [...sums.values()]
+}
+
+export function netAmounts(
+    specs: AllocationSpecification[]
+): InstrumentAmount[] {
+    return sumByInstrument(
+        specs.flatMap((spec) =>
+            spec.transferLegSides.map((leg) => {
+                const amount = new Decimal(leg.amount)
+                return {
+                    admin: spec.admin,
+                    instrumentId: leg.instrumentId,
+                    amount:
+                        leg.side === 'SenderSide' ? amount.negated() : amount,
+                }
+            })
+        )
+    )
+}
+
+export function amountsToLock(
+    specs: AllocationSpecification[]
+): InstrumentAmount[] {
+    return sumByInstrument(
+        specs.flatMap((spec) => {
+            const legs = spec.transferLegSides.map((leg) => {
+                const amount = new Decimal(leg.amount)
+                return {
+                    admin: spec.admin,
+                    instrumentId: leg.instrumentId,
+                    amount:
+                        leg.side === 'SenderSide' ? amount.negated() : amount,
+                }
+            })
+
+            const nextIteration = Object.entries(
+                spec.nextIterationFunding ?? {}
+            ).map(([instrumentId, amount]) => ({
+                admin: spec.admin,
+                instrumentId,
+                amount: new Decimal(amount),
+            }))
+            return [...legs, ...nextIteration]
+        })
+    ).filter((a) => a.amount.isPositive())
+}
+
+export function counterparties(specs: AllocationSpecification[]): string[] {
+    return [
+        ...new Set(
+            specs.flatMap((s) =>
+                s.transferLegSides.flatMap((leg) =>
+                    leg.otherside.owner ? [leg.otherside.owner] : []
+                )
+            )
+        ),
+    ]
 }
