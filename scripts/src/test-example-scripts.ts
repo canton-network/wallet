@@ -46,7 +46,7 @@ const EXCEPTIONS_FILE_NAMES = [
     'utils',
     'types.ts',
     'upload-dars.ts',
-    '19-token-standard-allocation-v2.ts',
+    ...(network === 'mainnet' ? ['19-token-standard-allocation-v2.ts'] : []),
 ]
 
 function getScriptsRecursive(currentDir: string): string[] {
