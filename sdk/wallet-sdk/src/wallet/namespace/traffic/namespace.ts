@@ -220,7 +220,7 @@ export class TrafficAccountNamespace {
         })
     }
 
-    private computeDecimal<T>(compute: () => T): T {
+    private withErrorHandling<T>(compute: () => T): T {
         try {
             return compute()
         } catch (originalError) {
