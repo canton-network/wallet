@@ -1,11 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-    AllocationRequestView as AllocationRequestViewV2,
-    AllocationView as AllocationViewV2,
-    AllocationInstructionView as AllocationInstructionViewV2,
-    AllocationSpecification,
+import {
+    type AllocationRequestView as AllocationRequestViewV2,
+    type AllocationView as AllocationViewV2,
+    type AllocationInstructionView as AllocationInstructionViewV2,
+    type AllocationSpecification,
+    type ActionAvailability,
+    actionAvailability,
+    decodeAvailableActions,
 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
@@ -13,6 +16,7 @@ import type {
     AllocationRequestV2ActionItem,
     AllocationV2ActionItem,
     AllocationInstructionV2ActionItem,
+    ActionItem,
 } from '@components/types'
 import Decimal from 'decimal.js'
 
@@ -208,4 +212,79 @@ export function counterparties(specs: AllocationSpecification[]): string[] {
             )
         ),
     ]
+}
+
+export type ActionWithAvailability<A extends string> = {
+    action: A
+} & ActionAvailability
+
+function getActions<A extends string>(
+    raw: unknown,
+    byTag: Record<string, A | undefined>,
+    order: readonly A[],
+    party: PartyId
+): ActionWithAvailability<A>[] {
+    return decodeAvailableActions<{ tag: string }>(raw)
+        .flatMap(([key, groups]): ActionWithAvailability<A>[] => {
+            const action = byTag[key.tag]
+            if (!action || groups.length === 0) return []
+            return [{ action, ...actionAvailability(groups, party) }]
+        })
+        .filter(
+            (a) =>
+                a.status === 'available' ||
+                a.groups.some((group) => group.includes(party))
+        )
+        .sort((a, b) => order.indexOf(a.action) - order.indexOf(b.action))
+}
+
+export type AllocationRequestAction = 'Accept' | 'Reject'
+export const getAllocationRequestActions = (
+    item: AllocationRequestV2ActionItem
+) =>
+    getActions<AllocationRequestAction>(
+        item.availableActions,
+        { ARA_Accept: 'Accept', ARA_Reject: 'Reject' },
+        ['Accept', 'Reject'],
+        item.currentPartyId
+    )
+
+export type AllocationInstructionAction = 'Accept' | 'Withdraw'
+export const getAllocationInstructionActions = (
+    item: AllocationInstructionV2ActionItem
+) =>
+    getActions<AllocationInstructionAction>(
+        item.availableActions,
+        { AIA_Accept: 'Accept', AIA_Withdraw: 'Withdraw' },
+        ['Accept', 'Withdraw'],
+        item.currentPartyId
+    )
+
+// only withdraw is a wallet action, settle/cancel belong to exectors
+export type AllocationAction = 'Withdraw'
+export const getAllocationActions = (item: AllocationV2ActionItem) =>
+    getActions<AllocationAction>(
+        item.availableActions,
+        { AIA_Withdraw: 'Withdraw' },
+        ['Withdraw'],
+        item.currentPartyId
+    )
+
+const canAct = <A extends string>(
+    actions: ActionWithAvailability<A>[],
+    action: A
+) => actions.some((a) => a.action === action && a.status === 'available')
+
+export function needsUserAction(item: ActionItem): boolean {
+    switch (item.kind) {
+        case 'allocation-request-v2':
+            return canAct(getAllocationRequestActions(item), 'Accept')
+        case 'allocation-instruction-v2':
+            return canAct(getAllocationInstructionActions(item), 'Accept')
+        case 'allocation-v2':
+            return false
+        default:
+            //V1 kinds/transfers behavior is unchanged
+            return true
+    }
 }
