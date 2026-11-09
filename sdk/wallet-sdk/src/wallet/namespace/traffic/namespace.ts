@@ -242,8 +242,8 @@ export class TrafficAccountNamespace {
     ) {
         const assets = parseAssets(
             this.ctx,
-            await purchaseCtx.tokenStandardService.registriesToAssets(
-                purchaseCtx.registryUrls.map(
+            await this.ctx.tokenStandardService.registriesToAssets(
+                this.ctx.registryUrls.map(
                     (input) => new ParsedURL(this.ctx, input)
                 )
             )
@@ -268,7 +268,7 @@ export class TrafficAccountNamespace {
             const { trafficAmount, conversionRate } = params
 
             if (
-                this.computeDecimal(() => wholeBytes(trafficAmount)) !==
+                this.withErrorHandling(() => wholeBytes(trafficAmount)) !==
                 trafficAmount
             ) {
                 this.ctx.error.throw({
@@ -279,7 +279,7 @@ export class TrafficAccountNamespace {
                 })
             }
 
-            const assetAmount = this.computeDecimal(() =>
+            const assetAmount = this.withErrorHandling(() =>
                 assetNeededFor(trafficAmount, conversionRate)
             )
             // With `inputUtxos` named this returns them as given -- unfiltered
@@ -287,15 +287,13 @@ export class TrafficAccountNamespace {
             // also behaves. The model re-validates ownership, instrument and
             // sufficiency, so `prepare` is what rejects a bad selection.
             const holdingCids =
-                (await purchaseCtx.tokenStandardService.core.getInputHoldingsCids(
-                    {
-                        sender: params.purchaser,
-                        instrumentAdmin: instrumentId.admin,
-                        instrumentId: instrumentId.id,
-                        inputUtxos: params.inputUtxos ?? [],
-                        amount: new Decimal(assetAmount),
-                    }
-                )) as HoldingCids
+                (await this.ctx.tokenStandardService.core.getInputHoldingsCids({
+                    sender: params.purchaser,
+                    instrumentAdmin: instrumentId.admin,
+                    instrumentId: instrumentId.id,
+                    inputUtxos: params.inputUtxos ?? [],
+                    amount: new Decimal(assetAmount),
+                })) as HoldingCids
             return { holdingCids, assetAmount }
         }
 
@@ -315,7 +313,7 @@ export class TrafficAccountNamespace {
             holdingCids: spendable.map(
                 (holding) => holding.contractId
             ) as HoldingCids,
-            assetAmount: this.computeDecimal(() =>
+            assetAmount: this.withErrorHandling(() =>
                 sumAmounts(
                     spendable.map(
                         (holding) => holding.interfaceViewValue.amount
@@ -340,7 +338,7 @@ export class TrafficAccountNamespace {
     ): Promise<PrettyContract<HoldingView>[]> {
         const now = new Date()
         const holdings =
-            await purchaseCtx.tokenStandardService.listContractsByInterface<HoldingView>(
+            await this.ctx.tokenStandardService.listContractsByInterface<HoldingView>(
                 HOLDING_INTERFACE_ID,
                 params.purchaser
             )
@@ -390,7 +388,6 @@ export class TrafficAccountNamespace {
             assetAmount,
             executeBefore,
         } = options
-        const purchaseCtx = this.ctx
         const transfer: Transfer = {
             sender: params.purchaser,
             receiver: params.paymasterReceiver,
@@ -405,7 +402,7 @@ export class TrafficAccountNamespace {
         }
 
         const { factoryId, transferKind, choiceContext } =
-            await purchaseCtx.tokenStandardService.transfer.fetchTransferFactoryChoiceContext(
+            await this.ctx.tokenStandardService.transfer.fetchTransferFactoryChoiceContext(
                 registryUrl,
                 {
                     expectedAdmin: instrumentId.admin,
