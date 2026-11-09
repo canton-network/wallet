@@ -319,14 +319,56 @@ function toAllocationV2Items(
     contracts: PrettyContract<AllocationViewV2>[],
     partyId: PartyId
 ): AllocationV2ActionItem[] {
-    throw new Error(`unimplemented ${contracts} ${partyId}`)
+    return contracts
+        .filter((c) => ownsAuthorizer(c.interfaceViewValue.allocation, partyId))
+        .map((c) => {
+            const view = c.interfaceViewValue
+            return {
+                kind: 'allocation-v2',
+                contractId: c.contractId,
+                currentPartyId: partyId,
+                versions: ['v2'],
+                settlement: view.settlement,
+                allocation: view.allocation,
+                holdingCids: view.holdingCids,
+                createdAt: view.createdAt,
+                expiresAt: view.expiresAt ?? null,
+                expiry: earliest([
+                    view.allocation.settlementDeadline,
+                    view.expiresAt,
+                ]),
+                numIterations: Number(view.numIterations),
+                availableActions: view.availableActions,
+                meta: view.meta,
+            }
+        })
 }
 
 function toAllocationInstructionV2Items(
     contracts: PrettyContract<AllocationInstructionViewV2>[],
     partyId: PartyId
 ): AllocationInstructionV2ActionItem[] {
-    throw new Error(`unimplemented ${contracts} ${partyId}`)
+    return contracts
+        .filter((c) => ownsAuthorizer(c.interfaceViewValue.allocation, partyId))
+        .map((c) => {
+            const view = c.interfaceViewValue
+            return {
+                kind: 'allocation-instruction-v2',
+                contractId: c.contractId,
+                currentPartyId: partyId,
+                versions: ['v2'],
+                originalInstructionCid: view.originalInstructionCid ?? null,
+                settlement: view.settlement,
+                allocation: view.allocation,
+                expiresAt: view.expiresAt ?? null,
+                expiry: earliest([
+                    view.allocation.settlementDeadline,
+                    view.expiresAt,
+                ]),
+                availableActions: view.availableActions,
+                meta: view.meta,
+            }
+        })
 }
 
 const ownsAuthorizer = (spec: AllocationSpecification, partyId: PartyId) =>
