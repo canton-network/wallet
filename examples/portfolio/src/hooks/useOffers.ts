@@ -98,10 +98,11 @@ function deriveOffers(items: ActionItem[]): OfferItem[] {
 
     for (const item of items) {
         switch (item.kind) {
-            case 'transfer':
+            case 'transfer': {
                 const offer = deriveTransferOffer(item)
                 if (offer) offers.push(offer)
                 break
+            }
             case 'allocation':
                 offers.push(deriveAllocationOffer(item))
                 break
@@ -197,7 +198,7 @@ function deriveAllocationStatus(item: AllocationActionItem): OfferStatus {
     return 'Action Required'
 }
 
-const isPast = (expiry: string | null) => expiry !== null && isExpired
+const isPast = (expiry: string | null) => expiry !== null && isExpired(expiry)
 
 function deriveAllocationRequestV2Status(
     item: AllocationRequestV2ActionItem

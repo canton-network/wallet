@@ -14,6 +14,7 @@ import type {
     Account,
     TransferInstructionView as TransferInstructionViewV2,
     AllocationRequestView as AllocationRequestViewV2,
+    AllocationInstructionView as AllocationInstructionViewV2,
     AllocationInstruction,
 } from '@canton-network/core-token-standard-v2'
 import type { TokenStandardVersion } from '../types/instruments'
@@ -96,7 +97,7 @@ export interface AllocationInstructionV2ActionItem extends ActionItemBase {
     allocation: AllocationSpecification
     requestedAt: string
     expiresAt: string | null
-    availableActions: AllocationInstruction['availableActions']
+    availableActions: AllocationInstructionViewV2['availableActions']
     meta: AllocationInstruction['meta']
     expiry: string | null
 }

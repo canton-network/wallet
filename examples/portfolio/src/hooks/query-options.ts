@@ -264,6 +264,12 @@ const v2OrEmpty = async <T>(
     try {
         return await fetch()
     } catch (error) {
+        if (
+            !String((error as Error)?.message ?? error).includes(
+                'TEMPLATES_OR_INTERFACES_NOT_FOUND'
+            )
+        )
+            throw error
         logger.warn({ error }, `${label} unavailable, showing V1 only`)
         return []
     }
@@ -319,7 +325,7 @@ export const useAllocationInstructionsV2QueryOptions = (
             if (!party || !sdk) {
                 throw new Error('Wallet SDK and party are required')
             }
-            return v2OrEmpty('V2 Allocation', () =>
+            return v2OrEmpty('V2 Allocation Instruction', () =>
                 sdk.token.v2.allocation.instruction.pending(party)
             )
         },
