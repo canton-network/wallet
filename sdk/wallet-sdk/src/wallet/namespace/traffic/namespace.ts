@@ -338,7 +338,6 @@ export class TrafficAccountNamespace {
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId
     ): Promise<PrettyContract<HoldingView>[]> {
-        const purchaseCtx = this.ctx
         const now = new Date()
         const holdings =
             await purchaseCtx.tokenStandardService.listContractsByInterface<HoldingView>(
