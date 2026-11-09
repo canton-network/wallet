@@ -301,7 +301,7 @@ export class ChildWindowOriginManager extends OriginManager {
         }
         this.postMessageFactory({
             window: this.parentWindow,
-            origin: this.parentWindow.origin,
+            origin: origin ?? '',
         })(message)
     }
 }
