@@ -5,15 +5,10 @@ import { Decimal } from 'decimal.js'
 import type { Numeric } from '@canton-network/core-types'
 
 /**
- * Client-side mirror of the pricing arithmetic in
- * `damljs/traffic-purchase-models/daml/Tea/TrafficPurchase.daml`.
+ * Price a traffic purchase exactly as `Tea.TrafficPurchase` does on-ledger
+ * (`damljs/traffic-purchase-models/daml/Tea/TrafficPurchase.daml`).
  *
- * The registry needs the exact amount before the ledger calculates it.
- * `TrafficPurchaser_PurchaseCredits` calculates the cost of the requested
- * traffic and passes that amount to `TransferFactory_Transfer`. The registry's
- * choice context must therefore be fetched for a transfer of that same amount.
- * Even a one-unit difference would make the context inconsistent with the
- * transfer.
+ * If specified traffic amount must be consistent with DAML model calculations.
  */
 
 /** A Daml `Decimal` carries exactly 10 decimal places. */
