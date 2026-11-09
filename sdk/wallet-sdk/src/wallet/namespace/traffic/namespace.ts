@@ -346,7 +346,7 @@ export class TrafficAccountNamespace {
             )
 
         // `CoreService` is internal to core-token-standard-service, so this
-        // repeats its instrument filter rather than reaching into the package.
+        // duplicates its instrument filter rather than using the package.
         const unlockedHoldings = holdings.filter(
             (holding) =>
                 !TokenStandardService.isHoldingLocked(holding, now) &&
