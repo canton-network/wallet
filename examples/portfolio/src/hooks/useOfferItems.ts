@@ -33,6 +33,7 @@ import type {
     AllocationRequestView as AllocationRequestViewV2,
     AllocationView as AllocationViewV2,
     AllocationInstructionView as AllocationInstructionViewV2,
+    AllocationSpecification,
 } from '@canton-network/core-token-standard-v2'
 import type { PartyId } from '@canton-network/core-types'
 
@@ -285,7 +286,33 @@ function toAllocationRequestV2Items(
     contracts: PrettyContract<AllocationRequestViewV2>[],
     partyId: PartyId
 ): AllocationRequestV2ActionItem[] {
-    throw new Error(`unimplemented ${contracts} ${partyId}`)
+    return contracts.flatMap((c) => {
+        const view = c.interfaceViewValue
+        const ownSpecs = view.allocations.filter((a) =>
+            ownsAuthorizer(a, partyId)
+        )
+        if (ownSpecs.length === 0) return []
+
+        return [
+            {
+                kind: 'allocation-request-v2',
+                contractId: c.contractId,
+                currentPartyId: partyId,
+                versions: ['v2'],
+                settlement: view.settlement,
+                requestedAt: view.requestedAt,
+                settleAt: view.settleAt ?? null,
+                expiry: earliest([
+                    ...ownSpecs.map((s) => s.settlementDeadline),
+                    view.settleAt,
+                ]),
+                ownSpecs,
+                allSpecs: view.allocations,
+                availableActions: view.availableActions,
+                meta: view.meta,
+            },
+        ]
+    })
 }
 
 function toAllocationV2Items(
@@ -301,3 +328,12 @@ function toAllocationInstructionV2Items(
 ): AllocationInstructionV2ActionItem[] {
     throw new Error(`unimplemented ${contracts} ${partyId}`)
 }
+
+const ownsAuthorizer = (spec: AllocationSpecification, partyId: PartyId) =>
+    spec.authorizer.owner === partyId
+
+const earliest = (times: Array<string | null | undefined>): string | null =>
+    times
+        .filter((t): t is string => !!t)
+        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0] ??
+    null

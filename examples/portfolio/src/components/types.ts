@@ -10,6 +10,7 @@ import type {
 import type {
     AllocationSpecification,
     AllocationView as AllocationViewV2,
+    SettlementInfo as SettlementInfoV2,
     Account,
     TransferInstructionView as TransferInstructionViewV2,
     AllocationRequestView as AllocationRequestViewV2,
@@ -62,11 +63,11 @@ export type ActionItem =
 export interface AllocationRequestV2ActionItem extends ActionItemBase {
     kind: 'allocation-request-v2'
     versions: TokenStandardVersion[]
-    settlement: SettlementInfo
+    settlement: SettlementInfoV2
     requestedAt: string
     settleAt: string | null
-    ownSpecs: AllocationSpecification
-    allSpecs: AllocationSpecification
+    ownSpecs: AllocationSpecification[]
+    allSpecs: AllocationSpecification[]
     availableActions: AllocationRequestViewV2['availableActions']
     meta: AllocationRequestViewV2['meta']
 }
@@ -74,7 +75,7 @@ export interface AllocationRequestV2ActionItem extends ActionItemBase {
 export interface AllocationV2ActionItem extends ActionItemBase {
     kind: 'allocation-v2'
     versions: TokenStandardVersion[]
-    settlement: SettlementInfo
+    settlement: SettlementInfoV2
     allocation: AllocationSpecification
     holdingCids: string[]
     createdAt: string
@@ -87,7 +88,7 @@ export interface AllocationV2ActionItem extends ActionItemBase {
 export interface AllocationInstructionV2ActionItem extends ActionItemBase {
     kind: 'allocation-instruction-v2'
     versions: TokenStandardVersion[]
-    settlement: SettlementInfo
+    settlement: SettlementInfoV2
     originalInstructionCid: string | null
     allocation: AllocationSpecification
     requestedAt: string
