@@ -5,7 +5,6 @@ import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 
 import * as mock from '../../__tests__/mocks.ts'
-import { ParsedURL } from '../utils/url.ts'
 import { TrafficAccountNamespace } from './namespace.ts'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -16,11 +15,21 @@ import { TrafficAccountNamespace } from './namespace.ts'
 describe('TrafficAccountNamespace', () => {
     let namespace: TrafficAccountNamespace
 
+    const emptyTokenStandardService = () =>
+        new TokenStandardService(
+            mock.ctx.ledgerProvider,
+            {
+                getAccessToken: vi.fn().mockResolvedValue('test-token'),
+                getAuthContext: vi.fn().mockResolvedValue(''),
+            },
+            false
+        )
+
     beforeEach(() => {
         vi.clearAllMocks()
         namespace = new TrafficAccountNamespace({
             ...mock.ctx,
-            tokenStandardService: {},
+            tokenStandardService: emptyTokenStandardService(),
             registryUrls: [],
         })
     })
@@ -130,7 +139,7 @@ describe('TrafficAccountNamespace', () => {
             } as any
             return {
                 tokenStandardService,
-                registryUrls: [new ParsedURL(mock.ctx, 'http://example.com')],
+                registryUrls: ['http://example.com'],
             }
         }
 
