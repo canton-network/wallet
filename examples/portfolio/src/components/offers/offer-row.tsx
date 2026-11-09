@@ -199,6 +199,8 @@ const STATUS_THEME_KEY_BY_STATUS = {
     'Partially Allocated': 'partially-allocated',
     Allocated: 'allocated',
     Expired: 'expired',
+    'Awaiting Approval': 'awaiting-approval',
+    'Awaiting Settlement': 'awaiting-settlement',
 } satisfies Record<
     OfferStatus,
     | 'pending'
@@ -206,4 +208,6 @@ const STATUS_THEME_KEY_BY_STATUS = {
     | 'partially-allocated'
     | 'allocated'
     | 'expired'
+    | 'awaiting-approval'
+    | 'awaiting-settlement'
 >

@@ -186,7 +186,7 @@ export function amountsToLock(
                     admin: spec.admin,
                     instrumentId: leg.instrumentId,
                     amount:
-                        leg.side === 'SenderSide' ? amount.negated() : amount,
+                        leg.side === 'SenderSide' ? amount : amount.negated(),
                 }
             })
 
@@ -265,7 +265,7 @@ export type AllocationAction = 'Withdraw'
 export const getAllocationActions = (item: AllocationV2ActionItem) =>
     getActions<AllocationAction>(
         item.availableActions,
-        { AIA_Withdraw: 'Withdraw' },
+        { AA: 'Withdraw' },
         ['Withdraw'],
         item.currentPartyId
     )
