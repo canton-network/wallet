@@ -5,10 +5,17 @@ import { useMemo } from 'react'
 import type {
     ActionItem,
     AllocationActionItem,
+    AllocationInstructionV2ActionItem,
+    AllocationRequestV2ActionItem,
+    AllocationV2ActionItem,
     TransferActionItem,
 } from '@components/types'
 import { isExpired } from '@utils/date-format'
 import { useOfferItems, type OfferItemsResult } from './useOfferItems'
+import {
+    getAllocationRequestActions,
+    needsUserAction,
+} from '@utils/v2-allocation-items'
 
 export type OfferDirection = 'incoming' | 'outgoing'
 export type OfferCategory = 'transfers' | 'allocations'
@@ -18,6 +25,8 @@ export type OfferStatus =
     | 'Partially Allocated'
     | 'Allocated'
     | 'Expired'
+    | 'Awaiting Settlement'
+    | 'Awaiting Approval'
 
 export type TransferOfferItem = {
     id: string
@@ -32,7 +41,30 @@ export type AllocationOfferItem = {
     status: OfferStatus
 }
 
-export type OfferItem = TransferOfferItem | AllocationOfferItem
+export type AllocationV2OfferItem = {
+    id: string
+    source: AllocationV2ActionItem
+    status: OfferStatus
+}
+
+export type AllocationRequestV2OfferItem = {
+    id: string
+    source: AllocationRequestV2ActionItem
+    status: OfferStatus
+}
+
+export type AllocationInstructionV2OfferItem = {
+    id: string
+    source: AllocationInstructionV2ActionItem
+    status: OfferStatus
+}
+
+export type OfferItem =
+    | TransferOfferItem
+    | AllocationOfferItem
+    | AllocationV2OfferItem
+    | AllocationRequestV2OfferItem
+    | AllocationInstructionV2OfferItem
 
 export interface OffersResult extends Omit<OfferItemsResult, 'items'> {
     all: OfferItem[]
@@ -48,7 +80,7 @@ export function useOffers(): OffersResult {
             all,
             transfers: all.filter((offer) => offer.source.kind === 'transfer'),
             allocations: all.filter(
-                (offer) => offer.source.kind === 'allocation'
+                (offer) => offer.source.kind !== 'transfer' //all allocations, v1 and v2
             ),
         }
     }, [offerItems.items])
@@ -74,9 +106,29 @@ function deriveOffers(items: ActionItem[]): OfferItem[] {
                 offers.push(deriveAllocationOffer(item))
                 break
             case 'allocation-instruction-v2':
+                offers.push({
+                    id: `${item.contractId}-allocation-instruction-v2`,
+                    source: item,
+                    status: needsUserAction(item)
+                        ? 'Action Required'
+                        : 'Awaiting Approval',
+                })
+                break
             case 'allocation-request-v2':
+                offers.push({
+                    id: `${item.contractId}-allocation-request-v2`,
+                    source: item,
+                    status: deriveAllocationRequestV2Status(item),
+                })
+                break
             case 'allocation-v2':
-                //TODO:v2 offer rows built by useOfferItems
+                offers.push({
+                    id: `${item.contractId}-allocation-v2`,
+                    source: item,
+                    status: isPast(item.expiry)
+                        ? 'Expired'
+                        : 'Awaiting Settlement',
+                })
                 break
             default: {
                 const unhandled: never = item
@@ -143,4 +195,17 @@ function deriveAllocationStatus(item: AllocationActionItem): OfferStatus {
     if (allocatedSenderLegCount > 0) return 'Partially Allocated'
     if (isExpired(item.expiry)) return 'Expired'
     return 'Action Required'
+}
+
+const isPast = (expiry: string | null) => expiry !== null && isExpired
+
+function deriveAllocationRequestV2Status(
+    item: AllocationRequestV2ActionItem
+): OfferStatus {
+    if (isPast(item.expiry)) return 'Expired'
+    const accept = getAllocationRequestActions(item).find(
+        (a) => a.action === 'Accept'
+    )
+    if (accept?.status === 'available') return 'Action Required'
+    return 'Pending'
 }
