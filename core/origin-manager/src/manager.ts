@@ -1,9 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WalletEvent } from '@canton-network/core-types'
+import { SpliceMessageHandshake, WalletEvent } from '@canton-network/core-types'
 import z from 'zod'
-import { OriginHandshake, OriginHandshakeMessage } from './types'
 
 type OriginManagerConstructor = {
     readonly userHandshakeCallback?: (event: MessageEvent) => void
@@ -39,21 +38,22 @@ abstract class OriginManager {
      */
     protected get messageToSend() {
         return this.messageToReceive ===
-            OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
-            ? OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
-            : OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+            WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+            ? WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK
+            : WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
     }
 
     /**
      * Creates a listener function that validates incoming handshake messages before invoking the callback.
      */
     protected listenerFactory =
-        (callback: (event: MessageEvent) => void) => (event: MessageEvent) => {
-            const parsedData = OriginHandshake.safeParse(event.data)
+        (callback: (cbEvent: MessageEvent) => void) =>
+        (event: MessageEvent) => {
+            const parsedData = SpliceMessageHandshake.safeParse(event.data)
             if (
                 !parsedData.success ||
                 event.origin !== parsedData.data.origin ||
-                parsedData.data.message !== this.messageToReceive
+                parsedData.data.type !== this.messageToReceive
             )
                 return
             callback(event)
@@ -78,7 +78,7 @@ abstract class OriginManager {
     }) {
         ;(options?.window ?? window).postMessage(
             {
-                message: this.messageToSend,
+                type: this.messageToSend,
                 origin: window.location.origin,
             },
             options.origin

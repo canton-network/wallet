@@ -12,51 +12,44 @@ import {
     beforeAll,
 } from 'vitest'
 import { ParentWindowOriginManager, ChildWindowOriginManager } from './manager'
-import { OriginHandshakeMessage } from './types'
+import { WalletEvent } from '@canton-network/core-types'
 
-const {
-    postMessage,
-    exampleOrigin,
-    falseOrigin,
-    sessionStorage,
-    userHandshakeCallback,
-} = vi.hoisted(() => {
-    const exampleOrigin = 'http://example.com'
-    const falseOrigin = 'http://false.origin.com'
+const { postMessage, exampleOrigin, falseOrigin, sessionStorage } = vi.hoisted(
+    () => {
+        const exampleOrigin = 'http://example.com'
+        const falseOrigin = 'http://false.origin.com'
 
-    const postMessage = vi.fn()
-    const sessionStorage = {
-        getItem: vi.fn(),
-        setItem: vi.fn(),
+        const postMessage = vi.fn()
+        const sessionStorage = {
+            getItem: vi.fn(),
+            setItem: vi.fn(),
+        }
+        const windowOpener = {
+            postMessage,
+            origin: exampleOrigin,
+        }
+        // Mock opener and sessionStorage
+        Object.defineProperties(window, {
+            opener: {
+                value: windowOpener,
+                writable: true,
+                configurable: true,
+            },
+            sessionStorage: {
+                value: sessionStorage,
+                writable: true,
+                configurable: true,
+            },
+        })
+
+        return {
+            postMessage,
+            exampleOrigin,
+            falseOrigin,
+            sessionStorage,
+        }
     }
-    const windowOpener = {
-        postMessage,
-        origin: exampleOrigin,
-    }
-    // Mock opener and sessionStorage
-    Object.defineProperties(window, {
-        opener: {
-            value: windowOpener,
-            writable: true,
-            configurable: true,
-        },
-        sessionStorage: {
-            value: sessionStorage,
-            writable: true,
-            configurable: true,
-        },
-    })
-
-    const userHandshakeCallback = vi.fn()
-
-    return {
-        postMessage,
-        exampleOrigin,
-        falseOrigin,
-        sessionStorage,
-        userHandshakeCallback,
-    }
-})
+)
 
 describe('manager', () => {
     let eventListenerSpy: Mock<Window['addEventListener']>
@@ -95,6 +88,21 @@ describe('manager', () => {
             expect(removeEventSpy).toHaveBeenCalledOnce()
         })
 
+        it('should post directly to pre-trusted origins without a handshake', () => {
+            const trustedManager = new ParentWindowOriginManager({
+                trustedOrigins: [exampleOrigin],
+            })
+
+            trustedManager.postMessage('some message', exampleOrigin)
+
+            expect(trustedManager.assert(exampleOrigin)).toBe(true)
+            expect(postMessageSpy).toHaveBeenCalledExactlyOnceWith(
+                'some message',
+                exampleOrigin
+            )
+            trustedManager.removeListener()
+        })
+
         it('should poll message when calling postMessage for the first time', () => {
             parentWindowManager.postMessage('some message', exampleOrigin)
 
@@ -107,9 +115,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -118,12 +124,42 @@ describe('manager', () => {
 
             vi.advanceTimersToNextTimer()
             expect(postMessageSpy).toHaveBeenNthCalledWith(
-                2,
-                'some message',
+                1,
+                {
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                    origin: window.location.origin,
+                },
                 exampleOrigin
             )
 
             expect(parentWindowManager.assert(exampleOrigin)).toBe(true)
+        })
+
+        it('should call postMessage for all origins if none were specified', () => {
+            const anotherExampleOrigin = 'http://another.example.com'
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
+
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        origin: anotherExampleOrigin,
+                    },
+                    origin: anotherExampleOrigin,
+                })
+            )
+
+            parentWindowManager.postMessage('message')
+
+            expect(postMessageSpy).toHaveBeenCalledTimes(2)
         })
 
         it("should return false when asking for origin where a handshake wasn't established with", () => {
@@ -168,9 +204,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -228,9 +262,7 @@ describe('manager', () => {
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -239,36 +271,9 @@ describe('manager', () => {
 
             expect(postMessage).toHaveBeenCalledExactlyOnceWith(
                 {
-                    message:
-                        OriginHandshakeMessage.enum
-                            .SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                    type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
                     origin: window.location.origin,
                 },
-                exampleOrigin
-            )
-        })
-
-        it('should send postMessage when origin is allowed', () => {
-            const testMessage = { test: 'data' }
-
-            window.dispatchEvent(
-                new MessageEvent('message', {
-                    data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN,
-                        origin: exampleOrigin,
-                    },
-                    origin: exampleOrigin,
-                })
-            )
-
-            vi.clearAllMocks()
-
-            childWindowManager.postMessage(testMessage)
-
-            expect(postMessage).toHaveBeenCalledExactlyOnceWith(
-                testMessage,
                 exampleOrigin
             )
         })
@@ -310,14 +315,12 @@ describe('manager', () => {
                 origin: exampleOrigin,
             } as unknown as Window
             const childWindowOriginManagerWithParentWindow =
-                new ChildWindowOriginManager(parentWindow)
+                new ChildWindowOriginManager({ parentWindow })
 
             window.dispatchEvent(
                 new MessageEvent('message', {
                     data: {
-                        message:
-                            OriginHandshakeMessage.enum
-                                .SPLICE_WALLET_BROADCAST_ORIGIN,
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
                         origin: exampleOrigin,
                     },
                     origin: exampleOrigin,
@@ -327,6 +330,29 @@ describe('manager', () => {
             childWindowOriginManagerWithParentWindow.postMessage('some message')
 
             expect(parentWindow.postMessage).toHaveBeenCalled()
+        })
+
+        it('should successfully load origins from session storage', () => {
+            expect(sessionStorage.getItem).toHaveBeenCalledExactlyOnceWith(
+                WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
+            )
+        })
+
+        it('should successfully save new state of origins to session storage', () => {
+            window.dispatchEvent(
+                new MessageEvent('message', {
+                    data: {
+                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                        origin: exampleOrigin,
+                    },
+                    origin: exampleOrigin,
+                })
+            )
+
+            expect(sessionStorage.setItem).toHaveBeenCalledExactlyOnceWith(
+                WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
+                JSON.stringify([exampleOrigin])
+            )
         })
     })
 })
