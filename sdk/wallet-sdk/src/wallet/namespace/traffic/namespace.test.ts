@@ -19,7 +19,7 @@ describe('TrafficAccountNamespace', () => {
         vi.clearAllMocks()
         namespace = new TrafficAccountNamespace({
             ...mock.ctx,
-            tokenStandardService: {} as any,
+            tokenStandardService: {},
             registryUrls: [],
         })
     })
