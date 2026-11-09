@@ -167,7 +167,7 @@ export class TrafficAccountNamespace {
         const factory = await this.resolveTransferFactory({
             params,
             instrumentId,
-            registryUrl: asset.registryUrl,
+            registryUrl: new ParsedURL(this.ctx, asset.registryUrl),
             holdingCids,
             assetAmount,
             executeBefore,
@@ -371,7 +371,7 @@ export class TrafficAccountNamespace {
     private async resolveTransferFactory(options: {
         params: PurchaseTrafficParams
         instrumentId: InstrumentId
-        registryUrl: URL
+        registryUrl: ParsedURL
         holdingCids: Transfer['inputHoldingCids']
         assetAmount: Numeric
         executeBefore: Date
