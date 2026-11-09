@@ -256,3 +256,72 @@ export const preapprovalStatusQueryOptions = ({
             })
         },
     })
+
+const v2OrEmpty = async <T>(
+    label: string,
+    fetch: () => Promise<T[]>
+): Promise<T[]> => {
+    try {
+        return await fetch()
+    } catch (error) {
+        logger.warn({ error }, `${label} unavailable, showing V1 only`)
+        return []
+    }
+}
+
+export const useAllocationRequestsV2QueryOptions = (
+    party: string | undefined
+) => {
+    const { sdk } = useWalletSdk()
+
+    return queryOptions({
+        queryKey:
+            queryKeys.walletConnection.allocationRequestsV2.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return v2OrEmpty('V2 Allocation Requests', () =>
+                sdk.token.v2.allocation.request.pending(party)
+            )
+        },
+    })
+}
+
+export const useAllocationV2QueryOptions = (party: string | undefined) => {
+    const { sdk } = useWalletSdk()
+
+    return queryOptions({
+        queryKey: queryKeys.walletConnection.allocationsV2.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return v2OrEmpty('V2 Allocation', () =>
+                sdk.token.v2.allocation.pending(party)
+            )
+        },
+    })
+}
+
+export const useAllocationInstructionsV2QueryOptions = (
+    party: string | undefined
+) => {
+    const { sdk } = useWalletSdk()
+
+    return queryOptions({
+        queryKey:
+            queryKeys.walletConnection.allocationInstructionsV2.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return v2OrEmpty('V2 Allocation', () =>
+                sdk.token.v2.allocation.instruction.pending(party)
+            )
+        },
+    })
+}
