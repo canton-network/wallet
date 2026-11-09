@@ -23,7 +23,7 @@ import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-typ
 import type { PreparedCommand } from '../transactions/types.js'
 import { dedupeDisclosedContracts } from '../utils/disclosedContracts.js'
 import { findAsset } from '../asset/index.js'
-import { ParsedURL, parseAssets } from '../utils/url.js'
+import { ParsedURL, parseAssets, type URLInput } from '../utils/url.js'
 import { assetNeededFor, sumAmounts, wholeBytes } from './pricing.js'
 import type {
     PurchaseTrafficParams,
@@ -61,7 +61,7 @@ type TransferFactoryCid = TrafficPurchaser_PurchaseCredits['transferFactoryCid']
  */
 export type TrafficPurchaseContext = SDKContext & {
     tokenStandardService: TokenStandardService
-    registryUrls: ParsedURL[]
+    registryUrls: URLInput[]
 }
 
 /**
@@ -244,7 +244,9 @@ export class TrafficAccountNamespace {
         const assets = parseAssets(
             this.ctx,
             await purchaseCtx.tokenStandardService.registriesToAssets(
-                purchaseCtx.registryUrls
+                purchaseCtx.registryUrls.map(
+                    (input) => new ParsedURL(this.ctx, input)
+                )
             )
         )
 
