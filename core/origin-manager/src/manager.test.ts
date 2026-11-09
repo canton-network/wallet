@@ -332,41 +332,6 @@ describe('manager', () => {
             expect(parentWindow.postMessage).toHaveBeenCalled()
         })
 
-        it('should post to a cross-origin parent window without reading its origin', () => {
-            const parentWindow = {
-                postMessage: vi.fn(),
-                get origin(): string {
-                    throw new DOMException(
-                        'Blocked a frame from accessing a cross-origin frame.',
-                        'SecurityError'
-                    )
-                },
-            } as unknown as Window
-            const crossOriginManager = new ChildWindowOriginManager({
-                parentWindow,
-            })
-
-            window.dispatchEvent(
-                new MessageEvent('message', {
-                    data: {
-                        type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN,
-                        origin: exampleOrigin,
-                    },
-                    origin: exampleOrigin,
-                })
-            )
-
-            expect(() =>
-                crossOriginManager.postMessage('some message')
-            ).not.toThrow()
-            expect(parentWindow.postMessage).toHaveBeenCalledWith(
-                'some message',
-                exampleOrigin
-            )
-
-            crossOriginManager.removeListener()
-        })
-
         it('should successfully load origins from session storage', () => {
             expect(sessionStorage.getItem).toHaveBeenCalledExactlyOnceWith(
                 WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN

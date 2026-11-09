@@ -104,7 +104,7 @@ abstract class OriginManager {
      * @returns Boolean which indicates if message was sent or not
      */
     protected postMessageFactory =
-        (options: { origin: Location['origin']; window?: Window }) =>
+        (options?: Partial<{ origin: Location['origin']; window: Window }>) =>
         (message: unknown) => {
             const establishedWindow = options?.window ?? window
             if (!options?.origin) {
@@ -301,7 +301,7 @@ export class ChildWindowOriginManager extends OriginManager {
         }
         this.postMessageFactory({
             window: this.parentWindow,
-            origin: origin ?? '',
+            ...(origin ? { origin } : {}),
         })(message)
     }
 }
