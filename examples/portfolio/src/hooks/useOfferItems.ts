@@ -196,7 +196,7 @@ export function useOfferItems(): OfferItemsResult {
 
         const v2AllocationItems = [
             ...toAllocationRequestV2Items(
-                allocationsV2.data ?? [],
+                allocationRequestsV2.data ?? [],
                 primaryParty
             ),
             ...toAllocationInstructionV2Items(
@@ -285,20 +285,19 @@ function toAllocationRequestV2Items(
     contracts: PrettyContract<AllocationRequestViewV2>[],
     partyId: PartyId
 ): AllocationRequestV2ActionItem[] {
-  throw new Error(`unimplemented ${contracts} ${partyId}`)
+    throw new Error(`unimplemented ${contracts} ${partyId}`)
 }
 
 function toAllocationV2Items(
     contracts: PrettyContract<AllocationViewV2>[],
     partyId: PartyId
 ): AllocationV2ActionItem[] {
- throw new Error(`unimplemented ${contracts} ${partyId}`)
+    throw new Error(`unimplemented ${contracts} ${partyId}`)
 }
 
 function toAllocationInstructionV2Items(
     contracts: PrettyContract<AllocationInstructionViewV2>[],
     partyId: PartyId
 ): AllocationInstructionV2ActionItem[] {
-    
     throw new Error(`unimplemented ${contracts} ${partyId}`)
 }

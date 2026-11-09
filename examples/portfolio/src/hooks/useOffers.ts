@@ -68,9 +68,9 @@ function deriveOffers(items: ActionItem[]): OfferItem[] {
         if (item.kind === 'transfer') {
             const offer = deriveTransferOffer(item)
             if (offer) offers.push(offer)
-        } else {
+        } else if (item.kind === 'allocation') {
             offers.push(deriveAllocationOffer(item))
-        }
+        } else continue
     }
 
     return offers
