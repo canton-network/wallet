@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SpliceMessageHandshake, WalletEvent } from '@canton-network/core-types'
+import { WalletEvent } from '@canton-network/core-types'
 import z from 'zod'
+import { OriginHandshake, OriginHandshakeMessage } from './types'
 
 type OriginManagerConstructor = {
     readonly userHandshakeCallback?: (event: MessageEvent) => void
@@ -103,7 +104,7 @@ abstract class OriginManager {
      * @returns Boolean which indicates if message was sent or not
      */
     protected postMessageFactory =
-        (options: { origin: Location['origin']; window: Window }) =>
+        (options: { origin: Location['origin']; window?: Window }) =>
         (message: unknown) => {
             const establishedWindow = options?.window ?? window
             if (!options?.origin) {
@@ -185,7 +186,7 @@ export class ParentWindowOriginManager extends OriginManager {
     /**
      * Stops polling once an ACK is received for a tracked origin.
      */
-    protected readonly handshakeCallback = (event: MessageEvent) => {
+    protected readonly classHandshakeCallback = (event: MessageEvent) => {
         const associatedIntervalID = this.intervalMap.get(event.origin)
         if (associatedIntervalID) {
             clearInterval(associatedIntervalID)
@@ -255,7 +256,7 @@ export class ParentWindowOriginManager extends OriginManager {
 
 export class ChildWindowOriginManager extends OriginManager {
     protected readonly messageToReceive =
-        OriginHandshakeMessage.enum.SPLICE_WALLET_BROADCAST_ORIGIN
+        WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN
 
     private parentWindow: Window
 
@@ -272,7 +273,7 @@ export class ChildWindowOriginManager extends OriginManager {
     /**
      * Replies to parent handshake messages and then removes the listener.
      */
-    protected readonly handshakeCallback = (event: MessageEvent) => {
+    protected readonly classHandshakeCallback = (event: MessageEvent) => {
         this.handshake({
             window: this.parentWindow,
             origin: event.origin,
