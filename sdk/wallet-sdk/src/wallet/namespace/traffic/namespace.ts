@@ -264,7 +264,6 @@ export class TrafficAccountNamespace {
         params: PurchaseTrafficParams,
         instrumentId: InstrumentId
     ): Promise<{ holdingCids: HoldingCids; assetAmount: Numeric }> {
-        const purchaseCtx = this.ctx
         if (params.trafficAmount !== undefined) {
             const { trafficAmount, conversionRate } = params
 
