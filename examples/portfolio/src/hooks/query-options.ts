@@ -289,7 +289,7 @@ export const useAllocationRequestsV2QueryOptions = (
     })
 }
 
-export const useAllocationV2QueryOptions = (party: string | undefined) => {
+export const useAllocationsV2QueryOptions = (party: string | undefined) => {
     const { sdk } = useWalletSdk()
 
     return queryOptions({

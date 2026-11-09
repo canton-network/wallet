@@ -22,7 +22,7 @@ import {
     useAllocationRequestsQueryOptions,
     useAllocationRequestsV2QueryOptions,
     useAllocationsQueryOptions,
-    useAllocationV2QueryOptions,
+    useAllocationsV2QueryOptions,
     usePendingTransfersQueryOptions,
     usePendingTransfersV2QueryOptions,
 } from './query-options'
@@ -85,7 +85,7 @@ export function useOfferItems(): OfferItemsResult {
     const allocationRequestsV2 = useQuery(
         useAllocationRequestsV2QueryOptions(primaryParty)
     )
-    const allocationsV2 = useQuery(useAllocationV2QueryOptions(primaryParty))
+    const allocationsV2 = useQuery(useAllocationsV2QueryOptions(primaryParty))
     const allocationInstructionsV2 = useQuery(
         useAllocationInstructionsV2QueryOptions(primaryParty)
     )
