@@ -4,6 +4,7 @@
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { TrafficAccountNamespace } from './namespace'
+import { ParsedURL } from '../utils/url'
 import * as mock from '../../__tests__/mocks'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -53,7 +54,7 @@ describe('TrafficAccountNamespace', () => {
                 accountId: 'acc-1',
                 balanceDelta: 50,
                 deduplicationId: 'dedup-1',
-            } as any)
+            })
 
             expect(mock.ledgerProvider.request).toHaveBeenCalledWith({
                 method: 'ledgerApi',
@@ -71,24 +72,23 @@ describe('TrafficAccountNamespace', () => {
         })
 
         it('generates a deduplicationId when none is provided', async () => {
+            const generated = '00000000-0000--0000-0000-000000000004'
             const randomUUID = vi
                 .spyOn(crypto, 'randomUUID')
-                .mockReturnValue(
-                    'generated-uuid' as `${string}-${string}-${string}-${string}-${string}`
-                )
+                .mockReturnValue(generated)
             mock.ledgerProvider.request.mockResolvedValueOnce({ response: {} })
 
             await namespace.topUpTraffic({
                 accountId: 'acc-1',
                 balanceDelta: 10,
-            } as any)
+            })
 
             expect(randomUUID).toHaveBeenCalled()
             expect(mock.ledgerProvider.request).toHaveBeenCalledWith(
                 expect.objectContaining({
                     params: expect.objectContaining({
                         body: expect.objectContaining({
-                            deduplicationId: 'generated-uuid',
+                            deduplicationId: generated,
                         }),
                     }),
                 })
@@ -129,7 +129,7 @@ describe('TrafficAccountNamespace', () => {
             } as any
             return {
                 tokenStandardService,
-                registryUrls: [new (URL as any)('http://example.com')],
+                registryUrls: [new ParsedURL(mock.ctx, 'http://example.com')],
             }
         }
 
