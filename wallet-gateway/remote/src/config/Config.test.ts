@@ -44,6 +44,29 @@ test('config from json file', async () => {
     })
 })
 
+test('signingWorker is optional and defaults the poll interval', () => {
+    const config = {
+        ...ConfigUtils.loadConfigFile('../test/config.json').config,
+    }
+    const server = { ...config.server }
+    delete server.signingWorker
+
+    expect(
+        configSchema.parse({ ...config, server }).server.signingWorker
+    ).toEqual({ pollInterval: 5000 })
+    expect(
+        configSchema.parse({
+            ...config,
+            server: { ...server, signingWorker: {} },
+        }).server.signingWorker
+    ).toEqual({ pollInterval: 5000 })
+    expect(
+        rawConfigSchema.parse({ ...config, server }).server.signingWorker
+    ).toEqual({
+        pollInterval: 5000,
+    })
+})
+
 test('signingStore is optional', () => {
     const config = {
         ...ConfigUtils.loadConfigFile('../test/config.json').config,

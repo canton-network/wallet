@@ -87,6 +87,27 @@ describe('stateManager', async () => {
         expect(stateManager.intendedPage.get(origin)).toBeUndefined()
     })
 
+    it('removes legacy gateway keys but keeps foreign keys on construction', () => {
+        localStorage.setItem('com.splice.wallet.accessToken', 'legacy')
+        localStorage.setItem(`com.splice.wallet.v1.${origin}.networkId`, 'n')
+        localStorage.setItem('splice_wallet_kernel_session', 'session')
+        localStorage.setItem('oidc.user:foo', 'user')
+
+        new StateManager()
+
+        expect(localStorage.getItem('com.splice.wallet.accessToken')).toBeNull()
+        expect(
+            localStorage.getItem(`com.splice.wallet.v1.${origin}.networkId`)
+        ).toBe('n')
+        expect(localStorage.getItem('splice_wallet_kernel_session')).toBe(
+            'session'
+        )
+        expect(localStorage.getItem('oidc.user:foo')).toBe('user')
+
+        localStorage.removeItem('splice_wallet_kernel_session')
+        localStorage.removeItem('oidc.user:foo')
+    })
+
     it('clearAuthState removes all auth-related values', async () => {
         await stateManager.accessToken.set('token', origin)
         stateManager.networkId.set('net-1', origin)
