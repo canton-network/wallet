@@ -65,12 +65,26 @@ function deriveOffers(items: ActionItem[]): OfferItem[] {
     const offers: OfferItem[] = []
 
     for (const item of items) {
-        if (item.kind === 'transfer') {
-            const offer = deriveTransferOffer(item)
-            if (offer) offers.push(offer)
-        } else if (item.kind === 'allocation') {
-            offers.push(deriveAllocationOffer(item))
-        } else continue
+        switch (item.kind) {
+            case 'transfer':
+                const offer = deriveTransferOffer(item)
+                if (offer) offers.push(offer)
+                break
+            case 'allocation':
+                offers.push(deriveAllocationOffer(item))
+                break
+            case 'allocation-instruction-v2':
+            case 'allocation-request-v2':
+            case 'allocation-v2':
+                //TODO:v2 offer rows built by useOfferItems
+                break
+            default: {
+                const unhandled: never = item
+                throw new Error(
+                    `Unhandled offer item: ${JSON.stringify(unhandled)}`
+                )
+            }
+        }
     }
 
     return offers
