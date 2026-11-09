@@ -13,9 +13,6 @@ import type {
 import type {
     ActionItem,
     AllocationActionItem,
-    AllocationInstructionV2ActionItem,
-    AllocationRequestV2ActionItem,
-    AllocationV2ActionItem,
     TransferActionItem,
 } from '@components/types'
 import { getExpiryTime } from '@utils/date-format'
@@ -29,13 +26,11 @@ import {
     usePendingTransfersQueryOptions,
     usePendingTransfersV2QueryOptions,
 } from './query-options'
-import type {
-    AllocationRequestView as AllocationRequestViewV2,
-    AllocationView as AllocationViewV2,
-    AllocationInstructionView as AllocationInstructionViewV2,
-    AllocationSpecification,
-} from '@canton-network/core-token-standard-v2'
-import type { PartyId } from '@canton-network/core-types'
+import {
+    toAllocationInstructionV2Items,
+    toAllocationRequestV2Items,
+    toAllocationV2Items,
+} from '@utils/v2-allocation-items'
 
 export interface OfferItemsResult {
     items: ActionItem[]
@@ -193,7 +188,10 @@ export function useOfferItems(): OfferItemsResult {
         }
 
         offerItems.push(...transfersByCid.values())
-        //TODO: normalize v2 allocation requests
+
+        const allocationCidsShownOnV1Requests = new Set(
+            [...groupedAllocations.values()].flat().map((a) => a.contractId)
+        )
 
         const v2AllocationItems = [
             ...toAllocationRequestV2Items(
@@ -204,7 +202,12 @@ export function useOfferItems(): OfferItemsResult {
                 allocationInstructionsV2.data ?? [],
                 primaryParty
             ),
-            ...toAllocationV2Items(allocationsV2.data ?? [], primaryParty),
+            ...toAllocationV2Items(
+                allocationsV2.data ?? [],
+                primaryParty
+            ).filter(
+                (item) => !allocationCidsShownOnV1Requests.has(item.contractId)
+            ),
         ]
 
         const v2ContractIds = new Set(
@@ -281,101 +284,3 @@ export function useOfferItems(): OfferItemsResult {
         error,
     }
 }
-
-function toAllocationRequestV2Items(
-    contracts: PrettyContract<AllocationRequestViewV2>[],
-    partyId: PartyId
-): AllocationRequestV2ActionItem[] {
-    return contracts.flatMap((c) => {
-        const view = c.interfaceViewValue
-        const ownSpecs = view.allocations.filter((a) =>
-            ownsAuthorizer(a, partyId)
-        )
-        if (ownSpecs.length === 0) return []
-
-        return [
-            {
-                kind: 'allocation-request-v2',
-                contractId: c.contractId,
-                currentPartyId: partyId,
-                versions: ['v2'],
-                settlement: view.settlement,
-                requestedAt: view.requestedAt,
-                settleAt: view.settleAt ?? null,
-                expiry: earliest([
-                    ...ownSpecs.map((s) => s.settlementDeadline),
-                    view.settleAt,
-                ]),
-                ownSpecs,
-                allSpecs: view.allocations,
-                availableActions: view.availableActions,
-                meta: view.meta,
-            },
-        ]
-    })
-}
-
-function toAllocationV2Items(
-    contracts: PrettyContract<AllocationViewV2>[],
-    partyId: PartyId
-): AllocationV2ActionItem[] {
-    return contracts
-        .filter((c) => ownsAuthorizer(c.interfaceViewValue.allocation, partyId))
-        .map((c) => {
-            const view = c.interfaceViewValue
-            return {
-                kind: 'allocation-v2',
-                contractId: c.contractId,
-                currentPartyId: partyId,
-                versions: ['v2'],
-                settlement: view.settlement,
-                allocation: view.allocation,
-                holdingCids: view.holdingCids,
-                createdAt: view.createdAt,
-                expiresAt: view.expiresAt ?? null,
-                expiry: earliest([
-                    view.allocation.settlementDeadline,
-                    view.expiresAt,
-                ]),
-                numIterations: Number(view.numIterations),
-                availableActions: view.availableActions,
-                meta: view.meta,
-            }
-        })
-}
-
-function toAllocationInstructionV2Items(
-    contracts: PrettyContract<AllocationInstructionViewV2>[],
-    partyId: PartyId
-): AllocationInstructionV2ActionItem[] {
-    return contracts
-        .filter((c) => ownsAuthorizer(c.interfaceViewValue.allocation, partyId))
-        .map((c) => {
-            const view = c.interfaceViewValue
-            return {
-                kind: 'allocation-instruction-v2',
-                contractId: c.contractId,
-                currentPartyId: partyId,
-                versions: ['v2'],
-                originalInstructionCid: view.originalInstructionCid ?? null,
-                settlement: view.settlement,
-                allocation: view.allocation,
-                expiresAt: view.expiresAt ?? null,
-                expiry: earliest([
-                    view.allocation.settlementDeadline,
-                    view.expiresAt,
-                ]),
-                availableActions: view.availableActions,
-                meta: view.meta,
-            }
-        })
-}
-
-const ownsAuthorizer = (spec: AllocationSpecification, partyId: PartyId) =>
-    spec.authorizer.owner === partyId
-
-const earliest = (times: Array<string | null | undefined>): string | null =>
-    times
-        .filter((t): t is string => !!t)
-        .sort((a, b) => new Date(a).getTime() - new Date(b).getTime())[0] ??
-    null
