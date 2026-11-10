@@ -73,6 +73,7 @@ export interface AllocationRequestV2ActionItem extends ActionItemBase {
     availableActions: AllocationRequestViewV2['availableActions']
     meta: AllocationRequestViewV2['meta']
     expiry: string | null
+    request: PrettyContract<AllocationRequestViewV2>
 }
 
 export interface AllocationV2ActionItem extends ActionItemBase {

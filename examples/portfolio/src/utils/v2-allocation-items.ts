@@ -9,6 +9,8 @@ import {
     type ActionAvailability,
     actionAvailability,
     decodeAvailableActions,
+    type SettlementInfo,
+    type Account,
 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
@@ -61,6 +63,7 @@ export function toAllocationRequestV2Items(
                 allSpecs: view.allocations,
                 availableActions: view.availableActions,
                 meta: view.meta,
+                request: c,
             },
         ]
     })
@@ -287,4 +290,37 @@ export function needsUserAction(item: ActionItem): boolean {
             //V1 kinds/transfers behavior is unchanged
             return true
     }
+}
+
+const settlementKey = (s: SettlementInfo) =>
+    JSON.stringify([[...s.executors].sort(), s.id, s.cid ?? null])
+
+//TODO: move this to core package somewhere and look at copies of this check across packages
+function isSameAccount(a: Account, b: Account) {
+    return a.id === b.id && a.owner === b.owner && a.provider === b.provider
+}
+
+/**
+ *
+ * Checks whether allocation/allocation instruction already exists for this spec (same settlement/admin/authorizer acc and leg sides)
+ */
+export function isSpecCovered(
+    spec: AllocationSpecification,
+    item: SettlementInfo,
+    existing: ReadonlyArray<{
+        settlement: SettlementInfo
+        allocation: AllocationSpecification
+    }>
+): boolean {
+    const legKey = (s: AllocationSpecification) =>
+        JSON.stringify(
+            s.transferLegSides.map((l) => [l.transferLegId, l.side]).sort()
+        )
+    return existing.some(
+        (e) =>
+            settlementKey(e.settlement) === settlementKey(item) &&
+            e.allocation.admin === spec.admin &&
+            isSameAccount(e.allocation.authorizer, spec.authorizer) &&
+            legKey(e.allocation) === legKey(spec)
+    )
 }

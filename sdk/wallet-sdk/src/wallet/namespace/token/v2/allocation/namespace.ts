@@ -372,24 +372,64 @@ export class AllocationNamespace {
             }
         },
 
+        /**
+         * Differs from acceptForParty where this doesn't select input holdings
+         * Useful for retrying after the accept failed in that case where the party's allocations already exist
+         */
+        prepareAccept: async (
+            params: AllocationRequestActionParams
+        ): Promise<PreparedCommand> => {
+            const view = params.request.interfaceViewValue
+            const groups =
+                decodeAvailableActions<AllocationRequestAction>(
+                    view.availableActions
+                ).find(([key]) => key.tag === 'ARA_Accept')?.[1] ?? []
+
+            if (
+                !params.actors &&
+                actionAvailability(groups, params.partyId).status! ==
+                    'available'
+            ) {
+                throw new Error(
+                    `Cannot accept allocation request ${params.request.contractId} for ${params.partyId}`
+                )
+            }
+
+            return toPrepared(
+                this.service.createAllocationRequestChoice(
+                    'accept',
+                    params.request.contractId,
+                    params.actors ?? [params.partyId]
+                )
+            )
+        },
+
         reject: async (
             params: AllocationRequestActionParams
         ): Promise<PreparedCommand> => {
-            const actors =
-                params.actors ??
-                params.request.interfaceViewValue.settlement.executors
-            if (!actors) {
+            const view = params.request.interfaceViewValue
+            const groups =
+                decodeAvailableActions<AllocationRequestAction>(
+                    view.availableActions
+                ).find(([key]) => key.tag === 'ARA_Reject')?.[1] ?? []
+
+            if (
+                !params.actors &&
+                actionAvailability(groups, params.partyId).status !==
+                    'available'
+            ) {
                 throw new Error(
                     `${params.partyId} cannot accept allocation request ${params.request.contractId}`
                 )
             }
 
-            const [command, dc] = this.service.createAllocationRequestChoice(
-                'reject',
-                params.request.contractId,
-                actors
+            return toPrepared(
+                this.service.createAllocationRequestChoice(
+                    'reject',
+                    params.request.contractId,
+                    params.actors ?? [params.partyId]
+                )
             )
-            return [{ ExerciseCommand: command }, dc]
         },
 
         withdraw: async (
