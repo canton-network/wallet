@@ -419,7 +419,7 @@ export class AllocationNamespace {
                     'available'
             ) {
                 throw new Error(
-                    `${params.partyId} cannot accept allocation request ${params.request.contractId}`
+                    `${params.partyId} cannot reject allocation request ${params.request.contractId}`
                 )
             }
 
