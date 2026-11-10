@@ -24,8 +24,9 @@ import { TrafficPaymasterApi } from './test-support/traffic-paymaster-api.js'
  *  2. `traffic.purchaseTraffic` buys traffic for a user account, paid for by an
  *     external party signing for itself.
  *  3. A `TrafficScan` -- standing in for the participant TEA -- notices the
- *     `PublishCredit` exercise the purchase makes on the participant's own
- *     update stream and applies it to the account with `topUpTraffic`.
+ *     `TrafficCreditReporter_PublishCredit` exercise the purchase makes on the
+ *     participant's own update stream and applies it to the account with
+ *     `topUpTraffic`.
  *  4. `traffic.getTraffic` reads the balance back, independently of what the
  *     scan reported, to confirm it is the participant's own account that moved.
  */
