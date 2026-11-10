@@ -47,11 +47,13 @@ The newest Canton 3.7 snapshot at the time of writing (read from Splice `main`'s
   `3.6` client to the `3.7` client.
 - `scripts/src/start-localnet.ts` — new env overrides so LocalNet can use a locally-built Splice:
   `LOCALNET_COMPOSE_DIR`, `SPLICE_IMAGE_TAG`, `SPLICE_IMAGE_REPO`.
-- `sdk/wallet-sdk/src/wallet/namespace/traffic/test-support/traffic-scan.ts` — the test's stand-in
-  TEA now matches the `PublishCredit` interface by its **module-qualified name**. Canton 3.7 reports
-  an exercised event's `interfaceId` package-**id** qualified (`<hash>:Canton.Traffic.Credit:…`)
-  rather than package-**name** qualified (`#canton-traffic-credit:…`), which the old exact-string
-  match missed. (The paymaster example's `scan-topup.ts` already matched this way.)
+
+Nothing else is needed for Canton 3.7: the test's stand-in TEA
+(`sdk/wallet-sdk/src/wallet/namespace/traffic/test-support/traffic-scan.ts`) and the paymaster
+example's `scan-topup.ts` already match the `TrafficCreditReporter` interface by its
+**module-qualified name**. That matters here because Canton 3.7 reports an exercised event's
+`interfaceId` package-**id** qualified (`<hash>:Canton.Api.Traffic.CreditV1:…`) rather than
+package-**name** qualified (`#canton-traffic-credit:…`), which an exact-string match would miss.
 
 ## Step 1 — Build the Splice `main` images (Canton 3.7)
 
