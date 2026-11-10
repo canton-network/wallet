@@ -196,7 +196,7 @@ export function ActionRequiredDialog({
         allocationRequestV2.accept.mutate(requestItem, {
             onSuccess: (result) => {
                 if (result.status === 'accepted') {
-                    toast.success('Allocation withdrawn successfully')
+                    toast.success('Allocation accepted successfully')
                     handleClose()
                 } else {
                     toast.warning(
@@ -213,7 +213,7 @@ export function ActionRequiredDialog({
         allocationRequestV2.accept.reset()
         allocationRequestV2.reject.mutate(requestItem, {
             onSuccess: () => {
-                toast.success('Allocation withdrawn successfully')
+                toast.success('Allocation rejected successfully')
                 handleClose()
             },
             onError: (error) =>
