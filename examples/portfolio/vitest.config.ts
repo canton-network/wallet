@@ -19,6 +19,10 @@ export default defineConfig({
     test: {
         // Playwright covers the UI. This run only counts the config schema.
         coverage: schemaCoverage,
-        projects: [nodeProject({ include: ['network-configs.test.ts'] })],
+        projects: [
+            nodeProject({
+                include: ['src/**/*.test.ts', '**/*.node.test.ts'],
+            }),
+        ],
     },
 })

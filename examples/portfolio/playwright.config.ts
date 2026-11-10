@@ -94,10 +94,17 @@ export default defineConfig({
         // },
     ],
 
-    /* Run your local dev server before starting the tests */
-    // webServer: {
-    //   command: 'npm run start',
-    //   url: 'http://localhost:3030',
-    //   reuseExistingServer: !process.env.CI,
-    // },
+    // CI already serves the preview build (ecosystem.ci.config.js). Starting
+    // another Vite there would fight it for 8081. Locally, reuse a dev server
+    // or start one.
+    ...(process.env.CI
+        ? {}
+        : {
+              webServer: {
+                  command: 'pnpm exec vite --port 8081 --strictPort',
+                  url: 'http://localhost:8081',
+                  reuseExistingServer: true,
+                  timeout: 120_000,
+              },
+          }),
 })
