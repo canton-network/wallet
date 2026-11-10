@@ -5,8 +5,8 @@
  * Stands in for the participant TEA that credits purchased traffic.
  *
  * `TrafficPurchaser_PurchaseCredits` credits the traffic on-ledger by exercising
- * the non-consuming `PublishCredit` choice on a `TrafficCreditIssuer` for the
- * target account. The choice creates no contract, so nothing lands in the active
+ * the non-consuming `TrafficCreditReporter_PublishCredit` choice on a
+ * `TrafficCreditReporter` for the target account. The choice creates no contract, so nothing lands in the active
  * contract set, but the exercise is in the transaction tree. The real
  * participant TEA reads that exercise and moves the account; this follows the
  * participant's own update stream and does the same through `topUpTraffic`,
@@ -22,20 +22,20 @@ import {
     type TokenProviderConfig,
 } from '@canton-network/core-wallet-auth'
 import {
-    TrafficCreditIssuer,
-    type PublishCredit,
+    TrafficCreditReporter,
+    type TrafficCreditReporter_PublishCredit,
 } from '@canton-network/core-traffic-purchase'
 import type { PartyId } from '@canton-network/core-types'
 import type { TrafficAccountNamespace } from '../namespace.js'
 
 /**
- * The interface whose `PublishCredit` exercises this scan reads, by package
- * *name*: its id is package-name qualified, e.g.
- * `#canton-traffic-credit:Canton.Traffic.Credit:TrafficCreditIssuer`. An
+ * The interface whose `TrafficCreditReporter_PublishCredit` exercises this scan
+ * reads, by package *name*: its id is package-name qualified, e.g.
+ * `#canton-traffic-credit:Canton.Api.Traffic.CreditV1:TrafficCreditReporter`. An
  * exercised event carries this as its `interfaceId`, so matching on it keeps
  * this working across the package upgrades that change the id but not the name.
  */
-const trafficCreditIssuerInterfaceId = TrafficCreditIssuer.templateId
+const trafficCreditReporterInterfaceId = TrafficCreditReporter.templateId
 
 /** A credit this scan applied, and what the account came to afterwards. */
 export type AppliedCredit = {
@@ -273,20 +273,21 @@ export class TrafficScan {
         ).ExercisedEvent
 
         // Only the credit-issuing choice, and only on the interface this scan
-        // trusts: a choice that merely shares the `PublishCredit` name from some
-        // other interface is not a traffic credit. The ledger reports the
-        // interface id package-*id* qualified (e.g.
-        // `<pkgid>:Canton.Traffic.Credit:TrafficCreditIssuer`), while the
+        // trusts: a choice that merely shares the
+        // `TrafficCreditReporter_PublishCredit` name from some other interface is
+        // not a traffic credit. The ledger reports the interface id package-*id*
+        // qualified (e.g.
+        // `<pkgid>:Canton.Api.Traffic.CreditV1:TrafficCreditReporter`), while the
         // generated companion's id is package-*name* qualified
         // (`#canton-traffic-credit:...`); comparing the `Module:Entity` part
         // keeps the match working across both forms and across the package
         // upgrades that change the id but not the name.
         if (
-            exercised.choice !== 'PublishCredit' ||
+            exercised.choice !== 'TrafficCreditReporter_PublishCredit' ||
             exercised.interfaceId === undefined ||
             !sameQualifiedName(
                 exercised.interfaceId,
-                trafficCreditIssuerInterfaceId
+                trafficCreditReporterInterfaceId
             ) ||
             exercised.choiceArgument === undefined
         ) {
@@ -295,8 +296,9 @@ export class TrafficScan {
 
         // The argument carries everything the account move needs: whom to credit
         // (`accountId`) and by how much (`trafficAmount`, whole bytes as an Int).
-        const credit = exercised.choiceArgument as PublishCredit
-        const accountId = credit.accountId.value
+        const credit =
+            exercised.choiceArgument as TrafficCreditReporter_PublishCredit
+        const accountId = credit.accountId
         const balanceDelta = Number(credit.trafficAmount)
         const account = await this.traffic.topUpTraffic({
             accountId,
