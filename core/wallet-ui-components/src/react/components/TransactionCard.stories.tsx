@@ -105,6 +105,36 @@ export const Failed: Story = {
         await expect(
             await findByShadowText(canvasElement, 'failed')
         ).toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Failure reason')
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const FailedWithLongReason: Story = {
+    args: {
+        status: 'failed',
+        failureReason: 'Dfns rejected the signing request (Denied by policy)',
+    },
+    decorators: [
+        (Story) => (
+            <div style={{ width: 360 }}>
+                <Story />
+            </div>
+        ),
+    ],
+    play: async ({ args, canvasElement }) => {
+        // Wraps instead of truncating, so users can read why it failed
+        const reason = await findByShadowText(
+            canvasElement,
+            args.failureReason!
+        )
+        await expect(reason.scrollWidth).toBeLessThanOrEqual(reason.clientWidth)
+        await expect(reason.getBoundingClientRect().height).toBeGreaterThan(
+            (
+                await findByShadowText(canvasElement, 'Failure reason')
+            ).getBoundingClientRect().height
+        )
     },
 }
 

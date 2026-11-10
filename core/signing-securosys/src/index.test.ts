@@ -12,7 +12,7 @@ import {
 } from 'vitest'
 import type { Key, Transaction } from '@canton-network/core-signing-lib'
 import SecurosysSigningDriver, { SECUROSYS_SIGNING_PROVIDER } from './index.js'
-import type { SigningAPIClient } from './signing-api-sdk.js'
+import { TsbApiError, type SigningAPIClient } from './signing-api-sdk.js'
 
 // Raw Ed25519 public key whose base64 form contains '+', '/' and '=' padding,
 // so the derived TSB label differs from the public key.
@@ -179,6 +179,33 @@ describe('SecurosysSigningDriver', () => {
         expect(result).toEqual({
             error: 'signing_error',
             error_description: 'TSB down',
+        })
+    })
+
+    it('signTransaction reports a failed TSB call without the raw response', async () => {
+        mockClient.signTransaction.mockRejectedValue(
+            new TsbApiError(
+                '/v1/sign',
+                500,
+                'Server Error',
+                JSON.stringify({
+                    errorCode: 701,
+                    reason: 'res.error.in.hsm',
+                    message: 'HSM error: KEY_FUNCTION_NOT_PERMITTED',
+                })
+            )
+        )
+
+        const result = await driver.controller(userId).signTransaction({
+            tx: 'tx',
+            txHash: 'hash',
+            keyIdentifier: { publicKey: 'pk' },
+        })
+
+        expect(result).toEqual({
+            error: 'signing_error',
+            error_description:
+                'Securosys request failed (500): HSM error: KEY_FUNCTION_NOT_PERMITTED',
         })
     })
 

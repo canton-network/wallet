@@ -15,6 +15,50 @@ import type {
 } from '@canton-network/core-signing-lib'
 import { Agent, type Dispatcher } from 'undici'
 
+/**
+ * A failed TSB call. `message` carries the raw response body for diagnostics,
+ * `userMessage` only what TSB reports as the reason and is safe to show to
+ * users and dApps.
+ */
+export class TsbApiError extends Error {
+    readonly userMessage: string
+
+    constructor(
+        endpoint: string,
+        status: number,
+        statusText: string,
+        body: string
+    ) {
+        super(
+            `TSB API call to ${endpoint} failed (${status}): ${body || statusText}`
+        )
+        this.name = 'TsbApiError'
+        const reason = tsbErrorMessage(body) ?? statusText
+        this.userMessage = reason
+            ? `Securosys request failed (${status}): ${reason}`
+            : `Securosys request failed (${status})`
+    }
+}
+
+/** TSB reports errors as `{ errorCode, reason, message }`. */
+function tsbErrorMessage(body: string): string | undefined {
+    try {
+        const parsed: unknown = JSON.parse(body)
+        if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            'message' in parsed &&
+            typeof parsed.message === 'string' &&
+            parsed.message
+        ) {
+            return parsed.message
+        }
+    } catch {
+        // not JSON
+    }
+    return undefined
+}
+
 export type TsbRequestStatus =
     | 'PENDING'
     | 'APPROVED'
@@ -502,9 +546,11 @@ export class SigningAPIClient {
         const response = await fetch(`${this.baseUrl}${endpoint}`, requestInit)
 
         if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(
-                `TSB API call to ${endpoint} failed (${response.status}): ${errorText || response.statusText}`
+            throw new TsbApiError(
+                endpoint,
+                response.status,
+                response.statusText,
+                await response.text()
             )
         }
 

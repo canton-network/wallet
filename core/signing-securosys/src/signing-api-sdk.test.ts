@@ -1066,6 +1066,30 @@ describe('SigningAPIClient', () => {
         )
     })
 
+    it.each([
+        [
+            JSON.stringify({
+                errorCode: 701,
+                reason: 'res.error.in.hsm',
+                message: 'HSM error',
+            }),
+            'Securosys request failed (400): HSM error',
+        ],
+        ['<html>bad key</html>', 'Securosys request failed (400): Bad Request'],
+    ])(
+        'offers a user message without the raw response body %#',
+        async (body, expected) => {
+            const client = new SigningAPIClient('http://tsb.example')
+            fetchMock.mockResolvedValueOnce(
+                new Response(body, { status: 400, statusText: 'Bad Request' })
+            )
+
+            await expect(client.getKeys()).rejects.toMatchObject({
+                userMessage: expected,
+            })
+        }
+    )
+
     it('cancelTransaction marks cached transactions rejected', async () => {
         const client = new SigningAPIClient('http://tsb.example')
         const publicKey = Buffer.alloc(32, 10).toString('base64')

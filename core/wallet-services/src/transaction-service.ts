@@ -8,6 +8,7 @@ import {
     LedgerClient,
     type Types,
 } from '@canton-network/core-ledger-client'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import type {
     Store,
     Transaction,
@@ -402,7 +403,8 @@ export class TransactionService {
             signingResult.status === 'pending' ? 'awaiting-signature' : 'failed'
         const failureReason =
             status === 'failed'
-                ? `Signing provider returned status: ${signingResult.status}`
+                ? (signingResult.failureReason ??
+                  `Signing provider returned status: ${signingResult.status}`)
                 : undefined
 
         await this.store.setTransactionStatus(
@@ -439,6 +441,12 @@ export class TransactionService {
                           externalTxId: signingResult.txId,
                       },
                       status: status,
+                      ...(failureReason && {
+                          error: {
+                              code: errorCodes.rpc.transactionRejected,
+                              message: failureReason,
+                          },
+                      }),
                   } satisfies TxChangedFailedEvent)
         )
 
@@ -814,6 +822,10 @@ export class TransactionService {
             this.notifier.emit('txChanged', {
                 ...transaction,
                 status: 'failed',
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
             } satisfies TxChangedFailedEvent)
         }
 
