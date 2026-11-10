@@ -5,6 +5,7 @@ import * as path from 'path'
 import { getRepoRoot } from './lib/utils.js'
 import { installDPM } from './install-dpm.js'
 import {
+    cleanGeneratedDamlJsPackages,
     ensureLocalnetDars,
     runDamlBuild,
     runDamlCodegen,
@@ -28,6 +29,7 @@ async function main() {
     const { destDir, packageName, version } = TRAFFIC_PURCHASE_CONFIG
 
     runDamlBuild(destDir)
+    cleanGeneratedDamlJsPackages(destDir)
     runDamlCodegen({
         workingDir: destDir,
         darFileNames: [`${packageName}-${version}.dar`],
