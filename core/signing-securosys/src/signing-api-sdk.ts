@@ -362,6 +362,23 @@ function readDerLength(
     return { length, offset: offset + 1 + lengthBytes }
 }
 
+/**
+ * Explains a rejected or failed request, adding the TSB status when it tells
+ * more than the signing status, e.g. `EXPIRED`
+ */
+export function tsbFailureReason(status: TsbRequestStatus): string | undefined {
+    const signingStatus = mapTsbStatus(status)
+    const detail = status.toLowerCase() !== signingStatus ? ` (${status})` : ''
+    switch (signingStatus) {
+        case 'rejected':
+            return `Securosys rejected the signing request${detail}`
+        case 'failed':
+            return `Securosys failed to sign the request${detail}`
+        default:
+            return undefined
+    }
+}
+
 export function mapTsbStatus(status: TsbRequestStatus): SigningStatus {
     switch (status) {
         case 'EXECUTED':
@@ -631,6 +648,7 @@ export class SigningAPIClient {
             status,
             signature,
             publicKey: cached?.publicKey,
+            failureReason: tsbFailureReason(response.status),
             metadata: {
                 ...cachedMetadata,
                 ...compact({
@@ -955,6 +973,7 @@ export class SigningAPIClient {
             this.transactionCache.set(txId, {
                 ...cached,
                 status: 'rejected',
+                failureReason: tsbFailureReason('CANCELLED'),
                 metadata: {
                     ...cached.metadata,
                     tsbStatus: 'CANCELLED',

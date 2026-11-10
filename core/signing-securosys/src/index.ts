@@ -95,6 +95,9 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...(tx.metadata !== undefined && {
                             metadata: tx.metadata,
                         }),
+                        ...(tx.failureReason !== undefined && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
@@ -168,6 +171,9 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...(tx.metadata !== undefined && {
                             metadata: tx.metadata,
                         }),
+                        ...(tx.failureReason !== undefined && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
@@ -199,6 +205,9 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                                 }),
                                 ...(tx.metadata !== undefined && {
                                     metadata: tx.metadata,
+                                }),
+                                ...(tx.failureReason !== undefined && {
+                                    failureReason: tx.failureReason,
                                 }),
                             })),
                         }

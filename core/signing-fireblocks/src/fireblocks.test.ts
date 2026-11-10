@@ -285,6 +285,49 @@ describe('FireblocksHandler', () => {
         }
     )
 
+    it.each([
+        {
+            status: 'BLOCKED',
+            subStatus: 'BLOCKED_BY_POLICY',
+            failureReason:
+                'Fireblocks rejected the signing request (BLOCKED_BY_POLICY)',
+        },
+        {
+            status: 'FAILED',
+            subStatus: undefined,
+            failureReason: 'Fireblocks failed to sign the request',
+        },
+        { status: 'SUBMITTED', subStatus: undefined, failureReason: undefined },
+    ])(
+        'derives failure reason $failureReason from $status / $subStatus',
+        async ({ status, subStatus, failureReason }) => {
+            const handler = createHandler()
+            mockGetTransaction.mockResolvedValueOnce({
+                data: {
+                    id: 'tx-status',
+                    createdAt: 3000,
+                    status,
+                    subStatus,
+                    extraParameters: {
+                        rawMessageData: {
+                            messages: [
+                                {
+                                    content: TX_HASH,
+                                    derivationPath: DERIVATION_PATH,
+                                },
+                            ],
+                            algorithm: 'EDDSA_ED25519',
+                        },
+                    },
+                },
+            })
+
+            const tx = await handler.getTransaction(USER_ID, 'tx-status')
+
+            expect(tx?.failureReason).toBe(failureReason)
+        }
+    )
+
     it('returns undefined when extraParameters cannot be parsed', async () => {
         const handler = createHandler()
         mockGetTransaction.mockResolvedValueOnce({
@@ -494,6 +537,31 @@ describe('FireblocksHandler', () => {
             )
 
             expect(tx.status).toBe(expectedStatus)
+        }
+    )
+
+    it.each([
+        ['REJECTED', 'Fireblocks rejected the signing request'],
+        ['FAILED', 'Fireblocks failed to sign the request'],
+        ['BLOCKED', 'Fireblocks failed to sign the request (BLOCKED)'],
+        ['CANCELLED', 'Fireblocks failed to sign the request (CANCELLED)'],
+    ])(
+        'reports a failure reason when createTransaction returns %s',
+        async (status, expected) => {
+            const handler = createHandler()
+            mockVaultPage([{ id: '4', name: 'vault-4' }])
+            mockCreateTransaction.mockResolvedValueOnce({
+                data: { id: 'status-tx', status },
+            })
+
+            const tx = await handler.signTransaction(
+                USER_ID,
+                TX_HASH,
+                { publicKey: PUBLIC_KEY },
+                NOTE
+            )
+
+            expect(tx.failureReason).toBe(expected)
         }
     )
 
