@@ -48,7 +48,7 @@ test('signingWorker is optional and defaults the poll interval', () => {
     const config = {
         ...ConfigUtils.loadConfigFile('../test/config.json').config,
     }
-    const server = { ...config.server }
+    const server: Partial<typeof config.server> = { ...config.server }
     delete server.signingWorker
 
     expect(
