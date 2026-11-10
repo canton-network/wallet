@@ -45,7 +45,7 @@ export type AllocationChoiceParams = {
     allocationCid: string
     asset: AssetBody
     actors: PartyId[]
-    prefetchedRegistryChoiceContext: AllocationChoiceContextV2
+    prefetchedRegistryChoiceContext?: AllocationChoiceContextV2
 }
 
 export type AllocationContextParams = {
@@ -55,12 +55,12 @@ export type AllocationContextParams = {
 
 /**
  * @param requireBothSides: Require every leg to be allocated on both its sender and receiver side
- * Only meaningful for. aparty taht sees all allocations (e.g. an executor)
+ * Only meaningful for a party that sees all allocations (e.g. an executor)
  * Set to false when polling as a trader. Default true.
  */
 export type AllocationScanParams = {
     partyId: PartyId
-    settlement: Pick<SettlementInfo, 'id' | 'cid'>
+    settlement: Pick<SettlementInfo, 'id' | 'cid' | 'executors'>
     transferLegIds: string[]
     requireBothSides?: boolean
     maxAttempts?: number
@@ -78,6 +78,10 @@ export type SettlementFactoryParams = {
     registryUrl: string | URL
 }
 
+/**
+ *
+ * @deprecated
+ */
 export function actorsFor(
     availableActions: unknown,
     action: string,
@@ -89,6 +93,12 @@ export function actorsFor(
 }
 
 export const sameSettlement = (
-    a: Pick<SettlementInfo, 'id' | 'cid'>,
-    b: Pick<SettlementInfo, 'id' | 'cid'>
-) => a.id === b.id && (a.cid ?? null) === (b.cid ?? null)
+    a: Pick<SettlementInfo, 'id' | 'cid' | 'executors'>,
+    b: Pick<SettlementInfo, 'id' | 'cid' | 'executors'>
+) =>
+    a.id === b.id &&
+    (a.cid ?? null) === (b.cid ?? null) &&
+    executorsKey(a.executors) === executorsKey(b.executors)
+
+const executorsKey = (executors: readonly string[] = []) =>
+    [...executors].sort().join('|')
