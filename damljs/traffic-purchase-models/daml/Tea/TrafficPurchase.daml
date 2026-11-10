@@ -3,21 +3,23 @@
 --
 -- The ledger settles payment and reports how much traffic was bought; Canton's
 -- TEA service holds the resulting balance. Nothing here writes a balance:
--- the `PublishCredit` exercise composed into the purchase is read off the
--- transaction tree by the TEA residing inside PN endpoints.
+-- the `TrafficCreditReporter_PublishCredit` exercise composed into the purchase
+-- is read off the transaction tree by the TEA residing inside PN endpoints.
 --
 -- Payment assets are reached only through the CIP-0056 token standard
 -- interfaces, so the model never names a concrete instrument. (CIP-0112 is the
 -- V2 evolution of that standard; this model is on V1 and so cites CIP-0056.)
 module Tea.TrafficPurchase where
 
-import Canton.Traffic.Credit
-  ( AccountId
-  , PublishCredit(..)
-  , TrafficCreditIssuer
-  , TrafficCreditIssuerView(..)
+import Canton.Api.Traffic.CreditV1 qualified as Credit
+import Canton.Api.Traffic.CreditV1
+  ( TrafficCreditReporter
+  , TrafficCreditReporterView(..)
+  , TrafficCreditReporter_PublishCredit(..)
+  , TrafficCreditReporter_PublishCreditResult(..)
   )
 import DA.Foldable (forA_)
+import DA.Text qualified as T
 import Splice.Api.Token.HoldingV1 (Holding, HoldingView(..), InstrumentId)
 import Splice.Api.Token.MetadataV1 (ExtraArgs, emptyMetadata)
 import Splice.Api.Token.TransferInstructionV1
@@ -35,10 +37,11 @@ data PaymentAsset = PaymentAsset with
 
 -- | Outcome of a purchase.
 --
--- The traffic itself is credited by the `PublishCredit` exercise composed into
--- the purchase (paymaster, target account and amount); the TEA reads that
--- exercise off the transaction tree and adds its `trafficAmount` to the balance
--- of its `accountId`. Only what that exercise does not carry is repeated here.
+-- The traffic itself is credited by the `TrafficCreditReporter_PublishCredit`
+-- exercise composed into the purchase (paymaster, target account and amount);
+-- the TEA reads that exercise off the transaction tree and adds its
+-- `trafficAmount` to the balance of its `accountId`. Only what that exercise
+-- does not carry is repeated here.
 data TrafficPurchasedResult = TrafficPurchasedResult with
     purchaser : Party
       -- ^ The party that paid.
@@ -64,6 +67,32 @@ assetNeededFor : Int -> Decimal -> Decimal
 assetNeededFor traffic rate
   | rate <= 0.0 = error "conversion rate must be positive"
   | otherwise = intToDecimal traffic / rate
+
+-- | Validate `value` as a TEA account id: at most 255 characters, matching
+-- `^[A-Za-z0-9@^$.!`\-#+'~_|:() ]+(?:/[A-Za-z0-9@^$.!`\-#+'~_|:() ]+)*$`, i.e.
+-- one or more non-empty segments separated by `/`.
+--
+-- `CreditV1` passes account ids as plain `Text` and requires implementations to
+-- reject invalid ones, so the rule lives here rather than in the interface.
+validateAccountId : Text -> Either Text ()
+validateAccountId value
+  | len > 255 = Left ("Account id must be at most 255 characters, found " <> show len)
+  | otherwise = forA_ (T.splitOn "/" value) validateAccountIdSegment
+  where
+    len = T.length value
+
+-- | Validate one `/`-separated segment of an account id.
+validateAccountIdSegment : Text -> Either Text ()
+validateAccountIdSegment segment
+  | segment == "" = Left "Account id segments must not be empty"
+  | T.isPred isSegmentChar segment = Right ()
+  | otherwise =
+      Left ("Account id segments must only contain [A-Za-z0-9@^$.!`#+'~_|:() -], found " <> show segment)
+  where
+    isSegmentChar c = T.isAlphaNum c || c `elem` segmentPunctuation
+
+segmentPunctuation : [Text]
+segmentPunctuation = T.explode "@^$.!`-#+'~_|:() "
 
 -- | A holding is spendable if it carries no lock, or a lock that has expired.
 --
@@ -165,20 +194,31 @@ template TrafficPurchaser
   where
     signatory paymaster
 
-    interface instance TrafficCreditIssuer for TrafficPurchaser where
-      view = TrafficCreditIssuerView with paymaster
+    interface instance TrafficCreditReporter for TrafficPurchaser where
+      view = TrafficCreditReporterView with
+        paymaster
+        meta = Credit.emptyMetadata
+
+      -- The interface requires implementations to reject invalid account ids
+      -- and non-positive traffic amounts. Ledger API exercises reach this
+      -- directly, so the checks cannot live in the calling choice alone.
+      trafficCreditReporter_publishCreditImpl _self arg = do
+        either abort pure (validateAccountId arg.accountId)
+        assertMsg "trafficAmount must be positive" (arg.trafficAmount > 0)
+        pure TrafficCreditReporter_PublishCreditResult
 
     -- | Buy traffic, paying with CIP-56 holdings.
     --
     -- Settles the payment through the registry's transfer factory and credits
-    -- the traffic to `targetAccount` by exercising `PublishCredit`.
+    -- the traffic to `targetAccount` by exercising
+    -- `TrafficCreditReporter_PublishCredit`.
     nonconsuming choice TrafficPurchaser_PurchaseCredits : TrafficPurchasedResult
       with
         purchaser : Party
           -- ^ The party paying. Must own every offered holding, and is the
           -- sender of the settling transfer: a v1 `TransferFactory_Transfer` is
           -- controlled by `transfer.sender`, so the payer cannot be anyone else.
-        targetAccount : AccountId
+        targetAccount : Text
           -- ^ The TEA account to credit. Need not correspond to `purchaser`: a
           -- wallet provider may buy on a user's behalf.
         conversionRateCid : ContractId ConversionRate
@@ -259,13 +299,18 @@ template TrafficPurchaser
           TransferInstructionResult_Failed ->
             abort "registry rejected the payment transfer"
 
-        -- 5. Credit the traffic. `PublishCredit` needs the paymaster's authority,
-        --    which this choice has because the paymaster signs the contract, and
-        --    it is reached through the `TrafficCreditIssuer` interface instance on
-        --    this same contract. It only runs once the payment above has completed.
-        exercise (toInterfaceContractId @TrafficCreditIssuer self) PublishCredit with
-          accountId = targetAccount
-          trafficAmount
+        -- 5. Credit the traffic. `TrafficCreditReporter_PublishCredit` needs the
+        --    paymaster's authority, which this choice has because the paymaster
+        --    signs the contract, and it is reached through the
+        --    `TrafficCreditReporter` interface instance on this same contract.
+        --    It only runs once the payment above has completed.
+        _ <- exercise (toInterfaceContractId @TrafficCreditReporter self)
+          TrafficCreditReporter_PublishCredit with
+            accountId = targetAccount
+            trafficAmount
+            purchaser
+            observers = []
+            metadata = Credit.emptyMetadata
 
         pure TrafficPurchasedResult with
           purchaser
