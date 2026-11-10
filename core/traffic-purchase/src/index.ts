@@ -37,9 +37,13 @@ export type {
 } from '@daml.js/traffic-purchase-models-1.0.0/lib/Tea/TrafficPurchase/module.js'
 
 /**
- * The TEA account a purchase credits.
+ * The credit interface `TrafficPurchaser` implements. The account a purchase
+ * credits is a plain `string`; the model validates it when the choice runs.
  */
-export type { AccountId } from '@daml.js/canton-traffic-credit-1.0.0/lib/Canton/Traffic/Credit/module.js'
+export type {
+    TrafficCreditReporter_PublishCredit,
+    TrafficCreditReporterView,
+} from '@daml.js/canton-traffic-credit-1.0.0/lib/Canton/Api/Traffic/CreditV1/module.js'
 
 /** Package id of the DAR these bindings were generated from. */
 export { packageId } from '@daml.js/traffic-purchase-models-1.0.0'
