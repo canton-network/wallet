@@ -195,9 +195,9 @@ export class TrafficAccountNamespace {
      * Those invariants are therefore deliberately not re-checked here.
      *
      * The purchase credits the traffic on-ledger: `TrafficPurchaser_PurchaseCredits`
-     * creates a `TrafficCredit` for `targetAccount`, which the paymaster's
-     * participant TEA reads off the transaction tree. The returned
-     * `ContractId TrafficCredit` identifies that credit.
+     * exercises `TrafficCreditReporter_PublishCredit` for `targetAccount`, which
+     * the paymaster's participant TEA reads off the transaction tree. Nothing is
+     * created for the credit; the exercise itself is the record of it.
      */
     public async purchaseTraffic(
         params: PurchaseTrafficParams
