@@ -177,9 +177,9 @@ export class TrafficAccountNamespace {
 
         const choiceArgument: TrafficPurchaser_PurchaseCredits = {
             purchaser: params.purchaser,
-            // The model's `AccountId` is an opaque record wrapping the id; the
-            // ledger re-validates it (non-empty, at most 255 UTF-16 units).
-            targetAccount: { value: params.targetAccount },
+            // A plain account id: the model takes `Text` and re-validates it
+            // (at most 255 characters, non-empty `/`-separated segments).
+            targetAccount: params.targetAccount,
             conversionRateCid,
             holdingCids,
             transferFactoryCid: factory.factoryId,
