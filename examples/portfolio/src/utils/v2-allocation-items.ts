@@ -55,10 +55,7 @@ export function toAllocationRequestV2Items(
                 settlement: view.settlement,
                 requestedAt: view.requestedAt,
                 settleAt: view.settleAt ?? null,
-                expiry: earliest([
-                    ...ownSpecs.map((s) => s.settlementDeadline),
-                    view.settleAt,
-                ]),
+                expiry: earliest(ownSpecs.map((s) => s.settlementDeadline)),
                 ownSpecs,
                 allSpecs: view.allocations,
                 availableActions: view.availableActions,
