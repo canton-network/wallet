@@ -5,8 +5,9 @@
  * Stands in for the participant TEA that credits purchased traffic (adapted
  * from `wallet-sdk`'s own `TrafficScan` test double, which is private to that
  * package). `TrafficPurchaser_PurchaseCredits` credits the traffic on-ledger by
- * exercising the non-consuming `PublishCredit` choice on a `TrafficCreditIssuer`;
- * the exercise is in the transaction tree even though it creates no contract.
+ * exercising the non-consuming `TrafficCreditReporter_PublishCredit` choice on a
+ * `TrafficCreditReporter`; the exercise is in the transaction tree even though it
+ * creates no contract.
  * This follows the update stream for those exercises and applies each with
  * `topUpTraffic`. Long-running: scans forever until Ctrl+C. For a one-off
  * manual credit instead, see `topup.ts`.
@@ -18,15 +19,16 @@ import {
 import type { Ops } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import {
-    TrafficCreditIssuer,
-    type PublishCredit,
+    TrafficCreditReporter,
+    type TrafficCreditReporter_PublishCredit,
 } from '@canton-network/core-traffic-purchase'
 import { createAdminSdk, localNetAuth, type AdminSdk } from './lib.js'
 import { requireEnvVar } from './env-file.js'
 
-const trafficCreditIssuerQualifiedName = TrafficCreditIssuer.templateId.slice(
-    TrafficCreditIssuer.templateId.indexOf(':')
-)
+const trafficCreditReporterQualifiedName =
+    TrafficCreditReporter.templateId.slice(
+        TrafficCreditReporter.templateId.indexOf(':')
+    )
 
 async function main() {
     const paymaster = await requireEnvVar('VITE_PAYMASTER_PARTY_ID')
@@ -123,17 +125,18 @@ async function applyEvent(admin: AdminSdk, event: unknown): Promise<void> {
         }
     ).ExercisedEvent
 
-    if (exercised.choice !== 'PublishCredit') return
+    if (exercised.choice !== 'TrafficCreditReporter_PublishCredit') return
     if (
         exercised.interfaceId === undefined ||
-        !exercised.interfaceId.endsWith(trafficCreditIssuerQualifiedName)
+        !exercised.interfaceId.endsWith(trafficCreditReporterQualifiedName)
     ) {
         return
     }
     if (exercised.choiceArgument === undefined) return
 
-    const credit = exercised.choiceArgument as PublishCredit
-    const accountId = credit.accountId.value
+    const credit =
+        exercised.choiceArgument as TrafficCreditReporter_PublishCredit
+    const accountId = credit.accountId
     const balanceDelta = Number(credit.trafficAmount)
     const deduplicationId = `${exercised.offset}:${exercised.nodeId}`
     const account = await admin.traffic.topUpTraffic({
