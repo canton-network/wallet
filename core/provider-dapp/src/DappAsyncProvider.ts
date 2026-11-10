@@ -50,8 +50,30 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
     }
 
     private openSSE(url: URL, token: string): void {
+        void this.connectSSE(url, token)
+    }
+
+    private async connectSSE(url: URL, token: string): Promise<void> {
+        const ticketUrl = new URL(
+            'events/ticket',
+            url.toString().replace(/\/?$/, '/')
+        )
+        let ticket = ''
+        try {
+            const response = await fetch(ticketUrl, {
+                method: 'POST',
+                headers: { authorization: `Bearer ${token}` },
+            })
+            if (!response.ok) return
+            const body = (await response.json()) as { ticket?: unknown }
+            if (typeof body.ticket === 'string') ticket = body.ticket
+        } catch {
+            return
+        }
+        if (!ticket) return
+
         const sseUrl = new URL('events', url.toString().replace(/\/?$/, '/'))
-        sseUrl.searchParams.set('token', token)
+        sseUrl.searchParams.set('ticket', ticket)
         const sseUrlString = sseUrl.toString()
 
         // Reconnect if the URL or token has changed

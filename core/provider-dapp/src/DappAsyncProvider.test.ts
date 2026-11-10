@@ -49,30 +49,56 @@ describe('DappAsyncProvider', () => {
             return eventSourceInstance as unknown as EventSource
         })
 
+        if (typeof window === 'undefined') {
+            vi.stubGlobal('window', new EventTarget())
+        }
         vi.stubGlobal('EventSource', eventSourceCtor)
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () => ({
+                ok: true,
+                json: async () => ({ ticket: 'sse-ticket' }),
+            }))
+        )
     })
+
+    async function waitForSocket() {
+        await vi.waitFor(() => {
+            expect(eventSourceCtor).toHaveBeenCalled()
+        })
+    }
 
     afterEach(() => {
         vi.restoreAllMocks()
         vi.unstubAllGlobals()
     })
 
-    it('opens an EventSource with auth token query parameter', () => {
+    it('opens an EventSource with a short-lived ticket, not the session token', async () => {
         new DappAsyncProvider('http://example.com', sessionToken)
+        await waitForSocket()
 
         expect(eventSourceCtor).toHaveBeenCalledTimes(1)
         expect(eventSourceCtor).toHaveBeenCalledWith(
-            `http://example.com/events?token=${sessionToken}`
+            'http://example.com/events?ticket=sse-ticket'
+        )
+        const fetchMock = vi.mocked(fetch)
+        expect(fetchMock).toHaveBeenCalledWith(
+            new URL('http://example.com/events/ticket'),
+            {
+                method: 'POST',
+                headers: { authorization: `Bearer ${sessionToken}` },
+            }
         )
 
         expect(sseHandlers.accountsChanged).toEqual(expect.any(Function))
     })
 
-    it('can mock an SSE event payload and forward it to provider listeners', () => {
+    it('can mock an SSE event payload and forward it to provider listeners', async () => {
         const provider = new DappAsyncProvider(
             'http://example.com',
             sessionToken
         )
+        await waitForSocket()
         const accountsChangedListener = vi.fn()
 
         provider.on('accountsChanged', accountsChangedListener)
@@ -100,8 +126,9 @@ describe('DappAsyncProvider', () => {
         expect(response).toBe('response-value')
     })
 
-    it('closes and resets the connection on EventSource error', () => {
+    it('closes and resets the connection on EventSource error', async () => {
         new DappAsyncProvider('http://example.com', sessionToken)
+        await waitForSocket()
 
         expect(eventSourceCtor).toHaveBeenCalledTimes(1)
 
@@ -110,9 +137,11 @@ describe('DappAsyncProvider', () => {
         expect(eventSourceInstance.close).toHaveBeenCalledTimes(1)
 
         new DappAsyncProvider('http://example.com', sessionToken)
+        await vi.waitFor(() => {
+            expect(eventSourceCtor).toHaveBeenCalledTimes(2)
+        })
 
         // The prior error should have nulled shared connection, so this creates a new SSE.
-        expect(eventSourceCtor).toHaveBeenCalledTimes(2)
     })
 
     it('processes an auth success event', async () => {

@@ -13,6 +13,7 @@ import {
 } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import type { Logger } from 'pino'
+import { resolveSseTicket } from './sseTicket.js'
 
 export function jwtAuth(authService: AuthService, logger: Logger) {
     return async (req: Request, res: Response, next: NextFunction) => {
@@ -21,12 +22,13 @@ export function jwtAuth(authService: AuthService, logger: Logger) {
             return next()
         }
 
-        // Support both Authorization header and token query parameter (for EventSource)
+        // EventSource cannot set a header. It sends a short-lived ticket, not the session token.
+        const ticket =
+            typeof req.query.ticket === 'string' ? req.query.ticket : ''
+        const ticketToken = ticket ? resolveSseTicket(ticket) : undefined
         const authHeader =
             req.headers.authorization ||
-            (typeof req.query.token === 'string' && req.query.token
-                ? `Bearer ${req.query.token}`
-                : undefined)
+            (ticketToken ? `Bearer ${ticketToken}` : undefined)
 
         try {
             const context = await authService.verifyToken(authHeader)
