@@ -86,7 +86,11 @@ describe('DappAsyncProvider', () => {
             new URL('http://example.com/events/ticket'),
             {
                 method: 'POST',
-                headers: { authorization: `Bearer ${sessionToken}` },
+                headers: {
+                    authorization: `Bearer ${sessionToken}`,
+                    'content-type': 'application/json',
+                },
+                body: '{}',
             }
         )
 
@@ -136,12 +140,94 @@ describe('DappAsyncProvider', () => {
 
         expect(eventSourceInstance.close).toHaveBeenCalledTimes(1)
 
+        // The error cleared the shared connection, so this opens another one.
         new DappAsyncProvider('http://example.com', sessionToken)
         await vi.waitFor(() => {
             expect(eventSourceCtor).toHaveBeenCalledTimes(2)
         })
+    })
 
-        // The prior error should have nulled shared connection, so this creates a new SSE.
+    it('keeps the open stream when another provider uses the same session', async () => {
+        new DappAsyncProvider('http://example.com', sessionToken)
+        await waitForSocket()
+        const second = new DappAsyncProvider('http://example.com', sessionToken)
+
+        expect(vi.mocked(fetch)).toHaveBeenCalledTimes(1)
+        expect(eventSourceCtor).toHaveBeenCalledTimes(1)
+
+        const accountsChangedListener = vi.fn()
+        second.on('accountsChanged', accountsChangedListener)
+        emitSseEvent('accountsChanged', ['acc-1'])
+
+        expect(accountsChangedListener).toHaveBeenCalledWith('acc-1')
+    })
+
+    it('drops a ticket response after the session has changed', async () => {
+        const gateway = 'http://ticket-race.example'
+        const pending: Array<{
+            authorization: string
+            resolve: (value: {
+                ok: boolean
+                json: () => Promise<{ ticket: string }>
+            }) => void
+        }> = []
+        vi.stubGlobal(
+            'fetch',
+            vi.fn((url: URL | string, init?: RequestInit) => {
+                const href = String(url)
+                if (!href.startsWith(`${gateway}/events/ticket`)) {
+                    return Promise.resolve(new Response('{}', { status: 401 }))
+                }
+                const headers = init?.headers as
+                    | { authorization?: string }
+                    | undefined
+                return new Promise((resolve) => {
+                    pending.push({
+                        authorization: headers?.authorization ?? '',
+                        resolve,
+                    })
+                })
+            })
+        )
+
+        const provider = new DappAsyncProvider(gateway, 'token-a')
+        provider.request = vi.fn().mockResolvedValue({ session: { id: 's' } })
+        await vi.waitFor(() => expect(pending).toHaveLength(1))
+
+        window.dispatchEvent(
+            new MessageEvent('message', {
+                data: {
+                    type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
+                    token: 'token-b',
+                    sessionId: 'session-b',
+                },
+            })
+        )
+        await vi.waitFor(() => expect(pending).toHaveLength(2))
+
+        pending[1]?.resolve({
+            ok: true,
+            json: async () => ({ ticket: 'ticket-b' }),
+        })
+        await vi.waitFor(() => expect(eventSourceCtor).toHaveBeenCalledTimes(1))
+        expect(eventSourceCtor).toHaveBeenCalledWith(
+            'http://ticket-race.example/events?ticket=ticket-b'
+        )
+
+        let lateTicketRead = false
+        pending[0]?.resolve({
+            ok: true,
+            json: async () => {
+                lateTicketRead = true
+                return { ticket: 'ticket-a' }
+            },
+        })
+        await vi.waitFor(() => expect(lateTicketRead).toBe(true))
+        await Promise.resolve()
+
+        expect(eventSourceCtor).toHaveBeenCalledTimes(1)
+        expect(pending[0]?.authorization).toBe('Bearer token-a')
+        expect(pending[1]?.authorization).toBe('Bearer token-b')
     })
 
     it('processes an auth success event', async () => {

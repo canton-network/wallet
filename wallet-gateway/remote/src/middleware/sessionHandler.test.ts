@@ -93,6 +93,21 @@ describe('sessionHandler', () => {
         expect(status).not.toHaveBeenCalled()
     })
 
+    it('allows a bodyless POST when the path uses a wildcard allow list', async () => {
+        const req = makeReq({
+            baseUrl: '/api/v0/dapp',
+            body: undefined,
+        })
+        const res = makeRes()
+        const middleware = sessionHandler(store, allowedPaths, logger)
+
+        await middleware(req, res, next)
+
+        expect(withAuthContext).not.toHaveBeenCalled()
+        expect(next).toHaveBeenCalledOnce()
+        expect(status).not.toHaveBeenCalled()
+    })
+
     it('allows unauthenticated POST when the path uses a wildcard allow list', async () => {
         const req = makeReq({
             baseUrl: '/api/v0/dapp',
