@@ -8,6 +8,7 @@ import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-typ
 import {
     TransactionParser,
     TokenStandardTransactionInterfaces,
+    isContractEventsNotFoundError,
 } from '@canton-network/core-tx-parser'
 import type { Transaction } from '@canton-network/core-tx-parser'
 import type { LedgerProvider, Ops } from '@canton-network/core-provider-ledger'
@@ -246,15 +247,14 @@ export class TransactionHistoryService {
                 if (result.success) {
                     this.transactions.push(result.transaction)
                 } else {
-                    // TODO: we should probably only add the transaction to
-                    // unprocessed if we get the error
-                    // CONTRACT_EVENTS_NOT_FOUND, in other cases retrying
-                    // probably won't help.
-                    this.logger.info(
-                        { error: result.error },
-                        'parsing transaction failed'
-                    )
-                    newUnprocessed.push(result.jsTransaction)
+                    if (isContractEventsNotFoundError(result.error)) {
+                        newUnprocessed.push(result.jsTransaction)
+                    } else {
+                        this.logger.warn(
+                            { error: result.error },
+                            'parsing transaction failed'
+                        )
+                    }
                 }
             }
 

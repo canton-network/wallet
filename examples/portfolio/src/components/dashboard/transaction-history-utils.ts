@@ -185,7 +185,8 @@ function getTransactionType(
     }
     if (event.label.type === 'ExpireDust') return 'Dust expired'
 
-    if (event.label.type === 'Settlement') return 'Trade settled'
+    if (event.label.type === 'Settlement' || isAllocationSettlement(event))
+        return 'Trade settled'
     if (event.label.type === 'Unlock') return 'Funds unlocked'
     if (event.label.type === 'Lock') return 'Funds locked'
 
@@ -437,4 +438,20 @@ function getBalanceEffect(
     if (direction === 'received') return 'credit'
 
     return 'none'
+}
+
+const SETTLEMENT_CHOICES = new Set([
+    'SettlementFactory_SettleBatch',
+    'Allocation_Settle',
+    'Allocation_ExecuteTransfer',
+])
+
+function isAllocationSettlement(event: TransactionEvent) {
+    const name =
+        getTokenStandardChoiceName(event) === 'EventLog_HoldingsChange'
+            ? (event.label as { v2?: { parentChoice: string } }).v2
+                  ?.parentChoice
+            : getTokenStandardChoiceName(event)
+
+    return name !== undefined && SETTLEMENT_CHOICES.has(name)
 }
