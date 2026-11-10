@@ -4,7 +4,11 @@
 import * as path from 'path'
 import { getRepoRoot } from './lib/utils.js'
 import { installDPM } from './install-dpm.js'
-import { runDamlBuild, runDamlCodegen } from './lib/daml-codegen.js'
+import {
+    cleanGeneratedDamlJsPackages,
+    runDamlBuild,
+    runDamlCodegen,
+} from './lib/daml-codegen.js'
 
 const repoRoot = getRepoRoot()
 
@@ -20,6 +24,7 @@ async function main() {
     const { destDir, packageName, version } = CANTON_TRAFFIC_CREDIT_CONFIG
 
     runDamlBuild(destDir)
+    cleanGeneratedDamlJsPackages(destDir)
     runDamlCodegen({
         workingDir: destDir,
         darFileNames: [`${packageName}-${version}.dar`],

@@ -81,6 +81,38 @@ export function runDamlBuild(workingDir: string): void {
 }
 
 /**
+ * Remove the `@daml.js/*` packages a previous codegen run wrote into `outputRoot`.
+ *
+ * `dpm codegen-js` only overwrites the packages it emits, so a module that was
+ * renamed or dropped keeps its stale directory and is still picked up by
+ * consumers bundling the whole output. Projects whose sources live next to the
+ * generated packages cannot simply delete the output root, so only directories
+ * holding a generated package are removed.
+ */
+export function cleanGeneratedDamlJsPackages(outputRoot: string): void {
+    if (!fs.existsSync(outputRoot)) return
+
+    for (const entry of fs.readdirSync(outputRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue
+
+        const packageJsonPath = path.join(
+            outputRoot,
+            entry.name,
+            'package.json'
+        )
+        if (!fs.existsSync(packageJsonPath)) continue
+
+        const { name } = JSON.parse(fs.readFileSync(packageJsonPath, 'utf-8'))
+        if (typeof name === 'string' && name.startsWith('@daml.js/')) {
+            fs.rmSync(path.join(outputRoot, entry.name), {
+                recursive: true,
+                force: true,
+            })
+        }
+    }
+}
+
+/**
  * Run dpm codegen js for one or more DAR files
  * Generates JavaScript/TypeScript bindings for the DARs and all their dependencies
  */
