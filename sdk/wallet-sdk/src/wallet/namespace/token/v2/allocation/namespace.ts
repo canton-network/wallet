@@ -115,14 +115,11 @@ export class AllocationNamespace {
         const { logger } = this.sdkContext.commonCtx
 
         logger.debug(params)
-        const {
-            partyId,
-            settlement,
-            transferLegIds,
-            requireBothSides = true,
-            maxAttempts = 30,
-            retryIntervalMs = 1000,
-        } = params
+        const { partyId, settlement, transferLegIds } = params
+
+        const requireBothSides = params.requireBothSides ?? true
+        const maxAttempts = params.maxAttempts ?? 30
+        const retryIntervalMs = params.retryIntervalMs ?? 1000
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             const allocations = (await this.pending(partyId)).filter((a) =>
