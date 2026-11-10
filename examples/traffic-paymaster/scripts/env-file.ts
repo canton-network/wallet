@@ -35,7 +35,9 @@ export async function writeEnvVar(key: string, value: string): Promise<void> {
 export async function requireEnvVar(key: string): Promise<string> {
     const value = (await readAll())[key]
     if (!value) {
-        throw new Error(`Missing ${key} in ${envPath}. Run "pnpm initialize" first.`)
+        throw new Error(
+            `Missing ${key} in ${envPath}. Run "pnpm initialize" first.`
+        )
     }
     return value
 }

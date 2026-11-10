@@ -69,8 +69,7 @@ export function useConnect() {
         }
     }, [connected])
 
-    const primaryParty = accounts?.find((account) => account.primary)
-        ?.partyId
+    const primaryParty = accounts?.find((account) => account.primary)?.partyId
 
     return {
         connect,

@@ -64,7 +64,9 @@ async function main() {
             actAs: [paymaster],
         })
     }
-    console.log(`Selling traffic for Amulet at ${BYTES_PER_AMULET} bytes/Amulet`)
+    console.log(
+        `Selling traffic for Amulet at ${BYTES_PER_AMULET} bytes/Amulet`
+    )
 
     const preapprovalCommand = await admin.amulet.preapproval.command.create({
         parties: { receiver: paymaster },
@@ -78,7 +80,9 @@ async function main() {
 
     await writeEnvVar('VITE_PAYMASTER_PARTY_ID', paymaster)
     console.log('Wrote VITE_PAYMASTER_PARTY_ID to .env.local')
-    console.log('Done. Next: `pnpm serve-paymaster`, then `pnpm scan-topup`, then `pnpm dev`.')
+    console.log(
+        'Done. Next: `pnpm serve-paymaster`, then `pnpm scan-topup`, then `pnpm dev`.'
+    )
 }
 
 main().catch((error: unknown) => {

@@ -92,11 +92,12 @@ example relies on:
 - `topUpTraffic` — applies an off-ledger balance delta (admin-only; used by `scan-topup` / `topup`).
 
 The credit itself is published through the
-[`TrafficCreditIssuer`](../../damljs/canton-traffic-credit/canton-tea/Canton/Traffic/Credit.daml)
-interface (`PublishCredit`), the contract between Canton's TEA and the selling application.
+[`TrafficCreditReporter`](../../damljs/canton-traffic-credit/canton-tea/Canton/Api/Traffic/CreditV1.daml)
+interface (`TrafficCreditReporter_PublishCredit`), the contract between Canton's TEA and the
+selling application.
 
 We propose a ready-made Daml model,
 [`traffic-purchase-models`](../../damljs/traffic-purchase-models/daml/Tea/TrafficPurchase.daml)
 (`TrafficPurchaser` + `ConversionRate`), and this example uses it. Wallets are free to implement
-their own model instead — as long as it exposes the `TrafficCreditIssuer` interface,
+their own model instead — as long as it exposes the `TrafficCreditReporter` interface,
 `purchaseTraffic` works against it unchanged.

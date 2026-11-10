@@ -10,7 +10,10 @@ import type {
 } from '@canton-network/core-traffic-purchase'
 import { useConnect } from './hooks/useConnect'
 import { useWalletSdk } from './hooks/useWalletSdk'
-import { createPaymasterClient, fetchTrafficBalance } from './lib/paymasterClient'
+import {
+    createPaymasterClient,
+    fetchTrafficBalance,
+} from './lib/paymasterClient'
 
 /** The token registry (asset/transfer resolution) -- distinct from the traffic registry below. */
 const tokenRegistryUrl = localNetStaticConfig.LOCALNET_REGISTRY_API_URL
@@ -24,7 +27,8 @@ function App() {
     const [trafficRegistryUrl, setTrafficRegistryUrl] = useState(
         import.meta.env.VITE_PAYMASTER_API_URL ?? ''
     )
-    const [purchaser, setPurchaser] = useState<TrafficPurchaserWithDisclosures>()
+    const [purchaser, setPurchaser] =
+        useState<TrafficPurchaserWithDisclosures>()
     const [fetchingPurchaser, setFetchingPurchaser] = useState(false)
     const [rate, setRate] = useState<ConversionRateWithDisclosures>()
     const [fetchingRate, setFetchingRate] = useState(false)
@@ -40,7 +44,9 @@ function App() {
         setFetchingPurchaser(true)
         try {
             setPurchaser(
-                await createPaymasterClient(trafficRegistryUrl).getTrafficPurchaser()
+                await createPaymasterClient(
+                    trafficRegistryUrl
+                ).getTrafficPurchaser()
             )
         } catch (err) {
             setError(err instanceof Error ? err.message : String(err))
@@ -56,7 +62,9 @@ function App() {
         try {
             const amulet = await sdk.asset.find('Amulet', tokenRegistryUrl)
             setRate(
-                await createPaymasterClient(trafficRegistryUrl).getConversionRate({
+                await createPaymasterClient(
+                    trafficRegistryUrl
+                ).getConversionRate({
                     admin: amulet.admin,
                     id: amulet.id,
                 })
@@ -178,9 +186,10 @@ function App() {
                     />
                 </label>
                 <p className="muted">
-                    The paymaster's off-ledger API, served by <code>serve-paymaster</code>.
-                    Pointing this at a different paymaster doesn't change anything else
-                    running -- it only changes who this page asks.
+                    The paymaster's off-ledger API, served by{' '}
+                    <code>serve-paymaster</code>. Pointing this at a different
+                    paymaster doesn't change anything else running -- it only
+                    changes who this page asks.
                 </p>
                 <button
                     onClick={fetchPurchaser}
@@ -194,7 +203,6 @@ function App() {
                 >
                     {fetchingRate ? 'Fetching…' : 'Fetch ConversionRate'}
                 </button>
-
                 {purchaser && (
                     <>
                         <h3>TrafficPurchaser</h3>
@@ -207,10 +215,15 @@ function App() {
                             <dd>{purchaser.paymasterReceiver}</dd>
                         </dl>
                         <p className="muted">Disclosed contracts</p>
-                        <pre>{JSON.stringify(purchaser.disclosedContracts, null, 2)}</pre>
+                        <pre>
+                            {JSON.stringify(
+                                purchaser.disclosedContracts,
+                                null,
+                                2
+                            )}
+                        </pre>
                     </>
                 )}
-
                 {rate && (
                     <>
                         <h3>ConversionRate</h3>
@@ -219,7 +232,8 @@ function App() {
                             <dd>{rate.conversionRateId}</dd>
                             <dt>Instrument</dt>
                             <dd>
-                                {rate.instrumentId.id} / {rate.instrumentId.admin}
+                                {rate.instrumentId.id} /{' '}
+                                {rate.instrumentId.admin}
                             </dd>
                             <dt>Rate</dt>
                             <dd>{rate.conversionRate} bytes per unit</dd>
@@ -237,7 +251,9 @@ function App() {
                             )}
                         </dl>
                         <p className="muted">Disclosed contracts</p>
-                        <pre>{JSON.stringify(rate.disclosedContracts, null, 2)}</pre>
+                        <pre>
+                            {JSON.stringify(rate.disclosedContracts, null, 2)}
+                        </pre>
                     </>
                 )}
             </section>
@@ -248,7 +264,10 @@ function App() {
                     <dt>Balance</dt>
                     <dd>{balance ?? '—'} bytes</dd>
                 </dl>
-                <button onClick={refreshBalance} disabled={!trafficRegistryUrl || !primaryParty}>
+                <button
+                    onClick={refreshBalance}
+                    disabled={!trafficRegistryUrl || !primaryParty}
+                >
                     Refresh
                 </button>
             </section>
@@ -258,14 +277,20 @@ function App() {
                 <p className="muted">
                     Paid in Amulet. If the purchase fails with "Sender has no
                     holdings", your party has no Amulet yet -- fund it with the
-                    <code> pnpm tap-amulet -- &lt;partyId&gt; [amount]</code>{' '}
+                    <code>
+                        {' '}
+                        pnpm tap-amulet -- &lt;partyId&gt; [amount]
+                    </code>{' '}
                     script first.
                 </p>
                 <dl>
                     <dt>Amulet balance</dt>
                     <dd>{amuletBalance ?? '—'} Amulet</dd>
                 </dl>
-                <button onClick={refreshAmulet} disabled={!sdk || !primaryParty}>
+                <button
+                    onClick={refreshAmulet}
+                    disabled={!sdk || !primaryParty}
+                >
                     Refresh Amulet
                 </button>
                 <br />
@@ -282,7 +307,10 @@ function App() {
                 <button
                     onClick={purchase}
                     disabled={
-                        !sdk || !primaryParty || !trafficRegistryUrl || purchasing
+                        !sdk ||
+                        !primaryParty ||
+                        !trafficRegistryUrl ||
+                        purchasing
                     }
                 >
                     {purchasing ? 'Purchasing…' : 'Purchase'}
