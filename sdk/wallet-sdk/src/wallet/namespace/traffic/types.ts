@@ -106,11 +106,11 @@ export type PurchaseTrafficParams = {
     /** Base URL of the registry's off-ledger API, e.g. scan's. */
     registryUrl: URLInput
     /**
-     * The TEA account to credit, as the model's `AccountId`.
+     * The TEA account to credit.
      *
      * Need not correspond to `purchaser`: a wallet provider may buy on a user's
-     * behalf. Non-empty and at most 255 UTF-16 code units, which the model's
-     * `AccountId` enforces too. As of Canton 3.5 this is a party id
+     * behalf. At most 255 characters and made of non-empty `/`-separated
+     * segments, which the model re-validates. As of Canton 3.5 this is a party id
      * (`hint::fingerprint`), which is why `topUpTraffic` and `getTraffic` take
      * the same value; Canton intends to decouple the two, so it is a plain
      * string here, not a `PartyId`.
