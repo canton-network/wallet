@@ -57,6 +57,7 @@ export function ActionRequiredDialog({
     const createAllocationMutation = useCreateAllocation()
     const withdrawAllocationMutation = useWithdrawAllocation()
     const allocationRequestV2 = useAllocationRequestV2Actions()
+    const withdrawAllocationV2 = useWithdrawAllocationV2()
     const [allocationState, setAllocationState] =
         useState<AllocationDialogState>(EMPTY_ALLOCATION_STATE)
     const isLoading =
@@ -64,7 +65,8 @@ export function ActionRequiredDialog({
         createAllocationMutation.isPending ||
         withdrawAllocationMutation.isPending ||
         allocationRequestV2.accept.isPending ||
-        allocationRequestV2.reject.isPending
+        allocationRequestV2.reject.isPending ||
+        withdrawAllocationV2.isPending
     const currentAllocationState =
         allocationState.itemContractId === item?.contractId
             ? allocationState
@@ -75,6 +77,7 @@ export function ActionRequiredDialog({
             setAllocationState(EMPTY_ALLOCATION_STATE)
             allocationRequestV2.accept.reset()
             allocationRequestV2.reject.reset()
+            withdrawAllocationV2.reset()
             onClose()
         }
     }
@@ -219,8 +222,6 @@ export function ActionRequiredDialog({
                 ),
         })
     }
-
-    const withdrawAllocationV2 = useWithdrawAllocationV2()
 
     return (
         <Dialog
