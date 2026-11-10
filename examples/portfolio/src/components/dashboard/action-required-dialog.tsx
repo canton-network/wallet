@@ -27,6 +27,8 @@ import {
 } from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
 import { useAllocationRequestV2Actions } from '@hooks/useAllocationRequestV2Actions'
+import { AllocationV2DialogContent } from './allocation-v2-dialog-content'
+import { useWithdrawAllocationV2 } from '@hooks/useWithdrawAllocationV2'
 
 interface ActionRequiredDialogProps {
     item: ActionItem | null
@@ -218,6 +220,8 @@ export function ActionRequiredDialog({
         })
     }
 
+    const withdrawAllocationV2 = useWithdrawAllocationV2()
+
     return (
         <Dialog
             open={Boolean(item)}
@@ -285,6 +289,23 @@ export function ActionRequiredDialog({
                         }
                         onWithdrawAllocation={(leg, contractId) =>
                             handleWithdrawAllocation(item, leg, contractId)
+                        }
+                    />
+                ) : item?.kind === 'allocation-v2' ? (
+                    <AllocationV2DialogContent
+                        item={item}
+                        isLoading={isLoading}
+                        error={withdrawAllocationV2.error?.message ?? null}
+                        onClose={handleClose}
+                        onWithdraw={() =>
+                            withdrawAllocationV2.mutate(item, {
+                                onSuccess: () => {
+                                    toast.success(
+                                        'Allocation withdrawn, funds released'
+                                    )
+                                    handleClose()
+                                },
+                            })
                         }
                     />
                 ) : item?.kind === 'allocation-request-v2' ? (

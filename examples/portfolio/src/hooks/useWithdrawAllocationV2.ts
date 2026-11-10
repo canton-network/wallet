@@ -11,7 +11,7 @@ import { queryKeys } from './query-keys'
 import type { AllocationV2ActionItem } from '@components/types'
 import { getAllocationActions } from '@utils/v2-allocation-items'
 
-export const useWithdrawAllocation = () => {
+export const useWithdrawAllocationV2 = () => {
     const { sdk } = useWalletSdk()
     const registryUrls = useRegistryUrls()
     const { reachableRegistryUrls } = useReachableRegistryUrls()
