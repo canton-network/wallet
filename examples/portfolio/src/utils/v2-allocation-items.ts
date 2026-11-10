@@ -265,7 +265,7 @@ export type AllocationAction = 'Withdraw'
 export const getAllocationActions = (item: AllocationV2ActionItem) =>
     getActions<AllocationAction>(
         item.availableActions,
-        { AA: 'Withdraw' },
+        { AA_Withdraw: 'Withdraw' },
         ['Withdraw'],
         item.currentPartyId
     )
