@@ -5,6 +5,7 @@ import {
     HashingSchemeVersion,
     PreparedTransaction,
     TopologyTransaction,
+    UntypedVersionedMessage,
     decodeUnknownFields,
 } from '@canton-network/core-ledger-proto'
 import {
@@ -65,16 +66,30 @@ export const decodePreparedTransaction = (
 /**
  * Decodes a base64 encoded topology transaction into a well-typed data model, generated directly from Protobuf definitions.
  *
- * @param topologyTx - The topology transaction in base64 format
+ * @param topologyTx - The topology transaction in base64 format, as the Ledger API returns it:
+ *   an `UntypedVersionedMessage` that wraps the serialized `TopologyTransaction` with its proto version
  * @param options - Decode options, e.g. `{ readUnknownField: 'throw' }` to reject unknown fields
  * @returns The decoded topology transaction
+ * @throws if the transaction is not wrapped or has a proto version other than 30
  */
 export const decodeTopologyTransaction = (
     topologyTx: string,
     options?: DecodeOptions
 ): TopologyTransaction => {
-    const bytes = fromBase64(topologyTx)
-    return TopologyTransaction.fromBinary(bytes, toReadOptions(options))
+    const readOptions = toReadOptions(options)
+    const { wrapper, version } = UntypedVersionedMessage.fromBinary(
+        fromBase64(topologyTx),
+        readOptions
+    )
+    if (version !== 30) {
+        throw new Error(
+            `Unsupported topology transaction proto version ${version}, expected 30`
+        )
+    }
+    if (wrapper.oneofKind !== 'data') {
+        throw new Error('Topology transaction without data')
+    }
+    return TopologyTransaction.fromBinary(wrapper.data, readOptions)
 }
 
 /**

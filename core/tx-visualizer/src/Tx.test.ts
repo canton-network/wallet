@@ -4,8 +4,11 @@
 import { expect, test, it, describe } from 'vitest'
 import {
     DamlTransaction,
+    Enums_TopologyChangeOp,
     HashingSchemeVersion,
     PreparedTransaction,
+    TopologyTransaction,
+    UntypedVersionedMessage,
 } from '@canton-network/core-ledger-proto'
 import {
     computeMultiHashForTopology,
@@ -97,15 +100,17 @@ test('hash from preparedTx ledger api call should match calculated hash', async 
     expect(hashResultHex).toBe(preparedTxHashFromLAPIHex)
 })
 
+// UntypedVersionedMessages with proto version 30, as the Ledger API returns them
+const namespaceDelegationBase64 =
+    'CosBCAEQARqEAQqBAQpEMTIyMDEyMzA4N2U2YmY2NmQyMjVkMDQ3ZTZhZjhiMDk0NGJjNTBjYzQ3MGNiNDZhZmQ5NTE1YTU1OGJmNTU2MDU0NDESNxAEGiwwKjAFBgMrZXADIQD6i6Mh8nmGPt1X6XoI8ZfRh2D3eozd7HgsY/abhbRNeyoDAQUEMAEiABAe'
+
+const partyToKeyMappingBase64 =
+    'CpMBCAEQARqMAYIBiAEKS2FsaWNlOjoxMjIwNWE1MGViOWI5ZDY0YmIzMGFjNDEyNWFmYTFhZWVhN2JjYWU1MTc5MmFjMmQxNzRhNjEzMmNlZWM5MjkwZDA2MhgBIjcQBBosMCowBQYDK2VwAyEAA5ufeUjSCCrbYVs4FipJRBhJQIFYKL++qE2t8lEccgoqAwEFBDABEB4='
+
+const partyToParticipantMappingBase64 =
+    'CrABCAEQARqpAUqmAQpLYWxpY2U6OjEyMjA1YTUwZWI5YjlkNjRiYjMwYWM0MTI1YWZhMWFlZWE3YmNhZTUxNzkyYWMyZDE3NGE2MTMyY2VlYzkyOTBkMDYyEAEaVQpRcGFydGljaXBhbnQ6OjEyMjAyZTk1ZDJmNjFlZmU3YjIzMmI2ZDE2M2ZlMDA2MTg4YWYzYjZiMDU4ODViZDU5ZDQ3ZTUyZTE3NjUwMWI1NmNkEAIQHg=='
+
 test('decode a base 64 encoded topology tx', async () => {
-    const namespaceDelegationBase64 =
-        'CosBCAEQARqEAQqBAQpEMTIyMDEyMzA4N2U2YmY2NmQyMjVkMDQ3ZTZhZjhiMDk0NGJjNTBjYzQ3MGNiNDZhZmQ5NTE1YTU1OGJmNTU2MDU0NDESNxAEGiwwKjAFBgMrZXADIQD6i6Mh8nmGPt1X6XoI8ZfRh2D3eozd7HgsY/abhbRNeyoDAQUEMAEiABAe'
-
-    const partyToKeyMappingBase64 =
-        'CpMBCAEQARqMAYIBiAEKS2FsaWNlOjoxMjIwNWE1MGViOWI5ZDY0YmIzMGFjNDEyNWFmYTFhZWVhN2JjYWU1MTc5MmFjMmQxNzRhNjEzMmNlZWM5MjkwZDA2MhgBIjcQBBosMCowBQYDK2VwAyEAA5ufeUjSCCrbYVs4FipJRBhJQIFYKL++qE2t8lEccgoqAwEFBDABEB4='
-
-    const partyToParticipantMappingBase64 =
-        'CrABCAEQARqpAUqmAQpLYWxpY2U6OjEyMjA1YTUwZWI5YjlkNjRiYjMwYWM0MTI1YWZhMWFlZWE3YmNhZTUxNzkyYWMyZDE3NGE2MTMyY2VlYzkyOTBkMDYyEAEaVQpRcGFydGljaXBhbnQ6OjEyMjAyZTk1ZDJmNjFlZmU3YjIzMmI2ZDE2M2ZlMDA2MTg4YWYzYjZiMDU4ODViZDU5ZDQ3ZTUyZTE3NjUwMWI1NmNkEAIQHg=='
     const decodedNameSpaceDelegation = decodeTopologyTransaction(
         namespaceDelegationBase64
     )
@@ -179,6 +184,40 @@ test('decode a base 64 encoded topology tx', async () => {
     expect(multiHashBase64Encoded).toEqual(
         'EiBefjKeCdX5CEnZ/m1dFoOggc1HUca747UYUDkbKjciDA=='
     )
+})
+
+describe('decodeTopologyTransaction', () => {
+    it('decodes the wrapped v30 transaction', () => {
+        const decoded = decodeTopologyTransaction(
+            partyToParticipantMappingBase64
+        )
+
+        expect(decoded.operation).toBe(Enums_TopologyChangeOp.ADD_REPLACE)
+        expect(decoded.serial).toBe(1)
+    })
+
+    it('rejects other proto versions', () => {
+        const { wrapper } = UntypedVersionedMessage.fromBinary(
+            fromBase64(partyToParticipantMappingBase64)
+        )
+        const v29 = toBase64(
+            UntypedVersionedMessage.toBinary({ wrapper, version: 29 })
+        )
+
+        expect(() => decodeTopologyTransaction(v29)).toThrow(
+            'Unsupported topology transaction proto version 29'
+        )
+    })
+
+    it('rejects an unwrapped transaction', () => {
+        const unwrapped = toBase64(
+            TopologyTransaction.toBinary(
+                decodeTopologyTransaction(partyToParticipantMappingBase64)
+            )
+        )
+
+        expect(() => decodeTopologyTransaction(unwrapped)).toThrow()
+    })
 })
 
 test(`should throw an error when converting invalid base64 to hex`, async () => {
