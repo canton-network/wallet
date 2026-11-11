@@ -145,7 +145,11 @@ describe('allocation namespace', () => {
     it('waits for the receiver side when only the sender side is visible', async () => {
         vi.useFakeTimers()
         try {
-            const settlement = { id: 'settle-1', cid: null }
+            const settlement = {
+                id: 'settle-1',
+                cid: null,
+                executors: ['executor::123'],
+            }
             const senderAllocation = {
                 contractId: 'sender-allocation',
                 interfaceViewValue: {
