@@ -8,7 +8,17 @@ import path from 'path'
 import { getRepoRoot, SUPPORTED_VERSIONS, type Network } from './lib/utils.js'
 
 const rootDir = getRepoRoot()
-const LOCALNET_DIR = path.join(rootDir, '.localnet/docker-compose/localnet')
+// LocalNet normally runs the splice-published images for SUPPORTED_VERSIONS'
+// splice version. To run against a locally-built splice (e.g. a `main` snapshot
+// bundling a Canton version no splice *release* ships yet, like Canton 3.7),
+// point these at the local build:
+//   LOCALNET_COMPOSE_DIR  the splice checkout's cluster/compose/localnet dir
+//   SPLICE_IMAGE_REPO     "" for local images (compose.env otherwise defaults
+//                         to the public ghcr prefix)
+//   SPLICE_IMAGE_TAG      the local image tag, e.g. 0.10.0-<user>-dirty
+const LOCALNET_DIR =
+    process.env.LOCALNET_COMPOSE_DIR ??
+    path.join(rootDir, '.localnet/docker-compose/localnet')
 const GENERATED_COMPOSE_OVERRIDE = path.join(
     rootDir,
     '.temp/start-localnet.override.yaml'
@@ -101,7 +111,12 @@ function compose(
         encoding: 'utf8',
         env: {
             ...process.env,
-            IMAGE_TAG: SUPPORTED_VERSIONS[network].splice.version,
+            IMAGE_TAG:
+                process.env.SPLICE_IMAGE_TAG ??
+                SUPPORTED_VERSIONS[network].splice.version,
+            ...(process.env.SPLICE_IMAGE_REPO !== undefined
+                ? { IMAGE_REPO: process.env.SPLICE_IMAGE_REPO }
+                : {}),
         },
     })
 }
