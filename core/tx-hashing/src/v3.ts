@@ -85,7 +85,6 @@ function encodeExercise(
 ): Uint8Array {
     checkLfVersion(exercise.lfVersion, `${at}.lfVersion`)
     checkKeyUse(exercise, at)
-    // Canton 3.7 adds them to exercise nodes, but the scheme does not hash them
     if (exercise.externalCallResults.length > 0) {
         throw new TxHashingError(
             'FIELD_NOT_COVERED_BY_SCHEME',

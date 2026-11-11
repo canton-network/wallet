@@ -18,8 +18,7 @@ const repoRoot = getRepoRoot()
 
 const outdir = `${repoRoot}/core/ledger-proto/src/_proto`
 
-// The newest supported Canton version: protobuf stays wire compatible, and its protos are a
-// superset of older ones (e.g. Canton 3.7 adds v31 topology transactions next to v30).
+// The newest supported Canton version, as its protos are a superset of older ones
 const version = Object.values(SUPPORTED_VERSIONS)
     .map((config) => config.canton.version)
     .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))

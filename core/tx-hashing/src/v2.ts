@@ -168,7 +168,6 @@ function checkNoKey(node: Exercise | Fetch, at: string): void {
     if (node.byKey) throw notCovered('byKey = true', `${at}.byKey`)
 }
 
-// Canton 3.7 adds them to exercise nodes, but the scheme does not hash them
 function checkNoExternalCallResults(exercise: Exercise, at: string): void {
     if (exercise.externalCallResults.length > 0) {
         throw notCovered('external call results', `${at}.externalCallResults`)

@@ -4,10 +4,10 @@
 import {
     HashingSchemeVersion,
     PreparedTransaction,
-    TopologyTransaction,
     UntypedVersionedMessage,
     decodeUnknownFields,
-    v31,
+    v30_topology,
+    v31_topology,
 } from '@canton-network/core-ledger-proto'
 import {
     computePreparedTransactionHash,
@@ -64,16 +64,10 @@ export const decodePreparedTransaction = (
     return PreparedTransaction.fromBinary(bytes, toReadOptions(options))
 }
 
-/**
- * A decoded topology transaction, tagged with its proto version.
- *
- * Canton 3.7 (protocol version 37) adds v31, which differs from v30 only in `PartyToParticipant`:
- * each hosting participant has a hosting `state` instead of the `onboarding` flag, and
- * `partySigningKeys` moved from field 6 to 4.
- */
+/** A decoded topology transaction, tagged with its proto version */
 export type VersionedTopologyTransaction =
-    | { version: 30; transaction: TopologyTransaction }
-    | { version: 31; transaction: v31.TopologyTransaction }
+    | { version: 30; transaction: v30_topology.TopologyTransaction }
+    | { version: 31; transaction: v31_topology.TopologyTransaction }
 
 /**
  * Decodes a base64 encoded topology transaction into a well-typed data model, generated directly from Protobuf definitions.
@@ -93,13 +87,11 @@ export const decodeTopologyTransaction = (
         fromBase64(topologyTx),
         readOptions
     )
-    // Never decode by the wrong version: v31 parses as v30, but loses the
-    // party signing keys and the hosting states
     switch (message.version) {
         case 30:
             return {
                 version: 30,
-                transaction: TopologyTransaction.fromBinary(
+                transaction: v30_topology.TopologyTransaction.fromBinary(
                     dataOf(message),
                     readOptions
                 ),
@@ -107,7 +99,7 @@ export const decodeTopologyTransaction = (
         case 31:
             return {
                 version: 31,
-                transaction: v31.TopologyTransaction.fromBinary(
+                transaction: v31_topology.TopologyTransaction.fromBinary(
                     dataOf(message),
                     readOptions
                 ),

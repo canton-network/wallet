@@ -4,13 +4,11 @@
 import { expect, test, it, describe } from 'vitest'
 import {
     DamlTransaction,
-    Enums_ParticipantPermission,
-    Enums_TopologyChangeOp,
     HashingSchemeVersion,
     PreparedTransaction,
-    TopologyTransaction,
     UntypedVersionedMessage,
-    v31,
+    v30_topology,
+    v31_topology,
 } from '@canton-network/core-ledger-proto'
 import {
     computeMultiHashForTopology,
@@ -211,8 +209,8 @@ describe('decodeTopologyTransaction', () => {
 
     // No Canton 3.7 participant in the tests: built with the v31 bindings, as
     // GenerateExternalPartyTopology returns it on protocol version 37
-    const v31PartyToParticipant = v31.TopologyTransaction.toBinary({
-        operation: Enums_TopologyChangeOp.ADD_REPLACE,
+    const v31PartyToParticipant = v31_topology.TopologyTransaction.toBinary({
+        operation: v30_topology.Enums_TopologyChangeOp.ADD_REPLACE,
         serial: 1,
         mapping: {
             mapping: {
@@ -224,15 +222,18 @@ describe('decodeTopologyTransaction', () => {
                         {
                             participantUid: 'participant1::1220aa',
                             permission:
-                                Enums_ParticipantPermission.CONFIRMATION,
-                            state: v31
+                                v30_topology.Enums_ParticipantPermission
+                                    .CONFIRMATION,
+                            state: v31_topology
                                 .PartyToParticipant_HostingParticipant_HostingState
                                 .ACTIVE,
                         },
                         {
                             participantUid: 'participant2::1220bb',
-                            permission: Enums_ParticipantPermission.OBSERVATION,
-                            state: v31
+                            permission:
+                                v30_topology.Enums_ParticipantPermission
+                                    .OBSERVATION,
+                            state: v31_topology
                                 .PartyToParticipant_HostingParticipant_HostingState
                                 .ONBOARDING,
                         },
@@ -250,7 +251,7 @@ describe('decodeTopologyTransaction', () => {
 
         expect(decoded.version).toBe(30)
         expect(decoded.transaction.operation).toBe(
-            Enums_TopologyChangeOp.ADD_REPLACE
+            v30_topology.Enums_TopologyChangeOp.ADD_REPLACE
         )
         expect(decoded.transaction.serial).toBe(1)
     })
@@ -270,8 +271,10 @@ describe('decodeTopologyTransaction', () => {
         expect(
             mapping.partyToParticipant.participants.map((p) => p.state)
         ).toEqual([
-            v31.PartyToParticipant_HostingParticipant_HostingState.ACTIVE,
-            v31.PartyToParticipant_HostingParticipant_HostingState.ONBOARDING,
+            v31_topology.PartyToParticipant_HostingParticipant_HostingState
+                .ACTIVE,
+            v31_topology.PartyToParticipant_HostingParticipant_HostingState
+                .ONBOARDING,
         ])
         expect(mapping.partyToParticipant.partySigningKeys).toEqual({
             keys: [signingKey()],
@@ -280,7 +283,7 @@ describe('decodeTopologyTransaction', () => {
     })
 
     it('would lose the signing keys if v31 were decoded as v30', () => {
-        const { mapping } = TopologyTransaction.fromBinary(
+        const { mapping } = v30_topology.TopologyTransaction.fromBinary(
             v31PartyToParticipant
         ).mapping!
 
@@ -337,7 +340,8 @@ describe('decodeTopologyTransaction', () => {
             expect(
                 mapping.partyToParticipant.participants.map((p) => p.state)
             ).toEqual([
-                v31.PartyToParticipant_HostingParticipant_HostingState.ACTIVE,
+                v31_topology.PartyToParticipant_HostingParticipant_HostingState
+                    .ACTIVE,
             ])
             expect(mapping.partyToParticipant.partySigningKeys?.keys).toEqual([
                 signingKey(),
@@ -370,7 +374,7 @@ describe('decodeTopologyTransaction', () => {
 
     it('rejects an unwrapped transaction', () => {
         const unwrapped = toBase64(
-            TopologyTransaction.toBinary(
+            v30_topology.TopologyTransaction.toBinary(
                 decodeV30(partyToParticipantMappingBase64)
             )
         )
