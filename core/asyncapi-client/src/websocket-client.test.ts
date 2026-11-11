@@ -23,9 +23,9 @@ const mockEventFilterBySetup = vi.hoisted(() =>
 )
 vi.mock('@canton-network/core-ledger-client-types', () => ({
     asyncApiByVersion: {
-        '3.5': { CHANNELS: MOCK_CHANNELS },
+        '3.6': { CHANNELS: MOCK_CHANNELS },
     },
-    supportedAsyncApiVersions: ['3.5'],
+    supportedAsyncApiVersions: ['3.6'],
     EventFilterBySetup: mockEventFilterBySetup,
 }))
 
@@ -59,7 +59,7 @@ class MockWebSocket {
 
 let lastWsInstance: MockWebSocket
 
-const makeClient = (version?: '3.5') => {
+const makeClient = (version?: '3.6') => {
     const accessTokenProvider = {
         getAccessToken: vi.fn().mockResolvedValue('test-token'),
         getAuthContext: vi.fn().mockResolvedValue(''),
