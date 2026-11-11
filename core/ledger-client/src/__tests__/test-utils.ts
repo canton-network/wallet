@@ -19,7 +19,7 @@ export function createAccessTokenProvider(token?: string): AccessTokenProvider {
 
 export function createLedgerClient(
     accessTokenProvider = createAccessTokenProvider('ledger-token'),
-    version?: '3.5'
+    version?: '3.6'
 ) {
     return new LedgerClient({
         baseUrl: BASE_URL,

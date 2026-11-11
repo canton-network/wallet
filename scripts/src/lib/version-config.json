@@ -3,29 +3,29 @@
     "SUPPORTED_VERSIONS": {
         "devnet": {
             "canton": {
-                "version": "3.6.0-snapshot.20261001.20345.0.v85a9270a",
-                "hash": "d95001934e7fa3339df8db3c0be2b1384a721abf4ad1029b74bde1d20b46e8c4"
+                "version": "3.7.2",
+                "hash": "dc90cb3497f8cddc86298e1d8c6f1c2a5c4bf6c9e4b35b2c641f0d94fa732092"
             },
             "splice": {
-                "version": "0.8.4",
+                "version": "0.10.1",
                 "hashes": {
-                    "localnet": "7034340d014e8cc0d47205239da99558afb26d86c20d0bfbd9bf827143298dc2",
-                    "splice": "587db617fdff269ae321ea810bb9d391178ee3dc0a77cc9dea61c05159b5be3d",
-                    "spliceSpec": "e4c35d076a9241cba499b5ee5037ecdd0845ea4a547fafb7e7bdbf2194eb59d1"
+                    "localnet": "bca75c8f573cc94dd0d5e5464321780c65c5498d7ceac96b6233b60f1919b9ef",
+                    "splice": "b69c78c79847e134de6c95a4a5d7ff9b33eb6e47d48d5f32e288d8f687da4d86",
+                    "spliceSpec": "d342f5e49a57aa3d810eeeca28fd6cfcb7ecaf7b405e8fc317c0a9b5a8709361"
                 }
             }
         },
         "mainnet": {
             "canton": {
-                "version": "3.5.10",
-                "hash": "ec298b4c971a47c1c0e2ec54763b3c28f49815d29ffbba45b1a745633b7c24d8"
+                "version": "3.6.4",
+                "hash": "5441af83237d891e326dca825527ac0a076a848fbfdcb142d69c29e7010fa8f9"
             },
             "splice": {
-                "version": "0.6.14",
+                "version": "0.9.4",
                 "hashes": {
-                    "localnet": "ee0813d6ba84f98ed990bdb9e0e8025c8c7976230d34c43a242fbd865a89034d",
-                    "splice": "7dd328227877eb74b0ce74bc08a4e1106bcc7b18ef9574abd4a8102d391c5ea9",
-                    "spliceSpec": "7d48a94149c12ab91fcf4105b4c836b0697dc2b788bd3a4b470903fa2560217b"
+                    "localnet": "26bb61ffd76d8e3db37a310df5b70252274d35edb324d24d2b0db66388fb6170",
+                    "splice": "61fb68d090d619edab5acab9af0558cc7c410095b3ed3633b26f307eafc888a8",
+                    "spliceSpec": "837570b45623eb03e05778ef6d3993a147b8d9391303f6d7f859752d06883423"
                 }
             }
         }
