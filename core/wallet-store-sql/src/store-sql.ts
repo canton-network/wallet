@@ -1016,44 +1016,63 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         const { cursor, limit } = options ?? {}
         const lim = limit ? Math.min(limit, 100) : 100
 
-        let query = this.db
-            .selectFrom('transactions')
-            .selectAll()
-            .where((eb) =>
-                eb.and([
-                    eb('userId', '=', userId),
-                    eb('networkId', '=', network.id),
-                ])
-            )
-            .orderBy(sql`${sql.ref('createdAt')} desc nulls last`)
-            .orderBy('id', 'desc')
-            .limit(lim + 1)
+        // Keyset pagination over (createdAt desc nulls last, id desc). Each
+        // branch below is a plain range on the transactions list index, so a
+        // page costs the same at any depth instead of scanning and sorting
+        // every transaction of the user.
+        const ordered = () =>
+            this.db
+                .selectFrom('transactions')
+                .selectAll()
+                .where((eb) =>
+                    eb.and([
+                        eb('userId', '=', userId),
+                        eb('networkId', '=', network.id),
+                    ])
+                )
+                .orderBy(sql`${sql.ref('createdAt')} desc nulls last`)
+                .orderBy('id', 'desc')
 
-        if (cursor) {
+        const untimestamped = () => ordered().where('createdAt', 'is', null)
+
+        let rows: DB['transactions'][]
+        if (!cursor) {
+            rows = await ordered()
+                .limit(lim + 1)
+                .execute()
+        } else {
             const split = cursor.split('::')
             const dateString = split[0] === 'null' ? null : split[0]
-            const cursorId = split[1]
+            const cursorId = split[1] ?? ''
 
-            query = query.where((eb) => {
-                if (dateString === null) {
-                    return eb.and([
-                        eb('createdAt', 'is', null),
-                        eb('id', '<', cursorId),
-                    ])
+            if (dateString === null) {
+                rows = await untimestamped()
+                    .where('id', '<', cursorId)
+                    .limit(lim + 1)
+                    .execute()
+            } else {
+                // Rows with a timestamp strictly after the cursor position,
+                // then (once those run out) the rows without a timestamp.
+                rows = await ordered()
+                    .where((eb) =>
+                        eb(
+                            eb.refTuple('createdAt', 'id'),
+                            '<',
+                            eb.tuple(dateString, cursorId)
+                        )
+                    )
+                    .limit(lim + 1)
+                    .execute()
+                if (rows.length < lim + 1) {
+                    rows = rows.concat(
+                        await untimestamped()
+                            .limit(lim + 1 - rows.length)
+                            .execute()
+                    )
                 }
-
-                return eb.or([
-                    eb('createdAt', '<', dateString),
-                    eb.and([
-                        eb('createdAt', '=', dateString),
-                        eb('id', '<', split[1]),
-                    ]),
-                    eb('createdAt', 'is', null),
-                ])
-            })
+            }
         }
 
-        const rows = await query.execute()
         const txs = rows.map((r) => toTransaction(r))
 
         const hasNextPage = txs.length > lim

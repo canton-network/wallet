@@ -18,7 +18,8 @@ import {
     UserLevelRight,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import type { Kysely } from 'kysely'
+import Database from 'better-sqlite3'
+import { CamelCasePlugin, Kysely, SqliteDialect } from 'kysely'
 import { migrator } from './migrator'
 import type { DB } from './schema'
 import { connection, StoreSql } from './store-sql'
@@ -1170,6 +1171,145 @@ implementations.forEach(([name, StoreImpl]) => {
 
             expect(listAllTxs.transactions).toEqual(collected)
             expect(timesCalled).toBe(2)
+        })
+
+        test('paginates in (createdAt desc nulls last, id desc) order for any page size', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'session-tx-order',
+                origin: 'dapp-1',
+                network: 'network1',
+                accessToken: 'test-access-token',
+            })
+
+            // 3 distinct timestamps with ties, plus transactions without one
+            const dates = [
+                '2026-01-01T00:00:00.000Z',
+                '2026-01-02T00:00:00.000Z',
+                '2026-01-03T00:00:00.000Z',
+            ]
+            const inserted: Array<{ id: string; createdAt?: string }> = []
+            for (let i = 0; i < 17; i++) {
+                const id = `tx-${String((i * 7) % 17).padStart(2, '0')}`
+                const createdAt = i % 4 === 3 ? undefined : dates[i % 3]
+                inserted.push(createdAt ? { id, createdAt } : { id })
+                await store.setTransaction(
+                    addTx(id, createdAt ? new Date(createdAt) : undefined)
+                )
+            }
+
+            const expected = [...inserted]
+                .sort((a, b) => {
+                    if (a.createdAt !== b.createdAt) {
+                        if (a.createdAt === undefined) return 1
+                        if (b.createdAt === undefined) return -1
+                        return a.createdAt < b.createdAt ? 1 : -1
+                    }
+                    return a.id < b.id ? 1 : -1
+                })
+                .map((t) => t.id)
+
+            expect(
+                (await store.listTransactions()).transactions.map((t) => t.id)
+            ).toEqual(expected)
+
+            for (let limit = 1; limit <= 18; limit++) {
+                const collected: string[] = []
+                let page = await store.listTransactions({ limit })
+                collected.push(...page.transactions.map((t) => t.id))
+                let pages = 1
+                while (page.nextCursor !== null) {
+                    expect(page.transactions).toHaveLength(limit)
+                    page = await store.listTransactions({
+                        cursor: page.nextCursor,
+                        limit,
+                    })
+                    collected.push(...page.transactions.map((t) => t.id))
+                    pages++
+                }
+                expect(collected).toEqual(expected)
+                expect(pages).toBe(Math.max(1, Math.ceil(17 / limit)))
+            }
+        })
+
+        test('list and count use the transactions index instead of scanning and sorting', async () => {
+            const database = new Database(':memory:')
+            const captured: Array<{
+                sql: string
+                parameters: readonly unknown[]
+            }> = []
+            const planDb = new Kysely<DB>({
+                dialect: new SqliteDialect({ database }),
+                plugins: [new CamelCasePlugin()],
+                log: (event) => {
+                    if (event.level === 'query') captured.push(event.query)
+                },
+            })
+            try {
+                await migrator(planDb).up()
+                const store = new StoreImpl(planDb, authContextMock)
+                await store.addIdp(idp)
+                await store.addNetwork(network)
+                await store.setSession({
+                    id: 'session-tx-plan',
+                    origin: 'dapp-1',
+                    network: 'network1',
+                    accessToken: 'test-access-token',
+                })
+
+                const plansFor = async (run: () => Promise<unknown>) => {
+                    captured.length = 0
+                    await run()
+                    return captured
+                        .filter((q) => /from "transactions"/i.test(q.sql))
+                        .map((q) =>
+                            database
+                                .prepare(`EXPLAIN QUERY PLAN ${q.sql}`)
+                                .all(...(q.parameters as unknown[]))
+                                .map((r) => (r as { detail: string }).detail)
+                                .join(' | ')
+                        )
+                }
+
+                const plans = [
+                    ...(await plansFor(() => store.transactionsCount())),
+                    ...(await plansFor(() =>
+                        store.listTransactions({ limit: 4 })
+                    )),
+                    ...(await plansFor(() =>
+                        store.listTransactions({
+                            limit: 4,
+                            cursor: '2026-01-02T00:00:00.000Z::tx5',
+                        })
+                    )),
+                    ...(await plansFor(() =>
+                        store.listTransactions({
+                            limit: 4,
+                            cursor: 'null::tx5',
+                        })
+                    )),
+                ]
+
+                // count, first page, timestamped cursor (+ untimestamped tail), null cursor
+                expect(plans).toHaveLength(5)
+                for (const p of plans) {
+                    expect(p).toContain(
+                        'idx_transactions_user_network_created_at_id'
+                    )
+                    expect(p).not.toContain('TEMP B-TREE')
+                }
+                // the cursor queries seek into the index rather than scanning from the start
+                expect(plans[2]).toMatch(
+                    /\(user_id=\? AND network_id=\? AND \(created_at,id\)<\(\?,\?\)\)/
+                )
+                expect(plans[3]).toMatch(
+                    /created_at=\?|created_at IS NULL|created_at=NULL/
+                )
+            } finally {
+                await planDb.destroy()
+            }
         })
 
         test('count correct number of transactions', async () => {
