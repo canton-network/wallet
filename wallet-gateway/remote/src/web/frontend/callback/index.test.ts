@@ -10,14 +10,14 @@ const {
     mockAddUserSession,
     mockAccessTokenSet,
     mockExpirationDateSet,
-    mockNetworkIdGet,
+    mockNetworkIdSet,
     mockHandleErrorToast,
 } = vi.hoisted(() => ({
     mockRedirectToIntendedOrDefault: vi.fn(),
     mockAddUserSession: vi.fn().mockResolvedValue(undefined),
     mockAccessTokenSet: vi.fn(),
     mockExpirationDateSet: vi.fn(),
-    mockNetworkIdGet: vi.fn(() => 'net-1'),
+    mockNetworkIdSet: vi.fn(),
     mockHandleErrorToast: vi.fn(),
 }))
 
@@ -29,7 +29,7 @@ vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { set: mockAccessTokenSet },
         expirationDate: { set: mockExpirationDateSet },
-        networkId: { get: mockNetworkIdGet },
+        networkId: { set: mockNetworkIdSet },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
@@ -130,7 +130,7 @@ describe('LoginCallback', () => {
         mockAddUserSession.mockReset().mockResolvedValue(undefined)
         mockAccessTokenSet.mockReset()
         mockExpirationDateSet.mockReset()
-        mockNetworkIdGet.mockReturnValue('net-1')
+        mockNetworkIdSet.mockReset()
         mockHandleErrorToast.mockReset()
         sessionStorage.clear()
         setCallbackUrl()
@@ -146,6 +146,7 @@ describe('LoginCallback', () => {
     it('renders the loading state', async () => {
         setCallbackUrl('auth-code', oauthState)
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
+        sessionStorage.setItem('oauth-network-state-123', 'net-1')
         vi.stubGlobal(
             'fetch',
             vi.fn(() => new Promise<Response>(() => {}))
@@ -196,6 +197,7 @@ describe('LoginCallback', () => {
     it('shows a recoverable error when the token endpoint returns no access token', async () => {
         setCallbackUrl('auth-code', oauthState)
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
+        sessionStorage.setItem('oauth-network-state-123', 'net-1')
         stubOAuthFetch()
 
         el = await fixture<LoginCallback>(componentFixture)
@@ -210,24 +212,22 @@ describe('LoginCallback', () => {
         await expectRecoverableError(el)
     })
 
-    it('uses an empty network id when none is stored in state', async () => {
-        mockNetworkIdGet.mockReturnValue('')
+    it('shows a recoverable error when no network was stored for the OAuth state', async () => {
         setCallbackUrl('auth-code', oauthState)
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
-
-        const accessToken = tokenWithExpiry()
-        stubOAuthFetch(accessToken)
+        stubOAuthFetch(tokenWithExpiry())
 
         el = await fixture<LoginCallback>(componentFixture)
 
-        await waitUntil(() => mockAddUserSession.mock.calls.length > 0)
-
-        expect(mockAddUserSession).toHaveBeenCalledWith(accessToken, '')
+        await expectRecoverableError(el)
+        expect(fetch).not.toHaveBeenCalled()
+        expect(mockAddUserSession).not.toHaveBeenCalled()
     })
 
     it('exchanges the authorization code and stores the access token', async () => {
         setCallbackUrl('auth-code', oauthState)
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
+        sessionStorage.setItem('oauth-network-state-123', 'net-1')
 
         const accessToken = tokenWithExpiry()
         stubOAuthFetch(accessToken)
@@ -241,8 +241,13 @@ describe('LoginCallback', () => {
             expect.any(String)
         )
         expect(mockExpirationDateSet).toHaveBeenCalled()
+        expect(mockNetworkIdSet).toHaveBeenCalledWith(
+            'net-1',
+            expect.any(String)
+        )
         expect(mockAddUserSession).toHaveBeenCalledWith(accessToken, 'net-1')
         expect(sessionStorage.getItem('oauth-pkce-state-123')).toBeNull()
+        expect(sessionStorage.getItem('oauth-network-state-123')).toBeNull()
         await waitUntil(
             () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
         )
@@ -253,6 +258,7 @@ describe('LoginCallback', () => {
         mockAddUserSession.mockRejectedValueOnce(error)
         setCallbackUrl('auth-code', oauthState)
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
+        sessionStorage.setItem('oauth-network-state-123', 'net-1')
         stubOAuthFetch(tokenWithExpiry())
 
         el = await fixture<LoginCallback>(componentFixture)
