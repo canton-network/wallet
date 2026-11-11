@@ -13,6 +13,7 @@ import {
     CANTON_PATH,
     downloadAndUnpackTarball,
     error,
+    pruneStaleApiSpecs,
     setCantonHash,
     type Network,
     getNetworkArg,
@@ -87,6 +88,8 @@ async function main(network: Network) {
             `Expected to find OpenAPI spec in ${openApiSpecDir} but directory does not exist. Please check if the structure of the Canton release has changed.`
         )
     }
+
+    pruneStaleApiSpecs('ledger-api')
 }
 
 main(getNetworkArg()).catch((e) => {
