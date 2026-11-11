@@ -4,11 +4,13 @@
 import { expect, test, it, describe } from 'vitest'
 import {
     DamlTransaction,
+    Enums_ParticipantPermission,
     Enums_TopologyChangeOp,
     HashingSchemeVersion,
     PreparedTransaction,
     TopologyTransaction,
     UntypedVersionedMessage,
+    v31,
 } from '@canton-network/core-ledger-proto'
 import {
     computeMultiHashForTopology,
@@ -28,6 +30,7 @@ import camelcaseKeys from 'camelcase-keys'
 import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
 import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
 import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
+import generateTopology372 from './__tests__/fixtures/generate-topology-3.7.2.json'
 import { fromBase64, fromHex, toBase64, toHex } from './utils'
 
 const parsedTxInfo: ParsedTransactionInfo = {
@@ -110,16 +113,18 @@ const partyToKeyMappingBase64 =
 const partyToParticipantMappingBase64 =
     'CrABCAEQARqpAUqmAQpLYWxpY2U6OjEyMjA1YTUwZWI5YjlkNjRiYjMwYWM0MTI1YWZhMWFlZWE3YmNhZTUxNzkyYWMyZDE3NGE2MTMyY2VlYzkyOTBkMDYyEAEaVQpRcGFydGljaXBhbnQ6OjEyMjAyZTk1ZDJmNjFlZmU3YjIzMmI2ZDE2M2ZlMDA2MTg4YWYzYjZiMDU4ODViZDU5ZDQ3ZTUyZTE3NjUwMWI1NmNkEAIQHg=='
 
+const decodeV30 = (topologyTx: string) => {
+    const decoded = decodeTopologyTransaction(topologyTx)
+    if (decoded.version !== 30) throw new Error(`v${decoded.version}`)
+    return decoded.transaction
+}
+
 test('decode a base 64 encoded topology tx', async () => {
-    const decodedNameSpaceDelegation = decodeTopologyTransaction(
-        namespaceDelegationBase64
-    )
+    const decodedNameSpaceDelegation = decodeV30(namespaceDelegationBase64)
 
-    const decodedPartyToKeyMapping = decodeTopologyTransaction(
-        partyToKeyMappingBase64
-    )
+    const decodedPartyToKeyMapping = decodeV30(partyToKeyMappingBase64)
 
-    const decodedPartyToParticipantMapping = decodeTopologyTransaction(
+    const decodedPartyToParticipantMapping = decodeV30(
         partyToParticipantMappingBase64
     )
 
@@ -187,32 +192,186 @@ test('decode a base 64 encoded topology tx', async () => {
 })
 
 describe('decodeTopologyTransaction', () => {
+    const alice =
+        'alice::12205a50eb9b9d64bb30ac4125afa1aeea7bcae51792ac2d174a6132ceec9290d062'
+    const wrap = (version: number, data: Uint8Array) =>
+        toBase64(
+            UntypedVersionedMessage.toBinary({
+                wrapper: { oneofKind: 'data', data },
+                version,
+            })
+        )
+    const signingKey = () => {
+        const { mapping } = decodeV30(partyToKeyMappingBase64)
+        if (mapping?.mapping.oneofKind !== 'partyToKeyMapping') {
+            throw new Error('not a PartyToKeyMapping')
+        }
+        return mapping.mapping.partyToKeyMapping.signingKeys[0]
+    }
+
+    // No Canton 3.7 participant in the tests: built with the v31 bindings, as
+    // GenerateExternalPartyTopology returns it on protocol version 37
+    const v31PartyToParticipant = v31.TopologyTransaction.toBinary({
+        operation: Enums_TopologyChangeOp.ADD_REPLACE,
+        serial: 1,
+        mapping: {
+            mapping: {
+                oneofKind: 'partyToParticipant',
+                partyToParticipant: {
+                    party: alice,
+                    threshold: 1,
+                    participants: [
+                        {
+                            participantUid: 'participant1::1220aa',
+                            permission:
+                                Enums_ParticipantPermission.CONFIRMATION,
+                            state: v31
+                                .PartyToParticipant_HostingParticipant_HostingState
+                                .ACTIVE,
+                        },
+                        {
+                            participantUid: 'participant2::1220bb',
+                            permission: Enums_ParticipantPermission.OBSERVATION,
+                            state: v31
+                                .PartyToParticipant_HostingParticipant_HostingState
+                                .ONBOARDING,
+                        },
+                    ],
+                    partySigningKeys: { keys: [signingKey()], threshold: 1 },
+                },
+            },
+        },
+    })
+
     it('decodes the wrapped v30 transaction', () => {
         const decoded = decodeTopologyTransaction(
             partyToParticipantMappingBase64
         )
 
-        expect(decoded.operation).toBe(Enums_TopologyChangeOp.ADD_REPLACE)
-        expect(decoded.serial).toBe(1)
+        expect(decoded.version).toBe(30)
+        expect(decoded.transaction.operation).toBe(
+            Enums_TopologyChangeOp.ADD_REPLACE
+        )
+        expect(decoded.transaction.serial).toBe(1)
     })
 
-    it('rejects other proto versions', () => {
-        const { wrapper } = UntypedVersionedMessage.fromBinary(
-            fromBase64(partyToParticipantMappingBase64)
-        )
-        const v29 = toBase64(
-            UntypedVersionedMessage.toBinary({ wrapper, version: 29 })
+    it('decodes a v31 PartyToParticipant with its hosting states and signing keys', () => {
+        const decoded = decodeTopologyTransaction(
+            wrap(31, v31PartyToParticipant)
         )
 
-        expect(() => decodeTopologyTransaction(v29)).toThrow(
-            'Unsupported topology transaction proto version 29'
+        if (decoded.version !== 31) throw new Error(`v${decoded.version}`)
+        expect(decoded.transaction.serial).toBe(1)
+        const { mapping } = decoded.transaction.mapping!
+        if (mapping.oneofKind !== 'partyToParticipant') {
+            throw new Error(mapping.oneofKind)
+        }
+        expect(mapping.partyToParticipant.party).toBe(alice)
+        expect(
+            mapping.partyToParticipant.participants.map((p) => p.state)
+        ).toEqual([
+            v31.PartyToParticipant_HostingParticipant_HostingState.ACTIVE,
+            v31.PartyToParticipant_HostingParticipant_HostingState.ONBOARDING,
+        ])
+        expect(mapping.partyToParticipant.partySigningKeys).toEqual({
+            keys: [signingKey()],
+            threshold: 1,
+        })
+    })
+
+    it('would lose the signing keys if v31 were decoded as v30', () => {
+        const { mapping } = TopologyTransaction.fromBinary(
+            v31PartyToParticipant
+        ).mapping!
+
+        if (mapping.oneofKind !== 'partyToParticipant') {
+            throw new Error(mapping.oneofKind)
+        }
+        expect(mapping.partyToParticipant.partySigningKeys).toBeUndefined()
+    })
+
+    it.each([29, 32])('rejects proto version %i', (version) => {
+        expect(() =>
+            decodeTopologyTransaction(wrap(version, v31PartyToParticipant))
+        ).toThrow(
+            `Unsupported topology transaction proto version ${version}, expected 30 or 31`
+        )
+    })
+
+    describe('of a Canton 3.7.2 participant', () => {
+        const { partyId, v30: fromPv36, v31: fromPv37 } = generateTopology372
+        const multiHash = async (transactions: string[]) =>
+            toBase64(
+                await computeSha256CantonHash(
+                    55,
+                    await computeMultiHashForTopology(
+                        await Promise.all(
+                            transactions.map((tx) =>
+                                computeSha256CantonHash(11, fromBase64(tx))
+                            )
+                        )
+                    )
+                )
+            )
+        const partyToParticipantOf = (topologyTx: string) => {
+            const decoded = decodeTopologyTransaction(topologyTx)
+            const { mapping } = decoded.transaction.mapping!
+            if (mapping.oneofKind !== 'partyToParticipant') {
+                throw new Error(mapping.oneofKind)
+            }
+            return { version: decoded.version, ...mapping }
+        }
+
+        it('decodes the v31 PartyToParticipant it generates on protocol version 37', () => {
+            const decoded = decodeTopologyTransaction(
+                fromPv37.topologyTransactions[0]
+            )
+            if (decoded.version !== 31) throw new Error(`v${decoded.version}`)
+            const { mapping } = decoded.transaction.mapping!
+            if (mapping.oneofKind !== 'partyToParticipant') {
+                throw new Error(mapping.oneofKind)
+            }
+
+            expect(decoded.transaction.serial).toBe(1)
+            expect(mapping.partyToParticipant.party).toBe(partyId)
+            expect(
+                mapping.partyToParticipant.participants.map((p) => p.state)
+            ).toEqual([
+                v31.PartyToParticipant_HostingParticipant_HostingState.ACTIVE,
+            ])
+            expect(mapping.partyToParticipant.partySigningKeys?.keys).toEqual([
+                signingKey(),
+            ])
+        })
+
+        it('decodes the v30 PartyToParticipant it generates for protocol version 36', () => {
+            const { version, partyToParticipant } = partyToParticipantOf(
+                fromPv36.topologyTransactions[0]
+            )
+
+            expect(version).toBe(30)
+            expect(partyToParticipant.party).toBe(partyId)
+            expect(partyToParticipant.partySigningKeys?.keys).toEqual([
+                signingKey(),
+            ])
+        })
+
+        it.each([
+            ['v31', fromPv37],
+            ['v30', fromPv36],
+        ])(
+            'computes the multi-hash of the %s transactions',
+            async (_, response) =>
+                expect(await multiHash(response.topologyTransactions)).toBe(
+                    response.multiHash
+                )
         )
     })
 
     it('rejects an unwrapped transaction', () => {
         const unwrapped = toBase64(
             TopologyTransaction.toBinary(
-                decodeTopologyTransaction(partyToParticipantMappingBase64)
+                decodeV30(partyToParticipantMappingBase64)
             )
         )
 

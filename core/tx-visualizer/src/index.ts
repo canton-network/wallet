@@ -7,6 +7,7 @@ import {
     TopologyTransaction,
     UntypedVersionedMessage,
     decodeUnknownFields,
+    v31,
 } from '@canton-network/core-ledger-proto'
 import {
     computePreparedTransactionHash,
@@ -64,32 +65,65 @@ export const decodePreparedTransaction = (
 }
 
 /**
+ * A decoded topology transaction, tagged with its proto version.
+ *
+ * Canton 3.7 (protocol version 37) adds v31, which differs from v30 only in `PartyToParticipant`:
+ * each hosting participant has a hosting `state` instead of the `onboarding` flag, and
+ * `partySigningKeys` moved from field 6 to 4.
+ */
+export type VersionedTopologyTransaction =
+    | { version: 30; transaction: TopologyTransaction }
+    | { version: 31; transaction: v31.TopologyTransaction }
+
+/**
  * Decodes a base64 encoded topology transaction into a well-typed data model, generated directly from Protobuf definitions.
  *
  * @param topologyTx - The topology transaction in base64 format, as the Ledger API returns it:
  *   an `UntypedVersionedMessage` that wraps the serialized `TopologyTransaction` with its proto version
  * @param options - Decode options, e.g. `{ readUnknownField: 'throw' }` to reject unknown fields
- * @returns The decoded topology transaction
- * @throws if the transaction is not wrapped or has a proto version other than 30
+ * @returns The decoded topology transaction with its proto version
+ * @throws if the transaction is not wrapped or has a proto version other than 30 or 31
  */
 export const decodeTopologyTransaction = (
     topologyTx: string,
     options?: DecodeOptions
-): TopologyTransaction => {
+): VersionedTopologyTransaction => {
     const readOptions = toReadOptions(options)
-    const { wrapper, version } = UntypedVersionedMessage.fromBinary(
+    const message = UntypedVersionedMessage.fromBinary(
         fromBase64(topologyTx),
         readOptions
     )
-    if (version !== 30) {
-        throw new Error(
-            `Unsupported topology transaction proto version ${version}, expected 30`
-        )
+    // Never decode by the wrong version: v31 parses as v30, but loses the
+    // party signing keys and the hosting states
+    switch (message.version) {
+        case 30:
+            return {
+                version: 30,
+                transaction: TopologyTransaction.fromBinary(
+                    dataOf(message),
+                    readOptions
+                ),
+            }
+        case 31:
+            return {
+                version: 31,
+                transaction: v31.TopologyTransaction.fromBinary(
+                    dataOf(message),
+                    readOptions
+                ),
+            }
+        default:
+            throw new Error(
+                `Unsupported topology transaction proto version ${message.version}, expected 30 or 31`
+            )
     }
+}
+
+const dataOf = ({ wrapper }: Pick<UntypedVersionedMessage, 'wrapper'>) => {
     if (wrapper.oneofKind !== 'data') {
         throw new Error('Topology transaction without data')
     }
-    return TopologyTransaction.fromBinary(wrapper.data, readOptions)
+    return wrapper.data
 }
 
 /**
