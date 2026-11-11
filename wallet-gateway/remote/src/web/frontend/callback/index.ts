@@ -50,6 +50,14 @@ export class LoginCallback extends LitElement {
 
             sessionStorage.removeItem(`oauth-pkce-${state.stateId}`)
 
+            const networkId = sessionStorage.getItem(
+                `oauth-network-${state.stateId}`
+            )
+            if (!networkId) {
+                throw new Error('Missing network for OAuth callback state')
+            }
+            sessionStorage.removeItem(`oauth-network-${state.stateId}`)
+
             const config = await fetchOidcDiscovery(state.configUrl)
             if (!config.token_endpoint) {
                 throw new Error('OIDC discovery document has no token_endpoint')
@@ -96,10 +104,10 @@ export class LoginCallback extends LitElement {
                 currentOrigin
             )
 
-            await addUserSession(
-                tokenResponse.access_token,
-                stateManager.networkId.get(currentOrigin) || ''
-            )
+            // Pages behind the login need the network in the localStorage
+            stateManager.networkId.set(networkId, currentOrigin)
+
+            await addUserSession(tokenResponse.access_token, networkId)
             await redirectToIntendedOrDefault()
         } catch (error) {
             this.hasError = true
