@@ -6,7 +6,6 @@ import type {
     Transaction,
 } from '@canton-network/core-tx-parser'
 import { formatAmount, toDecimalOrNull } from '@utils/decimal'
-
 export type TransactionFilter = 'all' | 'received' | 'sent'
 export type TransactionDirection = 'received' | 'sent' | 'unknown'
 
@@ -287,9 +286,12 @@ function getCounterparty(
 ): string | null {
     const allocationLifecycle = getAllocationLifecycle(event)
     const allocationLeg = getAllocationTransferLeg(event)
-    if (allocationLifecycle === 'reserved' && allocationLeg) {
-        if (allocationLeg.sender === walletId) return allocationLeg.receiver
-        if (allocationLeg.receiver === walletId) return allocationLeg.sender
+    if (allocationLifecycle === 'reserved') {
+        if (allocationLeg) {
+            if (allocationLeg.sender === walletId) return allocationLeg.receiver
+            if (allocationLeg.receiver === walletId) return allocationLeg.sender
+        }
+        return getAllocationCounterParty(event) ?? 'Self'
     }
     if (
         allocationLifecycle === 'withdrawn' ||
@@ -329,6 +331,23 @@ function getCounterparty(
     return null
 }
 
+function getAllocationCounterParty(event: TransactionEvent): string | null {
+    const allocation = getTokenStandardChoice(event)?.choiceArgument
+        ?.allocation as
+        | { transferLegSides?: { otherside: { owner: string | null } }[] }
+        | undefined
+
+    const owners = [
+        ...new Set(
+            (allocation?.transferLegSides ?? []).flatMap((leg) =>
+                leg.otherside.owner ? [leg.otherside.owner] : []
+            )
+        ),
+    ]
+    if (owners.length === 0) return null
+    return owners.length === 1 ? owners[0] : 'Multiple'
+}
+
 function getAllocationLifecycle(event: TransactionEvent): AllocationLifecycle {
     const name =
         getTokenStandardChoiceName(event) === 'EventLog_HoldingsChange'
@@ -338,6 +357,7 @@ function getAllocationLifecycle(event: TransactionEvent): AllocationLifecycle {
     if (name === 'AllocationFactory_Allocate') return 'reserved'
     if (name === 'Allocation_Withdraw') return 'withdrawn'
     if (name === 'Allocation_Cancel') return 'cancelled'
+
     return null
 }
 
@@ -436,6 +456,14 @@ function getBalanceEffect(
     if (status === 'Pending') return 'none'
     if (direction === 'sent') return 'debit'
     if (direction === 'received') return 'credit'
+
+    if (event.label.type === 'Settlement') {
+        const change = toDecimalOrNull(
+            getHoldingSummary(event)?.amountChange ?? '0'
+        )
+        if (change?.isPositive() && !change.isZero()) return 'credit'
+        if (change?.isNegative() && !change.isZero()) return 'debit'
+    }
 
     return 'none'
 }
