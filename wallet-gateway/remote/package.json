@@ -36,6 +36,7 @@
     },
     "dependencies": {
         "@canton-network/core-ledger-client": "workspace:",
+        "@canton-network/core-origin-manager": "workspace:",
         "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-rpc-transport": "workspace:",
         "@canton-network/core-signing-bitgo": "workspace:",

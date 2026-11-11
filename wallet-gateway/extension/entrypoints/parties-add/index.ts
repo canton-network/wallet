@@ -20,7 +20,7 @@ import {
     PARTY_STATUS_PARAM,
     walletStatusToCode,
 } from '@canton-network/core-wallet-ui-components/logic'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/origin'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {

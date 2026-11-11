@@ -19,7 +19,6 @@ import type {
     SigningProviderId,
     SigningProviders,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../listeners.js'
 import { createUserClient } from '../rpc-client.js'
 import { stateManager } from '../state-manager.js'
 import { showToast } from '../utils.js'
@@ -62,7 +61,7 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         this.signingProviders = []
         this.signingProvidersLoading = true
         try {
-            const currentOrigin = await detectCurrentOrigin()
+            const currentOrigin = await stateManager.currentOrigin.poll()
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
@@ -81,7 +80,7 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
         signingProviderId: SigningProviderId
     ) {
         this.publicKeysLoading = true
-        const currentOrigin = await detectCurrentOrigin()
+        const currentOrigin = await stateManager.currentOrigin.poll()
         try {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
