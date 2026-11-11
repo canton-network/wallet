@@ -63,6 +63,7 @@ catalog:
     '@open-wc/testing-helpers': ^3.0.1
     '@playwright/test': ^1.65.0
     '@protobuf-ts/plugin': ^2.11.1
+    '@protobuf-ts/protoc': ^2.11.1
     '@protobuf-ts/runtime': ^2.11.1
     '@protobuf-ts/runtime-rpc': ^2.11.1
     '@reown/walletkit': ^1.6.0

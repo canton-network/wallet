@@ -48,7 +48,7 @@ function generateProtos() {
     ]
 
     try {
-        execFileSync('grpc_tools_node_protoc', protocArgs, { stdio: 'inherit' })
+        execFileSync('protoc', protocArgs, { stdio: 'inherit' })
         console.log('Protobuf files generated successfully.')
     } catch (error) {
         console.error('Error generating protobuf files:', error)
@@ -78,7 +78,6 @@ function generateProtosWithPlugin() {
     const protoRoots = [ledgerApiRoot, ledgerApiValueRoot, libRoot]
 
     const protocArgs = [
-        '--plugin=protoc-gen-ts_proto=$(pnpm bin protoc-gen-ts_proto)',
         `--ts_out=${outdir}`,
         '--ts_opt=generate_dependencies',
         ...protoRoots.map((root) => `-I${root}`),
@@ -88,7 +87,7 @@ function generateProtosWithPlugin() {
     ]
 
     try {
-        execFileSync('grpc_tools_node_protoc', protocArgs, { stdio: 'inherit' })
+        execFileSync('protoc', protocArgs, { stdio: 'inherit' })
         console.log('Protobuf files generated successfully.')
     } catch (error) {
         console.error('Error generating protobuf files:', error)
