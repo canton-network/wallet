@@ -58,6 +58,80 @@ export interface CostEstimationHints {
     expectedSignatures: SigningAlgorithmSpec[]
 }
 /**
+ * Estimation of re-assignment costs
+ * This is the cost of re-assigning contracts from another synchronizer if necessary.
+ *
+ * @generated from protobuf message com.daml.ledger.api.v2.interactive.ReassignmentCost
+ */
+export interface ReassignmentCost {
+    /**
+     * The synchronizer the contracts are currently assigned to, and against whose traffic balance
+     * the unassignment cost is charged
+     *
+     * Required
+     *
+     * @generated from protobuf field: string source_synchronizer_id = 1
+     */
+    sourceSynchronizerId: string
+    /**
+     * The synchronizer the contracts will be re-assigned to, and against whose traffic balance
+     * the assignment cost is charged
+     *
+     * Required
+     *
+     * @generated from protobuf field: string target_synchronizer_id = 2
+     */
+    targetSynchronizerId: string
+    /**
+     * The contracts that will be unassigned together in this single unassignment request
+     *
+     * Required: must be non-empty
+     *
+     * @generated from protobuf field: repeated string contract_ids = 3
+     */
+    contractIds: string[]
+    /**
+     * Estimated traffic cost of the unassignment confirmation request
+     *
+     * Required
+     *
+     * @generated from protobuf field: uint64 unassignment_request_traffic_cost_estimation = 4
+     */
+    unassignmentRequestTrafficCostEstimation: bigint
+    /**
+     * Estimated traffic cost of the unassignment confirmation response
+     *
+     * Required
+     *
+     * @generated from protobuf field: uint64 unassignment_response_traffic_cost_estimation = 5
+     */
+    unassignmentResponseTrafficCostEstimation: bigint
+    /**
+     * Estimated traffic cost of the assignment confirmation request
+     *
+     * Required
+     *
+     * @generated from protobuf field: uint64 assignment_request_traffic_cost_estimation = 6
+     */
+    assignmentRequestTrafficCostEstimation: bigint
+    /**
+     * Estimated traffic cost of the assignment confirmation response
+     *
+     * Required
+     *
+     * @generated from protobuf field: uint64 assignment_response_traffic_cost_estimation = 7
+     */
+    assignmentResponseTrafficCostEstimation: bigint
+    /**
+     * Sum of the fields above
+     *
+     * Required
+     *
+     * @generated from protobuf field: uint64 total_reassignment_cost_estimation = 8
+     */
+    totalReassignmentCostEstimation: bigint
+}
+/**
  * Estimation of the cost of submitting the prepared transaction
  * The estimation is done against the synchronizer chosen during preparation of the transaction
  * (or the one explicitly requested).
@@ -100,6 +174,14 @@ export interface CostEstimation {
      * @generated from protobuf field: uint64 total_traffic_cost_estimation = 4
      */
     totalTrafficCostEstimation: bigint
+    /**
+     * Estimated cost of re-assigning contracts if necessary
+     *
+     * Optional: can be empty
+     *
+     * @generated from protobuf field: repeated com.daml.ledger.api.v2.interactive.ReassignmentCost reassignment_costs = 5
+     */
+    reassignmentCosts: ReassignmentCost[]
 }
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.interactive.PrepareSubmissionRequest
@@ -249,6 +331,8 @@ export interface PrepareSubmissionRequest {
     /**
      * The hashing scheme version to be used when building the hash.
      * Defaults to HASHING_SCHEME_VERSION_V2.
+     * HASHING_SCHEME_VERSION_V4 requires a synchronizer running protocol version 36 or later and is
+     * rejected on synchronizers running older protocol versions.
      *
      * Optional
      *
@@ -291,7 +375,9 @@ export interface PrepareSubmissionResponse {
      */
     preparedTransactionHash: Uint8Array
     /**
-     * The hashing scheme version used when building the hash
+     * The hashing scheme version used when building the hash.
+     * HASHING_SCHEME_VERSION_V4 is only returned for synchronizers running protocol version 36 or
+     * later.
      *
      * Required
      *
@@ -433,7 +519,9 @@ export interface ExecuteSubmissionRequest {
      */
     userId: string
     /**
-     * The hashing scheme version used when building the hash
+     * The hashing scheme version used when building the hash.
+     * HASHING_SCHEME_VERSION_V4 requires a synchronizer running protocol version 36 or later and is
+     * rejected on synchronizers running older protocol versions.
      *
      * Required
      *
@@ -532,7 +620,9 @@ export interface ExecuteSubmissionAndWaitRequest {
      */
     userId: string
     /**
-     * The hashing scheme version used when building the hash
+     * The hashing scheme version used when building the hash.
+     * HASHING_SCHEME_VERSION_V4 requires a synchronizer running protocol version 36 or later and is
+     * rejected on synchronizers running older protocol versions.
      *
      * Required
      *
@@ -649,7 +739,9 @@ export interface ExecuteSubmissionAndWaitForTransactionRequest {
      */
     userId: string
     /**
-     * The hashing scheme version used when building the hash
+     * The hashing scheme version used when building the hash.
+     * HASHING_SCHEME_VERSION_V4 requires a synchronizer running protocol version 36 or later and is
+     * rejected on synchronizers running older protocol versions.
      *
      * Required
      *
@@ -1022,81 +1114,6 @@ export interface DamlTransaction_Node {
           }
 }
 /**
- * @generated from protobuf message com.daml.ledger.api.v2.interactive.GetPreferredPackageVersionRequest
- */
-export interface GetPreferredPackageVersionRequest {
-    /**
-     * The parties whose participants' vetting state should be considered when resolving the preferred package.
-     *
-     * Required: must be non-empty
-     *
-     * @generated from protobuf field: repeated string parties = 1
-     */
-    parties: string[]
-    /**
-     * The package-name for which the preferred package should be resolved.
-     *
-     * Required
-     *
-     * @generated from protobuf field: string package_name = 2
-     */
-    packageName: string
-    /**
-     * The synchronizer whose vetting state should be used for resolving this query.
-     * If not specified, the vetting states of all synchronizers to which the participant is connected are used.
-     *
-     * Optional
-     *
-     * @generated from protobuf field: string synchronizer_id = 3
-     */
-    synchronizerId: string
-    /**
-     * The timestamp at which the package vetting validity should be computed
-     * on the latest topology snapshot as seen by the participant.
-     * If not provided, the participant's current clock time is used.
-     *
-     * Optional
-     *
-     * @generated from protobuf field: google.protobuf.Timestamp vetting_valid_at = 4
-     */
-    vettingValidAt?: Timestamp
-}
-/**
- * @generated from protobuf message com.daml.ledger.api.v2.interactive.GetPreferredPackageVersionResponse
- */
-export interface GetPreferredPackageVersionResponse {
-    /**
-     * Not populated when no preferred package is found
-     *
-     * Optional
-     *
-     * @generated from protobuf field: com.daml.ledger.api.v2.interactive.PackagePreference package_preference = 1
-     */
-    packagePreference?: PackagePreference
-}
-/**
- * @generated from protobuf message com.daml.ledger.api.v2.interactive.PackagePreference
- */
-export interface PackagePreference {
-    /**
-     * The package reference of the preferred package.
-     *
-     * Required
-     *
-     * @generated from protobuf field: com.daml.ledger.api.v2.PackageReference package_reference = 1
-     */
-    packageReference?: PackageReference
-    /**
-     * The synchronizer for which the preferred package was computed.
-     * If the synchronizer_id was specified in the request, then it matches the request synchronizer_id.
-     *
-     * Required
-     *
-     * @generated from protobuf field: string synchronizer_id = 2
-     */
-    synchronizerId: string
-}
-/**
  * Defines a package-name for which the commonly vetted package with the highest version must be found.
  *
  * @generated from protobuf message com.daml.ledger.api.v2.interactive.PackageVettingRequirement
@@ -1202,6 +1219,13 @@ export enum HashingSchemeVersion {
      * @generated from protobuf enum value: HASHING_SCHEME_VERSION_V3 = 3;
      */
     V3 = 3,
+    /**
+     * Development-protocol-only hashing scheme for LF development-version prepared transactions.
+     * V4 includes exercise external_call_results in the prepared transaction hash.
+     *
+     * @generated from protobuf enum value: HASHING_SCHEME_VERSION_V4 = 4;
+     */
+    V4 = 4,
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class CostEstimationHints$Type extends MessageType<CostEstimationHints> {
@@ -1306,6 +1330,203 @@ class CostEstimationHints$Type extends MessageType<CostEstimationHints> {
  */
 export const CostEstimationHints = new CostEstimationHints$Type()
 // @generated message type with reflection information, may provide speed optimized methods
+class ReassignmentCost$Type extends MessageType<ReassignmentCost> {
+    constructor() {
+        super('com.daml.ledger.api.v2.interactive.ReassignmentCost', [
+            {
+                no: 1,
+                name: 'source_synchronizer_id',
+                kind: 'scalar',
+                T: 9 /*ScalarType.STRING*/,
+            },
+            {
+                no: 2,
+                name: 'target_synchronizer_id',
+                kind: 'scalar',
+                T: 9 /*ScalarType.STRING*/,
+            },
+            {
+                no: 3,
+                name: 'contract_ids',
+                kind: 'scalar',
+                repeat: 2 /*RepeatType.UNPACKED*/,
+                T: 9 /*ScalarType.STRING*/,
+            },
+            {
+                no: 4,
+                name: 'unassignment_request_traffic_cost_estimation',
+                kind: 'scalar',
+                T: 4 /*ScalarType.UINT64*/,
+                L: 0 /*LongType.BIGINT*/,
+            },
+            {
+                no: 5,
+                name: 'unassignment_response_traffic_cost_estimation',
+                kind: 'scalar',
+                T: 4 /*ScalarType.UINT64*/,
+                L: 0 /*LongType.BIGINT*/,
+            },
+            {
+                no: 6,
+                name: 'assignment_request_traffic_cost_estimation',
+                kind: 'scalar',
+                T: 4 /*ScalarType.UINT64*/,
+                L: 0 /*LongType.BIGINT*/,
+            },
+            {
+                no: 7,
+                name: 'assignment_response_traffic_cost_estimation',
+                kind: 'scalar',
+                T: 4 /*ScalarType.UINT64*/,
+                L: 0 /*LongType.BIGINT*/,
+            },
+            {
+                no: 8,
+                name: 'total_reassignment_cost_estimation',
+                kind: 'scalar',
+                T: 4 /*ScalarType.UINT64*/,
+                L: 0 /*LongType.BIGINT*/,
+            },
+        ])
+    }
+    create(value?: PartialMessage<ReassignmentCost>): ReassignmentCost {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.sourceSynchronizerId = ''
+        message.targetSynchronizerId = ''
+        message.contractIds = []
+        message.unassignmentRequestTrafficCostEstimation = 0n
+        message.unassignmentResponseTrafficCostEstimation = 0n
+        message.assignmentRequestTrafficCostEstimation = 0n
+        message.assignmentResponseTrafficCostEstimation = 0n
+        message.totalReassignmentCostEstimation = 0n
+        if (value !== undefined)
+            reflectionMergePartial<ReassignmentCost>(this, message, value)
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: ReassignmentCost
+    ): ReassignmentCost {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* string source_synchronizer_id */ 1:
+                    message.sourceSynchronizerId = reader.string()
+                    break
+                case /* string target_synchronizer_id */ 2:
+                    message.targetSynchronizerId = reader.string()
+                    break
+                case /* repeated string contract_ids */ 3:
+                    message.contractIds.push(reader.string())
+                    break
+                case /* uint64 unassignment_request_traffic_cost_estimation */ 4:
+                    message.unassignmentRequestTrafficCostEstimation = reader
+                        .uint64()
+                        .toBigInt()
+                    break
+                case /* uint64 unassignment_response_traffic_cost_estimation */ 5:
+                    message.unassignmentResponseTrafficCostEstimation = reader
+                        .uint64()
+                        .toBigInt()
+                    break
+                case /* uint64 assignment_request_traffic_cost_estimation */ 6:
+                    message.assignmentRequestTrafficCostEstimation = reader
+                        .uint64()
+                        .toBigInt()
+                    break
+                case /* uint64 assignment_response_traffic_cost_estimation */ 7:
+                    message.assignmentResponseTrafficCostEstimation = reader
+                        .uint64()
+                        .toBigInt()
+                    break
+                case /* uint64 total_reassignment_cost_estimation */ 8:
+                    message.totalReassignmentCostEstimation = reader
+                        .uint64()
+                        .toBigInt()
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: ReassignmentCost,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* string source_synchronizer_id = 1; */
+        if (message.sourceSynchronizerId !== '')
+            writer
+                .tag(1, WireType.LengthDelimited)
+                .string(message.sourceSynchronizerId)
+        /* string target_synchronizer_id = 2; */
+        if (message.targetSynchronizerId !== '')
+            writer
+                .tag(2, WireType.LengthDelimited)
+                .string(message.targetSynchronizerId)
+        /* repeated string contract_ids = 3; */
+        for (let i = 0; i < message.contractIds.length; i++)
+            writer
+                .tag(3, WireType.LengthDelimited)
+                .string(message.contractIds[i])
+        /* uint64 unassignment_request_traffic_cost_estimation = 4; */
+        if (message.unassignmentRequestTrafficCostEstimation !== 0n)
+            writer
+                .tag(4, WireType.Varint)
+                .uint64(message.unassignmentRequestTrafficCostEstimation)
+        /* uint64 unassignment_response_traffic_cost_estimation = 5; */
+        if (message.unassignmentResponseTrafficCostEstimation !== 0n)
+            writer
+                .tag(5, WireType.Varint)
+                .uint64(message.unassignmentResponseTrafficCostEstimation)
+        /* uint64 assignment_request_traffic_cost_estimation = 6; */
+        if (message.assignmentRequestTrafficCostEstimation !== 0n)
+            writer
+                .tag(6, WireType.Varint)
+                .uint64(message.assignmentRequestTrafficCostEstimation)
+        /* uint64 assignment_response_traffic_cost_estimation = 7; */
+        if (message.assignmentResponseTrafficCostEstimation !== 0n)
+            writer
+                .tag(7, WireType.Varint)
+                .uint64(message.assignmentResponseTrafficCostEstimation)
+        /* uint64 total_reassignment_cost_estimation = 8; */
+        if (message.totalReassignmentCostEstimation !== 0n)
+            writer
+                .tag(8, WireType.Varint)
+                .uint64(message.totalReassignmentCostEstimation)
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.interactive.ReassignmentCost
+ */
+export const ReassignmentCost = new ReassignmentCost$Type()
+// @generated message type with reflection information, may provide speed optimized methods
 class CostEstimation$Type extends MessageType<CostEstimation> {
     constructor() {
         super('com.daml.ledger.api.v2.interactive.CostEstimation', [
@@ -1336,6 +1557,13 @@ class CostEstimation$Type extends MessageType<CostEstimation> {
                 T: 4 /*ScalarType.UINT64*/,
                 L: 0 /*LongType.BIGINT*/,
             },
+            {
+                no: 5,
+                name: 'reassignment_costs',
+                kind: 'message',
+                repeat: 2 /*RepeatType.UNPACKED*/,
+                T: () => ReassignmentCost,
+            },
         ])
     }
     create(value?: PartialMessage<CostEstimation>): CostEstimation {
@@ -1343,6 +1571,7 @@ class CostEstimation$Type extends MessageType<CostEstimation> {
         message.confirmationRequestTrafficCostEstimation = 0n
         message.confirmationResponseTrafficCostEstimation = 0n
         message.totalTrafficCostEstimation = 0n
+        message.reassignmentCosts = []
         if (value !== undefined)
             reflectionMergePartial<CostEstimation>(this, message, value)
         return message
@@ -1380,6 +1609,15 @@ class CostEstimation$Type extends MessageType<CostEstimation> {
                     message.totalTrafficCostEstimation = reader
                         .uint64()
                         .toBigInt()
+                    break
+                case /* repeated com.daml.ledger.api.v2.interactive.ReassignmentCost reassignment_costs */ 5:
+                    message.reassignmentCosts.push(
+                        ReassignmentCost.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options
+                        )
+                    )
                     break
                 default:
                     let u = options.readUnknownField
@@ -1427,6 +1665,13 @@ class CostEstimation$Type extends MessageType<CostEstimation> {
             writer
                 .tag(4, WireType.Varint)
                 .uint64(message.totalTrafficCostEstimation)
+        /* repeated com.daml.ledger.api.v2.interactive.ReassignmentCost reassignment_costs = 5; */
+        for (let i = 0; i < message.reassignmentCosts.length; i++)
+            ReassignmentCost.internalBinaryWrite(
+                message.reassignmentCosts[i],
+                writer.tag(5, WireType.LengthDelimited).fork(),
+                options
+            ).join()
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(
@@ -4144,331 +4389,6 @@ class DamlTransaction_Node$Type extends MessageType<DamlTransaction_Node> {
  */
 export const DamlTransaction_Node = new DamlTransaction_Node$Type()
 // @generated message type with reflection information, may provide speed optimized methods
-class GetPreferredPackageVersionRequest$Type extends MessageType<GetPreferredPackageVersionRequest> {
-    constructor() {
-        super(
-            'com.daml.ledger.api.v2.interactive.GetPreferredPackageVersionRequest',
-            [
-                {
-                    no: 1,
-                    name: 'parties',
-                    kind: 'scalar',
-                    repeat: 2 /*RepeatType.UNPACKED*/,
-                    T: 9 /*ScalarType.STRING*/,
-                },
-                {
-                    no: 2,
-                    name: 'package_name',
-                    kind: 'scalar',
-                    T: 9 /*ScalarType.STRING*/,
-                },
-                {
-                    no: 3,
-                    name: 'synchronizer_id',
-                    kind: 'scalar',
-                    T: 9 /*ScalarType.STRING*/,
-                },
-                {
-                    no: 4,
-                    name: 'vetting_valid_at',
-                    kind: 'message',
-                    T: () => Timestamp,
-                },
-            ]
-        )
-    }
-    create(
-        value?: PartialMessage<GetPreferredPackageVersionRequest>
-    ): GetPreferredPackageVersionRequest {
-        const message = globalThis.Object.create(this.messagePrototype!)
-        message.parties = []
-        message.packageName = ''
-        message.synchronizerId = ''
-        if (value !== undefined)
-            reflectionMergePartial<GetPreferredPackageVersionRequest>(
-                this,
-                message,
-                value
-            )
-        return message
-    }
-    internalBinaryRead(
-        reader: IBinaryReader,
-        length: number,
-        options: BinaryReadOptions,
-        target?: GetPreferredPackageVersionRequest
-    ): GetPreferredPackageVersionRequest {
-        let message = target ?? this.create(),
-            end = reader.pos + length
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag()
-            switch (fieldNo) {
-                case /* repeated string parties */ 1:
-                    message.parties.push(reader.string())
-                    break
-                case /* string package_name */ 2:
-                    message.packageName = reader.string()
-                    break
-                case /* string synchronizer_id */ 3:
-                    message.synchronizerId = reader.string()
-                    break
-                case /* google.protobuf.Timestamp vetting_valid_at */ 4:
-                    message.vettingValidAt = Timestamp.internalBinaryRead(
-                        reader,
-                        reader.uint32(),
-                        options,
-                        message.vettingValidAt
-                    )
-                    break
-                default:
-                    let u = options.readUnknownField
-                    if (u === 'throw')
-                        throw new globalThis.Error(
-                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
-                        )
-                    let d = reader.skip(wireType)
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(
-                            this.typeName,
-                            message,
-                            fieldNo,
-                            wireType,
-                            d
-                        )
-            }
-        }
-        return message
-    }
-    internalBinaryWrite(
-        message: GetPreferredPackageVersionRequest,
-        writer: IBinaryWriter,
-        options: BinaryWriteOptions
-    ): IBinaryWriter {
-        /* repeated string parties = 1; */
-        for (let i = 0; i < message.parties.length; i++)
-            writer.tag(1, WireType.LengthDelimited).string(message.parties[i])
-        /* string package_name = 2; */
-        if (message.packageName !== '')
-            writer.tag(2, WireType.LengthDelimited).string(message.packageName)
-        /* string synchronizer_id = 3; */
-        if (message.synchronizerId !== '')
-            writer
-                .tag(3, WireType.LengthDelimited)
-                .string(message.synchronizerId)
-        /* google.protobuf.Timestamp vetting_valid_at = 4; */
-        if (message.vettingValidAt)
-            Timestamp.internalBinaryWrite(
-                message.vettingValidAt,
-                writer.tag(4, WireType.LengthDelimited).fork(),
-                options
-            ).join()
-        let u = options.writeUnknownFields
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(
-                this.typeName,
-                message,
-                writer
-            )
-        return writer
-    }
-}
-/**
- * @generated MessageType for protobuf message com.daml.ledger.api.v2.interactive.GetPreferredPackageVersionRequest
- */
-export const GetPreferredPackageVersionRequest =
-    new GetPreferredPackageVersionRequest$Type()
-// @generated message type with reflection information, may provide speed optimized methods
-class GetPreferredPackageVersionResponse$Type extends MessageType<GetPreferredPackageVersionResponse> {
-    constructor() {
-        super(
-            'com.daml.ledger.api.v2.interactive.GetPreferredPackageVersionResponse',
-            [
-                {
-                    no: 1,
-                    name: 'package_preference',
-                    kind: 'message',
-                    T: () => PackagePreference,
-                },
-            ]
-        )
-    }
-    create(
-        value?: PartialMessage<GetPreferredPackageVersionResponse>
-    ): GetPreferredPackageVersionResponse {
-        const message = globalThis.Object.create(this.messagePrototype!)
-        if (value !== undefined)
-            reflectionMergePartial<GetPreferredPackageVersionResponse>(
-                this,
-                message,
-                value
-            )
-        return message
-    }
-    internalBinaryRead(
-        reader: IBinaryReader,
-        length: number,
-        options: BinaryReadOptions,
-        target?: GetPreferredPackageVersionResponse
-    ): GetPreferredPackageVersionResponse {
-        let message = target ?? this.create(),
-            end = reader.pos + length
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag()
-            switch (fieldNo) {
-                case /* com.daml.ledger.api.v2.interactive.PackagePreference package_preference */ 1:
-                    message.packagePreference =
-                        PackagePreference.internalBinaryRead(
-                            reader,
-                            reader.uint32(),
-                            options,
-                            message.packagePreference
-                        )
-                    break
-                default:
-                    let u = options.readUnknownField
-                    if (u === 'throw')
-                        throw new globalThis.Error(
-                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
-                        )
-                    let d = reader.skip(wireType)
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(
-                            this.typeName,
-                            message,
-                            fieldNo,
-                            wireType,
-                            d
-                        )
-            }
-        }
-        return message
-    }
-    internalBinaryWrite(
-        message: GetPreferredPackageVersionResponse,
-        writer: IBinaryWriter,
-        options: BinaryWriteOptions
-    ): IBinaryWriter {
-        /* com.daml.ledger.api.v2.interactive.PackagePreference package_preference = 1; */
-        if (message.packagePreference)
-            PackagePreference.internalBinaryWrite(
-                message.packagePreference,
-                writer.tag(1, WireType.LengthDelimited).fork(),
-                options
-            ).join()
-        let u = options.writeUnknownFields
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(
-                this.typeName,
-                message,
-                writer
-            )
-        return writer
-    }
-}
-/**
- * @generated MessageType for protobuf message com.daml.ledger.api.v2.interactive.GetPreferredPackageVersionResponse
- */
-export const GetPreferredPackageVersionResponse =
-    new GetPreferredPackageVersionResponse$Type()
-// @generated message type with reflection information, may provide speed optimized methods
-class PackagePreference$Type extends MessageType<PackagePreference> {
-    constructor() {
-        super('com.daml.ledger.api.v2.interactive.PackagePreference', [
-            {
-                no: 1,
-                name: 'package_reference',
-                kind: 'message',
-                T: () => PackageReference,
-            },
-            {
-                no: 2,
-                name: 'synchronizer_id',
-                kind: 'scalar',
-                T: 9 /*ScalarType.STRING*/,
-            },
-        ])
-    }
-    create(value?: PartialMessage<PackagePreference>): PackagePreference {
-        const message = globalThis.Object.create(this.messagePrototype!)
-        message.synchronizerId = ''
-        if (value !== undefined)
-            reflectionMergePartial<PackagePreference>(this, message, value)
-        return message
-    }
-    internalBinaryRead(
-        reader: IBinaryReader,
-        length: number,
-        options: BinaryReadOptions,
-        target?: PackagePreference
-    ): PackagePreference {
-        let message = target ?? this.create(),
-            end = reader.pos + length
-        while (reader.pos < end) {
-            let [fieldNo, wireType] = reader.tag()
-            switch (fieldNo) {
-                case /* com.daml.ledger.api.v2.PackageReference package_reference */ 1:
-                    message.packageReference =
-                        PackageReference.internalBinaryRead(
-                            reader,
-                            reader.uint32(),
-                            options,
-                            message.packageReference
-                        )
-                    break
-                case /* string synchronizer_id */ 2:
-                    message.synchronizerId = reader.string()
-                    break
-                default:
-                    let u = options.readUnknownField
-                    if (u === 'throw')
-                        throw new globalThis.Error(
-                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
-                        )
-                    let d = reader.skip(wireType)
-                    if (u !== false)
-                        (u === true ? UnknownFieldHandler.onRead : u)(
-                            this.typeName,
-                            message,
-                            fieldNo,
-                            wireType,
-                            d
-                        )
-            }
-        }
-        return message
-    }
-    internalBinaryWrite(
-        message: PackagePreference,
-        writer: IBinaryWriter,
-        options: BinaryWriteOptions
-    ): IBinaryWriter {
-        /* com.daml.ledger.api.v2.PackageReference package_reference = 1; */
-        if (message.packageReference)
-            PackageReference.internalBinaryWrite(
-                message.packageReference,
-                writer.tag(1, WireType.LengthDelimited).fork(),
-                options
-            ).join()
-        /* string synchronizer_id = 2; */
-        if (message.synchronizerId !== '')
-            writer
-                .tag(2, WireType.LengthDelimited)
-                .string(message.synchronizerId)
-        let u = options.writeUnknownFields
-        if (u !== false)
-            (u == true ? UnknownFieldHandler.onWrite : u)(
-                this.typeName,
-                message,
-                writer
-            )
-        return writer
-    }
-}
-/**
- * @generated MessageType for protobuf message com.daml.ledger.api.v2.interactive.PackagePreference
- */
-export const PackagePreference = new PackagePreference$Type()
-// @generated message type with reflection information, may provide speed optimized methods
 class PackageVettingRequirement$Type extends MessageType<PackageVettingRequirement> {
     constructor() {
         super('com.daml.ledger.api.v2.interactive.PackageVettingRequirement', [
@@ -4832,12 +4752,6 @@ export const InteractiveSubmissionService = new ServiceType(
             options: {},
             I: ExecuteSubmissionAndWaitForTransactionRequest,
             O: ExecuteSubmissionAndWaitForTransactionResponse,
-        },
-        {
-            name: 'GetPreferredPackageVersion',
-            options: {},
-            I: GetPreferredPackageVersionRequest,
-            O: GetPreferredPackageVersionResponse,
         },
         {
             name: 'GetPreferredPackages',

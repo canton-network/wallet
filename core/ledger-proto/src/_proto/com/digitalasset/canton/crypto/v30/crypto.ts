@@ -618,6 +618,12 @@ export enum SigningKeySpec {
      * @generated from protobuf enum value: SIGNING_KEY_SPEC_EC_SECP256K1 = 4;
      */
     EC_SECP256K1 = 4,
+    /**
+     * PQC Signing key spec for ML-DSA-65 as defined in https://doi.org/10.6028/NIST.FIPS.204
+     *
+     * @generated from protobuf enum value: SIGNING_KEY_SPEC_ML_DSA_65 = 5;
+     */
+    ML_DSA_65 = 5,
 }
 /**
  * @generated from protobuf enum com.digitalasset.canton.crypto.v30.KeyPurpose
@@ -703,6 +709,12 @@ export enum SigningAlgorithmSpec {
      * @generated from protobuf enum value: SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_384 = 3;
      */
     EC_DSA_SHA_384 = 3,
+    /**
+     * PQC Signing algorithm spec for ML-DSA-65 as defined in https://doi.org/10.6028/NIST.FIPS.204
+     *
+     * @generated from protobuf enum value: SIGNING_ALGORITHM_SPEC_ML_DSA_65 = 4;
+     */
+    ML_DSA_65 = 4,
 }
 /**
  * @deprecated

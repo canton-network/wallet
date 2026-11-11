@@ -112,6 +112,10 @@ export interface IPartyManagementServiceClient {
         options?: RpcOptions
     ): UnaryCall<AllocatePartyRequest, AllocatePartyResponse>
     /**
+     * Alpha 3.3: Endpoint to allocate a new external party on a synchronizer
+     *
+     * Expected to be stable in 3.5
+     *
      * The external party must be hosted (at least) on this node with either confirmation or observation permissions
      * It can optionally be hosted on other nodes (then called a multi-hosted party).
      * If hosted on additional nodes, explicit authorization of the hosting relationship must be performed on those nodes
@@ -151,6 +155,10 @@ export interface IPartyManagementServiceClient {
         UpdatePartyIdentityProviderIdResponse
     >
     /**
+     * Alpha 3.3: Convenience endpoint to generate topology transactions for external signing
+     *
+     * Expected to be stable in 3.5
+     *
      * You may use this endpoint to generate the common external topology transactions
      * which can be signed externally and uploaded as part of the allocate party process
      *
@@ -293,6 +301,10 @@ export class PartyManagementServiceClient
         )
     }
     /**
+     * Alpha 3.3: Endpoint to allocate a new external party on a synchronizer
+     *
+     * Expected to be stable in 3.5
+     *
      * The external party must be hosted (at least) on this node with either confirmation or observation permissions
      * It can optionally be hosted on other nodes (then called a multi-hosted party).
      * If hosted on additional nodes, explicit authorization of the hosting relationship must be performed on those nodes
@@ -353,6 +365,10 @@ export class PartyManagementServiceClient
         >('unary', this._transport, method, opt, input)
     }
     /**
+     * Alpha 3.3: Convenience endpoint to generate topology transactions for external signing
+     *
+     * Expected to be stable in 3.5
+     *
      * You may use this endpoint to generate the common external topology transactions
      * which can be signed externally and uploaded as part of the allocate party process
      *

@@ -15,6 +15,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
+import { SignedTopologyTransactions } from '../../../protocol/v30/topology.js'
+import { StoreId_Temporary } from './common.js'
 import { TopologyTransactions } from './common.js'
 import { LsuSequencerConnectionSuccessor } from '../../../protocol/v30/topology.js'
 import { LsuAnnouncement } from '../../../protocol/v30/topology.js'
@@ -22,6 +24,7 @@ import { SequencerSynchronizerState } from '../../../protocol/v30/topology.js'
 import { MediatorSynchronizerState } from '../../../protocol/v30/topology.js'
 import { DynamicSequencingParameters } from '../../../protocol/v30/sequencing_parameters.js'
 import { DynamicSynchronizerParameters } from '../../../protocol/v30/synchronizer_parameters.js'
+import { PartyToParticipant as PartyToParticipant$ } from '../../../protocol/v31/topology.js'
 import { PartyToParticipant } from '../../../protocol/v30/topology.js'
 import { VettedPackages } from '../../../protocol/v30/topology.js'
 import { PartyHostingLimits } from '../../../protocol/v30/topology.js'
@@ -89,6 +92,12 @@ export interface BaseQuery {
      * @generated from protobuf field: optional int32 protocol_version = 9
      */
     protocolVersion?: number
+    /**
+     * The canton version of the client issuing the request, e.g. "3.5.0-rc3"
+     *
+     * @generated from protobuf field: optional string client_version = 10
+     */
+    clientVersion?: string
 }
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.BaseQuery.TimeRange
@@ -175,9 +184,19 @@ export interface ListNamespaceDelegationResponse_Result {
      */
     context?: BaseResult
     /**
-     * @generated from protobuf field: com.digitalasset.canton.protocol.v30.NamespaceDelegation item = 2
+     * @generated from protobuf oneof: item
      */
-    item?: NamespaceDelegation
+    item:
+        | {
+              oneofKind: 'v30'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v30.NamespaceDelegation v30 = 2
+               */
+              v30: NamespaceDelegation
+          }
+        | {
+              oneofKind: undefined
+          }
 }
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.ListDecentralizedNamespaceDefinitionRequest
@@ -249,9 +268,19 @@ export interface ListOwnerToKeyMappingResponse_Result {
      */
     context?: BaseResult
     /**
-     * @generated from protobuf field: com.digitalasset.canton.protocol.v30.OwnerToKeyMapping item = 2
+     * @generated from protobuf oneof: item
      */
-    item?: OwnerToKeyMapping
+    item:
+        | {
+              oneofKind: 'v30'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v30.OwnerToKeyMapping v30 = 2
+               */
+              v30: OwnerToKeyMapping
+          }
+        | {
+              oneofKind: undefined
+          }
 }
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.ListPartyToKeyMappingRequest
@@ -284,9 +313,19 @@ export interface ListPartyToKeyMappingResponse_Result {
      */
     context?: BaseResult
     /**
-     * @generated from protobuf field: com.digitalasset.canton.protocol.v30.PartyToKeyMapping item = 2
+     * @generated from protobuf oneof: item
      */
-    item?: PartyToKeyMapping
+    item:
+        | {
+              oneofKind: 'v30'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v30.PartyToKeyMapping v30 = 2
+               */
+              v30: PartyToKeyMapping
+          }
+        | {
+              oneofKind: undefined
+          }
 }
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.ListSynchronizerTrustCertificateRequest
@@ -463,9 +502,30 @@ export interface ListPartyToParticipantResponse_Result {
      */
     context?: BaseResult
     /**
-     * @generated from protobuf field: com.digitalasset.canton.protocol.v30.PartyToParticipant item = 2
+     * Clients that send a client_version of 3.7 or later get the item of the transaction's proto
+     * version. Other clients get the v30 item whenever v30 can express the mapping, i.e. unless an
+     * entry is Nominated or Freezing.
+     *
+     * @generated from protobuf oneof: item
      */
-    item?: PartyToParticipant
+    item:
+        | {
+              oneofKind: 'v30'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v30.PartyToParticipant v30 = 2
+               */
+              v30: PartyToParticipant
+          }
+        | {
+              oneofKind: 'v31'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v31.PartyToParticipant v31 = 3
+               */
+              v31: PartyToParticipant$
+          }
+        | {
+              oneofKind: undefined
+          }
 }
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.ListSynchronizerParametersStateRequest
@@ -894,6 +954,36 @@ export interface SequencerLsuStateResponse {
      */
     chunk: Uint8Array
 }
+/**
+ * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.GenerateOnboardingTopologyTransactionsRequest
+ */
+export interface GenerateOnboardingTopologyTransactionsRequest {
+    /**
+     * The protocol version for which the topology transactions should be generated.
+     *
+     * @generated from protobuf field: int32 protocol_version = 1
+     */
+    protocolVersion: number
+    /**
+     * When this param is not set, a new temporary topology store will be created to
+     * generate the topology transactions.  However, this does not work if the root
+     * key is not present on the node.  Therefore, one can pass in a temporary store
+     * to use that is already seeded with both a signed root certificate, as well as
+     * a namespace delegation to an intermediate key that is present on the node.
+     *
+     * @generated from protobuf field: optional com.digitalasset.canton.topology.admin.v30.StoreId.Temporary temporary_store = 2
+     */
+    temporaryStore?: StoreId_Temporary
+}
+/**
+ * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.GenerateOnboardingTopologyTransactionsResponse
+ */
+export interface GenerateOnboardingTopologyTransactionsResponse {
+    /**
+     * @generated from protobuf field: com.digitalasset.canton.protocol.v30.SignedTopologyTransactions result = 1
+     */
+    result?: SignedTopologyTransactions
+}
 // @generated message type with reflection information, may provide speed optimized methods
 class BaseQuery$Type extends MessageType<BaseQuery> {
     constructor() {
@@ -948,6 +1038,13 @@ class BaseQuery$Type extends MessageType<BaseQuery> {
                 kind: 'scalar',
                 opt: true,
                 T: 5 /*ScalarType.INT32*/,
+            },
+            {
+                no: 10,
+                name: 'client_version',
+                kind: 'scalar',
+                opt: true,
+                T: 9 /*ScalarType.STRING*/,
             },
         ])
     }
@@ -1025,6 +1122,9 @@ class BaseQuery$Type extends MessageType<BaseQuery> {
                 case /* optional int32 protocol_version */ 9:
                     message.protocolVersion = reader.int32()
                     break
+                case /* optional string client_version */ 10:
+                    message.clientVersion = reader.string()
+                    break
                 default:
                     let u = options.readUnknownField
                     if (u === 'throw')
@@ -1091,6 +1191,11 @@ class BaseQuery$Type extends MessageType<BaseQuery> {
         /* optional int32 protocol_version = 9; */
         if (message.protocolVersion !== undefined)
             writer.tag(9, WireType.Varint).int32(message.protocolVersion)
+        /* optional string client_version = 10; */
+        if (message.clientVersion !== undefined)
+            writer
+                .tag(10, WireType.LengthDelimited)
+                .string(message.clientVersion)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(
@@ -1618,8 +1723,9 @@ class ListNamespaceDelegationResponse_Result$Type extends MessageType<ListNamesp
                 },
                 {
                     no: 2,
-                    name: 'item',
+                    name: 'v30',
                     kind: 'message',
+                    oneof: 'item',
                     T: () => NamespaceDelegation,
                 },
             ]
@@ -1629,6 +1735,7 @@ class ListNamespaceDelegationResponse_Result$Type extends MessageType<ListNamesp
         value?: PartialMessage<ListNamespaceDelegationResponse_Result>
     ): ListNamespaceDelegationResponse_Result {
         const message = globalThis.Object.create(this.messagePrototype!)
+        message.item = { oneofKind: undefined }
         if (value !== undefined)
             reflectionMergePartial<ListNamespaceDelegationResponse_Result>(
                 this,
@@ -1656,13 +1763,16 @@ class ListNamespaceDelegationResponse_Result$Type extends MessageType<ListNamesp
                         message.context
                     )
                     break
-                case /* com.digitalasset.canton.protocol.v30.NamespaceDelegation item */ 2:
-                    message.item = NamespaceDelegation.internalBinaryRead(
-                        reader,
-                        reader.uint32(),
-                        options,
-                        message.item
-                    )
+                case /* com.digitalasset.canton.protocol.v30.NamespaceDelegation v30 */ 2:
+                    message.item = {
+                        oneofKind: 'v30',
+                        v30: NamespaceDelegation.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.item as any).v30
+                        ),
+                    }
                     break
                 default:
                     let u = options.readUnknownField
@@ -1695,10 +1805,10 @@ class ListNamespaceDelegationResponse_Result$Type extends MessageType<ListNamesp
                 writer.tag(1, WireType.LengthDelimited).fork(),
                 options
             ).join()
-        /* com.digitalasset.canton.protocol.v30.NamespaceDelegation item = 2; */
-        if (message.item)
+        /* com.digitalasset.canton.protocol.v30.NamespaceDelegation v30 = 2; */
+        if (message.item.oneofKind === 'v30')
             NamespaceDelegation.internalBinaryWrite(
-                message.item,
+                message.item.v30,
                 writer.tag(2, WireType.LengthDelimited).fork(),
                 options
             ).join()
@@ -2265,8 +2375,9 @@ class ListOwnerToKeyMappingResponse_Result$Type extends MessageType<ListOwnerToK
                 },
                 {
                     no: 2,
-                    name: 'item',
+                    name: 'v30',
                     kind: 'message',
+                    oneof: 'item',
                     T: () => OwnerToKeyMapping,
                 },
             ]
@@ -2276,6 +2387,7 @@ class ListOwnerToKeyMappingResponse_Result$Type extends MessageType<ListOwnerToK
         value?: PartialMessage<ListOwnerToKeyMappingResponse_Result>
     ): ListOwnerToKeyMappingResponse_Result {
         const message = globalThis.Object.create(this.messagePrototype!)
+        message.item = { oneofKind: undefined }
         if (value !== undefined)
             reflectionMergePartial<ListOwnerToKeyMappingResponse_Result>(
                 this,
@@ -2303,13 +2415,16 @@ class ListOwnerToKeyMappingResponse_Result$Type extends MessageType<ListOwnerToK
                         message.context
                     )
                     break
-                case /* com.digitalasset.canton.protocol.v30.OwnerToKeyMapping item */ 2:
-                    message.item = OwnerToKeyMapping.internalBinaryRead(
-                        reader,
-                        reader.uint32(),
-                        options,
-                        message.item
-                    )
+                case /* com.digitalasset.canton.protocol.v30.OwnerToKeyMapping v30 */ 2:
+                    message.item = {
+                        oneofKind: 'v30',
+                        v30: OwnerToKeyMapping.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.item as any).v30
+                        ),
+                    }
                     break
                 default:
                     let u = options.readUnknownField
@@ -2342,10 +2457,10 @@ class ListOwnerToKeyMappingResponse_Result$Type extends MessageType<ListOwnerToK
                 writer.tag(1, WireType.LengthDelimited).fork(),
                 options
             ).join()
-        /* com.digitalasset.canton.protocol.v30.OwnerToKeyMapping item = 2; */
-        if (message.item)
+        /* com.digitalasset.canton.protocol.v30.OwnerToKeyMapping v30 = 2; */
+        if (message.item.oneofKind === 'v30')
             OwnerToKeyMapping.internalBinaryWrite(
-                message.item,
+                message.item.v30,
                 writer.tag(2, WireType.LengthDelimited).fork(),
                 options
             ).join()
@@ -2578,8 +2693,9 @@ class ListPartyToKeyMappingResponse_Result$Type extends MessageType<ListPartyToK
                 },
                 {
                     no: 2,
-                    name: 'item',
+                    name: 'v30',
                     kind: 'message',
+                    oneof: 'item',
                     T: () => PartyToKeyMapping,
                 },
             ]
@@ -2589,6 +2705,7 @@ class ListPartyToKeyMappingResponse_Result$Type extends MessageType<ListPartyToK
         value?: PartialMessage<ListPartyToKeyMappingResponse_Result>
     ): ListPartyToKeyMappingResponse_Result {
         const message = globalThis.Object.create(this.messagePrototype!)
+        message.item = { oneofKind: undefined }
         if (value !== undefined)
             reflectionMergePartial<ListPartyToKeyMappingResponse_Result>(
                 this,
@@ -2616,13 +2733,16 @@ class ListPartyToKeyMappingResponse_Result$Type extends MessageType<ListPartyToK
                         message.context
                     )
                     break
-                case /* com.digitalasset.canton.protocol.v30.PartyToKeyMapping item */ 2:
-                    message.item = PartyToKeyMapping.internalBinaryRead(
-                        reader,
-                        reader.uint32(),
-                        options,
-                        message.item
-                    )
+                case /* com.digitalasset.canton.protocol.v30.PartyToKeyMapping v30 */ 2:
+                    message.item = {
+                        oneofKind: 'v30',
+                        v30: PartyToKeyMapping.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.item as any).v30
+                        ),
+                    }
                     break
                 default:
                     let u = options.readUnknownField
@@ -2655,10 +2775,10 @@ class ListPartyToKeyMappingResponse_Result$Type extends MessageType<ListPartyToK
                 writer.tag(1, WireType.LengthDelimited).fork(),
                 options
             ).join()
-        /* com.digitalasset.canton.protocol.v30.PartyToKeyMapping item = 2; */
-        if (message.item)
+        /* com.digitalasset.canton.protocol.v30.PartyToKeyMapping v30 = 2; */
+        if (message.item.oneofKind === 'v30')
             PartyToKeyMapping.internalBinaryWrite(
-                message.item,
+                message.item.v30,
                 writer.tag(2, WireType.LengthDelimited).fork(),
                 options
             ).join()
@@ -4161,9 +4281,17 @@ class ListPartyToParticipantResponse_Result$Type extends MessageType<ListPartyTo
                 },
                 {
                     no: 2,
-                    name: 'item',
+                    name: 'v30',
                     kind: 'message',
+                    oneof: 'item',
                     T: () => PartyToParticipant,
+                },
+                {
+                    no: 3,
+                    name: 'v31',
+                    kind: 'message',
+                    oneof: 'item',
+                    T: () => PartyToParticipant$,
                 },
             ]
         )
@@ -4172,6 +4300,7 @@ class ListPartyToParticipantResponse_Result$Type extends MessageType<ListPartyTo
         value?: PartialMessage<ListPartyToParticipantResponse_Result>
     ): ListPartyToParticipantResponse_Result {
         const message = globalThis.Object.create(this.messagePrototype!)
+        message.item = { oneofKind: undefined }
         if (value !== undefined)
             reflectionMergePartial<ListPartyToParticipantResponse_Result>(
                 this,
@@ -4199,13 +4328,27 @@ class ListPartyToParticipantResponse_Result$Type extends MessageType<ListPartyTo
                         message.context
                     )
                     break
-                case /* com.digitalasset.canton.protocol.v30.PartyToParticipant item */ 2:
-                    message.item = PartyToParticipant.internalBinaryRead(
-                        reader,
-                        reader.uint32(),
-                        options,
-                        message.item
-                    )
+                case /* com.digitalasset.canton.protocol.v30.PartyToParticipant v30 */ 2:
+                    message.item = {
+                        oneofKind: 'v30',
+                        v30: PartyToParticipant.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.item as any).v30
+                        ),
+                    }
+                    break
+                case /* com.digitalasset.canton.protocol.v31.PartyToParticipant v31 */ 3:
+                    message.item = {
+                        oneofKind: 'v31',
+                        v31: PartyToParticipant$.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.item as any).v31
+                        ),
+                    }
                     break
                 default:
                     let u = options.readUnknownField
@@ -4238,11 +4381,18 @@ class ListPartyToParticipantResponse_Result$Type extends MessageType<ListPartyTo
                 writer.tag(1, WireType.LengthDelimited).fork(),
                 options
             ).join()
-        /* com.digitalasset.canton.protocol.v30.PartyToParticipant item = 2; */
-        if (message.item)
+        /* com.digitalasset.canton.protocol.v30.PartyToParticipant v30 = 2; */
+        if (message.item.oneofKind === 'v30')
             PartyToParticipant.internalBinaryWrite(
-                message.item,
+                message.item.v30,
                 writer.tag(2, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        /* com.digitalasset.canton.protocol.v31.PartyToParticipant v31 = 3; */
+        if (message.item.oneofKind === 'v31')
+            PartyToParticipant$.internalBinaryWrite(
+                message.item.v31,
+                writer.tag(3, WireType.LengthDelimited).fork(),
                 options
             ).join()
         let u = options.writeUnknownFields
@@ -7694,6 +7844,205 @@ class SequencerLsuStateResponse$Type extends MessageType<SequencerLsuStateRespon
  * @generated MessageType for protobuf message com.digitalasset.canton.topology.admin.v30.SequencerLsuStateResponse
  */
 export const SequencerLsuStateResponse = new SequencerLsuStateResponse$Type()
+// @generated message type with reflection information, may provide speed optimized methods
+class GenerateOnboardingTopologyTransactionsRequest$Type extends MessageType<GenerateOnboardingTopologyTransactionsRequest> {
+    constructor() {
+        super(
+            'com.digitalasset.canton.topology.admin.v30.GenerateOnboardingTopologyTransactionsRequest',
+            [
+                {
+                    no: 1,
+                    name: 'protocol_version',
+                    kind: 'scalar',
+                    T: 5 /*ScalarType.INT32*/,
+                },
+                {
+                    no: 2,
+                    name: 'temporary_store',
+                    kind: 'message',
+                    T: () => StoreId_Temporary,
+                },
+            ]
+        )
+    }
+    create(
+        value?: PartialMessage<GenerateOnboardingTopologyTransactionsRequest>
+    ): GenerateOnboardingTopologyTransactionsRequest {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.protocolVersion = 0
+        if (value !== undefined)
+            reflectionMergePartial<GenerateOnboardingTopologyTransactionsRequest>(
+                this,
+                message,
+                value
+            )
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: GenerateOnboardingTopologyTransactionsRequest
+    ): GenerateOnboardingTopologyTransactionsRequest {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* int32 protocol_version */ 1:
+                    message.protocolVersion = reader.int32()
+                    break
+                case /* optional com.digitalasset.canton.topology.admin.v30.StoreId.Temporary temporary_store */ 2:
+                    message.temporaryStore =
+                        StoreId_Temporary.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            message.temporaryStore
+                        )
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: GenerateOnboardingTopologyTransactionsRequest,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* int32 protocol_version = 1; */
+        if (message.protocolVersion !== 0)
+            writer.tag(1, WireType.Varint).int32(message.protocolVersion)
+        /* optional com.digitalasset.canton.topology.admin.v30.StoreId.Temporary temporary_store = 2; */
+        if (message.temporaryStore)
+            StoreId_Temporary.internalBinaryWrite(
+                message.temporaryStore,
+                writer.tag(2, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.digitalasset.canton.topology.admin.v30.GenerateOnboardingTopologyTransactionsRequest
+ */
+export const GenerateOnboardingTopologyTransactionsRequest =
+    new GenerateOnboardingTopologyTransactionsRequest$Type()
+// @generated message type with reflection information, may provide speed optimized methods
+class GenerateOnboardingTopologyTransactionsResponse$Type extends MessageType<GenerateOnboardingTopologyTransactionsResponse> {
+    constructor() {
+        super(
+            'com.digitalasset.canton.topology.admin.v30.GenerateOnboardingTopologyTransactionsResponse',
+            [
+                {
+                    no: 1,
+                    name: 'result',
+                    kind: 'message',
+                    T: () => SignedTopologyTransactions,
+                },
+            ]
+        )
+    }
+    create(
+        value?: PartialMessage<GenerateOnboardingTopologyTransactionsResponse>
+    ): GenerateOnboardingTopologyTransactionsResponse {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        if (value !== undefined)
+            reflectionMergePartial<GenerateOnboardingTopologyTransactionsResponse>(
+                this,
+                message,
+                value
+            )
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: GenerateOnboardingTopologyTransactionsResponse
+    ): GenerateOnboardingTopologyTransactionsResponse {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* com.digitalasset.canton.protocol.v30.SignedTopologyTransactions result */ 1:
+                    message.result =
+                        SignedTopologyTransactions.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            message.result
+                        )
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: GenerateOnboardingTopologyTransactionsResponse,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* com.digitalasset.canton.protocol.v30.SignedTopologyTransactions result = 1; */
+        if (message.result)
+            SignedTopologyTransactions.internalBinaryWrite(
+                message.result,
+                writer.tag(1, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.digitalasset.canton.topology.admin.v30.GenerateOnboardingTopologyTransactionsResponse
+ */
+export const GenerateOnboardingTopologyTransactionsResponse =
+    new GenerateOnboardingTopologyTransactionsResponse$Type()
 /**
  * @generated ServiceType for protobuf service com.digitalasset.canton.topology.admin.v30.TopologyManagerReadService
  */
@@ -7837,6 +8186,12 @@ export const TopologyManagerReadService = new ServiceType(
             options: {},
             I: SequencerLsuStateRequest,
             O: SequencerLsuStateResponse,
+        },
+        {
+            name: 'GenerateOnboardingTopologyTransactions',
+            options: {},
+            I: GenerateOnboardingTopologyTransactionsRequest,
+            O: GenerateOnboardingTopologyTransactionsResponse,
         },
     ]
 )

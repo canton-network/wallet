@@ -114,6 +114,7 @@ export interface Transaction {
      */
     recordTime?: Timestamp
     /**
+     * Deprecated: please use ``transaction_hash`` which has the same value.
      * For transaction externally signed, contains the external transaction hash
      * signed by the external party. Can be used to correlate an external submission with a committed transaction.
      *
@@ -137,6 +138,24 @@ export interface Transaction {
      * @generated from protobuf field: optional int64 paid_traffic_cost = 11
      */
     paidTrafficCost?: bigint
+    /**
+     * The transaction hash signed by the external party for prepared transactions
+     * that were submitted using `InteractiveSubmissionService.ExecuteSubmission`
+     * or one of its variants.
+     *
+     * Use this to correlate prepared transactions with their execution result
+     * on the *same participant* that executed the transaction.
+     *
+     * Not available for:
+     *
+     * - transactions executed on Canton versions prior to 3.6
+     * - transactions of internal parties submitted using `CommandSubmissionService.Submit` and its variants
+     *
+     * Optional: can be empty
+     *
+     * @generated from protobuf field: optional bytes transaction_hash = 12
+     */
+    transactionHash?: Uint8Array
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class Transaction$Type extends MessageType<Transaction> {
@@ -207,6 +226,13 @@ class Transaction$Type extends MessageType<Transaction> {
                 opt: true,
                 T: 3 /*ScalarType.INT64*/,
                 L: 0 /*LongType.BIGINT*/,
+            },
+            {
+                no: 12,
+                name: 'transaction_hash',
+                kind: 'scalar',
+                opt: true,
+                T: 12 /*ScalarType.BYTES*/,
             },
         ])
     }
@@ -287,6 +313,9 @@ class Transaction$Type extends MessageType<Transaction> {
                 case /* optional int64 paid_traffic_cost */ 11:
                     message.paidTrafficCost = reader.int64().toBigInt()
                     break
+                case /* optional bytes transaction_hash */ 12:
+                    message.transactionHash = reader.bytes()
+                    break
                 default:
                     let u = options.readUnknownField
                     if (u === 'throw')
@@ -364,6 +393,11 @@ class Transaction$Type extends MessageType<Transaction> {
         /* optional int64 paid_traffic_cost = 11; */
         if (message.paidTrafficCost !== undefined)
             writer.tag(11, WireType.Varint).int64(message.paidTrafficCost)
+        /* optional bytes transaction_hash = 12; */
+        if (message.transactionHash !== undefined)
+            writer
+                .tag(12, WireType.LengthDelimited)
+                .bytes(message.transactionHash)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(

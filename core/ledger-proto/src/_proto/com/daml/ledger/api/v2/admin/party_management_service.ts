@@ -31,7 +31,7 @@ export interface GetParticipantIdRequest {}
 export interface GetParticipantIdResponse {
     /**
      * Identifier of the participant, which SHOULD be globally unique.
-     * Must be a valid LedgerString (as describe in ``value.proto``).
+     * Must be a valid ParticipantIdStrings (as describe in ``value.proto``).
      *
      * Required
      *
@@ -519,6 +519,18 @@ export interface GenerateExternalPartyTopologyRequest {
      * @generated from protobuf field: repeated string observing_participant_uids = 7
      */
     observingParticipantUids: string[]
+    /**
+     * The protocol version to create the topology transactions for, so that clients that only read topology
+     * transactions of an older protocol version can read them, e.g. 36 on a synchronizer with protocol version 37.
+     * Must be the synchronizer's protocol version or a lower one whose topology transactions the synchronizer admits:
+     * from protocol version 37 on, a synchronizer admits those of protocol version 36.
+     * Defaults to the synchronizer's protocol version.
+     *
+     * Optional
+     *
+     * @generated from protobuf field: optional uint32 protocol_version = 8
+     */
+    protocolVersion?: number
 }
 /**
  * Response message with topology transactions and the multi-hash to be signed.
@@ -545,8 +557,8 @@ export interface GenerateExternalPartyTopologyResponse {
     /**
      * The serialized topology transactions which need to be signed and submitted as part of the allocate party process
      * Note that the serialization includes the versioning information. Therefore, the transaction here is serialized
-     * as an `UntypedVersionedMessage` which in turn contains the serialized `TopologyTransaction` in the version
-     * supported by the synchronizer.
+     * as an `UntypedVersionedMessage` which in turn contains the serialized `TopologyTransaction` for the requested
+     * protocol version, or for the synchronizer's protocol version if none is requested.
      *
      * Required: must be non-empty
      *
@@ -2242,6 +2254,13 @@ class GenerateExternalPartyTopologyRequest$Type extends MessageType<GenerateExte
                     repeat: 2 /*RepeatType.UNPACKED*/,
                     T: 9 /*ScalarType.STRING*/,
                 },
+                {
+                    no: 8,
+                    name: 'protocol_version',
+                    kind: 'scalar',
+                    opt: true,
+                    T: 13 /*ScalarType.UINT32*/,
+                },
             ]
         )
     }
@@ -2300,6 +2319,9 @@ class GenerateExternalPartyTopologyRequest$Type extends MessageType<GenerateExte
                 case /* repeated string observing_participant_uids */ 7:
                     message.observingParticipantUids.push(reader.string())
                     break
+                case /* optional uint32 protocol_version */ 8:
+                    message.protocolVersion = reader.uint32()
+                    break
                 default:
                     let u = options.readUnknownField
                     if (u === 'throw')
@@ -2355,6 +2377,9 @@ class GenerateExternalPartyTopologyRequest$Type extends MessageType<GenerateExte
             writer
                 .tag(7, WireType.LengthDelimited)
                 .string(message.observingParticipantUids[i])
+        /* optional uint32 protocol_version = 8; */
+        if (message.protocolVersion !== undefined)
+            writer.tag(8, WireType.Varint).uint32(message.protocolVersion)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(

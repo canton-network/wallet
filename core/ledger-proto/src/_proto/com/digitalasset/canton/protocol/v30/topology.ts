@@ -530,7 +530,7 @@ export interface PartyToParticipant {
     /**
      * which participants will host the party.
      * if threshold > 1, must be Confirmation or Observation.
-     * if all participants have Observation permission, the confirmation treshold is ignored, making the party
+     * if all participants have Observation permission, the confirmation threshold is ignored, making the party
      * a purely observing party.
      *
      * @generated from protobuf field: repeated com.digitalasset.canton.protocol.v30.PartyToParticipant.HostingParticipant participants = 3
@@ -539,7 +539,7 @@ export interface PartyToParticipant {
     /**
      * Contains protocol signing keys for the party used to authorize externally signed Daml transactions,
      * along with a signing threshold.
-     * The max number of keys is 20
+     * The max number of keys is the synchronizer's max_signing_keys_per_entity topology limit
      *
      * @generated from protobuf field: optional com.digitalasset.canton.crypto.v30.SigningKeysWithThreshold party_signing_keys = 6
      */
@@ -965,11 +965,11 @@ export interface SignedTopologyTransaction {
  */
 export interface SignedTopologyTransactions {
     /**
-     * serialized signed topology transaction (protobuf bytestring)
+     * serialized signed topology transactions (protobuf bytestring)
      *
-     * @generated from protobuf field: repeated bytes signed_transaction = 1
+     * @generated from protobuf field: repeated bytes signed_transactions = 1
      */
-    signedTransaction: Uint8Array[]
+    signedTransactions: Uint8Array[]
 }
 /**
  * * Accepted topology transaction
@@ -4394,7 +4394,7 @@ class SignedTopologyTransactions$Type extends MessageType<SignedTopologyTransact
             [
                 {
                     no: 1,
-                    name: 'signed_transaction',
+                    name: 'signed_transactions',
                     kind: 'scalar',
                     repeat: 2 /*RepeatType.UNPACKED*/,
                     T: 12 /*ScalarType.BYTES*/,
@@ -4413,7 +4413,7 @@ class SignedTopologyTransactions$Type extends MessageType<SignedTopologyTransact
         value?: PartialMessage<SignedTopologyTransactions>
     ): SignedTopologyTransactions {
         const message = globalThis.Object.create(this.messagePrototype!)
-        message.signedTransaction = []
+        message.signedTransactions = []
         if (value !== undefined)
             reflectionMergePartial<SignedTopologyTransactions>(
                 this,
@@ -4433,8 +4433,8 @@ class SignedTopologyTransactions$Type extends MessageType<SignedTopologyTransact
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag()
             switch (fieldNo) {
-                case /* repeated bytes signed_transaction */ 1:
-                    message.signedTransaction.push(reader.bytes())
+                case /* repeated bytes signed_transactions */ 1:
+                    message.signedTransactions.push(reader.bytes())
                     break
                 default:
                     let u = options.readUnknownField
@@ -4460,11 +4460,11 @@ class SignedTopologyTransactions$Type extends MessageType<SignedTopologyTransact
         writer: IBinaryWriter,
         options: BinaryWriteOptions
     ): IBinaryWriter {
-        /* repeated bytes signed_transaction = 1; */
-        for (let i = 0; i < message.signedTransaction.length; i++)
+        /* repeated bytes signed_transactions = 1; */
+        for (let i = 0; i < message.signedTransactions.length; i++)
             writer
                 .tag(1, WireType.LengthDelimited)
-                .bytes(message.signedTransaction[i])
+                .bytes(message.signedTransactions[i])
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(

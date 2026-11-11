@@ -3,6 +3,10 @@
 
 export * from './_proto/com/digitalasset/canton/crypto/v30/crypto.js'
 export * from './_proto/com/digitalasset/canton/protocol/v30/topology.js'
+// Canton 3.7 (protocol version 37) adds v31 topology transactions, which differ from v30 only in
+// PartyToParticipant. A namespace, as its message names clash with the v30 ones above.
+export * as v31 from './_proto/com/digitalasset/canton/protocol/v31/topology.js'
+export { UntypedVersionedMessage } from './_proto/com/digitalasset/canton/version/v1/untyped_versioned_message.js'
 export { TopologyManagerWriteServiceClient } from './_proto/com/digitalasset/canton/topology/admin/v30/topology_manager_write_service.client.js'
 export * from './_proto/com/digitalasset/canton/topology/admin/v30/topology_manager_write_service.js'
 export * from './_proto/com/digitalasset/canton/topology/admin/v30/topology_manager_read_service.js'

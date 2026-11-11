@@ -19,8 +19,20 @@ import { StoreId_Temporary } from './common.js'
 import { SignedTopologyTransaction } from '../../../protocol/v30/topology.js'
 import { Duration } from '../../../../../../google/protobuf/duration.js'
 import { StoreId } from './common.js'
+import { TopologyMapping as TopologyMapping$ } from '../../../protocol/v31/topology.js'
 import { TopologyMapping } from '../../../protocol/v30/topology.js'
 import { Enums_TopologyChangeOp } from '../../../protocol/v30/topology.js'
+/**
+ * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.BaseWriteRequest
+ */
+export interface BaseWriteRequest {
+    /**
+     * The canton version of the client issuing the request, e.g. "3.5.0-rc3"
+     *
+     * @generated from protobuf field: optional string client_version = 1
+     */
+    clientVersion?: string
+}
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.GenerateTransactionsRequest
  */
@@ -31,6 +43,10 @@ export interface GenerateTransactionsRequest {
      * @generated from protobuf field: repeated com.digitalasset.canton.topology.admin.v30.GenerateTransactionsRequest.Proposal proposals = 1
      */
     proposals: GenerateTransactionsRequest_Proposal[]
+    /**
+     * @generated from protobuf field: optional com.digitalasset.canton.topology.admin.v30.BaseWriteRequest base_request = 2
+     */
+    baseRequest?: BaseWriteRequest
 }
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.GenerateTransactionsRequest.Proposal
@@ -54,9 +70,26 @@ export interface GenerateTransactionsRequest_Proposal {
     /**
      * * The mapping to be authorized
      *
-     * @generated from protobuf field: com.digitalasset.canton.protocol.v30.TopologyMapping mapping = 3
+     * @generated from protobuf oneof: mapping
      */
-    mapping?: TopologyMapping
+    mapping:
+        | {
+              oneofKind: 'v30'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v30.TopologyMapping v30 = 3
+               */
+              v30: TopologyMapping
+          }
+        | {
+              oneofKind: 'v31'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v31.TopologyMapping v31 = 5
+               */
+              v31: TopologyMapping$
+          }
+        | {
+              oneofKind: undefined
+          }
     /**
      * Target store
      *
@@ -80,7 +113,12 @@ export interface GenerateTransactionsResponse {
  */
 export interface GenerateTransactionsResponse_GeneratedTransaction {
     /**
-     * Serialized com.digitalasset.canton.protocol.v30.TopologyTransaction
+     * Serialized com.digitalasset.canton.version.v1.UntypedVersionedMessage with a TopologyTransaction whose version
+     * depends on the target store's protocol version:
+     * - 30 (com.digitalasset.canton.protocol.v30.TopologyTransaction) for protocol version 36
+     * - 31 (com.digitalasset.canton.protocol.v31.TopologyTransaction) for protocol version 37
+     * Decode the data with the schema of its version. Decoding a v31 transaction with the v30 schema can be lossy,
+     * so avoid it.
      *
      * @generated from protobuf field: bytes serialized_transaction = 1
      */
@@ -191,9 +229,37 @@ export interface AuthorizeRequest_Proposal {
     /**
      * * The mapping to be authorized
      *
-     * @generated from protobuf field: com.digitalasset.canton.protocol.v30.TopologyMapping mapping = 3
+     * @generated from protobuf oneof: mapping
      */
-    mapping?: TopologyMapping
+    mapping:
+        | {
+              oneofKind: 'v30'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v30.TopologyMapping v30 = 3
+               */
+              v30: TopologyMapping
+          }
+        | {
+              oneofKind: 'v31'
+              /**
+               * @generated from protobuf field: com.digitalasset.canton.protocol.v31.TopologyMapping v31 = 4
+               */
+              v31: TopologyMapping$
+          }
+        | {
+              oneofKind: undefined
+          }
+    /**
+     * *
+     * Optional: the protocol version to create the topology transaction for, so that clients that only read
+     * topology transactions of an older protocol version can read it, e.g. 36 on a synchronizer with protocol version 37.
+     * Must be the target store's protocol version or a lower one whose topology transactions the store admits:
+     * from protocol version 37 on, a store admits those of protocol version 36.
+     * Defaults to the target store's protocol version.
+     *
+     * @generated from protobuf field: optional uint32 protocol_version = 5
+     */
+    protocolVersion?: number
 }
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.AuthorizeResponse
@@ -470,7 +536,91 @@ export enum ForceFlag {
      * @generated from protobuf enum value: FORCE_FLAG_ALLOW_CONFIRMING_THRESHOLD_CANNOT_BE_MET = 14;
      */
     ALLOW_CONFIRMING_THRESHOLD_CANNOT_BE_MET = 14,
+    /**
+     * *
+     * Required when replacing a party-to-participant mapping that has a participant in the Nominated or Freezing
+     * hosting state with a topology transaction of protocol version 36, which cannot express these states.
+     *
+     * @generated from protobuf enum value: FORCE_FLAG_ALLOW_V30_PARTY_TO_PARTICIPANT_AFTER_HOSTING_STATES = 15;
+     */
+    ALLOW_V30_PARTY_TO_PARTICIPANT_AFTER_HOSTING_STATES = 15,
 }
+// @generated message type with reflection information, may provide speed optimized methods
+class BaseWriteRequest$Type extends MessageType<BaseWriteRequest> {
+    constructor() {
+        super('com.digitalasset.canton.topology.admin.v30.BaseWriteRequest', [
+            {
+                no: 1,
+                name: 'client_version',
+                kind: 'scalar',
+                opt: true,
+                T: 9 /*ScalarType.STRING*/,
+            },
+        ])
+    }
+    create(value?: PartialMessage<BaseWriteRequest>): BaseWriteRequest {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        if (value !== undefined)
+            reflectionMergePartial<BaseWriteRequest>(this, message, value)
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: BaseWriteRequest
+    ): BaseWriteRequest {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* optional string client_version */ 1:
+                    message.clientVersion = reader.string()
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: BaseWriteRequest,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* optional string client_version = 1; */
+        if (message.clientVersion !== undefined)
+            writer
+                .tag(1, WireType.LengthDelimited)
+                .string(message.clientVersion)
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.digitalasset.canton.topology.admin.v30.BaseWriteRequest
+ */
+export const BaseWriteRequest = new BaseWriteRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class GenerateTransactionsRequest$Type extends MessageType<GenerateTransactionsRequest> {
     constructor() {
@@ -483,6 +633,12 @@ class GenerateTransactionsRequest$Type extends MessageType<GenerateTransactionsR
                     kind: 'message',
                     repeat: 2 /*RepeatType.UNPACKED*/,
                     T: () => GenerateTransactionsRequest_Proposal,
+                },
+                {
+                    no: 2,
+                    name: 'base_request',
+                    kind: 'message',
+                    T: () => BaseWriteRequest,
                 },
             ]
         )
@@ -520,6 +676,14 @@ class GenerateTransactionsRequest$Type extends MessageType<GenerateTransactionsR
                         )
                     )
                     break
+                case /* optional com.digitalasset.canton.topology.admin.v30.BaseWriteRequest base_request */ 2:
+                    message.baseRequest = BaseWriteRequest.internalBinaryRead(
+                        reader,
+                        reader.uint32(),
+                        options,
+                        message.baseRequest
+                    )
+                    break
                 default:
                     let u = options.readUnknownField
                     if (u === 'throw')
@@ -549,6 +713,13 @@ class GenerateTransactionsRequest$Type extends MessageType<GenerateTransactionsR
             GenerateTransactionsRequest_Proposal.internalBinaryWrite(
                 message.proposals[i],
                 writer.tag(1, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        /* optional com.digitalasset.canton.topology.admin.v30.BaseWriteRequest base_request = 2; */
+        if (message.baseRequest)
+            BaseWriteRequest.internalBinaryWrite(
+                message.baseRequest,
+                writer.tag(2, WireType.LengthDelimited).fork(),
                 options
             ).join()
         let u = options.writeUnknownFields
@@ -590,9 +761,17 @@ class GenerateTransactionsRequest_Proposal$Type extends MessageType<GenerateTran
                 },
                 {
                     no: 3,
-                    name: 'mapping',
+                    name: 'v30',
                     kind: 'message',
+                    oneof: 'mapping',
                     T: () => TopologyMapping,
+                },
+                {
+                    no: 5,
+                    name: 'v31',
+                    kind: 'message',
+                    oneof: 'mapping',
+                    T: () => TopologyMapping$,
                 },
                 { no: 4, name: 'store', kind: 'message', T: () => StoreId },
             ]
@@ -604,6 +783,7 @@ class GenerateTransactionsRequest_Proposal$Type extends MessageType<GenerateTran
         const message = globalThis.Object.create(this.messagePrototype!)
         message.operation = 0
         message.serial = 0
+        message.mapping = { oneofKind: undefined }
         if (value !== undefined)
             reflectionMergePartial<GenerateTransactionsRequest_Proposal>(
                 this,
@@ -629,13 +809,27 @@ class GenerateTransactionsRequest_Proposal$Type extends MessageType<GenerateTran
                 case /* uint32 serial */ 2:
                     message.serial = reader.uint32()
                     break
-                case /* com.digitalasset.canton.protocol.v30.TopologyMapping mapping */ 3:
-                    message.mapping = TopologyMapping.internalBinaryRead(
-                        reader,
-                        reader.uint32(),
-                        options,
-                        message.mapping
-                    )
+                case /* com.digitalasset.canton.protocol.v30.TopologyMapping v30 */ 3:
+                    message.mapping = {
+                        oneofKind: 'v30',
+                        v30: TopologyMapping.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.mapping as any).v30
+                        ),
+                    }
+                    break
+                case /* com.digitalasset.canton.protocol.v31.TopologyMapping v31 */ 5:
+                    message.mapping = {
+                        oneofKind: 'v31',
+                        v31: TopologyMapping$.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.mapping as any).v31
+                        ),
+                    }
                     break
                 case /* com.digitalasset.canton.topology.admin.v30.StoreId store */ 4:
                     message.store = StoreId.internalBinaryRead(
@@ -675,10 +869,10 @@ class GenerateTransactionsRequest_Proposal$Type extends MessageType<GenerateTran
         /* uint32 serial = 2; */
         if (message.serial !== 0)
             writer.tag(2, WireType.Varint).uint32(message.serial)
-        /* com.digitalasset.canton.protocol.v30.TopologyMapping mapping = 3; */
-        if (message.mapping)
+        /* com.digitalasset.canton.protocol.v30.TopologyMapping v30 = 3; */
+        if (message.mapping.oneofKind === 'v30')
             TopologyMapping.internalBinaryWrite(
-                message.mapping,
+                message.mapping.v30,
                 writer.tag(3, WireType.LengthDelimited).fork(),
                 options
             ).join()
@@ -687,6 +881,13 @@ class GenerateTransactionsRequest_Proposal$Type extends MessageType<GenerateTran
             StoreId.internalBinaryWrite(
                 message.store,
                 writer.tag(4, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        /* com.digitalasset.canton.protocol.v31.TopologyMapping v31 = 5; */
+        if (message.mapping.oneofKind === 'v31')
+            TopologyMapping$.internalBinaryWrite(
+                message.mapping.v31,
+                writer.tag(5, WireType.LengthDelimited).fork(),
                 options
             ).join()
         let u = options.writeUnknownFields
@@ -1121,9 +1322,24 @@ class AuthorizeRequest_Proposal$Type extends MessageType<AuthorizeRequest_Propos
                 },
                 {
                     no: 3,
-                    name: 'mapping',
+                    name: 'v30',
                     kind: 'message',
+                    oneof: 'mapping',
                     T: () => TopologyMapping,
+                },
+                {
+                    no: 4,
+                    name: 'v31',
+                    kind: 'message',
+                    oneof: 'mapping',
+                    T: () => TopologyMapping$,
+                },
+                {
+                    no: 5,
+                    name: 'protocol_version',
+                    kind: 'scalar',
+                    opt: true,
+                    T: 13 /*ScalarType.UINT32*/,
                 },
             ]
         )
@@ -1134,6 +1350,7 @@ class AuthorizeRequest_Proposal$Type extends MessageType<AuthorizeRequest_Propos
         const message = globalThis.Object.create(this.messagePrototype!)
         message.change = 0
         message.serial = 0
+        message.mapping = { oneofKind: undefined }
         if (value !== undefined)
             reflectionMergePartial<AuthorizeRequest_Proposal>(
                 this,
@@ -1159,13 +1376,30 @@ class AuthorizeRequest_Proposal$Type extends MessageType<AuthorizeRequest_Propos
                 case /* uint32 serial */ 2:
                     message.serial = reader.uint32()
                     break
-                case /* com.digitalasset.canton.protocol.v30.TopologyMapping mapping */ 3:
-                    message.mapping = TopologyMapping.internalBinaryRead(
-                        reader,
-                        reader.uint32(),
-                        options,
-                        message.mapping
-                    )
+                case /* com.digitalasset.canton.protocol.v30.TopologyMapping v30 */ 3:
+                    message.mapping = {
+                        oneofKind: 'v30',
+                        v30: TopologyMapping.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.mapping as any).v30
+                        ),
+                    }
+                    break
+                case /* com.digitalasset.canton.protocol.v31.TopologyMapping v31 */ 4:
+                    message.mapping = {
+                        oneofKind: 'v31',
+                        v31: TopologyMapping$.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options,
+                            (message.mapping as any).v31
+                        ),
+                    }
+                    break
+                case /* optional uint32 protocol_version */ 5:
+                    message.protocolVersion = reader.uint32()
                     break
                 default:
                     let u = options.readUnknownField
@@ -1197,13 +1431,23 @@ class AuthorizeRequest_Proposal$Type extends MessageType<AuthorizeRequest_Propos
         /* uint32 serial = 2; */
         if (message.serial !== 0)
             writer.tag(2, WireType.Varint).uint32(message.serial)
-        /* com.digitalasset.canton.protocol.v30.TopologyMapping mapping = 3; */
-        if (message.mapping)
+        /* com.digitalasset.canton.protocol.v30.TopologyMapping v30 = 3; */
+        if (message.mapping.oneofKind === 'v30')
             TopologyMapping.internalBinaryWrite(
-                message.mapping,
+                message.mapping.v30,
                 writer.tag(3, WireType.LengthDelimited).fork(),
                 options
             ).join()
+        /* com.digitalasset.canton.protocol.v31.TopologyMapping v31 = 4; */
+        if (message.mapping.oneofKind === 'v31')
+            TopologyMapping$.internalBinaryWrite(
+                message.mapping.v31,
+                writer.tag(4, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        /* optional uint32 protocol_version = 5; */
+        if (message.protocolVersion !== undefined)
+            writer.tag(5, WireType.Varint).uint32(message.protocolVersion)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(

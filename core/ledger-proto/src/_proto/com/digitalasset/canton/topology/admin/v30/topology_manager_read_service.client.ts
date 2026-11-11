@@ -8,6 +8,8 @@
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
 import { TopologyManagerReadService } from './topology_manager_read_service.js'
+import type { GenerateOnboardingTopologyTransactionsResponse } from './topology_manager_read_service.js'
+import type { GenerateOnboardingTopologyTransactionsRequest } from './topology_manager_read_service.js'
 import type { SequencerLsuStateResponse } from './topology_manager_read_service.js'
 import type { SequencerLsuStateRequest } from './topology_manager_read_service.js'
 import type { GenesisStateV2Response } from './topology_manager_read_service.js'
@@ -270,6 +272,16 @@ export interface ITopologyManagerReadServiceClient {
         input: SequencerLsuStateRequest,
         options?: RpcOptions
     ): ServerStreamingCall<SequencerLsuStateRequest, SequencerLsuStateResponse>
+    /**
+     * @generated from protobuf rpc: GenerateOnboardingTopologyTransactions
+     */
+    generateOnboardingTopologyTransactions(
+        input: GenerateOnboardingTopologyTransactionsRequest,
+        options?: RpcOptions
+    ): UnaryCall<
+        GenerateOnboardingTopologyTransactionsRequest,
+        GenerateOnboardingTopologyTransactionsResponse
+    >
 }
 /**
  * @generated from protobuf service com.digitalasset.canton.topology.admin.v30.TopologyManagerReadService
@@ -670,5 +682,22 @@ export class TopologyManagerReadServiceClient
             SequencerLsuStateRequest,
             SequencerLsuStateResponse
         >('serverStreaming', this._transport, method, opt, input)
+    }
+    /**
+     * @generated from protobuf rpc: GenerateOnboardingTopologyTransactions
+     */
+    generateOnboardingTopologyTransactions(
+        input: GenerateOnboardingTopologyTransactionsRequest,
+        options?: RpcOptions
+    ): UnaryCall<
+        GenerateOnboardingTopologyTransactionsRequest,
+        GenerateOnboardingTopologyTransactionsResponse
+    > {
+        const method = this.methods[23],
+            opt = this._transport.mergeOptions(options)
+        return stackIntercept<
+            GenerateOnboardingTopologyTransactionsRequest,
+            GenerateOnboardingTopologyTransactionsResponse
+        >('unary', this._transport, method, opt, input)
     }
 }
