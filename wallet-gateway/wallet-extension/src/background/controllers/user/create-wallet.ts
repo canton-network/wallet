@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+// TODO(#2498): temporary wallet-kernel party creation. Replace with the
+// HD-wallet allocator (#2164, #2401, #2406) and delete this file.
+
 import type { LedgerClient } from '@canton-network/core-ledger-client'
 import {
     isRpcError,
@@ -19,9 +22,15 @@ function signingError(operation: string, description: string): Error {
     return new Error(`Signing driver failed to ${operation}: ${description}`)
 }
 
+/** Rejects with `VaultLockedError` if the vault has locked since `store` was loaded. */
+async function assertStoreOpen(store: Store): Promise<void> {
+    await store.listNetworks()
+}
+
 // TODO: Combine with PartyAllocationService once its external-party allocation logic is extracted
-export async function createExtensionWallet({
+export async function createKernelWallet({
     authContext,
+    keyName,
     ledgerClient,
     networkId,
     partyHint,
@@ -31,6 +40,7 @@ export async function createExtensionWallet({
     synchronizerId,
 }: {
     authContext: AuthContext
+    keyName?: string
     ledgerClient: LedgerClient
     networkId: string
     partyHint: string
@@ -40,7 +50,7 @@ export async function createExtensionWallet({
     synchronizerId?: string
 }): Promise<Wallet> {
     const driver = signingDriver.controller(authContext.userId)
-    const key = await driver.createKey({ name: partyHint })
+    const key = await driver.createKey({ name: keyName ?? partyHint })
     if (isRpcError(key)) {
         throw signingError('create key', key.error_description)
     }
@@ -63,6 +73,8 @@ export async function createExtensionWallet({
         throw new Error('Ledger returned no topology transactions')
     }
 
+    // Lock checkpoint. Steps already started still finish.
+    await assertStoreOpen(store)
     const signed = await driver.signTransaction({
         tx: '',
         txHash: topology.multiHash,
@@ -78,6 +90,8 @@ export async function createExtensionWallet({
         throw new Error('Signing driver returned no signature')
     }
 
+    // Last checkpoint: allocation can't be undone.
+    await assertStoreOpen(store)
     const allocatedParty = await ledgerClient.allocateExternalParty(
         resolvedSynchronizerId,
         topology.topologyTransactions.map((transaction) => ({ transaction })),

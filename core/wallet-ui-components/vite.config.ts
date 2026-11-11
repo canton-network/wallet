@@ -13,6 +13,7 @@ export default defineConfig({
             entry: {
                 index: 'src/index.ts',
                 'react/index': 'src/react/index.ts',
+                'logic/index': 'src/logic/index.ts',
             },
             formats: ['es', 'cjs'],
             fileName: (format, entryName) =>
@@ -22,6 +23,7 @@ export default defineConfig({
         rolldownOptions: {
             external: [
                 /^lit($|\/)/,
+                /^@lit\//,
                 'bootstrap',
                 '@popperjs/core',
                 'react',

@@ -5,9 +5,11 @@ import { css, html, unsafeCSS } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import defaultTheme from '../../themes/default.css?inline'
 import { BaseElement } from '../internal/base-element'
+import './app-header.js'
 
+export
 @customElement('app-layout')
-export class AppLayout extends BaseElement {
+class AppLayout extends BaseElement {
     @property({ type: String }) accessor iconSrc: string = '/images/icon.png'
     @property({ type: String }) accessor themeSrc: string | undefined
 
@@ -15,6 +17,8 @@ export class AppLayout extends BaseElement {
     @property({ type: Boolean }) accessor networkConnected = false
     @property({ type: String }) accessor currentPage = ''
     @property({ type: String }) accessor dappApiUrl = ''
+    @property({ type: Boolean }) accessor isAdmin = false
+    @property({ type: Number }) accessor warningCount = 0
 
     static styles = [
         BaseElement.styles,
@@ -66,6 +70,8 @@ export class AppLayout extends BaseElement {
                 .networkConnected=${this.networkConnected}
                 .currentPage=${this.currentPage}
                 .dappApiUrl=${this.dappApiUrl}
+                .isAdmin=${this.isAdmin}
+                .warningCount=${this.warningCount}
             ></app-header>
             <div class="container" id="mainContent">
                 <slot></slot>

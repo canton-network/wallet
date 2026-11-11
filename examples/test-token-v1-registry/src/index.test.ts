@@ -8,8 +8,14 @@ import { mock } from './__tests__/mocks'
 const mocks = vi.hoisted(() => {
     const use = vi.fn().mockReturnThis()
     const close = vi.fn()
-    const listen = vi.fn().mockReturnValue({
-        close,
+    const address = vi.fn(() => ({
+        address: '::',
+        family: 'IPv6',
+        port: 5634,
+    }))
+    const listen = vi.fn((_port: number, callback: () => void) => {
+        queueMicrotask(callback)
+        return { close, address }
     })
     const json = vi.fn()
 
@@ -23,6 +29,7 @@ const mocks = vi.hoisted(() => {
     return {
         use,
         close,
+        address,
         listen,
         json,
         expressFactory,
@@ -86,10 +93,11 @@ describe('entry file', () => {
     it('should initialize the app and start listening', async () => {
         const { startRegistry } = await import('.')
 
-        await startRegistry({
+        const port = await startRegistry({
             port: 1111,
         })
 
+        expect(port).toBe(5634)
         expect(mock.state.RegistryState.instantiate).toHaveBeenCalledOnce()
         expect(mock.state.RegistryState.instantiate).toHaveBeenCalledWith({
             port: 1111,
@@ -100,6 +108,20 @@ describe('entry file', () => {
         expect(mocks.listen).toHaveBeenCalledOnce()
         expect(mocks.listen).toHaveBeenCalledWith(5634, expect.any(Function))
         expect(mocks.vetDar).not.toHaveBeenCalled()
+    })
+
+    it('should return and store the port assigned by the server', async () => {
+        const { startRegistry } = await import('.')
+        mocks.address.mockReturnValueOnce({
+            address: '::',
+            family: 'IPv6',
+            port: 49152,
+        })
+
+        const port = await startRegistry({ port: 0 })
+
+        expect(port).toBe(49152)
+        expect(mock.state.RegistryState.instance.port).toBe(port)
     })
 
     it('should properly close the server', async () => {

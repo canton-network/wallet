@@ -8,7 +8,8 @@ import {
     decryptString,
 } from './access-token-utils.js'
 
-const VERSION_PREFIX = 'com.splice.wallet.v1'
+const NAMESPACE = 'com.splice.wallet'
+const VERSION_PREFIX = `${NAMESPACE}.v1`
 
 export class StateManager {
     static localStorageKey(item: string, origin: string): string {
@@ -16,9 +17,13 @@ export class StateManager {
     }
 
     constructor() {
-        // delete any old storage entries not corresponding to the current version
-        for (const key in localStorage) {
-            if (!key.startsWith(VERSION_PREFIX)) {
+        // delete old gateway storage entries not corresponding to the current version.
+        // Only touch our own namespace: the gateway may share an origin with a dApp.
+        for (const key of Object.keys(localStorage)) {
+            if (
+                key.startsWith(`${NAMESPACE}.`) &&
+                !key.startsWith(`${VERSION_PREFIX}.`)
+            ) {
                 localStorage.removeItem(key)
             }
         }
@@ -167,6 +172,28 @@ export class StateManager {
             ),
     }
 
+    selfIssuedAccessTokenMessageId = {
+        get: (origin: string) =>
+            this.getWithStorage(
+                'selfIssuedAccessTokenMessageId',
+                origin,
+                sessionStorage
+            ),
+        set: (messageId: string, origin: string) =>
+            this.setWithStorage(
+                'selfIssuedAccessTokenMessageId',
+                messageId,
+                origin,
+                sessionStorage
+            ),
+        clear: (origin: string) =>
+            this.clearWithStorage(
+                'selfIssuedAccessTokenMessageId',
+                origin,
+                sessionStorage
+            ),
+    }
+
     async clearAuthState(origin: string): Promise<void> {
         await this.accessToken.clear(origin)
         this.networkId.clear(origin)
@@ -174,6 +201,7 @@ export class StateManager {
         this.intendedPage.clear(origin)
         this.sessionId.clear(origin)
         this.selfIssuedLoginSessionId.clear(origin)
+        this.selfIssuedAccessTokenMessageId.clear(origin)
     }
 
     async revokeAccessToken(origin: string): Promise<void> {

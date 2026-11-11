@@ -7,8 +7,17 @@ import type {
     Idp,
     PublicNetwork,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { Button } from '@mui/material'
-import { expect, fn } from 'storybook/test'
+import {
+    findByShadowAltText,
+    findByShadowLabelText,
+    findByShadowRole,
+    findByShadowText,
+    queryByShadowLabelText,
+    queryByShadowRole,
+    queryByShadowText,
+} from 'shadow-dom-testing-library'
+import { expect, fn, waitFor, type Mock } from 'storybook/test'
+import type { LoginConnectEvent } from '../../components/login-form'
 import { LoginForm } from './LoginForm'
 
 const oauthIdp: Idp = {
@@ -52,209 +61,298 @@ const clientCredentialsNetwork = network({
     name: 'Client Credentials Network',
     authMethod: 'client_credentials',
 })
+const misconfiguredNetwork = network({
+    id: 'misconfigured',
+    name: 'Misconfigured Network',
+    identityProviderId: 'missing',
+})
 const networks = [oauthNetwork, selfSignedNetwork, selfIssuedNetwork]
 
-const meta: Meta = {
+const meta = {
     title: 'LoginForm',
     component: LoginForm,
     parameters: { layout: 'fullscreen' },
     args: {
         networks,
         idps,
-        onConnect: fn(),
+        onLoginConnect: fn(),
     },
-}
+} satisfies Meta<typeof LoginForm>
 
 export default meta
 
 type Story = StoryObj<typeof meta>
 
+/** The event passed to the first onLoginConnect call */
+const connectEvent = (onLoginConnect: Mock | undefined) =>
+    onLoginConnect?.mock.calls[0]?.[0] as LoginConnectEvent
+
+const networkSelect = (canvasElement: HTMLElement) =>
+    findByShadowRole(canvasElement, 'combobox', { name: 'Select a network' })
+
+const connectButton = (canvasElement: HTMLElement) =>
+    findByShadowRole(canvasElement, 'button', { name: 'Connect' })
+
+/** Selects a network by its visible name */
+const chooseNetwork = async (
+    canvasElement: HTMLElement,
+    userEvent: {
+        selectOptions: (el: Element, option: HTMLElement) => Promise<void>
+    },
+    name: string
+) => {
+    await userEvent.selectOptions(
+        await networkSelect(canvasElement),
+        await findByShadowRole(canvasElement, 'option', { name })
+    )
+}
+
 export const Default: Story = {
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         await expect(
-            canvas.getByRole('heading', { name: 'Wallet Gateway' })
+            await findByShadowRole(canvasElement, 'heading', {
+                name: 'Wallet Gateway',
+            })
         ).toBeInTheDocument()
-        await expect(canvas.getByAltText('Canton logo')).toBeInTheDocument()
+        await expect(
+            await findByShadowAltText(canvasElement, 'Canton logo')
+        ).toBeInTheDocument()
 
         // The first network is selected, and there are no extra fields for OAuth
-        const select = canvas.getByRole('combobox', {
-            name: 'Select a network',
-        })
-        await expect(select).toHaveValue('oauth')
         await expect(
-            canvas.getByText('Selected: OAuth Network')
+            await findByShadowRole(canvasElement, 'option', {
+                name: 'OAuth Network',
+                selected: true,
+            })
         ).toBeInTheDocument()
         await expect(
-            canvas.queryByLabelText(/Username/)
+            await findByShadowText(canvasElement, 'Selected: OAuth Network')
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowLabelText(canvasElement, 'Username')
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByLabelText('Client ID')
+            queryByShadowLabelText(canvasElement, 'Client ID')
         ).not.toBeInTheDocument()
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Connect' }))
-        await expect(args.onConnect).toHaveBeenCalledTimes(1)
-        await expect(args.onConnect).toHaveBeenCalledWith(
-            oauthNetwork,
-            oauthIdp
-        )
+        await userEvent.click(await connectButton(canvasElement))
+        await expect(args.onLoginConnect).toHaveBeenCalledOnce()
+        const event = connectEvent(args.onLoginConnect)
+        await expect(event.selectedNetwork).toEqual(oauthNetwork)
+        await expect(event.selectedIdp).toEqual(oauthIdp)
+        await expect(event.clientId).toBeUndefined()
+        await expect(event.clientSecret).toBeUndefined()
+        await expect(event.username).toBeUndefined()
     },
 }
 
 export const SelfSigned: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: 'Select a network' }),
-            'Self-signed Network'
-        )
+    play: async ({ args, canvasElement, userEvent }) => {
+        await chooseNetwork(canvasElement, userEvent, 'Self-signed Network')
 
         // The client ID is prefilled from the network, the secret is masked
-        const clientId = canvas.getByLabelText('Client ID')
+        const clientId = await findByShadowLabelText(canvasElement, 'Client ID')
         await expect(clientId).toHaveValue('client-1')
-        const secret = canvas.getByLabelText('Client Secret')
+        const secret = await findByShadowLabelText(
+            canvasElement,
+            'Client Secret'
+        )
         await expect(secret).toHaveAttribute('type', 'password')
+        await expect(
+            queryByShadowLabelText(canvasElement, 'Username')
+        ).not.toBeInTheDocument()
 
         await userEvent.type(secret, 'network-secret')
-        await userEvent.click(canvas.getByRole('button', { name: 'Connect' }))
+        await userEvent.click(await connectButton(canvasElement))
 
-        await expect(args.onConnect).toHaveBeenCalledWith(
-            selfSignedNetwork,
-            selfSignedIdp,
-            'client-1',
-            'network-secret'
-        )
+        await expect(args.onLoginConnect).toHaveBeenCalledOnce()
+        const event = connectEvent(args.onLoginConnect)
+        await expect(event.selectedNetwork).toEqual(selfSignedNetwork)
+        await expect(event.selectedIdp).toEqual(selfSignedIdp)
+        await expect(event.clientId).toBe('client-1')
+        await expect(event.clientSecret).toBe('network-secret')
+        await expect(event.username).toBeUndefined()
     },
 }
 
 export const SelfSignedWithOtherClientId: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: 'Select a network' }),
-            'Self-signed Network'
-        )
-        const clientId = canvas.getByLabelText('Client ID')
-        await userEvent.clear(clientId)
+    play: async ({ args, canvasElement, userEvent }) => {
+        await chooseNetwork(canvasElement, userEvent, 'Self-signed Network')
+        const clientId = await findByShadowLabelText(canvasElement, 'Client ID')
+        // userEvent.clear can't focus inputs inside shadow roots
+        await userEvent.tripleClick(clientId)
+        await userEvent.keyboard('{Backspace}')
         await userEvent.type(clientId, 'other-client')
-        await userEvent.click(canvas.getByRole('button', { name: 'Connect' }))
+        await userEvent.click(await connectButton(canvasElement))
 
-        await expect(args.onConnect).toHaveBeenCalledWith(
-            selfSignedNetwork,
-            selfSignedIdp,
-            'other-client',
-            ''
-        )
+        const event = connectEvent(args.onLoginConnect)
+        await expect(event.clientId).toBe('other-client')
+        await expect(event.clientSecret).toBe('')
+    },
+}
+
+export const SelfSignedWithEmptyClientId: Story = {
+    play: async ({ args, canvasElement, userEvent }) => {
+        await chooseNetwork(canvasElement, userEvent, 'Self-signed Network')
+        const clientId = await findByShadowLabelText(canvasElement, 'Client ID')
+        // userEvent.clear can't focus inputs inside shadow roots
+        await userEvent.tripleClick(clientId)
+        await userEvent.keyboard('{Backspace}')
+        await userEvent.click(await connectButton(canvasElement))
+
+        // An empty client ID falls back to the network's
+        const event = connectEvent(args.onLoginConnect)
+        await expect(event.clientId).toBe('client-1')
     },
 }
 
 export const SelfIssued: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: 'Select a network' }),
-            'Self-issued Network'
-        )
-        const username = canvas.getByRole('textbox', { name: /^Username/ })
+    play: async ({ args, canvasElement, userEvent }) => {
+        await chooseNetwork(canvasElement, userEvent, 'Self-issued Network')
+        const username = await findByShadowRole(canvasElement, 'textbox', {
+            name: 'Username',
+        })
         await expect(username).toBeRequired()
         await expect(
-            canvas.queryByLabelText('Client ID')
+            queryByShadowLabelText(canvasElement, 'Client ID')
+        ).not.toBeInTheDocument()
+        await expect(
+            queryByShadowLabelText(canvasElement, 'Client Secret')
         ).not.toBeInTheDocument()
 
         // Surrounding whitespace is trimmed, and Enter submits
         await userEvent.type(username, '  alice  {Enter}')
-        await expect(args.onConnect).toHaveBeenCalledWith(
-            selfIssuedNetwork,
-            selfIssuedIdp,
-            undefined,
-            undefined,
-            'alice'
-        )
+        await expect(args.onLoginConnect).toHaveBeenCalledOnce()
+        const event = connectEvent(args.onLoginConnect)
+        await expect(event.selectedNetwork).toEqual(selfIssuedNetwork)
+        await expect(event.selectedIdp).toEqual(selfIssuedIdp)
+        await expect(event.username).toBe('alice')
+        await expect(event.clientId).toBeUndefined()
+        await expect(event.clientSecret).toBeUndefined()
     },
 }
 
 export const SelfIssuedRequiresUsername: Story = {
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: 'Select a network' }),
-            'Self-issued Network'
-        )
-        await userEvent.click(canvas.getByRole('button', { name: 'Connect' }))
+    play: async ({ args, canvasElement, userEvent }) => {
+        await chooseNetwork(canvasElement, userEvent, 'Self-issued Network')
+        await userEvent.click(await connectButton(canvasElement))
 
         // The browser blocks submitting an empty required field
-        await expect(args.onConnect).not.toHaveBeenCalled()
+        await expect(args.onLoginConnect).not.toHaveBeenCalled()
         await expect(
-            canvas.getByRole('textbox', { name: /^Username/ })
+            await findByShadowRole(canvasElement, 'textbox', {
+                name: 'Username',
+            })
         ).toBeInvalid()
     },
 }
 
 export const SelfIssuedOnboarding: Story = {
     args: {
-        networks: [
-            network({ ...selfIssuedNetwork, authMethod: 'self_issued' }),
-        ],
+        networks: [{ ...selfIssuedNetwork, authMethod: 'self_issued' }],
     },
-    play: async ({ canvas }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
+        const username = await findByShadowRole(canvasElement, 'textbox', {
+            name: 'Username',
+        })
         await expect(
-            canvas.getByRole('textbox', { name: /^Username/ })
-        ).toBeInTheDocument()
-        await expect(
-            canvas.queryByLabelText('Client ID')
+            queryByShadowLabelText(canvasElement, 'Client ID')
         ).not.toBeInTheDocument()
         await expect(
-            canvas.queryByLabelText('Client Secret')
+            queryByShadowLabelText(canvasElement, 'Client Secret')
         ).not.toBeInTheDocument()
+
+        await userEvent.type(username, 'alice')
+        await userEvent.click(await connectButton(canvasElement))
+
+        const event = connectEvent(args.onLoginConnect)
+        await expect(event.username).toBe('alice')
+        await expect(event.clientId).toBeUndefined()
+        await expect(event.clientSecret).toBeUndefined()
     },
 }
 
 export const SkipsClientCredentialsNetworks: Story = {
     args: { networks: [clientCredentialsNetwork, oauthNetwork] },
-    play: async ({ canvas }) => {
-        const select = canvas.getByRole('combobox', {
-            name: 'Select a network',
-        })
+    play: async ({ args, canvasElement, userEvent }) => {
         // The first network that can be logged into is selected, not the first one
-        await expect(select).toHaveValue('oauth')
         await expect(
-            canvas.getByRole('option', { name: 'Client Credentials Network' })
+            await findByShadowRole(canvasElement, 'option', {
+                name: 'OAuth Network',
+                selected: true,
+            })
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'option', {
+                name: 'Client Credentials Network',
+            })
         ).toBeDisabled()
+
+        await userEvent.click(await connectButton(canvasElement))
+        const event = connectEvent(args.onLoginConnect)
+        await expect(event.selectedNetwork).toEqual(oauthNetwork)
+        await expect(event.selectedIdp).toEqual(oauthIdp)
     },
 }
 
 export const NothingToSelect: Story = {
     args: { networks: [clientCredentialsNetwork] },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByText('Choose a network to continue.')
+            await findByShadowText(
+                canvasElement,
+                'Choose a network to continue.'
+            )
         ).toBeInTheDocument()
         await expect(
-            canvas.getByRole('button', { name: 'Connect' })
-        ).toBeDisabled()
+            await findByShadowRole(canvasElement, 'option', {
+                name: 'Select network',
+                selected: true,
+            })
+        ).toBeInTheDocument()
+        await expect(await connectButton(canvasElement)).toBeDisabled()
     },
 }
 
 export const ChoosingNoNetwork: Story = {
-    play: async ({ canvas, userEvent }) => {
-        await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: 'Select a network' }),
-            'Select network'
-        )
+    play: async ({ canvasElement, userEvent }) => {
+        await chooseNetwork(canvasElement, userEvent, 'Select network')
 
         await expect(
-            canvas.getByText('Choose a network to continue.')
+            await findByShadowText(
+                canvasElement,
+                'Choose a network to continue.'
+            )
         ).toBeInTheDocument()
-        await expect(
-            canvas.getByRole('button', { name: 'Connect' })
-        ).toBeDisabled()
+        await expect(await connectButton(canvasElement)).toBeDisabled()
     },
 }
 
 export const MisconfiguredIdentityProvider: Story = {
-    args: { networks: [network({ identityProviderId: 'missing' })] },
-    play: async ({ args, canvas, userEvent }) => {
-        await userEvent.click(canvas.getByRole('button', { name: 'Connect' }))
+    args: { networks: [misconfiguredNetwork, oauthNetwork] },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await userEvent.click(await connectButton(canvasElement))
 
-        await expect(canvas.getByRole('alert')).toHaveTextContent(
+        const alert = await findByShadowRole(canvasElement, 'alert')
+        await expect(alert).toHaveTextContent(
             'Identity provider misconfigured for this network.'
         )
-        await expect(args.onConnect).not.toHaveBeenCalled()
+        // The message replaces the "Selected" hint
+        await expect(
+            queryByShadowText(canvasElement, /^Selected:/)
+        ).not.toBeInTheDocument()
+        await expect(args.onLoginConnect).not.toHaveBeenCalled()
+
+        // Choosing another network clears the message
+        await chooseNetwork(canvasElement, userEvent, 'OAuth Network')
+        await waitFor(() =>
+            expect(
+                queryByShadowRole(canvasElement, 'alert')
+            ).not.toBeInTheDocument()
+        )
+        await expect(
+            await findByShadowText(canvasElement, 'Selected: OAuth Network')
+        ).toBeInTheDocument()
     },
 }
 
@@ -264,25 +362,31 @@ export const IdentityProvidersArriveLate: Story = {
         return (
             <>
                 <LoginForm
+                    {...args}
                     networks={[oauthNetwork]}
                     idps={loadedIdps}
-                    onConnect={args.onConnect}
                 />
-                <Button onClick={() => setLoadedIdps(idps)}>Load idps</Button>
+                <button type="button" onClick={() => setLoadedIdps(idps)}>
+                    Load idps
+                </button>
             </>
         )
     },
-    play: async ({ args, canvas, userEvent }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         // No identity provider yet: connecting is a misconfiguration
-        await userEvent.click(canvas.getByRole('button', { name: 'Connect' }))
-        await expect(canvas.getByRole('alert')).toHaveTextContent(
-            'Identity provider misconfigured'
-        )
+        await userEvent.click(await connectButton(canvasElement))
+        await expect(
+            await findByShadowRole(canvasElement, 'alert')
+        ).toHaveTextContent('Identity provider misconfigured')
 
-        await userEvent.click(canvas.getByRole('button', { name: 'Load idps' }))
-        await userEvent.click(canvas.getByRole('button', { name: 'Connect' }))
-        await expect(args.onConnect).toHaveBeenCalledWith(
-            oauthNetwork,
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Load idps',
+            })
+        )
+        await userEvent.click(await connectButton(canvasElement))
+        await expect(args.onLoginConnect).toHaveBeenCalledOnce()
+        await expect(connectEvent(args.onLoginConnect).selectedIdp).toEqual(
             oauthIdp
         )
     },
@@ -290,68 +394,79 @@ export const IdentityProvidersArriveLate: Story = {
 
 export const Loading: Story = {
     args: { networks: [], idps: [], loading: true },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByText('Loading networks...')
+            await findByShadowText(canvasElement, 'Loading networks...')
         ).toBeInTheDocument()
+        await expect(await networkSelect(canvasElement)).toBeDisabled()
+        await expect(await connectButton(canvasElement)).toBeDisabled()
+    },
+}
+
+export const FinishesLoading: Story = {
+    render: (args) => {
+        const [loaded, setLoaded] = useState(false)
+        return (
+            <>
+                <LoginForm
+                    {...args}
+                    networks={loaded ? networks : []}
+                    idps={loaded ? idps : []}
+                    loading={!loaded}
+                />
+                <button type="button" onClick={() => setLoaded(true)}>
+                    Finish loading
+                </button>
+            </>
+        )
+    },
+    play: async ({ canvasElement, userEvent }) => {
+        await expect(await networkSelect(canvasElement)).toBeDisabled()
+        await expect(await connectButton(canvasElement)).toBeDisabled()
+
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Finish loading',
+            })
+        )
+
+        await waitFor(async () =>
+            expect(await networkSelect(canvasElement)).toBeEnabled()
+        )
+        await expect(await connectButton(canvasElement)).toBeEnabled()
         await expect(
-            canvas.getByRole('combobox', { name: 'Select a network' })
-        ).toBeDisabled()
-        await expect(
-            canvas.getByRole('button', { name: 'Connect' })
-        ).toBeDisabled()
+            await findByShadowText(canvasElement, 'Selected: OAuth Network')
+        ).toBeInTheDocument()
     },
 }
 
 export const Connecting: Story = {
     args: { networks: [selfSignedNetwork], connecting: true },
-    play: async ({ canvas }) => {
+    play: async ({ canvasElement }) => {
         // Connecting locks the select, the credential fields and the button
+        await expect(await networkSelect(canvasElement)).toBeDisabled()
         await expect(
-            canvas.getByRole('combobox', { name: 'Select a network' })
+            await findByShadowLabelText(canvasElement, 'Client ID')
         ).toBeDisabled()
-        await expect(canvas.getByLabelText('Client ID')).toBeDisabled()
-        await expect(canvas.getByLabelText('Client Secret')).toBeDisabled()
         await expect(
-            canvas.getByRole('button', { name: 'Connecting…' })
+            await findByShadowLabelText(canvasElement, 'Client Secret')
+        ).toBeDisabled()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Connecting…',
+            })
         ).toBeDisabled()
     },
 }
 
-export const ErrorMessage: Story = {
-    args: { message: { type: 'error', text: 'Login failed: bad credentials' } },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByRole('alert')).toHaveTextContent(
-            'Login failed: bad credentials'
-        )
-        // The message replaces the "Selected" hint
-        await expect(canvas.queryByText(/^Selected:/)).not.toBeInTheDocument()
-    },
-}
-
-export const InfoMessage: Story = {
-    args: { message: { type: 'info', text: 'Redirecting...' } },
-    play: async ({ canvas }) => {
-        await expect(canvas.getByRole('alert')).toHaveTextContent(
-            'Redirecting...'
-        )
-    },
-}
-
-export const MessageClearsWhenNetworkChanges: Story = {
-    args: { message: { type: 'error', text: 'Login failed' } },
-    play: async ({ canvas, userEvent }) => {
-        await expect(canvas.getByRole('alert')).toBeInTheDocument()
-
-        await userEvent.selectOptions(
-            canvas.getByRole('combobox', { name: 'Select a network' }),
-            'Self-signed Network'
-        )
-
-        await expect(canvas.queryByRole('alert')).not.toBeInTheDocument()
+export const ConnectingSelfIssued: Story = {
+    args: { networks: [selfIssuedNetwork], connecting: true },
+    play: async ({ canvasElement }) => {
         await expect(
-            canvas.getByText('Selected: Self-signed Network')
-        ).toBeInTheDocument()
+            await findByShadowRole(canvasElement, 'textbox', {
+                name: 'Username',
+            })
+        ).toBeDisabled()
     },
 }
 
@@ -360,12 +475,9 @@ export const KeepsSelectionAcrossRefetch: Story = {
         const [current, setCurrent] = useState<PublicNetwork[]>(networks)
         return (
             <>
-                <LoginForm
-                    networks={current}
-                    idps={idps}
-                    onConnect={args.onConnect}
-                />
-                <Button
+                <LoginForm {...args} networks={current} idps={idps} />
+                <button
+                    type="button"
                     onClick={() =>
                         setCurrent([
                             oauthNetwork,
@@ -374,30 +486,79 @@ export const KeepsSelectionAcrossRefetch: Story = {
                     }
                 >
                     Refetch
-                </Button>
-                <Button onClick={() => setCurrent([oauthNetwork])}>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setCurrent([oauthNetwork])}
+                >
                     Drop selected
-                </Button>
+                </button>
+                <button
+                    type="button"
+                    onClick={() => setCurrent([clientCredentialsNetwork])}
+                >
+                    Only client credentials
+                </button>
+                <button type="button" onClick={() => setCurrent([])}>
+                    No networks
+                </button>
             </>
         )
     },
-    play: async ({ canvas, userEvent }) => {
-        const select = canvas.getByRole('combobox', {
-            name: 'Select a network',
-        })
-        await userEvent.selectOptions(select, 'Self-issued Network')
+    play: async ({ args, canvasElement, userEvent }) => {
+        const clickButton = async (name: string) =>
+            userEvent.click(
+                await findByShadowRole(canvasElement, 'button', { name })
+            )
+
+        await chooseNetwork(canvasElement, userEvent, 'Self-issued Network')
 
         // Still selected after a refetch, now with the refreshed details
-        await userEvent.click(canvas.getByRole('button', { name: 'Refetch' }))
-        await expect(select).toHaveValue('issued')
+        await clickButton('Refetch')
         await expect(
-            canvas.getByText('Selected: Renamed Network')
+            await findByShadowRole(canvasElement, 'option', {
+                name: 'Renamed Network',
+                selected: true,
+            })
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'Selected: Renamed Network')
         ).toBeInTheDocument()
 
         // Falls back to the first usable network when it disappears
-        await userEvent.click(
-            canvas.getByRole('button', { name: 'Drop selected' })
+        await clickButton('Drop selected')
+        await expect(
+            await findByShadowText(canvasElement, 'Selected: OAuth Network')
+        ).toBeInTheDocument()
+        await userEvent.click(await connectButton(canvasElement))
+        await expect(connectEvent(args.onLoginConnect).selectedNetwork).toEqual(
+            oauthNetwork
         )
-        await expect(select).toHaveValue('oauth')
+
+        // Selects nothing when no network can be logged into
+        await clickButton('Only client credentials')
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                'Choose a network to continue.'
+            )
+        ).toBeInTheDocument()
+        await expect(await connectButton(canvasElement)).toBeDisabled()
+
+        await clickButton('No networks')
+        await waitFor(() =>
+            expect(
+                queryByShadowRole(canvasElement, 'option', {
+                    name: 'Client Credentials Network',
+                })
+            ).not.toBeInTheDocument()
+        )
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                'Choose a network to continue.'
+            )
+        ).toBeInTheDocument()
+        await expect(await connectButton(canvasElement)).toBeDisabled()
     },
 }

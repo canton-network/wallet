@@ -1,4 +1,4 @@
-import { logAllContracts } from '../utils/index.js'
+import { logAllContracts, TOKEN_NAMESPACE_CONFIG } from '../utils/index.js'
 import { setupMultiSyncTrade } from './_setup.js'
 import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
 import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.js'
@@ -18,8 +18,8 @@ import { TestToken } from '@canton-network/core-splice-codegen'
 // app-user and app-provider connect to the global + app synchronizers, sv is global-only.
 
 import { configureLogging } from '../utils/configure-logging.js'
-import { TEST_TOKEN_V1_REGISTRY_PORT } from '../common/_constants.js'
-import { assertV1 } from '../common/_utils.js'
+import { TEST_TOKEN_V1_REGISTRY } from '../utils/constants.js'
+import { assertV1 } from '../utils/assert.js'
 const logger = await configureLogging()
 
 // ── Setup: create SDKs, discover synchronizers, vet DARs, allocate parties ───
@@ -27,6 +27,39 @@ const logger = await configureLogging()
 // Step 2: Vet DARs on both synchronizers for app-user + app-provider; global only for sv (not connected to app-synchronizer)
 // Step 3: Allocate parties for Alice, Charlie (app-user), Bob (app-provider), TradingApp (app-user, both synchronizers), and TokenAdmin (app-provider)
 const setup = await setupMultiSyncTrade(logger)
+
+// ── Start the TestToken registry (CIP-56 off-ledger APIs) ───────────────────
+const registryPort = await startRegistry({
+    operator: {
+        party: setup.tokenAdmin.partyId,
+        keys: setup.tokenAdmin.keyPair,
+    },
+    synchronizerId: setup.synchronizers.appSynchronizerId,
+    port: TEST_TOKEN_V1_REGISTRY.PORT,
+    sdk: setup.tokenAdminSdk,
+})
+const registryUrl = new URL(TEST_TOKEN_V1_REGISTRY.URL)
+registryUrl.port = registryPort.toString()
+
+// Register the bound URL only after startup, since port 0 selects a free port.
+const token = {
+    ...TOKEN_NAMESPACE_CONFIG,
+    registries: [...TOKEN_NAMESPACE_CONFIG.registries, registryUrl],
+}
+;[
+    setup.aliceSdk,
+    setup.bobSdk,
+    setup.tradingAppSdk,
+    setup.tokenAdminSdk,
+    setup.charlieSdk,
+] = await Promise.all([
+    setup.aliceSdk.extend({ token }),
+    setup.bobSdk.extend({ token }),
+    setup.tradingAppSdk.extend({ token }),
+    setup.tokenAdminSdk.extend({ token }),
+    setup.charlieSdk.extend({ token }),
+])
+
 const {
     aliceSdk,
     bobSdk,
@@ -41,17 +74,6 @@ const {
     synchronizers,
     amuletAdmin,
 } = setup
-
-// ── Start the TestToken registry (CIP-56 off-ledger APIs) ───────────────────
-await startRegistry({
-    operator: {
-        party: tokenAdmin.partyId,
-        keys: tokenAdmin.keyPair,
-    },
-    synchronizerId: synchronizers.appSynchronizerId,
-    port: TEST_TOKEN_V1_REGISTRY_PORT,
-    sdk: tokenAdminSdk,
-})
 
 // ── Steps 4–5: Init holdings ────────────────────────────────────────────────
 // Step 4:  Mint Amulet for Alice (global synchronizer)

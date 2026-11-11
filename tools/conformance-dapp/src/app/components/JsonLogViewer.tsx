@@ -8,6 +8,10 @@ import { useTheme } from '@mui/material/styles'
 import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
 import type React from 'react'
+import {
+    formatDateTime,
+    formatUtcDateTime,
+} from '@canton-network/core-wallet-ui-components'
 import type { Observation } from '../../report.ts'
 
 const TOKEN_PATTERN =
@@ -113,10 +117,10 @@ const ObservationEntry: React.FC<{ observation: Observation }> = ({
             <Typography
                 variant="caption"
                 color="textSecondary"
-                title={time.toISOString()}
+                title={formatUtcDateTime(time)}
                 sx={{ ml: 'auto', whiteSpace: 'nowrap' }}
             >
-                {time.toLocaleString()}
+                {formatDateTime(time, { seconds: true })}
             </Typography>
             {payload !== undefined && <JsonValue value={payload} />}
         </Box>

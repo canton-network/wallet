@@ -4,15 +4,16 @@
 import { html, css, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import './back-link.js'
+import './copy-button.js'
 import { BaseElement } from '../internal/base-element.js'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { chevronDownIcon } from '../icons/index.js'
 import {
-    formatActivityDate,
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
 } from '../internal/activity-utils.js'
+import { formatDateTime, formatUtcDateTime } from '../date-time.js'
 import { renderCopyableValue } from '../internal/activity-render.js'
 
 /** Emitted when the user clicks the "Approve" button */
@@ -29,8 +30,9 @@ export class TransactionDeleteEvent extends Event {
     }
 }
 
+export
 @customElement('wg-transaction-detail')
-export class WgTransactionDetail extends BaseElement {
+class WgTransactionDetail extends BaseElement {
     @property() accessor commandId = ''
 
     @property() accessor externalTxId: string | null = null
@@ -371,9 +373,14 @@ export class WgTransactionDetail extends BaseElement {
                     </span>`
                 )}
                 ${this.renderInlineField('Action type', activityType)}
-                ${this.renderInlineField(
+                ${renderCopyableValue(
                     'Created at',
-                    formatActivityDate(this.createdAt)
+                    this.createdAt,
+                    'Copy created at timestamp',
+                    {
+                        display: formatDateTime(this.createdAt),
+                        title: formatUtcDateTime(this.createdAt),
+                    }
                 )}
                 ${this.renderSignatories()}
                 ${renderCopyableValue(

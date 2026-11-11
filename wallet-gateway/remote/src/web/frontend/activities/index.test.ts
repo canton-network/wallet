@@ -108,6 +108,14 @@ describe('UserUiActivities', () => {
         expect(el.loading).toBe(false)
     })
 
+    it('shows a loading indicator while the first page is loading', async () => {
+        mockRequest.mockReturnValue(new Promise(() => {}))
+
+        el = await fixture<UserUiActivities>(componentFixture)
+
+        expect(el.shadowRoot?.querySelector('wg-loading-state')).not.toBeNull()
+    })
+
     it('shows empty state when there are no transactions', async () => {
         mockRequest.mockResolvedValue({ transactions: [] })
 
@@ -196,6 +204,49 @@ describe('UserUiActivities', () => {
                 limit: 4,
                 cursor: 'next-page-cursor',
             },
+        })
+    })
+
+    it('disables pagination and marks the list busy while a page is loading', async () => {
+        mockRequest.mockResolvedValueOnce({
+            transactions: makeTransactions(4),
+            nextCursor: 'page-2-cursor',
+            count: 12,
+        })
+        let resolvePage2!: (value: unknown) => void
+        mockRequest.mockReturnValueOnce(
+            new Promise((resolve) => (resolvePage2 = resolve))
+        )
+
+        el = await fixture<UserUiActivities>(componentFixture)
+        await waitUntil(() => el.transactions.length === 4)
+
+        const pagination = el.shadowRoot?.querySelector(
+            'wg-pagination'
+        ) as HTMLElement & { disabled: boolean }
+        expect(pagination.disabled).toBe(false)
+
+        const activityList = el.shadowRoot?.querySelector('.activity-list')
+        expect(activityList?.getAttribute('aria-busy')).toBe('false')
+
+        pagination.dispatchEvent(new PageChangeEvent(2))
+        await el.updateComplete
+        expect(pagination.disabled).toBe(true)
+        expect(activityList?.getAttribute('aria-busy')).toBe('true')
+
+        resolvePage2({
+            transactions: [makeTransaction({ id: 'tx-5', commandId: 'cmd-5' })],
+            nextCursor: 'page-3-cursor',
+            count: 12,
+        })
+        await waitUntil(() => !el.loading, 'page 2 loaded')
+        await el.updateComplete
+
+        expect(pagination.disabled).toBe(false)
+        expect(activityList?.getAttribute('aria-busy')).toBe('false')
+        expect(mockRequest).toHaveBeenNthCalledWith(2, {
+            method: 'listTransactions',
+            params: { limit: 4, cursor: 'page-2-cursor' },
         })
     })
 

@@ -45,7 +45,8 @@ export function startBackground({
     const walletStore = createWalletStore(vault)
     const getStore = async () =>
         loadAuthedStore(await walletStore.get(), authContext)
-    const signingDriver = new InternalSigningDriver(createSigningStore())
+    // TODO(#2498/#2406): use the HD-wallet driver.
+    const signingDriver = new InternalSigningDriver(createSigningStore(vault))
     const deps = { getStore, authContext, signingDriver, notificationService }
 
     registerVaultService(vault)

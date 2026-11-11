@@ -60,6 +60,7 @@ async function filledStore() {
     })
     await store.setMessageRaw({
         id: 'message-1',
+        kind: 'regular',
         status: 'pending',
         userId: CONTEXT.userId,
         partyId: WALLET.partyId,

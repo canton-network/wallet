@@ -4,13 +4,12 @@
 import { expect, test, it, describe } from 'vitest'
 import {
     DamlTransaction,
+    HashingSchemeVersion,
     PreparedTransaction,
-    type Value,
 } from '@canton-network/core-ledger-proto'
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,
-    encodeValue,
 } from './hashing_scheme_v2.js'
 import {
     type DecodeOptions,
@@ -23,9 +22,10 @@ import {
     validateAuthorizedPartyIds,
 } from './index.js'
 import camelcaseKeys from 'camelcase-keys'
+import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
 import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
+import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
 import { fromBase64, fromHex, toBase64, toHex } from './utils'
-import { computePreparedTransaction } from './hashing_scheme_v2'
 
 const parsedTxInfo: ParsedTransactionInfo = {
     jsonString:
@@ -76,10 +76,8 @@ test('decode a base 64 encoded prepared tx', async () => {
 
     const preparedTxHasBase64 = 'D8D0WGX3KgYcY/bkHDcm6OxHpgvTX8TQlDUeGIZtBzo='
     const calculatedPreparedTxHashBase64 =
-        await computePreparedTransaction(preparedTx)
-    expect(preparedTxHasBase64).toEqual(
-        toBase64(calculatedPreparedTxHashBase64)
-    )
+        await hashPreparedTransaction(preparedTx)
+    expect(preparedTxHasBase64).toEqual(calculatedPreparedTxHashBase64)
 })
 
 test('hash from preparedTx ledger api call should match calculated hash', async () => {
@@ -189,6 +187,74 @@ test(`should throw an error when converting invalid base64 to hex`, async () => 
     )
 })
 
+describe('hashPreparedTransaction', () => {
+    it('hashes an int64 above 2^53 exactly', async () => {
+        const { preparedTransaction, preparedTransactionHash } = bigInt64V2
+        // 2^53 + 1, which a JavaScript number rounds to 2^53
+        expect(
+            PreparedTransaction.toJsonString(
+                decodePreparedTransaction(preparedTransaction)
+            )
+        ).toContain('"int64":"9007199254740993"')
+
+        expect(await hashPreparedTransaction(preparedTransaction)).toBe(
+            preparedTransactionHash
+        )
+    })
+
+    it('refuses two nodes of one id', async () => {
+        const prepared = decodePreparedTransaction(
+            bigInt64V2.preparedTransaction
+        )
+        const { nodes } = prepared.transaction!
+        nodes.push({ ...nodes[0], nodeId: '5' })
+
+        await expect(hashPreparedTransaction(prepared)).rejects.toThrow(
+            expect.objectContaining({
+                name: 'TxHashingError',
+                code: 'DUPLICATE_NODE_ID',
+            })
+        )
+    })
+
+    it('hashes V3 when hashingScheme is V3', async () => {
+        expect(
+            await hashPreparedTransaction(
+                createPlainV3.preparedTransaction,
+                'hex',
+                { hashingScheme: HashingSchemeVersion.V3 }
+            )
+        ).toBe(createPlainV3.expected.hash)
+    })
+
+    it('applies limits.maxNodes', async () => {
+        // The participant's transaction has six nodes
+        const { preparedTransaction, preparedTransactionHash } = bigInt64V2
+        const hash = (maxNodes: number) =>
+            hashPreparedTransaction(preparedTransaction, 'base64', {
+                limits: { maxNodes },
+            })
+
+        await expect(hash(5)).rejects.toThrow(
+            expect.objectContaining({
+                name: 'TxHashingError',
+                code: 'NODE_LIMIT_EXCEEDED',
+            })
+        )
+        expect(await hash(6)).toBe(preparedTransactionHash)
+    })
+
+    it('hashes under V2 when the options are undefined', async () => {
+        expect(
+            await hashPreparedTransaction(
+                bigInt64V2.preparedTransaction,
+                'base64',
+                { hashingScheme: undefined, limits: undefined }
+            )
+        ).toBe(bigInt64V2.preparedTransactionHash)
+    })
+})
+
 describe('unknown fields', () => {
     // A message consisting only of field 999 (varint, value 1)
     const txWithUnknownField = toBase64(Uint8Array.from([0xb8, 0x3e, 0x01]))
@@ -257,187 +323,32 @@ describe('unknown fields', () => {
             hashPreparedTransaction(txWithUnknownField, 'hex', strict)
         ).rejects.toThrow(error)
     })
-})
 
-describe('encodeValue in hashing utils', () => {
-    it('should encode a unit value with prefix 0x00', async () => {
-        const input: Value = { sum: { oneofKind: 'unit', unit: {} } }
-        const result = await encodeValue(input)
-        expect(result).toEqual(Uint8Array.from([0]))
-    })
-
-    it('should encode a bool value with prefix 0x01', async () => {
-        const input: Value = { sum: { oneofKind: 'bool', bool: true } }
-        const result = await encodeValue(input)
-
-        expect(result[0]).toBe(0x01)
-    })
-
-    it('should encode an int64 value with prefix 0x02', async () => {
-        const input: Value = { sum: { oneofKind: 'int64', int64: '123' } }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x02)
-    })
-
-    it('should encode a numeric value with prefix 0x03', async () => {
-        const input: Value = { sum: { oneofKind: 'numeric', numeric: '12.34' } }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x03)
-    })
-
-    it('should encode a timestamp value with prefix 0x04', async () => {
-        const input: Value = {
-            sum: { oneofKind: 'timestamp', timestamp: '1609459200000' },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x04)
-    })
-
-    it('should encode a date value with prefix 0x05', async () => {
-        const input: Value = { sum: { oneofKind: 'date', date: 18628 } }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x05)
-    })
-
-    it('should encode a party value with prefix 0x06', async () => {
-        const input: Value = { sum: { oneofKind: 'party', party: 'Alice' } }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x06)
-    })
-
-    it('should encode a text value with prefix 0x07', async () => {
-        const input: Value = { sum: { oneofKind: 'text', text: 'hello' } }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x07)
-    })
-
-    it('should encode a contractId value with prefix 0x08', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'contractId',
-                contractId:
-                    '00550802ddb16371f5fc6d364e6cd4b3283a9eb5c0ccb121ae368cdebbad0fbf56',
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x08)
-    })
-
-    it('should recursively encode an optional value with prefix 0x09', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'optional',
-                optional: {
-                    value: { sum: { oneofKind: 'text', text: 'nested' } },
-                },
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x09)
-    })
-
-    it('should recursively encode a list value with prefix 0x0a', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'list',
-                list: {
-                    elements: [{ sum: { oneofKind: 'bool', bool: false } }],
-                },
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x0a)
-    })
-
-    it('should encode a textMap value with prefix 0x0b', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'textMap',
-                textMap: {
-                    entries: [
-                        {
-                            key: 'k',
-                            value: { sum: { oneofKind: 'text', text: 'v' } },
-                        },
-                    ],
-                },
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x0b)
-    })
-
-    it('should encode a record value with prefix 0x0c', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'record',
-                record: {
-                    recordId: {
-                        moduleName: 'M',
-                        entityName: 'R',
-                        packageId: '',
-                    },
-                    fields: [],
-                },
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x0c)
-    })
-
-    it('should encode a variant value with prefix 0x0d', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'variant',
-                variant: {
-                    variantId: {
-                        moduleName: 'M',
-                        entityName: 'V',
-                        packageId: '',
-                    },
-                    constructor: 'Left',
-                    value: { sum: { oneofKind: 'int64', int64: '1' } },
-                },
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x0d)
-    })
-
-    it('should encode an enum value with prefix 0x0e', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'enum',
-                enum: {
-                    enumId: {
-                        moduleName: 'M',
-                        entityName: 'E',
-                        packageId: '',
-                    },
-                    constructor: 'Red',
-                },
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x0e)
-    })
-
-    it('should encode a genMap value with prefix 0x0f', async () => {
-        const input: Value = {
-            sum: {
-                oneofKind: 'genMap',
-                genMap: { entries: [] },
-            },
-        }
-        const result = await encodeValue(input)
-        expect(result[0]).toBe(0x0f)
-    })
-
-    it('should throw an error for an undefined or unsupported oneofKind', async () => {
-        const input = { sum: { oneofKind: undefined } } as unknown as Value
-
-        await expect(encodeValue(input)).rejects.toThrow(
-            'Unsupported value type:'
+    describe('in a transaction to hash', () => {
+        // Protobuf decodes concatenated messages as one: the transaction with
+        // field 999 added
+        const tx = toBase64(
+            Uint8Array.from([
+                ...fromBase64(bigInt64V2.preparedTransaction),
+                ...fromBase64(txWithUnknownField),
+            ])
         )
+
+        it('refuses to hash them by default', async () => {
+            await expect(hashPreparedTransaction(tx)).rejects.toThrow(
+                expect.objectContaining({
+                    name: 'TxHashingError',
+                    code: 'UNKNOWN_FIELD',
+                })
+            )
+        })
+
+        it('hashes without them with readUnknownField: false', async () => {
+            expect(
+                await hashPreparedTransaction(tx, 'base64', {
+                    readUnknownField: false,
+                })
+            ).toBe(bigInt64V2.preparedTransactionHash)
+        })
     })
 })

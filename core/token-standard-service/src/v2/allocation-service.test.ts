@@ -824,4 +824,328 @@ describe('AllocationService', () => {
             )
         })
     })
+
+    describe('createAllocationsForRequestForLoggedInParty', () => {
+        const makeRequest = (
+            specs: AllocationSpecification[]
+        ): AllocationRequestViewV2 =>
+            ({
+                settlement: makeSettlement(),
+                allocations: specs,
+            }) as AllocationRequestViewV2
+
+        const makeAllocationCommand = (
+            inputHoldingCids: string[]
+        ): AllocationFactory_AllocateV2 => ({
+            settlement: makeSettlement(),
+            allocation: makeAllocationSpec(),
+            requestedAt: new Date().toISOString(),
+            inputHoldingCids:
+                inputHoldingCids as unknown as AllocationFactory_AllocateV2['inputHoldingCids'],
+            actors: [],
+            extraArgs: { context: { values: {} }, meta: { values: {} } },
+        })
+
+        it('throws when request has no allocation for account', async () => {
+            const { service } = makeService()
+
+            const dcA: DisclosedContractV2 = {
+                contractId: 'disc-a',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+            const dcShared: DisclosedContractV2 = {
+                contractId: 'disc-shared',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+
+            vi.spyOn(service, 'createAllocation')
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-1',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-1']),
+                    },
+                    [dcA, dcShared],
+                ])
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-2',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-2']),
+                    },
+                    [dcShared],
+                ])
+
+            const specA = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'alice::owner' }),
+            })
+            const specB = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'bob::owner' }),
+            })
+
+            const registry = vi.fn().mockResolvedValue(registryUrl)
+
+            await expect(
+                service.createAllocationsForRequestForLoggedInParty({
+                    requestCid: 'request-cid',
+                    request: makeRequest([specA, specB]),
+                    registry,
+                    partyId: 'badParty',
+                })
+            ).rejects.toThrow(
+                `Request request-cid has no allocation for account badParty`
+            )
+        })
+
+        it('creates allocations', async () => {
+            const { service } = makeService()
+
+            const dcA: DisclosedContractV2 = {
+                contractId: 'disc-a',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+            const dcShared: DisclosedContractV2 = {
+                contractId: 'disc-shared',
+                templateId: 't',
+                createdEventBlob: 'b',
+                synchronizerId: 's',
+            }
+
+            const allocateCmd = {
+                templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                contractId: 'factory-1',
+                choice: 'AllocationFactory_Allocate',
+                choiceArgument: makeAllocationCommand(['cid-1']),
+            }
+
+            vi.spyOn(service, 'createAllocation')
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-1',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-1']),
+                    },
+                    [dcA, dcShared],
+                ])
+                .mockResolvedValueOnce([
+                    {
+                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
+                        contractId: 'factory-2',
+                        choice: 'AllocationFactory_Allocate',
+                        choiceArgument: makeAllocationCommand(['cid-2']),
+                    },
+                    [dcShared],
+                ])
+
+            const specA = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'alice::owner' }),
+            })
+            const specB = makeAllocationSpec({
+                authorizer: makeAccount({ owner: 'bob::owner' }),
+            })
+
+            const registry = vi.fn().mockResolvedValue(registryUrl)
+
+            const r = await service.createAllocationsForRequestForLoggedInParty(
+                {
+                    requestCid: 'request-cid',
+                    request: makeRequest([specA, specB]),
+                    registry,
+                    partyId: 'bob::owner',
+                }
+            )
+
+            expect(r).toStrictEqual({
+                allocate: [[allocateCmd, [dcA, dcShared]]],
+                accept: [
+                    {
+                        templateId: ALLOCATION_REQUEST_INTERFACE_ID_V2,
+                        contractId: 'request-cid',
+                        choice: 'AllocationRequest_Accept',
+                        choiceArgument: {
+                            actors: ['bob::owner'],
+                            extraArgs: {
+                                context: { values: {} },
+                                meta: { values: {} },
+                            },
+                        },
+                    },
+                    [],
+                ],
+                skipped: [],
+            })
+            expect(registry).toHaveBeenCalledTimes(1)
+            expect(service.createAllocation).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    spec: specB,
+                    actors: ['bob::owner'],
+                }),
+                registryUrl
+            )
+        })
+    })
+
+    describe('createAllocationInstructionChoice', () => {
+        it('builds AllocationInstruction_Accept using a prefetched context, without a registry call', async () => {
+            const { service, tokenClient } = makeService()
+            const ctx = makeChoiceContext()
+
+            const [exercise, disclosed] =
+                await service.createAllocationInstructionChoice(
+                    'accept',
+                    'allocation-instruction-cid',
+                    ['actor::1'],
+                    registryUrl,
+                    true,
+                    ctx
+                )
+
+            expect(tokenClient.post).not.toHaveBeenCalled()
+            expect(exercise).toStrictEqual({
+                templateId: ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
+                contractId: 'allocation-instruction-cid',
+                choice: 'AllocationInstruction_Accept',
+                choiceArgument: {
+                    actors: ['actor::1'],
+                    extraArgs: {
+                        context: ctx.choiceContextData,
+                        meta: { values: {} },
+                    },
+                },
+            })
+            expect(disclosed).toBe(ctx.disclosedContracts)
+        })
+
+        it('builds AllocationInstruction_Withdraw using a prefetched context', async () => {
+            const { service, tokenClient } = makeService()
+            const ctx = makeChoiceContext()
+
+            const [exercise] = await service.createAllocationInstructionChoice(
+                'withdraw',
+                'allocation-instruction-cid',
+                ['actor::1'],
+                registryUrl,
+                true,
+                ctx
+            )
+
+            expect(tokenClient.post).not.toHaveBeenCalled()
+            expect(exercise.choice).toBe('AllocationInstruction_Withdraw')
+        })
+
+        it('fetches a choice context from the registry when none is prefetched', async () => {
+            const { service, tokenClient } = makeService()
+            const ctx = makeChoiceContext()
+            tokenClient.post.mockResolvedValue(ctx)
+
+            const [exercise, disclosed] =
+                await service.createAllocationInstructionChoice(
+                    'accept',
+                    'allocation-instruction-cid',
+                    ['actor::1'],
+                    registryUrl
+                )
+
+            expect(tokenClient.post).toHaveBeenCalledWith(
+                `/registry/allocation-instruction/v2/{allocationInstructionId}/choice-contexts/accept`,
+                { excludeDebugFields: true },
+                expect.any(Object)
+            )
+            expect(exercise.choice).toBe('AllocationInstruction_Accept')
+            expect(disclosed).toBe(ctx.disclosedContracts)
+        })
+
+        it('passes excludeDebugFields through to the registry fetch when no context is prefetched', async () => {
+            const { service, tokenClient } = makeService()
+            tokenClient.post.mockResolvedValue(makeChoiceContext())
+
+            await service.createAllocationInstructionChoice(
+                'withdraw',
+                'allocation-instruction-cid',
+                ['actor::1'],
+                registryUrl,
+                false
+            )
+
+            expect(tokenClient.post).toHaveBeenCalledWith(
+                expect.any(String),
+                { excludeDebugFields: false },
+                expect.any(Object)
+            )
+        })
+    })
+
+    describe('fetchAllocationInstructionChoiceContext', () => {
+        it.each(['accept', 'withdraw'] as const)(
+            'posts to the %s choice-context endpoint with the allocation instruction id',
+            async (action) => {
+                const { service, tokenClient } = makeService()
+                const ctx = makeChoiceContext()
+                tokenClient.post.mockResolvedValue(ctx)
+
+                const result =
+                    await service.fetchAllocationInstructionChoiceContext(
+                        action,
+                        'allocation-instruction-cid',
+                        registryUrl
+                    )
+
+                expect(tokenClient.post).toHaveBeenCalledWith(
+                    `/registry/allocation-instruction/v2/{allocationInstructionId}/choice-contexts/${action}`,
+                    { excludeDebugFields: true },
+                    {
+                        path: {
+                            allocationInstructionId:
+                                'allocation-instruction-cid',
+                        },
+                    }
+                )
+                expect(result).toBe(ctx)
+            }
+        )
+
+        it('defaults excludeDebugFields to true when not specified', async () => {
+            const { service, tokenClient } = makeService()
+            tokenClient.post.mockResolvedValue(makeChoiceContext())
+
+            await service.fetchAllocationInstructionChoiceContext(
+                'accept',
+                'cid-1',
+                registryUrl
+            )
+
+            expect(tokenClient.post).toHaveBeenCalledWith(
+                expect.any(String),
+                { excludeDebugFields: true },
+                expect.any(Object)
+            )
+        })
+
+        it('respects an explicit excludeDebugFields value', async () => {
+            const { service, tokenClient } = makeService()
+            tokenClient.post.mockResolvedValue(makeChoiceContext())
+
+            await service.fetchAllocationInstructionChoiceContext(
+                'accept',
+                'cid-1',
+                registryUrl,
+                false
+            )
+
+            expect(tokenClient.post).toHaveBeenCalledWith(
+                expect.any(String),
+                { excludeDebugFields: false },
+                expect.any(Object)
+            )
+        })
+    })
 })

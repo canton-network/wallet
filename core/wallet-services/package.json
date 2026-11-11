@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-services",
-    "version": "2.2.0",
+    "version": "2.3.0",
     "type": "module",
     "description": "Services needed to implement a Wallet.",
     "license": "Apache-2.0",
@@ -37,6 +37,7 @@
         "@logtape/testing": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
+        "jose": "catalog:",
         "playwright": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",

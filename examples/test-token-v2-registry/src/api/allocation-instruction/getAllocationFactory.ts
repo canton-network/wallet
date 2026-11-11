@@ -3,7 +3,7 @@
 
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { getTokenRulesFactory } from '../getTokenRulesFactory'
+import { getTokenRulesContext } from '../getTokenRulesContext'
 
 /**
  * Resolves or creates an allocation factory for initiating allocation workflows.
@@ -15,21 +15,7 @@ export const getAllocationFactory: TExpressOpenApiRequestHandler<
     OffLedger.AllocationInstructionV2.paths['/registry/allocation-instruction/v2/allocation-factory']['post']
 > = async (_req, res, next) => {
     try {
-        const foundFactory = await getTokenRulesFactory()
-        res.json({
-            factoryId: foundFactory.contractId,
-            choiceContext: {
-                choiceContextData: {},
-                disclosedContracts: [
-                    {
-                        templateId: foundFactory.templateId,
-                        contractId: foundFactory.contractId,
-                        createdEventBlob: foundFactory.createdEventBlob ?? '',
-                        synchronizerId: foundFactory.synchronizerId,
-                    },
-                ],
-            },
-        })
+        res.json(await getTokenRulesContext())
     } catch (e) {
         next(e)
     }

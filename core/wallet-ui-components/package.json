@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-ui-components",
-    "version": "1.18.0",
+    "version": "1.19.0",
     "type": "module",
     "description": "Reusable UI components for the Splice wallet",
     "license": "Apache-2.0",
@@ -17,6 +17,12 @@
         },
         "./index.css": "./dist/index.css",
         "./themes": "./themes",
+        "./logic": {
+            "types": "./dist/logic/index.d.ts",
+            "import": "./dist/logic/index.js",
+            "require": "./dist/logic/index.cjs",
+            "default": "./dist/logic/index.js"
+        },
         "./react": {
             "types": "./dist/react/index.d.ts",
             "import": "./dist/react/index.js",
@@ -29,8 +35,7 @@
         "build:watch": "vite build --watch & tsc -p tsconfig.lib.json --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist",
-        "dev": "storybook dev -p 6006 --no-open",
-        "dev:lit": "storybook dev -p 6007 -c .storybook-lit --no-open"
+        "dev": "storybook dev -p 6006 --no-open"
     },
     "devDependencies": {
         "@mui/icons-material": "catalog:",
@@ -39,7 +44,7 @@
         "@storybook/addon-a11y": "catalog:",
         "@storybook/addon-vitest": "catalog:",
         "@storybook/react-vite": "catalog:",
-        "@storybook/web-components-vite": "catalog:",
+        "@testing-library/dom": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitest/browser-playwright": "catalog:",
@@ -47,6 +52,7 @@
         "playwright": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
+        "shadow-dom-testing-library": "catalog:",
         "storybook": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",
@@ -55,6 +61,7 @@
         "vitest": "catalog:"
     },
     "dependencies": {
+        "@lit/react": "catalog:",
         "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-tx-visualizer": "workspace:",
         "@canton-network/core-types": "workspace:",

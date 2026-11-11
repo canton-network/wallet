@@ -7,6 +7,7 @@ import { userEvent } from 'vitest/browser'
 import { makeWalletPickerEntry } from './__tests__/fixtures.js'
 import './wallet-picker.js'
 import { WalletPicker } from './wallet-picker.js'
+import { popup } from '../windows/popup.js'
 
 const ENTRIES_KEY = 'splice_wallet_picker_entries'
 const RECENT_KEY = 'splice_wallet_picker_recent'
@@ -41,6 +42,41 @@ describe('WalletPicker', () => {
             configurable: true,
             writable: true,
         })
+    })
+
+    it('is styled in the popup, which loads no theme', async () => {
+        setPickerEntries([makeWalletPickerEntry()])
+        const popupWindow = {
+            closed: false,
+            location: { href: '' },
+            focus: vi.fn(),
+            close: vi.fn(),
+        }
+        vi.spyOn(window, 'open').mockReturnValue(
+            popupWindow as unknown as Window
+        )
+        popup.open(WalletPicker)
+
+        // Render the popup document as the popup window would
+        const iframe = document.createElement('iframe')
+        iframe.src = popupWindow.location.href
+        const loaded = new Promise((resolve) =>
+            iframe.addEventListener('load', resolve, { once: true })
+        )
+        document.body.appendChild(iframe)
+        await loaded
+
+        try {
+            const card = iframe
+                .contentDocument!.querySelector('popup-content')!
+                .shadowRoot!.querySelector('.wallet-card')!
+            const style = iframe.contentWindow!.getComputedStyle(card)
+            expect(style.borderTopStyle).toBe('solid')
+            expect(style.borderTopColor).toBe('rgb(229, 231, 235)')
+        } finally {
+            iframe.remove()
+            popup.close()
+        }
     })
 
     it('mounts without error', async () => {

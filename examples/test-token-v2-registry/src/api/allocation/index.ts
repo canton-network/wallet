@@ -6,7 +6,7 @@ import { getAllocationCancelContext } from './getAllocationCancelContext'
 import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z from 'zod'
+import z, { type ZodType } from 'zod'
 import { choiceContextRequestSchema } from '../common'
 import { getSettlementFactory } from './getSettlementFactory'
 
@@ -23,9 +23,11 @@ const openAPIRouter =
 
 openAPIRouter.post('/registry/allocation/v2/settlement-factory', {
     bodySchema: z.object({
-        choiceArguments: z.record(z.string(), z.never()),
+        choiceArguments: z.record(z.string(), z.unknown()),
         excludeDebugFields: z.boolean(),
-    }),
+    }) as unknown as ZodType<
+        OffLedger.AllocationV2.operations['getSettlementFactory']['requestBody']['content']['application/json']
+    >,
     handler: getSettlementFactory,
 })
 

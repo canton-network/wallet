@@ -35,8 +35,9 @@ export class IdpFormBackEvent extends Event {
     }
 }
 
+export
 @customElement('idp-form')
-export class IdpFormComponent extends BaseElement {
+class IdpFormComponent extends BaseElement {
     /** 'add' = creating a new IDP, 'review' = viewing/editing an existing one */
     @property({ type: String })
     accessor mode: 'add' | 'review' = 'add'
@@ -115,7 +116,7 @@ export class IdpFormComponent extends BaseElement {
             }
 
             .field-control:disabled {
-                background: rgba(15, 23, 42, 0.04);
+                background: rgba(var(--wg-shade-rgb), 0.04);
                 color: var(--wg-text-secondary);
                 opacity: 1;
             }

@@ -21,8 +21,9 @@ export class ErrorPageRefreshEvent extends Event {
     }
 }
 
+export
 @customElement('wg-error-page')
-export class WgErrorPage extends BaseElement {
+class WgErrorPage extends BaseElement {
     @property({ type: String }) accessor mode: ErrorPageMode = 'back'
     @property({ type: String }) accessor title = 'Something went wrong'
     @property({ type: String }) accessor message =
@@ -85,12 +86,12 @@ export class WgErrorPage extends BaseElement {
                 font-weight: var(--wg-font-weight-semibold);
                 cursor: pointer;
                 color: var(--wg-accent);
-                background: rgba(124, 58, 237, 0.1);
+                background: rgba(var(--wg-accent-rgb), 0.1);
                 transition: background-color 0.2s ease;
             }
 
             .action-btn:hover {
-                background: rgba(124, 58, 237, 0.16);
+                background: rgba(var(--wg-accent-rgb), 0.16);
             }
         `,
     ]

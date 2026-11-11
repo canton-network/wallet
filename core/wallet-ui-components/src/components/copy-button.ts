@@ -12,8 +12,9 @@ export class CopySuccessEvent extends Event {
     }
 }
 
+export
 @customElement('wg-copy-button')
-export class WgCopyButton extends BaseElement {
+class WgCopyButton extends BaseElement {
     @property({ type: String }) accessor value = ''
     @property({ type: String }) accessor label = 'Copy to clipboard'
 
@@ -25,6 +26,9 @@ export class WgCopyButton extends BaseElement {
             :host {
                 display: inline-flex;
                 flex: 0 0 auto;
+                /* BaseElement paints the page background on every host. This
+                   button sits on cards, whose surface can differ from it. */
+                background-color: transparent;
             }
 
             .copy-btn {

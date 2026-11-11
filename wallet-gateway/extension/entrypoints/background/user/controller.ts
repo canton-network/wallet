@@ -234,8 +234,20 @@ export const userController = (
                 'Function allocateSelfIssuedWallet not implemented.'
             )
         },
-        completeSelfIssuedLogin: async () => {
-            throw new Error('Function completeSelfIssuedLogin not implemented.')
+        signSelfIssuedAccessToken: async () => {
+            throw new Error(
+                'Function signSelfIssuedAccessToken not implemented.'
+            )
+        },
+        getSignSelfIssuedAccessTokenStatus: async () => {
+            throw new Error(
+                'Function getSignSelfIssuedAccessTokenStatus not implemented.'
+            )
+        },
+        listSelfIssuedSigningProviderKeys: async () => {
+            throw new Error(
+                'Function listSelfIssuedSigningProviderKeys not implemented.'
+            )
         },
         removeSelfIssuedLoginSession: async () => {
             throw new Error(
@@ -560,6 +572,9 @@ export const userController = (
         },
         getUser: async () => {
             throw new Error('Function getUser not implemented.')
+        },
+        getServerStatus: async () => {
+            throw new Error('Function getServerStatus not implemented.')
         },
         generateApiKey: async () => {
             throw new Error('Function generateApiKey not implemented.')

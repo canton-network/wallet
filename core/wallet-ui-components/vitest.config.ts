@@ -3,7 +3,7 @@
 
 import { defineConfig } from 'vitest/config'
 import { standardDecorators } from '../../vite.decorators.js'
-import { browserProject, coverage } from '../../vitest.base.ts'
+import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 import path from 'node:path'
 import { readdirSync, readFileSync } from 'node:fs'
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
@@ -45,9 +45,11 @@ const reactDependencies = (): string[] => {
 export default defineConfig({
     test: {
         coverage: coverage({
-            exclude: ['src/**/*.lit.stories.ts', 'src/vite-env.d.ts'],
+            exclude: ['src/vite-env.d.ts'],
         }),
         projects: [
+            // Only for tests that need Node, e.g. to switch the time zone
+            nodeProject({ include: ['src/**/*.node.test.ts'] }),
             browserProject({
                 plugins: [
                     standardDecorators(
@@ -58,6 +60,9 @@ export default defineConfig({
             {
                 extends: true,
                 plugins: [
+                    standardDecorators(
+                        path.resolve(import.meta.dirname, 'src/**/*.ts')
+                    ),
                     // The plugin will run tests for the stories defined in your Storybook config
                     // See options at: https://storybook.js.org/docs/next/writing-tests/integrations/vitest-addon#storybooktest
                     storybookTest({
@@ -70,7 +75,13 @@ export default defineConfig({
                     browser: {
                         enabled: true,
                         headless: true,
-                        provider: playwright({}),
+                        // Pinned so stories can assert on formatted dates
+                        provider: playwright({
+                            contextOptions: {
+                                locale: 'en-US',
+                                timezoneId: 'Europe/Zurich',
+                            },
+                        }),
                         instances: [
                             {
                                 browser: 'chromium',

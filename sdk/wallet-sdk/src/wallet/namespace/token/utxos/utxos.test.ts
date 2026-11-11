@@ -55,6 +55,7 @@ function makeUtxos(batchSize: number) {
                 createdEvent: {
                     templateId: 'tid',
                     contractId: 'cid',
+                    createdAt: new Date().toISOString(),
                 },
             },
             fetchedAtOffset: 10,
@@ -88,7 +89,13 @@ describe('utxos namespace', () => {
                 interfaceViewValue: {
                     lock: null,
                 },
-                activeContract: 'contract',
+                activeContract: {
+                    createdEvent: {
+                        templateId: 'tid',
+                        contractId: 'cid',
+                        createdAt: new Date().toISOString(),
+                    },
+                },
                 fetchedAtOffset: 10,
             },
         ])

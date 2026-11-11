@@ -49,7 +49,7 @@ Chrome stops an idle service worker and starts it again for the next message or 
 
 `background/vault/` keeps data encrypted in `local:vault`. The key comes from the user's password through PBKDF2-SHA-256, and the data is encrypted with AES-256-GCM. While the vault is unlocked, the decrypted data is in the background's memory and the key is cached in `session:vaultSession`. After a service worker restart, `startBackground()` restores the vault from that cached key without the password. Closing the browser, reloading the extension or pressing Lock clears it. Store secrets with `vault.defineItem(key, { fallback })`, which has the same shape as a WXT storage item.
 
-The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet-store)) and the auth context (item `authContext`), which is the signed-in user's access token and user ID. `createAuthContextStore(vault)` in `background/auth-context.ts` reads and writes the auth context, and its methods reject with `VaultLockedError` while the vault is locked. A lock doesn't sign the user out, so after an unlock the same user is signed in again. A reset deletes the token with everything else.
+The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet-store)), the auth context (item `authContext`), which is the signed-in user's access token and user ID, and the signing keys and signing transactions of the wallet-kernel driver (item `signingStore`). `createAuthContextStore(vault)` in `background/auth-context.ts` reads and writes the auth context, and its methods reject with `VaultLockedError` while the vault is locked. A lock doesn't sign the user out, so after an unlock the same user is signed in again. A reset deletes the token with everything else.
 
 The pages send `vault.getStatus`, `vault.create`, `vault.unlock` and `vault.lock` through `vaultMessenger` (`shared/vault-protocol.ts`). `vault-service.ts` answers them only from `popup.html` and `app.html`. Errors arrive as plain `Error`s, so compare `error.name` with `VaultErrorName`. While the vault isn't unlocked, every user API method rejects with `VaultLockedError`. The dApp dispatcher answers `status`, `isConnected` and `connect` with a not-connected result whose reason is `Locked`, and every other method with error 4100. Its `connect` also opens the unlock page.
 
@@ -126,7 +126,12 @@ Oxlint (`.oxlintrc.json`) blocks these imports:
 | any file                         | the `@mui/material` or `@mui/icons-material` root    |
 | any file                         | the `@canton-network/core-wallet-ui-components` root |
 
-`import type` across runtimes is allowed. Import MUI by path, for example `@mui/material/Button`. Import the shared UI components from `@canton-network/core-wallet-ui-components/react`, because the package root loads Lit and Bootstrap CSS.
+`import type` across runtimes is allowed. Import MUI by path, for example `@mui/material/Button`. Import the shared UI from the subpaths of `@canton-network/core-wallet-ui-components`, because the package root loads Lit and Bootstrap CSS:
+
+- `/react` has the native React components, as well as the React wrappers for the Lit components that the remote UI uses. For the wrappers, props go to the element as properties, so don't pass `undefined` for a prop that has a default (`signingProviders={data ?? []}`): the wrapper assigns it and replaces the default. Events are camelCase props that receive the event, such as `onWalletAllocate={(event) => event.wallet}`.
+- `/logic` has the framework-agnostic logic that both UIs share, such as the parties toasts and wallet loading. It has no UI imports.
+
+The Lit components take their colours from `--wg-theme-*` CSS variables, which inherit through shadow roots. `ui/theme/lit-bridge.ts` sets them on the root element from this app's colour schemes, so they follow the MUI theme and dark mode, nested components included.
 
 Use the `@/` alias to import across top-level folders. The lint rule doesn't check dynamic `import()`.
 

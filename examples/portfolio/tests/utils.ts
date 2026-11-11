@@ -7,6 +7,7 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { TokenStandardVersion } from '../src/types/instruments'
+import type { Request } from '@playwright/test'
 
 const BASE_URL = 'http://localhost:8081'
 
@@ -238,8 +239,11 @@ export const fillAndSubmitTransfer = async (
     await expect(
         dialog.getByRole('heading', { name: 'Transfer Summary' })
     ).toBeVisible({ timeout: 15000 })
+    // Date and expiration, e.g. "06/01/2025, 02:34 PM GMT+2" in en-US
     await expect(
-        dialog.getByText(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/)
+        dialog.getByText(
+            /^\d{2}\/\d{2}\/\d{4}, \d{2}:\d{2}\s[AP]M GMT([+-]\d{1,2}(:\d{2})?)?$/
+        )
     ).toHaveCount(2)
     await dialog.getByRole('button', { name: 'Close', exact: true }).click()
     await expect(dialog).not.toBeVisible({ timeout: 10000 })
@@ -470,3 +474,48 @@ export const selectTransferVersion = async (
     await radio.check()
     await expect(radio).toBeChecked()
 }
+
+export const recordTransferChoiceContexts = (page: Page) => {
+    const urls: string[] = []
+    const onRequest = (request: Request) => {
+        if (
+            /\/transfer-instruction\/v[12]\/[^/]+\/choice-contexts\//.test(
+                request.url()
+            )
+        ) {
+            urls.push(request.url())
+        }
+    }
+    page.on('request', onRequest)
+
+    return {
+        urls,
+        stop: () => page.off('request', onRequest),
+        usedVersion: (action: 'accept' | 'reject' | 'withdraw') => {
+            const pattern = (v: string) =>
+                new RegExp(
+                    `/transfer-instruction/${v}/[^/]+/choice-contexts/${action}`
+                )
+
+            return {
+                v1: urls.some((url) => pattern('v1').test(url)),
+                v2: urls.some((url) => pattern('v2').test(url)),
+            }
+        },
+    }
+}
+
+export const amuletSupportsApi = async (api: string): Promise<boolean> => {
+    const REGISTRY = 'http://scan.localhost:4000'
+    const response = await fetch(`${REGISTRY}/registry/metadata/v1/instruments`)
+    if (!response.ok) throw new Error(`Registry metadata unavailable`)
+    const { instruments } = (await response.json()) as {
+        instruments: { id: string; supportedApis?: Record<string, number> }[]
+    }
+    return instruments.some(
+        (i) => i.id === 'Amulet' && i.supportedApis?.[api] != null
+    )
+}
+
+export const amuletSupportsTransferV2 = () =>
+    amuletSupportsApi('splice-api-token-transfer-instruction-v2')

@@ -15,8 +15,9 @@ export class ApiKeyGenerateEvent extends Event {
     }
 }
 
+export
 @customElement('api-key-form')
-export class ApiKeyForm extends BaseElement {
+class ApiKeyForm extends BaseElement {
     @property({ type: Object })
     accessor apiKeyParams: GenerateApiKeyParams = {
         name: '',

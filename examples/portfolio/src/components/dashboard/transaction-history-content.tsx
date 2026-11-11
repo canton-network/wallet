@@ -35,13 +35,15 @@ interface TransactionHistoryContentProps {
     onLoadMore: () => void
 }
 
+// The date has a fixed width so it is never cut off. The percentages add up to
+// 100% and share the remaining width
 const TRANSACTION_HISTORY_COLUMNS = [
-    { id: 'type', label: 'Activity', width: '18%' },
-    { id: 'asset', label: 'Asset', width: '13%' },
-    { id: 'amount', label: 'Amount', width: '13%' },
-    { id: 'date', label: 'Date', width: '17%' },
-    { id: 'update-id', label: 'Update ID', width: '22%' },
-    { id: 'counterparty', label: 'Counterparty', width: '17%' },
+    { id: 'type', label: 'Activity', width: '22%' },
+    { id: 'asset', label: 'Asset', width: '16%' },
+    { id: 'amount', label: 'Amount', width: '16%' },
+    { id: 'date', label: 'Date', width: '184px' },
+    { id: 'update-id', label: 'Update ID', width: '26%' },
+    { id: 'counterparty', label: 'Counterparty', width: '20%' },
 ] as const
 
 const TRANSACTION_HISTORY_COLUMN_COUNT = TRANSACTION_HISTORY_COLUMNS.length

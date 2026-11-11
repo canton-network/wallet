@@ -171,6 +171,29 @@ describe('CoreService', () => {
         expect(result).toHaveLength(1)
         expect(result[0]).toEqual('2')
     })
+
+    it('should not read account holdings until completion by default', async () => {
+        const { service } = makeService()
+        const listContracts = vi
+            .spyOn(service.core, 'listContractsByInterface')
+            .mockResolvedValue([])
+
+        await service.core.getInputHoldingCidsForAccount({
+            account: { owner: senderParty, provider: null, id: '' },
+            instrumentAdmin,
+            instrumentId,
+        })
+
+        // The until-completion /v2/updates scan only keeps contracts with a
+        // top-level `owner` create argument, which drops V2 holdings.
+        expect(listContracts).toHaveBeenCalledWith(
+            expect.any(String),
+            senderParty,
+            undefined,
+            undefined,
+            false
+        )
+    })
 })
 
 describe('AllocationService', () => {

@@ -8,23 +8,37 @@ import {
     type AllocationInstructionView,
     type AllocationView,
     type AllocationRequestView,
+    type AllocationRequestAction,
+    decodeAvailableActions,
+    actionAvailability,
 } from '@canton-network/core-token-standard-v2'
 import type { TokenNamespaceConfig } from '../../namespace'
 import type { PartyId } from '@canton-network/core-types'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PreparedCommand } from '../../../transactions/types.js'
-import { parseAssets, ParsedURL } from '../../../utils/url.js'
+import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.js'
 import {
     actorsFor,
     sameSettlement,
+    type AllocationChoiceContextV2,
     type AllocationChoiceParams,
     type AllocationContextParams,
     type AllocationInstructionCreateParams,
+    type AllocationRequestAcceptResult,
     type AllocationRequestActionParams,
     type AllocationScanParams,
     type PreparedCommands,
     type SettlementFactoryParams,
 } from './types'
+import type {
+    DisclosedContract,
+    ExerciseCommand,
+} from '@canton-network/core-token-standard-service'
+
+const toPrepared = ([cmd, dcs]: [
+    ExerciseCommand,
+    DisclosedContract[],
+]): PreparedCommand => [{ ExerciseCommand: cmd }, dcs]
 
 export class AllocationNamespace {
     constructor(private readonly sdkContext: TokenNamespaceConfig) {}
@@ -217,25 +231,38 @@ export class AllocationNamespace {
 
         withdraw: async (
             allocationInstructionCid: string,
-            actors: PartyId[]
+            actors: PartyId[],
+            registryUrl: URLInput,
+            excludeDebugFields: boolean = true,
+            prefetched?: AllocationChoiceContextV2
         ): Promise<PreparedCommand> => {
             const [command, dc] =
-                this.service.createWithdrawAllocationInstruction(
+                await this.service.createAllocationInstructionChoice(
+                    'withdraw',
                     allocationInstructionCid,
-                    actors
+                    actors,
+                    new ParsedURL(this.sdkContext.commonCtx, registryUrl),
+                    excludeDebugFields,
+                    prefetched
                 )
-
             return [{ ExerciseCommand: command }, dc]
         },
 
         accept: async (
             allocationInstructionCid: string,
-            actors: PartyId[]
+            actors: PartyId[],
+            registryUrl: URLInput,
+            excludeDebugFields: boolean = true,
+            prefetched?: AllocationChoiceContextV2
         ): Promise<PreparedCommand> => {
             const [command, dc] =
-                this.service.createAcceptAllocationInstruction(
+                await this.service.createAllocationInstructionChoice(
+                    'accept',
                     allocationInstructionCid,
-                    actors
+                    actors,
+                    new ParsedURL(this.sdkContext.commonCtx, registryUrl),
+                    excludeDebugFields,
+                    prefetched
                 )
 
             return [{ ExerciseCommand: command }, dc]
@@ -252,6 +279,18 @@ export class AllocationNamespace {
             )
         },
 
+        /**
+         * Accepts an allocation request by creating the allocations and the
+         * accept command in a single batched submission.
+         *
+         * @deprecated Use {@link acceptForParty} instead. This method batches all
+         * commands into one tuple and cannot report allocations that were skipped
+         * because no registry serves their instrument admin. It will be removed
+         * in the next major version.
+         *
+         * @param params - The allocation request and the party accepting it.
+         * @returns A tuple of the wrapped exercise commands and their disclosed contracts.
+         */
         accept: async (
             params: AllocationRequestActionParams
         ): Promise<PreparedCommands> => {
@@ -277,6 +316,60 @@ export class AllocationNamespace {
                 commands.map((ExerciseCommand) => ({ ExerciseCommand })),
                 dc,
             ]
+        },
+
+        /**
+         * Prepares the commands needed for a party to accept an allocation request.
+         *
+         * Returns the allocation commands and the accept command separately, along
+         * with any instrument admins that were skipped because no configured
+         * registry serves them. When any admin is skipped, `accept` is `null`,
+         * since the request cannot be fully accepted.
+         *
+         * @returns The prepared allocate commands, the prepared accept command
+         * (or `null`), and the skipped admins.
+         * @throws If the request has no `ARA_Accept` action, or if accepting is
+         * not available to the party and no actors were given.
+         */
+
+        acceptForParty: async (
+            params: AllocationRequestActionParams
+        ): Promise<AllocationRequestAcceptResult> => {
+            const view = params.request.interfaceViewValue
+            const groups = decodeAvailableActions<AllocationRequestAction>(
+                view.availableActions
+            ).find(([key]) => key.tag === 'ARA_Accept')
+
+            if (!groups) {
+                throw new Error(`No groups found for ARA_Accept`)
+            }
+            const availability = actionAvailability(groups[1], params.partyId)
+
+            if (!params.actors && availability.status !== 'available') {
+                throw new Error(
+                    `${params.partyId} cannot accept allocation request ${params.request.contractId}`
+                )
+            }
+
+            const { allocate, accept, skipped } =
+                await this.service.createAllocationsForRequestForLoggedInParty({
+                    requestCid: params.request.contractId,
+                    request: view,
+                    partyId: params.partyId,
+                    registry: async (admin) => {
+                        try {
+                            return await this.registryForAdmin(admin)
+                        } catch {
+                            return null
+                        }
+                    },
+                })
+
+            return {
+                allocate: allocate.map(toPrepared),
+                accept: accept ? toPrepared(accept) : null,
+                skipped,
+            }
         },
 
         reject: async (
