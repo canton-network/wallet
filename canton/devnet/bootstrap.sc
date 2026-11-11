@@ -190,7 +190,7 @@ def migrateNode(
     migratedNode.keys.secret.upload(keys, name)
   }
   migratedNode.topology.init_id_from_uid(files.uid)
-  migratedNode.health.wait_for_ready_for_node_topology()
+  migratedNode.health.wait_for_ready_for_initialization()
   migratedNode.topology.transactions
     .import_topology_snapshot(files.authorizedStore, TopologyStoreId.Authorized)
 
