@@ -230,7 +230,9 @@ export class HttpTransport implements RpcTransport {
             },
             body: JSON.stringify(request),
         }).catch((error: unknown) => {
-            throw toJsonRpcError(error)
+            // No response (offline, connection refused, CORS), like a 502 or 504
+            const { message, data } = toJsonRpcError(error)
+            throw rpcErrors.resourceUnavailable({ message, data })
         })
 
         if (!response.ok) {
