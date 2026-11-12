@@ -20,7 +20,7 @@ describe('subscribeNotifications', () => {
     let sink: ReturnType<typeof fakeSink>
 
     beforeEach(() => {
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         sink = fakeSink()
     })
 

@@ -270,7 +270,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         }
     })
 
-    const notificationService = new NotificationService(logger)
+    const notificationService = new NotificationService()
     const serverStatusService = new ServerStatusService(serverNotices)
 
     const store = await initializeDatabase(config, logger)

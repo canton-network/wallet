@@ -13,8 +13,6 @@ import { requireUnlocked, userController } from './controllers/user'
 import {
     currentSessionSubscriber,
     registerNotificationPorts,
-    toNotificationLogger,
-    withoutNotificationArgs,
 } from './notifications'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui'
 import { createSigningStore, createWalletStore, loadAuthedStore } from './store'
@@ -34,13 +32,8 @@ export function startBackground({
     vault = createVault(),
 }: { vault?: Vault } = {}): void {
     // One notification service is shared by the dApp & user controllers and
-    // the content-script notification ports. Event payloads are not logged,
-    // as they can contain the access token.
-    const notificationService = new NotificationService(
-        withoutNotificationArgs(
-            toNotificationLogger(logger.getChild('notifications'))
-        )
-    )
+    // the content-script notification ports.
+    const notificationService = new NotificationService()
     const authContext = createAuthContextStore(vault)
     const walletStore = createWalletStore(vault)
     const getStore = async () =>

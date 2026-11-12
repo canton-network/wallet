@@ -312,7 +312,7 @@ describe('userController', () => {
 
     beforeEach(() => {
         logger = pino({ level: 'silent' }, sink())
-        notificationService = new NotificationService(logger)
+        notificationService = new NotificationService()
         ledgerMocks.get.mockReset()
         ledgerMocks.get.mockRejectedValue({
             code: 'USER_NOT_FOUND',
