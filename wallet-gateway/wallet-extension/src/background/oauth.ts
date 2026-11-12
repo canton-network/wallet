@@ -71,7 +71,8 @@ export async function signInWithAuthorizationCode({
     const { verifier, challenge } = await createPkcePair()
 
     const authorizeUrl = new URL(config.authorization_endpoint)
-    authorizeUrl.search = new URLSearchParams({
+
+    const authorizeParams = {
         response_type: 'code',
         client_id: clientId,
         redirect_uri: redirectUri,
@@ -81,7 +82,12 @@ export async function signInWithAuthorizationCode({
         nonce: crypto.randomUUID(),
         code_challenge: challenge,
         code_challenge_method: 'S256',
-    }).toString()
+    }
+
+    // add URL params without overwriting any existing ones (i.e. pre-set by the discovery endpoint)
+    for (const [name, value] of Object.entries(authorizeParams)) {
+        authorizeUrl.searchParams.set(name, value)
+    }
 
     let callbackUrl: string | undefined
     try {

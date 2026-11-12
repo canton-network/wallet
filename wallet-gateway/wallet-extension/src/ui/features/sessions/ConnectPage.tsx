@@ -31,28 +31,26 @@ export function ConnectPage() {
         })
     }
 
-    const loginNetworks =
-        networks.data ??
-        [].filter((network: PublicNetwork) => {
-            return SUPPORTED_AUTH_METHODS.has(network.authMethod)
-        })
+    const loginNetworks = networks.data?.filter((network: PublicNetwork) =>
+        SUPPORTED_AUTH_METHODS.has(network.authMethod)
+    )
 
     return (
         <Stack>
-            <LoginForm
-                displayTopBar={false}
-                networks={loginNetworks}
-                idps={idps.data ?? []}
-                loading={networks.isPending}
-                connecting={connect.isPending}
-                onLoginConnect={handleSubmit}
-                style={{ minHeight: '100%' }}
-            />
             {connect.isError && (
                 <Alert severity="error">
                     {connectErrorMessage(connect.error)}
                 </Alert>
             )}
+            <LoginForm
+                displayTopBar={false}
+                networks={loginNetworks}
+                idps={idps.data ?? []}
+                loading={networks.isPending || idps.isPending}
+                connecting={connect.isPending}
+                onLoginConnect={handleSubmit}
+                style={{ minHeight: '100%' }}
+            />
         </Stack>
     )
 }
