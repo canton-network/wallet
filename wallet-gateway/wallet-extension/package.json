@@ -13,7 +13,7 @@
         "build:firefox": "wxt build -b firefox",
         "zip": "wxt zip",
         "zip:firefox": "wxt zip -b firefox",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc -p tsconfig.app.json --noEmit",
         "postinstall": "wxt prepare"
     },
     "dependencies": {

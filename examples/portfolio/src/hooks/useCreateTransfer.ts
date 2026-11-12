@@ -17,7 +17,7 @@ export interface CreateTransferArgs {
     amount: string
     expiry: Date
     tokenStandardVersion: TokenStandardVersion
-    memo?: string
+    memo?: string | undefined
 }
 
 export const useCreateTransfer = () => {
@@ -63,7 +63,7 @@ export const useCreateTransfer = () => {
                 instrumentId: args.instrumentId.id,
                 registryUrl: new URL(registryUrl),
                 expirationDate: args.expiry,
-                memo: args.memo,
+                ...(args.memo !== undefined && { memo: args.memo }),
             }
 
             const preparedCommand =

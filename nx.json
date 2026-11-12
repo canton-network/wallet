@@ -15,7 +15,8 @@
             "{workspaceRoot}/vitest.base.ts",
             "{workspaceRoot}/tsdown.base.ts",
             "{workspaceRoot}/tsconfig.*.json",
-            "{workspaceRoot}/vite.decorators.ts"
+            "{workspaceRoot}/vite.decorators.ts",
+            "{workspaceRoot}/vite.source.ts"
         ]
     },
     "release": {
@@ -97,32 +98,12 @@
                 "{workspaceRoot}/scripts/src/check-migration-lock.ts"
             ]
         },
-        "typecheck": [
-            {
-                "dependsOn": ["^build"],
-                "inputs": ["default", "^production"],
-                "cache": true
-            },
-            {
-                "filter": {
-                    "plugin": "@nx/js/typescript",
-                    "projects": [
-                        "*",
-                        "!@canton-network/example-ping",
-                        "!@canton-network/example-portfolio",
-                        "!@canton-network/example-walletconnect"
-                    ]
-                },
-                "options": {
-                    "command": "tsc --noEmit"
-                }
-            }
-        ],
         "lint": {
             "cache": true,
             "options": {
                 "max-warnings": 0
-            }
+            },
+            "dependsOn": ["^typecheck"]
         },
         "dev": {
             "dependsOn": ["^build"]
@@ -139,6 +120,10 @@
         "playwright:e2e": {
             "dependsOn": ["^build"],
             "cache": false
+        },
+        "typecheck": {
+            "dependsOn": ["^typecheck"],
+            "cache": true
         }
     },
     "plugins": [
@@ -185,8 +170,5 @@
         }
     ],
     "analytics": false,
-    "neverConnectToCloud": true,
-    "sync": {
-        "disabledTaskSyncGenerators": ["@nx/js:typescript-sync"]
-    }
+    "neverConnectToCloud": true
 }

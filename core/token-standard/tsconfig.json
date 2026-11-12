@@ -6,5 +6,14 @@
             "@daml/types": ["./node_modules/@daml/types"],
             "@daml.js/*": ["../../damljs/token-standard-models/*"]
         }
-    }
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
+        }
+    ]
 }

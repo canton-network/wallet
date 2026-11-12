@@ -1,3 +1,14 @@
 {
-    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"]
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../types/tsconfig.lib.json"
+        },
+        {
+            "path": "../token-standard-service/tsconfig.lib.json"
+        },
+        {
+            "path": "../splice-client/tsconfig.lib.json"
+        }
+    ]
 }

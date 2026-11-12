@@ -701,7 +701,7 @@ export class WalletSyncService {
         updatedToEnabled: Wallet[]
         rightsUpdatedWallets: Wallet[]
         existingWallets: Wallet[]
-        walletsAfterAuthParty?: Wallet[]
+        walletsAfterAuthParty?: Wallet[] | undefined
     }): SyncWalletsResult {
         const added = new Set<string>()
         const updated = new Set<string>()

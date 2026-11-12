@@ -24,7 +24,7 @@ export default defineConfig({
     entry: ['src/index.ts'],
     platform: 'node',
     shims: true,
-    tsconfig: 'tsconfig.lib.json',
+    tsconfig: 'tsconfig.publish.json',
     alias: {
         ...damlJsPackages('splice-test-token-v1'),
         ...damlJsPackages('splice-token-test-trading-app'),

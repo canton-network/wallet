@@ -37,7 +37,6 @@ const ledgerMocks = vi.hoisted(() => ({
 const mockNetworkStatus = vi.hoisted(() =>
     vi.fn().mockResolvedValue({
         isConnected: true,
-        reason: undefined,
         cantonVersion: '3.4',
     } as {
         isConnected: boolean
@@ -152,19 +151,23 @@ const idp: Idp = {
     configUrl: 'http://auth/.well-known/openid-configuration',
 }
 
+const storeSynchronizerId = 'sync1::fingerprint'
+
+const storeAuth = {
+    method: 'authorization_code',
+    clientId: 'cid',
+    scope: 'scope1 scope2',
+    audience: 'aud',
+} satisfies StoreNetwork['auth']
+
 const storeNetwork: StoreNetwork = {
     id: 'network1',
     name: 'testnet',
-    synchronizerId: 'sync1::fingerprint',
+    synchronizerId: storeSynchronizerId,
     description: 'Test',
     identityProviderId: 'idp1',
     ledgerApi: { baseUrl: 'http://ledger.test' },
-    auth: {
-        method: 'authorization_code',
-        clientId: 'cid',
-        scope: 'scope1 scope2',
-        audience: 'aud',
-    },
+    auth: storeAuth,
     adminAuth: {
         method: 'client_credentials',
         clientId: 'admin-cid',
@@ -1006,7 +1009,7 @@ describe('userController', () => {
                         synchronizerId: 'sync::fingerprint',
                         identityProviderId: 'idp1',
                         ledgerApi: 'http://ledger.new',
-                        auth: storeNetwork.auth,
+                        auth: storeAuth,
                         description: 'description',
                     },
                 })
@@ -1032,7 +1035,7 @@ describe('userController', () => {
                     synchronizerId: 'sync::fingerprint',
                     identityProviderId: 'idp1',
                     ledgerApi: 'http://ledger.new',
-                    auth: storeNetwork.auth,
+                    auth: storeAuth,
                     description: 'description',
                 },
             })
@@ -1065,7 +1068,7 @@ describe('userController', () => {
                         synchronizerId: 'sync::fingerprint',
                         identityProviderId: 'missing-idp',
                         ledgerApi: 'http://ledger.new',
-                        auth: storeNetwork.auth,
+                        auth: storeAuth,
                         description: 'description',
                     },
                 })
@@ -1090,10 +1093,10 @@ describe('userController', () => {
                 network: {
                     id: 'network1',
                     name: 'Renamed Net',
-                    synchronizerId: storeNetwork.synchronizerId,
+                    synchronizerId: storeSynchronizerId,
                     identityProviderId: 'idp1',
                     ledgerApi: 'http://ledger.updated',
-                    auth: storeNetwork.auth,
+                    auth: storeAuth,
                     description: 'description',
                 },
             })
@@ -1123,10 +1126,10 @@ describe('userController', () => {
                     network: {
                         id: 'network1',
                         name: 'Renamed Net',
-                        synchronizerId: storeNetwork.synchronizerId,
+                        synchronizerId: storeSynchronizerId,
                         identityProviderId: 'idp1',
                         ledgerApi: 'http://ledger.updated',
-                        auth: storeNetwork.auth,
+                        auth: storeAuth,
                         adminAuth: {
                             method: 'client_credentials',
                             identityProviderId: 'missing-admin-idp',

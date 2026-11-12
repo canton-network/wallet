@@ -28,7 +28,7 @@ export class PartyAllocationService {
         accessTokenProvider,
         httpLedgerUrl,
     }: {
-        synchronizerId?: string
+        synchronizerId?: string | undefined
         accessTokenProvider: AccessTokenProvider
         httpLedgerUrl: string
     }) {

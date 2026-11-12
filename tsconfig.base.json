@@ -13,12 +13,10 @@
         "skipLibCheck": true,
         "verbatimModuleSyntax": true,
         "isolatedModules": true,
-        "allowImportingTsExtensions": true
-    },
-    "include": ["${configDir}/src", "${configDir}/*.ts"],
-    "exclude": [
-        "${configDir}/dist",
-        "${configDir}/build",
-        "${configDir}/out-tsc"
-    ]
+        "allowImportingTsExtensions": true,
+        "composite": true,
+        "customConditions": ["@canton-network/source"],
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedSideEffectImports": true
+    }
 }

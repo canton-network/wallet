@@ -12,7 +12,7 @@ interface Wallet {
 
 interface BalanceCardProps {
     wallet: Wallet
-    onSetPrimary?: (partyId: string) => void
+    onSetPrimary?: ((partyId: string) => void) | undefined
 }
 
 export function BalanceCard({ wallet, onSetPrimary }: BalanceCardProps) {

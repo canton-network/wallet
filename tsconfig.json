@@ -1,0 +1,171 @@
+{
+    "extends": "./tsconfig.base.json",
+    "files": [],
+    "references": [
+        {
+            "path": "./docs/wallet-integration-guide/examples"
+        },
+        {
+            "path": "./core/wallet-dapp-remote-rpc-client"
+        },
+        {
+            "path": "./examples/test-token-v1-registry"
+        },
+        {
+            "path": "./examples/test-token-v2-registry"
+        },
+        {
+            "path": "./core/token-standard-service"
+        },
+        {
+            "path": "./core/wallet-dapp-rpc-client"
+        },
+        {
+            "path": "./core/wallet-user-rpc-client"
+        },
+        {
+            "path": "./core/wallet-store-inmemory"
+        },
+        {
+            "path": "./core/daml-codegen-helpers"
+        },
+        {
+            "path": "./core/provider-conformance"
+        },
+        {
+            "path": "./core/wallet-ui-components"
+        },
+        {
+            "path": "./core/ledger-client-types"
+        },
+        {
+            "path": "./core/signing-blockdaemon"
+        },
+        {
+            "path": "./core/signing-participant"
+        },
+        {
+            "path": "./core/signing-fireblocks"
+        },
+        {
+            "path": "./core/signing-securosys"
+        },
+        {
+            "path": "./core/signing-store-sql"
+        },
+        {
+            "path": "./core/signing-store-wxt"
+        },
+        {
+            "path": "./core/token-standard-v2"
+        },
+        {
+            "path": "./core/wallet-test-utils"
+        },
+        {
+            "path": "./tools/conformance-dapp"
+        },
+        {
+            "path": "./core/signing-internal"
+        },
+        {
+            "path": "./core/wallet-discovery"
+        },
+        {
+            "path": "./core/wallet-store-sql"
+        },
+        {
+            "path": "./tools/conformance-cli"
+        },
+        {
+            "path": "./wallet-gateway/remote"
+        },
+        {
+            "path": "./core/asyncapi-client"
+        },
+        {
+            "path": "./core/provider-ledger"
+        },
+        {
+            "path": "./core/splice-provider"
+        },
+        {
+            "path": "./core/wallet-services"
+        },
+        {
+            "path": "./core/amulet-service"
+        },
+        {
+            "path": "./core/origin-manager"
+        },
+        {
+            "path": "./core/splice-codegen"
+        },
+        {
+            "path": "./core/token-standard"
+        },
+        {
+            "path": "./core/ledger-client"
+        },
+        {
+            "path": "./core/provider-dapp"
+        },
+        {
+            "path": "./core/rpc-generator"
+        },
+        {
+            "path": "./core/rpc-transport"
+        },
+        {
+            "path": "./core/signing-bitgo"
+        },
+        {
+            "path": "./core/splice-client"
+        },
+        {
+            "path": "./core/tx-visualizer"
+        },
+        {
+            "path": "./core/ledger-proto"
+        },
+        {
+            "path": "./core/signing-dfns"
+        },
+        {
+            "path": "./core/wallet-store"
+        },
+        {
+            "path": "./core/signing-lib"
+        },
+        {
+            "path": "./core/wallet-auth"
+        },
+        {
+            "path": "./core/acs-reader"
+        },
+        {
+            "path": "./core/rpc-errors"
+        },
+        {
+            "path": "./core/tx-hashing"
+        },
+        {
+            "path": "./core/tx-parser"
+        },
+        {
+            "path": "./sdk/wallet-sdk"
+        },
+        {
+            "path": "./sdk/dapp-sdk"
+        },
+        {
+            "path": "./mock-oauth2"
+        },
+        {
+            "path": "./core/types"
+        },
+        {
+            "path": "./scripts"
+        }
+    ]
+}

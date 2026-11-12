@@ -11,7 +11,7 @@ import type { SubmittedTransfer, TransferFormData } from './transfer-types'
 interface TransferDialogProps {
     open: boolean
     onClose: () => void
-    initialValues?: TransferFormData
+    initialValues?: TransferFormData | undefined
 }
 
 type DialogState = 'form' | 'summary'

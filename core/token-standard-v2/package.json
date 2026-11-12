@@ -18,7 +18,6 @@
     },
     "scripts": {
         "build": "tsdown",
-        "dev": "tsdown --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
@@ -49,5 +48,24 @@
     "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard-v2#readme",
     "bugs": {
         "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "nx": {
+        "targets": {
+            "typecheck": {
+                "dependsOn": [
+                    "^typecheck",
+                    "build"
+                ]
+            },
+            "build": {
+                "inputs": [
+                    "production",
+                    "^production",
+                    "{workspaceRoot}/scripts/src/lib/version-config.json",
+                    "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
+                    "{workspaceRoot}/scripts/src/generate-token-standard.ts"
+                ]
+            }
+        }
     }
 }

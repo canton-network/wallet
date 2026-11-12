@@ -5,6 +5,7 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { devtools } from '@tanstack/devtools-vite'
+import { workspaceSources } from '../../vite.source.js'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -15,6 +16,7 @@ export default defineConfig({
             autoCodeSplitting: true,
         }),
         react(),
+        workspaceSources(),
     ],
     resolve: {
         tsconfigPaths: true,

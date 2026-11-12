@@ -358,7 +358,7 @@ export class FireblocksHandler {
                 transactionRequest: {
                     operation: 'RAW',
                     note,
-                    externalTxId,
+                    ...(externalTxId !== undefined && { externalTxId }),
                     extraParameters: {
                         rawMessageData: {
                             messages: [

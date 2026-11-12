@@ -2,8 +2,14 @@
     "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
         "noImplicitOverride": false,
-        "allowImportingTsExtensions": true,
-        "experimentalDecorators": false,
-        "useDefineForClassFields": false
-    }
+        "useDefineForClassFields": false,
+        "customConditions": ["@canton-network/source"]
+    },
+    "files": [],
+    "include": [],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        }
+    ]
 }

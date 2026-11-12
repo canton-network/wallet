@@ -10,12 +10,14 @@
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         },
         "./localnet": {
+            "@canton-network/source": "./src/localnet.ts",
             "types": "./dist/localnet.d.ts",
             "import": "./dist/localnet.js",
             "require": "./dist/localnet.cjs",
@@ -41,8 +43,7 @@
         "typescript": "catalog:"
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.publish.json\"",
         "clean": "rm -rf dist",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },

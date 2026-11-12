@@ -1,7 +1,15 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "noUncheckedIndexedAccess": true,
-        "noImplicitAny": true
-    }
+        "noUncheckedIndexedAccess": true
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
+        }
+    ]
 }

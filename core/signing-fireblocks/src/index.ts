@@ -5,6 +5,7 @@
 /* oxlint-disable no-unused-vars */
 import {
     buildController,
+    omitUndefined,
     PartyMode,
     type SigningDriverInterface,
     SigningProvider,
@@ -38,8 +39,8 @@ import type { AuthContext } from '@canton-network/core-wallet-auth'
 export interface FireblocksConfig {
     defaultKeyInfo?: FireblocksApiKeyInfo
     userApiKeys: Map<string, FireblocksApiKeyInfo>
-    apiPath?: string
-    coinType?: number
+    apiPath?: string | undefined
+    coinType?: number | undefined
 }
 
 const FireblocksApiKeyInfoSchema = z.object({
@@ -114,12 +115,12 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         params.internalTxId
                     )
 
-                    return {
+                    return omitUndefined({
                         txId: tx.txId,
                         status: tx.status,
                         signature: toBase64(tx.signature),
                         publicKey: toBase64(tx.publicKey),
-                    }
+                    })
                 } catch (error) {
                     return {
                         error: 'signing_error',
@@ -183,12 +184,12 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     params.txId
                 )
                 if (tx) {
-                    return {
+                    return omitUndefined({
                         txId: tx.txId,
                         status: tx.status,
                         signature: toBase64(tx.signature),
                         publicKey: toBase64(tx.publicKey),
-                    } as GetTransactionResult
+                    }) as GetTransactionResult
                 } else {
                     return {
                         error: 'transaction_not_found',
@@ -212,12 +213,14 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                             txIds.has(tx.txId) ||
                             publicKeys.has(tx.publicKey || '')
                         ) {
-                            transactions.push({
-                                txId: tx.txId,
-                                status: tx.status,
-                                signature: toBase64(tx.signature),
-                                publicKey: toBase64(tx.publicKey),
-                            })
+                            transactions.push(
+                                omitUndefined({
+                                    txId: tx.txId,
+                                    status: tx.status,
+                                    signature: toBase64(tx.signature),
+                                    publicKey: toBase64(tx.publicKey),
+                                })
+                            )
                         }
                         if (
                             params.txIds &&

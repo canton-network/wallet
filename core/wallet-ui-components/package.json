@@ -32,7 +32,7 @@
     },
     "scripts": {
         "build": "vite build",
-        "build:watch": "vite build --watch & tsc -p tsconfig.lib.json --watch",
+        "build:watch": "vite build --watch & tsc -p tsconfig.publish.json --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist",
         "dev": "storybook dev -p 6006 --no-open"
@@ -106,5 +106,15 @@
     "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-ui-components#readme",
     "bugs": {
         "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "nx": {
+        "targets": {
+            "typecheck": {
+                "dependsOn": [
+                    "^typecheck",
+                    "build"
+                ]
+            }
+        }
     }
 }

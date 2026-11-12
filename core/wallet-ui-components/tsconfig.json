@@ -4,5 +4,13 @@
         "jsx": "react-jsx",
         "types": []
     },
-    "include": ["src", "*.ts", ".storybook/*.ts"]
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
+        }
+    ]
 }

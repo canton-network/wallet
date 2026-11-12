@@ -55,9 +55,9 @@ const BITGO_STATE_TO_CANTON: Record<string, SigningStatus> = {
 export interface BitGoConfig {
     accessToken: string
     baseUrl?: string
-    enterpriseId?: string
+    enterpriseId?: string | undefined
     /** Canton coin name. Defaults to 'tcanton' for bitgo-test.com URLs, 'canton' otherwise. */
-    coin?: string
+    coin?: string | undefined
 }
 
 interface BitGoWallet {
@@ -213,7 +213,7 @@ export class BitGoHandler {
         txHash: string
         walletId: string
         /** Optional: caller-provided payload type. Falls back to local JSON-vs-proto detection. */
-        messageStandardType?: string
+        messageStandardType?: string | undefined
     }): Promise<{ txId: string }> {
         const messageStandardType =
             params.messageStandardType ?? detectPayloadType(params.tx)
@@ -266,8 +266,8 @@ export class BitGoHandler {
     }
 
     async *getTransactions(params: {
-        txIds?: string[]
-        publicKeys?: string[]
+        txIds?: string[] | undefined
+        publicKeys?: string[] | undefined
     }): AsyncGenerator<BitGoTransaction> {
         for (const txId of params.txIds ?? []) {
             const tx = await this.getTransaction(txId)
@@ -334,8 +334,8 @@ export class BitGoHandler {
 
     // messages[0].txHash is a hex-encoded JSON blob containing the signature and signer fingerprint.
     private extractSignedData(txHash: string | undefined): {
-        signature?: string
-        signedBy?: string
+        signature?: string | undefined
+        signedBy?: string | undefined
     } {
         if (!txHash) return {}
         try {

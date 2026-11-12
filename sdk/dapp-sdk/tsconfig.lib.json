@@ -1,3 +1,32 @@
 {
-    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"]
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../../core/wallet-ui-components/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-discovery/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-dapp-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-dapp-remote-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/types/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/splice-provider/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/rpc-transport/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/rpc-errors/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/provider-dapp/tsconfig.lib.json"
+        }
+    ]
 }

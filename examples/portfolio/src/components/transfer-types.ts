@@ -24,8 +24,8 @@ export interface TransferFormData {
 export interface SubmittedTransfer {
     sender: string
     instrumentId: InstrumentId
-    instrumentSymbol?: string
-    instrumentName?: string
+    instrumentSymbol?: string | undefined
+    instrumentName?: string | undefined
     amount: string
     recipient: string
     memo: string

@@ -9,7 +9,7 @@ import { base } from '../../tsdown.base.ts'
 export default defineConfig({
     ...base,
     entry: ['src/index.ts'],
-    tsconfig: 'tsconfig.lib.json',
+    tsconfig: 'tsconfig.publish.json',
     alias: {
         '@daml.js': resolve(
             import.meta.dirname,

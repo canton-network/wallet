@@ -1,4 +1,21 @@
 {
     "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
-    "include": ["src/**/*.ts"]
+    "references": [
+        {
+            "path": "../../sdk/dapp-sdk/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-ui-components/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/rpc-errors/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/provider-conformance/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/types/tsconfig.lib.json"
+        }
+    ],
+    "include": ["src", "src/**/*.json", "package.json"]
 }

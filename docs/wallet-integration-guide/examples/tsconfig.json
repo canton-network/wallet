@@ -3,11 +3,11 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": [
-        "scripts/**/*.ts",
-        "snippets/*.ts",
-        "config.ts",
-        "snippets.test.ts",
-        "vitest.config.ts"
+    "files": [],
+    "include": [],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        }
     ]
 }

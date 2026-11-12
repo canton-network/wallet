@@ -21,7 +21,7 @@ import { queryKeys } from '@hooks/query-keys'
 const STORAGE_KEY = 'registries'
 
 type RegistryCandidate = {
-    configuredPartyId?: PartyId
+    configuredPartyId?: PartyId | undefined
     registryUrl: string
     isRemovable: boolean
 }
@@ -45,7 +45,7 @@ const writeToStorage = (next: ReadonlyMap<PartyId, string>): void => {
 const collectRegistryCandidates = (
     amuletRegistryUrl: string,
     configuredRegistries: ReadonlyArray<{
-        partyId?: PartyId
+        partyId?: PartyId | undefined
         url: string
     }>,
     storedRegistries: ReadonlyMap<PartyId, string>
@@ -82,7 +82,7 @@ const collectRegistryCandidates = (
 }
 
 type RegistryInfoQuery = {
-    data?: { adminId: PartyId }
+    data?: { adminId: PartyId } | undefined
     isPending: boolean
     isError: boolean
 }
@@ -223,7 +223,7 @@ export const useRegistryMutations = () => {
             party,
             url,
         }: {
-            party?: PartyId
+            party?: PartyId | undefined
             url: string
         }) => {
             const registryUrl = normalizeRegistryUrl(url)

@@ -6,9 +6,9 @@ import type * as sdk from '@canton-network/dapp-sdk'
 
 type Connection = {
     initialized: boolean
-    status?: sdk.dappAPI.StatusEvent
+    status?: sdk.dappAPI.StatusEvent | undefined
     accounts: sdk.dappAPI.Wallet[]
-    error?: string
+    error?: string | undefined
     sessionTokenVersion: number
 
     connect: () => void

@@ -12,7 +12,7 @@ import * as sdk from '@canton-network/dapp-sdk'
  */
 export function useStatus(): {
     status: () => Promise<void>
-    statusEvent?: sdk.dappAPI.StatusEvent
+    statusEvent?: sdk.dappAPI.StatusEvent | undefined
 } {
     const [statusEvent, setStatusEvent] = useState<sdk.dappAPI.StatusEvent>()
 

@@ -1,7 +1,14 @@
 {
     "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
-        "allowImportingTsExtensions": true,
-        "jsx": "react-jsx"
-    }
+        "jsx": "react-jsx",
+        "customConditions": ["@canton-network/source"]
+    },
+    "files": [],
+    "include": [],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        }
+    ]
 }

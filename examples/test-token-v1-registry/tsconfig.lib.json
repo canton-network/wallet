@@ -1,3 +1,14 @@
 {
-    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"]
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/token-standard/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/splice-codegen/tsconfig.lib.json"
+        }
+    ]
 }

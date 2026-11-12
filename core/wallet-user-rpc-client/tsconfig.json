@@ -2,5 +2,14 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "types": []
-    }
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
+        }
+    ]
 }

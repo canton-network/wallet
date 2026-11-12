@@ -429,7 +429,6 @@ describe('FireblocksHandler', () => {
                 transactionRequest: expect.objectContaining({
                     operation: 'RAW',
                     note: NOTE,
-                    externalTxId: undefined,
                     extraParameters: expect.objectContaining({
                         rawMessageData: expect.objectContaining({
                             messages: [

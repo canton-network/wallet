@@ -1,19 +1,11 @@
 {
-    "compilerOptions": {
-        "noEmit": false,
-        "allowImportingTsExtensions": false,
-        "declaration": true,
-        "declarationMap": true,
-        "emitDeclarationOnly": true,
-        "rootDir": "${configDir}/src",
-        "outDir": "${configDir}/dist"
-    },
-    "include": ["${configDir}/src"],
+    "include": ["${configDir}/src", "${configDir}/src/**/*.json"],
     "exclude": [
-        "${configDir}/dist",
-        "${configDir}/build",
         "${configDir}/**/*.spec.ts",
         "${configDir}/**/*.test.ts",
-        "${configDir}/**/__tests__/**"
+        "${configDir}/**/__tests__/**",
+        "${configDir}/**/*.test.tsx",
+        "${configDir}/**/*.stories.ts",
+        "${configDir}/**/*.stories.tsx"
     ]
 }

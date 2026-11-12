@@ -10,5 +10,14 @@
                 "../../damljs/splice-test-token-v2/*"
             ]
         }
-    }
+    },
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
+        }
+    ]
 }

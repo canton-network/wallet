@@ -1,0 +1,19 @@
+{
+    "include": [
+        "${configDir}/src/**/*.spec.ts",
+        "${configDir}/src/**/*.test.ts",
+        "${configDir}/src/**/*.test.tsx",
+        "${configDir}/src/**/*.stories.ts",
+        "${configDir}/src/**/*.stories.tsx",
+        "${configDir}/src/**/__tests__/**/*",
+        "${configDir}/src/**/__tests__/**/*.json",
+        "${configDir}/*.ts",
+        "${configDir}/*.mts",
+        "${configDir}/.storybook/*.ts",
+        "${configDir}/package.json",
+        "tsdown.base.ts",
+        "vitest.base.ts",
+        "vite.decorators.ts",
+        "vite.source.ts"
+    ]
+}

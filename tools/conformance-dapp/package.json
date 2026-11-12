@@ -10,13 +10,14 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         },
         "./app": "./dist/index.html"
     },
     "scripts": {
-        "build": "vite build && vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
+        "build": "vite build && vite build --config vite.lib.config.ts && tsc -p tsconfig.publish.json",
         "dev": "vite",
         "clean": "rm -rf dist"
     },

@@ -1,15 +1,4 @@
 {
-    "extends": "../../tsconfig.base.json",
-    "compilerOptions": {
-        "exactOptionalPropertyTypes": false,
-        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-        "lib": ["ES2023"],
-        "moduleDetection": "force",
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true
-    },
+    "extends": "../../tsconfig.web.json",
     "include": ["vite.config.ts"]
 }

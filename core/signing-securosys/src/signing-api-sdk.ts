@@ -13,6 +13,7 @@ import type {
     SigningStatus,
     Transaction,
 } from '@canton-network/core-signing-lib'
+import { omitUndefined } from '@canton-network/core-signing-lib'
 import { Agent, type Dispatcher } from 'undici'
 
 export type TsbRequestStatus =
@@ -379,12 +380,6 @@ export function mapTsbStatus(status: TsbRequestStatus): SigningStatus {
     }
 }
 
-function compact<T extends Record<string, unknown>>(value: T): T {
-    return Object.fromEntries(
-        Object.entries(value).filter(([, v]) => v !== undefined)
-    ) as T
-}
-
 function encodeJsonBase64(value: Record<string, unknown>): string {
     return Buffer.from(JSON.stringify(value), 'utf8').toString('base64')
 }
@@ -612,7 +607,7 @@ export class SigningAPIClient {
             !Array.isArray(cached.metadata)
                 ? (cached.metadata as Record<string, unknown>)
                 : undefined
-        const signatureAlgorithm =
+        const signatureAlgorithm: TsbSignRequest['signatureAlgorithm'] =
             typeof cachedMetadata?.signatureAlgorithm === 'string'
                 ? cachedMetadata.signatureAlgorithm
                 : this.signatureAlgorithm
@@ -626,14 +621,14 @@ export class SigningAPIClient {
         const mappedStatus = mapTsbStatus(response.status)
         const status =
             mappedStatus === 'signed' && !signature ? 'pending' : mappedStatus
-        const transaction: Transaction = compact({
+        const transaction: Transaction = omitUndefined({
             txId: response.id,
             status,
             signature,
             publicKey: cached?.publicKey,
             metadata: {
                 ...cachedMetadata,
-                ...compact({
+                ...omitUndefined({
                     tsbStatus: response.status,
                     executionTime: response.executionTime,
                     approvedBy: response.approvedBy,
@@ -722,9 +717,9 @@ export class SigningAPIClient {
     ): Promise<Transaction> {
         const key = await this.resolveKeyIdentifier(params.keyIdentifier)
         const extra = params.extraParams ?? {}
-        const signatureAlgorithm =
+        const signatureAlgorithm: TsbSignRequest['signatureAlgorithm'] =
             extra.signatureAlgorithm ?? this.signatureAlgorithm
-        const metadata = compact({
+        const metadata = omitUndefined({
             internalTxId: params.internalTxId,
             userIdentifier: extra.userIdentifier,
             keyIdentifier: params.keyIdentifier,
@@ -732,7 +727,7 @@ export class SigningAPIClient {
             signatureType: WALLET_SIGNATURE_TYPE,
         })
 
-        const signRequest: TsbSignRequest = compact({
+        const signRequest: TsbSignRequest = omitUndefined({
             payload: params.txHash,
             payloadType: WALLET_PAYLOAD_TYPE,
             signKeyName: key.name,
@@ -769,9 +764,9 @@ export class SigningAPIClient {
     public async signMessage(params: SignMessageParams): Promise<Transaction> {
         const key = await this.resolveKeyIdentifier(params.keyIdentifier)
         const extra = params.extraParams ?? {}
-        const signatureAlgorithm =
+        const signatureAlgorithm: TsbSignRequest['signatureAlgorithm'] =
             extra.signatureAlgorithm ?? this.signatureAlgorithm
-        const metadata = compact({
+        const metadata = omitUndefined({
             internalTxId: params.internalTxId,
             userIdentifier: extra.userIdentifier,
             keyIdentifier: params.keyIdentifier,
@@ -779,7 +774,7 @@ export class SigningAPIClient {
             signatureType: WALLET_SIGNATURE_TYPE,
         })
 
-        const signRequest: TsbSignRequest = compact({
+        const signRequest: TsbSignRequest = omitUndefined({
             payload: Buffer.from(params.message, 'utf8').toString('base64'),
             payloadType: WALLET_PAYLOAD_TYPE,
             signKeyName: key.name,
@@ -890,7 +885,7 @@ export class SigningAPIClient {
     public async createKey(params: CreateKeyParams): Promise<Key> {
         const temporaryLabel = `wallet-${crypto.randomUUID()}`
         const keyPassword = params.keyPassword ?? this.keyPassword
-        const request = compact({
+        const request = omitUndefined({
             label: temporaryLabel,
             password: keyPassword,
             algorithm: WALLET_KEY_ALGORITHM,
@@ -912,7 +907,7 @@ export class SigningAPIClient {
         >(
             '/v1/key/changeAttributes',
             'key-management',
-            compact({
+            omitUndefined({
                 label: createdKey.id,
                 password: keyPassword,
                 modifyAttributes: {
@@ -938,7 +933,7 @@ export class SigningAPIClient {
         >(
             '/v1/key/attributes',
             'key-management',
-            compact({
+            omitUndefined({
                 label,
                 password: this.keyPassword,
             })

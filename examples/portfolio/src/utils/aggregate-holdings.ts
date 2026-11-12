@@ -22,11 +22,13 @@ export interface AggregatedHolding {
     availableAmount: string
     numOfHoldings: number
     accountBalances: AggregatedAccountBalance[]
-    instrument?: {
-        name: string
-        symbol: string
-        decimals: number
-    }
+    instrument?:
+        | {
+              name: string
+              symbol: string
+              decimals: number
+          }
+        | undefined
 }
 
 export function getInstrumentKey(instrumentId: { admin: string; id: string }) {

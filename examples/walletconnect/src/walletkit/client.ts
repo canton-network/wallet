@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Core } from '@walletconnect/core'
+import type { ICore } from '@walletconnect/types'
 import { WalletKit } from '@reown/walletkit'
 
 let instance: InstanceType<typeof WalletKit> | null = null
@@ -21,7 +22,9 @@ export function initWalletKit(
         const core = new Core({ projectId })
 
         const wk = await WalletKit.init({
-            core,
+            // WalletConnect's Core doesn't match its own ICore with
+            // exactOptionalPropertyTypes (relayUrl may be undefined)
+            core: core as ICore,
             metadata: {
                 name: 'Canton Wallet Example',
                 description: 'Standalone Canton WalletConnect wallet',

@@ -1,3 +1,23 @@
 {
-    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"]
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../wallet-dapp-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../wallet-dapp-remote-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../types/tsconfig.lib.json"
+        },
+        {
+            "path": "../splice-provider/tsconfig.lib.json"
+        },
+        {
+            "path": "../rpc-transport/tsconfig.lib.json"
+        },
+        {
+            "path": "../ledger-client-types/tsconfig.lib.json"
+        }
+    ]
 }

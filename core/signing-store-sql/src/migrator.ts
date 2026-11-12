@@ -52,7 +52,8 @@ export const migrator = (db: Kysely<DB>) => {
             resolve: ({ name, path, context }) => {
                 // Dynamic import for ESM
                 return {
-                    name,
+                    // Recorded as built (.js), also when running from src/
+                    name: name.replace(/\.ts$/, '.js'),
                     up: async () => {
                         console.log(path)
                         const { up } = await import(path!)

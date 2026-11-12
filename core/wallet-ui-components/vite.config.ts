@@ -35,6 +35,6 @@ export default defineConfig({
     },
     plugins: [
         standardDecorators(resolve(import.meta.dirname, 'src/**/*.ts')),
-        dts({ tsconfigPath: './tsconfig.lib.json' }),
+        dts({ tsconfigPath: './tsconfig.publish.json' }),
     ],
 })

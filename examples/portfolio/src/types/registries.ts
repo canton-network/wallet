@@ -9,7 +9,7 @@ export type RegistryReachabilityStatus =
     | 'unreachable'
 
 export type RegistryEntry = {
-    partyId?: PartyId
+    partyId?: PartyId | undefined
     registryUrl: string
     status: RegistryReachabilityStatus
     isRemovable: boolean

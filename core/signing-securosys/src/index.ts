@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    omitUndefined,
     buildController,
     type CreateKeyParams,
     type CreateKeyResult,
@@ -182,10 +183,12 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
             ): Promise<GetTransactionsResult> => {
                 if (params.publicKeys || params.txIds) {
                     try {
-                        const transactions = await this.client.getTransactions({
-                            txIds: params.txIds,
-                            publicKeys: params.publicKeys,
-                        })
+                        const transactions = await this.client.getTransactions(
+                            omitUndefined({
+                                txIds: params.txIds,
+                                publicKeys: params.publicKeys,
+                            })
+                        )
 
                         return {
                             transactions: transactions.map((tx) => ({

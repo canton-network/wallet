@@ -1,5 +1,5 @@
 {
-    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "extends": ["./tsconfig.json", "../../tsconfig.publish.json"],
     "compilerOptions": {
         "emitDeclarationOnly": false
     },

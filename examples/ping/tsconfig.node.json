@@ -1,16 +1,17 @@
 {
-    "extends": "../../tsconfig.base.json",
+    "extends": "../../tsconfig.web.json",
     "compilerOptions": {
-        "exactOptionalPropertyTypes": false,
-        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-        "lib": ["ES2023", "DOM"],
-        "moduleDetection": "force",
-        "types": ["node"],
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true
+        "types": ["node"]
     },
-    "include": ["vite.config.ts", "playwright.config.ts", "tests"]
+    "include": [
+        "vite.config.ts",
+        "playwright.config.ts",
+        "tests",
+        "../../vite.source.ts"
+    ],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        }
+    ]
 }

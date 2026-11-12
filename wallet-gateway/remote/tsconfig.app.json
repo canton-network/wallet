@@ -1,0 +1,76 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "src",
+        "*.ts",
+        "../../vite.decorators.ts",
+        "../../vite.source.ts",
+        "../../vitest.base.ts"
+    ],
+    "exclude": ["src/web/frontend"],
+    "references": [
+        {
+            "path": "../../core/wallet-user-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-ui-components/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-store-sql/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-store/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-services/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/types/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/tx-visualizer/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-store-sql/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-securosys/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-participant/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-lib/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-internal/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-fireblocks/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-dfns/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-blockdaemon/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-bitgo/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/rpc-transport/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/rpc-errors/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/ledger-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-store-inmemory/tsconfig.lib.json"
+        }
+    ]
+}

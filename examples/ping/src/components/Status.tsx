@@ -1,8 +1,8 @@
 import type * as sdk from '@canton-network/dapp-sdk'
 
 export function Status(props: {
-    ledgerApiVersion?: string
-    status?: sdk.dappAPI.StatusEvent
+    ledgerApiVersion?: string | undefined
+    status?: sdk.dappAPI.StatusEvent | undefined
 }) {
     return (
         <div>

@@ -53,7 +53,7 @@ describe('sessionHandler', () => {
                 id?: number
                 params?: Record<string, unknown>
             }
-            authContext?: AuthContext
+            authContext?: AuthContext | undefined
         }
     ): Request {
         return {

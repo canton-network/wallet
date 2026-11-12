@@ -1,10 +1,14 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "exactOptionalPropertyTypes": false,
         "useDefineForClassFields": false,
         "types": ["node"]
     },
-    "exclude": ["src/web/frontend"],
-    "references": [{ "path": "./tsconfig.frontend.json" }]
+    "files": [],
+    "include": [],
+    "references": [
+        {
+            "path": "./tsconfig.app.json"
+        }
+    ]
 }

@@ -4,7 +4,7 @@ import { useAccounts } from '../hooks/useAccounts'
 import { useState } from 'react'
 
 export default function Holdings(props: {
-    connectResult?: sdk.dappAPI.ConnectResult
+    connectResult?: sdk.dappAPI.ConnectResult | undefined
 }) {
     const [urls, setUrls] = useState<{ validator?: URL; registry?: URL }>({})
 
