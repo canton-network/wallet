@@ -3,5 +3,11 @@
     "compilerOptions": {
         "noUncheckedIndexedAccess": true,
         "noImplicitAny": true
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../types"
+        }
+    ]
 }
