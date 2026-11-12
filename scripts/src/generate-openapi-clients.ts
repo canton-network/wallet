@@ -12,6 +12,7 @@ import {
     LEDGER_CLIENTS_PATH,
     type Network,
     getNetworkArg,
+    pruneStaleApiSpecs,
     pruneVersionedFiles,
     SPLICE_SPEC_PATH,
     SUPPORTED_VERSIONS,
@@ -85,6 +86,8 @@ async function fetchSpliceSpecs(
             .digest('hex')
         setSpliceHash(network, 'spliceSpec', newHash)
     }
+
+    pruneStaleApiSpecs('splice')
 }
 
 /**
