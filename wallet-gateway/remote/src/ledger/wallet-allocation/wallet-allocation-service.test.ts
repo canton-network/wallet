@@ -15,6 +15,7 @@ import { sink } from 'pino-test'
 import type { Logger } from 'pino'
 import { WalletAllocationService } from './wallet-allocation-service.js'
 import type { PartyAllocationService } from '../party-allocation-service.js'
+import { createFingerprintFromKey } from '../signing-keys.js'
 import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
@@ -272,7 +273,6 @@ describe('WalletAllocationService', () => {
     let mockPartyAllocator: {
         allocateParty: ReturnType<typeof vi.fn>
         allocatePartyWithExistingWallet: ReturnType<typeof vi.fn>
-        createFingerprintFromKey: ReturnType<typeof vi.fn>
         generateTopologyTransactions: ReturnType<typeof vi.fn>
     }
     let mockController: {
@@ -307,7 +307,6 @@ describe('WalletAllocationService', () => {
         mockPartyAllocator = {
             allocateParty: vi.fn(),
             allocatePartyWithExistingWallet: vi.fn(),
-            createFingerprintFromKey: vi.fn().mockReturnValue('fingerprint'),
             generateTopologyTransactions: vi
                 .fn<
                     () => Promise<{
@@ -430,9 +429,6 @@ describe('WalletAllocationService', () => {
             const expectedParty = createAllocatedParty(
                 'bob::fingerprint',
                 'bob',
-                'fingerprint'
-            )
-            mockPartyAllocator.createFingerprintFromKey.mockReturnValue(
                 'fingerprint'
             )
             mockPartyAllocator.allocateParty.mockResolvedValue(expectedParty)
@@ -1026,7 +1022,9 @@ describe('WalletAllocationService', () => {
                 WALLET_DISABLED_REASON.TOPOLOGY_TRANSACTION_PENDING
             )
             expect(result.externalTxId).toBe('tx-1')
-            expect(result.partyId).toBe('alice::fingerprint')
+            expect(result.partyId).toBe(
+                `alice::${createFingerprintFromKey('bd-pk')}`
+            )
             expect(
                 mockPartyAllocator.allocatePartyWithExistingWallet
             ).not.toHaveBeenCalled()
@@ -1302,7 +1300,9 @@ describe('WalletAllocationService', () => {
                 WALLET_DISABLED_REASON.TOPOLOGY_TRANSACTION_PENDING
             )
             expect(result.externalTxId).toBe('tx-1')
-            expect(result.partyId).toBe('alice::fingerprint')
+            expect(result.partyId).toBe(
+                `alice::${createFingerprintFromKey('dfns-pk')}`
+            )
             expect(mockStore.addWallet).toHaveBeenCalled()
         })
 
@@ -1694,7 +1694,9 @@ describe('WalletAllocationService', () => {
                 WALLET_DISABLED_REASON.TOPOLOGY_TRANSACTION_PENDING
             )
             expect(result.externalTxId).toBe('tx-1')
-            expect(result.partyId).toBe('alice::fingerprint')
+            expect(result.partyId).toBe(
+                `alice::${createFingerprintFromKey('dfns-pk')}`
+            )
             expect(mockStore.addWallet).toHaveBeenCalled()
         })
 

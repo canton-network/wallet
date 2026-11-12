@@ -6,10 +6,7 @@ import {
     LedgerClient,
 } from '@canton-network/core-ledger-client'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import {
-    createFingerprintFromKey,
-    normalizePublicKeyToBase64,
-} from './signing-keys.js'
+import { createFingerprintFromKey } from './signing-keys.js'
 
 export type AllocatedParty = {
     partyId: string
@@ -79,24 +76,6 @@ export class PartyAllocationService {
         } else {
             return this.allocateInternalParty(userId, hint)
         }
-    }
-
-    /**
-     * Create fingerprint
-     * @param publicKey The public key of the user (in base64 format).
-     */
-    createFingerprintFromKey(publicKey: string): string {
-        return createFingerprintFromKey(publicKey)
-    }
-
-    /**
-     * Normalizes a public key to base64 format.
-     * Converts hex format (Fireblocks) to base64, or returns base64 as-is.
-     * @param publicKey Public key in hex or base64 format
-     * @returns Public key in base64 format, or null if conversion fails
-     */
-    normalizePublicKeyToBase64(publicKey: string): string | null {
-        return normalizePublicKeyToBase64(publicKey)
     }
 
     /**
@@ -210,7 +189,7 @@ export class PartyAllocationService {
     ): Promise<AllocatedParty> {
         const synchronizerId =
             this.synchronizerId ?? (await this.ledgerClient.getSynchronizerId())
-        const namespace = this.createFingerprintFromKey(publicKey)
+        const namespace = createFingerprintFromKey(publicKey)
 
         const transactions = await this.generateTopologyTransactions(
             hint,

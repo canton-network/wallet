@@ -18,6 +18,12 @@ const { mockLedgerGet, mockLedgerPost, mockLedgerGrantUserRights } = vi.hoisted(
     })
 )
 
+// Keep the namespace predictable: the fingerprint is the public key itself.
+vi.mock('./signing-keys.js', async (importOriginal) => ({
+    ...(await importOriginal<typeof import('./signing-keys.js')>()),
+    createFingerprintFromKey: (publicKey: string) => publicKey,
+}))
+
 vi.mock('@canton-network/core-ledger-client', () => ({
     Signature: vi.fn(),
     SignatureFormat: vi.fn(),
@@ -91,10 +97,6 @@ describe('PartyAllocationService', () => {
             accessTokenProvider: mockAccessTokenProvider,
             httpLedgerUrl: network.ledgerApi.baseUrl,
         })
-
-        vi.spyOn(service, 'createFingerprintFromKey').mockReturnValue(
-            'mypublickey'
-        )
     })
 
     afterEach(() => vi.restoreAllMocks())

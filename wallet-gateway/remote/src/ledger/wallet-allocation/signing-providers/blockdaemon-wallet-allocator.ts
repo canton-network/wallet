@@ -13,6 +13,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
 import type { PartyAllocationService } from '../../party-allocation-service.js'
+import { createFingerprintFromKey } from '../../signing-keys.js'
 import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import {
@@ -49,9 +50,7 @@ export class BlockdaemonWalletAllocator implements WalletAllocator {
             throw new Error(`Failed to create key: ${key.error_description}`)
         }
 
-        const namespace = this.partyAllocator.createFingerprintFromKey(
-            key.publicKey
-        )
+        const namespace = createFingerprintFromKey(key.publicKey)
         const transactions =
             await this.partyAllocator.generateTopologyTransactions(
                 partyHint,
