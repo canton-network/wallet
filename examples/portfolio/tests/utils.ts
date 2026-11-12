@@ -24,6 +24,8 @@ export const LOCALNET_CLIENT_SECRET = 'unsafe'
 // Participant behind that network.
 export const LOCALNET_LEDGER_API_URL = 'http://localhost:2975'
 
+export const REGISTRY_URL = 'http://scan.localhost:4000'
+
 /**
  * Gateway user id for a worker.
  *
@@ -148,13 +150,13 @@ export const setupRegistry = async (page: Page): Promise<void> => {
     ).toBeVisible()
     await dialog
         .getByRole('textbox', { name: 'Registry URL' })
-        .fill('http://scan.localhost:4000')
+        .fill(REGISTRY_URL)
     await dialog.getByRole('button', { name: 'Add', exact: true }).click()
 
     await expect(dialog).not.toBeVisible({ timeout: 10000 })
-    await expect(
-        registriesSection.getByText('http://scan.localhost:4000')
-    ).toBeVisible({ timeout: 10000 })
+    await expect(registriesSection.getByText(REGISTRY_URL)).toBeVisible({
+        timeout: 10000,
+    })
 }
 
 /**
@@ -506,8 +508,9 @@ export const recordTransferChoiceContexts = (page: Page) => {
 }
 
 export const amuletSupportsApi = async (api: string): Promise<boolean> => {
-    const REGISTRY = 'http://scan.localhost:4000'
-    const response = await fetch(`${REGISTRY}/registry/metadata/v1/instruments`)
+    const response = await fetch(
+        `${REGISTRY_URL}/registry/metadata/v1/instruments`
+    )
     if (!response.ok) throw new Error(`Registry metadata unavailable`)
     const { instruments } = (await response.json()) as {
         instruments: { id: string; supportedApis?: Record<string, number> }[]
@@ -519,3 +522,56 @@ export const amuletSupportsApi = async (api: string): Promise<boolean> => {
 
 export const amuletSupportsTransferV2 = () =>
     amuletSupportsApi('splice-api-token-transfer-instruction-v2')
+
+const HISTORY_TIMEOUT = 30_000
+
+type ExpectedHistoryRow = {
+    activity: string
+    amount: string
+    counterpartyHint: string
+}
+
+export const gotoWalletHistory = async (
+    page: Page,
+    walletId: string,
+    walletHint: string,
+    timeout = HISTORY_TIMEOUT,
+    baseUrl: string = BASE_URL
+): Promise<void> => {
+    await page.goto(
+        `${baseUrl}/dashboard/wallet/${encodeURIComponent(walletId)}`
+    )
+
+    const main = page.locator('main')
+    await expect(main.getByRole('heading', { name: walletHint })).toBeVisible({
+        timeout: 10_000,
+    })
+    await expect(
+        main.getByRole('table', { name: 'Transaction history' })
+    ).toBeVisible({ timeout })
+}
+
+export const expectHistoryRow = async (
+    page: Page,
+    expected: ExpectedHistoryRow,
+    timeout = HISTORY_TIMEOUT
+): Promise<void> => {
+    const row = page
+        .getByRole('table', { name: 'Transaction history' })
+        .getByRole('row')
+        .filter({
+            has: page.getByRole('cell', {
+                name: expected.activity,
+                exact: true,
+            }),
+        })
+        .filter({
+            has: page.getByRole('cell', {
+                name: expected.amount,
+                exact: true,
+            }),
+        })
+        .filter({ hasText: expected.counterpartyHint.slice(0, 10) })
+
+    await expect(row).toHaveCount(1, { timeout })
+}

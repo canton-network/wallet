@@ -2,21 +2,24 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useState } from 'react'
-import { Alert, Box, CircularProgress, Typography } from '@mui/material'
+import {
+    Alert,
+    AlertTitle,
+    Box,
+    CircularProgress,
+    Typography,
+} from '@mui/material'
 import type { PartyId } from '@canton-network/core-types'
 import { PillButton } from '@components/ui/PillButton'
 import type { AllocationV2ActionItem } from '@components/types'
 import { isExpired } from '@utils/date-format'
-import {
-    amountsToLock,
-    getAllocationActions,
-    netAmounts,
-} from '@utils/v2-allocation-items'
+import { getAllocationActions, netAmounts } from '@utils/v2-allocation-items'
 import {
     AmountList,
     DetailRow,
     DialogHeader,
     LegList,
+    LockedAmounts,
     SettlementRows,
     TimeWithDistance,
 } from './allocation-v2-dialog-parts'
@@ -63,12 +66,8 @@ export function AllocationV2DialogContent({
             </Typography>
 
             <Box sx={{ display: 'grid' }}>
-                <DetailRow label="Locked">
-                    {amountsToLock([spec]).length === 0 ? (
-                        <Typography>Nothing — you only receive</Typography>
-                    ) : (
-                        <AmountList amounts={amountsToLock([spec])} />
-                    )}
+                <DetailRow label="You Lock">
+                    <LockedAmounts specs={[item.allocation]}></LockedAmounts>
                 </DetailRow>
                 <DetailRow label="Net effect at settlement">
                     <AmountList amounts={netAmounts([spec])} signed />
@@ -122,11 +121,20 @@ export function AllocationV2DialogContent({
             {canWithdraw &&
                 (confirming ? (
                     <Box sx={{ display: 'grid', gap: 2 }}>
-                        <Alert severity="warning">
-                            Withdrawing releases your funds. The trade can't
-                            settle without this allocation, and the request
-                            can't be accepted again; the venue would have to
-                            send a new one.
+                        <Alert
+                            severity="warning"
+                            sx={{
+                                py: 2,
+                                '& .MuiAlert-message': { fontSize: 16 },
+                            }}
+                        >
+                            <AlertTitle sx={{ fontSize: 18, fontWeight: 700 }}>
+                                Reject this allocation?
+                            </AlertTitle>
+                            Your funds will be released. The trade can't settle
+                            without this allocation, and the request can't be
+                            accepted again; the venue would have to send a new
+                            one.
                         </Alert>
                         <Box
                             sx={{
@@ -155,7 +163,7 @@ export function AllocationV2DialogContent({
                                         color="inherit"
                                     />
                                 ) : (
-                                    'Withdraw allocation'
+                                    'Reject allocation'
                                 )}
                             </PillButton>
                         </Box>
@@ -168,7 +176,7 @@ export function AllocationV2DialogContent({
                         onClick={() => setConfirming(true)}
                         sx={{ py: 1.25, fontSize: 18 }}
                     >
-                        Withdraw
+                        Reject allocation
                     </PillButton>
                 ))}
         </Box>

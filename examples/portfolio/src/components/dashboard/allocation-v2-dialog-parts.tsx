@@ -4,12 +4,19 @@
 import type { ReactNode } from 'react'
 import { Box, IconButton, Typography } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
-import type { AllocationSpecification } from '@canton-network/core-token-standard-v2'
+import type {
+    Account,
+    AllocationSpecification,
+} from '@canton-network/core-token-standard-v2'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DateTimeText } from '@components/date-time-text'
 import { formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
-import type { InstrumentAmount } from '@utils/v2-allocation-items'
+import { isBasicAccount } from '@utils/holdings'
+import {
+    amountsToLock,
+    type InstrumentAmount,
+} from '@utils/v2-allocation-items'
 
 export function DialogHeader({
     title,
@@ -170,7 +177,40 @@ export function SettlementRows({
     )
 }
 
-/** The party's leg sides, one line each: direction, counterparty, amount, meta */
+/** A party, plus its account ID unless it's the basic account; both copyable */
+function AccountRef({
+    label,
+    account,
+}: {
+    label: 'From' | 'To'
+    account: Account
+}) {
+    return (
+        <Box
+            sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flexWrap: 'wrap',
+                minWidth: 0,
+            }}
+        >
+            <Typography
+                color="text.primary"
+                sx={{ minWidth: 40, fontWeight: 700 }}
+            >
+                <strong>{label}:</strong>
+            </Typography>
+            <CopyableIdentifier value={account.owner ?? '—'} maxLength={24} />
+            {!isBasicAccount(account) && account.id && (
+                <>
+                    <CopyableIdentifier value={account.id} maxLength={16} />
+                </>
+            )}
+        </Box>
+    )
+}
+
 export function LegList({
     specs,
     title,
@@ -186,14 +226,18 @@ export function LegList({
             {specs.flatMap((spec) =>
                 spec.transferLegSides.map((leg) => {
                     const send = leg.side === 'SenderSide'
-                    const meta = Object.entries(leg.meta?.values ?? {})
+                    // The user's side is the spec's authorizer; the other side is `otherside`
+                    const from = send ? spec.authorizer : leg.otherside
+                    const to = send ? leg.otherside : spec.authorizer
+
                     return (
                         <Box
                             key={`${spec.admin}-${leg.transferLegId}-${leg.side}`}
+                            data-testid={`leg-${leg.transferLegId}-${leg.side}`}
                             sx={{
                                 display: 'grid',
                                 gridTemplateColumns:
-                                    'minmax(80px, auto) minmax(0, 1fr) auto',
+                                    'minmax(100px, auto) minmax(0, 1fr) auto',
                                 alignItems: 'center',
                                 gap: 2,
                                 py: 1.5,
@@ -208,33 +252,14 @@ export function LegList({
                             >
                                 {send ? 'You send' : 'You receive'}
                             </Typography>
-                            <Box sx={{ minWidth: 0 }}>
-                                <Box
-                                    sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 1,
-                                    }}
-                                >
-                                    <Typography color="text.secondary">
-                                        {send ? 'to' : 'from'}
-                                    </Typography>
-                                    <CopyableIdentifier
-                                        value={leg.otherside.owner ?? '—'}
-                                        maxLength={16}
-                                    />
-                                </Box>
-                                {meta.length > 0 && (
-                                    <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                    >
-                                        {meta
-                                            .map(([k, v]) => `${k}: ${v}`)
-                                            .join(', ')}
-                                    </Typography>
-                                )}
+
+                            <Box
+                                sx={{ minWidth: 0, display: 'grid', gap: 0.5 }}
+                            >
+                                <AccountRef label="From" account={from} />
+                                <AccountRef label="To" account={to} />
                             </Box>
+
                             <Typography>
                                 {formatAmount(leg.amount)} {leg.instrumentId}
                             </Typography>
@@ -243,5 +268,20 @@ export function LegList({
                 })
             )}
         </Box>
+    )
+}
+
+export function LockedAmounts({ specs }: { specs: AllocationSpecification[] }) {
+    const toLock = amountsToLock(specs)
+    if (toLock.length > 0) return <AmountList amounts={toLock}></AmountList>
+    const sendsAnything = specs.some((s) =>
+        s.transferLegSides.some((l) => l.side === 'SenderSide')
+    )
+    return (
+        <Typography>
+            {sendsAnything
+                ? 'Nothing - you receive more than you send'
+                : 'Nothing - you only receive'}
+        </Typography>
     )
 }

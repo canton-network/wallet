@@ -11,6 +11,7 @@ import {
     TokenStandardClient as TokenStandardClientV2,
     type HoldingView as HoldingViewV2,
     HOLDING_INTERFACE_ID_V2,
+    isSameAccount,
 } from '@canton-network/core-token-standard-v2'
 import type { PartyId } from '@canton-network/core-types'
 import { ACSReader, type AcsOptions } from '@canton-network/core-acs-reader'
@@ -103,9 +104,6 @@ export class CoreService {
         }
     }
 
-    private isSameAccount(a: Account, b: Account) {
-        return a.id === b.id && a.owner === b.owner && a.provider === b.provider
-    }
     async getInputHoldingCidsForAccount(opts: {
         account: Account
         partyId?: PartyId
@@ -137,10 +135,7 @@ export class CoreService {
                 h.interfaceViewValue.instrumentId.admin ===
                     opts.instrumentAdmin &&
                 h.interfaceViewValue.instrumentId.id === opts.instrumentId &&
-                this.isSameAccount(
-                    opts.account,
-                    h.interfaceViewValue.account
-                ) &&
+                isSameAccount(opts.account, h.interfaceViewValue.account) &&
                 !TokenStandardService.isHoldingLocked(h, now) &&
                 !opts.excludeCids?.has(h.contractId)
         )

@@ -377,18 +377,18 @@ export class AllocationNamespace {
             params: AllocationRequestActionParams
         ): Promise<PreparedCommand> => {
             const view = params.request.interfaceViewValue
-            const groups =
-                decodeAvailableActions<AllocationRequestAction>(
-                    view.availableActions
-                ).find(([key]) => key.tag === 'ARA_Accept')?.[1] ?? []
+            const groups = decodeAvailableActions<AllocationRequestAction>(
+                view.availableActions
+            ).find(([key]) => key.tag === 'ARA_Accept')
 
-            if (
-                !params.actors &&
-                actionAvailability(groups, params.partyId).status! ==
-                    'available'
-            ) {
+            if (!groups) {
+                throw new Error(`No groups found for ARA_Accept`)
+            }
+            const availability = actionAvailability(groups[1], params.partyId)
+
+            if (!params.actors && availability.status !== 'available') {
                 throw new Error(
-                    `Cannot accept allocation request ${params.request.contractId} for ${params.partyId}`
+                    `${params.partyId} cannot accept allocation request ${params.request.contractId} (${availability.status})`
                 )
             }
 
@@ -400,7 +400,6 @@ export class AllocationNamespace {
                 )
             )
         },
-
         reject: async (
             params: AllocationRequestActionParams
         ): Promise<PreparedCommand> => {

@@ -35,12 +35,12 @@ import { DateTimeText } from '@components/date-time-text'
 import type { AcceptProgress } from '@hooks/useAllocationRequestV2Actions'
 import type { PartyId } from '@canton-network/core-types'
 import {
-    amountsToLock,
     earliest,
     getAllocationRequestActions,
     netAmounts,
     type InstrumentAmount,
 } from '@utils/v2-allocation-items'
+import { LegList, LockedAmounts } from './allocation-v2-dialog-parts'
 
 interface AllocationActionDialogContentProps {
     item: AllocationActionItem
@@ -76,7 +76,6 @@ export function AllocationRequestV2DialogContent({
     onReject,
 }: AllocationRequestV2DialogContentProps) {
     const party = item.currentPartyId as PartyId
-    const toLock = amountsToLock(item.ownSpecs)
     const net = netAmounts(item.ownSpecs)
     const deadline = earliest(item.ownSpecs.map((s) => s.settlementDeadline))
     const committed = item.ownSpecs.some((s) => s.committed)
@@ -126,11 +125,7 @@ export function AllocationRequestV2DialogContent({
             {/* What accepting means for the user, before any detail */}
             <Box sx={{ display: 'grid' }}>
                 <DetailRow label="You lock">
-                    {toLock.length === 0 ? (
-                        <Typography>Nothing — you only receive</Typography>
-                    ) : (
-                        <AmountList amounts={toLock} />
-                    )}
+                    <LockedAmounts specs={item.ownSpecs}></LockedAmounts>
                 </DetailRow>
                 <DetailRow label="Net effect at settlement">
                     <AmountList amounts={net} signed />
@@ -187,22 +182,10 @@ export function AllocationRequestV2DialogContent({
             )}
 
             <Box sx={{ display: 'grid', gap: 1 }}>
-                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                    Your transfers in this trade
-                </Typography>
-                {item.ownSpecs.flatMap((spec) =>
-                    spec.transferLegSides.map((leg) => (
-                        <LegRow
-                            key={`${spec.admin}-${leg.transferLegId}-${leg.side}`}
-                            direction={
-                                leg.side === 'SenderSide' ? 'send' : 'receive'
-                            }
-                            counterparty={leg.otherside.owner ?? '—'}
-                            amount={`${formatAmount(leg.amount)} ${leg.instrumentId}`}
-                            meta={leg.meta?.values ?? {}}
-                        />
-                    ))
-                )}
+                <LegList
+                    specs={item.ownSpecs}
+                    title="Your transfers in this trade"
+                ></LegList>
             </Box>
 
             {error && <Alert severity="error">{error}</Alert>}
@@ -317,55 +300,6 @@ function TimeWithDistance({ value }: { value: string }) {
             <Typography color="text.secondary">
                 {formatDistanceToNow(value)}
             </Typography>
-        </Box>
-    )
-}
-
-function LegRow({
-    direction,
-    counterparty,
-    amount,
-    meta,
-}: {
-    direction: 'send' | 'receive'
-    counterparty: string
-    amount: string
-    meta: Record<string, string>
-}) {
-    const metaEntries = Object.entries(meta)
-    return (
-        <Box
-            sx={{
-                display: 'grid',
-                gridTemplateColumns: 'minmax(80px, auto) minmax(0, 1fr) auto',
-                alignItems: 'center',
-                gap: 2,
-                py: 1.5,
-                borderBottom: '1px solid',
-                borderColor: 'divider',
-            }}
-        >
-            <Typography
-                sx={{
-                    color: direction === 'send' ? 'error.main' : 'success.main',
-                }}
-            >
-                {direction === 'send' ? 'You send' : 'You receive'}
-            </Typography>
-            <Box sx={{ minWidth: 0 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography color="text.secondary">
-                        {direction === 'send' ? 'to' : 'from'}
-                    </Typography>
-                    <CopyableIdentifier value={counterparty} maxLength={16} />
-                </Box>
-                {metaEntries.length > 0 && (
-                    <Typography variant="body2" color="text.secondary">
-                        {metaEntries.map(([k, v]) => `${k}: ${v}`).join(', ')}
-                    </Typography>
-                )}
-            </Box>
-            <Typography>{amount}</Typography>
         </Box>
     )
 }

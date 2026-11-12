@@ -198,8 +198,8 @@ function formatNet(item: AllocationV2Item) {
     if (net.length === 0) return '-'
     return net
         .map(({ amount, instrumentId }) => {
-            const sign = amount.isPositive() && !amount.isZero() ? '+' : '-'
-            return `${sign}${formatAmount(amount.toString())} ${instrumentId}`
+            const sign = amount.isNegative() ? '-' : amount.isZero() ? '' : '+'
+            return `${sign}${formatAmount(amount.abs().toString())} ${instrumentId}`
         })
         .join(', ')
 }
@@ -213,7 +213,7 @@ function AllocationV2OfferRow({
 }) {
     const [executor, ...moreExecutors] = item.settlement.executors
     return (
-        <OfferRowGrid columns={5}>
+        <OfferRowGrid columns={6}>
             <OfferDetailBlock label="Type" value={V2_TYPE_LABEL[item.kind]} />
             <OfferDetailBlock label="Net Amount" value={formatNet(item)} />
             {item.expiry ? (

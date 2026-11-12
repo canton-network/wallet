@@ -10,7 +10,7 @@ import {
     actionAvailability,
     decodeAvailableActions,
     type SettlementInfo,
-    type Account,
+    isSameAccount,
 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
@@ -291,11 +291,6 @@ export function needsUserAction(item: ActionItem): boolean {
 
 const settlementKey = (s: SettlementInfo) =>
     JSON.stringify([[...s.executors].sort(), s.id, s.cid ?? null])
-
-//TODO: move this to core package somewhere and look at copies of this check across packages
-function isSameAccount(a: Account, b: Account) {
-    return a.id === b.id && a.owner === b.owner && a.provider === b.provider
-}
 
 /**
  *

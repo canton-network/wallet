@@ -236,6 +236,11 @@ function getTransactionAmount(event: TransactionEvent): string | null {
         return locked ? formatAmount(locked.abs()) : null
     }
 
+    if (event.label.type === 'Settlement' || isAllocationSettlement(event)) {
+        const change = getSettlementChange(event)
+        return change ? formatAmount(change.abs()) : null
+    }
+
     const summary = getHoldingSummary(event)
     if (!summary?.amountChange) return null
 
@@ -446,6 +451,15 @@ function isIntermediateUnlock(
     )
 }
 
+function getSettlementChange(event: TransactionEvent) {
+    return sumAmounts(
+        [
+            ...event.unlockedHoldingsChangeSummaries,
+            ...event.lockedHoldingsChangeSummaries,
+        ].map((s) => s.amountChange ?? '0')
+    )
+}
+
 function getBalanceEffect(
     event: TransactionEvent,
     direction: TransactionDirection
@@ -457,10 +471,8 @@ function getBalanceEffect(
     if (direction === 'sent') return 'debit'
     if (direction === 'received') return 'credit'
 
-    if (event.label.type === 'Settlement') {
-        const change = toDecimalOrNull(
-            getHoldingSummary(event)?.amountChange ?? '0'
-        )
+    if (event.label.type === 'Settlement' || isAllocationSettlement(event)) {
+        const change = getSettlementChange(event)
         if (change?.isPositive() && !change.isZero()) return 'credit'
         if (change?.isNegative() && !change.isZero()) return 'debit'
     }
