@@ -15,7 +15,8 @@
             "{workspaceRoot}/vitest.base.ts",
             "{workspaceRoot}/tsdown.base.ts",
             "{workspaceRoot}/tsconfig.*.json",
-            "{workspaceRoot}/vite.decorators.ts"
+            "{workspaceRoot}/vite.decorators.ts",
+            "{workspaceRoot}/vite.source.ts"
         ]
     },
     "release": {
