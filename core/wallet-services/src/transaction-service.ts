@@ -640,17 +640,16 @@ export class TransactionService {
 
         let result: TxChangedExecutedEvent['payload']
         try {
-            const submissionId = crypto.randomUUID()
-            this.logger.info('Executing transaction with submissionId', {
-                submissionId,
-                transactionId: transaction.id,
-                commandId: transaction.commandId,
-                externalTxId: transaction.externalTxId,
-            })
+            const buildExecuteAndWaitParams = () => {
+                const submissionId = crypto.randomUUID()
+                this.logger.info('Executing transaction with submissionId', {
+                    submissionId,
+                    transactionId: transaction.id,
+                    commandId: transaction.commandId,
+                    externalTxId: transaction.externalTxId,
+                })
 
-            result = await ledgerClient.postWithRetry(
-                '/v2/interactive-submission/executeAndWait',
-                {
+                return {
                     userId,
                     preparedTransaction: transaction.preparedTransaction,
                     hashingSchemeVersion: this.hashingSchemeVersion,
@@ -674,7 +673,12 @@ export class TransactionService {
                             },
                         ],
                     },
-                } as Types['JsExecuteSubmissionAndWaitRequest'],
+                } satisfies Types['JsExecuteSubmissionAndWaitRequest']
+            }
+
+            result = await ledgerClient.postWithRetry(
+                '/v2/interactive-submission/executeAndWait',
+                buildExecuteAndWaitParams,
                 { ...defaultRetryableOptions, retries: 20 }
             )
         } catch (err) {
