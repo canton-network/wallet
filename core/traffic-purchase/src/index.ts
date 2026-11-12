@@ -37,9 +37,19 @@ export type {
 } from '@daml.js/traffic-purchase-models-1.0.0/lib/Tea/TrafficPurchase/module.js'
 
 /**
- * The credit interface `TrafficPurchaser` implements. The account a purchase
+ * The credit interface `TrafficPurchaser` implements, and the argument of the
+ * choice that credits an account.
+ *
+ * These live in the `canton-traffic-credit` package the model data-depends on.
+ * It is interface-only: `TrafficPurchaser_PurchaseCredits` *exercises*
+ * `TrafficCreditReporter_PublishCredit` on a `TrafficCreditReporter` rather than
+ * creating a contract, so a scan reads the credit off that exercise's argument
+ * (`accountId`, `trafficAmount`). The interface companion is exported as a value
+ * for its interface id; the choice argument as a type. The account a purchase
  * credits is a plain `string`; the model validates it when the choice runs.
  */
+export { TrafficCreditReporter } from '@daml.js/canton-traffic-credit-1.0.0/lib/Canton/Api/Traffic/CreditV1/module.js'
+
 export type {
     TrafficCreditReporter_PublishCredit,
     TrafficCreditReporterView,
