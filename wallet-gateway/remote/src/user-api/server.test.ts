@@ -22,7 +22,7 @@ const config = ConfigUtils.loadConfigFile(configPath).config
 
 const store = new StoreInternal(config.bootstrap, getLogger('mock'))
 
-const notificationService = new NotificationService(pino(sink()))
+const notificationService = new NotificationService()
 const serverStatus = new ServerStatusService(new ServerNotices(pino(sink())))
 
 test('call listNetworks rpc', async () => {

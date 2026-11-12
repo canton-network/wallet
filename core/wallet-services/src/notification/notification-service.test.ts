@@ -1,25 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
-import {
-    type NotificationLogger,
-    NotificationService,
-} from './notification-service.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { initializeLogRecorder } from '../__tests__/test-utils.js'
+import { NotificationService } from './notification-service.js'
+
+const recorder = await initializeLogRecorder()
+
+const category = ['core', 'wallet-services', 'notification-service']
 
 describe('NotificationService', () => {
-    let logger: {
-        debug: Mock<NotificationLogger['debug']>
-        error: Mock<NotificationLogger['error']>
-    }
     let service: NotificationService
 
     beforeEach(() => {
-        logger = {
-            debug: vi.fn<NotificationLogger['debug']>(),
-            error: vi.fn<NotificationLogger['error']>(),
-        }
-        service = new NotificationService(logger)
+        recorder.clear()
+        service = new NotificationService()
     })
 
     it('creates a notifier for a new notifierId', () => {
@@ -70,26 +65,42 @@ describe('NotificationService', () => {
         const notifier = service.getNotifier('user-1')
 
         expect(notifier.emit('unknown-event')).toBe(false)
-        expect(logger.debug).toHaveBeenCalledWith(
-            { event: 'unknown-event', args: [] },
-            'Notifier emitted event: unknown-event for user-1'
-        )
+        recorder.assertLogged({
+            category,
+            level: 'debug',
+            rawMessage: 'Notifier emitted event: {event} for {notifierId}',
+            properties: { event: 'unknown-event', notifierId: 'user-1' },
+        })
     })
 
     it('logs every emitted event with the correct notifierId', () => {
         service.getNotifier('user-1').emit('txChanged', { id: 123 })
         service.getNotifier('user-2').emit('statusChanged')
 
-        expect(logger.debug).toHaveBeenNthCalledWith(
-            1,
-            { event: 'txChanged', args: [{ id: 123 }] },
-            'Notifier emitted event: txChanged for user-1'
-        )
-        expect(logger.debug).toHaveBeenNthCalledWith(
-            2,
-            { event: 'statusChanged', args: [] },
-            'Notifier emitted event: statusChanged for user-2'
-        )
+        expect(recorder.records.map((r) => [r.level, r.properties])).toEqual([
+            ['debug', { event: 'txChanged', notifierId: 'user-1' }],
+            ['debug', { event: 'statusChanged', notifierId: 'user-2' }],
+        ])
+    })
+
+    it('never logs the emitted args', () => {
+        const notifier = service.getNotifier('user-1')
+        notifier.on('connected', () => {
+            throw new Error('boom')
+        })
+
+        notifier.emit('connected', {
+            session: { accessToken: 'secret-token' },
+        })
+
+        expect(recorder.records).toHaveLength(2)
+        for (const record of recorder.records) {
+            expect(record.properties).not.toHaveProperty('args')
+            expect(JSON.stringify(record.properties)).not.toContain(
+                'secret-token'
+            )
+            expect(record.message.join('')).not.toContain('secret-token')
+        }
     })
 
     it('removes listeners with removeListener', () => {
@@ -163,11 +174,15 @@ describe('NotificationService', () => {
         expect(result).toBe(true)
         expect(failing).toHaveBeenCalledTimes(1)
         expect(next).toHaveBeenCalledWith({ id: 1 })
-        expect(logger.error).toHaveBeenCalledTimes(1)
-        expect(logger.error).toHaveBeenCalledWith(
-            { event: 'txChanged', err: error },
-            'Notifier listener failed for event: txChanged for user-1'
-        )
+        const errors = recorder.records.filter((r) => r.level === 'error')
+        expect(errors).toHaveLength(1)
+        recorder.assertLogged({
+            category,
+            level: 'error',
+            rawMessage:
+                'Notifier listener failed for event: {event} for {notifierId}',
+            properties: { event: 'txChanged', notifierId: 'user-1', error },
+        })
     })
 
     it('keeps listeners isolated between notifiers', () => {
