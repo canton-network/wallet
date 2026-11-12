@@ -1,0 +1,14 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../signing-lib/tsconfig.lib.json"
+        },
+        {
+            "path": "../signing-store-sql/tsconfig.lib.json"
+        }
+    ]
+}

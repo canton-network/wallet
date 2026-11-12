@@ -1,0 +1,23 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../wallet-user-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../wallet-store/tsconfig.lib.json"
+        },
+        {
+            "path": "../wallet-dapp-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../signing-lib/tsconfig.lib.json"
+        },
+        {
+            "path": "../ledger-client/tsconfig.lib.json"
+        }
+    ]
+}

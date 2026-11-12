@@ -16,37 +16,37 @@
     "include": ["src"],
     "references": [
         {
-            "path": "../../sdk/wallet-sdk"
+            "path": "../../sdk/wallet-sdk/tsconfig.lib.json"
         },
         {
-            "path": "../../sdk/dapp-sdk"
+            "path": "../../sdk/dapp-sdk/tsconfig.lib.json"
         },
         {
-            "path": "../../core/wallet-auth"
+            "path": "../../core/wallet-auth/tsconfig.lib.json"
         },
         {
-            "path": "../../core/types"
+            "path": "../../core/types/tsconfig.lib.json"
         },
         {
-            "path": "../../core/tx-parser"
+            "path": "../../core/tx-parser/tsconfig.lib.json"
         },
         {
-            "path": "../../core/token-standard-service"
+            "path": "../../core/token-standard-service/tsconfig.lib.json"
         },
         {
-            "path": "../../core/token-standard-v2"
+            "path": "../../core/token-standard-v2/tsconfig.lib.json"
         },
         {
-            "path": "../../core/token-standard"
+            "path": "../../core/token-standard/tsconfig.lib.json"
         },
         {
-            "path": "../../core/provider-ledger"
+            "path": "../../core/provider-ledger/tsconfig.lib.json"
         },
         {
-            "path": "../../core/ledger-client-types"
+            "path": "../../core/ledger-client-types/tsconfig.lib.json"
         },
         {
-            "path": "../../core/wallet-test-utils"
+            "path": "../../core/wallet-test-utils/tsconfig.lib.json"
         }
     ]
 }

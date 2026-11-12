@@ -5,13 +5,11 @@
         "erasableSyntaxOnly": true,
         "rewriteRelativeImportExtensions": true
     },
-    "include": ["src", "*.ts", "../../vitest.base.ts"],
+    "files": [],
+    "include": [],
     "references": [
         {
-            "path": "../conformance-dapp"
-        },
-        {
-            "path": "../../core/wallet-dapp-rpc-client"
+            "path": "./tsconfig.app.json"
         }
     ]
 }

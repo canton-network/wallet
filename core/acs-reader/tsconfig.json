@@ -3,16 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../types"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../provider-ledger"
-        },
-        {
-            "path": "../ledger-client-types"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

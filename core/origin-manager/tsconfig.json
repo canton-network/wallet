@@ -3,10 +3,13 @@
     "compilerOptions": {
         "noUncheckedIndexedAccess": true
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../types"
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

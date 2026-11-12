@@ -1,0 +1,20 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../wallet-user-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../wallet-store/tsconfig.lib.json"
+        },
+        {
+            "path": "../types/tsconfig.lib.json"
+        },
+        {
+            "path": "../tx-visualizer/tsconfig.lib.json"
+        },
+        {
+            "path": "../rpc-errors/tsconfig.lib.json"
+        }
+    ]
+}

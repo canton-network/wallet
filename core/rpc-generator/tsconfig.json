@@ -3,5 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src"]
+    "files": [],
+    "references": [
+        {
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
+        }
+    ]
 }

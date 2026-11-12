@@ -3,16 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../wallet-auth"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../signing-lib"
-        },
-        {
-            "path": "../signing-store-sql"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

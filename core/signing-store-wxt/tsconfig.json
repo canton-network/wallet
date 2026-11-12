@@ -1,12 +1,12 @@
 {
     "extends": "../../tsconfig.base.json",
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../wallet-auth"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../signing-lib"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

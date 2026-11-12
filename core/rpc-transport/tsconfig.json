@@ -1,12 +1,12 @@
 {
     "extends": "../../tsconfig.base.json",
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../types"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../rpc-errors"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

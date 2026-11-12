@@ -6,22 +6,13 @@
         "erasableSyntaxOnly": true,
         "rewriteRelativeImportExtensions": true
     },
-    "include": ["src", "package.json"],
+    "files": [],
     "references": [
         {
-            "path": "../../sdk/dapp-sdk"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../../core/wallet-ui-components"
-        },
-        {
-            "path": "../../core/rpc-errors"
-        },
-        {
-            "path": "../../core/provider-conformance"
-        },
-        {
-            "path": "../../core/types"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

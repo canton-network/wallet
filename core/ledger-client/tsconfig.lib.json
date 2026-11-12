@@ -1,0 +1,17 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../types/tsconfig.lib.json"
+        },
+        {
+            "path": "../ledger-proto/tsconfig.lib.json"
+        },
+        {
+            "path": "../ledger-client-types/tsconfig.lib.json"
+        }
+    ]
+}

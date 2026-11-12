@@ -1,0 +1,29 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../types/tsconfig.lib.json"
+        },
+        {
+            "path": "../tx-parser/tsconfig.lib.json"
+        },
+        {
+            "path": "../token-standard-v2/tsconfig.lib.json"
+        },
+        {
+            "path": "../token-standard/tsconfig.lib.json"
+        },
+        {
+            "path": "../provider-ledger/tsconfig.lib.json"
+        },
+        {
+            "path": "../ledger-client-types/tsconfig.lib.json"
+        },
+        {
+            "path": "../acs-reader/tsconfig.lib.json"
+        }
+    ]
+}

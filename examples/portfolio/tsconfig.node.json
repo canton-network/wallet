@@ -8,20 +8,11 @@
         "playwright.config.ts",
         "tests",
         "scripts",
-        "../../vite.source.ts",
-        "src/lib/synchronizer.ts",
-        "src/utils/registry.ts",
-        "src/types/instruments.ts"
+        "../../vite.source.ts"
     ],
     "references": [
         {
-            "path": "../../core/wallet-test-utils"
-        },
-        {
-            "path": "../../core/types"
-        },
-        {
-            "path": "../../sdk/wallet-sdk"
+            "path": "./tsconfig.app.json"
         }
     ]
 }

@@ -3,13 +3,13 @@
     "compilerOptions": {
         "types": []
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../types"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../rpc-transport"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

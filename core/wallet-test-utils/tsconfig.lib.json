@@ -1,0 +1,26 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk/tsconfig.lib.json"
+        },
+        {
+            "path": "../wallet-user-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../types/tsconfig.lib.json"
+        },
+        {
+            "path": "../rpc-transport/tsconfig.lib.json"
+        },
+        {
+            "path": "../rpc-errors/tsconfig.lib.json"
+        },
+        {
+            "path": "../ledger-client/tsconfig.lib.json"
+        }
+    ]
+}

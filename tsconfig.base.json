@@ -18,11 +18,5 @@
         "customConditions": ["@canton-network/source"],
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
-    },
-    "include": ["${configDir}/src", "${configDir}/*.ts"],
-    "exclude": [
-        "${configDir}/dist",
-        "${configDir}/build",
-        "${configDir}/out-tsc"
-    ]
+    }
 }

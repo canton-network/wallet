@@ -3,31 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src", "src/**/*.json"],
+    "files": [],
     "references": [
         {
-            "path": "../wallet-auth"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../types"
-        },
-        {
-            "path": "../tx-parser"
-        },
-        {
-            "path": "../token-standard-v2"
-        },
-        {
-            "path": "../token-standard"
-        },
-        {
-            "path": "../provider-ledger"
-        },
-        {
-            "path": "../ledger-client-types"
-        },
-        {
-            "path": "../acs-reader"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

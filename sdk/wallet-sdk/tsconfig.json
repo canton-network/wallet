@@ -3,61 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../../core/wallet-auth"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../../core/types"
-        },
-        {
-            "path": "../../core/tx-visualizer"
-        },
-        {
-            "path": "../../core/tx-parser"
-        },
-        {
-            "path": "../../core/tx-hashing"
-        },
-        {
-            "path": "../../core/token-standard-service"
-        },
-        {
-            "path": "../../core/token-standard-v2"
-        },
-        {
-            "path": "../../core/token-standard"
-        },
-        {
-            "path": "../../core/splice-provider"
-        },
-        {
-            "path": "../../core/splice-client"
-        },
-        {
-            "path": "../../core/signing-lib"
-        },
-        {
-            "path": "../../core/provider-ledger"
-        },
-        {
-            "path": "../../core/provider-dapp"
-        },
-        {
-            "path": "../../core/ledger-proto"
-        },
-        {
-            "path": "../../core/ledger-client-types"
-        },
-        {
-            "path": "../../core/asyncapi-client"
-        },
-        {
-            "path": "../../core/amulet-service"
-        },
-        {
-            "path": "../../core/acs-reader"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

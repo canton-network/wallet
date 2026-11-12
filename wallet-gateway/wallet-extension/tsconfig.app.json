@@ -1,0 +1,40 @@
+{
+    "extends": "./tsconfig.json",
+    "include": ["**/*", ".wxt/wxt.d.ts"],
+    "exclude": ["**/node_modules", ".output"],
+    "references": [
+        {
+            "path": "../../core/wallet-user-rpc-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-ui-components/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-store-inmemory/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-store/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-services/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/types/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-lib/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-internal/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/rpc-errors/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/ledger-client/tsconfig.lib.json"
+        }
+    ]
+}

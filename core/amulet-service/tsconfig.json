@@ -3,16 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../types"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../token-standard-service"
-        },
-        {
-            "path": "../splice-client"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

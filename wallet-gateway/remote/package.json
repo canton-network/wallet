@@ -103,7 +103,7 @@
             },
             "typecheck": {
                 "options": {
-                    "command": "tsc --noEmit && tsc -p tsconfig.frontend.json --noEmit"
+                    "command": "tsc -p tsconfig.app.json --noEmit && tsc -p tsconfig.frontend.json --noEmit"
                 }
             }
         }

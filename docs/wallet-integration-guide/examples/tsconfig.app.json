@@ -1,0 +1,54 @@
+{
+    "extends": "./tsconfig.json",
+    "include": [
+        "scripts/**/*.ts",
+        "snippets/*.ts",
+        "config.ts",
+        "snippets.test.ts",
+        "vitest.config.ts"
+    ],
+    "references": [
+        {
+            "path": "../../../sdk/wallet-sdk/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../examples/test-token-v2-registry/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../examples/test-token-v1-registry/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/types/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/tx-parser/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/tx-hashing/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/token-standard-v2/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/token-standard/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/splice-codegen/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/signing-lib/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/ledger-client-types/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/ledger-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../../core/wallet-test-utils/tsconfig.lib.json"
+        }
+    ]
+}

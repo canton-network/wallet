@@ -3,34 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src", "src/**/*.json", "package.json"],
+    "files": [],
     "references": [
         {
-            "path": "../../core/wallet-ui-components"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../../core/wallet-discovery"
-        },
-        {
-            "path": "../../core/wallet-dapp-rpc-client"
-        },
-        {
-            "path": "../../core/wallet-dapp-remote-rpc-client"
-        },
-        {
-            "path": "../../core/types"
-        },
-        {
-            "path": "../../core/splice-provider"
-        },
-        {
-            "path": "../../core/rpc-transport"
-        },
-        {
-            "path": "../../core/rpc-errors"
-        },
-        {
-            "path": "../../core/provider-dapp"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

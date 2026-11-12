@@ -3,10 +3,13 @@
     "compilerOptions": {
         "types": ["node"]
     },
-    "include": ["src", "src/**/*.json"],
+    "files": [],
     "references": [
         {
-            "path": "../ledger-proto"
+            "path": "./tsconfig.lib.json"
+        },
+        {
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

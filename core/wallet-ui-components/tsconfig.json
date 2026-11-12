@@ -4,22 +4,13 @@
         "jsx": "react-jsx",
         "types": []
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../wallet-user-rpc-client"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../wallet-store"
-        },
-        {
-            "path": "../types"
-        },
-        {
-            "path": "../tx-visualizer"
-        },
-        {
-            "path": "../rpc-errors"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

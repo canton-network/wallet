@@ -10,7 +10,7 @@
         "dev": "wxt",
         "dev:firefox": "wxt -b firefox",
         "build": "wxt build",
-        "typecheck": "tsc --noEmit",
+        "typecheck": "tsc -p tsconfig.app.json --noEmit",
         "build:firefox": "wxt build -b firefox",
         "zip": "wxt zip",
         "zip:firefox": "wxt zip -b firefox",

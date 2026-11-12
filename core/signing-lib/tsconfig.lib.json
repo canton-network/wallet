@@ -1,0 +1,8 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../wallet-auth/tsconfig.lib.json"
+        }
+    ]
+}

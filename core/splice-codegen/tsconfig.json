@@ -11,22 +11,13 @@
             ]
         }
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../../sdk/wallet-sdk"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../types"
-        },
-        {
-            "path": "../token-standard-v2"
-        },
-        {
-            "path": "../token-standard"
-        },
-        {
-            "path": "../ledger-client-types"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

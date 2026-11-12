@@ -7,13 +7,13 @@
             "@daml.js/*": ["../../damljs/token-standard-models/*"]
         }
     },
-    "include": ["src"],
+    "files": [],
     "references": [
         {
-            "path": "../wallet-auth"
+            "path": "./tsconfig.lib.json"
         },
         {
-            "path": "../types"
+            "path": "./tsconfig.spec.json"
         }
     ]
 }

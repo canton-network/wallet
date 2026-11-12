@@ -1,0 +1,12 @@
+{
+    "extends": "./tsconfig.json",
+    "include": ["src", "*.ts", "../../vitest.base.ts"],
+    "references": [
+        {
+            "path": "../conformance-dapp/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/wallet-dapp-rpc-client/tsconfig.lib.json"
+        }
+    ]
+}

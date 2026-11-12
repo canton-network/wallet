@@ -1,0 +1,59 @@
+{
+    "extends": ["./tsconfig.json", "../../tsconfig.lib.json"],
+    "references": [
+        {
+            "path": "../../core/wallet-auth/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/types/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/tx-visualizer/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/tx-parser/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/tx-hashing/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/token-standard-service/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/token-standard-v2/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/token-standard/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/splice-provider/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/splice-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/signing-lib/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/provider-ledger/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/provider-dapp/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/ledger-proto/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/ledger-client-types/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/asyncapi-client/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/amulet-service/tsconfig.lib.json"
+        },
+        {
+            "path": "../../core/acs-reader/tsconfig.lib.json"
+        }
+    ]
+}
