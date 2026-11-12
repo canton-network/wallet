@@ -565,7 +565,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     async upgradeSelfIssuedLoginSession(
         sessionId: string,
-        accessToken: AccessToken
+        accessToken: AccessToken,
+        signedMessageId: string
     ): Promise<Session> {
         const userId = this.assertConnected()
         const tokenHash = await hashAccessToken(accessToken)
@@ -592,6 +593,12 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .updateTable('sessions')
                 .set({ accessToken: tokenHash })
                 .where('id', '=', sessionId)
+                .execute()
+            await trx
+                .deleteFrom('messagesRaw')
+                .where('id', '=', signedMessageId)
+                .where('userId', '=', userId)
+                .where('networkId', '=', row.network)
                 .execute()
 
             return toSession({ ...row, accessToken: tokenHash })
@@ -1123,12 +1130,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         updates: MessageRawStatusUpdate = {}
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
-        const signature = updates.signature ?? existing.signature
+        const signature =
+            updates.signature === null
+                ? undefined
+                : (updates.signature ?? existing.signature)
         const externalTxId = updates.externalTxId ?? existing.externalTxId
         const failureReason = updates.failureReason ?? existing.failureReason
+        const { signature: _previousSignature, ...rest } = existing
 
         return {
-            ...existing,
+            ...rest,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),

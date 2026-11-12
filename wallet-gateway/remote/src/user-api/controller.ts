@@ -252,16 +252,6 @@ export const userController = (
             accessToken,
         }
         const scopedStore = authAwareStore.withAuthContext(connectedContext)
-        // The signed message is the full access token; it isn't needed once
-        // the session holds its hash.
-        await scopedStore
-            .removeMessageRaw(signature.messageId)
-            .catch((error: unknown) =>
-                logger.warn(
-                    { error, messageId: signature.messageId },
-                    'Failed to remove the signed self-issued token message'
-                )
-            )
         const network = await scopedStore.getCurrentNetwork()
         const ledgerClient = new LedgerClient({
             baseUrl: new URL(network.ledgerApi.baseUrl),

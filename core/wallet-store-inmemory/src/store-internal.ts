@@ -370,7 +370,8 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async upgradeSelfIssuedLoginSession(
         sessionId: string,
-        accessToken: AccessToken
+        accessToken: AccessToken,
+        signedMessageId: string
     ): Promise<Session> {
         const tokenHash = await hashAccessToken(accessToken)
         const storage = this.getStorage()
@@ -389,6 +390,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         }
         const upgraded = { ...selfIssuedLoginSession, accessToken: tokenHash }
         storage.sessions.set(sessionId, upgraded)
+        storage.messageRaws.delete(signedMessageId)
         this.updateStorage(storage)
         return upgraded
     }
@@ -713,12 +715,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         updates: MessageRawStatusUpdate = {}
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
-        const signature = updates.signature ?? existing.signature
+        const signature =
+            updates.signature === null
+                ? undefined
+                : (updates.signature ?? existing.signature)
         const externalTxId = updates.externalTxId ?? existing.externalTxId
         const failureReason = updates.failureReason ?? existing.failureReason
+        const { signature: _previousSignature, ...rest } = existing
 
         return {
-            ...existing,
+            ...rest,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),

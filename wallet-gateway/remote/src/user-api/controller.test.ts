@@ -197,19 +197,6 @@ const selfIssuedLoginAuth: AuthContext = {
     sessionId: session.id,
 }
 
-const signedTokenMessage: MessageRaw = {
-    id: 'login-message',
-    kind: 'self-issued-token',
-    status: 'signed',
-    userId: regularUserId,
-    partyId: 'party::namespace',
-    publicKey: 'wallet-public-key',
-    message: 'header.payload',
-    signature: 'c2lnbmF0dXJl',
-    origin: null,
-    createdAt: new Date('2026-01-01T00:00:00.000Z'),
-}
-
 const pendingTransaction: Transaction = {
     id: 'tx-1',
     commandId: 'cmd-1',
@@ -523,7 +510,11 @@ describe('userController', () => {
             })
             await store
                 .withAuthContext(loginAuth)
-                .upgradeSelfIssuedLoginSession(sessionId, 'access-token')
+                .upgradeSelfIssuedLoginSession(
+                    sessionId,
+                    'access-token',
+                    'login-message'
+                )
 
             await createController(store, notificationService, logger, {
                 ...loginAuth,
@@ -707,62 +698,6 @@ describe('userController', () => {
                 accessToken: session.accessToken,
                 sessionId: session.id,
             })
-        })
-
-        it('removes the signed token message once the login completes', async () => {
-            const store = await createStore(logger, selfIssuedLoginAuth, {
-                selfIssuedLogin: true,
-            })
-            await store.setMessageRaw(signedTokenMessage)
-            selfIssuedAuthServiceMocks.getAccessTokenSignatureStatus.mockResolvedValue(
-                { messageId: signedTokenMessage.id, status: 'signed' }
-            )
-            // The auth service would store this signed-in session, but it's mocked.
-            await store.setSession({ ...session, id: 'connected-session' })
-
-            await createController(
-                store,
-                notificationService,
-                logger,
-                selfIssuedLoginAuth
-            ).getSignSelfIssuedAccessTokenStatus({
-                sessionId: session.id,
-                messageId: signedTokenMessage.id,
-            })
-
-            await expect(
-                store.withAuthContext(auth).getMessageRaw(signedTokenMessage.id)
-            ).resolves.toBeUndefined()
-        })
-
-        it('keeps the signed token message when the login fails', async () => {
-            const store = await createStore(logger, selfIssuedLoginAuth, {
-                selfIssuedLogin: true,
-            })
-            await store.setMessageRaw(signedTokenMessage)
-            selfIssuedAuthServiceMocks.getAccessTokenSignatureStatus.mockResolvedValue(
-                { messageId: signedTokenMessage.id, status: 'signed' }
-            )
-            selfIssuedAuthServiceMocks.connectWithSignedAccessToken.mockResolvedValue(
-                {
-                    status: 'failed',
-                    failureReason: SELF_ISSUED_LOGIN_EXPIRED,
-                }
-            )
-
-            await createController(
-                store,
-                notificationService,
-                logger,
-                selfIssuedLoginAuth
-            ).getSignSelfIssuedAccessTokenStatus({
-                sessionId: session.id,
-                messageId: signedTokenMessage.id,
-            })
-
-            await expect(
-                store.getMessageRaw(signedTokenMessage.id)
-            ).resolves.toEqual(signedTokenMessage)
         })
 
         it('returns awaiting-signature while the provider awaits approval', async () => {

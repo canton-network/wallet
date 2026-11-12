@@ -151,7 +151,8 @@ export interface MessageRaw {
 
 export interface MessageRawStatusUpdate {
     signedAt?: Date
-    signature?: string
+    /** null clears the stored signature. */
+    signature?: string | null
     externalTxId?: string
     failureReason?: string
 }
@@ -235,10 +236,13 @@ export interface Store {
     /**
      * Sets the access token on the authenticated user's tokenless self-issued login session,
      * keeping its id, and removes the user's other sessions for the same origin.
+     * In the same write it deletes the signed message the token was built from,
+     * so the raw token isn't left behind.
      */
     upgradeSelfIssuedLoginSession(
         sessionId: string,
-        accessToken: string
+        accessToken: string,
+        signedMessageId: string
     ): Promise<Session>
 
     // IDP methods

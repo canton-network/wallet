@@ -53,6 +53,16 @@ const message = {
     createdAt: '2026-11-12T10:00:00.000Z',
 }
 
+const nowSeconds = () => Math.floor(Date.now() / 1000)
+const inOneHour = () => nowSeconds() + 3600
+const anHourAgo = () => nowSeconds() - 3600
+
+function signingInput(exp: () => number): string {
+    const encode = (value: unknown) =>
+        Buffer.from(JSON.stringify(value)).toString('base64url')
+    return `${encode({ alg: 'EdDSA', typ: 'JWT' })}.${encode({ exp: exp() })}`
+}
+
 forEachDialect('migration 022 - hash session access token', ({ getDb }) => {
     test('hashes existing access tokens in place and keeps tokenless sessions', async () => {
         const db = getDb()
@@ -82,38 +92,79 @@ forEachDialect('migration 022 - hash session access token', ({ getDb }) => {
         expect(await sessionTokens(db)).toEqual(afterFirstRun)
     })
 
-    test('deletes signed self-issued token messages and keeps the rest', async () => {
+    test('cleans up self-issued token messages but keeps unfinished logins', async () => {
         const db = getDb()
         await migrateUpToBefore(db, TARGET)
-        await insertMessageRaw(db, {
+        // bob has a tokenless login session, so his login is still open
+        await insertSession(db, {
+            id: 'bob-login',
+            network: 'network-1',
+            userId: 'bob',
+            origin: 'https://example.com',
+        })
+        const signedToken = {
             ...message,
-            id: 'signed-token',
             kind: 'self-issued-token',
             status: 'signed',
             signature: 'c2lnbmF0dXJl',
+        }
+        await insertMessageRaw(db, {
+            ...signedToken,
+            id: 'alice-completed',
+            message: signingInput(inOneHour),
+        })
+        await insertMessageRaw(db, {
+            ...signedToken,
+            id: 'bob-unfinished',
+            userId: 'bob',
+            message: signingInput(inOneHour),
+        })
+        await insertMessageRaw(db, {
+            ...signedToken,
+            id: 'bob-expired',
+            userId: 'bob',
+            message: signingInput(anHourAgo),
+        })
+        await insertMessageRaw(db, {
+            ...signedToken,
+            id: 'alice-failed',
+            status: 'failed',
+            failureReason: 'rejected',
         })
         await insertMessageRaw(db, {
             ...message,
-            id: 'pending-token',
+            id: 'alice-pending',
             kind: 'self-issued-token',
             status: 'awaiting-signature',
         })
         await insertMessageRaw(db, {
-            ...message,
-            id: 'signed-regular',
+            ...signedToken,
+            id: 'alice-regular',
             kind: 'regular',
-            status: 'signed',
-            signature: 'c2lnbmF0dXJl',
         })
 
         await migrateUpThrough(db, TARGET)
 
-        const result = await sql<{ id: string }>`
-            SELECT id FROM messages_raw ORDER BY id
+        const result = await sql<{
+            id: string
+            signature: string | null
+            failureReason: string | null
+        }>`
+            SELECT id, signature, failure_reason FROM messages_raw ORDER BY id
         `.execute(db)
         expect(result.rows).toEqual([
-            { id: 'pending-token' },
-            { id: 'signed-regular' },
+            { id: 'alice-failed', signature: null, failureReason: 'rejected' },
+            { id: 'alice-pending', signature: null, failureReason: null },
+            {
+                id: 'alice-regular',
+                signature: 'c2lnbmF0dXJl',
+                failureReason: null,
+            },
+            {
+                id: 'bob-unfinished',
+                signature: 'c2lnbmF0dXJl',
+                failureReason: null,
+            },
         ])
     })
 
