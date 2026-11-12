@@ -46,7 +46,7 @@ describe('userController.addSession', () => {
 
     beforeEach(async () => {
         vi.spyOn(AuthService, 'loadAuthContext').mockResolvedValue(authContext)
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         const store = await initializeWalletStore()
         controller = userController(
             async () => store,
@@ -149,7 +149,7 @@ describe('userController transactions', () => {
             .spyOn(LedgerClient.prototype, 'postWithRetry')
             .mockResolvedValue(ledgerResult)
 
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         store = await initializeWalletStore()
         signingStore = new WxtStore(authContext.userId)
         await signingStore.setSigningKey(authContext.userId, {

@@ -7,6 +7,10 @@
 // Delivery to clients (SSE, extension ports, ...) is handled by transport-specific
 // `NotificationSink` implementations, see `subscribe.ts`.
 
+import { getLogger } from '@logtape/logtape'
+
+const logger = getLogger(['core', 'wallet-services', 'notification-service'])
+
 export type NotificationListener = (...args: unknown[]) => void
 
 export interface Notifier {
@@ -15,15 +19,6 @@ export interface Notifier {
     emit(event: string, ...args: unknown[]): boolean
 
     removeListener(event: string, listenerToRemove: NotificationListener): void
-}
-
-/**
- * Minimal logger contract, satisfied by pino loggers (remote) as well as
- * pino-compatible adaptors (extension).
- */
-export interface NotificationLogger {
-    debug(obj: object, msg: string): void
-    error(obj: object, msg: string): void
 }
 
 export interface INotificationService {
@@ -43,14 +38,14 @@ export interface INotificationService {
  * listeners. Node's EventEmitter would stop and rethrow instead. This way one
  * client with a broken transport doesn't stop other clients from getting the
  * event, and the error doesn't reach the code that called `emit`.
+ *
+ * Only event metadata (event name, notifier id, errors) is logged, never the
+ * emitted args: event payloads can carry the session's access token.
  */
 class LoggingNotifier implements Notifier {
     private listeners: Map<string, NotificationListener[]> = new Map()
 
-    constructor(
-        private readonly notifierId: string,
-        private readonly logger: NotificationLogger
-    ) {}
+    constructor(private readonly notifierId: string) {}
 
     on(event: string, listener: NotificationListener): void {
         const listeners = this.listeners.get(event)
@@ -62,10 +57,10 @@ class LoggingNotifier implements Notifier {
     }
 
     emit(event: string, ...args: unknown[]): boolean {
-        this.logger.debug(
-            { event, args },
-            `Notifier emitted event: ${event} for ${this.notifierId}`
-        )
+        logger.debug('Notifier emitted event: {event} for {notifierId}', {
+            event,
+            notifierId: this.notifierId,
+        })
 
         const listeners = this.listeners.get(event)
         if (!listeners || listeners.length === 0) {
@@ -77,10 +72,10 @@ class LoggingNotifier implements Notifier {
         for (const listener of [...listeners]) {
             try {
                 listener(...args)
-            } catch (err) {
-                this.logger.error(
-                    { event, err },
-                    `Notifier listener failed for event: ${event} for ${this.notifierId}`
+            } catch (error) {
+                logger.error(
+                    'Notifier listener failed for event: {event} for {notifierId}',
+                    { event, notifierId: this.notifierId, error }
                 )
             }
         }
@@ -107,13 +102,11 @@ class LoggingNotifier implements Notifier {
 export class NotificationService implements INotificationService {
     private notifiers: Map<string, Notifier> = new Map()
 
-    constructor(private logger: NotificationLogger) {}
-
     getNotifier(notifierId: string): Notifier {
         let notifier = this.notifiers.get(notifierId)
 
         if (!notifier) {
-            notifier = new LoggingNotifier(notifierId, this.logger)
+            notifier = new LoggingNotifier(notifierId)
             this.notifiers.set(notifierId, notifier)
         }
 

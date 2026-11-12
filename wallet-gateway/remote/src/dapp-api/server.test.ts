@@ -20,7 +20,7 @@ const config = ConfigUtils.loadConfigFile(configPath).config
 
 const store = new StoreInternal(config.bootstrap, getLogger('mock'))
 
-const notificationService = new NotificationService(pino(sink()))
+const notificationService = new NotificationService()
 
 test('call connect rpc', async () => {
     const app = express()
@@ -69,7 +69,7 @@ test('streams session & user notifications over SSE until logout', async () => {
         network: 'network',
         accessToken: context.accessToken,
     })
-    const service = new NotificationService(pino(sink()))
+    const service = new NotificationService()
 
     const app = express()
     app.use((req, _res, next) => {
