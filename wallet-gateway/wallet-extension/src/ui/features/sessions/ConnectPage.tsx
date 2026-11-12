@@ -40,11 +40,13 @@ export function ConnectPage() {
     return (
         <Stack>
             <LoginForm
+                displayTopBar={false}
                 networks={loginNetworks}
                 idps={idps.data ?? []}
                 loading={networks.isPending}
                 connecting={connect.isPending}
                 onLoginConnect={handleSubmit}
+                style={{ minHeight: '100%' }}
             />
             {connect.isError && (
                 <Alert severity="error">
