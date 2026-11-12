@@ -1,13 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { rmSync } from 'node:fs'
-
-// Dev servers using the libraries wait until dev-libs has built them all
-rmSync('node_modules/.cache/dev-libs-ready', { force: true })
-const afterLibs = (command) =>
-    `node scripts/src/wait-for-dev-libs.ts ${command}`
-
 const sharedEnvDevelopment = {
     NODE_ENV: 'development',
     DEBUG: 'true',
@@ -16,9 +9,7 @@ const sharedEnvDevelopment = {
 export const apps = [
     {
         name: 'remote',
-        script: afterLibs(
-            'pnpm --filter @canton-network/wallet-gateway-remote dev'
-        ),
+        script: 'pnpm --filter @canton-network/wallet-gateway-remote dev',
         env_development: sharedEnvDevelopment,
     },
     {
@@ -28,14 +19,12 @@ export const apps = [
     },
     {
         name: 'example-ping',
-        script: afterLibs('pnpm --filter @canton-network/example-ping dev'),
+        script: 'pnpm --filter @canton-network/example-ping dev',
         env_development: sharedEnvDevelopment,
     },
     {
         name: 'example-portfolio',
-        script: afterLibs(
-            'pnpm --filter @canton-network/example-portfolio dev'
-        ),
+        script: 'pnpm --filter @canton-network/example-portfolio dev',
         env_development: sharedEnvDevelopment,
     },
     {
@@ -47,16 +36,12 @@ export const apps = [
     },
     {
         name: 'core-wallet-ui-components',
-        script: afterLibs(
-            'pnpm --filter @canton-network/core-wallet-ui-components build:watch'
-        ),
+        script: 'pnpm --filter @canton-network/core-wallet-ui-components build:watch',
         env_development: sharedEnvDevelopment,
     },
     {
         name: 'core-wallet-ui-components-sb',
-        script: afterLibs(
-            'pnpm --filter @canton-network/core-wallet-ui-components dev'
-        ),
+        script: 'pnpm --filter @canton-network/core-wallet-ui-components dev',
         env_development: sharedEnvDevelopment,
     },
 ]

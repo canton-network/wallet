@@ -121,10 +121,10 @@ as dev servers that restart or reload on change. Start them with:
 pnpm start:all
 ```
 
-This uses `pm2` to run each dev server as a background process with its own log, next to a single
-`tsdown` process that builds every library and rebuilds it on change (`dev-libs`, see
-[`tsdown.dev.ts`](../tsdown.dev.ts)), the UI components watcher and their Storybook. Dev servers using
-the libraries wait until `dev-libs` has built them. See the `pm2`
+This first builds the libraries the dev servers need, then uses `pm2` to run each dev server as a
+background process with its own log, next to a single `tsdown` process that rebuilds every library
+on change (`dev-libs`, see [`tsdown.dev.ts`](../tsdown.dev.ts)), the UI components watcher and their
+Storybook. See the `pm2`
 [cheatsheet](https://pm2.keymetrics.io/docs/usage/quick-start/#cheatsheet) for more commands
 (preface them with `pnpm pm2` when invoking).
 

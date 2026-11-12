@@ -6,24 +6,13 @@
 // Can be dropped once dev servers import workspace libraries from src.
 
 import { execFile } from 'node:child_process'
-import {
-    existsSync,
-    mkdirSync,
-    readdirSync,
-    readFileSync,
-    writeFileSync,
-} from 'node:fs'
+import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { availableParallelism } from 'node:os'
-import { dirname, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import { promisify } from 'node:util'
 import { defineConfig, type Rolldown } from 'tsdown'
 
 const run = promisify(execFile)
-// Dev servers wait for this, see scripts/src/wait-for-dev-libs.ts
-const readyFile = resolve(
-    import.meta.dirname,
-    'node_modules/.cache/dev-libs-ready'
-)
 const tsc = resolve(import.meta.dirname, 'node_modules/.bin/tsc')
 
 const tsdownPackages = ['core', 'sdk']
@@ -66,7 +55,6 @@ async function limited<T>(task: () => Promise<T>): Promise<T> {
 }
 
 const builtOutDirs = new Set<string>()
-const builtPackages = new Set<string>()
 
 // Rewriting unchanged files would restart every dev server using them
 const skipUnchanged: Rolldown.Plugin = {
@@ -98,11 +86,6 @@ export default defineConfig({
         const outDir = resolve(config.outDir)
         const initial = !builtOutDirs.has(outDir)
         builtOutDirs.add(outDir)
-        builtPackages.add(resolve(config.cwd))
-        if (initial && builtPackages.size === tsdownPackages.length) {
-            mkdirSync(dirname(readyFile), { recursive: true })
-            writeFileSync(readyFile, '')
-        }
         try {
             if (config.dts) return
             if (initial) {
