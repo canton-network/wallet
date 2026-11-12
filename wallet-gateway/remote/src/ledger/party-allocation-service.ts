@@ -5,8 +5,8 @@ import {
     type GenerateTransactionResponse,
     LedgerClient,
 } from '@canton-network/core-ledger-client'
-import { createHash } from 'node:crypto'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { createFingerprintFromKey } from './signing-keys.js'
 
 export type AllocatedParty = {
     partyId: string
@@ -75,51 +75,6 @@ export class PartyAllocationService {
             )
         } else {
             return this.allocateInternalParty(userId, hint)
-        }
-    }
-
-    /**
-     * Create fingerprint
-     * @param publicKey The public key of the user (in base64 format).
-     */
-    createFingerprintFromKey(publicKey: string): string {
-        // Hash purpose codes can be looked up in the Canton codebase:
-        //  https://github.com/DACH-NY/canton/blob/62e9ccd3f1743d2c9422d863cfc2ca800405c71b/community/base/src/main/scala/com/digitalasset/canton/crypto/HashPurpose.scala#L52
-        const hashPurpose = 12 // For `PublicKeyFingerprint`
-        const keyBytes = Buffer.from(publicKey, 'base64')
-        const hashInput = Buffer.alloc(4 + keyBytes.length)
-        hashInput.writeUInt32BE(hashPurpose, 0)
-        Buffer.from(keyBytes).copy(hashInput, 4)
-        const hash = createHash('sha256').update(hashInput).digest()
-        const multiprefix = Buffer.from([0x12, 0x20])
-        return Buffer.concat([multiprefix, hash]).toString('hex')
-    }
-
-    /**
-     * Normalizes a public key to base64 format.
-     * Converts hex format (Fireblocks) to base64, or returns base64 as-is.
-     * @param publicKey Public key in hex or base64 format
-     * @returns Public key in base64 format, or null if conversion fails
-     */
-    normalizePublicKeyToBase64(publicKey: string): string | null {
-        try {
-            // Try hex first (Fireblocks format), fallback to base64 (internal format)
-            try {
-                const hexKey = Buffer.from(publicKey, 'hex')
-                // If it's valid hex and produces 32 bytes, convert to base64
-                if (hexKey.length === 32) {
-                    return hexKey.toString('base64')
-                } else {
-                    // Invalid hex length, treat as base64
-                    return publicKey
-                }
-            } catch {
-                // Not valid hex, treat as base64
-                return publicKey
-            }
-        } catch {
-            // If any conversion fails, return null
-            return null
         }
     }
 
@@ -234,7 +189,7 @@ export class PartyAllocationService {
     ): Promise<AllocatedParty> {
         const synchronizerId =
             this.synchronizerId ?? (await this.ledgerClient.getSynchronizerId())
-        const namespace = this.createFingerprintFromKey(publicKey)
+        const namespace = createFingerprintFromKey(publicKey)
 
         const transactions = await this.generateTopologyTransactions(
             hint,

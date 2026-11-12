@@ -4,7 +4,6 @@
 import type { AuthContext, UserId } from '@canton-network/core-wallet-auth'
 import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import {
-    type Error as SigningProviderError,
     type Keys,
     type SigningDriverInterface,
     SigningProvider,
@@ -40,16 +39,7 @@ export interface WalletAllocator {
     getKeys(userId: UserId): Promise<Keys | null | void>
 }
 
-export function handleSigningProviderError<T extends object>(
-    result: SigningProviderError | T
-): T {
-    if ('error' in result) {
-        throw new Error(
-            `Error from signing driver: ${result.error_description}`
-        )
-    }
-    return result
-}
+export { handleSigningProviderError } from '../signing-keys.js'
 
 export class WalletAllocationService {
     private readonly participantAllocator: ParticipantWalletAllocator

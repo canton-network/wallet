@@ -20,6 +20,10 @@ import {
 import type { Logger } from 'pino'
 import { canUserUseSelfIssuedAuth } from '@canton-network/core-wallet-services'
 import type { PartyAllocationService } from './party-allocation-service.js'
+import {
+    createFingerprintFromKey,
+    normalizePublicKeyToBase64,
+} from './signing-keys.js'
 import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 
@@ -86,7 +90,6 @@ export class WalletSyncService {
         providerId: string,
         driver: SigningDriverInterface
     ): Promise<ProviderKey[]> {
-        const partyAllocator = this.requirePartyAllocator()
         try {
             const result = await driver
                 .controller(this.authContext?.userId)
@@ -107,16 +110,14 @@ export class WalletSyncService {
 
             return (result.keys ?? [])
                 .map((key) => {
-                    const normalizedKey =
-                        partyAllocator.normalizePublicKeyToBase64(key.publicKey)
+                    const normalizedKey = normalizePublicKeyToBase64(
+                        key.publicKey
+                    )
                     if (!normalizedKey) return undefined
                     return {
                         id: key.id,
                         publicKey: key.publicKey,
-                        fingerprint:
-                            partyAllocator.createFingerprintFromKey(
-                                normalizedKey
-                            ),
+                        fingerprint: createFingerprintFromKey(normalizedKey),
                     }
                 })
                 .filter((key) => key !== undefined)

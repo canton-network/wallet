@@ -33,6 +33,10 @@ import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import { WalletSyncService } from './wallet-sync-service.js'
 import { PartyAllocationService } from './party-allocation-service.js'
+import {
+    createFingerprintFromKey,
+    normalizePublicKeyToBase64,
+} from './signing-keys.js'
 import { getLogger } from '@logtape/logtape'
 
 type LedgerGet = (path: string, ...rest: unknown[]) => Promise<unknown>
@@ -182,7 +186,7 @@ describe('WalletSyncService - resolveSigningProvider', () => {
             )
         }
 
-        const namespace = partyAllocator.createFingerprintFromKey(key.publicKey)
+        const namespace = createFingerprintFromKey(key.publicKey)
 
         const differentParticipantNamespace = 'different-participant-namespace'
 
@@ -205,12 +209,8 @@ describe('WalletSyncService - resolveSigningProvider', () => {
             '02fefbcc9aebc8a479f211167a9f564df53aefd603a8662d9449a98c1ead2eba'
 
         // Convert hex to base64, then calculate namespace
-        const normalizedKey = partyAllocator.normalizePublicKeyToBase64(
-            fireblocksPublicKeyHex
-        )
-        const namespace = partyAllocator.createFingerprintFromKey(
-            normalizedKey!
-        )
+        const normalizedKey = normalizePublicKeyToBase64(fireblocksPublicKeyHex)
+        const namespace = createFingerprintFromKey(normalizedKey!)
 
         const mockFireblocksDriver = {
             controller: vi.fn().mockReturnValue({
@@ -1071,9 +1071,7 @@ describe('WalletSyncService - multi-network features', () => {
             return {
                 kernelService,
                 publicKey: key.publicKey,
-                namespace: partyAllocator.createFingerprintFromKey(
-                    key.publicKey
-                ),
+                namespace: createFingerprintFromKey(key.publicKey),
             }
         }
 
@@ -1718,7 +1716,7 @@ describe('WalletSyncService - multi-network features', () => {
         it('syncAuthParty stores only the matched party and ignores other parties in the rights response', async () => {
             await useSelfIssuedNetwork()
             const publicKey = Buffer.alloc(32, 7).toString('base64')
-            const namespace = partyAllocator.createFingerprintFromKey(publicKey)
+            const namespace = createFingerprintFromKey(publicKey)
             const partyId = `auth::${namespace}`
             const getKeys = vi.fn().mockResolvedValue({
                 keys: [{ id: 'key-1', name: 'auth', publicKey }],

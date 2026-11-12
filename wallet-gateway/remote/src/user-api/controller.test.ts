@@ -22,6 +22,8 @@ import {
     SignMessageService,
 } from '@canton-network/core-wallet-services'
 import { userController } from './controller.js'
+import { PartyAllocationService } from '../ledger/party-allocation-service.js'
+import { createFingerprintFromKey } from '../ledger/signing-keys.js'
 import { ServerStatusService } from '../notices/server-status-service.js'
 import { ServerNotices } from '../notices/server-notices.js'
 import { GATEWAY_VERSION } from '../version.js'
@@ -462,6 +464,88 @@ describe('userController', () => {
                     SigningProvider.FIREBLOCKS,
                 ],
             })
+        })
+    })
+
+    describe('signing provider keys without admin auth', () => {
+        // 32-byte key in base64 (as the internal driver reports it)
+        const ownKey = Buffer.alloc(32, 7).toString('base64')
+
+        async function createStoreWithoutAdminAuth() {
+            const store = new StoreInternal(
+                {
+                    idps: [idp],
+                    networks: [{ ...storeNetwork, adminAuth: undefined }],
+                },
+                getLogger('mock'),
+                auth
+            )
+            await store.setSession(session)
+            await store.addWallet(primaryWallet)
+            return store
+        }
+
+        function createKernelDriver() {
+            const getKeys = vi.fn().mockResolvedValue({
+                keys: [{ id: 'key-1', name: 'key-1', publicKey: ownKey }],
+            })
+            const controller = vi.fn(() => ({ getKeys }))
+            return { driver: { controller }, controller }
+        }
+
+        beforeEach(() => {
+            vi.mocked(PartyAllocationService).mockClear()
+        })
+
+        it('lists keys from the signing driver without admin auth', async () => {
+            const store = await createStoreWithoutAdminAuth()
+            const kernel = createKernelDriver()
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                { [SigningProvider.WALLET_KERNEL]: kernel.driver }
+            )
+
+            await expect(
+                controller.listSigningProviderKeys({
+                    signingProviderId: SigningProvider.WALLET_KERNEL,
+                })
+            ).resolves.toEqual({
+                keys: [{ id: 'key-1', name: 'key-1', publicKey: ownKey }],
+            })
+            expect(kernel.controller).toHaveBeenCalledWith(regularUserId)
+            expect(PartyAllocationService).not.toHaveBeenCalled()
+        })
+
+        it('changes the signing key without admin auth and stores its fingerprint as namespace', async () => {
+            const store = await createStoreWithoutAdminAuth()
+            const kernel = createKernelDriver()
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                { [SigningProvider.WALLET_KERNEL]: kernel.driver }
+            )
+
+            await expect(
+                controller.changeSigningProvider({
+                    signingProviderId: SigningProvider.WALLET_KERNEL,
+                    partyId: primaryWallet.partyId,
+                    publicKey: ownKey,
+                })
+            ).resolves.toBeNull()
+
+            const wallet = await store.getWallet(primaryWallet.partyId)
+            expect(wallet).toMatchObject({
+                signingProviderId: SigningProvider.WALLET_KERNEL,
+                publicKey: ownKey,
+                namespace: createFingerprintFromKey(ownKey),
+                disabled: false,
+            })
+            expect(PartyAllocationService).not.toHaveBeenCalled()
         })
     })
 

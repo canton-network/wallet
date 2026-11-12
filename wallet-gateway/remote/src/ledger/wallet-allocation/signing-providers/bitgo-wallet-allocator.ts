@@ -13,6 +13,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
 import type { PartyAllocationService } from '../../party-allocation-service.js'
+import { createFingerprintFromKey } from '../../signing-keys.js'
 import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
 import {
     handleSigningProviderError,
@@ -51,9 +52,7 @@ export class BitGoWalletAllocator implements WalletAllocator {
             .createKey({ name: partyHint })
             .then(handleSigningProviderError)
 
-        const namespace = this.partyAllocator.createFingerprintFromKey(
-            key.publicKey
-        )
+        const namespace = createFingerprintFromKey(key.publicKey)
         const transactions =
             await this.partyAllocator.generateTopologyTransactions(
                 partyHint,

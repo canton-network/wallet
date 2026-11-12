@@ -13,6 +13,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
 import type { PartyAllocationService } from '../../party-allocation-service.js'
+import { createFingerprintFromKey } from '../../signing-keys.js'
 import type {
     KeyName,
     PartyHint,
@@ -51,9 +52,7 @@ export class FireblocksWalletAllocator implements WalletAllocator {
         const key = keys?.keys?.find((k) => k.name === keyName)
         if (!key) throw new Error('Fireblocks key not found')
 
-        const namespace = this.partyAllocator.createFingerprintFromKey(
-            key.publicKey
-        )
+        const namespace = createFingerprintFromKey(key.publicKey)
         const transactions =
             await this.partyAllocator.generateTopologyTransactions(
                 partyHint,

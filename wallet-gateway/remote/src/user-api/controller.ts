@@ -81,6 +81,11 @@ import type { KernelInfo } from '../config/Config.js'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
 import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
+import {
+    createFingerprintFromKey,
+    getSigningDriverKeys,
+    normalizePublicKeyToBase64,
+} from '../ledger/signing-keys.js'
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { TxChangedFailedEvent } from '../dapp-api/rpc-gen/typings.js'
@@ -339,37 +344,14 @@ export const userController = (
     const getSigningProviderKeys = async (
         params: ListSigningProviderKeysParams
     ) => {
-        const network = await store.getCurrentNetwork()
-        if (!network.adminAuth) {
-            throw new Error('No admin auth configured')
-        }
-        const idp = await getIdpForAuth(network, network.adminAuth)
-
-        const adminAccessTokenProvider = AuthTokenProvider.fromGatewayConfig(
-            idp,
-            network.adminAuth
-        )
-        const partyAllocator = new PartyAllocationService({
-            synchronizerId: network.synchronizerId,
-            accessTokenProvider: adminAccessTokenProvider,
-            httpLedgerUrl: network.ledgerApi.baseUrl,
-        })
-        const walletAllocationService = new WalletAllocationService(
-            store,
-            logger,
-            partyAllocator,
-            drivers
-        )
-        if (!drivers[params.signingProviderId as SigningProvider])
-            throw new Error(
-                `Signing provider ${params.signingProviderId} not supported`
-            )
-        const keys = await walletAllocationService.getKeys(
-            assertConnected(authContext),
+        // Key listing only talks to the signing driver; no ledger/admin token needed.
+        const keys = await getSigningDriverKeys(
+            drivers,
+            assertConnected(authContext).userId,
             params.signingProviderId as SigningProvider
         )
         if (!keys)
-            throw new Error(`No keys ofr ${params.signingProviderId} found`)
+            throw new Error(`No keys for ${params.signingProviderId} found`)
         return keys
     }
 
@@ -1433,32 +1415,13 @@ export const userController = (
                 throw new Error(
                     `provided publicKey does not belong to ${signingProviderId}`
                 )
-            const network = await store.getCurrentNetwork()
-            if (network === undefined) {
-                throw new Error('No network session found')
-            }
-            if (!network.adminAuth) {
-                throw new Error('No admin auth configured')
-            }
-            const idp = await getIdpForAuth(network, network.adminAuth)
-            const adminTokenProvider = AuthTokenProvider.fromGatewayConfig(
-                idp,
-                network.adminAuth
-            )
-            const partyAllocator = new PartyAllocationService({
-                synchronizerId: network.synchronizerId,
-                accessTokenProvider: adminTokenProvider,
-                httpLedgerUrl: network.ledgerApi.baseUrl,
-            })
-            const normalizedKey =
-                partyAllocator.normalizePublicKeyToBase64(publicKey)
+            const normalizedKey = normalizePublicKeyToBase64(publicKey)
             if (!normalizedKey) {
                 throw new Error(
                     'provided key cannot be converted to Base64 format'
                 )
             }
-            const namespace =
-                partyAllocator.createFingerprintFromKey(normalizedKey)
+            const namespace = createFingerprintFromKey(normalizedKey)
 
             await store.updateWallet({
                 partyId,
