@@ -3,5 +3,32 @@
     "compilerOptions": {
         "resolveJsonModule": true,
         "types": ["node"]
-    }
+    },
+    "include": ["src", "src/**/*.json"],
+    "references": [
+        {
+            "path": "../wallet-auth"
+        },
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../tx-parser"
+        },
+        {
+            "path": "../token-standard-v2"
+        },
+        {
+            "path": "../token-standard"
+        },
+        {
+            "path": "../provider-ledger"
+        },
+        {
+            "path": "../ledger-client-types"
+        },
+        {
+            "path": "../acs-reader"
+        }
+    ]
 }

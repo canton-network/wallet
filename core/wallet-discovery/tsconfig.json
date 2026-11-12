@@ -1,3 +1,15 @@
 {
-    "extends": "../../tsconfig.base.json"
+    "extends": "../../tsconfig.base.json",
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-dapp-rpc-client"
+        },
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../splice-provider"
+        }
+    ]
 }

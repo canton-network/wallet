@@ -1,6 +1,9 @@
 {
     "compilerOptions": {
         "noEmit": false,
+        // Publish declarations against the dependencies' dist/, as before
+        "composite": false,
+        "customConditions": [],
         "allowImportingTsExtensions": false,
         "declaration": true,
         "declarationMap": true,

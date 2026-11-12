@@ -6,5 +6,79 @@
         "types": ["node"]
     },
     "exclude": ["src/web/frontend"],
-    "references": [{ "path": "./tsconfig.frontend.json" }]
+    "references": [
+        {
+            "path": "../../core/wallet-user-rpc-client"
+        },
+        {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
+            "path": "../../core/wallet-store-sql"
+        },
+        {
+            "path": "../../core/wallet-store"
+        },
+        {
+            "path": "../../core/wallet-services"
+        },
+        {
+            "path": "../../core/wallet-auth"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/tx-visualizer"
+        },
+        {
+            "path": "../../core/signing-store-sql"
+        },
+        {
+            "path": "../../core/signing-securosys"
+        },
+        {
+            "path": "../../core/signing-participant"
+        },
+        {
+            "path": "../../core/signing-lib"
+        },
+        {
+            "path": "../../core/signing-internal"
+        },
+        {
+            "path": "../../core/signing-fireblocks"
+        },
+        {
+            "path": "../../core/signing-dfns"
+        },
+        {
+            "path": "../../core/signing-blockdaemon"
+        },
+        {
+            "path": "../../core/signing-bitgo"
+        },
+        {
+            "path": "../../core/rpc-transport"
+        },
+        {
+            "path": "../../core/rpc-errors"
+        },
+        {
+            "path": "../../core/ledger-client"
+        },
+        {
+            "path": "../../core/wallet-store-inmemory"
+        },
+        {
+            "path": "./tsconfig.frontend.json"
+        }
+    ],
+    "include": [
+        "src",
+        "*.ts",
+        "../../vite.decorators.ts",
+        "../../vite.source.ts",
+        "../../vitest.base.ts"
+    ]
 }

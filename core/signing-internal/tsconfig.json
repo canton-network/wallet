@@ -2,5 +2,17 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "types": ["node"]
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-auth"
+        },
+        {
+            "path": "../signing-lib"
+        },
+        {
+            "path": "../signing-store-sql"
+        }
+    ]
 }

@@ -2,5 +2,11 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "types": ["node"]
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-auth"
+        }
+    ]
 }

@@ -13,7 +13,9 @@
         "skipLibCheck": true,
         "verbatimModuleSyntax": true,
         "isolatedModules": true,
-        "allowImportingTsExtensions": true
+        "allowImportingTsExtensions": true,
+        "composite": true,
+        "customConditions": ["@canton-network/source"]
     },
     "include": ["${configDir}/src", "${configDir}/*.ts"],
     "exclude": [

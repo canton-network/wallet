@@ -10,5 +10,23 @@
                 "../../damljs/splice-test-token-v2/*"
             ]
         }
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../token-standard-v2"
+        },
+        {
+            "path": "../token-standard"
+        },
+        {
+            "path": "../ledger-client-types"
+        }
+    ]
 }

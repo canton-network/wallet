@@ -3,5 +3,20 @@
     "compilerOptions": {
         "noUncheckedIndexedAccess": true,
         "noImplicitAny": true
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../../core/token-standard-v2"
+        },
+        {
+            "path": "../../core/token-standard"
+        },
+        {
+            "path": "../../core/splice-codegen"
+        }
+    ]
 }

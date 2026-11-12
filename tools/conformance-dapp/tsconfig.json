@@ -6,5 +6,23 @@
         "erasableSyntaxOnly": true,
         "rewriteRelativeImportExtensions": true,
         "resolveJsonModule": true
-    }
+    },
+    "include": ["src", "package.json"],
+    "references": [
+        {
+            "path": "../../sdk/dapp-sdk"
+        },
+        {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
+            "path": "../../core/rpc-errors"
+        },
+        {
+            "path": "../../core/provider-conformance"
+        },
+        {
+            "path": "../../core/types"
+        }
+    ]
 }

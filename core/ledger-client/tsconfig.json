@@ -2,5 +2,20 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "types": ["node"]
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-auth"
+        },
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../ledger-proto"
+        },
+        {
+            "path": "../ledger-client-types"
+        }
+    ]
 }

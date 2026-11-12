@@ -4,6 +4,51 @@
         "noImplicitOverride": false,
         "allowImportingTsExtensions": true,
         "experimentalDecorators": false,
-        "useDefineForClassFields": false
-    }
+        "useDefineForClassFields": false,
+        "customConditions": ["@canton-network/source"]
+    },
+    "references": [
+        {
+            "path": "../../core/rpc-transport"
+        },
+        {
+            "path": "../../core/wallet-test-utils"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/wallet-store-inmemory"
+        },
+        {
+            "path": "../../core/signing-store-wxt"
+        },
+        {
+            "path": "../../core/signing-internal"
+        },
+        {
+            "path": "../../core/ledger-client"
+        },
+        {
+            "path": "../../core/wallet-services"
+        },
+        {
+            "path": "../../core/wallet-auth"
+        },
+        {
+            "path": "../../core/wallet-user-rpc-client"
+        },
+        {
+            "path": "../../core/tx-visualizer"
+        },
+        {
+            "path": "../../core/wallet-store"
+        },
+        {
+            "path": "../../core/signing-lib"
+        },
+        {
+            "path": "../../core/wallet-ui-components"
+        }
+    ]
 }

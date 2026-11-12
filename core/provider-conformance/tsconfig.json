@@ -2,5 +2,11 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "types": ["node"]
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/dapp-sdk"
+        }
+    ]
 }

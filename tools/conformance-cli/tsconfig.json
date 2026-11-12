@@ -5,5 +5,14 @@
         "types": ["node"],
         "erasableSyntaxOnly": true,
         "rewriteRelativeImportExtensions": true
-    }
+    },
+    "include": ["src", "*.ts", "../../vitest.base.ts"],
+    "references": [
+        {
+            "path": "../conformance-dapp"
+        },
+        {
+            "path": "../../core/wallet-dapp-rpc-client"
+        }
+    ]
 }

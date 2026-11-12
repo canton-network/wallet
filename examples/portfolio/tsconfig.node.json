@@ -12,5 +12,25 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["vite.config.ts", "playwright.config.ts", "tests", "scripts"]
+    "include": [
+        "vite.config.ts",
+        "playwright.config.ts",
+        "tests",
+        "scripts",
+        "../../vite.source.ts",
+        "src/lib/synchronizer.ts",
+        "src/utils/registry.ts",
+        "src/types/instruments.ts"
+    ],
+    "references": [
+        {
+            "path": "../../core/wallet-test-utils"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../sdk/wallet-sdk"
+        }
+    ]
 }

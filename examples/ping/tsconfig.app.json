@@ -13,5 +13,25 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["src"]
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../../sdk/dapp-sdk"
+        },
+        {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/tx-visualizer"
+        },
+        {
+            "path": "../../core/wallet-test-utils"
+        }
+    ]
 }

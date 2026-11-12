@@ -126,6 +126,9 @@ jobs:
             - name: check for unused and unlisted dependencies
               run: pnpm knip --reporter github-actions
 
+            - name: check TypeScript project references are in sync
+              run: pnpm nx sync:check
+
             - name: run typechecking
               run: pnpm nx run-many -t typecheck --parallel
 
