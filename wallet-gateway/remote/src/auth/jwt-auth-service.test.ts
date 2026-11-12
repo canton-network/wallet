@@ -1596,13 +1596,11 @@ describe('jwtAuthService', () => {
         it('returns undefined when isAuthParty is missing', async () => {
             const { publicKey, privateKey } = await generateKeyPair('EdDSA')
             const otherParty = 'carol::namespace'
-            await store.addWallet(
-                selfIssuedWallet(await rawEd25519PublicKeyBase64(publicKey), {
-                    partyId: otherParty,
-                    primary: false,
-                    isAuthParty: undefined,
-                })
+            const { isAuthParty: _, ...wallet } = selfIssuedWallet(
+                await rawEd25519PublicKeyBase64(publicKey),
+                { partyId: otherParty, primary: false }
             )
+            await store.addWallet(wallet)
 
             const service = jwtAuthService(store, mockLogger)
             const token = await eddsaBearerToken(

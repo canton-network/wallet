@@ -11,9 +11,9 @@ import * as sdk from '@canton-network/dapp-sdk'
 import { prettyjson } from '../utils'
 
 export function LedgerSubmission(props: {
-    primaryParty?: string
-    ledgerApiVersion?: string
-    connectResult?: sdk.dappAPI.ConnectResult
+    primaryParty?: string | undefined
+    ledgerApiVersion?: string | undefined
+    connectResult?: sdk.dappAPI.ConnectResult | undefined
 }) {
     const { setErrorMsg } = useContext(ErrorContext)
     const [loading, setLoading] = useState(false)

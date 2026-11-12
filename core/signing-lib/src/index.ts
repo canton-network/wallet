@@ -22,6 +22,25 @@ export function isRpcError<T>(value: T | RpcError): value is RpcError {
     return (value as RpcError).error_description !== undefined
 }
 
+type OmitUndefined<T> = {
+    [K in keyof T as undefined extends T[K] ? never : K]: T[K]
+} & {
+    [K in keyof T as undefined extends T[K] ? K : never]?: Exclude<
+        T[K],
+        undefined
+    >
+}
+
+/**
+ * Drops properties whose value is undefined, so that the result fits types
+ * with optional properties (`exactOptionalPropertyTypes`).
+ */
+export function omitUndefined<T extends object>(value: T): OmitUndefined<T> {
+    return Object.fromEntries(
+        Object.entries(value).filter(([, v]) => v !== undefined)
+    ) as OmitUndefined<T>
+}
+
 export enum PartyMode {
     INTERNAL = 'internal',
     EXTERNAL = 'external',

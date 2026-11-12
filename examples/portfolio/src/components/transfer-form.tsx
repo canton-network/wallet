@@ -36,7 +36,7 @@ import type {
 } from './transfer-types'
 
 interface TransferFormProps {
-    initialValues?: TransferFormData
+    initialValues?: TransferFormData | undefined
     createTransferMutation: ReturnType<typeof useCreateTransfer>
     onClose: () => void
     onSubmitted: (transfer: SubmittedTransfer) => void

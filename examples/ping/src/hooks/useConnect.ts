@@ -30,7 +30,7 @@ const additionalAdapters = wcAdapter ? [wcAdapter] : []
 export function useConnect(): {
     connect: () => Promise<void>
     disconnect: () => Promise<void>
-    connectResult?: sdk.dappAPI.ConnectResult
+    connectResult?: sdk.dappAPI.ConnectResult | undefined
 } {
     const [connectResult, setConnectResult] =
         useState<sdk.dappAPI.ConnectResult>()

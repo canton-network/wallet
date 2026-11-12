@@ -1580,7 +1580,9 @@ function toNetworkDto(network: Network): ApiNetwork {
         id: network.id,
         name: network.name,
         description: network.description,
-        synchronizerId: network.synchronizerId,
+        ...(network.synchronizerId !== undefined && {
+            synchronizerId: network.synchronizerId,
+        }),
         identityProviderId: network.identityProviderId,
         ledgerApi: network.ledgerApi.baseUrl,
         auth: toAuthDto(network.auth),
@@ -1600,7 +1602,9 @@ function toPublicNetwork(network: Network): PublicNetwork {
         id: network.id,
         name: network.name,
         description: network.description,
-        synchronizerId: network.synchronizerId,
+        ...(network.synchronizerId !== undefined && {
+            synchronizerId: network.synchronizerId,
+        }),
         identityProviderId: network.identityProviderId,
         ledgerApi: network.ledgerApi.baseUrl,
         authMethod: auth.method,

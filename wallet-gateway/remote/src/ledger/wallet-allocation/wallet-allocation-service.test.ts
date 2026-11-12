@@ -735,7 +735,6 @@ describe('WalletAllocationService', () => {
 
         it('createWallet handles missing topology transactions from party allocator', async () => {
             mockPartyAllocator.generateTopologyTransactions.mockResolvedValue({
-                topologyTransactions: undefined,
                 multiHash: 'multi-hash',
             })
             const serviceWithFireblocks = createService({
@@ -887,7 +886,6 @@ describe('WalletAllocationService', () => {
                     authContext,
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.FIREBLOCKS,
-                        topologyTransactions: undefined,
                         externalTxId: 'tx-1',
                     }),
                     SigningProvider.FIREBLOCKS
@@ -1142,7 +1140,6 @@ describe('WalletAllocationService', () => {
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.BLOCKDAEMON,
                         topologyTransactions: 'tx1',
-                        externalTxId: undefined,
                     }),
                     SigningProvider.BLOCKDAEMON
                 )
@@ -1418,7 +1415,6 @@ describe('WalletAllocationService', () => {
                     createWallet('alice::fingerprint', {
                         signingProviderId: SigningProvider.DFNS,
                         topologyTransactions: 'tx1',
-                        externalTxId: undefined,
                     }),
                     SigningProvider.DFNS
                 )

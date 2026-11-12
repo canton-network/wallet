@@ -89,9 +89,9 @@ export default defineConfig({
         timeout: 15_000,
     },
     testDir: './tests',
-    testIgnore: includeCiSecretDependency
-        ? undefined
-        : externalSigningProviderTests,
+    ...(!includeCiSecretDependency && {
+        testIgnore: externalSigningProviderTests,
+    }),
     /* Run tests in files in parallel */
     fullyParallel: false,
     /* Fail the build on CI if you accidentally left test.only in the source code. */

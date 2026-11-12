@@ -6,7 +6,9 @@ import { ErrorContext } from '../ErrorContext'
 import * as sdk from '@canton-network/dapp-sdk'
 import { prettyjson } from '../utils'
 
-export function Signing(props: { connectResult?: sdk.dappAPI.ConnectResult }) {
+export function Signing(props: {
+    connectResult?: sdk.dappAPI.ConnectResult | undefined
+}) {
     const { setErrorMsg } = useContext(ErrorContext)
     const [message, setMessage] = useState('')
     const [loading, setLoading] = useState(false)

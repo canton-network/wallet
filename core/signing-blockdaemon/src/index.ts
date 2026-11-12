@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    omitUndefined,
     buildController,
     type CreateKeyParams,
     type CreateKeyResult,
@@ -42,10 +43,9 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
 
     constructor(config: BlockdaemonConfig) {
         this.client = new SigningAPIClient(config.baseUrl)
-        this.client.setConfiguration({
-            ApiKey: config.apiKey,
-            Caip2: config.caip2,
-        })
+        this.client.setConfiguration(
+            omitUndefined({ ApiKey: config.apiKey, Caip2: config.caip2 })
+        )
     }
 
     public partyMode = PartyMode.EXTERNAL

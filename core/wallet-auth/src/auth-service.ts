@@ -10,7 +10,7 @@ export type AuthContext =
     | {
           userId: UserId
           accessToken: string
-          email?: string
+          email?: string | undefined
           isApiKey?: false
           /** Tokenless self-issued login session, set only while accessToken is empty. */
           sessionId?: string
@@ -20,7 +20,7 @@ export type AuthContext =
           userId: UserId
           ledgerUserId: UserId
           accessToken: string
-          email?: string
+          email?: string | undefined
       }
 
 /**

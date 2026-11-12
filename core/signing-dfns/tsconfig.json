@@ -1,7 +1,6 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "exactOptionalPropertyTypes": false,
         "types": ["node"]
     },
     "include": ["src"],

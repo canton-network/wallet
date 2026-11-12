@@ -4,9 +4,9 @@ import * as sdk from '@canton-network/dapp-sdk'
 import { prettyjson } from '../utils'
 
 export function LedgerQuery(props: {
-    primaryParty?: string
-    ledgerApiVersion?: string
-    connectResult?: sdk.dappAPI.ConnectResult
+    primaryParty?: string | undefined
+    ledgerApiVersion?: string | undefined
+    connectResult?: sdk.dappAPI.ConnectResult | undefined
 }) {
     const [loading, setLoading] = useState(false)
     const [queryResponses, setQueryResponses] = useState<

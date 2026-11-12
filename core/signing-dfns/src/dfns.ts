@@ -45,7 +45,7 @@ export interface DfnsSignature {
     keyId: string
     status: SigningStatus
     /** ed25519 signature, base64-encoded (Canton SIGNATURE_FORMAT_CONCAT). */
-    signature?: string
+    signature?: string | undefined
 }
 
 function stripHexPrefix(hex: string): string {
@@ -343,7 +343,7 @@ export class DfnsHandler {
     }
 
     private extractSignature(signature?: {
-        encoded?: string
+        encoded?: string | undefined
         r: string
         s: string
     }): string | undefined {

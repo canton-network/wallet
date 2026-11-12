@@ -1,7 +1,4 @@
 {
     "extends": "../../tsconfig.web.json",
-    "compilerOptions": {
-        "exactOptionalPropertyTypes": false
-    },
     "include": ["vite.config.ts"]
 }

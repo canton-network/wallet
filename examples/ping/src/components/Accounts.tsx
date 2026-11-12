@@ -1,7 +1,9 @@
 import type * as sdk from '@canton-network/dapp-sdk'
 import { useAccounts } from '../hooks/useAccounts'
 
-export function Accounts(props: { connectResult?: sdk.dappAPI.ConnectResult }) {
+export function Accounts(props: {
+    connectResult?: sdk.dappAPI.ConnectResult | undefined
+}) {
     const accounts = useAccounts(props.connectResult)
 
     const connected = props.connectResult?.isConnected ?? false

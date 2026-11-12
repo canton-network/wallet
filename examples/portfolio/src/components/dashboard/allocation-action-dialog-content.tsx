@@ -480,7 +480,7 @@ function DetailRow({ label, children }: DetailRowProps) {
 
 interface LegFieldProps {
     label: string
-    badge?: string
+    badge?: string | undefined
     children: ReactNode
 }
 
