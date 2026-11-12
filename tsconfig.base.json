@@ -16,7 +16,8 @@
         "allowImportingTsExtensions": true,
         "rewriteRelativeImportExtensions": true,
         "composite": true,
-        "customConditions": ["@canton-network/source"]
+        "customConditions": ["@canton-network/source"],
+        "noFallthroughCasesInSwitch": true
     },
     "include": ["${configDir}/src", "${configDir}/*.ts"],
     "exclude": [
