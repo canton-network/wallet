@@ -60,10 +60,7 @@ describe('createAuthService', () => {
             getStore: () => loadAuthedStore(store, authContext),
             authContext,
             signingDriver: {} as SigningDriverInterface,
-            notificationService: new NotificationService({
-                debug: vi.fn(),
-                error: vi.fn(),
-            }),
+            notificationService: new NotificationService(),
         })
     }
 
