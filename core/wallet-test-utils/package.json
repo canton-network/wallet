@@ -29,6 +29,8 @@
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/core-wallet-user-rpc-client": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "decimal.js": "catalog:",
         "@canton-network/wallet-sdk": "workspace:^",
         "@logtape/logtape": "catalog:",
         "@logtape/testing": "catalog:",
