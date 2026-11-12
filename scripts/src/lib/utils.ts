@@ -82,6 +82,17 @@ export function getSupportedCantonVersions(): string[] {
     ]
 }
 
+// Every Splice version the repo supports, one per network.
+export function getSupportedSpliceVersions(): string[] {
+    return [
+        ...new Set(
+            Object.values(SUPPORTED_VERSIONS).map(
+                (config) => config.splice.version
+            )
+        ),
+    ]
+}
+
 /** Downloads `url` to `destination`, retrying any failure with exponential backoff. */
 export async function downloadWithRetry(
     url: string | URL,
@@ -383,8 +394,8 @@ export async function ensureDir(dir: string) {
     }
 }
 
-// Delete the files of `dir` whose version is not in `keep`, and return the names deleted.
-// `pattern` must capture the version in group 1. Files it does not match are left untouched.
+// Delete the files or directories of `dir` whose version is not in `keep`, and return the names deleted.
+// `pattern` must capture the version in group 1. Entries it does not match are left untouched.
 export function pruneVersionedFiles(
     dir: string,
     pattern: RegExp,
@@ -399,10 +410,32 @@ export function pruneVersionedFiles(
     })
 
     for (const name of stale) {
-        fs.rmSync(path.join(dir, name))
+        fs.rmSync(path.join(dir, name), { recursive: true })
     }
 
     return stale
+}
+
+/**
+ * Delete the spec directories of `api-specs/<kind>` (one per version, e.g. `ledger-api/3.6.4`)
+ * whose version no network supports. Keeps every network's version, as a fetch runs for one
+ * network only.
+ */
+export function pruneStaleApiSpecs(kind: 'ledger-api' | 'splice'): void {
+    const removed = pruneVersionedFiles(
+        path.join(API_SPECS_PATH, kind),
+        /^(\d+\.\d+\.\d+)$/,
+        kind === 'ledger-api'
+            ? getSupportedCantonVersions()
+            : getSupportedSpliceVersions()
+    )
+    if (removed.length > 0) {
+        console.log(
+            warn(
+                `Removed ${removed.length} stale ${kind} spec(s): ${removed.join(', ')}`
+            )
+        )
+    }
 }
 
 // Copy a file

@@ -173,7 +173,12 @@ async function main() {
             process.exit(1)
         }
     }
-    spawnSync('pnpm exec oxfmt --check')
+    // Format the downloaded API specs and the regenerated clients
+    const format = spawnSync('pnpm', ['exec', 'oxfmt'], { stdio: 'inherit' })
+    if (format.status !== 0) {
+        console.error(error('oxfmt failed'))
+        process.exit(1)
+    }
     console.log(success('Upgrade completed successfully.'))
 }
 

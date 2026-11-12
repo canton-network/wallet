@@ -6,7 +6,10 @@ import * as mock from '../../../../__tests__/mocks'
 import type { TokenNamespaceConfig } from '../../index'
 import { ParsedURL } from '../../../utils/url'
 import { TransferNamespace } from './namespace'
-import { TRANSFER_INSTRUCTION_INTERFACE_ID_V2 } from '@canton-network/core-token-standard-v2'
+import {
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+    type Account,
+} from '@canton-network/core-token-standard-v2'
 import type { TransferParamsV2 } from '../../transfer/types'
 import type { PartyId } from '@canton-network/core-types'
 import { toBasicAccount } from '../../utils'

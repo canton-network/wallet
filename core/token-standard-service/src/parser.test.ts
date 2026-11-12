@@ -3,7 +3,7 @@
 
 import { vi, describe, it, expect, beforeEach, type Mocked } from 'vitest'
 
-import type { v3_5 } from '@canton-network/core-ledger-client-types'
+import type { v3_6 } from '@canton-network/core-ledger-client-types'
 import { CoreService } from './core-service.js'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
@@ -13,8 +13,8 @@ import ledgerEffectsMockJson from './__tests__/data/mock/utility-payload-ledger-
 import ledgerEffectsExpected from './__tests__/data/expected/utility-payload-ledger-effects-sender.json'
 
 type JsGetEventsByContractIdResponse =
-    v3_5.components['schemas']['JsGetEventsByContractIdResponse']
-type JsGetUpdatesResponse = v3_5.components['schemas']['JsGetUpdatesResponse']
+    v3_6.components['schemas']['JsGetEventsByContractIdResponse']
+type JsGetUpdatesResponse = v3_6.components['schemas']['JsGetUpdatesResponse']
 
 // Recorded from an older ledger API version: the events lack `acsDelta` and
 // `representativePackageId`, which the parser does not read.
@@ -23,7 +23,7 @@ const eventsByContractIdResponses =
 const ledgerEffectsMock =
     ledgerEffectsMockJson as unknown as JsGetUpdatesResponse[]
 
-type CreatedEvent = v3_5.components['schemas']['CreatedEvent']
+type CreatedEvent = v3_6.components['schemas']['CreatedEvent']
 
 const makeLedgerProviderMock = (
     responses: JsGetEventsByContractIdResponse[]
