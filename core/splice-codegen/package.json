@@ -19,7 +19,6 @@
     },
     "scripts": {
         "build": "pnpm --workspace-root generate:codegen && tsdown",
-        "dev": "tsdown --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
