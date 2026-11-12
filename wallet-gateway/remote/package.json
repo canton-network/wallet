@@ -11,7 +11,7 @@
         "wallet-gateway-remote": "dist/index.js"
     },
     "scripts": {
-        "build": "vite build && tsc -p tsconfig.lib.json",
+        "build": "vite build && tsc -p tsconfig.publish.json",
         "clean": "rm -rf ./dist && rm -f ./*.sqlite",
         "dev": "NODE_ENV=development tsx watch --conditions=@canton-network/source --exclude 'vite.config.ts.timestamp-*.mjs' src/index.ts -c ../test/config.json",
         "start": "pnpm node dist/index.js -c ../test/config.json",

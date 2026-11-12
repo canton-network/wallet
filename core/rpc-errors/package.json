@@ -25,7 +25,7 @@
         "access": "public"
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.publish.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },

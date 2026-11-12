@@ -18,7 +18,7 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json && pnpm run docs\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.publish.json && pnpm run docs\"",
         "docs": "typedoc --tsconfig tsconfig.docs.json",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
