@@ -18,6 +18,11 @@
             // Loaded by open-rpc-generator through the rpc-generator-config-*.json files
             "entry": ["src/components/*.ts"],
         },
+        "core/traffic-purchase": {
+            // Bundled into the browser build from the generated @daml.js code (which
+            // knip ignores), so knip can't see the import. See rollup.config.js.
+            "ignoreDependencies": ["@mojotech/json-type-validation"],
+        },
         "core/wallet-ui-components": {
             "storybook": {
                 "config": [".storybook/main.ts", ".storybook-lit/main.ts"],
