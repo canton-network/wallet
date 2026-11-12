@@ -3,7 +3,7 @@
     "private": true,
     "type": "module",
     "scripts": {
-        "start:all": "pnpm exec tsdown -c tsdown.dev.ts && pnpm exec pm2 start ecosystem.config.js --env development",
+        "start:all": "pnpm exec pm2 start ecosystem.config.js --env development",
         "start:canton": "tsx ./scripts/src/start-canton.ts",
         "start:canton:tls": "tsx ./scripts/src/start-canton.ts --network=mainnet --tls=true",
         "start:localnet": "tsx ./scripts/src/start-localnet.ts start",
@@ -19,7 +19,7 @@
         "generate:grpc": "tsx ./scripts/src/generate-protobufs.ts",
         "generate:tokenstandard": "nx run @canton-network/scripts:generate:tokenstandard",
         "generate:codegen": "nx run @canton-network/scripts:generate:codegen",
-        "generate:all": "nx run @canton-network/scripts:generate:all",
+        "generate:all": "nx run @canton-network/scripts:generate:all && nx run-many -t build -p @canton-network/core-token-standard @canton-network/core-token-standard-v2 @canton-network/core-splice-codegen",
         "lint": "nx run-many -t lint --parallel",
         "knip": "knip --dependencies",
         "format": "oxfmt",

@@ -56,6 +56,15 @@
                     "^typecheck",
                     "build"
                 ]
+            },
+            "build": {
+                "inputs": [
+                    "production",
+                    "^production",
+                    "{workspaceRoot}/scripts/src/lib/version-config.json",
+                    "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
+                    "{workspaceRoot}/scripts/src/generate-token-standard.ts"
+                ]
             }
         }
     }

@@ -3,7 +3,7 @@
     "version": "1.7.0",
     "type": "module",
     "description": "daml codegen js for default packages",
-    "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "author": "Mateusz Pi\u0105tkowski <mateusz.piatkowski@digitalasset.com>",
     "license": "Apache-2.0",
     "sideEffects": false,
     "main": "dist/index.cjs",
@@ -58,6 +58,15 @@
                 "dependsOn": [
                     "^typecheck",
                     "build"
+                ]
+            },
+            "build": {
+                "inputs": [
+                    "production",
+                    "^production",
+                    "{workspaceRoot}/scripts/src/lib/version-config.json",
+                    "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
+                    "{workspaceRoot}/scripts/src/generate-daml-codegen.ts"
                 ]
             }
         }

@@ -2,14 +2,5 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "types": []
-    },
-    "include": ["src"],
-    "references": [
-        {
-            "path": "../types"
-        },
-        {
-            "path": "../rpc-transport"
-        }
-    ]
+    }
 }

@@ -28,13 +28,6 @@ export const apps = [
         env_development: sharedEnvDevelopment,
     },
     {
-        name: 'dev-libs',
-        script: 'pnpm exec tsdown -c tsdown.dev.ts --watch',
-        env_development: sharedEnvDevelopment,
-        // Exits on an invalid package.json or tsdown config, e.g. while editing
-        exp_backoff_restart_delay: 100,
-    },
-    {
         name: 'core-wallet-ui-components',
         script: 'pnpm --filter @canton-network/core-wallet-ui-components build:watch',
         env_development: sharedEnvDevelopment,

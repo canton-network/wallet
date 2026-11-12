@@ -121,10 +121,11 @@ as dev servers that restart or reload on change. Start them with:
 pnpm start:all
 ```
 
-This first builds the libraries the dev servers need, then uses `pm2` to run each dev server as a
-background process with its own log, next to a single `tsdown` process that rebuilds every library
-on change (`dev-libs`, see [`tsdown.dev.ts`](../tsdown.dev.ts)), the UI components watcher and their
-Storybook. See the `pm2`
+This uses `pm2` to run each dev server as a background process with its own log, next to the UI
+components watcher and their Storybook. The dev servers import the workspace libraries from their
+`src/` (the `@canton-network/source` export condition), so library changes reach them without a
+build. Only the libraries bundling generated Daml bindings (`core-token-standard`,
+`core-token-standard-v2`, `core-splice-codegen`) are used from `dist/`; `pnpm generate:all` builds them. See the `pm2`
 [cheatsheet](https://pm2.keymetrics.io/docs/usage/quick-start/#cheatsheet) for more commands
 (preface them with `pnpm pm2` when invoking).
 
@@ -134,8 +135,7 @@ pnpm pm2 logs remote  # View the Wallet Gateway logs
 pnpm stop:all         # Stop all services
 ```
 
-> Note: Codegenned artifacts are not regenerated automatically. Use `pnpm generate:all` if updating the API specs; the
-> generated packages are then rebuilt like any other library.
+> Note: Codegenned artifacts are not regenerated automatically. Use `pnpm generate:all` if updating the API specs.
 
 After running `pnpm start:all`, you'll have services exposed on the following ports:
 
@@ -194,8 +194,9 @@ If you've cloned this repository when it was set up to use `yarn`, finalize the 
 
 ## Migrating from per-package dev watchers
 
-`pnpm start:all` used to start a `tsdown --watch` process per library. If your pm2 daemon still runs
-those, remove them once (this also stops Canton started with `pnpm start:canton`):
+`pnpm start:all` used to start a `tsdown --watch` process per library, as the dev servers imported
+the libraries from `dist/`. If your pm2 daemon still runs those, remove them once (this also stops
+Canton started with `pnpm start:canton`):
 
 ```bash
 pnpm pm2 delete all
