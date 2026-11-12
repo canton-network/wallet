@@ -16,6 +16,7 @@
             "{workspaceRoot}/tsdown.base.ts",
             "{workspaceRoot}/tsconfig.*.json",
             "{workspaceRoot}/vite.decorators.ts",
+            "{workspaceRoot}/vite.source.ts",
             "{workspaceRoot}/scripts/src/lib/version-config.json",
             "{workspaceRoot}/.nvmrc",
             "{workspaceRoot}/pnpm-workspace.yaml"

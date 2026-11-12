@@ -10,12 +10,14 @@
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         },
         "./localnet": {
+            "@canton-network/source": "./src/localnet.ts",
             "types": "./dist/localnet.d.ts",
             "import": "./dist/localnet.js",
             "require": "./dist/localnet.cjs",
