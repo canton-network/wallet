@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 
 const ERROR_TITLES: Partial<Record<number, string>> = {
     [errorCodes.provider.userRejectedRequest]: 'User Rejected Request',
@@ -34,7 +34,11 @@ export function getErrorToastContent(
     fallback?: ErrorToastFallback
 ): { title: string; message: string; buttonText: string } {
     const message = e instanceof Error ? e.message : ''
-    const title = e instanceof JsonRpcError ? ERROR_TITLES[e.code] : undefined
+    // Matches the code instead of `instanceof JsonRpcError`, which fails when
+    // the error comes from another copy of core-rpc-errors
+    const code =
+        typeof e === 'object' && e !== null && 'code' in e ? e.code : undefined
+    const title = typeof code === 'number' ? ERROR_TITLES[code] : undefined
 
     return {
         title: title || fallback?.title || 'Unexpected Error',
