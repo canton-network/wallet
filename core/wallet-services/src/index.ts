@@ -4,6 +4,7 @@
 export * from './notification'
 export * from './self-issued-auth-service'
 export * from './sign-message-service'
+export * from './signing-worker'
 export * from './transaction-service'
 export * from './types'
 export * from './utils'
