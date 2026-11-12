@@ -19,7 +19,7 @@
         "generate:grpc": "tsx ./scripts/src/generate-protobufs.ts",
         "generate:tokenstandard": "nx run @canton-network/scripts:generate:tokenstandard",
         "generate:codegen": "nx run @canton-network/scripts:generate:codegen",
-        "generate:all": "nx run @canton-network/scripts:generate:all && nx run-many -t build -p @canton-network/core-token-standard @canton-network/core-token-standard-v2 @canton-network/core-splice-codegen",
+        "generate:all": "nx run @canton-network/scripts:generate:all && nx sync && nx run-many -t build -p @canton-network/core-token-standard @canton-network/core-token-standard-v2 @canton-network/core-splice-codegen",
         "lint": "nx run-many -t lint --parallel",
         "knip": "knip --dependencies",
         "format": "oxfmt",
