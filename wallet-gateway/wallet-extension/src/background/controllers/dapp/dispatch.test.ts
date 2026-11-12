@@ -50,7 +50,7 @@ describe('createDappDispatcher', () => {
 
     beforeEach(() => {
         fakeBrowser.reset()
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         walletStore = createTestWalletStore()
         authContextStore = fakeAuthContext()
         dispatcher = createDappDispatcher(

@@ -33,12 +33,13 @@ import { existsSync } from 'fs'
 import { GATEWAY_VERSION } from './version.js'
 import { sessionHandler } from './middleware/sessionHandler.js'
 import { sql } from 'kysely'
-import { SigningWorker } from './signing/signing-worker.js'
+import { createServiceAccountRunContextResolver } from './signing/service-account-session.js'
 import { apiKeyAuth } from './middleware/apiKeyAuth.js'
 import { securityHeaders } from './middleware/securityHeaders.js'
 import {
     type HASHING_SCHEME_VERSION,
     NotificationService,
+    SigningWorker,
 } from '@canton-network/core-wallet-services'
 import { errorHandler } from './middleware/errorHandler.js'
 import { registerSigningProviders } from './signing-providers-registration.js'
@@ -270,7 +271,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         }
     })
 
-    const notificationService = new NotificationService(logger)
+    const notificationService = new NotificationService()
     const serverStatusService = new ServerStatusService(serverNotices)
 
     const store = await initializeDatabase(config, logger)
@@ -334,10 +335,6 @@ export async function initialize(opts: CliOptions, logger: Logger) {
 
     const kernelInfo = config.kernel
 
-    const signingWorkerLogger = logger.child({
-        component: 'SigningWorker',
-    })
-
     const hashingSchemeVersion: HASHING_SCHEME_VERSION =
         config.hashingScheme?.version ?? 'HASHING_SCHEME_VERSION_V3'
 
@@ -345,8 +342,11 @@ export async function initialize(opts: CliOptions, logger: Logger) {
         intervalMs: config.server.signingWorker.pollInterval,
         signingDrivers: drivers,
         store,
-        notificationService,
-        logger: signingWorkerLogger,
+        resolveRunContext: createServiceAccountRunContextResolver({
+            store,
+            notificationService,
+            logger: logger.child({ component: 'SigningWorker' }),
+        }),
         hashingSchemeVersion,
     })
     signingWorker.start()

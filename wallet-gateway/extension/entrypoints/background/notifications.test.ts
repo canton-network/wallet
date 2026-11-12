@@ -2,13 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { NotificationService } from '@canton-network/core-wallet-services'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it } from 'vitest'
 import { asPort, type FakePort, fakePort } from '@/tests/unit/fake-port'
-import {
-    handleNotificationPort,
-    PortNotificationSink,
-    withoutNotificationArgs,
-} from './notifications'
+import { handleNotificationPort, PortNotificationSink } from './notifications'
 
 const subscriber = { sessionId: 'session-1', userId: 'user-1' }
 
@@ -58,35 +54,12 @@ describe('PortNotificationSink', () => {
     })
 })
 
-describe('withoutNotificationArgs', () => {
-    it('logs event metadata without the emitted args', () => {
-        const logger = { debug: vi.fn(), error: vi.fn() }
-        const service = new NotificationService(withoutNotificationArgs(logger))
-        const notifier = service.getNotifier('session-1')
-        notifier.on('connected', () => {
-            throw new Error('listener failed')
-        })
-
-        notifier.emit('connected', { session: { accessToken: 'secret' } })
-
-        expect(logger.debug).toHaveBeenCalledWith(
-            { event: 'connected' },
-            'Notifier emitted event: connected for session-1'
-        )
-        expect(logger.error).toHaveBeenCalledWith(
-            { event: 'connected', err: expect.any(Error) },
-            'Notifier listener failed for event: connected for session-1'
-        )
-        expect(JSON.stringify(logger.debug.mock.calls)).not.toContain('secret')
-    })
-})
-
 describe('handleNotificationPort', () => {
     let service: NotificationService
     let port: FakePort
 
     beforeEach(() => {
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         port = fakePort()
     })
 

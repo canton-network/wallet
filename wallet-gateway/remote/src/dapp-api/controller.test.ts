@@ -192,7 +192,7 @@ describe('dappController', () => {
 
     beforeEach(() => {
         logger = pino({ level: 'silent' }, sink())
-        notificationService = new NotificationService(logger)
+        notificationService = new NotificationService()
         ledgerMocks.getWithRetry.mockReset()
         ledgerMocks.postWithRetry.mockReset()
         ledgerMocks.getSynchronizerId.mockReset()
