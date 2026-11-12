@@ -1,6 +1,9 @@
 {
     "$schema": "./node_modules/oxlint/configuration_schema.json",
     "plugins": ["unicorn", "typescript", "oxc", "import"],
+    "options": {
+        "typeAware": true
+    },
     "jsPlugins": [
         {
             "name": "header",
@@ -17,8 +20,7 @@
         "core/rpc-generator/templates",
         "core/wallet-user-rpc-client",
         "core/wallet-dapp-rpc-client",
-        "core/wallet-dapp-remote-rpc-client",
-        "docs/wallet-integration-guide/examples"
+        "core/wallet-dapp-remote-rpc-client"
     ],
     "rules": {
         "header/header": [
@@ -46,6 +48,7 @@
             { "ignorePackages": true, "checkTypeImports": true, "js": "never" }
         ],
         "typescript/no-import-type-side-effects": "error",
-        "typescript/no-explicit-any": "error"
+        "typescript/no-explicit-any": "error",
+        "typescript/unbound-method": "off"
     }
 }

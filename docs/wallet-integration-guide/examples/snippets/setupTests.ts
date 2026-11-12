@@ -1,4 +1,4 @@
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     localNetStaticConfig,
     SDK,

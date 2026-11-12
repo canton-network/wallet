@@ -308,7 +308,9 @@ export function isSpecCovered(
 ): boolean {
     const legKey = (s: AllocationSpecification) =>
         JSON.stringify(
-            s.transferLegSides.map((l) => [l.transferLegId, l.side]).sort()
+            s.transferLegSides
+                .map((l) => JSON.stringify([l.transferLegId, l.side]))
+                .sort()
         )
     return existing.some(
         (e) =>

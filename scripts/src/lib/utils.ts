@@ -112,7 +112,7 @@ export async function downloadWithRetry(
             if (attempt >= attempts) throw e
             console.warn(
                 warn(
-                    `Download of ${url} failed (${e}), retry ${attempt}/${attempts - 1}`
+                    `Download of ${url} failed (${String(e)}), retry ${attempt}/${attempts - 1}`
                 )
             )
             await new Promise((r) => setTimeout(r, 2 ** attempt * 1000))

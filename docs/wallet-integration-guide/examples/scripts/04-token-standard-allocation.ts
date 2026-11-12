@@ -256,8 +256,11 @@ logger.info({ otcTradeCid }, `OtcTrades were found`)
 const pendingAllocationRequestsAlice =
     await sdk.token.allocation.request.pending(sender.partyId)
 
-const allocationRequestViewAlice =
-    pendingAllocationRequestsAlice?.[0].interfaceViewValue!
+const [allocationRequestAlice] = pendingAllocationRequestsAlice
+if (!allocationRequestAlice) {
+    throw new Error('No pending allocation request found for Alice')
+}
+const allocationRequestViewAlice = allocationRequestAlice.interfaceViewValue
 
 const legIdAlice = Object.keys(allocationRequestViewAlice.transferLegs).find(
     (key) =>
@@ -296,8 +299,11 @@ const pendingAllocationRequestsBob = await sdk.token.allocation.request.pending(
     recipient.partyId
 )
 
-const allocationRequestViewBob =
-    pendingAllocationRequestsBob?.[0].interfaceViewValue!
+const [allocationRequestBob] = pendingAllocationRequestsBob
+if (!allocationRequestBob) {
+    throw new Error('No pending allocation request found for Bob')
+}
+const allocationRequestViewBob = allocationRequestBob.interfaceViewValue
 
 const legIdBob = Object.keys(allocationRequestViewAlice.transferLegs).find(
     (key) =>
@@ -371,16 +377,18 @@ const allocationEntries = await Promise.all(
     })
 )
 
-const allocationsWithContext: Record<string, { _1: string; _2: any }> =
-    Object.fromEntries(
-        allocationEntries.map((e) => [e.legId, { _1: e.cid, _2: e.extraArgs }])
-    )
+const allocationsWithContext: Record<
+    string,
+    { _1: string; _2: (typeof allocationEntries)[number]['extraArgs'] }
+> = Object.fromEntries(
+    allocationEntries.map((e) => [e.legId, { _1: e.cid, _2: e.extraArgs }])
+)
 
 const uniqueDisclosedContracts = Array.from(
     new Map(
         allocationEntries
             .flatMap((e) => e.disclosedContracts)
-            .map((d: any) => [d.contractId, d])
+            .map((d) => [d.contractId, d] as const)
     ).values()
 )
 
