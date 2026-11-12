@@ -15,6 +15,7 @@ export const queryKeys = {
     sessions: {
         all: ['sessions'] as const,
         list: () => ['sessions', 'list'] as const,
+        status: () => ['sessions', 'status'] as const,
     },
 
     networks: {

@@ -8,6 +8,7 @@ import { browser } from 'wxt/browser'
 import { logger } from '@/shared/logger'
 import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
 import { createAuthContextStore } from './auth-context'
+import { registerAuthService } from './auth-service'
 import { createDappDispatcher } from './controllers/dapp/dispatch'
 import { requireUnlocked, userController } from './controllers/user'
 import {
@@ -43,6 +44,7 @@ export function startBackground({
     const deps = { getStore, authContext, signingDriver, notificationService }
 
     registerVaultService(vault)
+    registerAuthService({ ...deps, vault })
     // The dApp controller scopes the store to each request's user itself.
     registerService(
         DAPP_RPC_KEY,

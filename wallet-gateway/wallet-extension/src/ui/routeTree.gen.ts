@@ -13,11 +13,12 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as UnlockedRouteImport } from './routes/_unlocked'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as UnlockRouteImport } from './routes/unlock'
+import { Route as UnlockedConnectedRouteImport } from './routes/_unlocked/_connected'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as OnboardingPasswordRouteImport } from './routes/onboarding/password'
 import { Route as UnlockedConnectIndexRouteImport } from './routes/_unlocked/connect/index'
-import { Route as UnlockedPartiesIndexRouteImport } from './routes/_unlocked/parties/index'
-import { Route as UnlockedPartiesAddRouteImport } from './routes/_unlocked/parties/add'
+import { Route as UnlockedConnectedPartiesIndexRouteImport } from './routes/_unlocked/_connected/parties/index'
+import { Route as UnlockedConnectedPartiesAddRouteImport } from './routes/_unlocked/_connected/parties/add'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -38,6 +39,10 @@ const UnlockRoute = UnlockRouteImport.update({
   path: '/unlock',
   getParentRoute: () => rootRouteImport,
 } as any)
+const UnlockedConnectedRoute = UnlockedConnectedRouteImport.update({
+  id: '/_connected',
+  getParentRoute: () => UnlockedRoute,
+} as any)
 const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -53,16 +58,18 @@ const UnlockedConnectIndexRoute = UnlockedConnectIndexRouteImport.update({
   path: '/connect/',
   getParentRoute: () => UnlockedRoute,
 } as any)
-const UnlockedPartiesIndexRoute = UnlockedPartiesIndexRouteImport.update({
-  id: '/parties/',
-  path: '/parties/',
-  getParentRoute: () => UnlockedRoute,
-} as any)
-const UnlockedPartiesAddRoute = UnlockedPartiesAddRouteImport.update({
-  id: '/parties/add',
-  path: '/parties/add',
-  getParentRoute: () => UnlockedRoute,
-} as any)
+const UnlockedConnectedPartiesIndexRoute =
+  UnlockedConnectedPartiesIndexRouteImport.update({
+    id: '/parties/',
+    path: '/parties/',
+    getParentRoute: () => UnlockedConnectedRoute,
+  } as any)
+const UnlockedConnectedPartiesAddRoute =
+  UnlockedConnectedPartiesAddRouteImport.update({
+    id: '/parties/add',
+    path: '/parties/add',
+    getParentRoute: () => UnlockedConnectedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -70,18 +77,18 @@ export interface FileRoutesByFullPath {
   '/unlock': typeof UnlockRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
-  '/parties/add': typeof UnlockedPartiesAddRoute
   '/connect/': typeof UnlockedConnectIndexRoute
-  '/parties/': typeof UnlockedPartiesIndexRoute
+  '/parties/add': typeof UnlockedConnectedPartiesAddRoute
+  '/parties/': typeof UnlockedConnectedPartiesIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/unlock': typeof UnlockRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding': typeof OnboardingIndexRoute
-  '/parties/add': typeof UnlockedPartiesAddRoute
   '/connect': typeof UnlockedConnectIndexRoute
-  '/parties': typeof UnlockedPartiesIndexRoute
+  '/parties/add': typeof UnlockedConnectedPartiesAddRoute
+  '/parties': typeof UnlockedConnectedPartiesIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,11 +96,12 @@ export interface FileRoutesById {
   '/_unlocked': typeof UnlockedRouteWithChildren
   '/onboarding': typeof OnboardingRouteWithChildren
   '/unlock': typeof UnlockRoute
+  '/_unlocked/_connected': typeof UnlockedConnectedRouteWithChildren
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
-  '/_unlocked/parties/add': typeof UnlockedPartiesAddRoute
   '/_unlocked/connect/': typeof UnlockedConnectIndexRoute
-  '/_unlocked/parties/': typeof UnlockedPartiesIndexRoute
+  '/_unlocked/_connected/parties/add': typeof UnlockedConnectedPartiesAddRoute
+  '/_unlocked/_connected/parties/': typeof UnlockedConnectedPartiesIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -103,8 +111,8 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/onboarding/password'
     | '/onboarding/'
-    | '/parties/add'
     | '/connect/'
+    | '/parties/add'
     | '/parties/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -112,8 +120,8 @@ export interface FileRouteTypes {
     | '/unlock'
     | '/onboarding/password'
     | '/onboarding'
-    | '/parties/add'
     | '/connect'
+    | '/parties/add'
     | '/parties'
   id:
     | '__root__'
@@ -121,11 +129,12 @@ export interface FileRouteTypes {
     | '/_unlocked'
     | '/onboarding'
     | '/unlock'
+    | '/_unlocked/_connected'
     | '/onboarding/password'
     | '/onboarding/'
-    | '/_unlocked/parties/add'
     | '/_unlocked/connect/'
-    | '/_unlocked/parties/'
+    | '/_unlocked/_connected/parties/add'
+    | '/_unlocked/_connected/parties/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -165,6 +174,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnlockRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_unlocked/_connected': {
+      id: '/_unlocked/_connected'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof UnlockedConnectedRouteImport
+      parentRoute: typeof UnlockedRoute
+    }
     '/onboarding/': {
       id: '/onboarding/'
       path: '/'
@@ -186,33 +202,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnlockedConnectIndexRouteImport
       parentRoute: typeof UnlockedRoute
     }
-    '/_unlocked/parties/': {
-      id: '/_unlocked/parties/'
+    '/_unlocked/_connected/parties/': {
+      id: '/_unlocked/_connected/parties/'
       path: '/parties'
       fullPath: '/parties/'
-      preLoaderRoute: typeof UnlockedPartiesIndexRouteImport
-      parentRoute: typeof UnlockedRoute
+      preLoaderRoute: typeof UnlockedConnectedPartiesIndexRouteImport
+      parentRoute: typeof UnlockedConnectedRoute
     }
-    '/_unlocked/parties/add': {
-      id: '/_unlocked/parties/add'
+    '/_unlocked/_connected/parties/add': {
+      id: '/_unlocked/_connected/parties/add'
       path: '/parties/add'
       fullPath: '/parties/add'
-      preLoaderRoute: typeof UnlockedPartiesAddRouteImport
-      parentRoute: typeof UnlockedRoute
+      preLoaderRoute: typeof UnlockedConnectedPartiesAddRouteImport
+      parentRoute: typeof UnlockedConnectedRoute
     }
   }
 }
 
+interface UnlockedConnectedRouteChildren {
+  UnlockedConnectedPartiesAddRoute: typeof UnlockedConnectedPartiesAddRoute
+  UnlockedConnectedPartiesIndexRoute: typeof UnlockedConnectedPartiesIndexRoute
+}
+
+const UnlockedConnectedRouteChildren: UnlockedConnectedRouteChildren = {
+  UnlockedConnectedPartiesAddRoute: UnlockedConnectedPartiesAddRoute,
+  UnlockedConnectedPartiesIndexRoute: UnlockedConnectedPartiesIndexRoute,
+}
+
+const UnlockedConnectedRouteWithChildren =
+  UnlockedConnectedRoute._addFileChildren(UnlockedConnectedRouteChildren)
+
 interface UnlockedRouteChildren {
-  UnlockedPartiesAddRoute: typeof UnlockedPartiesAddRoute
+  UnlockedConnectedRoute: typeof UnlockedConnectedRouteWithChildren
   UnlockedConnectIndexRoute: typeof UnlockedConnectIndexRoute
-  UnlockedPartiesIndexRoute: typeof UnlockedPartiesIndexRoute
 }
 
 const UnlockedRouteChildren: UnlockedRouteChildren = {
-  UnlockedPartiesAddRoute: UnlockedPartiesAddRoute,
+  UnlockedConnectedRoute: UnlockedConnectedRouteWithChildren,
   UnlockedConnectIndexRoute: UnlockedConnectIndexRoute,
-  UnlockedPartiesIndexRoute: UnlockedPartiesIndexRoute,
 }
 
 const UnlockedRouteWithChildren = UnlockedRoute._addFileChildren(
