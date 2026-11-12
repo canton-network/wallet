@@ -111,6 +111,7 @@
             ]
         },
         "lint": {
+            "dependsOn": ["^dist-types"],
             "cache": true,
             "inputs": [
                 "default",
