@@ -129,7 +129,7 @@ gateway, see [Changing wallet providers](#changing-wallet-providers).
 - **A configured signing provider holds the new key.** The key must appear in that provider's
   key list. See [Signing providers](../operate/signing-providers.mdx).
 
-### Change it in the User UI
+### Change the key
 
 1. Open the **Parties** page and find the party card.
 2. Choose **Edit** on the card. This opens the **Edit party** page.
@@ -144,40 +144,9 @@ disabled. Disabled wallets always show **Edit**. One example is a party created 
 Wallet Gateway whose root key isn't held by any configured signing provider: the Wallet
 Gateway disables it during sync. Selecting the delegated key re-enables the wallet.
 
-### Change it with the User API
-
-The same operation is available through the User API (see
-[Automate with the User API](../automation/automate-with-user-api.mdx)). First list the keys
-the provider holds, then pass the delegated public key to `changeSigningProvider`:
-
-```bash
-# List the keys a signing provider holds
-curl -X POST http://localhost:3030/api/v0/user \
-  -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer <jwt-token>' \
-  -d '{ "jsonrpc": "2.0", "id": 1, "method": "listSigningProviderKeys",
-        "params": { "signingProviderId": "<provider-id>" } }'
-
-# Switch the wallet to the delegated key
-curl -X POST http://localhost:3030/api/v0/user \
-  -H 'Content-Type: application/json' \
-  -H 'Authorization: Bearer <jwt-token>' \
-  -d '{ "jsonrpc": "2.0", "id": 2, "method": "changeSigningProvider",
-        "params": {
-          "signingProviderId": "<provider-id>",
-          "partyId": "<party-id>",
-          "publicKey": "<delegated-public-key>"
-        } }'
-```
-
-`publicKey` must exactly match one of the `publicKey` values returned by
-`listSigningProviderKeys`. Otherwise the call fails with
-`provided publicKey does not belong to <provider-id>`.
-
 ### Verify the change
 
-- Call `getWallet` with the `partyId`, or open **Edit** again. The wallet shows the new
-  `signingProviderId` and `publicKey`.
+- Open **Edit** on the party card again. It shows the new signing provider and public key.
 - Submit a test transaction. A successful execution confirms that the ledger accepts
   signatures from the delegated key.
 
