@@ -93,7 +93,12 @@ export interface Session {
     id: string
     origin: string
     network: string
-    /** Absent only while self-issued onboarding is in progress. */
+    /**
+     * The raw access token when passed to setSession. Stores keep and return
+     * only its SHA-256 digest (see hashAccessToken), so a session read back
+     * from a store can't be used as a credential.
+     * Absent only while self-issued onboarding is in progress.
+     */
     accessToken?: string
     userId?: string
 }
@@ -197,7 +202,7 @@ export interface Store {
     // Session methods
     /**
      * getSession is keyed by the accessToken, which is unique per session. It retrieves the session associated with the provided accessToken.
-     * @param accessToken The access token associated with the session to retrieve.
+     * @param accessToken The raw access token associated with the session to retrieve; the store hashes it before the lookup.
      * @returns A Promise that resolves to the Session object if found, or undefined if no session exists for the given accessToken.
      */
     getSession(accessToken: string): Promise<Session | undefined>

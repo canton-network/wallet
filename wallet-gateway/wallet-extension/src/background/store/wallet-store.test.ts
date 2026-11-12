@@ -6,6 +6,7 @@ import type {
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { fakeAuthContext } from '@/__tests__/fake-auth-context'
@@ -111,6 +112,10 @@ describe('createWalletStore', () => {
 
         expect(await reread.getSession(CONTEXT.accessToken)).toEqual({
             ...SESSION,
+            // The store keeps only the SHA-256 digest of the token
+            accessToken: createHash('sha256')
+                .update(CONTEXT.accessToken)
+                .digest('hex'),
             userId: CONTEXT.userId,
         })
         expect(await reread.getWallets()).toEqual([wallet()])

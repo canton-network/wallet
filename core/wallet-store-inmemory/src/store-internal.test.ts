@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createHash } from 'node:crypto'
 
 import { StoreInternal, type StoreInternalConfig } from './store-internal'
 import {
@@ -507,8 +508,12 @@ implementations.forEach(([name, StoreImpl]) => {
             const result = await store.getSession('test-access-token')
             expect(result).toEqual({
                 ...session,
+                accessToken: sha256Hex('test-access-token'),
                 userId: authContextMock.userId,
             })
+            await expect(
+                store.getSession(sha256Hex('test-access-token'))
+            ).resolves.toBeUndefined()
             await store.removeSession('test-access-token')
             const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
@@ -630,7 +635,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(store.listSessions()).resolves.toEqual([
                 expect.objectContaining({
                     id: 'onboarding-session',
-                    accessToken: 'new-token',
+                    accessToken: sha256Hex('new-token'),
                 }),
             ])
             await expect(store.getSession('new-token')).resolves.toEqual(
@@ -1451,3 +1456,7 @@ implementations.forEach(([name, StoreImpl]) => {
         })
     })
 })
+
+function sha256Hex(value: string): string {
+    return createHash('sha256').update(value, 'utf8').digest('hex')
+}

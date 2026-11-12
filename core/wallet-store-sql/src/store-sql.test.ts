@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, test, beforeEach, afterEach } from 'vitest'
+import { createHash } from 'node:crypto'
 
 import type {
     AuthContext,
@@ -501,11 +502,45 @@ implementations.forEach(([name, StoreImpl]) => {
             const result = await store.getSession('test-access-token')
             expect(result).toEqual({
                 ...session,
+                accessToken: sha256Hex('test-access-token'),
                 userId: authContextMock.userId,
             })
             await store.removeSession('test-access-token')
             const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
+        })
+
+        test('stores only the SHA-256 digest of a session access token', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'sess-hashed',
+                origin: 'dapp-1',
+                network: 'network1',
+                accessToken: authContextMock.accessToken,
+            })
+
+            const rows = await db
+                .selectFrom('sessions')
+                .select(['id', 'accessToken'])
+                .execute()
+            expect(rows).toEqual([
+                {
+                    id: 'sess-hashed',
+                    accessToken: sha256Hex(authContextMock.accessToken),
+                },
+            ])
+
+            // Lookups still take the raw token
+            await expect(
+                store.getSession(authContextMock.accessToken)
+            ).resolves.toEqual(expect.objectContaining({ id: 'sess-hashed' }))
+            await expect(store.getCurrentNetwork()).resolves.toEqual(network)
+            // and the stored digest is not accepted as a token
+            await expect(
+                store.getSession(sha256Hex(authContextMock.accessToken))
+            ).resolves.toBeUndefined()
         })
 
         test('resolves the current network from a tokenless self-issued login session', async () => {
@@ -634,15 +669,18 @@ implementations.forEach(([name, StoreImpl]) => {
                 expect.objectContaining({
                     id: 'onboarding-session',
                     network: 'network1',
-                    accessToken: 'new-token',
+                    accessToken: sha256Hex('new-token'),
                 })
             )
             await expect(store.listSessions()).resolves.toEqual([
                 expect.objectContaining({
                     id: 'onboarding-session',
-                    accessToken: 'new-token',
+                    accessToken: sha256Hex('new-token'),
                 }),
             ])
+            await expect(store.getSession('new-token')).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
             await expect(
                 store.upgradeSelfIssuedLoginSession(
                     'onboarding-session',
@@ -1603,3 +1641,7 @@ implementations.forEach(([name, StoreImpl]) => {
         })
     })
 })
+
+function sha256Hex(value: string): string {
+    return createHash('sha256').update(value, 'utf8').digest('hex')
+}
