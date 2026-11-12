@@ -1,6 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { rmSync } from 'node:fs'
+
+// Dev servers using the libraries wait until dev-libs has built them all
+rmSync('node_modules/.cache/dev-libs-ready', { force: true })
+const afterLibs = (command) =>
+    `node scripts/src/wait-for-dev-libs.ts ${command}`
+
 const sharedEnvDevelopment = {
     NODE_ENV: 'development',
     DEBUG: 'true',
@@ -9,7 +16,9 @@ const sharedEnvDevelopment = {
 export const apps = [
     {
         name: 'remote',
-        script: 'pnpm --filter @canton-network/wallet-gateway-remote dev',
+        script: afterLibs(
+            'pnpm --filter @canton-network/wallet-gateway-remote dev'
+        ),
         env_development: sharedEnvDevelopment,
     },
     {
@@ -19,108 +28,35 @@ export const apps = [
     },
     {
         name: 'example-ping',
-        script: 'pnpm --filter @canton-network/example-ping dev',
+        script: afterLibs('pnpm --filter @canton-network/example-ping dev'),
         env_development: sharedEnvDevelopment,
     },
     {
-        name: 'example-porfolio',
-        script: 'pnpm --filter @canton-network/example-portfolio dev',
+        name: 'example-portfolio',
+        script: afterLibs(
+            'pnpm --filter @canton-network/example-portfolio dev'
+        ),
         env_development: sharedEnvDevelopment,
     },
     {
-        name: 'wallet-sdk',
-        script: 'pnpm --filter @canton-network/wallet-sdk dev',
+        name: 'dev-libs',
+        script: 'pnpm exec tsdown -c tsdown.dev.ts --watch',
         env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'dapp-sdk',
-        script: 'pnpm --filter @canton-network/dapp-sdk dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-ledger-client',
-        script: 'pnpm --filter @canton-network/core-ledger-client dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-splice-provider',
-        script: 'pnpm --filter @canton-network/core-splice-provider dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-wallet-auth',
-        script: 'pnpm --filter @canton-network/core-wallet-auth dev',
-        env_development: sharedEnvDevelopment,
+        // Exits on an invalid package.json or tsdown config, e.g. while editing
+        exp_backoff_restart_delay: 100,
     },
     {
         name: 'core-wallet-ui-components',
-        script: 'pnpm --filter @canton-network/core-wallet-ui-components build:watch',
+        script: afterLibs(
+            'pnpm --filter @canton-network/core-wallet-ui-components build:watch'
+        ),
         env_development: sharedEnvDevelopment,
     },
     {
         name: 'core-wallet-ui-components-sb',
-        script: 'pnpm --filter @canton-network/core-wallet-ui-components dev',
-        env_development: sharedEnvDevelopment,
-    },
-
-    {
-        name: 'core-wallet-services',
-        script: 'pnpm --filter @canton-network/core-wallet-services dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-wallet-store',
-        script: 'pnpm --filter @canton-network/core-wallet-store dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-wallet-user-rpc-client',
-        script: 'pnpm --filter @canton-network/core-wallet-user-rpc-client dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-wallet-dapp-rpc-client',
-        script: 'pnpm --filter @canton-network/core-wallet-dapp-rpc-client dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-types',
-        script: 'pnpm --filter @canton-network/core-types dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-rpc-transport',
-        script: 'pnpm --filter @canton-network/core-rpc-transport dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-wallet-test-utils',
-        script: 'pnpm --filter @canton-network/core-wallet-test-utils dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-tx-parser',
-        script: 'pnpm --filter @canton-network/core-tx-parser dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-token-standard-service',
-        script: 'pnpm --filter @canton-network/core-token-standard-service dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-ledger-client-types',
-        script: 'pnpm --filter @canton-network/core-ledger-client-types dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-amulet-service',
-        script: 'pnpm --filter @canton-network/core-amulet-service dev',
-        env_development: sharedEnvDevelopment,
-    },
-    {
-        name: 'core-asyncapi-client',
-        script: 'pnpm --filter @canton-network/core-asyncapi-client dev',
+        script: afterLibs(
+            'pnpm --filter @canton-network/core-wallet-ui-components dev'
+        ),
         env_development: sharedEnvDevelopment,
     },
 ]
