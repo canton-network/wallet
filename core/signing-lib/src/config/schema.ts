@@ -11,6 +11,7 @@ export enum SigningProvider {
     DFNS = 'dfns',
     SECUROSYS = 'securosys',
     BITGO = 'bitgo',
+    DSRV = 'dsrv',
 }
 
 export const SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS: readonly SigningProvider[] =

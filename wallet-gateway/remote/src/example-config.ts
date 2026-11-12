@@ -60,6 +60,10 @@ export default {
             coin: 'canton',
             accessTokenEnv: 'BITGO_ACCESS_TOKEN',
         },
+        dsrv: {
+            baseUrl: 'https://api.dsrv.example',
+            bearerTokenEnv: 'DSRV_SIGNING_API_TOKEN',
+        },
     },
     signingStore: {
         connection: {

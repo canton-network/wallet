@@ -616,6 +616,102 @@ describe('TransactionService', () => {
             })
         })
 
+        describe('dsrv', () => {
+            const dsrvWallet = walletWithProvider(SigningProvider.DSRV)
+
+            it('starts signing with an internal id and persists the pending request', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'pending',
+                    txId: 'dsrv-tx-1',
+                })
+                const driver = createDriver({ signTransaction })
+                const store = createStore()
+                const service = createService(
+                    store,
+                    { [SigningProvider.DSRV]: driver },
+                    notifier
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    dsrvWallet,
+                    signParams
+                )
+
+                expect(driver.controller).toHaveBeenCalledWith(
+                    authContext.userId
+                )
+                expect(signTransaction).toHaveBeenCalledWith({
+                    tx: pendingTransaction.preparedTransaction,
+                    txHash: pendingTransaction.preparedTransactionHash,
+                    keyIdentifier: { publicKey: wallet.publicKey },
+                    internalTxId: expect.stringMatching(/^[0-9a-f]{16}$/),
+                })
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    'awaiting-signature',
+                    { externalTxId: 'dsrv-tx-1' },
+                    { expectedStatus: 'pending' }
+                )
+                expect(emit).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.objectContaining({ status: 'pending' })
+                )
+                expect(result).toEqual({
+                    status: 'pending',
+                    externalTxId: 'dsrv-tx-1',
+                    partyId: wallet.partyId,
+                })
+            })
+
+            it('polls the provider and persists signed status', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    txId: 'dsrv-tx-1',
+                    signature: 'dsrv-signature',
+                })
+                const driver = createDriver({ getTransaction })
+                const store = createStore(awaitingTransaction)
+                const service = createService(
+                    store,
+                    { [SigningProvider.DSRV]: driver },
+                    notifier
+                )
+
+                const result = await service.refreshTransaction(
+                    authContext,
+                    dsrvWallet,
+                    pendingTransaction.id
+                )
+
+                expect(driver.controller).toHaveBeenCalledWith(
+                    authContext.userId
+                )
+                expect(getTransaction).toHaveBeenCalledWith({
+                    userId: authContext.userId,
+                    txId: 'external-tx-1',
+                })
+                expect(store.setTransactionSigned).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    expect.any(Date),
+                    'dsrv-tx-1',
+                    { expectedStatus: 'awaiting-signature' }
+                )
+                expect(result).toEqual({
+                    status: 'signed',
+                    externalTxId: 'dsrv-tx-1',
+                })
+            })
+
+            it('throws when the DSRV signing driver is not available', async () => {
+                const service = createService(createStore(), {}, notifier)
+
+                await expect(
+                    service.sign(authContext, dsrvWallet, signParams)
+                ).rejects.toThrow('No driver found for dsrv')
+            })
+        })
+
         describe('bitgo', () => {
             it('returns the driver signature when signing completes', async () => {
                 const signTransaction = vi.fn().mockResolvedValue({
@@ -1136,6 +1232,11 @@ describe('TransactionService', () => {
                 provider: SigningProvider.BITGO,
                 auth: authContext,
             },
+            {
+                name: 'dsrv',
+                provider: SigningProvider.DSRV,
+                auth: authContext,
+            },
         ])(
             'rejects signing an already executed transaction for $name',
             async ({ provider, auth }) => {
@@ -1248,6 +1349,7 @@ describe('TransactionService', () => {
                 SigningProvider.FIREBLOCKS,
                 SigningProvider.DFNS,
                 SigningProvider.SECUROSYS,
+                SigningProvider.DSRV,
             ])(
                 'executes with the provided signature for %s',
                 async (signingProviderId) => {

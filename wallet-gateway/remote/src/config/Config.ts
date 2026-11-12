@@ -265,6 +265,22 @@ export const signingProvidersConfigSchema = z
                 description:
                     'Include this object to opt in BitGo. The access token is read from the environment variable named by accessTokenEnv.',
             }),
+        dsrv: z
+            .object({
+                baseUrl: z.string().meta({
+                    description:
+                        'DSRV signing API base URL. Requests go to {baseUrl}/api/signing/{operation}.',
+                }),
+                bearerTokenEnv: secretEnvName(
+                    'DSRV_SIGNING_API_TOKEN',
+                    'the DSRV signing API bearer token'
+                ),
+            })
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in DSRV. Requires baseUrl. The bearer token is read from the environment variable named by bearerTokenEnv and sent as Authorization: Bearer; it identifies the calling Wallet Gateway, not the user or the request. Not available in legacy discovery mode.',
+            }),
     })
     .meta({
         description:

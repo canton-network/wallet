@@ -53,6 +53,7 @@ deprecated and will be removed.
 | [DFNS](#dfns)               | DFNS (MPC)                            | Yes                                                |
 | [Securosys](#securosys)     | Securosys TSB (HSM-backed)            | Yes                                                |
 | [BitGo](#bitgo)             | BitGo (MPC)                           | Yes                                                |
+| [DSRV](#dsrv)               | DSRV (MPC)                            | Yes                                                |
 
 <Warning>
 
@@ -197,3 +198,22 @@ See the [BitGo signing documentation](https://github.com/canton-network/wallet/t
 | Environment variable | Required | Description                                              |
 | -------------------- | -------- | -------------------------------------------------------- |
 | `BITGO_ACCESS_TOKEN` | yes      | BitGo access token. Override name with `accessTokenEnv`. |
+
+## DSRV
+
+MPC-based key management and signing from DSRV. Get the base URL and a bearer token from DSRV
+([contact@dsrvlabs.com](mailto:contact@dsrvlabs.com)) and see the
+[DSRV signing documentation](https://github.com/canton-network/wallet/tree/main/core/signing-dsrv),
+then set the following config fields and environment variables:
+
+| Config field                           | Required | Description                                                                         |
+| -------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| `signingProviders.dsrv`                | yes      | Include this object to opt in. Requires `baseUrl`.                                  |
+| `signingProviders.dsrv.baseUrl`        | yes      | Signing API base URL. Requests go to `{baseUrl}/api/signing/{operation}`.           |
+| `signingProviders.dsrv.bearerTokenEnv` | no       | Name of the env var that holds the bearer token. Defaults to `DSRV_SIGNING_API_TOKEN`. |
+
+| Environment variable     | Required | Description                                                                                  |
+| ------------------------ | -------- | -------------------------------------------------------------------------------------------- |
+| `DSRV_SIGNING_API_TOKEN` | yes      | Bearer token sent as `Authorization: Bearer` on every request. Override name with `bearerTokenEnv`. |
+
+The provider is not available in the legacy discovery mode.

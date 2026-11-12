@@ -164,6 +164,24 @@ ID used for wallet creation.
 See [`@canton-network/core-signing-bitgo`](../../core/signing-bitgo/README.md)
 for credential setup and driver behavior.
 
+### DSRV
+
+Get the signing API base URL and a bearer token for your Wallet Gateway from DSRV
+([contact@dsrvlabs.com](mailto:contact@dsrvlabs.com)).
+
+**Gateway config:**
+
+- `signingProviders.dsrv` - include this object to enable
+- `signingProviders.dsrv.baseUrl` - required, base URL of the DSRV signing API
+- `signingProviders.dsrv.bearerTokenEnv` - optional name of the env var that holds the bearer token, defaults to `DSRV_SIGNING_API_TOKEN`
+
+**Environment variables:**
+
+- The variable named by `bearerTokenEnv` (default above)
+
+See [`@canton-network/core-signing-dsrv`](../../core/signing-dsrv/README.md)
+for the signing API the driver calls.
+
 ## Postgres connection
 
 To create a Postgres database you need to:
