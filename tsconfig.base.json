@@ -15,7 +15,9 @@
         "isolatedModules": true,
         "allowImportingTsExtensions": true,
         "composite": true,
-        "customConditions": ["@canton-network/source"]
+        "customConditions": ["@canton-network/source"],
+        "noFallthroughCasesInSwitch": true,
+        "noUncheckedSideEffectImports": true
     },
     "include": ["${configDir}/src", "${configDir}/*.ts"],
     "exclude": [

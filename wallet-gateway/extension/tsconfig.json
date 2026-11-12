@@ -2,8 +2,6 @@
     "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
         "noImplicitOverride": false,
-        "allowImportingTsExtensions": true,
-        "experimentalDecorators": false,
         "useDefineForClassFields": false,
         "customConditions": ["@canton-network/source"]
     },

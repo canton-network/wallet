@@ -2,16 +2,8 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "exactOptionalPropertyTypes": false,
-        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-        "lib": ["ES2020", "DOM"],
-        "moduleDetection": "force",
         "jsx": "react-jsx",
-        "types": ["vite/client"],
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true
+        "types": ["vite/client"]
     },
     "include": ["src"]
 }

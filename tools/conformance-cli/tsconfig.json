@@ -1,7 +1,6 @@
 {
-    "extends": "../../tsconfig.base.json",
+    "extends": "../../tsconfig.web.json",
     "compilerOptions": {
-        "lib": ["ESNext", "DOM"],
         "types": ["node"],
         "erasableSyntaxOnly": true,
         "rewriteRelativeImportExtensions": true
