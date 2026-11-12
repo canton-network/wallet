@@ -14,7 +14,9 @@
         "verbatimModuleSyntax": true,
         "isolatedModules": true,
         "allowImportingTsExtensions": true,
-        "rewriteRelativeImportExtensions": true
+        "rewriteRelativeImportExtensions": true,
+        "composite": true,
+        "customConditions": ["@canton-network/source"]
     },
     "include": ["${configDir}/src", "${configDir}/*.ts"],
     "exclude": [
