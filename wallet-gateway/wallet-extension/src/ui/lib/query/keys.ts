@@ -25,6 +25,7 @@ export const queryKeys = {
 
     idps: {
         all: ['idps'] as const,
+        list: () => ['idps', 'list'] as const,
     },
 
     signingProviders: {

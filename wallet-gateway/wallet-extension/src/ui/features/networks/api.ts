@@ -13,3 +13,10 @@ export const networksQuery = () =>
             (await getUserClient().request({ method: 'listNetworks' }))
                 .networks,
     })
+
+export const idpsQuery = () =>
+    queryOptions({
+        queryKey: queryKeys.idps.list(),
+        queryFn: async () =>
+            (await getUserClient().request({ method: 'listIdps' })).idps,
+    })
