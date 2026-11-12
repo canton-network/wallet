@@ -1,6 +1,9 @@
 {
     "$schema": "./node_modules/oxlint/configuration_schema.json",
     "plugins": ["unicorn", "typescript", "oxc"],
+    "options": {
+        "typeAware": true
+    },
     "jsPlugins": [
         {
             "name": "header",
@@ -41,6 +44,13 @@
             }
         ],
         "typescript/no-import-type-side-effects": "error",
-        "typescript/no-explicit-any": "error"
+        "typescript/no-explicit-any": "error",
+        "typescript/unbound-method": "off",
+        "typescript/no-floating-promises": "off",
+        "typescript/await-thenable": "off",
+        "typescript/restrict-template-expressions": "off",
+        "typescript/no-misused-spread": "off",
+        "typescript/no-redundant-type-constituents": "off",
+        "typescript/no-duplicate-type-constituents": "off"
     }
 }
