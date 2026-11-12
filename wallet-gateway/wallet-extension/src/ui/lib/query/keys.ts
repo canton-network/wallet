@@ -14,10 +14,12 @@ export const queryKeys = {
 
     sessions: {
         all: ['sessions'] as const,
+        list: () => ['sessions', 'list'] as const,
     },
 
     networks: {
         all: ['networks'] as const,
+        list: () => ['networks', 'list'] as const,
     },
 
     idps: {

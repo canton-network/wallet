@@ -15,6 +15,7 @@ import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as OnboardingPasswordRouteImport } from './routes/onboarding/password'
+import { Route as UnlockedConnectIndexRouteImport } from './routes/_unlocked/connect/index'
 import { Route as UnlockedPartiesIndexRouteImport } from './routes/_unlocked/parties/index'
 import { Route as UnlockedPartiesAddRouteImport } from './routes/_unlocked/parties/add'
 
@@ -47,6 +48,11 @@ const OnboardingPasswordRoute = OnboardingPasswordRouteImport.update({
   path: '/password',
   getParentRoute: () => OnboardingRoute,
 } as any)
+const UnlockedConnectIndexRoute = UnlockedConnectIndexRouteImport.update({
+  id: '/connect/',
+  path: '/connect/',
+  getParentRoute: () => UnlockedRoute,
+} as any)
 const UnlockedPartiesIndexRoute = UnlockedPartiesIndexRouteImport.update({
   id: '/parties/',
   path: '/parties/',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/parties/add': typeof UnlockedPartiesAddRoute
+  '/connect/': typeof UnlockedConnectIndexRoute
   '/parties/': typeof UnlockedPartiesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -73,6 +80,7 @@ export interface FileRoutesByTo {
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/parties/add': typeof UnlockedPartiesAddRoute
+  '/connect': typeof UnlockedConnectIndexRoute
   '/parties': typeof UnlockedPartiesIndexRoute
 }
 export interface FileRoutesById {
@@ -84,6 +92,7 @@ export interface FileRoutesById {
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/_unlocked/parties/add': typeof UnlockedPartiesAddRoute
+  '/_unlocked/connect/': typeof UnlockedConnectIndexRoute
   '/_unlocked/parties/': typeof UnlockedPartiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -95,6 +104,7 @@ export interface FileRouteTypes {
     | '/onboarding/password'
     | '/onboarding/'
     | '/parties/add'
+    | '/connect/'
     | '/parties/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -103,6 +113,7 @@ export interface FileRouteTypes {
     | '/onboarding/password'
     | '/onboarding'
     | '/parties/add'
+    | '/connect'
     | '/parties'
   id:
     | '__root__'
@@ -113,6 +124,7 @@ export interface FileRouteTypes {
     | '/onboarding/password'
     | '/onboarding/'
     | '/_unlocked/parties/add'
+    | '/_unlocked/connect/'
     | '/_unlocked/parties/'
   fileRoutesById: FileRoutesById
 }
@@ -167,6 +179,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingPasswordRouteImport
       parentRoute: typeof OnboardingRoute
     }
+    '/_unlocked/connect/': {
+      id: '/_unlocked/connect/'
+      path: '/connect'
+      fullPath: '/connect/'
+      preLoaderRoute: typeof UnlockedConnectIndexRouteImport
+      parentRoute: typeof UnlockedRoute
+    }
     '/_unlocked/parties/': {
       id: '/_unlocked/parties/'
       path: '/parties'
@@ -186,11 +205,13 @@ declare module '@tanstack/react-router' {
 
 interface UnlockedRouteChildren {
   UnlockedPartiesAddRoute: typeof UnlockedPartiesAddRoute
+  UnlockedConnectIndexRoute: typeof UnlockedConnectIndexRoute
   UnlockedPartiesIndexRoute: typeof UnlockedPartiesIndexRoute
 }
 
 const UnlockedRouteChildren: UnlockedRouteChildren = {
   UnlockedPartiesAddRoute: UnlockedPartiesAddRoute,
+  UnlockedConnectIndexRoute: UnlockedConnectIndexRoute,
   UnlockedPartiesIndexRoute: UnlockedPartiesIndexRoute,
 }
 
