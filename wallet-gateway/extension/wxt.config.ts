@@ -4,12 +4,16 @@
 import { resolve } from 'path'
 import { defineConfig } from 'wxt'
 import { standardDecorators } from '../../vite.decorators.js'
+import { workspaceSources } from '../../vite.source.js'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
     modules: [],
     vite: () => ({
-        plugins: [standardDecorators(resolve(import.meta.dirname, '**/*.ts'))],
+        plugins: [
+            standardDecorators(resolve(import.meta.dirname, '**/*.ts')),
+            workspaceSources(),
+        ],
     }),
     manifest: {
         name: 'Canton Wallet',
