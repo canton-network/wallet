@@ -123,4 +123,9 @@ export const apps = [
         script: 'pnpm --filter @canton-network/core-asyncapi-client dev',
         env_development: sharedEnvDevelopment,
     },
+    {
+        name: 'wallet-cli',
+        script: 'pnpm --filter @canton-network/wallet-cli dev',
+        env_development: sharedEnvDevelopment,
+    },
 ]

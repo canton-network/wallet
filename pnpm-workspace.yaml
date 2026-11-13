@@ -7,6 +7,7 @@ update:
         - '@types/node'
 packages:
     - api-specs
+    - cli
     - core/**
     - docs/wallet-integration-guide/examples
     - examples/**
@@ -27,6 +28,12 @@ allowBuilds:
     protobufjs: false
     secp256k1: true
     ssh2: false
+permissions:
+    '@optique/core':
+        skills: true
+skills:
+    dirs:
+        - .agents/skills
 peerDependencyRules:
     allowedVersions:
         # Project no longer actively maintained
@@ -61,6 +68,9 @@ catalog:
     '@open-rpc/generator': ^2.1.1
     '@open-rpc/mock-server': ^1.7.8
     '@open-wc/testing-helpers': ^3.0.1
+    '@optique/core': ^1.3.6
+    '@optique/logtape': ^1.3.6
+    '@optique/run': ^1.3.6
     '@playwright/test': ^1.65.0
     '@protobuf-ts/plugin': ^2.11.1
     '@protobuf-ts/runtime': ^2.11.1

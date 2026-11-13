@@ -1,0 +1,44 @@
+{
+    "name": "@canton-network/wallet-cli",
+    "version": "1.0.0",
+    "description": "Wallet CLI PoC",
+    "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "license": "Apache-2.0",
+    "sideEffects": false,
+    "bin": {
+        "wallet": "./dist/wallet"
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@optique/core": "catalog:",
+        "@optique/run": "catalog:",
+        "@optique/logtape": "catalog:",
+        "@logtape/logtape": "catalog:"
+    },
+    "devDependencies": {
+        "@types/node": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "cli"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/cli#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    }
+}

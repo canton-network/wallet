@@ -96,7 +96,9 @@
     },
     "packageManager": "pnpm@12.15.0",
     "dependencies": {
+        "@logtape/logtape": "catalog:",
         "@nx/js": "catalog:",
+        "@optique/logtape": "catalog:",
         "nx": "catalog:"
     },
     "repository": {
