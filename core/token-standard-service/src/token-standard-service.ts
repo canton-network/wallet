@@ -17,6 +17,7 @@ import {
     type PrettyTransactions,
     type Transaction,
     type TransferObject,
+    CombinedTokenStandardTransactionInterfaces,
 } from '@canton-network/core-tx-parser'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import type {
@@ -333,7 +334,7 @@ export class TokenStandardService {
         const updateFormat: UpdateFormat = {
             includeTransactions: {
                 eventFormat: EventFilterBySetup({
-                    interfaceIds: TokenStandardTransactionInterfaces,
+                    interfaceIds: CombinedTokenStandardTransactionInterfaces,
                     isMasterUser: this.isMasterUser,
                     partyId: partyId,
                     includeWildcard: true,

@@ -52,7 +52,7 @@ export default async (args: TransferTestScriptParameters) => {
             registryUrl
         )
 
-    await sdk.ledger
+    const acceptTxResult = await sdk.ledger
         .prepare({
             partyId: receiver.partyId,
             commands: acceptCommand,
@@ -62,7 +62,7 @@ export default async (args: TransferTestScriptParameters) => {
         .execute({ partyId: receiver.partyId })
     logger.info('Receiver accepted the transfer instruction')
 
-    const receiverUtxos = await sdk.token.utxos.list({
+    const receiverUtxos = await sdk.token.v2.utxos.list({
         partyId: receiver.partyId,
     })
     logger.info(
@@ -78,6 +78,47 @@ export default async (args: TransferTestScriptParameters) => {
         )
     })
 
+    const receiverTx = await sdk.token.transactionsById({
+        updateId: acceptTxResult.updateId,
+        partyId: receiver.partyId,
+    })
+
+    logger.info(receiverTx)
+
+    const incoming = receiverTx.events.find(
+        (e) => e.label.type === 'TransferIn'
+    )
+
+    assertV2(incoming !== undefined, 'incoming is undefined')
+
+    const show = (value: unknown) => JSON.stringify(value)
+    const TOKEN = TestTokenV2.DAR.TestTokenID
+    const summaries = (
+        s: { instrumentId: { id: string }; amountChange: string }[]
+    ) => s.map((x) => [x.instrumentId.id, x.amountChange])
+
+    assertV2(
+        incoming !== undefined,
+        `receiver: no TransferIn, labels ${show(receiverTx.events.map((e) => e.label.type))}`
+    )
+
+    const unlockedSummaries = summaries(
+        incoming.unlockedHoldingsChangeSummaries
+    )
+    assertV2(
+        show(unlockedSummaries) === show([[TOKEN, '2000']]),
+        `receiver: unlocked summaries ${show(unlockedSummaries)}`
+    )
+    assertV2(
+        receiverTestTokenUtxos.length === 1,
+        `receiver: expected 1 matching UTXO, got ${receiverTestTokenUtxos.length}`
+    )
+    const createdCids =
+        incoming.unlockedHoldingsChange?.creates.map((h) => h.contractId) ?? []
+    assertV2(
+        createdCids.includes(receiverTestTokenUtxos[0].contractId),
+        `receiver: created holdings ${show(createdCids)} don't include ${receiverTestTokenUtxos[0].contractId}`
+    )
     assertV2(
         receiverTestTokenUtxos.length > 0,
         'No TestTokenV2 UTXOs found for Receiver after accepting transfer instruction'
