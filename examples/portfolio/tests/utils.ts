@@ -556,8 +556,8 @@ export const expectHistoryRow = async (
     expected: ExpectedHistoryRow,
     timeout = HISTORY_TIMEOUT
 ): Promise<void> => {
-    const row = page
-        .getByRole('table', { name: 'Transaction history' })
+    const table = page.getByRole('table', { name: 'Transaction history' })
+    const row = table
         .getByRole('row')
         .filter({
             has: page.getByRole('cell', {
@@ -572,6 +572,16 @@ export const expectHistoryRow = async (
             }),
         })
         .filter({ hasText: expected.counterpartyHint.slice(0, 10) })
+
+    try {
+        await expect(row).toHaveCount(1, { timeout })
+    } catch (error) {
+        const rows = await table.getByRole('row').allInnerTexts()
+        console.error(error)
+        throw new Error(
+            `No history row ${expected.activity} ${expected.amount} ${expected.counterpartyHint}; Rows shows: \n${rows.map((r: string) => `${r.replace(/\s+/g, ' ')}`).join('\n')}`
+        )
+    }
 
     await expect(row).toHaveCount(1, { timeout })
 }
