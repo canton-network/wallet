@@ -173,9 +173,7 @@ describe('createAuthService', () => {
             name: VaultErrorName.Locked,
         })
         expect(authContext.store).not.toHaveBeenCalled()
-        expect(
-            await (await loadAuthedStore(store, authContext)).listSessions()
-        ).toEqual([])
+        await expect(auth.getStatus()).resolves.toBe('disconnected')
     })
 
     it('connects normally after an earlier lock', async () => {
@@ -185,6 +183,47 @@ describe('createAuthService', () => {
 
         await auth.connect(networkId)
 
+        await expect(auth.getStatus()).resolves.toBe('connected')
+    })
+
+    it('does not overlap the commits of concurrent connects', async () => {
+        const tokenA = jwt({ sub: 'user-a', exp: inAnHour() })
+        const tokenB = jwt({ sub: 'user-b', exp: inAnHour() })
+        signIn.mockResolvedValueOnce(tokenA).mockResolvedValueOnce(tokenB)
+
+        // Hold A's write open until the test releases it.
+        let releaseA!: () => void
+        const aHeld = new Promise<void>((resolve) => (releaseA = resolve))
+        const realStore = authContext.store.getMockImplementation()!
+        authContext.store.mockImplementation(async (token) => {
+            if (token === tokenA) await aHeld
+            return realStore(token)
+        })
+
+        const auth = service()
+        const connectA = auth.connect(networkId)
+        const connectB = auth.connect(networkId)
+
+        // Let everything that isn't blocked run to completion.
+        await vi.waitFor(() =>
+            expect(authContext.store).toHaveBeenCalledWith(tokenA)
+        )
+        await new Promise((resolve) => setTimeout(resolve, 0))
+
+        // B must wait for A's commit; without serialization it writes here.
+        expect(authContext.store).not.toHaveBeenCalledWith(tokenB)
+
+        releaseA()
+        await Promise.all([connectA, connectB])
+
+        // B committed after A, so B's token is current and its session matches it.
+        expect(authContext.store.mock.calls.map(([t]) => t)).toEqual([
+            tokenA,
+            tokenB,
+        ])
+        expect(
+            await (await loadAuthedStore(store, authContext)).listSessions()
+        ).toEqual([expect.objectContaining({ accessToken: tokenB })])
         await expect(auth.getStatus()).resolves.toBe('connected')
     })
 })

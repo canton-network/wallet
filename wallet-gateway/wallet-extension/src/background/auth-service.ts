@@ -55,6 +55,18 @@ export function createAuthService({
         lockSignal = new AbortController()
     })
 
+    let commitQueue: Promise<unknown> = Promise.resolve()
+
+    /**
+     * Runs `fn` after every earlier call has settled, one at a time.
+     * This ensures that multiple concurrent "connect" attempts do not interfere with each other.
+     */
+    function serialized<T>(fn: () => Promise<T>): Promise<T> {
+        const result = commitQueue.then(fn)
+        commitQueue = result.catch(() => undefined)
+        return result
+    }
+
     return {
         async getStatus(): Promise<ConnectionStatus> {
             await assertUnlocked()
@@ -96,23 +108,23 @@ export function createAuthService({
                 scope: network.auth.scope,
                 audience: network.auth.audience,
             })
-            signal.throwIfAborted()
 
-            // addSession reads the auth context, so store the token first,
-            // and put the previous one back if the session can't be added.
-            const previous = await authContext.load()
-            await authContext.store(token)
-            try {
-                await sessions(deps).addSession({
-                    origin: EXTENSION_ORIGIN,
-                    networkId,
-                })
-            } catch (error) {
-                await (previous
-                    ? authContext.store(previous.accessToken)
-                    : authContext.clear())
-                throw error
-            }
+            await serialized(async () => {
+                signal.throwIfAborted() // check inside the lock, right before writing
+                const previous = await authContext.load()
+                await authContext.store(token)
+                try {
+                    await sessions(deps).addSession({
+                        origin: EXTENSION_ORIGIN,
+                        networkId,
+                    })
+                } catch (error) {
+                    await (previous
+                        ? authContext.store(previous.accessToken)
+                        : authContext.clear())
+                    throw error
+                }
+            })
             log.info('Connected to {networkId}', { networkId })
         },
     }
