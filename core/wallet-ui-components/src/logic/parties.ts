@@ -121,7 +121,7 @@ export function walletSyncResultToast(
     result: Pick<SyncWalletsResult, 'added' | 'updated' | 'disabled'>
 ): ToastDescriptor {
     return {
-        title: 'Wallet Sync Complete',
+        title: 'Parties refreshed',
         message: `Added: ${result.added.length}, Updated: ${result.updated.length}, Disabled: ${result.disabled.length}.`,
         type: 'success',
     }

@@ -51,6 +51,8 @@ class IdpFormComponent extends BaseElement {
     }
 
     @property({ type: Boolean }) accessor loading = false
+    /** Names of the networks that use this IdP, which block deleting it */
+    @property({ type: Array }) accessor usedByNetworks: string[] = []
 
     @state() private accessor _error = ''
     @state() private accessor selectedType: Idp['type'] = 'oauth'
@@ -177,8 +179,13 @@ class IdpFormComponent extends BaseElement {
                     color 0.2s ease;
             }
 
-            .btn-delete:hover {
+            .btn-delete:hover:not(:disabled) {
                 background: rgba(var(--wg-error-rgb), 0.08);
+            }
+
+            .btn-delete:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
 
             .form-error {
@@ -408,12 +415,16 @@ class IdpFormComponent extends BaseElement {
                                       Delete identity provider
                                   </h4>
                                   <p class="delete-desc">
-                                      You will not be able to undo the change
-                                      once you delete this Identity Provider.
+                                      ${
+                                          this.usedByNetworks.length > 0
+                                              ? `Used by ${this.usedByNetworks.join(', ')}. Change or delete ${this.usedByNetworks.length === 1 ? 'that network' : 'those networks'} first.`
+                                              : "You can't undo this."
+                                      }
                                   </p>
                                   <button
                                       type="button"
                                       class="btn-delete"
+                                      ?disabled=${this.usedByNetworks.length > 0}
                                       @click=${() =>
                                           this.dispatchEvent(
                                               new IdpFormDeleteEvent(this.idp)

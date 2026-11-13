@@ -7,6 +7,7 @@ import { css, html } from 'lit'
 import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { cardStyles } from '../styles/card'
 import './copy-button.js'
+import './readonly-badge.js'
 
 /** Emitted when the user clicks an IDP card to review it */
 export class IdpCardReviewEvent extends Event {
@@ -54,6 +55,12 @@ class IdpCard extends BaseElement {
                 cursor: initial;
             }
 
+            /* Read-only cards can't be opened, so don't highlight them */
+            .idp-card.readonly:hover {
+                border-color: var(--wg-border);
+                box-shadow: var(--wg-shadow-sm);
+            }
+
             .idp-card:not(.readonly):hover {
                 border-color: var(--wg-accent);
                 box-shadow: var(--wg-shadow-md);
@@ -70,11 +77,6 @@ class IdpCard extends BaseElement {
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
                 color: var(--wg-text);
-            }
-
-            .badge-config {
-                background: var(--wg-badge-bg);
-                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -150,11 +152,9 @@ class IdpCard extends BaseElement {
                     <p class="card-title">${this.idp.id}</p>
                     ${
                         this.configManaged
-                            ? html`<span
-                                  class="wg-badge badge-config"
-                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
-                                  >CONFIG FILE</span
-                              >`
+                            ? html`<wg-readonly-badge
+                                  section="idps"
+                              ></wg-readonly-badge>`
                             : ''
                     }
                 </div>

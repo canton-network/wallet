@@ -26,6 +26,7 @@ const {
     mockNetworkIdGet,
     mockOnboardingSessionIdSet,
     setLocationHref,
+    showPendingToast,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
@@ -37,6 +38,7 @@ const {
     mockNetworkIdGet: vi.fn(() => 'net-1'),
     mockOnboardingSessionIdSet: vi.fn(),
     setLocationHref: vi.fn(),
+    showPendingToast: vi.fn(),
 }))
 
 const defaultAccessToken =
@@ -68,6 +70,7 @@ vi.mock('../state-manager.js', () => ({
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
+vi.mock('../utils.js', () => ({ showPendingToast }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     const actual =
         await importOriginal<
@@ -189,6 +192,10 @@ describe('LoginUI', () => {
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
         vi.useRealTimers()
+    })
+
+    it('shows the toast that the previous page left', async () => {
+        expect(showPendingToast).toHaveBeenCalled()
     })
 
     it('renders the login form with loaded networks and idps', async () => {

@@ -8,23 +8,30 @@ import {
     IdpFormCancelEvent,
     IdpFormDeleteEvent,
     IdpFormSaveEvent,
+    type WgPageHeader,
 } from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeIdp,
+    makePublicNetwork,
     mockIdpsPageFlow,
     mockRequest,
 } from '../../__tests__/test-helpers.js'
 
-const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
-    () => ({
-        mockCreateUserClient: vi.fn(),
-        handleErrorToast: vi.fn(),
-        setLocationHref: vi.fn(),
-    })
-)
+const {
+    showToastAfterNavigation,
+    mockCreateUserClient,
+    handleErrorToast,
+    setLocationHref,
+} = vi.hoisted(() => ({
+    showToastAfterNavigation: vi.fn(),
+    mockCreateUserClient: vi.fn(),
+    handleErrorToast: vi.fn(),
+    setLocationHref: vi.fn(),
+}))
 
 vi.mock('../../index.js', () => ({}))
+vi.mock('../../utils.js', () => ({ showToastAfterNavigation }))
 vi.mock('../../navigation.js', () => ({ setLocationHref }))
 vi.mock('../../rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
@@ -76,9 +83,10 @@ describe('UserUiReviewIdp', () => {
     it('loads and renders the review form for the idp in the URL', async () => {
         await waitUntil(() => el.idp?.id === 'idp-review')
 
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Review Identity Provider'
-        )
+        expect(
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+                ?.heading
+        ).toBe('Edit identity provider')
         expect(el.shadowRoot?.querySelector('idp-form')).not.toBeNull()
     })
 
@@ -241,5 +249,29 @@ describe('UserUiReviewIdp', () => {
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
+    })
+
+    it('blocks deleting an identity provider that networks use', async () => {
+        mockIdpsPageFlow([makeIdp({ id: 'idp-in-use' })], {
+            networks: [
+                makePublicNetwork({
+                    name: 'Main Net',
+                    identityProviderId: 'idp-in-use',
+                }),
+                makePublicNetwork({
+                    name: 'Other Net',
+                    identityProviderId: 'other-idp',
+                }),
+            ],
+        })
+        history.replaceState({}, '', '?id=idp-in-use')
+
+        el = await fixture<UserUiReviewIdp>(componentFixture)
+
+        await waitUntil(() => el.shadowRoot?.querySelector('idp-form'))
+        const form = el.shadowRoot!.querySelector('idp-form') as unknown as {
+            usedByNetworks: string[]
+        }
+        expect(form.usedByNetworks).toEqual(['Main Net'])
     })
 })

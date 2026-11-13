@@ -4,6 +4,7 @@
 import { html, css, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import './back-link.js'
+import './page-header.js'
 import './copy-button.js'
 import { BaseElement } from '../internal/base-element.js'
 import {
@@ -57,18 +58,6 @@ class WgMessageDetail extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
-            }
-
-            .page-title {
-                color: var(--wg-text);
             }
 
             .detail-grid {
@@ -204,8 +193,7 @@ class WgMessageDetail extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="page-title h4 fw-semibold mb-0">Message Details</h1>
+            <wg-page-header heading="Message Details">
                 ${
                     this.backHref
                         ? html`<wg-back-link
@@ -213,7 +201,7 @@ class WgMessageDetail extends BaseElement {
                           ></wg-back-link>`
                         : nothing
                 }
-            </div>
+            </wg-page-header>
 
             <div class="detail-grid">
                 ${this.renderInlineField(

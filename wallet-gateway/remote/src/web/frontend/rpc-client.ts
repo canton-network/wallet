@@ -4,7 +4,7 @@
 import { HttpTransport } from '@canton-network/core-rpc-transport'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 import { stateManager } from './state-manager'
-import { LOGIN_PAGE_REDIRECT } from './constants'
+import { LOGIN_PAGE_REDIRECT, SESSION_EXPIRED_TOAST } from './constants'
 import { setLocationHref } from './navigation.js'
 import {
     getCurrentRoute,
@@ -85,6 +85,7 @@ const handleAutoLogout = async (): Promise<void> => {
         isLoggingOut = false
 
         if (getCurrentRoute(window.location.pathname) !== LOGIN_PAGE_REDIRECT) {
+            stateManager.pendingToast.set(SESSION_EXPIRED_TOAST)
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
         }
     }

@@ -88,7 +88,7 @@ const SyncContainer = ({ fail = false }: { fail?: boolean }) => {
             if (fail) throw new globalThis.Error('sync failed')
 
             showToast({
-                title: 'Wallet Sync Complete',
+                title: 'Parties refreshed',
                 message: 'Added: 1, Updated: 1, Disabled: 1.',
                 type: 'success',
             })
@@ -131,7 +131,7 @@ export const AppFlow: Story = {
         const toast = await within(canvasElement.ownerDocument.body).findByRole(
             'status'
         )
-        await expect(toast).toHaveTextContent('Wallet Sync Complete')
+        await expect(toast).toHaveTextContent('Parties refreshed')
         await expect(toast).toHaveTextContent(
             'Added: 1, Updated: 1, Disabled: 1.'
         )

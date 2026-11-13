@@ -32,6 +32,7 @@ import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils'
 import { detectCurrentOrigin } from '../listeners.js'
+import { PARTIES_DOCS_URL } from '../constants'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
 @customElement('user-ui-parties')
@@ -85,7 +86,11 @@ export class UserUiParties extends BaseElement {
         }
 
         return html`
-            <wg-page-header heading="Parties">
+            <wg-page-header
+                heading="Parties"
+                info="A party is your identity on the Canton ledger. Its signing provider holds its key and signs for it. dApps get your primary party by default."
+                .docsUrl=${PARTIES_DOCS_URL}
+            >
                 <wg-wallets-sync
                     slot="title-suffix"
                     ?syncNeeded=${this.syncNeeded}

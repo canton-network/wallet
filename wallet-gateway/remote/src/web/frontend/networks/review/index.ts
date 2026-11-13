@@ -7,22 +7,24 @@ import {
     BaseElement,
     type NetworkEditSaveEvent,
     type NetworkDeleteEvent,
-    chevronLeftIcon,
     handleErrorToast,
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import type { Network } from '@canton-network/core-wallet-user-rpc-client'
+import type { Idp, Network } from '@canton-network/core-wallet-user-rpc-client'
 import { createUserClient } from '../../rpc-client'
 import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import { detectCurrentOrigin } from '../../listeners.js'
+import { NETWORKS_INFO, NETWORKS_DOCS_URL } from '../../constants'
+import { showToastAfterNavigation } from '../../utils'
 
 @customElement('user-ui-review-network')
 export class UserUiReviewNetwork extends BaseElement {
     @state() accessor network: Network | null = null
     @state() accessor loading = true
+    @state() private accessor idps: Idp[] = []
 
     static styles = [
         BaseElement.styles,
@@ -31,14 +33,6 @@ export class UserUiReviewNetwork extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: var(--wg-space-4);
-                gap: var(--wg-space-3);
             }
 
             .form-wrap {
@@ -66,11 +60,15 @@ export class UserUiReviewNetwork extends BaseElement {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
-            const result = await userClient.request({
-                method: 'getNetwork',
-                params: { networkId },
-            })
+            const [result, idpsResult] = await Promise.all([
+                userClient.request({
+                    method: 'getNetwork',
+                    params: { networkId },
+                }),
+                userClient.request({ method: 'listIdps' }),
+            ])
             this.network = result.network
+            this.idps = idpsResult.idps
         } catch (error) {
             handleErrorToast(error)
             this.navigateBack()
@@ -110,6 +108,11 @@ export class UserUiReviewNetwork extends BaseElement {
                 },
             })
 
+            showToastAfterNavigation(
+                'Network updated',
+                `Saved the network "${e.network.name}".`,
+                'success'
+            )
             setLocationHref(toRelPath('/networks/'))
         } catch (error) {
             handleErrorToast(error)
@@ -117,8 +120,7 @@ export class UserUiReviewNetwork extends BaseElement {
     }
 
     private async onDelete(e: NetworkDeleteEvent) {
-        if (!confirm(`Delete network "${e.network.name}"?`)) return
-
+        // The form already made the user type the network ID to confirm
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
@@ -129,6 +131,11 @@ export class UserUiReviewNetwork extends BaseElement {
                 params: { networkName: e.network.id },
             })
 
+            showToastAfterNavigation(
+                'Network deleted',
+                `Deleted the network "${e.network.name}".`,
+                'success'
+            )
             setLocationHref(toRelPath('/networks/'))
         } catch (error) {
             handleErrorToast(error)
@@ -151,22 +158,19 @@ export class UserUiReviewNetwork extends BaseElement {
         }
 
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Review network</h1>
-                <button
-                    class="btn btn-link btn-sm text-body text-decoration-none p-0 d-inline-flex align-items-center gap-1"
-                    type="button"
-                    @click=${this.navigateBack}
-                >
-                    ${chevronLeftIcon}
-                    <span>Back</span>
-                </button>
-            </div>
+            <wg-page-header
+                heading="Edit network"
+                .info=${NETWORKS_INFO}
+                .docsUrl=${NETWORKS_DOCS_URL}
+            >
+                <wg-back-link @click=${this.navigateBack}></wg-back-link>
+            </wg-page-header>
 
             <div class="form-wrap">
                 <network-form
                     mode="review"
                     .network=${this.network}
+                    .idps=${this.idps}
                     @network-edit-save=${this.onSave}
                     @network-edit-cancel=${this.onCancel}
                     @network-delete=${this.onDelete}

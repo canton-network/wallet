@@ -20,10 +20,13 @@ import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils.js'
 import { detectCurrentOrigin } from '../listeners.js'
+import { API_KEYS_DOCS_URL, API_KEYS_INFO } from '../constants'
 
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {
     @state() accessor apiKeys: ApiKey[] = []
+    /** Unknown until loaded, so Generate stays disabled until then */
+    @state() private accessor apiKeysSupported: boolean | undefined = undefined
     @state() accessor currentPage = 1
 
     private readonly pageSize = 4
@@ -35,14 +38,6 @@ export class UserUiApiKeys extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
             }
 
             .pagination-wrap {
@@ -81,6 +76,7 @@ export class UserUiApiKeys extends BaseElement {
             )
             const apiKeys = await userClient.request({ method: 'listApiKeys' })
             this.apiKeys = apiKeys.apiKeys
+            this.apiKeysSupported = apiKeys.apiKeysSupported
 
             const maxPage = Math.max(
                 1,
@@ -112,7 +108,11 @@ export class UserUiApiKeys extends BaseElement {
                 params: { id: apiKeyEvent.apiKey.id },
             })
 
-            showToast('', 'API key removed', 'success')
+            showToast(
+                'API key revoked',
+                `Revoked the API key "${apiKeyEvent.apiKey.name}".`,
+                'success'
+            )
 
             this.apiKeys = this.apiKeys.filter(
                 (key) => key.id !== apiKeyEvent.apiKey.id
@@ -124,19 +124,31 @@ export class UserUiApiKeys extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">API Keys</h1>
-
+            <wg-page-header
+                heading="API Keys"
+                .info=${API_KEYS_INFO}
+                .docsUrl=${API_KEYS_DOCS_URL}
+            >
                 <button
                     class="btn btn-primary btn-sm rounded-pill btn-add"
                     type="button"
+                    ?disabled=${this.apiKeysSupported !== true}
                     @click=${() => setLocationHref(toRelPath('/api-keys/add/'))}
                 >
                     <span aria-hidden="true">+</span>
                     Generate
                 </button>
-            </div>
+            </wg-page-header>
 
+            ${
+                this.apiKeysSupported === false
+                    ? html`<div class="alert alert-info" role="status">
+                          API keys don't work on this network yet because it has
+                          no service account auth. Ask your Wallet Gateway admin
+                          to add it.
+                      </div>`
+                    : ''
+            }
             ${
                 this.apiKeys.length === 0
                     ? html`<p class="mb-0 text-body-secondary">

@@ -7,7 +7,6 @@ import {
     BaseElement,
     type IdpFormSaveEvent,
     type IdpFormDeleteEvent,
-    chevronLeftIcon,
     handleErrorToast,
     toRelHref,
     toRelPath,
@@ -18,11 +17,17 @@ import { setLocationHref } from '../../navigation.js'
 import { stateManager } from '../../state-manager'
 import '../../index'
 import { detectCurrentOrigin } from '../../listeners.js'
+import {
+    IDENTITY_PROVIDERS_INFO,
+    IDENTITY_PROVIDERS_DOCS_URL,
+} from '../../constants'
+import { showToastAfterNavigation } from '../../utils'
 
 @customElement('user-ui-review-idp')
 export class UserUiReviewIdp extends BaseElement {
     @state() accessor idp: Idp | null = null
     @state() accessor loading = true
+    @state() private accessor usedByNetworks: string[] = []
 
     static styles = [
         BaseElement.styles,
@@ -31,14 +36,6 @@ export class UserUiReviewIdp extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: var(--wg-space-4);
-                gap: var(--wg-space-3);
             }
 
             .form-wrap {
@@ -66,7 +63,10 @@ export class UserUiReviewIdp extends BaseElement {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
-            const result = await userClient.request({ method: 'listIdps' })
+            const [result, networksResult] = await Promise.all([
+                userClient.request({ method: 'listIdps' }),
+                userClient.request({ method: 'listNetworks' }),
+            ])
 
             const found = result.idps.find((i: Idp) => i.id === idpId)
             if (!found) {
@@ -78,6 +78,9 @@ export class UserUiReviewIdp extends BaseElement {
             }
 
             this.idp = found
+            this.usedByNetworks = networksResult.networks
+                .filter((network) => network.identityProviderId === idpId)
+                .map((network) => network.name)
         } catch (error) {
             handleErrorToast(error)
             this.navigateBack()
@@ -101,6 +104,11 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { idp: e.idp },
             })
 
+            showToastAfterNavigation(
+                'Identity provider updated',
+                `Saved the identity provider "${e.idp.id}".`,
+                'success'
+            )
             setLocationHref(toRelPath('/identity-providers/'))
         } catch (error) {
             handleErrorToast(error)
@@ -120,6 +128,11 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { identityProviderId: e.idp.id },
             })
 
+            showToastAfterNavigation(
+                'Identity provider deleted',
+                `Deleted the identity provider "${e.idp.id}".`,
+                'success'
+            )
             setLocationHref(toRelPath('/identity-providers/'))
         } catch (error) {
             handleErrorToast(error)
@@ -142,22 +155,19 @@ export class UserUiReviewIdp extends BaseElement {
         }
 
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Review Identity Provider</h1>
-                <button
-                    class="btn btn-link btn-sm text-body text-decoration-none p-0 d-inline-flex align-items-center gap-1"
-                    type="button"
-                    @click=${this.navigateBack}
-                >
-                    ${chevronLeftIcon}
-                    <span>Back</span>
-                </button>
-            </div>
+            <wg-page-header
+                heading="Edit identity provider"
+                .info=${IDENTITY_PROVIDERS_INFO}
+                .docsUrl=${IDENTITY_PROVIDERS_DOCS_URL}
+            >
+                <wg-back-link @click=${this.navigateBack}></wg-back-link>
+            </wg-page-header>
 
             <div class="form-wrap">
                 <idp-form
                     mode="review"
                     .idp=${this.idp}
+                    .usedByNetworks=${this.usedByNetworks}
                     @idp-form-save=${this.onSave}
                     @idp-form-cancel=${this.onCancel}
                     @idp-form-delete=${this.onDelete}

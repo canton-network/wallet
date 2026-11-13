@@ -165,6 +165,9 @@ export function mockNetworksPageFlow(
         if (method === 'listNetworks') {
             return { networks, configManagedIds: options.configManagedIds }
         }
+        if (method === 'listIdps') {
+            return { idps: [makeIdp()] }
+        }
         if (method === 'listSessions') {
             return { sessions: [] }
         }
@@ -183,11 +186,14 @@ export function mockNetworksPageFlow(
 
 export function mockApiKeysPageFlow(
     apiKeys: ApiKey[],
-    options: { isAdmin?: boolean } = {}
+    options: { isAdmin?: boolean; apiKeysSupported?: boolean } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listApiKeys') {
-            return { apiKeys }
+            return {
+                apiKeys,
+                apiKeysSupported: options.apiKeysSupported ?? true,
+            }
         }
         if (method === 'listSessions') {
             return { sessions: [] }
@@ -215,6 +221,9 @@ export function mockReviewNetworkFlow(
         if (method === 'getNetwork') {
             return { network }
         }
+        if (method === 'listIdps') {
+            return { idps: [makeIdp()] }
+        }
         if (method === 'getUser') {
             return {
                 userId: 'user-1',
@@ -232,11 +241,18 @@ export function mockReviewNetworkFlow(
 
 export function mockIdpsPageFlow(
     idps: Idp[],
-    options: { isAdmin?: boolean; configManagedIds?: string[] } = {}
+    options: {
+        isAdmin?: boolean
+        configManagedIds?: string[]
+        networks?: PublicNetwork[]
+    } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listIdps') {
             return { idps, configManagedIds: options.configManagedIds }
+        }
+        if (method === 'listNetworks') {
+            return { networks: options.networks ?? [] }
         }
         if (method === 'getUser') {
             return {
