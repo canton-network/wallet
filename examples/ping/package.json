@@ -24,6 +24,7 @@
         "react-dom": "catalog:"
     },
     "devDependencies": {
+        "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-wallet-test-utils": "workspace:",
         "@playwright/test": "catalog:",
         "@types/node": "catalog:",

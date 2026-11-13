@@ -115,6 +115,29 @@ describe('UserUiNetworks', () => {
         expect(el.shadowRoot?.querySelector('.btn-add')).toBeNull()
     })
 
+    it('shows config-managed networks as read-only for admin users', async () => {
+        mockNetworksPageFlow(
+            [
+                makePublicNetwork({ id: 'net-1' }),
+                makePublicNetwork({ id: 'net-2' }),
+            ],
+            { isAdmin: true, configManagedIds: ['net-1'] }
+        )
+
+        el = await fixture<UserUiNetworks>(componentFixture)
+
+        await waitUntil(() => getNetworkCards(el).length === 2)
+
+        const cards = Array.from(
+            el.shadowRoot!.querySelectorAll('network-card')
+        ) as unknown as Array<{ readonly: boolean; configManaged: boolean }>
+        expect(cards.map((card) => card.readonly)).toEqual([true, false])
+        expect(cards.map((card) => card.configManaged)).toEqual([true, false])
+        expect(el.shadowRoot?.textContent?.replace(/\s+/g, ' ')).toContain(
+            'Entries marked CONFIG FILE are managed by the Wallet Gateway config file and are read-only.'
+        )
+    })
+
     it('marks a network connected only when session status is connected', async () => {
         const network = makePublicNetwork({ id: 'net-1' })
         mockRequest.mockImplementation(async ({ method }) => {

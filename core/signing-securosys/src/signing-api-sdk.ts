@@ -15,6 +15,50 @@ import type {
 } from '@canton-network/core-signing-lib'
 import { Agent, type Dispatcher } from 'undici'
 
+/**
+ * A failed TSB call. `message` carries the raw response body for diagnostics,
+ * `userMessage` only what TSB reports as the reason and is safe to show to
+ * users and dApps.
+ */
+export class TsbApiError extends Error {
+    readonly userMessage: string
+
+    constructor(
+        endpoint: string,
+        status: number,
+        statusText: string,
+        body: string
+    ) {
+        super(
+            `TSB API call to ${endpoint} failed (${status}): ${body || statusText}`
+        )
+        this.name = 'TsbApiError'
+        const reason = tsbErrorMessage(body) ?? statusText
+        this.userMessage = reason
+            ? `Securosys request failed (${status}): ${reason}`
+            : `Securosys request failed (${status})`
+    }
+}
+
+/** TSB reports errors as `{ errorCode, reason, message }`. */
+function tsbErrorMessage(body: string): string | undefined {
+    try {
+        const parsed: unknown = JSON.parse(body)
+        if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            'message' in parsed &&
+            typeof parsed.message === 'string' &&
+            parsed.message
+        ) {
+            return parsed.message
+        }
+    } catch {
+        // not JSON
+    }
+    return undefined
+}
+
 export type TsbRequestStatus =
     | 'PENDING'
     | 'APPROVED'
@@ -362,6 +406,23 @@ function readDerLength(
     return { length, offset: offset + 1 + lengthBytes }
 }
 
+/**
+ * Explains a rejected or failed request, adding the TSB status when it tells
+ * more than the signing status, e.g. `EXPIRED`
+ */
+export function tsbFailureReason(status: TsbRequestStatus): string | undefined {
+    const signingStatus = mapTsbStatus(status)
+    const detail = status.toLowerCase() !== signingStatus ? ` (${status})` : ''
+    switch (signingStatus) {
+        case 'rejected':
+            return `Securosys rejected the signing request${detail}`
+        case 'failed':
+            return `Securosys failed to sign the request${detail}`
+        default:
+            return undefined
+    }
+}
+
 export function mapTsbStatus(status: TsbRequestStatus): SigningStatus {
     switch (status) {
         case 'EXECUTED':
@@ -485,9 +546,11 @@ export class SigningAPIClient {
         const response = await fetch(`${this.baseUrl}${endpoint}`, requestInit)
 
         if (!response.ok) {
-            const errorText = await response.text()
-            throw new Error(
-                `TSB API call to ${endpoint} failed (${response.status}): ${errorText || response.statusText}`
+            throw new TsbApiError(
+                endpoint,
+                response.status,
+                response.statusText,
+                await response.text()
             )
         }
 
@@ -631,6 +694,7 @@ export class SigningAPIClient {
             status,
             signature,
             publicKey: cached?.publicKey,
+            failureReason: tsbFailureReason(response.status),
             metadata: {
                 ...cachedMetadata,
                 ...compact({
@@ -955,6 +1019,7 @@ export class SigningAPIClient {
             this.transactionCache.set(txId, {
                 ...cached,
                 status: 'rejected',
+                failureReason: tsbFailureReason('CANCELLED'),
                 metadata: {
                     ...cached.metadata,
                     tsbStatus: 'CANCELLED',

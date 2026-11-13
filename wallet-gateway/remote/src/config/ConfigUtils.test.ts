@@ -24,12 +24,23 @@ const inlineAdminAuth = {
 }
 
 function withInlineAdminSecret(config: typeof testConfig) {
-    const [network, ...networks] = config.bootstrap.networks
+    const [network] = config.networks
+    const idp = config.idps.find(
+        (idp: { id: string }) => idp.id === network.identityProviderId
+    )
     return {
         ...config,
+        // Only the deprecated bootstrap section is used for inline secrets here
         bootstrap: {
-            ...config.bootstrap,
-            networks: [{ ...network, adminAuth: inlineAdminAuth }, ...networks],
+            idps: [{ ...idp, id: 'bootstrap-idp' }],
+            networks: [
+                {
+                    ...network,
+                    id: 'bootstrap-network',
+                    identityProviderId: 'bootstrap-idp',
+                    adminAuth: inlineAdminAuth,
+                },
+            ],
         },
     }
 }
@@ -37,9 +48,27 @@ function withInlineAdminSecret(config: typeof testConfig) {
 describe('ConfigUtils.parseConfig warnings', () => {
     const warnings = (config: unknown) =>
         ConfigUtils.parseConfig(config).warnings
+    const inlineSecretWarnings = (config: unknown) =>
+        warnings(config).filter((warning) =>
+            warning.id.startsWith('inline-secret:')
+        )
 
     it('returns no warnings for the test config', () => {
         expect(warnings(testConfig)).toEqual([])
+    })
+
+    it('warns about bootstrap with the migration to take', () => {
+        expect(
+            warnings({ ...testConfig, bootstrap: { idps: [], networks: [] } })
+        ).toEqual([
+            expect.objectContaining({
+                id: 'deprecated-config:bootstrap',
+                severity: 'warning',
+                message: expect.stringContaining(
+                    'Move bootstrap.idps to idps and bootstrap.networks to networks'
+                ),
+            }),
+        ])
     })
 
     it('warns about server.host and server.tls with the action to take', () => {
@@ -68,7 +97,7 @@ describe('ConfigUtils.parseConfig warnings', () => {
 
     it('warns about inline secrets with the env field to use', () => {
         expect(
-            warnings({
+            inlineSecretWarnings({
                 ...withInlineAdminSecret(testConfig),
                 store: {
                     connection: { ...postgresConnection, password: 'inline' },
@@ -92,5 +121,19 @@ describe('ConfigUtils.parseConfig warnings', () => {
                 message: expect.stringContaining('Prefer clientSecretEnv'),
             }),
         ])
+    })
+
+    it('warns about inline secrets of config-managed networks', () => {
+        const [network, ...networks] = testConfig.networks
+
+        expect(
+            warnings({
+                ...testConfig,
+                networks: [
+                    { ...network, adminAuth: inlineAdminAuth },
+                    ...networks,
+                ],
+            }).map((warning) => warning.id)
+        ).toEqual(['inline-secret:networks[0].adminAuth.clientSecret'])
     })
 })

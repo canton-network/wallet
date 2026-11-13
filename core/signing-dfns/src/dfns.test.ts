@@ -337,6 +337,20 @@ describe('DfnsHandler', () => {
             }
         })
 
+        test('reports the Dfns reason when signing is rejected', async () => {
+            dfnsKeysMock.generateSignature.mockResolvedValueOnce({
+                id: SIG_ID,
+                status: 'Rejected',
+                reason: 'Denied by policy',
+            })
+
+            const sig = await createHandler().signHash(KEY_ID, hashBase64)
+
+            expect(sig.failureReason).toBe(
+                'Dfns rejected the signing request (Denied by policy)'
+            )
+        })
+
         test('rethrows generateSignature errors', async () => {
             const err = new Error('sign failed')
             dfnsKeysMock.generateSignature.mockRejectedValue(err)
@@ -416,6 +430,34 @@ describe('DfnsHandler', () => {
                 ),
             })
         })
+
+        test.each([
+            {
+                status: 'Rejected',
+                reason: 'Denied by policy',
+                failureReason:
+                    'Dfns rejected the signing request (Denied by policy)',
+            },
+            {
+                status: 'Failed',
+                reason: undefined,
+                failureReason: 'Dfns failed to sign the request',
+            },
+            { status: 'Signed', reason: undefined, failureReason: undefined },
+        ])(
+            'derives failure reason $failureReason from $status / $reason',
+            async ({ status, reason, failureReason }) => {
+                dfnsKeysMock.getSignature.mockResolvedValue({
+                    id: SIG_ID,
+                    status,
+                    ...(reason && { reason }),
+                })
+
+                const sig = await createHandler().getSignature(KEY_ID, SIG_ID)
+
+                expect(sig?.failureReason).toBe(failureReason)
+            }
+        )
 
         test('returns undefined when the API throws', async () => {
             dfnsKeysMock.getSignature.mockRejectedValue(new Error('missing'))
@@ -534,7 +576,13 @@ describe('DfnsHandler', () => {
                     nextPageToken: 'sig-page-2',
                 })
                 .mockResolvedValueOnce({
-                    items: [{ id: 'sig-2', status: 'Rejected' }],
+                    items: [
+                        {
+                            id: 'sig-2',
+                            status: 'Rejected',
+                            reason: 'Denied by policy',
+                        },
+                    ],
                     nextPageToken: undefined,
                 })
 
@@ -557,6 +605,8 @@ describe('DfnsHandler', () => {
                     keyId: KEY_ID,
                     status: 'rejected',
                     signature: undefined,
+                    failureReason:
+                        'Dfns rejected the signing request (Denied by policy)',
                 },
             ])
             expect(dfnsKeysMock.listSignatures).toHaveBeenNthCalledWith(1, {

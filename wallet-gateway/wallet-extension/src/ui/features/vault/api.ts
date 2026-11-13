@@ -19,7 +19,6 @@ export const vaultStatusQuery = () =>
         queryKey: queryKeys.vault.status(),
         queryFn: () => vaultMessenger.sendMessage('vault.getStatus'),
         staleTime: 0,
-        networkMode: 'always',
     })
 
 // Vault messages stay inside the extension, so they use `networkMode:
@@ -35,7 +34,6 @@ export function useCreateVault() {
     return useMutation({
         mutationFn: (password: string) =>
             vaultMessenger.sendMessage('vault.create', { password }),
-        networkMode: 'always',
         gcTime: 0,
         onSuccess: () => {
             queryClient.setQueryData<VaultStatus>(
@@ -51,7 +49,6 @@ export function useUnlockVault() {
     return useMutation({
         mutationFn: (password: string) =>
             vaultMessenger.sendMessage('vault.unlock', { password }),
-        networkMode: 'always',
         gcTime: 0,
         onSuccess: () => {
             queryClient.setQueryData<VaultStatus>(
@@ -66,7 +63,6 @@ export function useLockVault() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: () => vaultMessenger.sendMessage('vault.lock'),
-        networkMode: 'always',
         // Drop everything read while unlocked, the status included.
         // watchVaultStatus does the same in every open page; this covers the
         // page that locked even if the storage event comes late.

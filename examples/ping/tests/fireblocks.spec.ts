@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     test,
     type WalletGateway,
@@ -93,12 +94,22 @@ test.describe('Fireblocks external signing', () => {
             submission.externalTxId,
             'rejected'
         )
+        const failureReason = 'Fireblocks rejected the signing request'
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 
     test('fails when Fireblocks fails signing', async () => {
@@ -111,11 +122,21 @@ test.describe('Fireblocks external signing', () => {
             'failed'
         )
 
+        const failureReason = 'Fireblocks failed to sign the request'
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 })

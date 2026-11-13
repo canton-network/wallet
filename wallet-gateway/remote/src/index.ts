@@ -168,7 +168,10 @@ const hasDb = process.argv.slice(2).includes('db')
 if (hasDb) {
     const config = ConfigUtils.loadConfigFile(options.config).config
     setupConsoleSink()
-    db = createCLI(config.store, config.bootstrap) as Command
+    db = createCLI(config.store, config.bootstrap, {
+        idps: config.idps,
+        networks: config.networks,
+    }) as Command
 }
 
 const hasSigningDb = process.argv.slice(2).includes('signing-db')

@@ -31,6 +31,7 @@ interface DfnsMockSignature {
     messageHex: string
     externalId?: string
     signatureHex?: string
+    reason?: string
 }
 
 interface DfnsCreateKeyBody {
@@ -49,6 +50,7 @@ interface DfnsSetTransactionStateBody {
     signatureId?: string
     status?: DfnsApiStatus
     signatureHex?: string
+    reason?: string
 }
 
 const MOCK_CRED_ID = 'mock-cred-id'
@@ -97,6 +99,7 @@ function signatureApiResponse(signature: DfnsMockSignature): {
         r: string
         s: string
     }
+    reason?: string
 } {
     const encodedSignature = signatureResponse(signature)
     return {
@@ -106,6 +109,7 @@ function signatureApiResponse(signature: DfnsMockSignature): {
             encodedSignature !== undefined && {
                 signature: encodedSignature,
             }),
+        ...(signature.reason !== undefined && { reason: signature.reason }),
     }
 }
 
@@ -273,7 +277,7 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
             method: 'POST',
             path: '/_admin/setTransactionState',
             handler: ({ body }) => {
-                const { signatureId, status, signatureHex } =
+                const { signatureId, status, signatureHex, reason } =
                     body as DfnsSetTransactionStateBody
                 if (!signatureId) {
                     return {
@@ -292,6 +296,7 @@ export function createDfnsMockProvider(): SigningProviderMockRoute[] {
                                 normalizeHex(signatureHex)
                             ),
                         }),
+                        ...(reason !== undefined && { reason }),
                     })
                 )
                 if (!nextTx) {

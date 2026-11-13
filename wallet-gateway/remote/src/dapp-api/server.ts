@@ -3,38 +3,39 @@
 
 import type express from 'express'
 import cors from 'cors'
-import { dappController } from './controller.js'
-import type { Logger } from 'pino'
+import { dappController, type DappControllerOptions } from './controller.js'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
 import type { Methods } from './rpc-gen/index.js'
 import { paramSchemas } from './rpc-gen/schemas.js'
 import type { Store } from '@canton-network/core-wallet-store'
 import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Server } from 'http'
-import type { KernelInfo, ServerConfig } from '../config/Config.js'
-import type { DappControllerDeps } from './controller.js'
-import {
-    type HASHING_SCHEME_VERSION,
-    type NotificationService,
-    subscribeNotifications,
-} from '@canton-network/core-wallet-services'
+import type { ServerConfig } from '../config/Config.js'
+import { subscribeNotifications } from '@canton-network/core-wallet-services'
 import { SseNotificationSink } from './sse-sink.js'
 import { issueSseTicket } from '../middleware/sseTicket.js'
 
-export const dapp = (
-    route: string,
-    app: express.Express,
-    logger: Logger,
-    server: Server,
-    kernelInfo: KernelInfo,
-    dappUrl: string,
-    userUrl: string,
-    serverConfig: ServerConfig,
-    notificationService: NotificationService,
-    store: Store & AuthAware<Store>,
-    controllerDeps: DappControllerDeps,
-    hashingSchemeVersion: HASHING_SCHEME_VERSION
-) => {
+export interface DappApiOptions extends Omit<
+    DappControllerOptions,
+    'store' | 'origin' | 'context'
+> {
+    route: string
+    app: express.Express
+    server: Server
+    serverConfig: ServerConfig
+    store: Store & AuthAware<Store>
+}
+
+export const dapp = ({
+    route,
+    app,
+    server,
+    serverConfig,
+    store,
+    logger,
+    notificationService,
+    ...controllerOptions
+}: DappApiOptions) => {
     app.use(
         cors({
             origin: serverConfig.allowedOrigins,
@@ -99,18 +100,14 @@ export const dapp = (
         const origin: string | null = req.headers.origin ?? null
 
         jsonRpcHandler<Methods>({
-            controller: dappController(
-                kernelInfo,
-                dappUrl,
-                userUrl,
-                store.withAuthContext(req.authContext),
-                notificationService,
+            controller: dappController({
+                ...controllerOptions,
                 logger,
+                notificationService,
+                store: store.withAuthContext(req.authContext),
                 origin,
-                controllerDeps,
-                hashingSchemeVersion,
-                req.authContext
-            ),
+                context: req.authContext,
+            }),
             logger,
             paramSchemas,
         })(req, res, next)
