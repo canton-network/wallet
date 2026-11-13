@@ -39,7 +39,10 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 
 import './index.js'
 import type { UserUiAddApiKey } from './index.js'
-import { ApiKeyGenerateEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    ApiKeyGenerateEvent,
+    type WgPageHeader,
+} from '@canton-network/core-wallet-ui-components'
 
 describe('UserUiAddApiKey', () => {
     let el: UserUiAddApiKey
@@ -61,9 +64,10 @@ describe('UserUiAddApiKey', () => {
     })
 
     it('renders the add-api-key form', () => {
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Generate new API Key'
-        )
+        expect(
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+                ?.heading
+        ).toBe('Generate API key')
         expect(el.shadowRoot?.querySelector('api-key-form')).not.toBeNull()
     })
 
@@ -84,8 +88,8 @@ describe('UserUiAddApiKey', () => {
 
     it('navigates back when Back is clicked', () => {
         const backBtn = el.shadowRoot?.querySelector(
-            '.page-header button'
-        ) as HTMLButtonElement
+            'wg-back-link'
+        ) as HTMLElement
         backBtn.click()
 
         expect(setLocationHref).toHaveBeenCalledWith(

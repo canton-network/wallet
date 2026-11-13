@@ -32,3 +32,5 @@ export const NETWORKS_INFO =
     "A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
 export const IDENTITY_PROVIDERS_INFO =
     "An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."
+export const API_KEYS_INFO =
+    'API keys let a backend service or CI job submit transactions through the dApp API without a person approving each one. They only work on networks with service account auth configured.'

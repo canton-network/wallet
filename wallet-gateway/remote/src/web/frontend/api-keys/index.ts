@@ -20,7 +20,7 @@ import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils.js'
 import { detectCurrentOrigin } from '../listeners.js'
-import { API_KEYS_DOCS_URL } from '../constants'
+import { API_KEYS_DOCS_URL, API_KEYS_INFO } from '../constants'
 
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {
@@ -126,7 +126,7 @@ export class UserUiApiKeys extends BaseElement {
         return html`
             <wg-page-header
                 heading="API Keys"
-                info="API keys let a backend service or CI job submit transactions through the dApp API without a person approving each one. They only work on networks with service account auth configured."
+                .info=${API_KEYS_INFO}
                 .docsUrl=${API_KEYS_DOCS_URL}
             >
                 <button
