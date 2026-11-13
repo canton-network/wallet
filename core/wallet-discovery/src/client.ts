@@ -172,9 +172,7 @@ export class DiscoveryClient {
                 }
             })
 
-            const picked = await this.config.walletPicker(entries, {
-                requestedScopes: params?.requestedScopes,
-            })
+            const picked = await this.config.walletPicker(entries)
             targetId = picked.providerId
         }
 

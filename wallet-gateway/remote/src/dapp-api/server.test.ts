@@ -52,7 +52,7 @@ test('call connect rpc', async () => {
             jsonrpc: '2.0',
             id: 0,
             method: 'connect',
-            params: { requestedScopes: ['ledger:read', 'l:pkg:#pkg-one'] },
+            params: { scopes: ['ledger:read', 'l:pkg:#pkg-one'] },
         })
         .set('Accept', 'application/json')
 
@@ -65,7 +65,7 @@ test('call connect rpc', async () => {
             isNetworkConnected: false,
             networkReason: 'Unauthenticated',
             userUrl:
-                'http://localhost:3030/login/?requestedScopes=ledger%3Aread&requestedScopes=l%3Apkg%3A%23pkg-one',
+                'http://localhost:3030/login/?scopes=ledger%3Aread&scopes=l%3Apkg%3A%23pkg-one',
         },
     })
 })

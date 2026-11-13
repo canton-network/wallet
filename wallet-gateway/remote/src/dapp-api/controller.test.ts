@@ -256,12 +256,12 @@ describe('dappController', () => {
             )
 
             const result = await controller.connect({
-                requestedScopes: ['ledger:read', 'l:pkg:#pkg-one'],
+                scopes: ['ledger:read', 'l:pkg:#pkg-one'],
             })
 
             const url = new URL(result.userUrl!)
             expect(`${url.origin}${url.pathname}`).toBe(`${userUrl}/login/`)
-            expect(url.searchParams.getAll('requestedScopes')).toEqual([
+            expect(url.searchParams.getAll('scopes')).toEqual([
                 'ledger:read',
                 'l:pkg:#pkg-one',
             ])
@@ -278,7 +278,7 @@ describe('dappController', () => {
                 undefined
             )
 
-            const result = await controller.connect({ requestedScopes: [] })
+            const result = await controller.connect({ scopes: [] })
 
             expect(result.userUrl).toBe(`${userUrl}/login/`)
         })
@@ -293,12 +293,12 @@ describe('dappController', () => {
             )
 
             const result = await controller.connect({
-                requestedScopes: ['ledger:read'],
+                scopes: ['ledger:read'],
             })
 
             expect(result).toMatchObject({
                 isConnected: true,
-                userUrl: `${userUrl}/login/?requestedScopes=ledger%3Aread`,
+                userUrl: `${userUrl}/login/?scopes=ledger%3Aread`,
             })
         })
 

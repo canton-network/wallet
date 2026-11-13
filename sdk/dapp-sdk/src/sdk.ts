@@ -64,13 +64,28 @@ export interface DappSDKConnectOptions<
     enableSuggestedWallets?: boolean
 }
 
-export interface DappSDKConnectParams extends ConnectParams {
-    /** @deprecated Pass to `init()` instead. */
-    defaultAdapters?: ProviderAdapter[]
-    /** @deprecated Pass to `init()` instead. */
-    additionalAdapters?: ProviderAdapter[] | undefined
-    /** @deprecated Pass to `init()` instead. */
-    enableSuggestedWallets?: boolean
+/**
+ * Checks whether connect argument are using deprecated way of initializing SDK through connect by passing options as param.
+ * It uses duck typing in the following way:
+ * - if any of deprecated init options properties are present then it's deprecated init options
+ * - if it's an empty object then it's deprecated init options
+ * - if it's undefined, or object with different keys then it's the new dapp-api connect params
+ */
+function isDeprecatedConnectOptions(
+    arg: ConnectParams | DappSDKConnectOptions | undefined
+): arg is DappSDKConnectOptions {
+    const DEPRECATED_CONNECT_OPTION_KEYS: string[] = [
+        'defaultAdapters',
+        'additionalAdapters',
+        'enableSuggestedWallets',
+    ] satisfies Array<keyof DappSDKConnectOptions>
+
+    if (arg === undefined) return false
+    const keys = Object.keys(arg)
+    return (
+        keys.length === 0 ||
+        keys.some((key) => DEPRECATED_CONNECT_OPTION_KEYS.includes(key))
+    )
 }
 
 function defaultTrue(b: boolean | undefined): boolean {
@@ -371,32 +386,27 @@ export class DappSDK {
 
     /**
      * Opens the wallet picker and connects to the selected wallet.
-     *
-     * `params.requestedScopes` are Ledger API access token scopes the dApp asks
-     * the user to approve; they are passed to the wallet picker and sent with
-     * the wallet's `connect` request.
-     *
-     * Deprecated adapter options in `params` are forwarded to `init()`.
+     * Passes `params` to the `connect` method of dapp-api.
+     * `options` here is a legacy convenience that forwards to {@link DappSDK.init};
+     * prefer {@link init} with adapters at startup.
      */
-    async connect(params?: DappSDKConnectParams): Promise<ConnectResult> {
-        // Before requestedScopes, connect(options) took only init options, and any
-        // passed object (including {}) meant init(options) then connect(). The
-        // init options are now deprecated fields, so the argument decides:
-        // - undefined                         -> init()
-        // - {}                                -> init({}), as before
-        // - { requestedScopes } only          -> init(), keeps init() config intact
-        // - requestedScopes + any init option -> init(initOptions)
-        // init({}) is kept for {} because it resets the config to default adapters.
-        // TODO: find a cleaner API for this, or check whether the deprecated
-        //  init options can be removed from connect().
-        const { requestedScopes, ...initOptions } = params ?? {}
-        const hasInitOptions =
-            params !== undefined &&
-            (Object.keys(params).length === 0 ||
-                Object.keys(initOptions).length > 0)
-        if (hasInitOptions) {
-            await this.init(initOptions)
+    async connect(params?: ConnectParams): Promise<ConnectResult>
+    /** @deprecated Pass options to `init()` instead. */
+    async connect(options: DappSDKConnectOptions): Promise<ConnectResult>
+    async connect(
+        // A single discriminated union argument for either deprecated init options or dapp-api connect params.
+        // A single argument was chosen rather than adding second one because it enables removing deprecated init options
+        // without introducing a breaking change of moving connect params from second to first argument.
+        arg?: ConnectParams | DappSDKConnectOptions
+    ): Promise<ConnectResult> {
+        let connectParams: ConnectParams | undefined
+        // Prefer init({ ... }) once at startup. Passing options here remains supported
+        // for older call sites; it is equivalent to init(options) then connect().
+        // For connecting with a scoped access token, init must be used instead of passing DappSDKConnectOptions here.
+        if (isDeprecatedConnectOptions(arg)) {
+            await this.init(arg)
         } else {
+            connectParams = arg
             await this.init()
         }
 
@@ -422,12 +432,7 @@ export class DappSDK {
                 }
             })
 
-        const initialSelection = await this.walletPicker(entries, {
-            requestedScopes,
-        })
-        const connectParams: ConnectParams | undefined = requestedScopes
-            ? { requestedScopes }
-            : undefined
+        const initialSelection = await this.walletPicker(entries)
         const connectionAttempts = new EventTarget()
 
         return new Promise<ConnectResult>((resolve, reject) => {
@@ -663,21 +668,19 @@ export class DappSDK {
 export const sdk = new DappSDK()
 
 /**
- * Opens the wallet picker and connects. Prefer {@link init} with adapters at startup;
- * `options` here is a legacy convenience that forwards to {@link DappSDK.init}.
+ * Opens the wallet picker and connects to the selected wallet.
+ * Passes `params` to the `connect` method of dapp-api.
+ * `options` here is a legacy convenience that forwards to {@link DappSDK.init};
+ * prefer {@link init} with adapters at startup.
  */
-export function connect(): Promise<ConnectResult>
+export function connect(params?: ConnectParams): Promise<ConnectResult>
 /** @deprecated Pass options to `init()` instead. */
 export function connect(options: DappSDKConnectOptions): Promise<ConnectResult>
 export function connect(
-    options?: DappSDKConnectOptions
+    arg?: ConnectParams | DappSDKConnectOptions
 ): Promise<ConnectResult> {
-    // TODO we probably shouldn't add logic in the convenience exported methods
-    //  that would not execute if called through sdk.connect
-    if (options) {
-        return sdk.init(options).then(() => sdk.connect())
-    }
-    return sdk.connect()
+    // Both branches are the same call, narrowing picks the overload
+    return isDeprecatedConnectOptions(arg) ? sdk.connect(arg) : sdk.connect(arg)
 }
 
 export const init = (options?: DappSDKConnectOptions): Promise<void> =>

@@ -463,7 +463,7 @@ describe('DappSDK', () => {
             )
         })
 
-        it('passes requested scopes to the wallet picker and connect request', async () => {
+        it('passes scopes to the connect request', async () => {
             const provider = makeMockProvider()
             setRemoteProviderFactory(() => asProvider(provider))
             const walletPicker = vi.fn(async () => ({
@@ -473,19 +473,21 @@ describe('DappSDK', () => {
                 url: 'https://custom.gateway.test',
             }))
             const sdk = new DappSDK({ walletPicker })
-            const requestedScopes = ['ledger:read', 'l:pkg:#pkg-one']
+            const scopes = ['ledger:read', 'l:pkg:#pkg-one']
 
-            await sdk.connect({ defaultAdapters: [], requestedScopes })
+            await sdk.init({ defaultAdapters: [] })
+            await sdk.connect({ scopes })
 
-            expect(walletPicker).toHaveBeenCalledWith([], { requestedScopes })
+            expect(walletPicker).toHaveBeenCalledWith([])
             expect(provider.request).toHaveBeenCalledWith({
                 method: 'connect',
-                params: { requestedScopes },
+                params: { scopes },
             })
         })
 
-        it('keeps init() config when connect gets only requested scopes', async () => {
-            setRemoteProviderFactory(() => asProvider(makeMockProvider()))
+        it('initialises with deprecated connect options and sends no params', async () => {
+            const provider = makeMockProvider()
+            setRemoteProviderFactory(() => asProvider(provider))
             const walletPicker = vi.fn(async () => ({
                 providerId: 'custom-entry',
                 name: 'Custom Gateway',
@@ -494,11 +496,12 @@ describe('DappSDK', () => {
             }))
             const sdk = new DappSDK({ walletPicker })
 
-            await sdk.init({ defaultAdapters: [] })
-            await sdk.connect({ requestedScopes: ['ledger:read'] })
+            await sdk.connect({ defaultAdapters: [] })
 
-            expect(walletPicker).toHaveBeenCalledWith([], {
-                requestedScopes: ['ledger:read'],
+            expect(walletPicker).toHaveBeenCalledWith([])
+            expect(provider.request).toHaveBeenCalledWith({
+                method: 'connect',
+                params: undefined,
             })
         })
 
@@ -518,8 +521,7 @@ describe('DappSDK', () => {
             expect(walletPicker).toHaveBeenCalledWith(
                 defaultGatewayList.map(({ rpcUrl }) =>
                     expect.objectContaining({ url: rpcUrl })
-                ),
-                { requestedScopes: undefined }
+                )
             )
         })
 
@@ -569,9 +571,7 @@ describe('DappSDK', () => {
             await sdk.connect()
 
             // Not offered as a registered entry, so the picker shows the saved one
-            expect(walletPicker).toHaveBeenCalledWith([], {
-                requestedScopes: undefined,
-            })
+            expect(walletPicker).toHaveBeenCalledWith([])
             expect(
                 JSON.parse(
                     localStorage.getItem('splice_wallet_picker_recent') ?? '[]'
@@ -594,10 +594,9 @@ describe('DappSDK', () => {
             await sdk.init()
             await sdk.connect()
 
-            expect(walletPicker).toHaveBeenCalledWith(
-                [expect.objectContaining({ url: rpcUrl })],
-                { requestedScopes: undefined }
-            )
+            expect(walletPicker).toHaveBeenCalledWith([
+                expect.objectContaining({ url: rpcUrl }),
+            ])
         })
 
         it('retries after a connection failure and appends HTTP status details', async () => {

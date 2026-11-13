@@ -17,12 +17,12 @@ export const paramSchemas: Record<string, z.ZodType> = {
             description: 'Request to connect to the wallet provider.',
             additionalProperties: { type: 'null' },
             properties: {
-                requestedScopes: {
-                    title: 'requestedScopes',
+                scopes: {
+                    title: 'scopes',
                     type: 'array',
                     description:
                         'Ledger API access token scopes requested by the dApp, for the user to approve.',
-                    items: { title: 'requestedScope', type: 'string' },
+                    items: { title: 'scope', type: 'string' },
                 },
             },
         })

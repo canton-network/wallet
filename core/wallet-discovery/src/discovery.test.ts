@@ -252,23 +252,20 @@ describe('DiscoveryClient', () => {
             expect(client.getActiveSession()?.providerId).toBe('wallet-a')
         })
 
-        it('forwards requested scopes to the wallet picker and connect request', async () => {
+        it('forwards scopes to the connect request', async () => {
             const adapter = makeAdapter('wallet-a')
             const picker = vi.fn().mockResolvedValue({ providerId: 'wallet-a' })
             const client = await makeClient({
                 adapters: [adapter],
                 walletPicker: picker,
             })
-            const requestedScopes = ['ledger:read']
+            const scopes = ['ledger:read']
 
-            await client.connect(undefined, { requestedScopes })
+            await client.connect(undefined, { scopes })
 
-            expect(picker).toHaveBeenCalledWith(expect.any(Array), {
-                requestedScopes,
-            })
             expect(adapter._provider.request).toHaveBeenCalledWith({
                 method: 'connect',
-                params: { requestedScopes },
+                params: { scopes },
             })
         })
 

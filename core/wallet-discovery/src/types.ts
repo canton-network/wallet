@@ -83,12 +83,5 @@ export interface ProviderAdapter {
  * This abstraction allows the DiscoveryClient to remain UI-framework agnostic.
  */
 export type WalletPickerFn = (
-    entries: WalletPickerEntry[],
-    options?: WalletPickerOptions
+    entries: WalletPickerEntry[]
 ) => Promise<WalletPickerResult>
-
-/** Connection request context shown to the user alongside wallet choices. */
-export interface WalletPickerOptions {
-    /** Ledger API access token scopes requested by the dApp. */
-    requestedScopes?: string[] | undefined
-}

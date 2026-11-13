@@ -98,16 +98,16 @@ export const dappController = ({
         return session
     }
 
-    function loginUrl(requestedScopes: string[] = []): string {
+    function loginUrl(scopes: string[] = []): string {
         const query = new URLSearchParams(
-            requestedScopes.map((scope) => ['requestedScopes', scope])
+            scopes.map((scope) => ['scopes', scope])
         ).toString()
         return `${userUrl}/login/${query ? `?${query}` : ''}`
     }
 
     return buildController({
         connect: async (params?: ConnectParams) => {
-            const connectUserUrl = loginUrl(params?.requestedScopes)
+            const connectUserUrl = loginUrl(params?.scopes)
             const session =
                 context && (await store.getSession(context.accessToken))
 

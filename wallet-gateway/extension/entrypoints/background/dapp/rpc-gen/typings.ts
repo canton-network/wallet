@@ -5,13 +5,13 @@
 /* oxlint-disable typescript/no-explicit-any */
 /* oxlint-disable no-unused-vars */
 
-export type RequestedScope = string
+export type Scope = string
 /**
  *
  * Ledger API access token scopes requested by the dApp, for the user to approve.
  *
  */
-export type RequestedScopes = RequestedScope[]
+export type Scopes = Scope[]
 type AlwaysFalse = any
 /**
  *
@@ -538,7 +538,7 @@ export interface MessageSignatureFailedEvent {
  *
  */
 export interface ConnectParams {
-    requestedScopes?: RequestedScopes
+    scopes?: Scopes
 }
 /**
  *

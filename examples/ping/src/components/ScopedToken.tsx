@@ -10,7 +10,7 @@ export function ScopedToken(props: {
     onConnect: (params: sdk.ConnectParams) => void
 }) {
     const [scope, setScope] = useState('')
-    const requestedScopes = scope.split(' ').filter((s) => s.length > 0)
+    const scopes = scope.split(' ').filter((s) => s.length > 0)
 
     return (
         <div>
@@ -31,7 +31,7 @@ export function ScopedToken(props: {
                 <button
                     data-testid="scoped-token-connect"
                     disabled={props.loading || props.connectResult?.isConnected}
-                    onClick={() => props.onConnect({ requestedScopes })}
+                    onClick={() => props.onConnect({ scopes })}
                 >
                     connect
                 </button>
@@ -41,7 +41,7 @@ export function ScopedToken(props: {
                     <i>Disconnect first to connect with requested scopes.</i>
                 </p>
             )}
-            <p>Requested scopes: {JSON.stringify(requestedScopes)}</p>
+            <p>Requested scopes: {JSON.stringify(scopes)}</p>
         </div>
     )
 }
