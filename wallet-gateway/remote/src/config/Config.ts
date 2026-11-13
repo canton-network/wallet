@@ -8,7 +8,11 @@ import {
     networkSchema,
 } from '@canton-network/core-wallet-store'
 import { storeConfigSchema as signingStoreConfigSchema } from '@canton-network/core-signing-store-sql'
-import { authFromEnvSchema, authSchema } from '@canton-network/core-wallet-auth'
+import {
+    authFromEnvSchema,
+    authSchema,
+    idpSchema,
+} from '@canton-network/core-wallet-auth'
 import { cantonCaip2Values } from '@canton-network/core-signing-blockdaemon'
 
 export const kernelInfoSchema = z.object({
@@ -105,14 +109,37 @@ const loggingConfigSchema = z
 
 const authFromEnvOrConfig = z.union([authSchema, authFromEnvSchema])
 
-const bootstrapFromEnv = bootstrapConfigSchema.extend({
-    networks: z.array(
-        networkSchema.extend({
-            auth: authFromEnvOrConfig,
-            adminAuth: authFromEnvOrConfig.optional(),
-            serviceAccountAuth: authFromEnvOrConfig.optional(),
-        })
-    ),
+const bootstrapFromEnv = bootstrapConfigSchema
+    .extend({
+        networks: z.array(
+            networkSchema.extend({
+                auth: authFromEnvOrConfig,
+                adminAuth: authFromEnvOrConfig.optional(),
+                serviceAccountAuth: authFromEnvOrConfig.optional(),
+            })
+        ),
+    })
+    .optional()
+    .meta({
+        deprecated: true,
+        description:
+            'Deprecated, use the top-level idps and networks instead. Identity providers and networks that are only written to the database if it is empty. Move an entry to idps or networks with the same id to keep its existing wallets. Will be removed in a future release.',
+    })
+
+const configNetworkSchema = networkSchema.extend({
+    auth: authFromEnvOrConfig,
+    adminAuth: authFromEnvOrConfig.optional(),
+    serviceAccountAuth: authFromEnvOrConfig.optional(),
+})
+
+const configIdpsSchema = z.array(idpSchema).default([]).meta({
+    description:
+        'Identity providers managed by this config file. They are written to the database on every start and cannot be changed at runtime.',
+})
+
+const configNetworksSchema = z.array(configNetworkSchema).default([]).meta({
+    description:
+        'Networks managed by this config file. They are written to the database on every start and cannot be changed at runtime. Each network must reference an identity provider from idps.',
 })
 
 const secretEnvName = (defaultName: string, purpose: string) =>
@@ -290,6 +317,8 @@ export const rawConfigSchema = z.object({
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
     signingProviders: signingProvidersConfigSchema.optional(),
+    idps: configIdpsSchema,
+    networks: configNetworksSchema,
     bootstrap: bootstrapFromEnv,
     hashingScheme: hashingSchemeSchema,
 })
@@ -301,6 +330,8 @@ export const configSchema = z.object({
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
     signingProviders: signingProvidersConfigSchema.optional(),
+    idps: z.array(idpSchema),
+    networks: z.array(networkSchema),
     bootstrap: bootstrapConfigSchema,
     hashingScheme: hashingSchemeSchema,
 })

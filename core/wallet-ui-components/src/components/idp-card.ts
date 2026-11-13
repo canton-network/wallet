@@ -34,6 +34,7 @@ export
 class IdpCard extends BaseElement {
     @property({ type: Object }) accessor idp: Idp | null = null
     @property({ type: Boolean }) accessor readonly = false
+    @property({ type: Boolean }) accessor configManaged = false
 
     static styles = [
         BaseElement.styles,
@@ -58,11 +59,22 @@ class IdpCard extends BaseElement {
                 box-shadow: var(--wg-shadow-md);
             }
 
+            .card-header {
+                display: flex;
+                align-items: center;
+                gap: var(--wg-space-2);
+            }
+
             .card-title {
                 margin: 0;
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
                 color: var(--wg-text);
+            }
+
+            .badge-config {
+                background: var(--wg-badge-bg);
+                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -134,7 +146,18 @@ class IdpCard extends BaseElement {
                 class="wg-card idp-card${this.readonly ? ' readonly' : ''}"
                 @click=${this._onClick}
             >
-                <p class="card-title">${this.idp.id}</p>
+                <div class="card-header">
+                    <p class="card-title">${this.idp.id}</p>
+                    ${
+                        this.configManaged
+                            ? html`<span
+                                  class="wg-badge badge-config"
+                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
+                                  >CONFIG FILE</span
+                              >`
+                            : ''
+                    }
+                </div>
 
                 <div class="meta">
                     <div class="meta-row">

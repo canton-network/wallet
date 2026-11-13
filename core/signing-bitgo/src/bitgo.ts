@@ -85,6 +85,30 @@ export interface BitGoTransaction {
     publicKey?: string
     signature?: string
     metadata?: Record<string, unknown>
+    failureReason?: string
+}
+
+/**
+ * Explains a rejected or failed request, adding the BitGo txRequest state
+ * when it tells more than the status, e.g. `canceled`
+ */
+function failureReason(
+    status: SigningStatus,
+    state: string,
+    missingSignature: boolean
+): string | undefined {
+    if (missingSignature) {
+        return `BitGo reported the request as ${state} but returned no signature`
+    }
+    const detail = state !== status ? ` (${state})` : ''
+    switch (status) {
+        case 'rejected':
+            return `BitGo rejected the signing request${detail}`
+        case 'failed':
+            return `BitGo failed to sign the request${detail}`
+        default:
+            return undefined
+    }
 }
 
 export class BitGoHandler {
@@ -399,18 +423,24 @@ export class BitGoHandler {
         // Terminal states will never change — fail fast if signature extraction failed.
         const isTerminal =
             txReq.state === 'delivered' || txReq.state === 'signed'
-        const status: SigningStatus =
-            rawStatus === 'signed' && !signedData.signature
-                ? isTerminal
-                    ? 'failed'
-                    : 'pending'
-                : rawStatus
+        const missingSignature = rawStatus === 'signed' && !signedData.signature
+        const status: SigningStatus = missingSignature
+            ? isTerminal
+                ? 'failed'
+                : 'pending'
+            : rawStatus
         const { signature, signedBy } = status === 'signed' ? signedData : {}
         const publicKey = await this.resolvePublicKey(walletId)
         const tx: BitGoTransaction = { txId, status }
         if (signature !== undefined) tx.signature = signature
         if (publicKey !== undefined) tx.publicKey = publicKey
         if (signedBy !== undefined) tx.metadata = { signedBy }
+        const reason = failureReason(
+            status,
+            txReq.state,
+            missingSignature && isTerminal
+        )
+        if (reason !== undefined) tx.failureReason = reason
         return tx
     }
 }

@@ -21,21 +21,16 @@ import {
 import { getUserClient } from '@/ui/lib/user-client'
 import { queryKeys } from '@/ui/lib/query/keys'
 
-// Everything here talks to the background, so none of it needs the network:
-// `networkMode: 'always'`, as in the vault queries.
-
 export const walletsQuery = () =>
     queryOptions({
         queryKey: queryKeys.wallets.list(),
         queryFn: () => loadWallets(getUserClient()),
-        networkMode: 'always',
     })
 
 export const walletSyncNeededQuery = () =>
     queryOptions({
         queryKey: queryKeys.wallets.syncNeeded(),
         queryFn: () => isWalletSyncNeeded(getUserClient()),
-        networkMode: 'always',
     })
 
 export function useSyncWallets() {
@@ -44,7 +39,6 @@ export function useSyncWallets() {
     const showError = useErrorToast()
     return useMutation({
         mutationFn: () => syncWallets(getUserClient()),
-        networkMode: 'always',
         onSuccess: (result) => showToast(walletSyncResultToast(result)),
         onError: (error) => showError(error),
         onSettled: () =>
@@ -61,7 +55,6 @@ export function useSetPrimaryWallet() {
                 method: 'setPrimaryWallet',
                 params: { partyId },
             }),
-        networkMode: 'always',
         onError: (error) => showError(error),
         onSettled: () =>
             queryClient.invalidateQueries({ queryKey: queryKeys.wallets.all }),
@@ -78,7 +71,6 @@ export function useAllocateWallet() {
                 method: 'allocatePartyForWallet',
                 params: { partyId },
             }),
-        networkMode: 'always',
         onSuccess: (result) => {
             const toast = result?.wallet
                 ? allocationResultToast(result.wallet.status)
@@ -104,7 +96,6 @@ export function useCreateWallet() {
             })
             return wallet
         },
-        networkMode: 'always',
         onError: (error) => showError(error),
         onSuccess: () =>
             queryClient.invalidateQueries({ queryKey: queryKeys.wallets.all }),
@@ -117,5 +108,4 @@ export const signingProvidersQuery = () =>
         queryFn: async () =>
             (await getUserClient().request({ method: 'listSigningProviders' }))
                 .signingProviders,
-        networkMode: 'always',
     })

@@ -265,7 +265,8 @@ type TxStatus = 'pending' | 'signed' | 'executed' | 'failed'
 export async function expectTxStatusInDappEvents(
     dappPage: Page,
     commandId: string,
-    status: TxStatus
+    status: TxStatus,
+    opts?: { error?: { code: number; message: string } }
 ): Promise<void> {
     let locator = dappPage
         .getByRole('paragraph')
@@ -280,6 +281,14 @@ export async function expectTxStatusInDappEvents(
     if (status === 'executed') {
         locator = locator.filter({ hasText: EXECUTED_PAYLOAD_PATTERN })
         description += ', with an update id and completion offset'
+    }
+    if (opts?.error) {
+        locator = locator
+            .filter({ hasText: `"code": ${opts.error.code}` })
+            .filter({
+                hasText: `"message": ${JSON.stringify(opts.error.message)}`,
+            })
+        description += `, failing with ${opts.error.code}: ${opts.error.message}`
     }
 
     await expect(locator, description).toHaveCount(1)

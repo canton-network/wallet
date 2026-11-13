@@ -5,6 +5,7 @@ import { errorCodes } from '@canton-network/core-rpc-errors'
 import { createProxyService } from '@webext-core/proxy-service'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { authMessenger } from '@/shared/auth-protocol'
 import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
 import { VaultErrorName, vaultMessenger } from '@/shared/vault-protocol'
 import { startBackground } from '.'
@@ -22,8 +23,9 @@ describe('startBackground', () => {
 
     afterEach(() => {
         vi.restoreAllMocks()
-        // The messenger is a singleton that allows one listener per message.
+        // The messengers are singletons that allow one listener per message.
         vaultMessenger.removeAllListeners()
+        authMessenger.removeAllListeners()
     })
 
     it('adds every listener before its first await', () => {
@@ -40,9 +42,9 @@ describe('startBackground', () => {
         expect(fakeBrowser.runtime.onConnect.addListener).toHaveBeenCalledTimes(
             1
         )
-        // The vault service, the dApp dispatcher, the user controller and the
-        // open-UI handler
-        expect(onMessage).toHaveBeenCalledTimes(4)
+        // The vault service, the auth service, the dApp dispatcher, the user
+        // controller and the open-UI handler
+        expect(onMessage).toHaveBeenCalledTimes(5)
         expect(onInstalled).toHaveBeenCalledTimes(1)
     })
 

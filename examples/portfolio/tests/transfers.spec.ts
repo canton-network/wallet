@@ -108,7 +108,7 @@ for (const version of [
             await wg.rejectTransaction(() => submitButton.click())
 
             await expect(dialog.getByRole('alert')).toContainText(
-                /Transfer failed: Transaction with commandId \S+ failed to execute\./,
+                /Transfer failed: Transaction with commandId \S+ failed to execute: Rejected by the user/,
                 { timeout: 15000 }
             )
             await expect(

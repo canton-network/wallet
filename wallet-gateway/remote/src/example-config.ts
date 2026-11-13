@@ -73,77 +73,75 @@ export default {
             database: 'store.sqlite',
         },
     },
-    bootstrap: {
-        idps: [
-            {
-                id: 'idp-example-self-signed',
-                type: 'self_signed',
-                issuer: 'unsafe-auth',
+    idps: [
+        {
+            id: 'idp-example-self-signed',
+            type: 'self_signed',
+            issuer: 'unsafe-auth',
+        },
+        {
+            id: 'idp-example-oauth',
+            type: 'oauth',
+            issuer: 'https://oauth.example.com/',
+            configUrl:
+                'https://oauth.example.com/.well-known/openid-configuration',
+        },
+    ],
+    networks: [
+        {
+            id: 'canton:example-self-signed',
+            name: 'Canton Local (Self Signed)',
+            description:
+                'A network that connects to a Canton participant using self-signed tokens',
+            identityProviderId: 'idp-example-self-signed',
+            auth: {
+                method: 'self_signed',
+                issuer: 'self-signed',
+                audience:
+                    'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
+                scope: 'openid email daml_ledger_api offline_access',
+                clientId: 'example_client_id',
+                clientSecretEnv: 'EXAMPLE_CLIENT_SECRET',
             },
-            {
-                id: 'idp-example-oauth',
-                type: 'oauth',
-                issuer: 'https://oauth.example.com/',
-                configUrl:
-                    'https://oauth.example.com/.well-known/openid-configuration',
+            adminAuth: {
+                method: 'self_signed',
+                issuer: 'self-signed',
+                scope: 'daml_ledger_api',
+                audience:
+                    'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
+                clientId: 'example_admin_client_id',
+                clientSecretEnv: 'EXAMPLE_ADMIN_CLIENT_SECRET',
             },
-        ],
-        networks: [
-            {
-                id: 'canton:example-self-signed',
-                name: 'Canton Local (Self Signed)',
-                description:
-                    'A network that connects to a Canton participant using self-signed tokens',
-                identityProviderId: 'idp-example-self-signed',
-                auth: {
-                    method: 'self_signed',
-                    issuer: 'self-signed',
-                    audience:
-                        'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
-                    scope: 'openid email daml_ledger_api offline_access',
-                    clientId: 'example_client_id',
-                    clientSecretEnv: 'EXAMPLE_CLIENT_SECRET',
-                },
-                adminAuth: {
-                    method: 'self_signed',
-                    issuer: 'self-signed',
-                    scope: 'daml_ledger_api',
-                    audience:
-                        'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
-                    clientId: 'example_admin_client_id',
-                    clientSecretEnv: 'EXAMPLE_ADMIN_CLIENT_SECRET',
-                },
-                ledgerApi: {
-                    baseUrl: 'http://127.0.0.1:2975',
-                },
+            ledgerApi: {
+                baseUrl: 'http://127.0.0.1:2975',
             },
-            {
-                id: 'canton:example-oauth',
-                name: 'Canton Local (OAuth IDP)',
-                description:
-                    'A network that connects to a Canton participant using an OAuth IDP',
-                identityProviderId: 'idp-example-oauth',
-                auth: {
-                    method: 'authorization_code',
-                    clientId: 'example_client_id',
-                    scope: 'openid email daml_ledger_api offline_access',
-                    audience:
-                        'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
-                },
-                adminAuth: {
-                    method: 'client_credentials',
-                    scope: 'daml_ledger_api',
-                    audience:
-                        'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
-                    clientId: 'example_admin_client_id',
-                    clientSecretEnv: 'MY_CLIENT_SECRET_ENV_VAR',
-                },
-                ledgerApi: {
-                    baseUrl: 'http://127.0.0.1:2975',
-                },
+        },
+        {
+            id: 'canton:example-oauth',
+            name: 'Canton Local (OAuth IDP)',
+            description:
+                'A network that connects to a Canton participant using an OAuth IDP',
+            identityProviderId: 'idp-example-oauth',
+            auth: {
+                method: 'authorization_code',
+                clientId: 'example_client_id',
+                scope: 'openid email daml_ledger_api offline_access',
+                audience:
+                    'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
             },
-        ],
-    },
+            adminAuth: {
+                method: 'client_credentials',
+                scope: 'daml_ledger_api',
+                audience:
+                    'https://daml.com/jwt/aud/participant/participant1::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424',
+                clientId: 'example_admin_client_id',
+                clientSecretEnv: 'MY_CLIENT_SECRET_ENV_VAR',
+            },
+            ledgerApi: {
+                baseUrl: 'http://127.0.0.1:2975',
+            },
+        },
+    ],
     hashingScheme: {
         version: 'HASHING_SCHEME_VERSION_V3',
     },
