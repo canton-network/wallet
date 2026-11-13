@@ -247,9 +247,8 @@ export class TransactionHistoryService {
                 if (result.success) {
                     this.transactions.push(result.transaction)
                 } else {
-                    if (isContractEventsNotFoundError(result.error)) {
-                        newUnprocessed.push(result.jsTransaction)
-                    } else {
+                    newUnprocessed.push(result.jsTransaction)
+                    if (!isContractEventsNotFoundError(result.error)) {
                         this.logger.warn(
                             { error: result.error },
                             'parsing transaction failed'
