@@ -5,6 +5,14 @@
 /* oxlint-disable typescript/no-explicit-any */
 /* oxlint-disable no-unused-vars */
 
+export type Scope = string
+/**
+ *
+ * Ledger API access token scopes requested by the dApp, for the user to approve.
+ *
+ */
+export type Scopes = Scope[]
+type AlwaysFalse = any
 /**
  *
  * The unique identifier of the command associated with the transaction.
@@ -20,7 +28,6 @@ type AlwaysTrue = any
 export interface CreateCommandPayload {
     [key: string]: any
 }
-type AlwaysFalse = any
 export interface CreateCommand {
     CreateCommand: CreateCommandPayload
 }
@@ -542,6 +549,14 @@ export interface MessageSignatureFailedEvent {
 }
 /**
  *
+ * Request to connect to the wallet provider.
+ *
+ */
+export interface ConnectParams {
+    scopes?: Scopes
+}
+/**
+ *
  * Structure representing the request for prepare and execute calls
  *
  */
@@ -639,7 +654,7 @@ export type MessageSignatureEvent =
  */
 
 export type Status = () => Promise<StatusEvent>
-export type Connect = () => Promise<ConnectResult>
+export type Connect = (params?: ConnectParams) => Promise<ConnectResult>
 export type Disconnect = () => Promise<Null>
 export type IsConnected = () => Promise<ConnectResult>
 export type GetActiveNetwork = () => Promise<Network>

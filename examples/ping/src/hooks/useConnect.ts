@@ -28,16 +28,16 @@ const additionalAdapters = wcAdapter ? [wcAdapter] : []
  * Uses the dapp-sdk to connect and disconnect, and updates the connection status.
  */
 export function useConnect(): {
-    connect: () => Promise<void>
+    connect: (params?: sdk.ConnectParams) => Promise<void>
     disconnect: () => Promise<void>
     connectResult?: sdk.dappAPI.ConnectResult
 } {
     const [connectResult, setConnectResult] =
         useState<sdk.dappAPI.ConnectResult>()
 
-    async function connect() {
+    async function connect(params?: sdk.ConnectParams) {
         await sdk
-            .connect()
+            .connect(params)
             .then(setConnectResult)
             .catch((err) => {
                 console.error('Error connecting to wallet:', err)

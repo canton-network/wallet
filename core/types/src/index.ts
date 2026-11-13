@@ -248,7 +248,10 @@ export type RequestArgs<
 > = M extends keyof T
     ? T[M]['params'] extends never
         ? { method: M }
-        : { method: M; params: T[M]['params'] }
+        : // If a method's params type includes undefined, the key becomes optional (params?:).
+          undefined extends T[M]['params']
+          ? { method: M; params?: T[M]['params'] }
+          : { method: M; params: T[M]['params'] }
     : never
 
 export enum WALLET_DISABLED_REASON {

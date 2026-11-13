@@ -4,6 +4,7 @@
 import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
 import buildController from './dapp-api/rpc-gen'
 import type {
+    ConnectParams,
     ConnectResult,
     LedgerApiParams,
     MessageSignatureEvent,
@@ -50,9 +51,10 @@ const toFailureError = (
 
 export const dappSDKController = (provider: DappAsyncProvider) =>
     buildController({
-        connect: async (): Promise<ConnectResult> => {
+        connect: async (params?: ConnectParams): Promise<ConnectResult> => {
             const response = await provider.request({
                 method: 'connect',
+                params,
             })
 
             popup.open(response.userUrl ?? '')
