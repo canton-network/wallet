@@ -927,15 +927,7 @@ describe('AllocationService', () => {
             }
 
             vi.spyOn(service, 'createAllocation')
-                .mockResolvedValueOnce([
-                    {
-                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
-                        contractId: 'factory-1',
-                        choice: 'AllocationFactory_Allocate',
-                        choiceArgument: makeAllocationCommand(['cid-1']),
-                    },
-                    [dcA, dcShared],
-                ])
+                .mockResolvedValueOnce([allocateCmd, [dcA, dcShared]])
                 .mockResolvedValueOnce([
                     {
                         templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
