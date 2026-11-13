@@ -3,6 +3,7 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+import './tooltip.js'
 import { BaseElement } from '../internal/base-element'
 import { refreshIcon } from '../icons'
 
@@ -102,17 +103,18 @@ class WgWalletsSync extends BaseElement {
               : 'Refresh parties'
 
         return html`
-            <button
-                class="sync-button ${this.syncNeeded ? 'out-of-sync' : ''}"
-                .disabled=${this.disabled || this.syncing}
-                @click=${this.onClick}
-                title=${title}
-                aria-label=${title}
-            >
-                <span class="sync-icon ${this.syncing ? 'spinning' : ''}">
-                    ${refreshIcon}
-                </span>
-            </button>
+            <wg-tooltip .text=${title} placement="bottom">
+                <button
+                    class="sync-button ${this.syncNeeded ? 'out-of-sync' : ''}"
+                    .disabled=${this.disabled || this.syncing}
+                    @click=${this.onClick}
+                    aria-label=${title}
+                >
+                    <span class="sync-icon ${this.syncing ? 'spinning' : ''}">
+                        ${refreshIcon}
+                    </span>
+                </button>
+            </wg-tooltip>
         `
     }
 }

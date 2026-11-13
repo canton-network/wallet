@@ -1,8 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html, nothing } from 'lit'
-import { ifDefined } from 'lit/directives/if-defined.js'
+import { html, nothing, type TemplateResult } from 'lit'
 import '../components/copy-button.js'
 
 export function renderCopyableValue(
@@ -10,7 +9,7 @@ export function renderCopyableValue(
     value: string | null | undefined,
     copyLabel: string,
     /** Shown instead of the copied value, e.g. a formatted date */
-    { display, title }: { display?: string; title?: string | undefined } = {}
+    { display }: { display?: TemplateResult } = {}
 ) {
     const resolvedValue = display ?? (value || 'N/A')
 
@@ -21,9 +20,7 @@ export function renderCopyableValue(
                     ${label}
                 </h2>
                 <div class="detail-value">
-                    <p class="value mb-0 text-body" title=${ifDefined(title)}>
-                        ${resolvedValue}
-                    </p>
+                    <p class="value mb-0 text-body">${resolvedValue}</p>
                     ${
                         value
                             ? html`

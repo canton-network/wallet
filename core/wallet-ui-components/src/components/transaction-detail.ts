@@ -13,7 +13,7 @@ import {
     getActivityStatusLabel,
     getActivityType,
 } from '../internal/activity-utils.js'
-import { formatDateTime, formatUtcDateTime } from '../date-time.js'
+import './timestamp.js'
 import { renderCopyableValue } from '../internal/activity-render.js'
 
 /** Emitted when the user clicks the "Approve" button */
@@ -378,8 +378,9 @@ class WgTransactionDetail extends BaseElement {
                     this.createdAt,
                     'Copy created at timestamp',
                     {
-                        display: formatDateTime(this.createdAt),
-                        title: formatUtcDateTime(this.createdAt),
+                        display: html`<wg-timestamp
+                            .value=${this.createdAt}
+                        ></wg-timestamp>`,
                     }
                 )}
                 ${this.renderSignatories()}

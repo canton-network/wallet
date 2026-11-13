@@ -20,6 +20,7 @@ import '../index'
 import { stateManager } from '../state-manager'
 import { showToast } from '../utils.js'
 import { detectCurrentOrigin } from '../listeners.js'
+import { API_KEYS_DOCS_URL } from '../constants'
 
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {
@@ -35,14 +36,6 @@ export class UserUiApiKeys extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
             }
 
             .pagination-wrap {
@@ -124,9 +117,11 @@ export class UserUiApiKeys extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">API Keys</h1>
-
+            <wg-page-header
+                heading="API Keys"
+                info="API keys let a backend service or CI job submit transactions through the dApp API without a person approving each one. They only work on networks with service account auth configured."
+                .docsUrl=${API_KEYS_DOCS_URL}
+            >
                 <button
                     class="btn btn-primary btn-sm rounded-pill btn-add"
                     type="button"
@@ -135,7 +130,7 @@ export class UserUiApiKeys extends BaseElement {
                     <span aria-hidden="true">+</span>
                     Generate
                 </button>
-            </div>
+            </wg-page-header>
 
             ${
                 this.apiKeys.length === 0

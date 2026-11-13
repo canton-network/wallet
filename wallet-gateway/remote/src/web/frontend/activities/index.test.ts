@@ -8,6 +8,7 @@ import {
     PageChangeEvent,
     TransactionCardReviewEvent,
     type WgTransactionCard,
+    type WgPageHeader,
 } from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
@@ -100,9 +101,10 @@ describe('UserUiActivities', () => {
             'transactions loaded'
         )
 
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Activities'
-        )
+        expect(
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+                ?.heading
+        ).toBe('Activities')
         expect(
             el.shadowRoot?.querySelectorAll('wg-transaction-card').length
         ).toBe(2)

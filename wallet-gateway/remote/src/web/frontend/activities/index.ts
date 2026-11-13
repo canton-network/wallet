@@ -23,6 +23,7 @@ import '../index'
 import { stateManager } from '../state-manager'
 import type { Transaction } from '@canton-network/core-wallet-user-rpc-client'
 import { detectCurrentOrigin } from '../listeners.js'
+import { ACTIVITIES_DOCS_URL } from '../constants'
 
 @customElement('user-ui-activities')
 export class UserUiActivities extends BaseElement {
@@ -66,10 +67,6 @@ export class UserUiActivities extends BaseElement {
                 opacity: 0.5;
             }
 
-            .page-header {
-                margin-bottom: var(--wg-space-4);
-            }
-
             .pagination-wrap {
                 margin-top: var(--wg-space-8);
                 display: flex;
@@ -80,9 +77,11 @@ export class UserUiActivities extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0 text-body">Activities</h1>
-            </div>
+            <wg-page-header
+                heading="Activities"
+                info="Transactions that the Wallet Gateway prepared, signed or executed for your parties, with their status. Open one to see its details."
+                .docsUrl=${ACTIVITIES_DOCS_URL}
+            ></wg-page-header>
 
             ${
                 this.loading && !this.transactions.length

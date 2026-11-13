@@ -4,7 +4,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { PageChangeEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    PageChangeEvent,
+    type WgPageHeader,
+} from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeApiKey,
@@ -73,7 +76,10 @@ describe('UserUiApiKeys', () => {
 
         await waitUntil(() => getApiKeyCards(el).length === 2)
 
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe('API Keys')
+        expect(
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+                ?.heading
+        ).toBe('API Keys')
         expect(getApiKeyCards(el)).toHaveLength(2)
     })
 
