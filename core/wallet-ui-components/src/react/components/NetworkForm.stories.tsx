@@ -51,6 +51,10 @@ const meta = {
         onNetworkEditSave: fn(),
         onNetworkEditCancel: fn(),
         onNetworkDelete: fn(),
+        idps: [
+            { id: 'idp-1', type: 'self_signed', issuer: 'self-signed' },
+            { id: 'idp-2', type: 'self_signed', issuer: 'self-signed' },
+        ],
     },
 } satisfies Meta<typeof NetworkForm>
 
@@ -119,7 +123,13 @@ export const Add: Story = {
         await text('Network ID', 'new-net')
         await text('Name', 'New Network')
         await text('Description', 'A new network')
-        await text('Identity provider ID', 'idp-1')
+        // The IdP is picked from the existing ones, so it can't be mistyped
+        await userEvent.selectOptions(
+            await findByShadowRole(canvasElement, 'combobox', {
+                name: 'Identity provider *',
+            }),
+            'idp-1'
+        )
         await text('Ledger API base URL', 'http://localhost:6865')
         // The user auth is required, so its fields are shown straight away
         const userAuth = await authSection(canvasElement, 'Configure user auth')
@@ -233,11 +243,21 @@ export const Cancel: Story = {
 export const Delete: Story = {
     args: { mode: 'review', network: makeNetwork({ id: 'delete-me' }) },
     play: async ({ args, canvasElement, userEvent }) => {
-        await userEvent.click(
-            await findByShadowRole(canvasElement, 'button', {
-                name: 'Delete Network',
-            })
+        const deleteButton = await findByShadowRole(canvasElement, 'button', {
+            name: 'Delete Network',
+        })
+        // Deleting also deletes every user's parties, so it needs the ID typed
+        await expect(deleteButton).toBeDisabled()
+        await fillField(
+            userEvent,
+            await findByShadowRole(canvasElement, 'textbox', {
+                name: 'Type delete-me to confirm.',
+            }),
+            'delete-me'
         )
+        await expect(deleteButton).toBeEnabled()
+
+        await userEvent.click(deleteButton)
         await expect(args.onNetworkDelete).toHaveBeenCalledOnce()
         await expect(args.onNetworkDelete?.mock.calls[0]?.[0].network).toEqual(
             makeNetwork({ id: 'delete-me' })

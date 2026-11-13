@@ -12,7 +12,10 @@ import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { IDENTITY_PROVIDERS_DOCS_URL } from '../constants.ts'
+import {
+    IDENTITY_PROVIDERS_INFO,
+    IDENTITY_PROVIDERS_DOCS_URL,
+} from '../constants.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import { setLocationHref } from '../navigation.ts'
 import '../index.ts'
@@ -108,7 +111,7 @@ export class UserUiIdentityProviders extends BaseElement {
         return html`
             <wg-page-header
                 heading="Identity Providers"
-                info="An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."
+                .info=${IDENTITY_PROVIDERS_INFO}
                 .docsUrl=${IDENTITY_PROVIDERS_DOCS_URL}
             >
                 ${

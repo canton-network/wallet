@@ -15,7 +15,7 @@ import type {
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { NETWORKS_DOCS_URL } from '../constants.ts'
+import { NETWORKS_INFO, NETWORKS_DOCS_URL } from '../constants.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import { setLocationHref } from '../navigation.ts'
 import '../index.ts'
@@ -117,7 +117,7 @@ export class UserUiNetworks extends BaseElement {
         return html`
             <wg-page-header
                 heading="Networks"
-                info="A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
+                .info=${NETWORKS_INFO}
                 .docsUrl=${NETWORKS_DOCS_URL}
             >
                 ${

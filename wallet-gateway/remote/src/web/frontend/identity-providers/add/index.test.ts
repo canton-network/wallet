@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { IdpFormSaveEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    IdpFormSaveEvent,
+    type WgPageHeader,
+} from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -13,16 +16,21 @@ import {
     mockRequest,
 } from '../../__tests__/test-helpers.ts'
 
-const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
-    () => ({
-        mockCreateUserClient: vi.fn(),
-        handleErrorToast: vi.fn(),
-        setLocationHref: vi.fn(),
-    })
-)
+const {
+    showToastAfterNavigation,
+    mockCreateUserClient,
+    handleErrorToast,
+    setLocationHref,
+} = vi.hoisted(() => ({
+    showToastAfterNavigation: vi.fn(),
+    mockCreateUserClient: vi.fn(),
+    handleErrorToast: vi.fn(),
+    setLocationHref: vi.fn(),
+}))
 
 vi.mock('../../index.ts', () => ({}))
 vi.mock('../../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../../utils.ts', () => ({ showToastAfterNavigation }))
 vi.mock('../../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -62,9 +70,10 @@ describe('UserUiAddIdp', () => {
     })
 
     it('renders the add identity provider form', () => {
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Add a new identity provider'
-        )
+        expect(
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+                ?.heading
+        ).toBe('Add identity provider')
         expect(el.shadowRoot?.querySelector('idp-form')).not.toBeNull()
     })
 

@@ -5,13 +5,24 @@ import {
     type Network as StoreNetwork,
     networkSchema,
 } from '@canton-network/core-wallet-store'
-import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    Network as ApiNetwork,
+    Idp,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 
+import { chevronDownIcon } from '../icons/index.ts'
 import { BaseElement } from '../internal/base-element.ts'
 import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.ts'
 import './auth-editor.ts'
+import './info-tip.ts'
+
+const NETWORKS_AND_IDENTITY_DOCS_URL =
+    'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity'
+const AUTH_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#authentication-methods`
+const ADMIN_AUTH_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#auth-vs-adminauth`
+const SERVICE_ACCOUNT_AUTH_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#service-account-automation-serviceaccountauth`
 
 /**
  * Emitted when the user clicks the Cancel button on the form
@@ -67,7 +78,12 @@ class NetworkForm extends BaseElement {
         },
     }
 
+    /** The identity providers the network can reference */
+    @property({ type: Array })
+    accessor idps: Idp[] = []
+
     @state() private accessor _error = ''
+    @state() private accessor deleteConfirmation = ''
 
     static styles = [
         BaseElement.styles,
@@ -139,7 +155,16 @@ class NetworkForm extends BaseElement {
                 display: inline-flex;
             }
 
+            .field-help {
+                margin: 0;
+                font-size: var(--wg-font-size-xs);
+                color: var(--wg-text-secondary);
+            }
+
             .section-title {
+                display: flex;
+                align-items: center;
+                gap: 0.15rem;
                 margin: var(--wg-space-4) 0 var(--wg-space-2);
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
@@ -182,8 +207,18 @@ class NetworkForm extends BaseElement {
                     color 0.2s ease;
             }
 
-            .btn-delete:hover {
+            .btn-delete:hover:not(:disabled) {
                 background: rgba(var(--wg-error-rgb), 0.08);
+            }
+
+            .btn-delete:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .delete-confirm {
+                max-width: 24rem;
+                margin-bottom: var(--wg-space-3);
             }
 
             .form-error {
@@ -255,6 +290,13 @@ class NetworkForm extends BaseElement {
             ...network,
             ledgerApi: { baseUrl: network.ledgerApi },
         } as StoreNetwork
+    }
+
+    /** The IdP IDs to choose from, keeping the current one even if it is gone */
+    private idpOptions(): string[] {
+        const ids = this.idps.map((idp) => idp.id)
+        const current = this.network.identityProviderId
+        return current && !ids.includes(current) ? [current, ...ids] : ids
     }
 
     render() {
@@ -340,21 +382,52 @@ class NetworkForm extends BaseElement {
                     </div>
 
                     <div class="field-group d-flex flex-column">
-                        <label class="form-label field-label mb-0">
-                            Identity provider ID
+                        <label
+                            class="form-label field-label mb-0"
+                            for="identity-provider"
+                        >
+                            Identity provider
                             <span class="required">*</span>
                         </label>
-                        <input
-                            class="form-control field-control"
-                            type="text"
-                            required
-                            .value=${this.network.identityProviderId ?? ''}
-                            @change=${(e: Event) => {
-                                this.network.identityProviderId = (
-                                    e.target as HTMLInputElement
-                                ).value
-                            }}
-                        />
+                        <div class="select-wrap">
+                            <select
+                                id="identity-provider"
+                                class="form-select field-control"
+                                required
+                                @change=${(e: Event) => {
+                                    this.network.identityProviderId = (
+                                        e.target as HTMLSelectElement
+                                    ).value
+                                }}
+                            >
+                                <option
+                                    value=""
+                                    disabled
+                                    ?selected=${!this.network.identityProviderId}
+                                >
+                                    Select an identity provider
+                                </option>
+                                ${this.idpOptions().map(
+                                    (id) =>
+                                        html`<option
+                                            value=${id}
+                                            ?selected=${
+                                                id ===
+                                                this.network.identityProviderId
+                                            }
+                                        >
+                                            ${id}
+                                        </option>`
+                                )}
+                            </select>
+                            <span class="select-chevron"
+                                >${chevronDownIcon}</span
+                            >
+                        </div>
+                        <p class="field-help">
+                            Issues the tokens that users log in to this network
+                            with.
+                        </p>
                     </div>
 
                     <div class="field-group d-flex flex-column">
@@ -375,7 +448,13 @@ class NetworkForm extends BaseElement {
                         />
                     </div>
 
-                    <h3 class="section-title">Configure user auth</h3>
+                    <h3 class="section-title">
+                        Configure user auth
+                        <wg-info-tip
+                            text="How users log in to this network's Ledger API. Use authorization_code for a browser login with OAuth, or self_signed for development."
+                            docsUrl=${AUTH_DOCS_URL}
+                        ></wg-info-tip>
+                    </h3>
                     <auth-editor
                         .auth=${this.network.auth}
                         @auth-change=${(e: AuthEditorChangeEvent) => {
@@ -388,7 +467,13 @@ class NetworkForm extends BaseElement {
                         }}
                     ></auth-editor>
 
-                    <h3 class="section-title">Configure admin auth</h3>
+                    <h3 class="section-title">
+                        Configure admin auth
+                        <wg-info-tip
+                            text="How the Wallet Gateway itself gets tokens for admin operations, such as syncing parties when a user logs in or allocating parties. Usually client_credentials."
+                            docsUrl=${ADMIN_AUTH_DOCS_URL}
+                        ></wg-info-tip>
+                    </h3>
                     <auth-editor
                         .auth=${this.network.adminAuth}
                         .optional=${true}
@@ -406,6 +491,10 @@ class NetworkForm extends BaseElement {
 
                     <h3 class="section-title">
                         Configure service account auth
+                        <wg-info-tip
+                            text="Machine credentials (client_credentials) that API keys use to submit transactions without a person approving them. Users can only create API keys on networks that have it."
+                            docsUrl=${SERVICE_ACCOUNT_AUTH_DOCS_URL}
+                        ></wg-info-tip>
                     </h3>
                     <auth-editor
                         .auth=${this.network.serviceAccountAuth}
@@ -436,12 +525,35 @@ class NetworkForm extends BaseElement {
                               <div class="delete-section">
                                   <h4 class="delete-title">Delete network</h4>
                                   <p class="delete-desc">
-                                      You will not be able to undo the change
-                                      once you delete this network.
+                                      Deleting this network also deletes the
+                                      parties and activity history that the
+                                      Wallet Gateway stores for it, for every
+                                      user. You can't undo this.
                                   </p>
+                                  <label
+                                      class="delete-desc d-block"
+                                      for="delete-confirmation"
+                                      >Type <code>${this.network.id}</code> to
+                                      confirm.</label
+                                  >
+                                  <input
+                                      id="delete-confirmation"
+                                      class="form-control field-control delete-confirm"
+                                      autocomplete="off"
+                                      .value=${this.deleteConfirmation}
+                                      @input=${(e: InputEvent) => {
+                                          this.deleteConfirmation = (
+                                              e.target as HTMLInputElement
+                                          ).value
+                                      }}
+                                  />
                                   <button
                                       type="button"
                                       class="btn-delete"
+                                      ?disabled=${
+                                          this.deleteConfirmation !==
+                                          this.network.id
+                                      }
                                       @click=${() =>
                                           this.dispatchEvent(
                                               new NetworkDeleteEvent(

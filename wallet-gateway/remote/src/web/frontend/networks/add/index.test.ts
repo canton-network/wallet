@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { WgPageHeader } from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -14,16 +15,21 @@ import {
     networkEditSaveEventFrom,
 } from '../../__tests__/test-helpers.ts'
 
-const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
-    () => ({
-        mockCreateUserClient: vi.fn(),
-        handleErrorToast: vi.fn(),
-        setLocationHref: vi.fn(),
-    })
-)
+const {
+    showToastAfterNavigation,
+    mockCreateUserClient,
+    handleErrorToast,
+    setLocationHref,
+} = vi.hoisted(() => ({
+    showToastAfterNavigation: vi.fn(),
+    mockCreateUserClient: vi.fn(),
+    handleErrorToast: vi.fn(),
+    setLocationHref: vi.fn(),
+}))
 
 vi.mock('../../index.ts', () => ({}))
 vi.mock('../../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../../utils.ts', () => ({ showToastAfterNavigation }))
 vi.mock('../../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -64,9 +70,10 @@ describe('UserUiAddNetwork', () => {
     })
 
     it('renders the add-network form', () => {
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Add a new network'
-        )
+        expect(
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+                ?.heading
+        ).toBe('Add network')
         expect(el.shadowRoot?.querySelector('network-form')).not.toBeNull()
     })
 
@@ -88,8 +95,8 @@ describe('UserUiAddNetwork', () => {
 
     it('navigates back when Back is clicked', () => {
         const backBtn = el.shadowRoot?.querySelector(
-            '.page-header button'
-        ) as HTMLButtonElement
+            'wg-back-link'
+        ) as HTMLElement
         backBtn.click()
 
         expect(setLocationHref).toHaveBeenCalledWith(
@@ -147,6 +154,27 @@ describe('UserUiAddNetwork', () => {
                     }),
                 }),
             },
+        })
+    })
+
+    it('offers the identity providers in the form', async () => {
+        const form = el.shadowRoot!.querySelector(
+            'network-form'
+        ) as unknown as { idps: { id: string }[] }
+        await waitUntil(() => form.idps.length === 1)
+    })
+
+    it('confirms on the list page that the network was added', async () => {
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(networkEditSaveEvent())
+
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
+        expect(showToastAfterNavigation).toHaveBeenCalledWith({
+            title: 'Network added',
+            message: expect.any(String),
+            type: 'success',
         })
     })
 })
