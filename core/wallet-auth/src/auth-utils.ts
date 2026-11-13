@@ -92,6 +92,7 @@ export const oidcDiscoverySchema = z.looseObject({
     token_endpoint: endpointSchema,
     userinfo_endpoint: endpointSchema,
     jwks_uri: endpointSchema,
+    end_session_endpoint: endpointSchema,
 })
 export type OidcDiscovery = z.infer<typeof oidcDiscoverySchema>
 
@@ -116,6 +117,7 @@ export type OidcUserInfo = z.infer<typeof oidcUserInfoSchema>
  */
 export const oidcTokenResponseSchema = z.looseObject({
     access_token: z.string().min(1),
+    id_token: z.string().min(1).optional(),
 })
 export type OidcTokenResponse = z.infer<typeof oidcTokenResponseSchema>
 
@@ -185,6 +187,34 @@ export async function fetchOidcDiscovery(
             { cause: error }
         )
     }
+}
+
+/**
+ * Builds an OIDC RP-initiated logout URL, which ends the user's session at the
+ * IDP. The `postLogoutRedirectUri` must be registered with the IDP, otherwise
+ * the IDP will not redirect back.
+ * https://openid.net/specs/openid-connect-rpinitiated-1_0.html
+ *
+ * @param endSessionEndpoint - The `end_session_endpoint` from the discovery document
+ */
+export function buildEndSessionUrl(
+    endSessionEndpoint: string,
+    params: {
+        clientId: string
+        postLogoutRedirectUri: string
+        idTokenHint?: string | undefined
+    }
+): string {
+    const url = new URL(endSessionEndpoint)
+    url.searchParams.set('client_id', params.clientId)
+    url.searchParams.set(
+        'post_logout_redirect_uri',
+        params.postLogoutRedirectUri
+    )
+    if (params.idTokenHint) {
+        url.searchParams.set('id_token_hint', params.idTokenHint)
+    }
+    return url.toString()
 }
 
 /**

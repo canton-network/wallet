@@ -8,6 +8,7 @@ import {
     jwtExpiresAt,
     assertConnected,
     fetchOidcUserInfo,
+    buildEndSessionUrl,
     fetchOidcDiscovery,
     jwtExpired,
 } from './auth-utils.js'
@@ -225,6 +226,35 @@ describe('Auth Utils', () => {
             })
         }
     )
+
+    it('should build an end session URL, keeping existing query parameters', () => {
+        const url = new URL(
+            buildEndSessionUrl('https://idp.example.com/logout?tenant=t1', {
+                clientId: 'client-id',
+                postLogoutRedirectUri: 'https://wallet.example.com/login',
+                idTokenHint: 'id-token',
+            })
+        )
+
+        expect(url.origin + url.pathname).toBe('https://idp.example.com/logout')
+        expect(Object.fromEntries(url.searchParams)).toEqual({
+            tenant: 't1',
+            client_id: 'client-id',
+            post_logout_redirect_uri: 'https://wallet.example.com/login',
+            id_token_hint: 'id-token',
+        })
+    })
+
+    it('should omit id_token_hint when there is no id token', () => {
+        const url = new URL(
+            buildEndSessionUrl('https://idp.example.com/logout', {
+                clientId: 'client-id',
+                postLogoutRedirectUri: 'https://wallet.example.com/login',
+            })
+        )
+
+        expect(url.searchParams.has('id_token_hint')).toBe(false)
+    })
 
     it('should reject a userinfo response without sub', async () => {
         fetchMock.mockResolvedValue(Response.json({ email: 'a@b.c' }))

@@ -24,6 +24,9 @@ const authState = vi.hoisted(() => ({
     networkId: undefined as string | undefined,
     expirationDate: undefined as string | undefined,
     intendedPage: undefined as string | undefined,
+    oauthIdpSession: undefined as
+        | { configUrl: string; clientId: string; idToken?: string }
+        | undefined,
 }))
 
 const {
@@ -104,7 +107,15 @@ vi.mock('./state-manager.js', () => ({
                 authState.intendedPage = undefined
             },
         },
+        oauthIdpSession: {
+            get: async () => await Promise.resolve(authState.oauthIdpSession),
+            set: vi.fn(),
+            clear: () => {
+                authState.oauthIdpSession = undefined
+            },
+        },
         clearAuthState: () => {
+            authState.oauthIdpSession = undefined
             authState.accessToken = undefined
             authState.networkId = undefined
             authState.expirationDate = undefined
@@ -453,6 +464,87 @@ describe('UserApp', () => {
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(LOGIN_PAGE_REDIRECT)
         )
+    })
+
+    describe('IDP logout', () => {
+        const configUrl = 'https://idp.example/.well-known/openid-configuration'
+        let fetchSpy: ReturnType<typeof vi.spyOn>
+
+        const logout = async () => {
+            el = await fixture<UserApp>(componentFixture)
+            setLocationHref.mockClear()
+            el.shadowRoot
+                ?.querySelector('app-layout')
+                ?.dispatchEvent(new LogoutEvent())
+            await waitUntil(() => setLocationHref.mock.calls.length > 0)
+            return setLocationHref.mock.calls[0][0] as string
+        }
+
+        beforeEach(() => {
+            authState.oauthIdpSession = {
+                configUrl,
+                clientId: 'client-id',
+                idToken: 'id-token',
+            }
+            fetchSpy = vi.spyOn(globalThis, 'fetch')
+        })
+
+        afterEach(() => {
+            fetchSpy.mockRestore()
+            authState.oauthIdpSession = undefined
+        })
+
+        it('redirects to the end_session_endpoint when the IDP advertises one', async () => {
+            fetchSpy.mockResolvedValue(
+                Response.json({
+                    end_session_endpoint: 'https://idp.example/logout',
+                })
+            )
+
+            const url = new URL(await logout())
+
+            expect(fetchSpy).toHaveBeenCalledWith(configUrl, expect.anything())
+            expect(url.origin + url.pathname).toBe('https://idp.example/logout')
+            expect(url.searchParams.get('client_id')).toBe('client-id')
+            expect(url.searchParams.get('id_token_hint')).toBe('id-token')
+            expect(url.searchParams.get('post_logout_redirect_uri')).toContain(
+                LOGIN_PAGE_REDIRECT
+            )
+            expect(authState.oauthIdpSession).toBeUndefined()
+            expect(authState.accessToken).toBeUndefined()
+        })
+
+        it('closes a popup only after returning from the IDP logout', async () => {
+            const opener = { closed: false, postMessage: vi.fn() }
+            vi.stubGlobal('opener', opener)
+            const close = vi.spyOn(window, 'close').mockImplementation(() => {})
+            fetchSpy.mockResolvedValue(
+                Response.json({
+                    end_session_endpoint: 'https://idp.example/logout',
+                })
+            )
+
+            expect(await logout()).toContain('https://idp.example/logout')
+            expect(opener.postMessage).toHaveBeenCalledWith(
+                { type: WalletEvent.SPLICE_WALLET_LOGOUT },
+                '*'
+            )
+            expect(close).not.toHaveBeenCalled()
+            expect(sessionStorage.getItem('closeAfterIdpLogout')).toBe('true')
+            close.mockRestore()
+        })
+
+        it('redirects to login when the IDP has no end_session_endpoint', async () => {
+            fetchSpy.mockResolvedValue(Response.json({}))
+
+            expect(await logout()).toContain(LOGIN_PAGE_REDIRECT)
+        })
+
+        it('redirects to login when the discovery document cannot be fetched', async () => {
+            fetchSpy.mockRejectedValue(new TypeError('fetch failed'))
+
+            expect(await logout()).toContain(LOGIN_PAGE_REDIRECT)
+        })
     })
 })
 

@@ -9,10 +9,12 @@ const {
     mockRedirectToIntendedOrDefault,
     mockAddUserSession,
     mockAccessTokenSet,
+    mockOAuthIdpSessionSet,
     mockExpirationDateSet,
     mockNetworkIdGet,
     mockHandleErrorToast,
 } = vi.hoisted(() => ({
+    mockOAuthIdpSessionSet: vi.fn(),
     mockRedirectToIntendedOrDefault: vi.fn(),
     mockAddUserSession: vi.fn().mockResolvedValue(undefined),
     mockAccessTokenSet: vi.fn(),
@@ -28,6 +30,7 @@ vi.mock('../index.js', () => ({
 vi.mock('../state-manager.js', () => ({
     stateManager: {
         accessToken: { set: mockAccessTokenSet },
+        oauthIdpSession: { set: mockOAuthIdpSessionSet },
         expirationDate: { set: mockExpirationDateSet },
         networkId: { get: mockNetworkIdGet },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
@@ -67,7 +70,7 @@ function tokenWithExpiry(exp?: number) {
     )
 }
 
-function stubOAuthFetch(accessToken?: string) {
+function stubOAuthFetch(accessToken?: string, idToken?: string) {
     vi.stubGlobal(
         'fetch',
         vi.fn(async (input: string | URL) => {
@@ -83,7 +86,9 @@ function stubOAuthFetch(accessToken?: string) {
             if (url === 'https://idp.example/token') {
                 return new Response(
                     JSON.stringify(
-                        accessToken ? { access_token: accessToken } : {}
+                        accessToken
+                            ? { access_token: accessToken, id_token: idToken }
+                            : {}
                     ),
                     { status: 200 }
                 )
@@ -95,6 +100,7 @@ function stubOAuthFetch(accessToken?: string) {
 
 function expectNoAuthSideEffects() {
     expect(mockAccessTokenSet).not.toHaveBeenCalled()
+    expect(mockOAuthIdpSessionSet).not.toHaveBeenCalled()
     expect(mockExpirationDateSet).not.toHaveBeenCalled()
     expect(mockAddUserSession).not.toHaveBeenCalled()
     expect(mockRedirectToIntendedOrDefault).not.toHaveBeenCalled()
@@ -129,6 +135,7 @@ describe('LoginCallback', () => {
         mockRedirectToIntendedOrDefault.mockReset()
         mockAddUserSession.mockReset().mockResolvedValue(undefined)
         mockAccessTokenSet.mockReset()
+        mockOAuthIdpSessionSet.mockReset()
         mockExpirationDateSet.mockReset()
         mockNetworkIdGet.mockReturnValue('net-1')
         mockHandleErrorToast.mockReset()
@@ -230,11 +237,20 @@ describe('LoginCallback', () => {
         sessionStorage.setItem('oauth-pkce-state-123', 'pkce-verifier')
 
         const accessToken = tokenWithExpiry()
-        stubOAuthFetch(accessToken)
+        stubOAuthFetch(accessToken, 'id-token')
 
         el = await fixture<LoginCallback>(componentFixture)
 
         await waitUntil(() => mockAccessTokenSet.mock.calls.length > 0)
+        await waitUntil(() => mockOAuthIdpSessionSet.mock.calls.length > 0)
+        expect(mockOAuthIdpSessionSet).toHaveBeenCalledWith(
+            {
+                configUrl: oauthState.configUrl,
+                clientId: oauthState.clientId,
+                idToken: 'id-token',
+            },
+            expect.any(String)
+        )
 
         expect(mockAccessTokenSet).toHaveBeenCalledWith(
             accessToken,

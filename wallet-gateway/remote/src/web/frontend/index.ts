@@ -28,6 +28,7 @@ import {
 import './listeners'
 import { detectCurrentOrigin } from './listeners'
 import { fetchDappApiUrl, showToast } from './utils'
+import { closeAfterIdpLogout, idpEndSessionUrl } from './idp-logout'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `
@@ -135,6 +136,9 @@ export class UserApp extends LitElement {
             return
         }
 
+        // Must be read before the auth state is cleared below
+        const endSessionUrl = await idpEndSessionUrl(currentOrigin)
+
         try {
             const userClient = await createUserClient(accessToken)
             await userClient.request({ method: 'removeSession' })
@@ -146,11 +150,20 @@ export class UserApp extends LitElement {
 
         await stateManager.clearAuthState(currentOrigin)
 
-        if (window.opener && !window.opener.closed) {
+        const isPopup = window.opener && !window.opener.closed
+        if (isPopup) {
             window.opener.postMessage(
                 { type: WalletEvent.SPLICE_WALLET_LOGOUT },
                 '*'
             )
+        }
+
+        if (endSessionUrl) {
+            // End the IDP session too, otherwise the next login silently
+            // reuses it. The IDP redirects back to the login page.
+            if (isPopup) closeAfterIdpLogout()
+            setLocationHref(endSessionUrl)
+        } else if (isPopup) {
             // close the gateway UI automatically if we are within a popup
             window.close()
         } else {

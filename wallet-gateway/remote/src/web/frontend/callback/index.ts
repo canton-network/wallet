@@ -95,6 +95,14 @@ export class LoginCallback extends LitElement {
                 tokenResponse.access_token,
                 currentOrigin
             )
+            await stateManager.oauthIdpSession.set(
+                {
+                    configUrl: state.configUrl,
+                    clientId: state.clientId,
+                    idToken: tokenResponse.id_token,
+                },
+                currentOrigin
+            )
 
             await addUserSession(
                 tokenResponse.access_token,
