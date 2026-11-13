@@ -101,6 +101,65 @@ it. See [dApp API](../reference/dapp-api.mdx).
 
 </Warning>
 
+## Change the signing key of a wallet
+
+You can change the **signing provider** and the **public key** of an existing wallet. This
+changes the key the Wallet Gateway uses to sign transactions for the wallet's party. The
+party ID itself stays the same.
+
+A typical reason is a party allocated with a **namespace root key** that you no longer want to
+use for day-to-day signing, for example because the root key should stay in cold storage. If
+the party's namespace is delegated to a second key, select that delegated key here. The party
+keeps its root-key namespace, and from then on the Wallet Gateway signs transactions with the
+delegated key.
+
+<Note>
+
+This is about the key that signs **transactions**. To log in with a different wallet or
+gateway, see [Changing wallet providers](#changing-wallet-providers).
+
+</Note>
+
+### Before you start
+
+- **The ledger authorizes the new key for the party.** A namespace delegation (a topology
+  transaction) from the party's root key to the new key must exist on the synchronizer. You
+  set this up outside the Wallet Gateway with Canton's topology management tooling. See the
+    Canton documentation on [namespace delegation mapping](https://docs.canton.network/appdev/deep-dives/external-signing-topology#4-namespace-delegation-mapping).
+- **A configured signing provider holds the new key.** The key must appear in that provider's
+  key list. See [Signing providers](../operate/signing-providers.mdx).
+
+### Change the key
+
+1. Open the **Parties** page and find the party card.
+2. Choose **Edit** on the card. This opens the **Edit party** page.
+3. Under **Signing Provider**, select the provider that holds the delegated key.
+   **Participant** can't be selected as a target.
+4. Under **Public Key**, select the delegated key. The list shows the keys of the selected
+   provider.
+5. Choose **Edit** to save. You return to **Parties**, and a confirmation is shown.
+
+Wallets whose signing provider is **Participant** have no **Edit** button, unless the wallet is
+disabled. Disabled wallets always show **Edit**. One example is a party created outside the
+Wallet Gateway whose root key isn't held by any configured signing provider: the Wallet
+Gateway disables it during sync. Selecting the delegated key re-enables the wallet.
+
+### Verify the change
+
+- Open **Edit** on the party card again. It shows the new signing provider and public key.
+- Submit a test transaction. A successful execution confirms that the ledger accepts
+  signatures from the delegated key.
+
+<Warning>
+
+The Wallet Gateway checks only that the selected provider holds the key. It doesn't check
+whether the key is authorized for the party on the ledger. If the delegation is missing or
+points to a different key, the Wallet Gateway still saves the change, but the ledger rejects
+the signatures when a transaction executes. To recover, set up the delegation, or switch the
+wallet back to a key the ledger accepts.
+
+</Warning>
+
 ## View activities
 
 The **Activities** page lists transactions the Wallet Gateway has prepared, signed, or executed for
