@@ -241,7 +241,7 @@ test.describe('OTC allocations V2', () => {
             counterpartyHint: hints.bob,
         })
         await expectHistoryRow(page, {
-            activity: 'Transfer sent ↗',
+            activity: 'Trade settled',
             amount: '-8',
             counterpartyHint: hints.bob,
         })
@@ -255,7 +255,7 @@ test.describe('OTC allocations V2', () => {
 
         await gotoWalletHistory(page, carol, hints.carol)
         await expectHistoryRow(page, {
-            activity: 'Transfer received ↘',
+            activity: 'Trade settled',
             amount: '+0.5',
             counterpartyHint: hints.bob,
         })
