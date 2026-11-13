@@ -261,7 +261,7 @@ class AuthEditor extends BaseElement {
 
         if ('clientId' in auth) {
             rows.splice(1, 0, {
-                key: 'Client Id',
+                key: 'Client ID',
                 value: auth.clientId ?? '',
             })
         }
@@ -278,7 +278,7 @@ class AuthEditor extends BaseElement {
 
         if (auth.method === 'client_credentials' && auth.identityProviderId) {
             rows.push({
-                key: 'Identity Provider Id',
+                key: 'Identity provider ID',
                 value: auth.identityProviderId,
             })
         }
@@ -471,7 +471,7 @@ class AuthEditor extends BaseElement {
     ) {
         return html` <div class="field-group d-flex flex-column">
             <label class="form-label field-label mb-0">
-                Client Id <span class="required">*</span>
+                Client ID <span class="required">*</span>
             </label>
             <input
                 class="form-control field-control"
@@ -526,7 +526,7 @@ class AuthEditor extends BaseElement {
     _renderIdentityProviderIdInput(authObj: ClientCredentialsAuth) {
         return html` <div class="field-group d-flex flex-column">
             <label class="form-label field-label mb-0">
-                Identity Provider Id Override
+                Identity provider ID override
             </label>
             <input
                 class="form-control field-control"

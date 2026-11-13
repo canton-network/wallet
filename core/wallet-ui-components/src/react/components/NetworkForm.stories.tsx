@@ -119,7 +119,7 @@ export const Add: Story = {
 
         const text = async (label: string, value: string) =>
             fill(userEvent, await field(canvasElement, label), value)
-        await text('Network Id', 'new-net')
+        await text('Network ID', 'new-net')
         await text('Name', 'New Network')
         await text('Description', 'A new network')
         // The IdP is picked from the existing ones, so it can't be mistyped
@@ -129,12 +129,12 @@ export const Add: Story = {
             }),
             'idp-1'
         )
-        await text('Ledger API Base Url', 'http://localhost:6865')
+        await text('Ledger API base URL', 'http://localhost:6865')
         // The user auth is required, so its fields are shown straight away
         const userAuth = await authSection(canvasElement, 'Configure user auth')
         await fill(userEvent, await field(userAuth, 'Audience'), 'aud')
         await fill(userEvent, await field(userAuth, 'Scope'), 'scope')
-        await fill(userEvent, await field(userAuth, 'Client Id'), 'client')
+        await fill(userEvent, await field(userAuth, 'Client ID'), 'client')
 
         await userEvent.click(addButton(canvasElement))
 
@@ -165,7 +165,7 @@ export const AddPrefilled: Story = {
         }),
     },
     play: async ({ args, canvasElement, userEvent }) => {
-        await expect(await field(canvasElement, 'Network Id')).toHaveValue(
+        await expect(await field(canvasElement, 'Network ID')).toHaveValue(
             'new-net'
         )
 
@@ -188,9 +188,9 @@ export const RequiresFields: Story = {
         await userEvent.click(addButton(canvasElement))
 
         await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
-        await expect(await field(canvasElement, 'Network Id')).toBeInvalid()
+        await expect(await field(canvasElement, 'Network ID')).toBeInvalid()
         await expect(
-            await field(canvasElement, 'Synchronizer Id')
+            await field(canvasElement, 'Synchronizer ID')
         ).not.toBeRequired()
     },
 }
@@ -198,7 +198,7 @@ export const RequiresFields: Story = {
 export const Review: Story = {
     args: { mode: 'review', network: makeNetwork() },
     play: async ({ args, canvasElement, userEvent }) => {
-        await expect(await field(canvasElement, 'Network Id')).toHaveValue(
+        await expect(await field(canvasElement, 'Network ID')).toHaveValue(
             'canton:devnet'
         )
         await expect(
@@ -271,7 +271,7 @@ export const InvalidLedgerApi: Story = {
         await expect(queryByShadowText(canvasElement, INVALID)).toBeNull()
 
         // Filled in, so the browser lets it through, but not a URL
-        const ledgerApi = await field(canvasElement, 'Ledger API Base Url')
+        const ledgerApi = await field(canvasElement, 'Ledger API base URL')
         await fill(userEvent, ledgerApi, 'not a url')
         await userEvent.click(await update(canvasElement))
 
@@ -291,7 +291,7 @@ export const InvalidLedgerApi: Story = {
 export const SynchronizerId: Story = {
     args: { mode: 'review', network: makeNetwork() },
     play: async ({ args, canvasElement, userEvent }) => {
-        const synchronizerId = await field(canvasElement, 'Synchronizer Id')
+        const synchronizerId = await field(canvasElement, 'Synchronizer ID')
 
         // It has to look like a synchronizer ID when it is set
         await fill(userEvent, synchronizerId, 'short')
@@ -328,7 +328,7 @@ export const ExistingUserAuth: Story = {
     play: async ({ args, canvasElement, userEvent }) => {
         const userAuth = await authSection(canvasElement, 'Configure user auth')
         const secret = await field(userAuth, 'Client Secret')
-        const override = await field(userAuth, 'Identity Provider Id Override')
+        const override = await field(userAuth, 'Identity provider ID override')
         const method = await field(userAuth, 'Method')
         const withOverride = {
             ...clientCredentialsAuth(),
@@ -397,7 +397,7 @@ export const ExistingUserAuth: Story = {
             await findByShadowText(userAuth, 'Client Secret')
         ).toBeVisible()
         await expect(
-            await field(userAuth, 'Identity Provider Id Override')
+            await field(userAuth, 'Identity provider ID override')
         ).toHaveValue('')
     },
 }
@@ -419,7 +419,7 @@ export const SwitchingUserAuthMethods: Story = {
         await expect(secret).toBeRequired()
         await expect(secret).toHaveAttribute('placeholder', '')
         await expect(
-            await findByShadowText(userAuth, 'Identity Provider Id Override')
+            await findByShadowText(userAuth, 'Identity provider ID override')
         ).toBeVisible()
         await expect(queryByShadowText(userAuth, 'Issuer')).toBeNull()
 
@@ -427,7 +427,7 @@ export const SwitchingUserAuthMethods: Story = {
         await expect(await field(userAuth, 'Issuer')).toHaveValue('')
         await waitFor(() =>
             expect(
-                queryByShadowText(userAuth, 'Identity Provider Id Override')
+                queryByShadowText(userAuth, 'Identity provider ID override')
             ).toBeNull()
         )
         await fill(userEvent, await field(userAuth, 'Issuer'), 'https://iss')
@@ -448,7 +448,7 @@ export const SwitchingUserAuthMethods: Story = {
 
         await userEvent.selectOptions(method, 'self_issued')
         await waitFor(() =>
-            expect(queryByShadowText(userAuth, 'Client Id')).toBeNull()
+            expect(queryByShadowText(userAuth, 'Client ID')).toBeNull()
         )
         await expect(queryByShadowText(userAuth, 'Client Secret')).toBeNull()
         await userEvent.click(await update(canvasElement))
@@ -460,10 +460,10 @@ export const SwitchingUserAuthMethods: Story = {
 
         // Nothing to carry over from self_issued
         await userEvent.selectOptions(method, 'client_credentials')
-        await expect(await field(userAuth, 'Client Id')).toHaveValue('')
+        await expect(await field(userAuth, 'Client ID')).toHaveValue('')
         await userEvent.selectOptions(method, 'self_issued')
         await userEvent.selectOptions(method, 'authorization_code')
-        const clientId = await field(userAuth, 'Client Id')
+        const clientId = await field(userAuth, 'Client ID')
         await expect(clientId).toHaveValue('')
         await fill(userEvent, clientId, 'new-client')
         await userEvent.click(await update(canvasElement))
@@ -604,7 +604,7 @@ export const AddingAdminAuth: Story = {
         await expect(await field(admin, 'Method')).toHaveValue(
             'authorization_code'
         )
-        await expect(await field(admin, 'Client Id')).toHaveValue('')
+        await expect(await field(admin, 'Client ID')).toHaveValue('')
         await userEvent.click(
             await findByShadowRole(admin, 'button', { name: 'Cancel' })
         )
@@ -630,7 +630,7 @@ export const AddingAdminAuth: Story = {
         await expect(await field(admin, 'Issuer')).toHaveValue('')
         await fill(userEvent, await field(admin, 'Audience'), 'admin-aud')
         await fill(userEvent, await field(admin, 'Scope'), 'admin-scope')
-        await fill(userEvent, await field(admin, 'Client Id'), 'admin-client')
+        await fill(userEvent, await field(admin, 'Client ID'), 'admin-client')
         await fill(userEvent, await field(admin, 'Issuer'), 'https://iss')
         await fill(userEvent, await field(admin, 'Client Secret'), 'secret')
         await userEvent.click(await update(canvasElement))
@@ -687,7 +687,7 @@ export const AddingServiceAccountAuth: Story = {
 
         await fill(userEvent, await field(serviceAccount, 'Audience'), 'sa')
         await fill(userEvent, await field(serviceAccount, 'Scope'), 'sa')
-        await fill(userEvent, await field(serviceAccount, 'Client Id'), 'sa')
+        await fill(userEvent, await field(serviceAccount, 'Client ID'), 'sa')
         await userEvent.click(await update(canvasElement))
         await expect(args.onNetworkEditSave).not.toHaveBeenCalled()
         await expect(secret).toBeInvalid()
@@ -732,7 +732,7 @@ export const EditingServiceAccountAuth: Story = {
         )
 
         // Editing starts from the current values, with the secret hidden
-        const clientId = await field(serviceAccount, 'Client Id')
+        const clientId = await field(serviceAccount, 'Client ID')
         await expect(clientId).toHaveValue('admin-client')
         const secret = await field(serviceAccount, 'Client Secret')
         await expect(secret).toHaveValue('')
@@ -808,7 +808,7 @@ export const OptionalAuthSummaries: Story = {
         for (const text of [
             'Method',
             'self_signed',
-            'Client Id',
+            'Client ID',
             'admin-client',
             'Audience',
             'admin-aud',
@@ -833,7 +833,7 @@ export const OptionalAuthSummaries: Story = {
         for (const text of [
             'client_credentials',
             'sa-client',
-            'Identity Provider Id',
+            'Identity provider ID',
             'machine-idp',
             '********',
         ]) {
