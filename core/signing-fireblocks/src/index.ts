@@ -119,6 +119,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         status: tx.status,
                         signature: toBase64(tx.signature),
                         publicKey: toBase64(tx.publicKey),
+                        ...(tx.failureReason && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
@@ -166,6 +169,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         ...(tx.signature
                             ? { signature: toBase64(tx.signature) }
                             : {}),
+                        ...(tx.failureReason && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
@@ -188,6 +194,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         status: tx.status,
                         signature: toBase64(tx.signature),
                         publicKey: toBase64(tx.publicKey),
+                        ...(tx.failureReason && {
+                            failureReason: tx.failureReason,
+                        }),
                     } as GetTransactionResult
                 } else {
                     return {
@@ -217,6 +226,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                                 status: tx.status,
                                 signature: toBase64(tx.signature),
                                 publicKey: toBase64(tx.publicKey),
+                                ...(tx.failureReason && {
+                                    failureReason: tx.failureReason,
+                                }),
                             })
                         }
                         if (

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     assertConnected,
     AuthTokenProvider,
@@ -216,6 +217,10 @@ export const transactions = ({
             notificationService.getNotifier(session.id).emit('txChanged', {
                 status: 'failed',
                 commandId: transaction.commandId,
+                error: {
+                    code: errorCodes.provider.userRejectedRequest,
+                    message: 'Rejected by the user',
+                },
             } satisfies TxChangedFailedEvent)
             return null
         },

@@ -121,6 +121,9 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
                         ...(tx.metadata !== undefined && {
                             metadata: tx.metadata,
                         }),
+                        ...(tx.failureReason !== undefined && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
@@ -161,6 +164,9 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
                             }),
                             ...(tx.metadata !== undefined && {
                                 metadata: tx.metadata,
+                            }),
+                            ...(tx.failureReason !== undefined && {
+                                failureReason: tx.failureReason,
                             }),
                         })
                         // break early when filtering by txIds only and all have been found

@@ -85,7 +85,11 @@ import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allo
 import { WalletSyncService } from '../ledger/wallet-sync-service.js'
 import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
 import type { TxChangedFailedEvent } from '../dapp-api/rpc-gen/typings.js'
-import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
+import {
+    errorCodes,
+    providerErrors,
+    rpcErrors,
+} from '@canton-network/core-rpc-errors'
 import { randomBytes, createHash, timingSafeEqual } from 'crypto'
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
 import type { ServerStatusService } from '../notices/server-status-service.js'
@@ -1404,6 +1408,10 @@ export const userController = ({
             notificationService.getNotifier(session.id).emit('txChanged', {
                 status: 'failed',
                 commandId: transaction.commandId,
+                error: {
+                    code: errorCodes.provider.userRejectedRequest,
+                    message: 'Rejected by the user',
+                },
             } satisfies TxChangedFailedEvent)
             return null
         },

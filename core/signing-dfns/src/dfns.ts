@@ -46,6 +46,23 @@ export interface DfnsSignature {
     status: SigningStatus
     /** ed25519 signature, base64-encoded (Canton SIGNATURE_FORMAT_CONCAT). */
     signature?: string
+    failureReason?: string
+}
+
+/** Explains a rejected or failed request, with the reason Dfns gives if any */
+function failureReason(
+    status: SigningStatus,
+    reason: string | undefined
+): string | undefined {
+    if (status !== 'rejected' && status !== 'failed') {
+        return undefined
+    }
+
+    const message =
+        status === 'rejected'
+            ? 'Dfns rejected the signing request'
+            : 'Dfns failed to sign the request'
+    return reason ? `${message} (${reason})` : message
 }
 
 function stripHexPrefix(hex: string): string {
@@ -257,11 +274,13 @@ export class DfnsHandler {
                 })
             }
             this.signatureKey.set(result.id, keyId)
+            const reason = failureReason(mapped, result.reason)
             return {
                 id: result.id,
                 keyId,
                 status: mapped,
                 signature: this.extractSignature(result.signature),
+                ...(reason && { failureReason: reason }),
             }
         } catch (error) {
             this.logger.error('Error generating Dfns signature', {
@@ -281,11 +300,14 @@ export class DfnsHandler {
                 keyId,
                 signatureId,
             })
+            const status = this.mapStatus(result.status)
+            const reason = failureReason(status, result.reason)
             return {
                 id: result.id,
                 keyId,
-                status: this.mapStatus(result.status),
+                status,
                 signature: this.extractSignature(result.signature),
+                ...(reason && { failureReason: reason }),
             }
         } catch (error) {
             this.logger.debug('Signature {signatureId} not found', {
@@ -330,11 +352,14 @@ export class DfnsHandler {
             })
 
             for (const sig of response.items) {
+                const status = this.mapStatus(sig.status)
+                const reason = failureReason(status, sig.reason)
                 yield {
                     id: sig.id,
                     keyId,
-                    status: this.mapStatus(sig.status),
+                    status,
                     signature: this.extractSignature(sig.signature),
+                    ...(reason && { failureReason: reason }),
                 }
             }
 

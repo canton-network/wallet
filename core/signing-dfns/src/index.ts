@@ -67,6 +67,7 @@ function toTransaction(sig: DfnsSignature, publicKey?: string): Transaction {
     }
     if (sig.signature) tx.signature = sig.signature
     if (publicKey) tx.publicKey = publicKey
+    if (sig.failureReason) tx.failureReason = sig.failureReason
     return tx
 }
 
@@ -307,6 +308,9 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
                         status: signingResult.status,
                         ...(signingResult.signature && {
                             signature: signingResult.signature,
+                        }),
+                        ...(signingResult.failureReason && {
+                            failureReason: signingResult.failureReason,
                         }),
                     }
                 } catch (error) {

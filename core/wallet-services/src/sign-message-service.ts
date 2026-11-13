@@ -20,6 +20,7 @@ import type {
     SignMessageResult,
 } from '@canton-network/core-wallet-user-rpc-client'
 import type { MessageSignatureEvent } from '@canton-network/core-wallet-dapp-rpc-client'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import type { SigningDrivers } from './types.js'
 import type { Notifier } from './notification/index.js'
 
@@ -111,7 +112,14 @@ export class SignMessageService {
         }
 
         await this.store.removeMessageRaw(message.id)
-        this.notify(message, { status: 'failed', messageId: message.id })
+        this.notify(message, {
+            status: 'failed',
+            messageId: message.id,
+            error: {
+                code: errorCodes.provider.userRejectedRequest,
+                message: 'Rejected by the user',
+            },
+        })
     }
 
     public async sign(
@@ -134,6 +142,7 @@ export class SignMessageService {
         }
 
         const emitFailedAndPersist = async (
+            code: number,
             details: string
         ): Promise<never> => {
             // Best-effort: make sure listeners see a terminal state.
@@ -144,13 +153,18 @@ export class SignMessageService {
             } catch {
                 // ignore (e.g. record removed concurrently)
             }
-            this.notify(pending, { status: 'failed', messageId: pending.id })
+            this.notify(pending, {
+                status: 'failed',
+                messageId: pending.id,
+                error: { code, message: details },
+            })
             // Preserve the original error message for the caller/UI.
             throw new Error(details)
         }
 
         if (!pending.message) {
             return await emitFailedAndPersist(
+                errorCodes.rpc.invalidParams,
                 `Message request ${pending.id} has an empty message.`
             )
         }
@@ -158,11 +172,13 @@ export class SignMessageService {
         const wallet = await this.store.getWallet(pending.partyId)
         if (!wallet) {
             return await emitFailedAndPersist(
+                errorCodes.rpc.resourceNotFound,
                 `No wallet found for partyId ${pending.partyId} (from message request ${pending.id})`
             )
         }
         if (wallet.publicKey !== pending.publicKey) {
             return await emitFailedAndPersist(
+                errorCodes.rpc.invalidInput,
                 `Wallet public key changed for partyId ${pending.partyId}; refusing to sign message request ${pending.id}`
             )
         }
@@ -172,6 +188,7 @@ export class SignMessageService {
             )
         ) {
             return await emitFailedAndPersist(
+                errorCodes.provider.unsupportedMethod,
                 `signMessage is only supported for ${SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS.join(', ')} wallets, got ${wallet.signingProviderId}`
             )
         }
@@ -182,6 +199,7 @@ export class SignMessageService {
             ]?.controller(userId)
         if (!driver) {
             return await emitFailedAndPersist(
+                errorCodes.rpc.resourceUnavailable,
                 `${wallet.signingProviderId} signing driver not available`
             )
         }
@@ -193,12 +211,16 @@ export class SignMessageService {
         })
 
         if (isRpcError(result)) {
-            return await emitFailedAndPersist(result.error_description)
+            return await emitFailedAndPersist(
+                errorCodes.rpc.transactionRejected,
+                result.error_description
+            )
         }
 
         if (result.status === 'signed') {
             if (!result.signature) {
                 return await emitFailedAndPersist(
+                    errorCodes.rpc.internal,
                     'No signature returned from signing driver'
                 )
             }
@@ -237,12 +259,21 @@ export class SignMessageService {
         }
 
         if (result.status === 'failed' || result.status === 'rejected') {
-            const failureReason = `Signing provider returned status: ${result.status}`
+            const failureReason =
+                result.failureReason ??
+                `Signing provider returned status: ${result.status}`
             await this.store.setMessageRawStatus(pending.id, 'failed', {
                 failureReason,
                 ...(result.txId && { externalTxId: result.txId }),
             })
-            this.notify(pending, { status: 'failed', messageId: pending.id })
+            this.notify(pending, {
+                status: 'failed',
+                messageId: pending.id,
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            })
             return {
                 publicKey: wallet.publicKey,
                 status: 'failed',
@@ -252,6 +283,7 @@ export class SignMessageService {
         }
 
         return await emitFailedAndPersist(
+            errorCodes.rpc.internal,
             `Signing provider returned status: ${result.status} without a txId`
         )
     }
@@ -331,12 +363,21 @@ export class SignMessageService {
             signingResult.status === 'failed' ||
             signingResult.status === 'rejected'
         ) {
-            const failureReason = `Signing provider returned status: ${signingResult.status}`
+            const failureReason =
+                signingResult.failureReason ??
+                `Signing provider returned status: ${signingResult.status}`
             await this.store.setMessageRawStatus(message.id, 'failed', {
                 externalTxId: message.externalTxId,
                 failureReason,
             })
-            this.notify(message, { status: 'failed', messageId: message.id })
+            this.notify(message, {
+                status: 'failed',
+                messageId: message.id,
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            })
             return {
                 status: 'failed',
                 externalTxId: message.externalTxId,

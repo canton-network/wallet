@@ -455,12 +455,41 @@ export interface TxChangedSignedEvent {
 export type StatusFailed = 'failed'
 /**
  *
+ * One of the EIP-1193 or EIP-1474 error codes adopted by CIP-103.
+ *
+ */
+export type ErrorCode = number
+/**
+ *
+ * Human readable description of the failure.
+ *
+ */
+export type ErrorMessage = string
+/**
+ *
+ * Optional additional information about the failure, as for JSON-RPC errors.
+ *
+ */
+export type ErrorData = any
+/**
+ *
+ * Why it failed, as a JSON-RPC error object with one of the error codes adopted by CIP-103, e.g. 4001 when the user rejected it or -32003 when the signing provider or the ledger rejected it. The message is human readable and meant for display, not for parsing.
+ *
+ */
+export interface FailureError {
+    code: ErrorCode
+    message: ErrorMessage
+    data?: ErrorData
+}
+/**
+ *
  * Event emitted when a transaction has failed.
  *
  */
 export interface TxChangedFailedEvent {
     status: StatusFailed
     commandId: CommandId
+    error?: FailureError
 }
 /**
  *
@@ -495,6 +524,7 @@ export interface MessageSignatureSignedEvent {
 export interface MessageSignatureFailedEvent {
     status: StatusFailed
     messageId: MessageId
+    error?: FailureError
 }
 /**
  *

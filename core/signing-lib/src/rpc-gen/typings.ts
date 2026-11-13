@@ -135,17 +135,25 @@ export type Signature = string
 export interface Metadata {
     [key: string]: any
 }
+/**
+ *
+ * Human readable reason why the Signing Provider rejected or failed to sign the transaction.
+ *
+ */
+export type FailureReason = string
 export interface Transaction {
     txId: TxId
     status: SigningStatus
     signature?: Signature
     publicKey?: PublicKey
     metadata?: Metadata
+    failureReason?: FailureReason
 }
 export interface SignatureResult {
     status: SigningStatus
     signature?: Signature
     txId?: TxId
+    failureReason?: FailureReason
 }
 /**
  *
@@ -225,6 +233,7 @@ export interface SubscribeTransactionsResult {
     signature?: Signature
     publicKey?: PublicKey
     metadata?: Metadata
+    failureReason?: FailureReason
 }
 /**
  *
