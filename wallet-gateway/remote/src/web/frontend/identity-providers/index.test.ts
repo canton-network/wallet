@@ -144,4 +144,20 @@ describe('UserUiIdentityProviders', () => {
         expect(getIdpCards(el)).toHaveLength(1)
         expect(getIdpCards(el)[0]?.idp.id).toBe('idp-5')
     })
+
+    it('links to the docs for all users', async () => {
+        mockIdpsPageFlow([makeIdp()])
+
+        el = await fixture<UserUiIdentityProviders>(componentFixture)
+
+        await waitUntil(() => getIdpCards(el).length === 1)
+
+        const link =
+            el.shadowRoot!.querySelector<HTMLAnchorElement>(
+                'a[target="_blank"]'
+            )
+        expect(link?.href).toBe(
+            'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity#identity-providers'
+        )
+    })
 })

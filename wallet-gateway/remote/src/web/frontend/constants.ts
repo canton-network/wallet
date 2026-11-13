@@ -11,3 +11,8 @@ export const IDENTITY_PROVIDERS_PAGE_REDIRECT = '/identity-providers'
 export const TOKEN_EXPIRED_SKEW_MS = 5000
 // UI sets timeout to trigger logout when token expires. It needs capping, because setTimeout stops delaying if timeout exceed ~24 days (unsigned 32bit in ms)
 export const TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS = 24 * 60 * 60 * 1000
+
+const NETWORKS_AND_IDENTITY_DOCS_URL =
+    'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity'
+export const NETWORKS_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#networks`
+export const IDENTITY_PROVIDERS_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#identity-providers`

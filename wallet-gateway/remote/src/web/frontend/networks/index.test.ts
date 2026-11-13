@@ -133,9 +133,6 @@ describe('UserUiNetworks', () => {
         ) as unknown as Array<{ readonly: boolean; configManaged: boolean }>
         expect(cards.map((card) => card.readonly)).toEqual([true, false])
         expect(cards.map((card) => card.configManaged)).toEqual([true, false])
-        expect(el.shadowRoot?.textContent?.replace(/\s+/g, ' ')).toContain(
-            'Entries marked CONFIG FILE are managed by the Wallet Gateway config file and are read-only.'
-        )
     })
 
     it('marks a network connected only when session status is connected', async () => {
@@ -200,5 +197,21 @@ describe('UserUiNetworks', () => {
         expect(pagination?.page).toBe(2)
         expect(getNetworkCards(el)).toHaveLength(1)
         expect(getNetworkCards(el)[0]?.network.id).toBe('net-4')
+    })
+
+    it('links to the docs for all users', async () => {
+        mockNetworksPageFlow([makePublicNetwork()], { isAdmin: false })
+
+        el = await fixture<UserUiNetworks>(componentFixture)
+
+        await waitUntil(() => getNetworkCards(el).length === 1)
+
+        const link =
+            el.shadowRoot!.querySelector<HTMLAnchorElement>(
+                'a[target="_blank"]'
+            )
+        expect(link?.href).toBe(
+            'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity#networks'
+        )
     })
 })

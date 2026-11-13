@@ -19,6 +19,7 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { detectCurrentOrigin } from '../listeners.js'
+import { IDENTITY_PROVIDERS_DOCS_URL } from '../constants'
 
 @customElement('user-ui-identity-providers')
 export class UserUiIdentityProviders extends BaseElement {
@@ -137,14 +138,20 @@ export class UserUiIdentityProviders extends BaseElement {
                 }
             </div>
 
-            ${
-                this.configManagedIds.length > 0
-                    ? html`<p class="text-body-secondary">
-                          Entries marked CONFIG FILE are managed by the Wallet
-                          Gateway config file and are read-only.
-                      </p>`
-                    : ''
-            }
+            <p class="text-body-secondary mb-4">
+                An identity provider (IdP) issues the tokens that users and the
+                Wallet Gateway use to authenticate against a network's Ledger
+                API. Every network references one. Use an OAuth / OpenID Connect
+                provider in production; self-signed tokens are for development
+                and testing only.
+                <a
+                    href=${IDENTITY_PROVIDERS_DOCS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >Learn more in the docs</a
+                >
+            </p>
+
             ${
                 this.idps.length === 0
                     ? html`<p class="mb-0 text-body-secondary">

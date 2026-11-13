@@ -22,6 +22,7 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { detectCurrentOrigin } from '../listeners.js'
+import { NETWORKS_DOCS_URL } from '../constants'
 
 @customElement('user-ui-networks')
 export class UserUiNetworks extends BaseElement {
@@ -146,14 +147,19 @@ export class UserUiNetworks extends BaseElement {
                 }
             </div>
 
-            ${
-                this.configManagedIds.length > 0
-                    ? html`<p class="text-body-secondary">
-                          Entries marked CONFIG FILE are managed by the Wallet
-                          Gateway config file and are read-only.
-                      </p>`
-                    : ''
-            }
+            <p class="text-body-secondary mb-4">
+                A network is a Canton validator that you can reach through this
+                Wallet Gateway. It points at the validator's Ledger API, picks
+                the synchronizer to use, and references the identity provider
+                that issues the tokens to authenticate with it.
+                <a
+                    href=${NETWORKS_DOCS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    >Learn more in the docs</a
+                >
+            </p>
+
             ${
                 this.networks.length === 0
                     ? html`<p class="mb-0 text-body-secondary">
