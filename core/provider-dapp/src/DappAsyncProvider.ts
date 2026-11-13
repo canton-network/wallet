@@ -16,6 +16,7 @@ import {
 // Maintain a global SSE connection in-memory to avoid multiple connections
 // per DappAsyncProvider instance.
 type GatewaySSE = {
+    // Gateway event endpoint, without the ticket query.
     url: string
     token: string
     eventSource: EventSource
@@ -50,65 +51,103 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
     }
 
     private openSSE(url: URL, token: string): void {
-        const sseUrl = new URL('events', url.toString().replace(/\/?$/, '/'))
-        sseUrl.searchParams.set('token', token)
-        const sseUrlString = sseUrl.toString()
+        void this.connectSSE(url, token)
+    }
 
-        // Reconnect if the URL or token has changed
+    private async connectSSE(url: URL, token: string): Promise<void> {
+        const base = url.toString().replace(/\/?$/, '/')
+        const endpoint = new URL('events', base).toString()
+
         if (
             connection &&
-            (token !== connection.token || sseUrlString !== connection.url)
+            connection.token === token &&
+            connection.url === endpoint
         ) {
+            connection.listeners.add(this.sseForwarder)
+            return
+        }
+
+        const ticketUrl = new URL('events/ticket', base)
+        let ticket = ''
+        try {
+            const response = await fetch(ticketUrl, {
+                method: 'POST',
+                headers: {
+                    authorization: `Bearer ${token}`,
+                    'content-type': 'application/json',
+                },
+                body: '{}',
+            })
+            if (!response.ok) return
+            const body = (await response.json()) as { ticket?: unknown }
+            if (typeof body.ticket === 'string') ticket = body.ticket
+        } catch {
+            return
+        }
+
+        // Auth can move on while this request is in flight.
+        if (this.sessionToken !== token || !ticket) return
+
+        if (
+            connection &&
+            connection.token === token &&
+            connection.url === endpoint
+        ) {
+            connection.listeners.add(this.sseForwarder)
+            return
+        }
+
+        if (connection) {
             connection.eventSource.close()
             connection = null
         }
 
-        if (!connection) {
-            const eventSource = new EventSource(sseUrlString)
-            const dispatchToProviders =
-                (eventName: string) => (event: MessageEvent) => {
-                    const args = parseSSEData(event.data)
-                    connection?.listeners.forEach((listener) => {
-                        listener(eventName, args)
-                    })
-                }
-
-            eventSource.onmessage = dispatchToProviders('message')
-
-            eventSource.addEventListener(
-                'accountsChanged',
-                dispatchToProviders('accountsChanged')
-            )
-            eventSource.addEventListener(
-                'statusChanged',
-                dispatchToProviders('statusChanged')
-            )
-            eventSource.addEventListener(
-                'connected',
-                dispatchToProviders('connected')
-            )
-            eventSource.addEventListener(
-                'txChanged',
-                dispatchToProviders('txChanged')
-            )
-            eventSource.addEventListener(
-                'messageSignature',
-                dispatchToProviders('messageSignature')
-            )
-
-            eventSource.onerror = () => {
-                if (connection?.url === sseUrlString) {
-                    connection.eventSource.close()
-                    connection = null
-                }
+        const sseUrl = new URL(endpoint)
+        sseUrl.searchParams.set('ticket', ticket)
+        const eventSource = new EventSource(sseUrl.toString())
+        const dispatchToProviders =
+            (eventName: string) => (event: MessageEvent) => {
+                const args = parseSSEData(event.data)
+                connection?.listeners.forEach((listener) => {
+                    listener(eventName, args)
+                })
             }
 
-            connection = {
-                eventSource,
-                url: sseUrlString,
-                token,
-                listeners: new Set(),
+        eventSource.onmessage = dispatchToProviders('message')
+
+        eventSource.addEventListener(
+            'accountsChanged',
+            dispatchToProviders('accountsChanged')
+        )
+        eventSource.addEventListener(
+            'statusChanged',
+            dispatchToProviders('statusChanged')
+        )
+        eventSource.addEventListener(
+            'connected',
+            dispatchToProviders('connected')
+        )
+        eventSource.addEventListener(
+            'txChanged',
+            dispatchToProviders('txChanged')
+        )
+        eventSource.addEventListener(
+            'messageSignature',
+            dispatchToProviders('messageSignature')
+        )
+
+        eventSource.onerror = () => {
+            if (connection?.eventSource === eventSource) {
+                connection.eventSource.close()
+                connection = null
             }
+        }
+
+        connection = {
+            eventSource,
+            url: endpoint,
+            token,
+            listeners: new Set(),
         }
 
         connection.listeners.add(this.sseForwarder)

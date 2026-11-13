@@ -13,6 +13,7 @@ import type { Server } from 'http'
 import type { ServerConfig } from '../config/Config.js'
 import { subscribeNotifications } from '@canton-network/core-wallet-services'
 import { SseNotificationSink } from './sse-sink.js'
+import { issueSseTicket } from '../middleware/sseTicket.js'
 
 export interface DappApiOptions extends Omit<
     DappControllerOptions,
@@ -40,6 +41,16 @@ export const dapp = ({
             origin: serverConfig.allowedOrigins,
         })
     )
+
+    // The browser fetches this with Authorization, then opens EventSource with the ticket.
+    app.post(`${route}/events/ticket`, (req, res) => {
+        const token = req.authContext?.accessToken
+        if (!token) {
+            res.status(401).json({ error: 'Unauthenticated' })
+            return
+        }
+        res.json({ ticket: issueSseTicket(token) })
+    })
 
     // SSE endpoint for real-time notifications (must be registered before the JSON-RPC route)
     app.get(`${route}/events`, async (req, res) => {

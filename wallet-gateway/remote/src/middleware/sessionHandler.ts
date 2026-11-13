@@ -36,21 +36,29 @@ export function sessionHandler(
             return next()
         }
 
+        // Express 5 leaves req.body unset when the POST has no JSON body.
+        // The dapp path is a wildcard, so that request still has to get through.
+        const rpcMethod =
+            typeof req.body?.method === 'string' ? req.body.method : undefined
+
         if (
             allowedMethods &&
-            (allowedMethods.includes(req.body.method) ||
+            ((rpcMethod !== undefined && allowedMethods.includes(rpcMethod)) ||
                 allowedMethods.includes('*'))
         ) {
             logger.debug(
-                `Allowing unauthenticated access to ${req.baseUrl} for method ${req.body.method}`
+                `Allowing unauthenticated access to ${req.baseUrl} for method ${rpcMethod}`
             )
             return next()
         }
 
         const reqId = req.body?.id ?? null
 
-        if (selfIssuedLoginMethods?.includes(req.body.method)) {
-            const sessionId = req.body.params?.sessionId
+        if (
+            rpcMethod !== undefined &&
+            selfIssuedLoginMethods?.includes(rpcMethod)
+        ) {
+            const sessionId = req.body?.params?.sessionId
             const session =
                 typeof sessionId === 'string' && sessionId
                     ? await store.getSelfIssuedLoginSession(sessionId)
