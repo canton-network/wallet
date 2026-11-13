@@ -143,6 +143,22 @@ export class StateManager {
         clear: () => this.clearWithStorage('origin', 'current', sessionStorage),
     }
 
+    /** Set when the session ends without the user logging out, so the login page can say why */
+    sessionExpired = {
+        get: () =>
+            this.getWithStorage('sessionExpired', 'current', sessionStorage) ===
+            'true',
+        set: () =>
+            this.setWithStorage(
+                'sessionExpired',
+                'true',
+                'current',
+                sessionStorage
+            ),
+        clear: () =>
+            this.clearWithStorage('sessionExpired', 'current', sessionStorage),
+    }
+
     sessionId = {
         get: (origin: string) => this.getWithStorage('sessionId', origin),
         set: (sessionId: string, origin: string) =>

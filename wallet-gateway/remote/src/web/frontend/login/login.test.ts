@@ -26,6 +26,8 @@ const {
     mockNetworkIdGet,
     mockOnboardingSessionIdSet,
     setLocationHref,
+    showToast,
+    sessionExpired,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
@@ -37,6 +39,8 @@ const {
     mockNetworkIdGet: vi.fn(() => 'net-1'),
     mockOnboardingSessionIdSet: vi.fn(),
     setLocationHref: vi.fn(),
+    showToast: vi.fn(),
+    sessionExpired: { value: false },
 }))
 
 const defaultAccessToken =
@@ -66,8 +70,15 @@ vi.mock('../state-manager.js', () => ({
         networkId: { set: mockNetworkIdSet, get: mockNetworkIdGet },
         selfIssuedLoginSessionId: { set: mockOnboardingSessionIdSet },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        sessionExpired: {
+            get: () => sessionExpired.value,
+            clear: () => {
+                sessionExpired.value = false
+            },
+        },
     },
 }))
+vi.mock('../utils.js', () => ({ showToast }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     const actual =
         await importOriginal<
@@ -189,6 +200,22 @@ describe('LoginUI', () => {
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
         vi.useRealTimers()
+    })
+
+    it('says why the user has to log in again after the session expired', async () => {
+        sessionExpired.value = true
+        mockRequest.mockImplementation(async ({ method }) =>
+            method === 'listNetworks' ? { networks: [] } : { idps: [] }
+        )
+
+        el = await fixture<LoginUI>(componentFixture)
+
+        expect(showToast).toHaveBeenCalledWith(
+            'Session expired',
+            'Your session has ended. Log in again to continue.',
+            'info'
+        )
+        expect(sessionExpired.value).toBe(false)
     })
 
     it('renders the login form with loaded networks and idps', async () => {

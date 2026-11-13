@@ -20,6 +20,7 @@ const {
     mockSetLocationHref,
     mockClearAuthState,
     authState,
+    mockSessionExpiredSet,
 } = vi.hoisted(() => {
     const mockRemoveSession = vi.fn()
     const mockRequest = vi.fn()
@@ -44,6 +45,7 @@ const {
         mockToRelHref: vi.fn((path: string) => path),
         mockSetLocationHref: vi.fn(),
         mockClearAuthState: vi.fn(),
+        mockSessionExpiredSet: vi.fn(),
         authState: { accessToken: undefined as string | undefined },
     }
 })
@@ -80,6 +82,11 @@ vi.mock('./state-manager.js', () => ({
         },
         clearAuthState: mockClearAuthState,
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        sessionExpired: {
+            get: vi.fn(),
+            set: mockSessionExpiredSet,
+            clear: vi.fn(),
+        },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', () => ({
@@ -101,6 +108,7 @@ describe('rpc-client', () => {
         mockRequest.mockReset()
         HttpTransportSpy.mockClear()
         mockClearAuthState.mockClear()
+        mockSessionExpiredSet.mockClear()
         mockSetLocationHref.mockClear()
         mockGetCurrentRoute.mockReturnValue('/parties')
         mockToRelHref.mockImplementation((path: string) => path)
@@ -213,6 +221,7 @@ describe('rpc-client', () => {
             expect(mockSetLocationHref).toHaveBeenCalledWith(
                 LOGIN_PAGE_REDIRECT
             )
+            expect(mockSessionExpiredSet).toHaveBeenCalled()
         })
 
         it('does not redirect when already on the login page', async () => {
@@ -225,6 +234,7 @@ describe('rpc-client', () => {
 
             expect(mockClearAuthState).toHaveBeenCalled()
             expect(mockSetLocationHref).not.toHaveBeenCalled()
+            expect(mockSessionExpiredSet).not.toHaveBeenCalled()
         })
 
         it('skips removeSession when there is no access token', async () => {

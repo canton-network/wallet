@@ -85,6 +85,7 @@ const handleAutoLogout = async (): Promise<void> => {
         isLoggingOut = false
 
         if (getCurrentRoute(window.location.pathname) !== LOGIN_PAGE_REDIRECT) {
+            stateManager.sessionExpired.set()
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
         }
     }

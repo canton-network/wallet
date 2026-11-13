@@ -372,6 +372,7 @@ export class UserUIAuthRedirect extends LitElement {
 
         if (!isLoginPage) {
             await this.clearAuthStateAndPreserveIntendedPage()
+            stateManager.sessionExpired.set()
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
             return 'redirecting'
         }
