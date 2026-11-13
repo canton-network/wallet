@@ -55,7 +55,6 @@ export async function upsertIdpsAndNetworks(
         }
 
         for (const network of config.networks) {
-            // Without an owner, so networks taken over from the UI are global
             const row = fromNetwork(network)
             await trx
                 .insertInto('networks')
