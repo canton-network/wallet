@@ -197,8 +197,8 @@ export function amountsToLock(
                 instrumentId,
                 amount: new Decimal(amount),
             }))
-            return sumByInstrument([...legs, ...nextIteration]).filter(
-                (a) => a.amount.greaterThan(0)
+            return sumByInstrument([...legs, ...nextIteration]).filter((a) =>
+                a.amount.greaterThan(0)
             )
         })
     )
