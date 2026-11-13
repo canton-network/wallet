@@ -22,7 +22,7 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { detectCurrentOrigin } from '../listeners.js'
-import { NETWORKS_DOCS_URL } from '../constants'
+import { NETWORKS_INFO, NETWORKS_DOCS_URL } from '../constants'
 
 @customElement('user-ui-networks')
 export class UserUiNetworks extends BaseElement {
@@ -119,7 +119,7 @@ export class UserUiNetworks extends BaseElement {
         return html`
             <wg-page-header
                 heading="Networks"
-                info="A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
+                .info=${NETWORKS_INFO}
                 .docsUrl=${NETWORKS_DOCS_URL}
             >
                 ${

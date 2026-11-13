@@ -27,3 +27,8 @@ export const PARTIES_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/use/party-management
 export const ACTIVITIES_DOCS_URL = `${PARTIES_DOCS_URL}#view-activities`
 export const API_KEYS_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/automation/service-account-automations`
 export const ADMIN_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/configure#administration-page`
+
+export const NETWORKS_INFO =
+    "A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
+export const IDENTITY_PROVIDERS_INFO =
+    "An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."

@@ -50,6 +50,10 @@ const meta = {
         onNetworkEditSave: fn(),
         onNetworkEditCancel: fn(),
         onNetworkDelete: fn(),
+        idps: [
+            { id: 'idp-1', type: 'self_signed', issuer: 'self-signed' },
+            { id: 'idp-2', type: 'self_signed', issuer: 'self-signed' },
+        ],
     },
 } satisfies Meta<typeof NetworkForm>
 
@@ -118,7 +122,13 @@ export const Add: Story = {
         await text('Network Id', 'new-net')
         await text('Name', 'New Network')
         await text('Description', 'A new network')
-        await text('Identity Provider Id', 'idp-1')
+        // The IdP is picked from the existing ones, so it can't be mistyped
+        await userEvent.selectOptions(
+            await findByShadowRole(canvasElement, 'combobox', {
+                name: 'Identity provider *',
+            }),
+            'idp-1'
+        )
         await text('Ledger API Base Url', 'http://localhost:6865')
         // The user auth is required, so its fields are shown straight away
         const userAuth = await authSection(canvasElement, 'Configure user auth')

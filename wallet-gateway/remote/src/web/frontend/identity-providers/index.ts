@@ -19,7 +19,10 @@ import { setLocationHref } from '../navigation.js'
 import '../index'
 import { stateManager } from '../state-manager'
 import { detectCurrentOrigin } from '../listeners.js'
-import { IDENTITY_PROVIDERS_DOCS_URL } from '../constants'
+import {
+    IDENTITY_PROVIDERS_INFO,
+    IDENTITY_PROVIDERS_DOCS_URL,
+} from '../constants'
 
 @customElement('user-ui-identity-providers')
 export class UserUiIdentityProviders extends BaseElement {
@@ -110,7 +113,7 @@ export class UserUiIdentityProviders extends BaseElement {
         return html`
             <wg-page-header
                 heading="Identity Providers"
-                info="An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."
+                .info=${IDENTITY_PROVIDERS_INFO}
                 .docsUrl=${IDENTITY_PROVIDERS_DOCS_URL}
             >
                 ${

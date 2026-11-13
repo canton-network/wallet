@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
+import type {
+    Network as ApiNetwork,
+    Idp,
+} from '@canton-network/core-wallet-user-rpc-client'
 import {
     type Network as StoreNetwork,
     networkSchema,
@@ -11,6 +14,10 @@ import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.js'
 import './auth-editor.js'
+import './info-tip.js'
+
+const AUTH_DOCS_URL =
+    'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity#authentication-methods'
 
 /**
  * Emitted when the user clicks the Cancel button on the form
@@ -65,6 +72,10 @@ class NetworkForm extends BaseElement {
             clientId: '',
         },
     }
+
+    /** The identity providers the network can reference */
+    @property({ type: Array })
+    accessor idps: Idp[] = []
 
     @state() private accessor _error = ''
     @state() private accessor deleteConfirmation = ''
@@ -139,7 +150,16 @@ class NetworkForm extends BaseElement {
                 display: inline-flex;
             }
 
+            .field-help {
+                margin: 0;
+                font-size: var(--wg-font-size-xs);
+                color: var(--wg-text-secondary);
+            }
+
             .section-title {
+                display: flex;
+                align-items: center;
+                gap: 0.15rem;
                 margin: var(--wg-space-4) 0 var(--wg-space-2);
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
@@ -267,6 +287,13 @@ class NetworkForm extends BaseElement {
         } as StoreNetwork
     }
 
+    /** The IdP IDs to choose from, keeping the current one even if it is gone */
+    private idpOptions(): string[] {
+        const ids = this.idps.map((idp) => idp.id)
+        const current = this.network.identityProviderId
+        return current && !ids.includes(current) ? [current, ...ids] : ids
+    }
+
     render() {
         const isReview = this.mode === 'review'
 
@@ -350,21 +377,47 @@ class NetworkForm extends BaseElement {
                     </div>
 
                     <div class="field-group d-flex flex-column">
-                        <label class="form-label field-label mb-0">
-                            Identity Provider Id
+                        <label
+                            class="form-label field-label mb-0"
+                            for="identity-provider"
+                        >
+                            Identity provider
                             <span class="required">*</span>
                         </label>
-                        <input
-                            class="form-control field-control"
-                            type="text"
+                        <select
+                            id="identity-provider"
+                            class="form-select field-control"
                             required
-                            .value=${this.network.identityProviderId ?? ''}
                             @change=${(e: Event) => {
                                 this.network.identityProviderId = (
-                                    e.target as HTMLInputElement
+                                    e.target as HTMLSelectElement
                                 ).value
                             }}
-                        />
+                        >
+                            <option
+                                value=""
+                                disabled
+                                ?selected=${!this.network.identityProviderId}
+                            >
+                                Select an identity provider
+                            </option>
+                            ${this.idpOptions().map(
+                                (id) =>
+                                    html`<option
+                                        value=${id}
+                                        ?selected=${
+                                            id ===
+                                            this.network.identityProviderId
+                                        }
+                                    >
+                                        ${id}
+                                    </option>`
+                            )}
+                        </select>
+                        <p class="field-help">
+                            Issues the tokens that users log in to this network
+                            with.
+                        </p>
                     </div>
 
                     <div class="field-group d-flex flex-column">
@@ -385,7 +438,13 @@ class NetworkForm extends BaseElement {
                         />
                     </div>
 
-                    <h3 class="section-title">Configure user auth</h3>
+                    <h3 class="section-title">
+                        Configure user auth
+                        <wg-info-tip
+                            text="How users log in to this network's Ledger API. Use authorization_code for a browser login with OAuth, or self_signed for development."
+                            docsUrl=${AUTH_DOCS_URL}
+                        ></wg-info-tip>
+                    </h3>
                     <auth-editor
                         .auth=${this.network.auth}
                         @auth-change=${(e: AuthEditorChangeEvent) => {
@@ -398,7 +457,13 @@ class NetworkForm extends BaseElement {
                         }}
                     ></auth-editor>
 
-                    <h3 class="section-title">Configure admin auth</h3>
+                    <h3 class="section-title">
+                        Configure admin auth
+                        <wg-info-tip
+                            text="How the Wallet Gateway itself gets tokens for admin operations, such as syncing parties when a user logs in or allocating parties. Usually client_credentials."
+                            docsUrl=${AUTH_DOCS_URL}
+                        ></wg-info-tip>
+                    </h3>
                     <auth-editor
                         .auth=${this.network.adminAuth}
                         .optional=${true}
@@ -416,6 +481,10 @@ class NetworkForm extends BaseElement {
 
                     <h3 class="section-title">
                         Configure service account auth
+                        <wg-info-tip
+                            text="Machine credentials (client_credentials) that API keys use to submit transactions without a person approving them. Users can only create API keys on networks that have it."
+                            docsUrl=${AUTH_DOCS_URL}
+                        ></wg-info-tip>
                     </h3>
                     <auth-editor
                         .auth=${this.network.serviceAccountAuth}
