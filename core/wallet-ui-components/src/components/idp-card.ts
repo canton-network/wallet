@@ -9,6 +9,7 @@ import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
 import { IDP_TYPE_LABELS } from './idp-type.ts'
 import './copy-button.ts'
+import './readonly-badge.ts'
 
 /** Emitted when the user clicks an IDP card to review it */
 export class IdpCardReviewEvent extends Event {
@@ -72,11 +73,6 @@ class IdpCard extends BaseElement {
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
                 color: var(--wg-text);
-            }
-
-            .badge-config {
-                background: var(--wg-badge-bg);
-                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -152,11 +148,9 @@ class IdpCard extends BaseElement {
                     <p class="card-title">${this.idp.id}</p>
                     ${
                         this.configManaged
-                            ? html`<span
-                                  class="wg-badge badge-config"
-                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
-                                  >CONFIG FILE</span
-                              >`
+                            ? html`<wg-readonly-badge
+                                  section="idps"
+                              ></wg-readonly-badge>`
                             : ''
                     }
                 </div>

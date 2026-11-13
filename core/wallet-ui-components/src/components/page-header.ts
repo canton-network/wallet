@@ -5,9 +5,11 @@ import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 
 import { BaseElement } from '../internal/base-element.ts'
+import './info-tip.ts'
 
 /**
- * The title row at the top of a page.
+ * The title row at the top of a page. With `info`, an info icon next to the
+ * title explains what the page is for, linking to `docsUrl` if set.
  *
  * Slots:
  *  - default: actions at the end of the row, such as an add button or a back link
@@ -17,6 +19,8 @@ export
 @customElement('wg-page-header')
 class WgPageHeader extends BaseElement {
     @property() accessor heading = ''
+    @property() accessor info = ''
+    @property() accessor docsUrl = ''
 
     static styles = [
         BaseElement.styles,
@@ -50,6 +54,15 @@ class WgPageHeader extends BaseElement {
             <div class="page-header">
                 <div class="page-title-wrap">
                     <h1 class="h4 fw-semibold mb-0">${this.heading}</h1>
+                    ${
+                        this.info
+                            ? html`<wg-info-tip
+                                  .text=${this.info}
+                                  .docsUrl=${this.docsUrl}
+                                  label="About this page"
+                              ></wg-info-tip>`
+                            : ''
+                    }
                     <slot name="title-suffix"></slot>
                 </div>
                 <slot></slot>

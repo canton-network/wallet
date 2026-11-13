@@ -8,6 +8,7 @@ import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
 import './copy-button.ts'
+import './readonly-badge.ts'
 
 /** Emitted when the user clicks a network card to review it */
 export class NetworkCardReviewEvent extends Event {
@@ -88,11 +89,6 @@ class NetworkCard extends BaseElement {
                 letter-spacing: 0.04em;
                 background: rgba(var(--wg-success-rgb), 0.14);
                 color: var(--wg-success);
-            }
-
-            .badge-config {
-                background: var(--wg-badge-bg);
-                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -183,11 +179,9 @@ class NetworkCard extends BaseElement {
                     }
                     ${
                         this.configManaged
-                            ? html`<span
-                                  class="wg-badge badge-config"
-                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
-                                  >CONFIG FILE</span
-                              >`
+                            ? html`<wg-readonly-badge
+                                  section="networks"
+                              ></wg-readonly-badge>`
                             : ''
                     }
                 </div>
