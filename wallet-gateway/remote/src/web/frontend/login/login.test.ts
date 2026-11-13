@@ -3,6 +3,7 @@
 
 import {
     LoginConnectEvent,
+    type WgInfoTip,
     type WgLoginForm,
 } from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
@@ -81,7 +82,11 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './login.ts'
-import { SESSION_EXPIRED_TOAST } from '../constants.ts'
+import {
+    LOGIN_DOCS_URL,
+    LOGIN_INFO,
+    SESSION_EXPIRED_TOAST,
+} from '../constants.ts'
 import type { LoginUI } from './login.ts'
 
 const selfSignedNetwork = makePublicNetwork({
@@ -225,6 +230,18 @@ describe('LoginUI', () => {
 
         expect(el.shadowRoot?.querySelector('wg-login-form')).not.toBeNull()
         expect(el.idps).toHaveLength(1)
+    })
+
+    it('explains the page in an info icon linking to the login docs', async () => {
+        const getInfoTip = () =>
+            getLoginForm(el)?.shadowRoot?.querySelector<WgInfoTip>(
+                'h3 wg-info-tip'
+            )
+        await waitUntil(getInfoTip, 'info icon rendered')
+        const infoTip = getInfoTip()
+
+        expect(infoTip?.text).toBe(LOGIN_INFO)
+        expect(infoTip?.docsUrl).toBe(LOGIN_DOCS_URL)
     })
 
     it('redirects after self-signed connect succeeds', async () => {

@@ -15,6 +15,7 @@ import {
 import { html } from 'lit'
 import { customElement } from 'lit/decorators.js'
 
+import { CREATE_PARTY_DOCS_URL } from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import '../../index.ts'
@@ -25,6 +26,9 @@ import { UserUiAddOrEditParty } from '../common.ts'
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends UserUiAddOrEditParty {
     protected pageTitle = 'Create a new party'
+    protected pageInfo =
+        'Creates a party on the current network. Its signing provider holds the key and signs for it.'
+    protected docsUrl = CREATE_PARTY_DOCS_URL
     protected get showToast() {
         return this.selectedSigningProvider === SigningProvider.FIREBLOCKS
     }

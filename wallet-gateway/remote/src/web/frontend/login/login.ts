@@ -20,7 +20,12 @@ import type {
 import { html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { SESSION_EXPIRED_PARAM, SESSION_EXPIRED_TOAST } from '../constants.ts'
+import {
+    LOGIN_DOCS_URL,
+    LOGIN_INFO,
+    SESSION_EXPIRED_PARAM,
+    SESSION_EXPIRED_TOAST,
+} from '../constants.ts'
 import { redirectToIntendedOrDefault, addUserSession } from '../index.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import '../index.ts'
@@ -301,6 +306,8 @@ export class LoginUI extends BaseElement {
                 .idps=${this.idps}
                 .loading=${this.loading}
                 .connecting=${this.connecting}
+                .info=${LOGIN_INFO}
+                .docsUrl=${LOGIN_DOCS_URL}
                 @login-connect=${this.handleConnect}
             ></wg-login-form>
         `

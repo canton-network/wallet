@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { JsonRpcError } from '@canton-network/core-rpc-errors'
+import type { WgMessageDetail } from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -40,6 +41,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     return { ...actual, handleErrorToast }
 })
 
+import { SIGN_MESSAGE_INFO } from '../constants.ts'
 import './index.ts'
 import type { UserUiSignMessage } from './index.ts'
 
@@ -135,6 +137,10 @@ describe('UserUiSignMessage', () => {
         expect(detailText(el)).toContain('Hello, Canton')
         expect(detailText(el)).toContain('https://dapp.example')
         expect(approveButton(el)).not.toBeNull()
+        expect(
+            el.shadowRoot!.querySelector<WgMessageDetail>('wg-message-detail')!
+                .info
+        ).toBe(SIGN_MESSAGE_INFO)
     })
 
     it('calls signMessage when approve is clicked', async () => {

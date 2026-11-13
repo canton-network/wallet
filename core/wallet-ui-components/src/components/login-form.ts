@@ -8,6 +8,7 @@ import type {
 import { css, html, nothing, type PropertyValues } from 'lit'
 
 import './back-link.ts'
+import './info-tip.ts'
 import { customElement, property, state } from 'lit/decorators.js'
 
 import cantonLogo from '../../images/logos/canton-logo.png'
@@ -54,6 +55,10 @@ class WgLoginForm extends BaseElement {
     @property({ type: String }) accessor backHref = '/'
 
     @property({ type: Boolean }) accessor displayTopBar = true
+
+    /** Explains the page in an info icon next to the title, if set */
+    @property() accessor info = ''
+    @property() accessor docsUrl = ''
 
     @state() accessor selectedNetwork: PublicNetwork | null = null
     @state() accessor message: string | null = null
@@ -356,7 +361,17 @@ class WgLoginForm extends BaseElement {
 
                 <div class="content">
                     <div class="title-row">
-                        <h3 class="h3 mb-0 fw-bold">Wallet Gateway</h3>
+                        <h3 class="h3 mb-0 fw-bold">
+                            Wallet Gateway
+                            ${
+                                this.info
+                                    ? html`<wg-info-tip
+                                          .text=${this.info}
+                                          .docsUrl=${this.docsUrl}
+                                      ></wg-info-tip>`
+                                    : nothing
+                            }
+                        </h3>
                     </div>
 
                     <label

@@ -10,7 +10,7 @@ import type { GetSignMessageStatusResult } from '@canton-network/core-wallet-use
 import { html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { ACTIVITIES_PAGE_REDIRECT } from '../constants.ts'
+import { ACTIVITIES_PAGE_REDIRECT, SIGN_MESSAGE_INFO } from '../constants.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import '../index.ts'
 import { setLocationHref } from '../navigation.ts'
@@ -277,6 +277,7 @@ export class UserUiSignMessage extends BaseElement {
                     : nothing
             }
             <wg-message-detail
+                .info=${SIGN_MESSAGE_INFO}
                 .messageId=${this.messageId}
                 .message=${this.message}
                 .status=${this.status}

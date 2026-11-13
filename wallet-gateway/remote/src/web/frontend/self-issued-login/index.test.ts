@@ -5,6 +5,7 @@ import {
     SigningProviderChangeEvent,
     WalletCardSelectEvent,
     WalletCreateEvent,
+    type WgInfoTip,
     type WgWalletCreateForm,
 } from '@canton-network/core-wallet-ui-components'
 import type {
@@ -88,6 +89,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.ts'
+import { SELF_ISSUED_LOGIN_DOCS_URL } from '../constants.ts'
 import type { UserUiSelfIssuedLogin } from './index.ts'
 
 const accessToken = `header.${btoa(JSON.stringify({ exp: 2_000_000_000 }))}.sig`
@@ -610,6 +612,10 @@ describe('UserUiSelfIssuedLogin', () => {
         expect(element.shadowRoot?.querySelector('h1')?.textContent).toContain(
             'Select authentication party'
         )
+        expect(
+            element.shadowRoot?.querySelector<WgInfoTip>('h1 wg-info-tip')
+                ?.docsUrl
+        ).toBe(SELF_ISSUED_LOGIN_DOCS_URL)
         expect(
             element.shadowRoot
                 ?.querySelector('[role="alert"]')

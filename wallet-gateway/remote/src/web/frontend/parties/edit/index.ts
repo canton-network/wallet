@@ -15,6 +15,7 @@ import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import { EDIT_PARTY_DOCS_URL } from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import '../../index.ts'
 import { setLocationHref } from '../../navigation.ts'
@@ -30,6 +31,9 @@ export class UserUiEditParty extends UserUiAddOrEditParty {
     @state() accessor selectedPublicKey = ''
 
     protected readonly pageTitle = 'Edit party'
+    protected readonly pageInfo =
+        'Changes the key that signs transactions for this party. The party ID stays the same, and the ledger must already accept the new key for the party.'
+    protected readonly docsUrl = EDIT_PARTY_DOCS_URL
     protected readonly showToast = true
 
     private get partyId() {

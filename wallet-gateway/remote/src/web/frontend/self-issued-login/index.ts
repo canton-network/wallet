@@ -23,7 +23,10 @@ import type {
 import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { LOGIN_PAGE_REDIRECT } from '../constants.ts'
+import {
+    LOGIN_PAGE_REDIRECT,
+    SELF_ISSUED_LOGIN_DOCS_URL,
+} from '../constants.ts'
 import { redirectToIntendedOrDefault, shareUserSession } from '../index.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import { setLocationHref } from '../navigation.ts'
@@ -642,6 +645,10 @@ export class UserUiSelfIssuedLogin extends BaseElement {
                                 ? 'Select authentication party'
                                 : 'Create authentication party'
                         }
+                        <wg-info-tip
+                            text="This network logs you in without an OIDC provider. Your authentication party signs a short-lived access token, and the ledger accepts it because the party is linked to your user."
+                            docsUrl=${SELF_ISSUED_LOGIN_DOCS_URL}
+                        ></wg-info-tip>
                     </h1>
                     ${
                         this.sessionLoaded

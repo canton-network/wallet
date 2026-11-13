@@ -4,7 +4,6 @@
 import {
     type ApiKeyGenerateEvent,
     BaseElement,
-    chevronLeftIcon,
     handleErrorToast,
     toRelHref,
     toRelPath,
@@ -13,6 +12,7 @@ import type { GeneratedApiKey } from '@canton-network/core-wallet-user-rpc-clien
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import { API_KEYS_DOCS_URL, API_KEYS_INFO } from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import '../../index.ts'
@@ -34,14 +34,6 @@ export class UserUiAddApiKey extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: var(--wg-space-4);
-                gap: var(--wg-space-3);
             }
 
             .form-wrap {
@@ -103,17 +95,13 @@ export class UserUiAddApiKey extends BaseElement {
         }
 
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Generate new API Key</h1>
-                <button
-                    class="btn btn-link btn-sm text-body text-decoration-none p-0 d-inline-flex align-items-center gap-1"
-                    type="button"
-                    @click=${this.navigateBack}
-                >
-                    ${chevronLeftIcon}
-                    <span>Back</span>
-                </button>
-            </div>
+            <wg-page-header
+                heading="Generate API key"
+                .info=${API_KEYS_INFO}
+                .docsUrl=${API_KEYS_DOCS_URL}
+            >
+                <wg-back-link @click=${this.navigateBack}></wg-back-link>
+            </wg-page-header>
 
             <div class="form-wrap">
                 <api-key-form @api-key-generate=${this.onSave}></api-key-form>
@@ -126,9 +114,7 @@ export class UserUiAddApiKey extends BaseElement {
         name: string
     }) {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">API Key generated</h1>
-            </div>
+            <wg-page-header heading="API key generated"></wg-page-header>
 
             <div class="form-wrap">
                 <div class="mb-4">

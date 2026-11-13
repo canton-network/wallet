@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { WalletEditEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    WalletEditEvent,
+    type WgPageHeader,
+} from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -50,6 +53,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 import './index.ts'
 import { WALLET_STATUS_CODE } from '@canton-network/core-wallet-ui-components/logic'
 
+import { EDIT_PARTY_DOCS_URL } from '../../constants.ts'
 import { UserUiEditParty } from './index.ts'
 
 describe('UserUiEditParty', () => {
@@ -114,6 +118,14 @@ describe('UserUiEditParty', () => {
         expect(
             el.shadowRoot?.querySelector('wg-wallet-edit-form')
         ).not.toBeNull()
+    })
+
+    it('links the header info icon to the change signing key docs', () => {
+        const header =
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+
+        expect(header?.info).toBeTruthy()
+        expect(header?.docsUrl).toBe(EDIT_PARTY_DOCS_URL)
     })
 
     it('loads existing wallet on initialization', async () => {

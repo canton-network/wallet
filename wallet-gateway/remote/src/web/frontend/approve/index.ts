@@ -18,7 +18,11 @@ import type {
 import { html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { ACTIVITIES_PAGE_REDIRECT } from '../constants.ts'
+import {
+    ACTIVITIES_PAGE_REDIRECT,
+    APPROVE_INFO,
+    APPROVE_DOCS_URL,
+} from '../constants.ts'
 import '../index.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import { setLocationHref } from '../navigation.ts'
@@ -342,6 +346,8 @@ export class ApproveUi extends BaseElement {
                     : ''
             }
             <wg-transaction-detail
+                .info=${APPROVE_INFO}
+                .docsUrl=${APPROVE_DOCS_URL}
                 .commandId=${this.commandId}
                 .status=${this.status}
                 .txHash=${this.txHash}

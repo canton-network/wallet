@@ -28,11 +28,24 @@ const NETWORKS_AND_IDENTITY_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/netwo
 export const NETWORKS_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#networks`
 export const IDENTITY_PROVIDERS_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#identity-providers`
 export const PARTIES_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/use/party-management`
+export const LOGIN_DOCS_URL = `${PARTIES_DOCS_URL}#log-in`
+export const CREATE_PARTY_DOCS_URL = `${PARTIES_DOCS_URL}#create-a-party`
+export const EDIT_PARTY_DOCS_URL = `${PARTIES_DOCS_URL}#change-the-signing-key-of-a-wallet`
 export const ACTIVITIES_DOCS_URL = `${PARTIES_DOCS_URL}#view-activities`
 export const API_KEYS_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/automation/service-account-automations`
 export const ADMIN_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/configure#administration-page`
+export const SELF_ISSUED_LOGIN_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/self-issued-authentication#wallet-gateway-ui`
+export const APPROVE_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/use/approve-and-sign`
 
+export const LOGIN_INFO =
+    'Pick the network to log in to. Its identity provider decides how you log in. The Wallet Gateway operator configures which networks you can choose.'
 export const NETWORKS_INFO =
     "A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
 export const IDENTITY_PROVIDERS_INFO =
     "An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."
+export const API_KEYS_INFO =
+    'API keys let a backend service or CI job submit transactions through the dApp API without a person approving each one. They only work on networks with service account auth configured.'
+export const APPROVE_INFO =
+    'Shows what a transaction does. Pending ones wait for you to approve or reject them.'
+export const SIGN_MESSAGE_INFO =
+    "A message that a dApp asked you to sign with your party's key. Signing doesn't submit a transaction."

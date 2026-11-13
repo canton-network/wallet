@@ -10,6 +10,7 @@ import { customElement, property, state } from 'lit/decorators.js'
 
 import { chevronDownIcon } from '../icons/index.ts'
 import { renderCopyableValue } from '../internal/activity-render.ts'
+import './page-header.ts'
 import {
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
@@ -56,6 +57,11 @@ class WgTransactionDetail extends BaseElement {
 
     @property() accessor backHref = ''
 
+    /** Explains the page next to its heading */
+    @property() accessor info = ''
+
+    @property() accessor docsUrl = ''
+
     @property({ type: Boolean }) accessor isApproving = false
 
     @property({ type: Boolean }) accessor isDeleting = false
@@ -76,18 +82,6 @@ class WgTransactionDetail extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
-            }
-
-            .page-title {
-                color: var(--wg-text);
             }
 
             .detail-grid {
@@ -352,8 +346,11 @@ class WgTransactionDetail extends BaseElement {
         const decoded = this.parsed?.jsonString || 'N/A'
 
         return html`
-            <div class="page-header">
-                <h1 class="page-title h4 fw-semibold mb-0">Activity Details</h1>
+            <wg-page-header
+                heading="Activity Details"
+                .info=${this.info}
+                .docsUrl=${this.docsUrl}
+            >
                 ${
                     this.backHref
                         ? html`<wg-back-link
@@ -361,7 +358,7 @@ class WgTransactionDetail extends BaseElement {
                           ></wg-back-link>`
                         : nothing
                 }
-            </div>
+            </wg-page-header>
 
             <div class="detail-grid">
                 ${this.renderInlineField(
