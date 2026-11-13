@@ -67,6 +67,7 @@ class NetworkForm extends BaseElement {
     }
 
     @state() private accessor _error = ''
+    @state() private accessor deleteConfirmation = ''
 
     static styles = [
         BaseElement.styles,
@@ -181,8 +182,18 @@ class NetworkForm extends BaseElement {
                     color 0.2s ease;
             }
 
-            .btn-delete:hover {
+            .btn-delete:hover:not(:disabled) {
                 background: rgba(var(--wg-error-rgb), 0.08);
+            }
+
+            .btn-delete:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
+            }
+
+            .delete-confirm {
+                max-width: 24rem;
+                margin-bottom: var(--wg-space-3);
             }
 
             .form-error {
@@ -435,12 +446,35 @@ class NetworkForm extends BaseElement {
                               <div class="delete-section">
                                   <h4 class="delete-title">Delete network</h4>
                                   <p class="delete-desc">
-                                      You will not be able to undo the change
-                                      once you delete this network.
+                                      Deleting this network also deletes the
+                                      parties, sessions and activity history
+                                      that the Wallet Gateway stores for it, for
+                                      every user. You can't undo this.
                                   </p>
+                                  <label
+                                      class="delete-desc d-block"
+                                      for="delete-confirmation"
+                                      >Type <code>${this.network.id}</code> to
+                                      confirm.</label
+                                  >
+                                  <input
+                                      id="delete-confirmation"
+                                      class="form-control form-control-sm delete-confirm"
+                                      autocomplete="off"
+                                      .value=${this.deleteConfirmation}
+                                      @input=${(e: InputEvent) => {
+                                          this.deleteConfirmation = (
+                                              e.target as HTMLInputElement
+                                          ).value
+                                      }}
+                                  />
                                   <button
                                       type="button"
                                       class="btn-delete"
+                                      ?disabled=${
+                                          this.deleteConfirmation !==
+                                          this.network.id
+                                      }
                                       @click=${() =>
                                           this.dispatchEvent(
                                               new NetworkDeleteEvent(

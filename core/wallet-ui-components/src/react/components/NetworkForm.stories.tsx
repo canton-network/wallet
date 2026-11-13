@@ -232,11 +232,21 @@ export const Cancel: Story = {
 export const Delete: Story = {
     args: { mode: 'review', network: makeNetwork({ id: 'delete-me' }) },
     play: async ({ args, canvasElement, userEvent }) => {
-        await userEvent.click(
-            await findByShadowRole(canvasElement, 'button', {
-                name: 'Delete Network',
-            })
+        const deleteButton = await findByShadowRole(canvasElement, 'button', {
+            name: 'Delete Network',
+        })
+        // Deleting also deletes every user's parties, so it needs the ID typed
+        await expect(deleteButton).toBeDisabled()
+        await fillField(
+            userEvent,
+            await findByShadowRole(canvasElement, 'textbox', {
+                name: 'Type delete-me to confirm.',
+            }),
+            'delete-me'
         )
+        await expect(deleteButton).toBeEnabled()
+
+        await userEvent.click(deleteButton)
         await expect(args.onNetworkDelete).toHaveBeenCalledOnce()
         await expect(args.onNetworkDelete?.mock.calls[0]?.[0].network).toEqual(
             makeNetwork({ id: 'delete-me' })

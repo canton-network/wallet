@@ -117,8 +117,7 @@ export class UserUiReviewNetwork extends BaseElement {
     }
 
     private async onDelete(e: NetworkDeleteEvent) {
-        if (!confirm(`Delete network "${e.network.name}"?`)) return
-
+        // The form already made the user type the network ID to confirm
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(

@@ -57,10 +57,6 @@ describe('UserUiReviewNetwork', () => {
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockReviewNetworkFlow({ id: 'net-review', name: 'Review Net' })
         history.replaceState({}, '', '?id=net-review')
-        vi.stubGlobal(
-            'confirm',
-            vi.fn(() => true)
-        )
         el = await fixture<UserUiReviewNetwork>(componentFixture)
     })
 
@@ -124,7 +120,7 @@ describe('UserUiReviewNetwork', () => {
         )
     })
 
-    it('calls removeNetwork when delete is confirmed', async () => {
+    it('calls removeNetwork when the form asks to delete', async () => {
         await waitUntil(() => el.network !== null)
 
         el.shadowRoot
@@ -229,21 +225,6 @@ describe('UserUiReviewNetwork', () => {
         await waitUntil(() => handleErrorToast.mock.calls.length > 0)
 
         expect(handleErrorToast).toHaveBeenCalled()
-    })
-
-    it('does not delete when confirmation is declined', async () => {
-        await waitUntil(() => el.network !== null)
-        vi.mocked(confirm).mockReturnValue(false)
-
-        el.shadowRoot
-            ?.querySelector('network-form')
-            ?.dispatchEvent(
-                networkDeleteEvent({ id: 'net-review', name: 'Review Net' })
-            )
-
-        expect(
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'removeNetwork')
-        ).toBe(false)
     })
 
     it('calls handleErrorToast when delete fails', async () => {
