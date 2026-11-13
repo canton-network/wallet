@@ -788,8 +788,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             ).map(toNetwork)
             assertUniqueSelfIssuedAudience(existing, network, network.id)
 
-            // we do not set a userId for now and leave all networks global when updating
-            const networkEntry = fromNetwork(network, undefined)
+            // An update keeps the owner of the network
+            const { userId: _userId, ...networkEntry } = fromNetwork(network)
             this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')

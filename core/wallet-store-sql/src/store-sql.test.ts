@@ -714,6 +714,24 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(rows).toEqual([])
         })
 
+        test('should keep the owner of a network on update', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+
+            await store.updateNetwork({ ...network, name: 'Renamed' })
+
+            const row = await db
+                .selectFrom('networks')
+                .select(['name', 'userId'])
+                .where('id', '=', network.id)
+                .executeTakeFirstOrThrow()
+            expect(row).toEqual({
+                name: 'Renamed',
+                userId: authContextMock.userId,
+            })
+        })
+
         test('should clear optional auth fields removed on update', async () => {
             const store = new StoreImpl(db, authContextMock)
             await store.addIdp(idp)

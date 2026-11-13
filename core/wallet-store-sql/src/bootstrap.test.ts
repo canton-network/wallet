@@ -179,6 +179,25 @@ describe('upsertIdpsAndNetworks', () => {
         expect(networks[0]?.adminAuth).toBeNull()
     })
 
+    test('makes networks it takes over global', async () => {
+        await bootstrap(db, bootstrapConfig)
+        // e.g. added by the admin at runtime before it was moved to the config
+        await db
+            .updateTable('networks')
+            .set({ userId: 'admin' })
+            .where('id', '=', 'net-1')
+            .execute()
+
+        await upsertIdpsAndNetworks(db, bootstrapConfig)
+
+        const network = await db
+            .selectFrom('networks')
+            .select('userId')
+            .where('id', '=', 'net-1')
+            .executeTakeFirstOrThrow()
+        expect(network.userId).toBeNull()
+    })
+
     test('keeps wallets and sessions of networks it takes over', async () => {
         await bootstrap(db, bootstrapConfig)
         await db
