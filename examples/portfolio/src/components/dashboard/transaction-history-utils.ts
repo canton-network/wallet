@@ -81,7 +81,11 @@ export function formatDisplayAmount(
         case 'credit':
             return `+${display.amount}`
         case 'none':
-            return display.amount
+            return display.direction === 'received'
+                ? `+${display.amount}`
+                : display.direction === 'sent'
+                  ? `-${display.amount}`
+                  : display.amount
     }
 }
 
