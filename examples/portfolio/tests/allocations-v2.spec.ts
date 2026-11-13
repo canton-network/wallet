@@ -249,7 +249,7 @@ test.describe('OTC allocations V2', () => {
         await gotoWalletHistory(page, bob, hints.bob)
         await expectHistoryRow(page, {
             activity: 'Trade settled',
-            amount: '7.5',
+            amount: '+7.5',
             counterpartyHint: 'Multiple',
         })
 
