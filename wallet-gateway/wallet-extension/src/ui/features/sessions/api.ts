@@ -64,6 +64,9 @@ export function useConnect() {
                 queryKeys.sessions.status(),
                 'connected'
             )
+            // if changing users or networks, then we dont want to keep the old wallet queries in the cache
+            await queryClient.resetQueries({ queryKey: queryKeys.wallets.all })
+
             await queryClient.invalidateQueries({
                 queryKey: queryKeys.sessions.list(),
             })
