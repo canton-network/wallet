@@ -150,12 +150,11 @@ server:
     requestSizeLimit: '5mb'
     # Default 10000 requests / minute / IP. Bump if you hit HTTP 429 during regular use.
     requestRateLimit: 10000
-bootstrap:
-    networks:
-        - adminAuth:
-              # For production, inject OAuth secrets via the environment (secrets manager),
-              # naming the environment variable to read for this network.
-              clientSecretEnv: 'OAUTH2_CLIENT_SECRET'
+networks:
+    - adminAuth:
+          # For production, inject OAuth secrets via the environment (secrets manager),
+          # naming the environment variable to read for this network.
+          clientSecretEnv: 'OAUTH2_CLIENT_SECRET'
 ```
 
 ### Signing provider environment variables

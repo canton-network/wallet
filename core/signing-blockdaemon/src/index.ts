@@ -21,6 +21,7 @@ import {
     type SignTransactionResult,
     type SubscribeTransactionsParams,
     type SubscribeTransactionsResult,
+    type Transaction,
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.js'
@@ -35,6 +36,39 @@ export interface BlockdaemonConfig {
     baseUrl: string
     apiKey: string
     caip2?: CantonCaip2
+}
+
+/**
+ * Blockdaemon reports why it rejected or failed a request in `metadata`, e.g.
+ * `{ ErrorCode: 'M0025', ErrorProperties: { DebugMessage: '…' } }` for a
+ * policy block. Only the code is surfaced, as the reason reaches end users and
+ * dApps, while `ErrorProperties` is internal debug information.
+ */
+function failureReason({ status, metadata }: Transaction): string | undefined {
+    if (status !== 'rejected' && status !== 'failed') {
+        return undefined
+    }
+
+    const reason =
+        status === 'rejected'
+            ? 'Blockdaemon rejected the signing request'
+            : 'Blockdaemon failed to sign the request'
+    const code: unknown = metadata?.ErrorCode
+    return typeof code === 'string' && code
+        ? `${reason} (error code ${code})`
+        : reason
+}
+
+function toTransaction(tx: Transaction): Transaction {
+    const reason = failureReason(tx)
+    return {
+        txId: tx.txId,
+        status: tx.status,
+        ...(tx.signature !== undefined && { signature: tx.signature }),
+        ...(tx.publicKey !== undefined && { publicKey: tx.publicKey }),
+        ...(tx.metadata !== undefined && { metadata: tx.metadata }),
+        ...(reason !== undefined && { failureReason: reason }),
+    }
 }
 
 export default class BlockdaemonSigningDriver implements SigningDriverInterface {
@@ -73,19 +107,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                         }),
                         userIdentifier: userId,
                     })
-                    return {
-                        txId: tx.txId,
-                        status: tx.status,
-                        ...(tx.signature !== undefined && {
-                            signature: tx.signature,
-                        }),
-                        ...(tx.publicKey !== undefined && {
-                            publicKey: tx.publicKey,
-                        }),
-                        ...(tx.metadata !== undefined && {
-                            metadata: tx.metadata,
-                        }),
-                    }
+                    return toTransaction(tx)
                 } catch (error) {
                     return {
                         error: 'signing_error',
@@ -110,19 +132,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                     const tx = await this.client.getTransaction({
                         txId: params.txId,
                     })
-                    return {
-                        txId: tx.txId,
-                        status: tx.status,
-                        ...(tx.signature !== undefined && {
-                            signature: tx.signature,
-                        }),
-                        ...(tx.publicKey !== undefined && {
-                            publicKey: tx.publicKey,
-                        }),
-                        ...(tx.metadata !== undefined && {
-                            metadata: tx.metadata,
-                        }),
-                    }
+                    return toTransaction(tx)
                 } catch (error) {
                     return {
                         error: 'transaction_not_found',
@@ -142,19 +152,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                             userIdentifier: userId,
                         })
                         return {
-                            transactions: transactions.map((tx) => ({
-                                txId: tx.txId,
-                                status: tx.status,
-                                ...(tx.signature !== undefined && {
-                                    signature: tx.signature,
-                                }),
-                                ...(tx.publicKey !== undefined && {
-                                    publicKey: tx.publicKey,
-                                }),
-                                ...(tx.metadata !== undefined && {
-                                    metadata: tx.metadata,
-                                }),
-                            })),
+                            transactions: transactions.map(toTransaction),
                         }
                     } catch (error) {
                         return {

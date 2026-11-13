@@ -519,7 +519,822 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             },
             "description": "Explicit signing provider configuration. When omitted, the Wallet Gateway uses legacy discovery: every provider is available if its required environment variables are set. When present, only listed providers are registered; non-secret settings come from this object, and secrets are read from environment variables named by the *Env fields."
         },
+        "idps": {
+            "default": [],
+            "description": "Identity providers managed by this config file. They are written to the database on every start and cannot be changed at runtime.",
+            "type": "array",
+            "items": {
+                "oneOf": [
+                    {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "const": "self_signed"
+                            },
+                            "issuer": {
+                                "type": "string"
+                            }
+                        },
+                        "required": ["id", "type", "issuer"]
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "const": "self_issued"
+                            }
+                        },
+                        "required": ["id", "type"],
+                        "additionalProperties": false
+                    },
+                    {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "string"
+                            },
+                            "type": {
+                                "type": "string",
+                                "const": "oauth"
+                            },
+                            "issuer": {
+                                "type": "string"
+                            },
+                            "configUrl": {
+                                "type": "string",
+                                "format": "uri"
+                            }
+                        },
+                        "required": ["id", "type", "issuer", "configUrl"]
+                    }
+                ]
+            }
+        },
+        "networks": {
+            "default": [],
+            "description": "Networks managed by this config file. They are written to the database on every start and cannot be changed at runtime. Each network must reference an identity provider from idps.",
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    },
+                    "description": {
+                        "type": "string"
+                    },
+                    "synchronizerId": {
+                        "type": "string",
+                        "minLength": 10,
+                        "format": "includes",
+                        "pattern": "::"
+                    },
+                    "identityProviderId": {
+                        "type": "string"
+                    },
+                    "ledgerApi": {
+                        "type": "object",
+                        "properties": {
+                            "baseUrl": {
+                                "type": "string",
+                                "format": "uri"
+                            }
+                        },
+                        "required": ["baseUrl"]
+                    },
+                    "auth": {
+                        "anyOf": [
+                            {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "authorization_code"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId"
+                                        ],
+                                        "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "client_credentials"
+                                            },
+                                            "identityProviderId": {
+                                                "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecret": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecret"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_signed"
+                                            },
+                                            "issuer": {
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecret": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "issuer",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecret"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_issued"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "authorization_code"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId"
+                                        ],
+                                        "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "client_credentials"
+                                            },
+                                            "identityProviderId": {
+                                                "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecretEnv": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecretEnv"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_signed"
+                                            },
+                                            "issuer": {
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecretEnv": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "issuer",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecretEnv"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_issued"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "adminAuth": {
+                        "anyOf": [
+                            {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "authorization_code"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId"
+                                        ],
+                                        "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "client_credentials"
+                                            },
+                                            "identityProviderId": {
+                                                "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecret": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecret"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_signed"
+                                            },
+                                            "issuer": {
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecret": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "issuer",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecret"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_issued"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "authorization_code"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId"
+                                        ],
+                                        "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "client_credentials"
+                                            },
+                                            "identityProviderId": {
+                                                "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecretEnv": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecretEnv"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_signed"
+                                            },
+                                            "issuer": {
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecretEnv": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "issuer",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecretEnv"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_issued"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                    "serviceAccountAuth": {
+                        "anyOf": [
+                            {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "authorization_code"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId"
+                                        ],
+                                        "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "client_credentials"
+                                            },
+                                            "identityProviderId": {
+                                                "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecret": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecret"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_signed"
+                                            },
+                                            "issuer": {
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecret": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "issuer",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecret"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_issued"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope"
+                                        ]
+                                    }
+                                ]
+                            },
+                            {
+                                "oneOf": [
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "authorization_code"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Participant ID prefixed with \"https://daml.com/jwt/aud/participant/\"."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId"
+                                        ],
+                                        "description": "Authorization code flow authentication configuration. This is used for browser-based application login."
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "client_credentials"
+                                            },
+                                            "identityProviderId": {
+                                                "description": "Overrides the network's identity provider for client credentials token acquisition.",
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecretEnv": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecretEnv"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_signed"
+                                            },
+                                            "issuer": {
+                                                "type": "string"
+                                            },
+                                            "audience": {
+                                                "type": "string"
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            },
+                                            "clientId": {
+                                                "type": "string"
+                                            },
+                                            "clientSecretEnv": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "issuer",
+                                            "audience",
+                                            "scope",
+                                            "clientId",
+                                            "clientSecretEnv"
+                                        ]
+                                    },
+                                    {
+                                        "type": "object",
+                                        "properties": {
+                                            "method": {
+                                                "type": "string",
+                                                "const": "self_issued"
+                                            },
+                                            "audience": {
+                                                "type": "string",
+                                                "description": "Only participant ID, with no https://daml.com/jwt/aud/participant/ prefix (unlike the other auth methods)."
+                                            },
+                                            "scope": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "required": [
+                                            "method",
+                                            "audience",
+                                            "scope"
+                                        ]
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                },
+                "required": [
+                    "id",
+                    "name",
+                    "description",
+                    "identityProviderId",
+                    "ledgerApi",
+                    "auth"
+                ]
+            }
+        },
         "bootstrap": {
+            "deprecated": true,
+            "description": "Deprecated, use the top-level idps and networks instead. Identity providers and networks that are only written to the database if it is empty. Move an entry to idps or networks with the same id to keep its existing wallets. Will be removed in a future release.",
             "type": "object",
             "properties": {
                 "idps": {
@@ -1354,6 +2169,6 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
             "required": ["version"]
         }
     },
-    "required": ["kernel", "store", "bootstrap"]
+    "required": ["kernel", "store"]
 }
 ```

@@ -4,7 +4,6 @@
 import {
     type DappNotificationEvent,
     type INotificationService,
-    type NotificationLogger,
     type NotificationSink,
     type NotificationSubscriber,
     subscribeNotifications,
@@ -16,25 +15,6 @@ import {
 } from '@/utils/notifications.js'
 
 type Port = Browser.runtime.Port
-
-/**
- * Wraps a logger for the `NotificationService`, dropping the emitted `args`
- * from log records: event payloads can carry the session's access token.
- * Only event metadata (event name, notifier id, errors) is logged.
- */
-export function withoutNotificationArgs(
-    logger: NotificationLogger
-): NotificationLogger {
-    const metadata = (obj: object): object => {
-        const rest: Record<string, unknown> = { ...obj }
-        delete rest.args
-        return rest
-    }
-    return {
-        debug: (obj, msg) => logger.debug(metadata(obj), msg),
-        error: (obj, msg) => logger.error(metadata(obj), msg),
-    }
-}
 
 /**
  * Delivers notifications to a content script over a `runtime.Port`.

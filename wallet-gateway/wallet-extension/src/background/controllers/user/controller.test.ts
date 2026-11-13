@@ -49,7 +49,7 @@ describe('userController.addSession', () => {
     }
 
     beforeEach(() => {
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         const store = createTestWalletStore(authContext)
         controller = userController({
             getStore: async () => store,
@@ -151,7 +151,7 @@ describe('userController transactions', () => {
             .spyOn(LedgerClient.prototype, 'postWithRetry')
             .mockResolvedValue(ledgerResult)
 
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         store = createTestWalletStore(authContext)
         const vault = createVault({ iterations: 1000 })
         await vault.create('abcde1')
@@ -531,7 +531,7 @@ describe('userController wallets', () => {
         vault = createVault({ iterations: 1000 })
         await vault.create(password)
         signingStore = createVaultSigningStore(vault)
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         sink = newSink()
 
         generateTopology = vi

@@ -8,5 +8,5 @@ export default defineConfig({
     ...base,
     // commander is ESM only
     format: ['esm'],
-    entry: ['src/index.ts'],
+    entry: ['src/index.ts', 'src/migrations/*.ts'],
 })

@@ -15,7 +15,11 @@ import type {
     SignMessageResult,
     Wallet,
 } from './dapp-api/rpc-gen/typings'
-import { rpcErrors } from '@canton-network/core-rpc-errors'
+import {
+    isCip103ErrorCode,
+    JsonRpcError,
+    rpcErrors,
+} from '@canton-network/core-rpc-errors'
 import { popup } from '@canton-network/core-wallet-ui-components'
 import type * as dappAsyncAPI from '@canton-network/core-wallet-dapp-remote-rpc-client'
 
@@ -28,6 +32,22 @@ const withTimeout = (
         console.warn(`SDK: ${details}`)
         reject(rpcErrors.resourceUnavailable(details))
     }, timeoutMs)
+
+// Keeps the wallet's CIP-103 error code, falling back to transactionRejected
+// for wallets that don't report why it failed or send a code outside CIP-103.
+// JsonRpcError also throws on a non-integer code, so the caller would never settle.
+const toFailureError = (
+    details: string,
+    error: dappAsyncAPI.FailureError | undefined
+) => {
+    if (!error) {
+        return rpcErrors.transactionRejected(`${details}.`)
+    }
+    const message = `${details}: ${error.message}`
+    return isCip103ErrorCode(error.code)
+        ? new JsonRpcError(error.code, message, error.data)
+        : rpcErrors.transactionRejected(message)
+}
 
 export const dappSDKController = (provider: DappAsyncProvider) =>
     buildController({
@@ -110,8 +130,9 @@ export const dappSDKController = (provider: DappAsyncProvider) =>
                             provider.removeListener('txChanged', listener)
                             clearTimeout(timeout)
                             reject(
-                                rpcErrors.transactionRejected(
-                                    `Transaction with commandId ${event.commandId} failed to execute.`
+                                toFailureError(
+                                    `Transaction with commandId ${event.commandId} failed to execute`,
+                                    event.error
                                 )
                             )
                         }
@@ -185,10 +206,10 @@ export const dappSDKController = (provider: DappAsyncProvider) =>
                     clearTimeout(timeout)
 
                     if (event.status === 'failed') {
-                        // The event cannot tell a user rejection from a signing failure.
                         reject(
-                            rpcErrors.transactionRejected(
-                                `Message signing failed for messageId ${event.messageId}.`
+                            toFailureError(
+                                `Message signing failed for messageId ${event.messageId}`,
+                                event.error
                             )
                         )
                         return

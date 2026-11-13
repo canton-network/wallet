@@ -43,6 +43,26 @@ export interface FireblocksTransaction {
     signature?: string | undefined
     publicKey?: string | undefined
     derivationPath: number[]
+    failureReason?: string
+}
+
+/**
+ * Fireblocks explains a terminal status with a documented `subStatus` code,
+ * e.g. `BLOCKED_BY_POLICY` or `REJECTED_BY_USER`.
+ */
+function failureReason(
+    status: SigningStatus,
+    detail?: string
+): string | undefined {
+    if (status !== 'rejected' && status !== 'failed') {
+        return undefined
+    }
+
+    const reason =
+        status === 'rejected'
+            ? 'Fireblocks rejected the signing request'
+            : 'Fireblocks failed to sign the request'
+    return detail ? `${reason} (${detail})` : reason
 }
 
 export interface FireblocksApiKeyInfo {
@@ -201,12 +221,14 @@ export class FireblocksHandler {
                     : tx.status === 'FAILED'
                       ? 'failed'
                       : 'pending'
+            const reason = failureReason(status, tx.subStatus)
             return {
                 txId: tx.id!,
                 status: status,
                 createdAt: tx.createdAt!,
                 publicKey: publicKey,
                 derivationPath: message.derivationPath,
+                ...(reason && { failureReason: reason }),
             }
         }
     }
@@ -389,11 +411,21 @@ export class FireblocksHandler {
                     break
             }
 
+            // The create response carries no subStatus, so explain a block or
+            // cancellation with the status itself
+            const reason = failureReason(
+                status,
+                transaction.data.status === 'BLOCKED' ||
+                    transaction.data.status === 'CANCELLED'
+                    ? transaction.data.status
+                    : undefined
+            )
             return {
                 txId: transaction.data.id!,
                 status,
                 publicKey: key.publicKey,
                 derivationPath: key.derivationPath,
+                ...(reason && { failureReason: reason }),
             }
         } catch (error) {
             this.logger.error('Error signing transaction', { error })

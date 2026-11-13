@@ -6,15 +6,15 @@
     "license": "Apache-2.0",
     "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
     "sideEffects": false,
-    "main": "dist/cjs/index.cjs",
-    "module": "dist/esm/index.js",
-    "types": "dist/types/index.d.ts",
+    "main": "./dist/index.cjs",
+    "module": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
-            "types": "./dist/types/index.d.ts",
-            "import": "./dist/esm/index.js",
-            "require": "./dist/cjs/index.cjs",
-            "default": "./dist/esm/index.js"
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
         }
     },
     "scripts": {

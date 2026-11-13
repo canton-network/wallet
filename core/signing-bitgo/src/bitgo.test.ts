@@ -541,6 +541,23 @@ describe('BitGoHandler', () => {
             }
         )
 
+        it.each([
+            ['canceled', 'BitGo rejected the signing request (canceled)'],
+            ['rejected', 'BitGo rejected the signing request'],
+            ['failed', 'BitGo failed to sign the request'],
+            [
+                'delivered',
+                'BitGo reported the request as delivered but returned no signature',
+            ],
+            ['pendingApproval', undefined],
+        ])(
+            'txRequest state "%s" → failure reason "%s"',
+            async (bitgoState, failureReason) => {
+                const tx = await withState(bitgoState)
+                expect(tx?.failureReason).toBe(failureReason)
+            }
+        )
+
         it('non-terminal txRequest with signed message but missing txHash falls back to pending (retryable)', async () => {
             // pendingDelivery + messages[0].signed but txHash absent → message-level signed,
             // non-terminal txRequest state → pending (will be retried)

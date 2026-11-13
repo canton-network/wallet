@@ -62,6 +62,23 @@ describe('handleErrorToast', () => {
         }
     })
 
+    it('maps the code of errors from another copy of core-rpc-errors', () => {
+        class OtherJsonRpcError extends Error {
+            constructor(
+                readonly code: number,
+                message: string
+            ) {
+                super(message)
+            }
+        }
+
+        handleErrorToast(new OtherJsonRpcError(-32002, 'unreachable'))
+
+        const toast = getToast()
+        expect(toast.title).toBe('Resource Unavailable')
+        expect(toast.message).toBe('unreachable')
+    })
+
     it('allows custom fallback button text', () => {
         handleErrorToast(new Error('x'), { buttonText: 'Close' })
 

@@ -333,6 +333,47 @@ describe('DfnsSigningDriver', () => {
         })
     })
 
+    test('signMessage passes on the failure reason', async () => {
+        dfnsHandlerMock.signMessage.mockResolvedValue({
+            ...PENDING_SIG,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+        const controller = createTestDriver().controller(TEST_USER_ID)
+        const result = await controller.signMessage({
+            message: 'hello',
+            keyIdentifier: { id: TEST_KEY_ID },
+        })
+
+        assertNotRpcError(result)
+        expect(result).toEqual({
+            txId: PENDING_SIG.id,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+    })
+
+    test('getTransaction passes on the failure reason', async () => {
+        dfnsHandlerMock.findSignature.mockResolvedValueOnce({
+            id: TEST_SIG_ID,
+            keyId: TEST_KEY_ID,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+        const controller = createTestDriver().controller(TEST_USER_ID)
+        const result = await controller.getTransaction({ txId: TEST_SIG_ID })
+
+        assertNotRpcError(result)
+        expect(result).toMatchObject({
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+    })
+
     test('signTransaction omits optional signature on pending result', async () => {
         dfnsHandlerMock.signHash.mockResolvedValue({
             id: TEST_SIG_ID,

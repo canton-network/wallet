@@ -788,8 +788,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             ).map(toNetwork)
             assertUniqueSelfIssuedAudience(existing, network, network.id)
 
-            // we do not set a userId for now and leave all networks global when updating
-            const networkEntry = fromNetwork(network, undefined)
+            // An update keeps the owner of the network
+            const { userId: _userId, ...networkEntry } = fromNetwork(network)
             this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')
@@ -835,7 +835,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async removeNetwork(networkId: string): Promise<void> {
-        const userId = this.assertConnected()
+        this.assertConnected()
         await this.db.transaction().execute(async (trx) => {
             const network = await trx
                 .selectFrom('networks')
@@ -844,11 +844,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .executeTakeFirst()
             if (!network) {
                 throw new Error(`Network ${networkId} does not exists`)
-            }
-            if (network.userId !== userId) {
-                throw new Error(
-                    `Network ${networkId} is not owned by user ${userId}`
-                )
             }
             await trx
                 .deleteFrom('networks')

@@ -571,8 +571,10 @@ export class DappSDK {
     }
 
     /**
-     * @throws `JsonRpcError` with `userRejectedRequest` or `transactionRejected` if the
-     * transaction is declined or fails, and `resourceUnavailable` if no outcome arrives in time.
+     * @throws `JsonRpcError` with the CIP-103 code reported by the wallet if the transaction
+     * fails, e.g. `userRejectedRequest` if the user declines it or `transactionRejected` if it
+     * is rejected (also used when the wallet reports no code), and `resourceUnavailable` if no
+     * outcome arrives in time.
      */
     async prepareExecuteAndWait(
         params: PrepareExecuteParams
@@ -581,8 +583,10 @@ export class DappSDK {
     }
 
     /**
-     * @throws `JsonRpcError` with `userRejectedRequest` or `transactionRejected` if signing
-     * is declined or fails, and `resourceUnavailable` if no signature arrives in time.
+     * @throws `JsonRpcError` with the CIP-103 code reported by the wallet if signing fails,
+     * e.g. `userRejectedRequest` if the user declines it or `transactionRejected` if it is
+     * rejected (also used when the wallet reports no code), and `resourceUnavailable` if no
+     * signature arrives in time.
      */
     async signMessage(params: SignMessageParams): Promise<SignMessageResult> {
         return this.requireClient().signMessage(params)

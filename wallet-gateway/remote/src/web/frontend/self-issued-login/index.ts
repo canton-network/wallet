@@ -84,7 +84,7 @@ export class UserUiSelfIssuedLogin extends BaseElement {
             }
 
             .onboarding-card {
-                background: var(--wg-surface, #fff);
+                background: var(--wg-surface);
                 border-radius: 12px;
                 padding: var(--wg-space-5);
                 box-shadow: 0 8px 24px rgb(0 0 0 / 8%);

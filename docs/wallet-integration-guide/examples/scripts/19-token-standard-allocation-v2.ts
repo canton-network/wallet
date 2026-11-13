@@ -170,8 +170,6 @@ const result = await poll('admin holdings to be available', async () => {
     )
 })
 
-console.log('RESULT', result)
-
 const [fundAliceCommand, fundAliceDisclosedContracts] =
     await sdk.token.v2.transfer.create({
         sender: admin.partyId,
@@ -421,25 +419,39 @@ async function acceptAsTrader(trader: PartyInfo, name: string) {
         sdk.token.v2.allocation.request.pending(trader.partyId)
     )
 
-    const [commands, dc] = await sdk.token.v2.allocation.request.accept({
-        request,
-        partyId: trader.partyId,
-    })
+    const { allocate, accept, skipped } =
+        await sdk.token.v2.allocation.request.acceptForParty({
+            request,
+            partyId: trader.partyId,
+        })
 
-    // Interactive submission supports one command per prepared transaction.
-    for (const command of commands) {
-        await sdk.ledger
+    assertV2(
+        skipped.length === 0 && accept !== null,
+        `${name} has no configured registry for admins, skipped: ${skipped.join(',')}`
+    )
+
+    const submit = async ([
+        command,
+        disclosedContracts,
+    ]: (typeof allocate)[number]) =>
+        sdk.ledger
             .prepare({
                 partyId: trader.partyId,
                 commands: command,
-                disclosedContracts: dc,
+                disclosedContracts,
             })
             .sign(trader.keyPair.privateKey)
             .execute({ partyId: trader.partyId })
+
+    for (const prepared of allocate) {
+        await submit(prepared)
     }
+    // `accept` is typed as nullable by acceptForParty, but the assertV2 above
+    // already guarantees it's non-null here — non-null assertion documents that.
+    await submit(accept!)
 
     logger.info(
-        { allocations: commands.length - 1 },
+        { allocations: allocate.length },
         `${name} allocated and accepted request`
     )
 

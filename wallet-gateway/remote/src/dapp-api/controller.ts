@@ -48,18 +48,31 @@ export interface DappControllerDeps {
     signingDrivers: SigningDrivers
 }
 
-export const dappController = (
-    kernelInfo: KernelInfoConfig,
-    dappUrl: string,
-    userUrl: string,
-    store: Store,
-    notificationService: NotificationService,
-    _logger: Logger,
-    origin: string | null,
-    deps: DappControllerDeps,
-    hashingSchemeVersion: HASHING_SCHEME_VERSION,
+export interface DappControllerOptions {
+    kernelInfo: KernelInfoConfig
+    dappUrl: string
+    userUrl: string
+    store: Store
+    notificationService: NotificationService
+    logger: Logger
+    origin: string | null
+    deps: DappControllerDeps
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
     context?: AuthContext
-) => {
+}
+
+export const dappController = ({
+    kernelInfo,
+    dappUrl,
+    userUrl,
+    store,
+    notificationService,
+    logger: _logger,
+    origin,
+    deps,
+    hashingSchemeVersion,
+    context,
+}: DappControllerOptions) => {
     const logger = _logger.child({ component: 'dapp-controller' })
 
     function assertActAsPartiesBelongToUser(
