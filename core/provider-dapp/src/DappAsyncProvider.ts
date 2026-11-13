@@ -12,6 +12,7 @@ import {
     type RequestArgs,
     WalletEvent,
 } from '@canton-network/core-types'
+import { ParentWindowOriginManager } from '@canton-network/core-origin-manager'
 
 // Maintain a global SSE connection in-memory to avoid multiple connections
 // per DappAsyncProvider instance.
@@ -41,6 +42,7 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
     private readonly sseForwarder = (event: string, args: unknown[]) => {
         this.emit(event, ...args)
     }
+    private readonly parentOrigin = new ParentWindowOriginManager()
 
     private createClient(
         sessionToken?: string
@@ -130,7 +132,9 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
             if (!isSpliceMessageEvent(event)) return
 
             if (
-                event.data.type === WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS
+                event.data.type ===
+                    WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS &&
+                this.parentOrigin.assert(event.origin)
             ) {
                 this.sessionToken = event.data.token
                 this.client = this.createClient(this.sessionToken)

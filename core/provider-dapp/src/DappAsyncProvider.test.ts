@@ -17,6 +17,7 @@ let eventSourceCtor: ReturnType<typeof vi.fn>
 let eventSourceInstance: MockEventSourceInstance
 let sseHandlers: Record<string, (event: MessageEvent) => void>
 let sessionToken: string
+let walletOrigin: string
 let tokenCounter = 0
 
 import { DappAsyncProvider } from './DappAsyncProvider'
@@ -29,12 +30,36 @@ function emitSseEvent(eventName: string, data: unknown) {
     handler({ data: JSON.stringify(data) } as MessageEvent)
 }
 
+function dispatchWindowMessage(data: unknown, origin: string) {
+    window.dispatchEvent(new MessageEvent('message', { data, origin }))
+}
+
+function completeOriginHandshake(origin: string) {
+    dispatchWindowMessage(
+        { type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK, origin },
+        origin
+    )
+}
+
+function dispatchAuthSuccess(origin: string) {
+    dispatchWindowMessage(
+        {
+            type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
+            token: sessionToken,
+            sessionId: 'session-1',
+        },
+        origin
+    )
+}
+
 describe('DappAsyncProvider', () => {
     beforeEach(async () => {
         sseHandlers = {}
         tokenCounter += 1
         // Token needs to be unique per test to ensure new connections and event listeners are created.
         sessionToken = `authtoken-${tokenCounter}`
+        // Providers from earlier tests keep listening, so a unique origin keeps trust isolated per test.
+        walletOrigin = `http://wallet-${tokenCounter}.example.com`
 
         eventSourceInstance = {
             close: vi.fn(),
@@ -55,6 +80,7 @@ describe('DappAsyncProvider', () => {
     afterEach(() => {
         vi.restoreAllMocks()
         vi.unstubAllGlobals()
+        sessionStorage.clear()
     })
 
     it('opens an EventSource with auth token query parameter', () => {
@@ -115,7 +141,7 @@ describe('DappAsyncProvider', () => {
         expect(eventSourceCtor).toHaveBeenCalledTimes(2)
     })
 
-    it('processes an auth success event', async () => {
+    it('processes an auth success event from an origin that completed the handshake', async () => {
         const provider = new DappAsyncProvider(
             'http://example.com',
             sessionToken
@@ -131,20 +157,34 @@ describe('DappAsyncProvider', () => {
         const statusListener = vi.fn()
         provider.on('statusChanged', statusListener)
 
-        window.dispatchEvent(
-            new MessageEvent('message', {
-                data: {
-                    type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
-                    token: sessionToken,
-                    sessionId: 'session-1',
-                },
-            })
-        )
+        completeOriginHandshake(walletOrigin)
+        dispatchAuthSuccess(walletOrigin)
 
         await vi.waitFor(() => {
             expect(provider.request).toHaveBeenCalledWith({ method: 'status' })
             expect(statusListener).toHaveBeenCalledTimes(1)
             expect(statusListener).toHaveBeenCalledWith(statusPayload)
         })
+    })
+
+    it('ignores an auth success event when no handshake was completed', () => {
+        const provider = new DappAsyncProvider('http://example.com')
+        provider.request = vi.fn()
+
+        dispatchAuthSuccess(walletOrigin)
+
+        expect(provider.request).not.toHaveBeenCalled()
+        expect(eventSourceCtor).not.toHaveBeenCalled()
+    })
+
+    it('ignores an auth success event from an origin other than the handshaked one', () => {
+        const provider = new DappAsyncProvider('http://example.com')
+        provider.request = vi.fn()
+
+        completeOriginHandshake(walletOrigin)
+        dispatchAuthSuccess(`http://untrusted-${tokenCounter}.example.com`)
+
+        expect(provider.request).not.toHaveBeenCalled()
+        expect(eventSourceCtor).not.toHaveBeenCalled()
     })
 })

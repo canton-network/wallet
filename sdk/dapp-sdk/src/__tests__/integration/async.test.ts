@@ -48,6 +48,15 @@ function mockPopupOpen(): void {
                     new MessageEvent('message', {
                         origin: window.location.origin,
                         data: {
+                            type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+                            origin: window.location.origin,
+                        },
+                    })
+                )
+                window.dispatchEvent(
+                    new MessageEvent('message', {
+                        origin: window.location.origin,
+                        data: {
                             type: WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS,
                             token: MOCK_AUTH_TOKEN,
                             sessionId: MOCK_SESSION_ID,

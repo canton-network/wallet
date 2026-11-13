@@ -37,7 +37,8 @@
         "@canton-network/core-splice-provider": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-dapp-remote-rpc-client": "workspace:",
-        "@canton-network/core-wallet-dapp-rpc-client": "workspace:"
+        "@canton-network/core-wallet-dapp-rpc-client": "workspace:",
+        "@canton-network/core-origin-manager": "workspace:"
     },
     "files": [
         "dist/**"
