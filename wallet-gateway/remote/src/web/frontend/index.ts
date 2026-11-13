@@ -19,12 +19,17 @@ import {
     DEFAULT_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
+    SESSION_EXPIRED_PARAM,
     TOKEN_EXPIRED_SKEW_MS,
     TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
 } from './constants.ts'
 import { detectCurrentOrigin } from './listeners.ts'
 import { setLocationHref } from './navigation.ts'
-import { createUserClient, attemptRemoveSession } from './rpc-client.ts'
+import {
+    attemptRemoveSession,
+    createUserClient,
+    markSessionVerified,
+} from './rpc-client.ts'
 import './listeners.ts'
 import { stateManager } from './state-manager.ts'
 import { fetchDappApiUrl, showToast } from './utils.ts'
@@ -135,15 +140,8 @@ export class UserApp extends LitElement {
             return
         }
 
-        try {
-            const userClient = await createUserClient(accessToken)
-            await userClient.request({ method: 'removeSession' })
-        } catch (error) {
-            // If removeSession fails (for example token is invalid),
-            // clear the local state anyway
-            console.debug('Failed to remove session during logout: ', error)
-        }
-
+        // Not through createUserClient, whose 401 handling announces an expired session
+        await attemptRemoveSession(accessToken)
         await stateManager.clearAuthState(currentOrigin)
 
         if (window.opener && !window.opener.closed) {
@@ -282,6 +280,7 @@ export class UserUIAuthRedirect extends LitElement {
         let verdict: AuthVerdict = 'redirecting'
         try {
             verdict = await this.resolveAuthRedirect()
+            if (verdict === 'show-page') markSessionVerified()
         } catch (error) {
             // Keep the session, reloading the page tries again
             if (isUnavailable(error)) {
@@ -309,7 +308,7 @@ export class UserUIAuthRedirect extends LitElement {
         }
 
         if (this.isTokenExpired(currentOrigin)) {
-            return this.handleExpiredToken(isLoginPage)
+            return this.handleExpiredToken(isLoginPage, false)
         }
 
         if (isLoginPage) {
@@ -359,7 +358,8 @@ export class UserUIAuthRedirect extends LitElement {
     }
 
     private async handleExpiredToken(
-        isLoginPage: boolean
+        isLoginPage: boolean,
+        showSessionExpired: boolean
     ): Promise<AuthVerdict> {
         clearTokenExpirationTimeout()
 
@@ -372,7 +372,12 @@ export class UserUIAuthRedirect extends LitElement {
 
         if (!isLoginPage) {
             await this.clearAuthStateAndPreserveIntendedPage()
-            setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
+            const loginHref = toRelHref(LOGIN_PAGE_REDIRECT)
+            setLocationHref(
+                showSessionExpired
+                    ? `${loginHref}?${SESSION_EXPIRED_PARAM}`
+                    : loginHref
+            )
             return 'redirecting'
         }
 
@@ -450,7 +455,7 @@ export class UserUIAuthRedirect extends LitElement {
                     const isLoginPage =
                         getCurrentRoute(window.location.pathname) ===
                         LOGIN_PAGE_REDIRECT
-                    await this.handleExpiredToken(isLoginPage)
+                    await this.handleExpiredToken(isLoginPage, true)
                 },
                 Math.min(timeUntilExpiration, TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS)
             )

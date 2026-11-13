@@ -9,18 +9,21 @@ import {
 } from '@canton-network/core-wallet-ui-components'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 
-import { LOGIN_PAGE_REDIRECT } from './constants.ts'
+import { LOGIN_PAGE_REDIRECT, SESSION_EXPIRED_PARAM } from './constants.ts'
 import { detectCurrentOrigin } from './listeners.ts'
 import { setLocationHref } from './navigation.ts'
 import { stateManager } from './state-manager.ts'
 
 let isLoggingOut = false
+// Until the auth check verified the session, a 401 only means the stored one was old
+let sessionVerified = false
 let userApiPathPromise: Promise<URL> | null = null
 
 // Clears module-level caches between unit tests
 export function resetRpcClientCachesForTests(): void {
     userApiPathPromise = null
     isLoggingOut = false
+    sessionVerified = false
 }
 
 const getUserApiPath = async (): Promise<URL> => {
@@ -47,6 +50,10 @@ const getUserApiPath = async (): Promise<URL> => {
             })
     }
     return userApiPathPromise
+}
+
+export const markSessionVerified = (): void => {
+    sessionVerified = true
 }
 
 export const attemptRemoveSession = async (
@@ -86,7 +93,12 @@ const handleAutoLogout = async (): Promise<void> => {
         isLoggingOut = false
 
         if (getCurrentRoute(window.location.pathname) !== LOGIN_PAGE_REDIRECT) {
-            setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
+            const loginHref = toRelHref(LOGIN_PAGE_REDIRECT)
+            setLocationHref(
+                sessionVerified
+                    ? `${loginHref}?${SESSION_EXPIRED_PARAM}`
+                    : loginHref
+            )
         }
     }
 }

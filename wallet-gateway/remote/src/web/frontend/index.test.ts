@@ -30,6 +30,7 @@ const authState = vi.hoisted(() => ({
 const {
     mockCreateUserClient,
     mockAttemptRemoveSession,
+    mockMarkSessionVerified,
     setLocationHref,
     getCurrentRoute,
     isAllowedRoute,
@@ -38,6 +39,7 @@ const {
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     mockAttemptRemoveSession: vi.fn().mockResolvedValue(undefined),
+    mockMarkSessionVerified: vi.fn(),
     setLocationHref: vi.fn(),
     getCurrentRoute: vi.fn(),
     isAllowedRoute: vi.fn(),
@@ -65,8 +67,12 @@ vi.mock('./navigation.ts', () => ({ setLocationHref }))
 vi.mock('./rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
     attemptRemoveSession: mockAttemptRemoveSession,
+    markSessionVerified: mockMarkSessionVerified,
 }))
-vi.mock('./utils.ts', () => ({ showToast, fetchDappApiUrl }))
+vi.mock('./utils.ts', () => ({
+    showToast,
+    fetchDappApiUrl,
+}))
 vi.mock('./state-manager.ts', () => ({
     stateManager: {
         accessToken: {
@@ -421,19 +427,7 @@ describe('UserApp', () => {
     })
 
     it('clears auth state and redirects to login after logout', async () => {
-        mockRequest.mockImplementation(async ({ method }) => {
-            if (method === 'listSessions') {
-                return {
-                    sessions: [
-                        { id: 'session-1', network: { id: 'network1' } },
-                    ],
-                }
-            }
-            if (method === 'removeSession') {
-                return undefined
-            }
-            return undefined
-        })
+        mockAttemptRemoveSession.mockClear()
         el = await fixture<UserApp>(componentFixture)
         setLocationHref.mockClear()
 
@@ -441,16 +435,15 @@ describe('UserApp', () => {
             ?.querySelector('app-layout')
             ?.dispatchEvent(new LogoutEvent())
 
-        await waitUntil(() =>
-            mockRequest.mock.calls.some(
-                (call) => call[0]?.method === 'removeSession'
-            )
-        )
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
-        expect(mockRequest).toHaveBeenCalledWith(
-            expect.objectContaining({ method: 'removeSession' })
-        )
+        // Not through createUserClient, whose 401 handling would announce an
+        // expired session
+        expect(mockAttemptRemoveSession).toHaveBeenCalledWith('access-token')
         expect(authState.accessToken).toBeUndefined()
+        expect(setLocationHref).not.toHaveBeenCalledWith(
+            expect.stringContaining('sessionExpired')
+        )
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(LOGIN_PAGE_REDIRECT)
         )
@@ -560,6 +553,28 @@ describe('UserUIAuthRedirect', () => {
         expect(setLocationHref).not.toHaveBeenCalled()
     })
 
+    it('sends the user to login when the gateway no longer knows their session', async () => {
+        mockMarkSessionVerified.mockClear()
+        setValidAuth()
+        mockSessionList('')
+        setPath('/parties')
+
+        await fixture<UserUIAuthRedirect>(
+            html`<user-ui-auth-redirect></user-ui-auth-redirect>`
+        )
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
+        expect(mockAttemptRemoveSession).toHaveBeenCalled()
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining(LOGIN_PAGE_REDIRECT)
+        )
+        // Only an open page that logs the user out announces it
+        expect(setLocationHref).not.toHaveBeenCalledWith(
+            expect.stringContaining('sessionExpired')
+        )
+        expect(mockMarkSessionVerified).not.toHaveBeenCalled()
+    })
+
     it.each(['/login', '/parties'])(
         'keeps the session on %s when the gateway cannot verify the token',
         async (path) => {
@@ -596,6 +611,10 @@ describe('UserUIAuthRedirect', () => {
         expect(mockAttemptRemoveSession).toHaveBeenCalled()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(LOGIN_PAGE_REDIRECT)
+        )
+        // Opening a page with an old token isn't worth a toast
+        expect(setLocationHref).not.toHaveBeenCalledWith(
+            expect.stringContaining('sessionExpired')
         )
     })
 
@@ -651,6 +670,8 @@ describe('UserUIAuthRedirect', () => {
             html`<user-ui-auth-redirect></user-ui-auth-redirect>`
         )
         await authSettled
+        // From now on a 401 means the session ended while the page was open
+        expect(mockMarkSessionVerified).toHaveBeenCalled()
 
         vi.setSystemTime(
             new Date(now.getTime() + 3 * TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS)
@@ -660,6 +681,10 @@ describe('UserUIAuthRedirect', () => {
         expect(mockAttemptRemoveSession).toHaveBeenCalledOnce()
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining(LOGIN_PAGE_REDIRECT)
+        )
+        // The login page tells the user why they have to log in again
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('?sessionExpired')
         )
     })
 
