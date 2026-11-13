@@ -3,15 +3,13 @@
 
 import {
     BaseElement,
-    formatDateTime,
-    formatUtcDateTime,
     handleErrorToast,
 } from '@canton-network/core-wallet-ui-components'
 import type { GetServerStatusResult } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import { ifDefined } from 'lit/directives/if-defined.js'
 
+import { ADMIN_DOCS_URL } from '../constants.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import '../index.ts'
 import { createUserClient } from '../rpc-client.ts'
@@ -88,12 +86,9 @@ export class UserUiAdmin extends BaseElement {
                             <div>${notice.message}</div>
                             <div class="notice-meta text-body-secondary mt-1">
                                 Last seen
-                                <span
-                                    title=${ifDefined(
-                                        formatUtcDateTime(notice.lastSeenAt)
-                                    )}
-                                    >${formatDateTime(notice.lastSeenAt)}</span
-                                >
+                                <wg-timestamp
+                                    .value=${notice.lastSeenAt}
+                                ></wg-timestamp>
                             </div>
                         </div>
                     `
@@ -108,7 +103,11 @@ export class UserUiAdmin extends BaseElement {
         }
 
         return html`
-            <h1 class="h4 fw-semibold">Administration</h1>
+            <wg-page-header
+                heading="Administration"
+                info="Check that the Wallet Gateway is configured correctly. Notices point out anything that needs attention, such as deprecated config options or signing providers that are unavailable."
+                .docsUrl=${ADMIN_DOCS_URL}
+            ></wg-page-header>
             <p class="text-body-secondary mb-4">
                 Wallet Gateway ${this.status.version}
             </p>

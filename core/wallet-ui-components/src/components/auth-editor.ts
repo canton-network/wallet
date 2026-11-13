@@ -13,6 +13,7 @@ import { customElement, property, state } from 'lit/decorators.js'
 
 import { chevronDownIcon } from '../icons/index.ts'
 import { BaseElement } from '../internal/base-element.ts'
+import './tooltip.ts'
 
 export type AuthMethod =
     | 'authorization_code'
@@ -738,11 +739,10 @@ class AuthEditor extends BaseElement {
                                     <dt class="auth-summary-label">
                                         ${row.key}
                                     </dt>
-                                    <dd
-                                        class="auth-summary-value"
-                                        title=${row.value}
-                                    >
-                                        ${row.value}
+                                    <dd class="auth-summary-value">
+                                        <wg-tooltip truncate .text=${row.value}
+                                            >${row.value}</wg-tooltip
+                                        >
                                     </dd>
                                 </div>
                             `

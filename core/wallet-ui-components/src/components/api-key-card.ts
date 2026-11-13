@@ -4,11 +4,10 @@
 import type { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { ifDefined } from 'lit/directives/if-defined.js'
 
-import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
+import './timestamp.ts'
 
 /** Emitted when the user clicks the "Revoke" button on a api key card */
 export class ApiKeyCardRevokeEvent extends Event {
@@ -155,11 +154,10 @@ class ApiKeyCard extends BaseElement {
 
                     <div class="meta-row">
                         <p class="meta-title">Created At</p>
-                        <p
-                            class="meta-value"
-                            title=${ifDefined(formatUtcDateTime(this.apiKey.createdAt))}
-                        >
-                            ${formatDateTime(this.apiKey.createdAt)}
+                        <p class="meta-value">
+                            <wg-timestamp
+                                .value=${this.apiKey.createdAt}
+                            ></wg-timestamp>
                         </p>
                     </div>
                 </div>

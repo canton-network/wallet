@@ -8,7 +8,6 @@ import './back-link.ts'
 import './copy-button.ts'
 import { customElement, property, state } from 'lit/decorators.js'
 
-import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 import { chevronDownIcon } from '../icons/index.ts'
 import { renderCopyableValue } from '../internal/activity-render.ts'
 import {
@@ -17,6 +16,7 @@ import {
     getActivityType,
 } from '../internal/activity-utils.ts'
 import { BaseElement } from '../internal/base-element.ts'
+import './timestamp.ts'
 
 /** Emitted when the user clicks the "Approve" button */
 export class TransactionApproveEvent extends Event {
@@ -380,8 +380,9 @@ class WgTransactionDetail extends BaseElement {
                     this.createdAt,
                     'Copy created at timestamp',
                     {
-                        display: formatDateTime(this.createdAt),
-                        title: formatUtcDateTime(this.createdAt),
+                        display: html`<wg-timestamp
+                            .value=${this.createdAt}
+                        ></wg-timestamp>`,
                     }
                 )}
                 ${this.renderSignatories()}

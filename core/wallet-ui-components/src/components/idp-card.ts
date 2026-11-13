@@ -9,6 +9,7 @@ import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
 import { IDP_TYPE_LABELS } from './idp-type.ts'
 import './copy-button.ts'
+import './tooltip.ts'
 import './readonly-badge.ts'
 
 /** Emitted when the user clicks an IDP card to review it */
@@ -168,11 +169,12 @@ class IdpCard extends BaseElement {
                             ? html`
                                   <div class="meta-row meta-row--copy">
                                       <p class="meta-title">Issuer</p>
-                                      <p
-                                          class="meta-value"
-                                          title=${this.idp.issuer}
-                                      >
-                                          ${this.idp.issuer}
+                                      <p class="meta-value">
+                                          <wg-tooltip
+                                              truncate
+                                              .text=${this.idp.issuer}
+                                              >${this.idp.issuer}</wg-tooltip
+                                          >
                                       </p>
                                       <wg-copy-button
                                           .value=${this.idp.issuer}
@@ -187,11 +189,12 @@ class IdpCard extends BaseElement {
                             ? html`
                                   <div class="meta-row meta-row--copy">
                                       <p class="meta-title">Config URL</p>
-                                      <p
-                                          class="meta-value"
-                                          title=${this.idp.configUrl}
-                                      >
-                                          ${this.idp.configUrl}
+                                      <p class="meta-value">
+                                          <wg-tooltip
+                                              truncate
+                                              .text=${this.idp.configUrl}
+                                              >${this.idp.configUrl}</wg-tooltip
+                                          >
                                       </p>
                                       <wg-copy-button
                                           .value=${this.idp.configUrl}
