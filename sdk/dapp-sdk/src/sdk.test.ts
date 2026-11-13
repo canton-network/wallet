@@ -406,6 +406,21 @@ describe('DappSDK', () => {
 
             expect(getDiscovery(sdk).listAdapters()).toHaveLength(1)
         })
+
+        it('retries discovery after a failed init', async () => {
+            const adapter = makeMockAdapter()
+            vi.mocked(adapter.detect)
+                .mockRejectedValueOnce(new Error('detect failed'))
+                .mockResolvedValue(true)
+            const sdk = new DappSDK()
+
+            await expect(
+                sdk.init({ defaultAdapters: [adapter] })
+            ).rejects.toThrow('detect failed')
+            await expect(sdk.init()).resolves.toBeUndefined()
+
+            expect(getDiscovery(sdk).listAdapters()).toEqual([adapter])
+        })
     })
 
     describe('connect', () => {

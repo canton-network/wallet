@@ -374,13 +374,16 @@ export class DappSDK {
         // are registered even if discovery was already created by an earlier call
         // (e.g. status() on cold start). Serialize behind the existing initPromise
         // to avoid concurrent discovery mutations.
-        // TODO: a single rejected ensureDiscovery() leaves initPromise rejected,
-        //  so every later init()/status()/connect() fails until page reload.
+        const ensureDiscoveryWithAdapters = () =>
+            this.ensureDiscovery(this.configuredAdapters)
         this.initPromise = this.initPromise
-            ? this.initPromise.then(() =>
-                  this.ensureDiscovery(this.configuredAdapters)
+            ? // 2 args `then` makes chained ensureDiscovery execute even if the one from previous init failed.
+              // This prevents a single rejected initPromise from blocking all calls to ensureDiscovery in subsequent calls to `init`
+              this.initPromise.then(
+                  ensureDiscoveryWithAdapters,
+                  ensureDiscoveryWithAdapters
               )
-            : this.ensureDiscovery(this.configuredAdapters)
+            : ensureDiscoveryWithAdapters()
         await this.initPromise
     }
 
