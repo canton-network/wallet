@@ -60,6 +60,12 @@ class NetworkCard extends BaseElement {
                 cursor: initial;
             }
 
+            /* Read-only cards can't be opened, so don't highlight them */
+            .net-card.readonly:hover {
+                border-color: var(--wg-border);
+                box-shadow: var(--wg-shadow-sm);
+            }
+
             .net-card:not(.readonly):hover {
                 border-color: var(--wg-accent);
                 box-shadow: var(--wg-shadow-md);

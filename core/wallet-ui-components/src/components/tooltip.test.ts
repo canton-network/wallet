@@ -54,4 +54,24 @@ describe('wg-tooltip', () => {
         await el.updateComplete
         expect(isShown(el)).toBe(false)
     })
+
+    it('keeps only one tooltip open at a time', async () => {
+        const el = await fixture<HTMLElement>(
+            html`<div>
+                <wg-tooltip text="First"><button>One</button></wg-tooltip>
+                <wg-tooltip text="Second"><button>Two</button></wg-tooltip>
+            </div>`
+        )
+        const [first, second] = Array.from(
+            el.querySelectorAll<WgTooltip>('wg-tooltip')
+        )
+
+        first.querySelector('button')!.focus()
+        await waitUntil(() => isShown(first))
+        // e.g. hovering another tooltip while the first one has focus
+        second.dispatchEvent(new FocusEvent('focusin'))
+        await waitUntil(() => isShown(second))
+
+        expect(isShown(first)).toBe(false)
+    })
 })
