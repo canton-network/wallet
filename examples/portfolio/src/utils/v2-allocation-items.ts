@@ -197,9 +197,11 @@ export function amountsToLock(
                 instrumentId,
                 amount: new Decimal(amount),
             }))
-            return [...legs, ...nextIteration]
+            return sumByInstrument([...legs, ...nextIteration]).filter(
+                (a) => a.amount.greaterThan(0)
+            )
         })
-    ).filter((a) => a.amount.isPositive())
+    )
 }
 
 export function counterparties(specs: AllocationSpecification[]): string[] {
