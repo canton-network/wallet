@@ -4,7 +4,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { PageChangeEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    PageChangeEvent,
+    type WgPageHeader,
+} from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeIdp,
@@ -50,6 +53,10 @@ function makeIdps(count: number) {
     )
 }
 
+function getPageHeader(el: HTMLElement) {
+    return el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+}
+
 describe('UserUiIdentityProviders', () => {
     let el: UserUiIdentityProviders
     const componentFixture = html`<user-ui-identity-providers></user-ui-identity-providers>`
@@ -73,9 +80,7 @@ describe('UserUiIdentityProviders', () => {
 
         await waitUntil(() => getIdpCards(el).length === 2)
 
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Identity Providers'
-        )
+        expect(getPageHeader(el)?.heading).toBe('Identity Providers')
         expect(getIdpCards(el)).toHaveLength(2)
     })
 
@@ -145,18 +150,14 @@ describe('UserUiIdentityProviders', () => {
         expect(getIdpCards(el)[0]?.idp.id).toBe('idp-5')
     })
 
-    it('links to the docs for all users', async () => {
+    it('links the page info to the docs', async () => {
         mockIdpsPageFlow([makeIdp()])
 
         el = await fixture<UserUiIdentityProviders>(componentFixture)
 
         await waitUntil(() => getIdpCards(el).length === 1)
 
-        const link =
-            el.shadowRoot!.querySelector<HTMLAnchorElement>(
-                'a[target="_blank"]'
-            )
-        expect(link?.href).toBe(
+        expect(getPageHeader(el)?.docsUrl).toBe(
             'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity#identity-providers'
         )
     })

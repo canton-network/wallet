@@ -4,7 +4,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { PageChangeEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    PageChangeEvent,
+    type WgPageHeader,
+} from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makePublicNetwork,
@@ -53,6 +56,10 @@ function makeNetworks(count: number) {
     )
 }
 
+function getPageHeader(el: HTMLElement) {
+    return el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+}
+
 describe('UserUiNetworks', () => {
     let el: UserUiNetworks
     const componentFixture = html`<user-ui-networks></user-ui-networks>`
@@ -79,7 +86,7 @@ describe('UserUiNetworks', () => {
 
         await waitUntil(() => getNetworkCards(el).length === 2)
 
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe('Networks')
+        expect(getPageHeader(el)?.heading).toBe('Networks')
         expect(getNetworkCards(el)).toHaveLength(2)
     })
 
@@ -199,18 +206,14 @@ describe('UserUiNetworks', () => {
         expect(getNetworkCards(el)[0]?.network.id).toBe('net-4')
     })
 
-    it('links to the docs for all users', async () => {
+    it('links the page info to the docs', async () => {
         mockNetworksPageFlow([makePublicNetwork()], { isAdmin: false })
 
         el = await fixture<UserUiNetworks>(componentFixture)
 
         await waitUntil(() => getNetworkCards(el).length === 1)
 
-        const link =
-            el.shadowRoot!.querySelector<HTMLAnchorElement>(
-                'a[target="_blank"]'
-            )
-        expect(link?.href).toBe(
+        expect(getPageHeader(el)?.docsUrl).toBe(
             'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity#networks'
         )
     })

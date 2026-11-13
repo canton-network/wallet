@@ -4,6 +4,7 @@
 import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
+import './tooltip.js'
 
 /**
  * A "READ-ONLY" badge for entries that come from the Wallet Gateway config
@@ -20,7 +21,6 @@ class WgReadonlyBadge extends BaseElement {
         css`
             :host {
                 display: inline-flex;
-                position: relative;
             }
 
             .badge {
@@ -41,33 +41,6 @@ class WgReadonlyBadge extends BaseElement {
                 outline-offset: 2px;
             }
 
-            .tooltip {
-                position: absolute;
-                top: calc(100% + 6px);
-                left: 0;
-                z-index: 20;
-                width: max-content;
-                max-width: min(320px, 80vw);
-                padding: 8px 10px;
-                border-radius: 10px;
-                background: var(--wg-primary);
-                color: var(--wg-primary-text);
-                box-shadow: 0 10px 24px rgba(var(--wg-shade-rgb), 0.22);
-                font-size: var(--wg-font-size-xs);
-                font-weight: 500;
-                line-height: 1.4;
-                opacity: 0;
-                visibility: hidden;
-                pointer-events: none;
-                transition: opacity 0.12s ease;
-            }
-
-            :host(:hover) .tooltip,
-            .badge:focus-visible + .tooltip {
-                opacity: 1;
-                visibility: visible;
-            }
-
             code {
                 color: inherit;
             }
@@ -76,14 +49,16 @@ class WgReadonlyBadge extends BaseElement {
 
     render() {
         return html`
-            <span class="badge" tabindex="0" aria-describedby="tooltip"
-                >READ-ONLY</span
-            >
-            <span class="tooltip" id="tooltip" role="tooltip">
-                Defined in the <code>${this.section}</code> section of the
-                Wallet Gateway config file. To change it, edit the config file
-                and restart the Wallet Gateway.
-            </span>
+            <wg-tooltip>
+                <span class="badge" tabindex="0" aria-describedby="details"
+                    >READ-ONLY</span
+                >
+                <span slot="content" id="details">
+                    Defined in the <code>${this.section}</code> section of the
+                    Wallet Gateway config file. To change it, edit the config
+                    file and restart the Wallet Gateway.
+                </span>
+            </wg-tooltip>
         `
     }
 }

@@ -39,14 +39,6 @@ export class UserUiIdentityProviders extends BaseElement {
                 margin: 0 auto;
             }
 
-            .page-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
-            }
-
             .idp-list {
                 display: flex;
                 flex-direction: column;
@@ -116,9 +108,11 @@ export class UserUiIdentityProviders extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Identity Providers</h1>
-
+            <wg-page-header
+                heading="Identity Providers"
+                info="An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."
+                .docsUrl=${IDENTITY_PROVIDERS_DOCS_URL}
+            >
                 ${
                     this.isAdmin
                         ? html`
@@ -136,21 +130,7 @@ export class UserUiIdentityProviders extends BaseElement {
                           `
                         : ''
                 }
-            </div>
-
-            <p class="text-body-secondary mb-4">
-                An identity provider (IdP) issues the tokens that users and the
-                Wallet Gateway use to authenticate against a network's Ledger
-                API. Every network references one. Use an OAuth / OpenID Connect
-                provider in production; self-signed tokens are for development
-                and testing only.
-                <a
-                    href=${IDENTITY_PROVIDERS_DOCS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >Learn more in the docs</a
-                >
-            </p>
+            </wg-page-header>
 
             ${
                 this.idps.length === 0

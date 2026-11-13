@@ -43,14 +43,6 @@ export class UserUiNetworks extends BaseElement {
                 margin: 0 auto;
             }
 
-            .page-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
-            }
-
             .network-list {
                 display: flex;
                 flex-direction: column;
@@ -125,9 +117,11 @@ export class UserUiNetworks extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Networks</h1>
-
+            <wg-page-header
+                heading="Networks"
+                info="A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
+                .docsUrl=${NETWORKS_DOCS_URL}
+            >
                 ${
                     this.isAdmin
                         ? html`
@@ -145,20 +139,7 @@ export class UserUiNetworks extends BaseElement {
                           `
                         : ''
                 }
-            </div>
-
-            <p class="text-body-secondary mb-4">
-                A network is a Canton validator that you can reach through this
-                Wallet Gateway. It points at the validator's Ledger API, picks
-                the synchronizer to use, and references the identity provider
-                that issues the tokens to authenticate with it.
-                <a
-                    href=${NETWORKS_DOCS_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    >Learn more in the docs</a
-                >
-            </p>
+            </wg-page-header>
 
             ${
                 this.networks.length === 0
