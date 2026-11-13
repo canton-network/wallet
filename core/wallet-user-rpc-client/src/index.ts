@@ -688,6 +688,12 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
+ * Whether the current network has service account auth configured. API keys can only submit transactions on such networks.
+ *
+ */
+export type ApiKeysSupported = boolean
+/**
+ *
  * The IDs of the available signing providers.
  *
  */
@@ -969,6 +975,7 @@ export interface GeneratedApiKey {
 }
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
+    apiKeysSupported: ApiKeysSupported
 }
 export interface ListSigningProvidersResult {
     signingProviders: SigningProviders

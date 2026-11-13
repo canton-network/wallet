@@ -25,6 +25,8 @@ import { API_KEYS_DOCS_URL } from '../constants'
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {
     @state() accessor apiKeys: ApiKey[] = []
+    /** Unknown until loaded, so Generate stays disabled until then */
+    @state() private accessor apiKeysSupported: boolean | undefined = undefined
     @state() accessor currentPage = 1
 
     private readonly pageSize = 4
@@ -74,6 +76,7 @@ export class UserUiApiKeys extends BaseElement {
             )
             const apiKeys = await userClient.request({ method: 'listApiKeys' })
             this.apiKeys = apiKeys.apiKeys
+            this.apiKeysSupported = apiKeys.apiKeysSupported
 
             const maxPage = Math.max(
                 1,
@@ -105,7 +108,11 @@ export class UserUiApiKeys extends BaseElement {
                 params: { id: apiKeyEvent.apiKey.id },
             })
 
-            showToast('', 'API key removed', 'success')
+            showToast(
+                'API key revoked',
+                `Revoked the API key "${apiKeyEvent.apiKey.name}".`,
+                'success'
+            )
 
             this.apiKeys = this.apiKeys.filter(
                 (key) => key.id !== apiKeyEvent.apiKey.id
@@ -125,6 +132,7 @@ export class UserUiApiKeys extends BaseElement {
                 <button
                     class="btn btn-primary btn-sm rounded-pill btn-add"
                     type="button"
+                    ?disabled=${this.apiKeysSupported !== true}
                     @click=${() => setLocationHref(toRelPath('/api-keys/add/'))}
                 >
                     <span aria-hidden="true">+</span>
@@ -132,6 +140,15 @@ export class UserUiApiKeys extends BaseElement {
                 </button>
             </wg-page-header>
 
+            ${
+                this.apiKeysSupported === false
+                    ? html`<div class="alert alert-info" role="status">
+                          API keys can't be used on this network because it has
+                          no service account auth configured. An admin can add
+                          it on the Networks page.
+                      </div>`
+                    : ''
+            }
             ${
                 this.apiKeys.length === 0
                     ? html`<p class="mb-0 text-body-secondary">

@@ -186,11 +186,14 @@ export function mockNetworksPageFlow(
 
 export function mockApiKeysPageFlow(
     apiKeys: ApiKey[],
-    options: { isAdmin?: boolean } = {}
+    options: { isAdmin?: boolean; apiKeysSupported?: boolean } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listApiKeys') {
-            return { apiKeys }
+            return {
+                apiKeys,
+                apiKeysSupported: options.apiKeysSupported ?? true,
+            }
         }
         if (method === 'listSessions') {
             return { sessions: [] }

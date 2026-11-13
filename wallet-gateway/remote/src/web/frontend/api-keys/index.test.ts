@@ -138,4 +138,32 @@ describe('UserUiApiKeys', () => {
         expect(getApiKeyCards(el)).toHaveLength(2)
         expect(getApiKeyCards(el)[0]?.apiKey.id).toBe('api-key-5')
     })
+
+    it('explains why API keys are unavailable and disables Generate', async () => {
+        mockApiKeysPageFlow([], { apiKeysSupported: false })
+
+        el = await fixture<UserUiApiKeys>(componentFixture)
+
+        await waitUntil(() =>
+            el.shadowRoot?.textContent?.includes(
+                'no service account auth configured'
+            )
+        )
+        expect(
+            el.shadowRoot?.querySelector<HTMLButtonElement>('.btn-add')
+                ?.disabled
+        ).toBe(true)
+    })
+
+    it('enables Generate on a network that supports API keys', async () => {
+        mockApiKeysPageFlow([])
+
+        el = await fixture<UserUiApiKeys>(componentFixture)
+
+        await waitUntil(
+            () =>
+                el.shadowRoot?.querySelector<HTMLButtonElement>('.btn-add')
+                    ?.disabled === false
+        )
+    })
 })
