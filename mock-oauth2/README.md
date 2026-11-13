@@ -9,6 +9,14 @@ A local OAuth2 mock server used for development and tests.
 - Signs access tokens with generated keys.
 - Adds token claims from the request (`aud`, `sub`, `scope`, `iat`, `exp`).
 
+## Token lifetime
+
+Access tokens live for one hour. To try out what happens when they expire, shorten the lifetime:
+
+```bash
+MOCK_OAUTH2_TOKEN_TTL_SECONDS=90 pnpm start
+```
+
 ## PKCE behavior
 
 The server now enforces PKCE (`S256`) for `authorization_code` requests:
