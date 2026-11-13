@@ -54,6 +54,11 @@ class WgInfoTip extends BaseElement {
                 border-radius: var(--wg-radius-full);
                 background: transparent;
                 color: var(--wg-text-secondary);
+            }
+
+            /* As specific as Bootstrap's [type=button]:not(:disabled) pointer, so it
+               wins. Clicking only shows the tooltip, like hovering does */
+            .info-btn:not(:disabled) {
                 cursor: help;
             }
 
