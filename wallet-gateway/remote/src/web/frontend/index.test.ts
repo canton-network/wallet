@@ -122,6 +122,8 @@ vi.mock('./state-manager.ts', () => ({
 
 import '@canton-network/core-wallet-ui-components'
 import {
+    type AuthSettledEvent,
+    type AuthVerdict,
     type UserApp,
     type UserUI,
     type UserUIAuthRedirect,
@@ -571,12 +573,19 @@ describe('UserUIAuthRedirect', () => {
                 })
             )
             setPath(path)
+            const verdicts: AuthVerdict[] = []
+            const onSettled = (e: Event) =>
+                verdicts.push((e as AuthSettledEvent).detail.verdict)
+            document.addEventListener('auth-settled', onSettled)
 
             await fixture<UserUIAuthRedirect>(
                 html`<user-ui-auth-redirect></user-ui-auth-redirect>`
             )
-            await waitUntil(() => document.querySelector('custom-toast'))
+            await waitUntil(() => verdicts.length > 0)
+            document.removeEventListener('auth-settled', onSettled)
 
+            expect(verdicts).toEqual(['unavailable'])
+            expect(document.querySelector('custom-toast')).not.toBeNull()
             expect(authState.accessToken).toBe('access-token')
             expect(mockAttemptRemoveSession).not.toHaveBeenCalled()
             expect(setLocationHref).not.toHaveBeenCalled()

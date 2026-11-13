@@ -20,7 +20,11 @@ import type {
 import { html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { redirectToIntendedOrDefault, addUserSession } from '../index.ts'
+import {
+    redirectToIntendedOrDefault,
+    addUserSession,
+    type AuthSettledEvent,
+} from '../index.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import '../index.ts'
 import { setLocationHref } from '../navigation.ts'
@@ -73,6 +77,15 @@ export class LoginUI extends BaseElement {
 
     @state()
     accessor connectingMessage = 'Connecting...'
+
+    // The form stays hidden until it is known that the user isn't logged in
+    // already. Otherwise it shows up briefly before the redirect to the wallet.
+    @state()
+    private accessor showForm = false
+
+    private handleAuthSettled(e: AuthSettledEvent) {
+        this.showForm = e.detail.verdict !== 'redirecting'
+    }
 
     private async loadNetworks() {
         const currentOrigin = await detectCurrentOrigin()
@@ -280,6 +293,15 @@ export class LoginUI extends BaseElement {
             return html`<wg-loading-state
                 .text=${this.connectingMessage}
             ></wg-loading-state>`
+        }
+
+        if (!this.showForm) {
+            return html`
+                <user-ui-auth-redirect
+                    @auth-settled=${this.handleAuthSettled}
+                ></user-ui-auth-redirect>
+                <wg-loading-state .text=${'Loading...'}></wg-loading-state>
+            `
         }
 
         return html`

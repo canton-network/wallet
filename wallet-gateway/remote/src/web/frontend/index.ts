@@ -257,9 +257,9 @@ export const shareConnection = (token: string, sessionId: string) => {
     }
 }
 
-// Whether the page the browser loaded is the one the user gets to see, or is
-// about to be replaced by a redirect.
-export type AuthVerdict = 'show-page' | 'redirecting'
+// Whether the page the browser loaded is the one the user gets to see, is
+// about to be replaced by a redirect, or the session couldn't be verified.
+export type AuthVerdict = 'show-page' | 'redirecting' | 'unavailable'
 
 export class AuthSettledEvent extends CustomEvent<{ verdict: AuthVerdict }> {
     constructor(verdict: AuthVerdict) {
@@ -286,6 +286,7 @@ export class UserUIAuthRedirect extends LitElement {
             // Keep the session, reloading the page tries again
             if (isUnavailable(error)) {
                 handleErrorToast(error)
+                verdict = 'unavailable'
                 return
             }
             // Without a verdict there is no safe page to show, so treat any
