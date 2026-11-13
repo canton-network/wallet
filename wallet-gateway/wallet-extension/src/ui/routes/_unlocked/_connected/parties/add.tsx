@@ -4,6 +4,6 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { AddPartyPage } from '@/ui/features/parties'
 
-export const Route = createFileRoute('/_unlocked/parties/add')({
+export const Route = createFileRoute('/_unlocked/_connected/parties/add')({
     component: AddPartyPage,
 })

@@ -51,6 +51,8 @@ class WgLoginForm extends BaseElement {
     @property({ type: Boolean }) accessor connecting = false
     @property({ type: String }) accessor backHref = '/'
 
+    @property({ type: Boolean }) accessor displayTopBar = true
+
     @state() accessor selectedNetwork: PublicNetwork | null = null
     @state() accessor message: string | null = null
     @state() accessor messageType: 'error' | 'info' | null = null
@@ -59,12 +61,14 @@ class WgLoginForm extends BaseElement {
         BaseElement.styles,
         css`
             :host {
-                display: block;
+                display: flex;
+                flex-direction: column;
                 min-height: 100dvh;
             }
 
             .screen {
-                min-height: 100dvh;
+                height: 100%;
+                flex: 1;
                 display: flex;
                 flex-direction: column;
             }
@@ -336,9 +340,17 @@ class WgLoginForm extends BaseElement {
 
         return html`
             <form class="screen" @submit=${this.handleSubmit}>
-                <div class="top-bar">
-                    <img class="top-logo" src=${cantonLogo} alt="Canton logo" />
-                </div>
+                ${
+                    this.displayTopBar
+                        ? html`<div class="top-bar">
+                              <img
+                                  class="top-logo"
+                                  src=${cantonLogo}
+                                  alt="Canton logo"
+                              />
+                          </div>`
+                        : nothing
+                }
 
                 <div class="content">
                     <div class="title-row">
