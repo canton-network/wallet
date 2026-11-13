@@ -18,7 +18,7 @@ describe('wg-readonly-badge', () => {
         expect(badge.textContent).toBe('READ-ONLY')
         expect(badge.getAttribute('aria-describedby')).toBe(tooltip.id)
         expect(tooltip.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-            'Defined in the networks section of the Wallet Gateway config file. To change it, edit the config file and restart the Wallet Gateway.'
+            'Comes from the networks section of the config file. Edit it there and restart the Wallet Gateway.'
         )
     })
 })

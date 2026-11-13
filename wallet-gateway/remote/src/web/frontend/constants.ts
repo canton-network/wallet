@@ -29,8 +29,8 @@ export const API_KEYS_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/automation/service-
 export const ADMIN_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/configure#administration-page`
 
 export const NETWORKS_INFO =
-    "A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
+    'A network is a Canton validator that users can connect to through this Wallet Gateway.'
 export const IDENTITY_PROVIDERS_INFO =
-    "An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."
+    'An identity provider (IdP) logs users in and issues the tokens that a network accepts. Use OAuth in production; self-signed is for testing only.'
 export const API_KEYS_INFO =
-    'API keys let a backend service or CI job submit transactions through the dApp API without a person approving each one. They only work on networks with service account auth configured.'
+    'API keys let your backend services submit transactions without someone approving each one. A key only works on the network you were connected to when you generated it.'

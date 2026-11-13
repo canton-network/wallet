@@ -421,8 +421,8 @@ class NetworkForm extends BaseElement {
                             >
                         </div>
                         <p class="field-help">
-                            Issues the tokens that users log in to this network
-                            with.
+                            Users log in to this network through this identity
+                            provider.
                         </p>
                     </div>
 
@@ -447,7 +447,7 @@ class NetworkForm extends BaseElement {
                     <h3 class="section-title">
                         Configure user auth
                         <wg-info-tip
-                            text="How users log in to this network's Ledger API. Use authorization_code for a browser login with OAuth, or self_signed for development."
+                            text="How users log in to this network."
                             docsUrl=${AUTH_DOCS_URL}
                         ></wg-info-tip>
                     </h3>
@@ -466,7 +466,7 @@ class NetworkForm extends BaseElement {
                     <h3 class="section-title">
                         Configure admin auth
                         <wg-info-tip
-                            text="How the Wallet Gateway itself gets tokens for admin operations, such as syncing parties when a user logs in or allocating parties. Usually client_credentials."
+                            text="How the Wallet Gateway gets a token for its own tasks, such as syncing parties when a user logs in."
                             docsUrl=${AUTH_DOCS_URL}
                         ></wg-info-tip>
                     </h3>
@@ -488,7 +488,7 @@ class NetworkForm extends BaseElement {
                     <h3 class="section-title">
                         Configure service account auth
                         <wg-info-tip
-                            text="Machine credentials (client_credentials) that API keys use to submit transactions without a person approving them. Users can only create API keys on networks that have it."
+                            text="The credentials that API keys use to submit transactions. Without them, API keys don't work on this network."
                             docsUrl=${AUTH_DOCS_URL}
                         ></wg-info-tip>
                     </h3>

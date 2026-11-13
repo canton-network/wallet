@@ -107,7 +107,7 @@ export class UserUiAdmin extends BaseElement {
         return html`
             <wg-page-header
                 heading="Administration"
-                info="Check that the Wallet Gateway is configured correctly. Notices point out anything that needs attention, such as deprecated config options or signing providers that are unavailable."
+                info="The Wallet Gateway version and notices about its configuration that need your attention."
                 .docsUrl=${ADMIN_DOCS_URL}
             ></wg-page-header>
             <p class="text-body-secondary mb-4">

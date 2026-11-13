@@ -79,7 +79,7 @@ export class UserUiActivities extends BaseElement {
         return html`
             <wg-page-header
                 heading="Activities"
-                info="Transactions that the Wallet Gateway prepared, signed or executed for your parties, with their status. Open one to see its details."
+                info="Transactions for your parties and their status. Open one to see its details."
                 .docsUrl=${ACTIVITIES_DOCS_URL}
             ></wg-page-header>
 

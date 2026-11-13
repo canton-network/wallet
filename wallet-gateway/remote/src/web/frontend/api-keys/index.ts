@@ -143,9 +143,9 @@ export class UserUiApiKeys extends BaseElement {
             ${
                 this.apiKeysSupported === false
                     ? html`<div class="alert alert-info" role="status">
-                          API keys can't be used on this network because it has
-                          no service account auth configured. An admin can add
-                          it on the Networks page.
+                          API keys don't work on this network yet because it has
+                          no service account auth. Ask your Wallet Gateway admin
+                          to add it.
                       </div>`
                     : ''
             }

@@ -54,9 +54,8 @@ class WgReadonlyBadge extends BaseElement {
                     >READ-ONLY</span
                 >
                 <span slot="content" id="details">
-                    Defined in the <code>${this.section}</code> section of the
-                    Wallet Gateway config file. To change it, edit the config
-                    file and restart the Wallet Gateway.
+                    Comes from the <code>${this.section}</code> section of the
+                    config file. Edit it there and restart the Wallet Gateway.
                 </span>
             </wg-tooltip>
         `

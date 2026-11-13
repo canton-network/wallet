@@ -88,7 +88,7 @@ export class UserUiParties extends BaseElement {
         return html`
             <wg-page-header
                 heading="Parties"
-                info="Parties are your identities on the Canton ledger. Each party holds assets and signs transactions through its signing provider. dApps get your primary party by default."
+                info="A party is your identity on the Canton ledger. Its signing provider holds its key and signs for it. dApps get your primary party by default."
                 .docsUrl=${PARTIES_DOCS_URL}
             >
                 <wg-wallets-sync
