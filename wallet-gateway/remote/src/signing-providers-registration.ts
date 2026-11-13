@@ -6,6 +6,7 @@ import BlockdaemonSigningProvider, {
 } from '@canton-network/core-signing-blockdaemon'
 import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import DfnsSigningProvider from '@canton-network/core-signing-dfns'
+import DsrvSigningProvider from '@canton-network/core-signing-dsrv'
 import FireblocksSigningProvider from '@canton-network/core-signing-fireblocks'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { SigningProvider } from '@canton-network/core-signing-lib'
@@ -31,6 +32,7 @@ const dfnsSchema = signingProvidersConfigSchema.shape.dfns.unwrap().shape
 const securosysSchema =
     signingProvidersConfigSchema.shape.securosys.unwrap().shape
 const bitgoSchema = signingProvidersConfigSchema.shape.bitgo.unwrap().shape
+const dsrvSchema = signingProvidersConfigSchema.shape.dsrv.unwrap().shape
 
 type ProviderSecrets = {
     fireblocksApiKey: string | undefined
@@ -44,6 +46,7 @@ type ProviderSecrets = {
     dfnsPrivateKey: string | undefined
     dfnsAuthToken: string | undefined
     bitgoAccessToken: string | undefined
+    dsrvBearerToken: string | undefined
 }
 
 type ProviderSettings = {
@@ -59,6 +62,7 @@ type ProviderSettings = {
     bitgoBaseUrl: string
     bitgoEnterpriseId: string | undefined
     bitgoCoin: string | undefined
+    dsrvBaseUrl: string | undefined
 }
 
 type ProviderSelection = {
@@ -69,6 +73,7 @@ type ProviderSelection = {
     securosys: boolean
     dfns: boolean
     bitgo: boolean
+    dsrv: boolean
 }
 
 type UnavailableProvider =
@@ -78,6 +83,7 @@ type UnavailableProvider =
     | 'securosys'
     | 'dfns'
     | 'bitgo'
+    | 'dsrv'
 
 // Why an enabled provider is unavailable, depending on whether providers are
 // configured in signingProviders (explicit) or not (legacy). Legacy mode
@@ -117,6 +123,11 @@ const UNAVAILABLE_PROVIDER_MESSAGES: Record<
             'BitGo is unavailable because the environment variable named by signingProviders.bitgo.accessTokenEnv is not set. Set it, or remove signingProviders.bitgo.',
         legacy: 'BitGo is not registered because BITGO_ACCESS_TOKEN is not set.',
     },
+    dsrv: {
+        explicit:
+            'DSRV is unavailable because signingProviders.dsrv.baseUrl is empty or the environment variable named by signingProviders.dsrv.bearerTokenEnv is not set. Set them, or remove signingProviders.dsrv.',
+        legacy: 'DSRV is not registered because it is only configured through signingProviders.',
+    },
 }
 
 function readLegacySecrets(): ProviderSecrets {
@@ -146,6 +157,7 @@ function readLegacySecrets(): ProviderSecrets {
         dfnsPrivateKey: Env.get(dfnsSchema.privateKeyEnv.parse(undefined)),
         dfnsAuthToken: Env.get(dfnsSchema.authTokenEnv.parse(undefined)),
         bitgoAccessToken: Env.get(bitgoSchema.accessTokenEnv.parse(undefined)),
+        dsrvBearerToken: undefined,
     }
 }
 
@@ -204,6 +216,11 @@ function readExplicitSecrets(
                 signingProviders.bitgo?.accessTokenEnv
             )
         ),
+        dsrvBearerToken: Env.get(
+            dsrvSchema.bearerTokenEnv.parse(
+                signingProviders.dsrv?.bearerTokenEnv
+            )
+        ),
     }
 }
 
@@ -229,6 +246,7 @@ function legacySettings(): ProviderSettings {
         bitgoBaseUrl: bitgoSchema.baseUrl.parse(Env.get('BITGO_API_URL')),
         bitgoEnterpriseId: Env.get('BITGO_ENTERPRISE_ID'),
         bitgoCoin: Env.get('BITGO_COIN'),
+        dsrvBaseUrl: undefined,
     }
 }
 
@@ -258,6 +276,7 @@ function explicitSettings(
         ),
         bitgoEnterpriseId: signingProviders.bitgo?.enterpriseId,
         bitgoCoin: signingProviders.bitgo?.coin,
+        dsrvBaseUrl: signingProviders.dsrv?.baseUrl,
     }
 }
 
@@ -403,6 +422,17 @@ function buildDrivers(
         }
     }
 
+    if (selected.dsrv) {
+        if (settings.dsrvBaseUrl && secrets.dsrvBearerToken) {
+            drivers[SigningProvider.DSRV] = new DsrvSigningProvider({
+                baseUrl: settings.dsrvBaseUrl,
+                bearerToken: secrets.dsrvBearerToken,
+            })
+        } else {
+            reportUnavailable('dsrv')
+        }
+    }
+
     return drivers
 }
 
@@ -433,6 +463,8 @@ export function registerSigningProviders(
                 securosys: true,
                 dfns: true,
                 bitgo: true,
+                // Not discovered from the environment, needs signingProviders.dsrv
+                dsrv: false,
             },
             legacySettings(),
             secrets,
@@ -452,6 +484,7 @@ export function registerSigningProviders(
             securosys: signingProviders.securosys !== undefined,
             dfns: signingProviders.dfns !== undefined,
             bitgo: signingProviders.bitgo !== undefined,
+            dsrv: signingProviders.dsrv !== undefined,
         },
         explicitSettings(signingProviders),
         secrets,

@@ -145,6 +145,15 @@ export class TransactionService {
                     { ...baseSignParams, internalTxId }
                 )
             }
+            case SigningProvider.DSRV: {
+                return this.signWithDriver(
+                    driver,
+                    signingProvider,
+                    wallet,
+                    tx,
+                    { ...baseSignParams, internalTxId }
+                )
+            }
             default:
                 throw new Error(
                     `Unsupported signing provider: ${wallet.signingProviderId}`

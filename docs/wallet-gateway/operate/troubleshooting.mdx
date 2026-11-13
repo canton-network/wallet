@@ -112,6 +112,12 @@ permissions:
   its `*Env` fields.
 - **BitGo**: `signingProviders.bitgo.baseUrl` set, and the access token in the env var named by
   `signingProviders.bitgo.accessTokenEnv`.
+- **DSRV**: `signingProviders.dsrv.baseUrl` set, the bearer token in the env var named by
+  `signingProviders.dsrv.bearerTokenEnv`, and the signing API reachable from the Wallet Gateway
+  at `{baseUrl}/api/signing/*`. Errors such as `DSRV signing API … failed (401)` mean the
+  signing API did not accept the bearer token: check the env var named by
+  `signingProviders.dsrv.bearerTokenEnv` and restart after changing it. A wallet or transaction
+  that stays pending is waiting on the signing API, for example for an approval.
 
 See [Signing providers](signing-providers.mdx) for each
 provider's setup.

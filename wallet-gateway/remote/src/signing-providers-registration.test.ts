@@ -13,6 +13,7 @@ const providerConstructors = vi.hoisted(() => ({
     bitgo: vi.fn(),
     blockdaemon: vi.fn(),
     dfns: vi.fn(),
+    dsrv: vi.fn(),
     fireblocks: vi.fn(),
     securosys: vi.fn(),
 }))
@@ -32,6 +33,9 @@ vi.mock('@canton-network/core-signing-blockdaemon', async (importOriginal) => {
 })
 vi.mock('@canton-network/core-signing-dfns', () => ({
     default: providerConstructors.dfns,
+}))
+vi.mock('@canton-network/core-signing-dsrv', () => ({
+    default: providerConstructors.dsrv,
 }))
 vi.mock('@canton-network/core-signing-fireblocks', () => ({
     default: providerConstructors.fireblocks,
@@ -64,6 +68,7 @@ const signingProviderEnvVars = [
     'BITGO_API_URL',
     'BITGO_ENTERPRISE_ID',
     'BITGO_COIN',
+    'DSRV_SIGNING_API_TOKEN',
 ]
 
 describe('registerSigningProviders', () => {
@@ -186,6 +191,18 @@ describe('registerSigningProviders', () => {
                 enterpriseId: 'bitgo-enterprise',
                 coin: 'tcanton',
             })
+        })
+
+        test('does not register DSRV', () => {
+            const drivers = registerSigningProviders(
+                undefined,
+                signingStore,
+                logger,
+                notices
+            )
+
+            expect(drivers[SigningProvider.DSRV]).toBeUndefined()
+            expect(providerConstructors.dsrv).not.toHaveBeenCalled()
         })
     })
 
@@ -603,6 +620,119 @@ describe('registerSigningProviders', () => {
                         ),
                     }),
                 ])
+            })
+        })
+
+        describe('DSRV', () => {
+            test('rejects config without a base URL', () => {
+                expect(() =>
+                    signingProvidersConfigSchema.parse({ dsrv: {} })
+                ).toThrow()
+            })
+
+            test('registers with the bearer token from the default env var', () => {
+                vi.stubEnv('DSRV_SIGNING_API_TOKEN', 'gw-token')
+
+                const drivers = registerSigningProviders(
+                    signingProvidersConfigSchema.parse({
+                        dsrv: { baseUrl: 'https://dsrv.example' },
+                    }),
+                    signingStore,
+                    logger,
+                    notices
+                )
+
+                expect(drivers[SigningProvider.DSRV]).toBeDefined()
+                expect(providerConstructors.dsrv).toHaveBeenCalledWith({
+                    baseUrl: 'https://dsrv.example',
+                    bearerToken: 'gw-token',
+                })
+                expect(notices.list()).toEqual([])
+            })
+
+            test('reads the bearer token from the configured env var name', () => {
+                vi.stubEnv('DSRV_SIGNING_API_TOKEN', 'default-token')
+                vi.stubEnv('MY_DSRV_TOKEN', 'custom-token')
+
+                registerSigningProviders(
+                    signingProvidersConfigSchema.parse({
+                        dsrv: {
+                            baseUrl: 'https://dsrv.example',
+                            bearerTokenEnv: 'MY_DSRV_TOKEN',
+                        },
+                    }),
+                    signingStore,
+                    logger,
+                    notices
+                )
+
+                expect(providerConstructors.dsrv).toHaveBeenCalledWith({
+                    baseUrl: 'https://dsrv.example',
+                    bearerToken: 'custom-token',
+                })
+            })
+
+            test('does not register when the bearer token is missing', () => {
+                vi.stubEnv('OTHER_TOKEN', 'not-this-one')
+
+                const drivers = registerSigningProviders(
+                    signingProvidersConfigSchema.parse({
+                        participant: {},
+                        dsrv: {
+                            baseUrl: 'https://dsrv.example',
+                            bearerTokenEnv: 'MY_DSRV_TOKEN',
+                        },
+                    }),
+                    signingStore,
+                    logger,
+                    notices
+                )
+
+                expect(drivers[SigningProvider.DSRV]).toBeUndefined()
+                expect(providerConstructors.dsrv).not.toHaveBeenCalled()
+                expect(notices.list()).toEqual([
+                    expect.objectContaining({
+                        id: 'signing-provider-unavailable:dsrv',
+                        severity: 'warning',
+                        message:
+                            'DSRV is unavailable because signingProviders.dsrv.baseUrl is empty or the environment variable named by signingProviders.dsrv.bearerTokenEnv is not set. Set them, or remove signingProviders.dsrv.',
+                    }),
+                ])
+            })
+
+            test('does not register when the base URL is empty', () => {
+                vi.stubEnv('DSRV_SIGNING_API_TOKEN', 'gw-token')
+
+                const drivers = registerSigningProviders(
+                    signingProvidersConfigSchema.parse({
+                        participant: {},
+                        dsrv: { baseUrl: '' },
+                    }),
+                    signingStore,
+                    logger,
+                    notices
+                )
+
+                expect(drivers[SigningProvider.DSRV]).toBeUndefined()
+                expect(providerConstructors.dsrv).not.toHaveBeenCalled()
+                expect(notices.list()).toEqual([
+                    expect.objectContaining({
+                        id: 'signing-provider-unavailable:dsrv',
+                        severity: 'warning',
+                    }),
+                ])
+            })
+
+            test('is not registered unless opted in', () => {
+                const drivers = registerSigningProviders(
+                    signingProvidersConfigSchema.parse({ participant: {} }),
+                    signingStore,
+                    logger,
+                    notices
+                )
+
+                expect(drivers[SigningProvider.DSRV]).toBeUndefined()
+                expect(providerConstructors.dsrv).not.toHaveBeenCalled()
             })
         })
     })

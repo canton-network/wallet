@@ -162,3 +162,31 @@ test('dfns and securosys in config require non-secret settings', () => {
         },
     })
 })
+
+test('dsrv in config requires a base URL and names the bearer token env var', () => {
+    expect(() => signingProvidersConfigSchema.parse({ dsrv: {} })).toThrow()
+    expect(
+        signingProvidersConfigSchema.parse({
+            dsrv: { baseUrl: 'https://dsrv.example' },
+        })
+    ).toEqual({
+        dsrv: {
+            baseUrl: 'https://dsrv.example',
+            bearerTokenEnv: 'DSRV_SIGNING_API_TOKEN',
+        },
+    })
+    expect(
+        signingProvidersConfigSchema.parse({
+            dsrv: {
+                baseUrl: 'https://dsrv.example',
+                bearerTokenEnv: 'MY_DSRV_TOKEN',
+                bearerToken: 'inline values are dropped',
+            },
+        })
+    ).toEqual({
+        dsrv: {
+            baseUrl: 'https://dsrv.example',
+            bearerTokenEnv: 'MY_DSRV_TOKEN',
+        },
+    })
+})

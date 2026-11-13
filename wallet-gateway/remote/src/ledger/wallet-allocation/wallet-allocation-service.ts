@@ -23,6 +23,7 @@ import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wall
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
 import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
 import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.js'
+import { DsrvWalletAllocator } from './signing-providers/dsrv-wallet-allocator.js'
 
 export interface WalletAllocator {
     createWallet(
@@ -59,6 +60,7 @@ export class WalletAllocationService {
     private readonly dfnsAllocator?: DfnsWalletAllocator
     private readonly securosysAllocator?: SecurosysWalletAllocator
     private readonly bitgoAllocator?: BitGoWalletAllocator
+    private readonly dsrvAllocator?: DsrvWalletAllocator
 
     private getAllocator(
         signingProviderId: string
@@ -74,6 +76,8 @@ export class WalletAllocationService {
                 return this.securosysAllocator
             case SigningProvider.BITGO:
                 return this.bitgoAllocator
+            case SigningProvider.DSRV:
+                return this.dsrvAllocator
             case SigningProvider.WALLET_KERNEL:
                 return this.kernelAllocator
             case SigningProvider.PARTICIPANT:
@@ -153,6 +157,16 @@ export class WalletAllocationService {
                 logger,
                 partyAllocator,
                 bitgoDriver
+            )
+        }
+
+        const dsrvDriver = signingDrivers[SigningProvider.DSRV]
+        if (dsrvDriver) {
+            this.dsrvAllocator = new DsrvWalletAllocator(
+                store,
+                logger,
+                partyAllocator,
+                dsrvDriver
             )
         }
     }
@@ -245,6 +259,16 @@ export class WalletAllocationService {
                     partyHint,
                     primary
                 )
+            case SigningProvider.DSRV:
+                if (!this.dsrvAllocator) {
+                    throw new Error('DSRV signing driver not available')
+                }
+                return this.dsrvAllocator.createWallet(
+                    authContext.userId,
+                    authContext.email,
+                    partyHint,
+                    primary
+                )
             default:
                 throw new Error(
                     `Unsupported signing provider: ${String(signingProviderId)}`
@@ -321,6 +345,15 @@ export class WalletAllocationService {
                     throw new Error('BitGo signing driver not available')
                 }
                 return this.bitgoAllocator.allocateParty(
+                    authContext.userId,
+                    authContext.email,
+                    existingWallet
+                )
+            case SigningProvider.DSRV:
+                if (!this.dsrvAllocator) {
+                    throw new Error('DSRV signing driver not available')
+                }
+                return this.dsrvAllocator.allocateParty(
                     authContext.userId,
                     authContext.email,
                     existingWallet
