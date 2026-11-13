@@ -14,6 +14,7 @@ import {
     DEFAULT_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
+    SESSION_EXPIRED_TOAST,
     TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
 } from './constants.js'
 import { createMockUserClient, mockRequest } from './__tests__/test-helpers.js'
@@ -24,7 +25,7 @@ const authState = vi.hoisted(() => ({
     networkId: undefined as string | undefined,
     expirationDate: undefined as string | undefined,
     intendedPage: undefined as string | undefined,
-    sessionExpired: false,
+    pendingToast: undefined as unknown,
 }))
 
 const {
@@ -66,7 +67,11 @@ vi.mock('./rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
     attemptRemoveSession: mockAttemptRemoveSession,
 }))
-vi.mock('./utils.js', () => ({ showToast, fetchDappApiUrl }))
+vi.mock('./utils.js', () => ({
+    showToast,
+    showPendingToast: vi.fn(),
+    fetchDappApiUrl,
+}))
 vi.mock('./state-manager.js', () => ({
     stateManager: {
         accessToken: {
@@ -117,13 +122,9 @@ vi.mock('./state-manager.js', () => ({
             clear: vi.fn(),
         },
         sessionId: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
-        sessionExpired: {
-            get: () => authState.sessionExpired,
-            set: () => {
-                authState.sessionExpired = true
-            },
-            clear: () => {
-                authState.sessionExpired = false
+        pendingToast: {
+            set: (toast: unknown) => {
+                authState.pendingToast = toast
             },
         },
     },
@@ -607,7 +608,7 @@ describe('UserUIAuthRedirect', () => {
             expect.stringContaining(LOGIN_PAGE_REDIRECT)
         )
         // The login page tells the user why they have to log in again
-        expect(authState.sessionExpired).toBe(true)
+        expect(authState.pendingToast).toEqual(SESSION_EXPIRED_TOAST)
     })
 
     it('chains bounded timeouts until a long-lived token expires', async () => {

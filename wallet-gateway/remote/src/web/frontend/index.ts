@@ -14,6 +14,7 @@ import {
     DEFAULT_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
+    SESSION_EXPIRED_TOAST,
     TOKEN_EXPIRED_SKEW_MS,
     TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
 } from './constants'
@@ -27,7 +28,7 @@ import {
 } from '@canton-network/core-wallet-ui-components'
 import './listeners'
 import { detectCurrentOrigin } from './listeners'
-import { fetchDappApiUrl, showToast } from './utils'
+import { fetchDappApiUrl, showPendingToast, showToast } from './utils'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `
@@ -66,6 +67,7 @@ export class UserApp extends LitElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
+        showPendingToast()
         this.currentOrigin = await detectCurrentOrigin()
         void this.loadHeaderState()
     }
@@ -372,7 +374,7 @@ export class UserUIAuthRedirect extends LitElement {
 
         if (!isLoginPage) {
             await this.clearAuthStateAndPreserveIntendedPage()
-            stateManager.sessionExpired.set()
+            stateManager.pendingToast.set(SESSION_EXPIRED_TOAST)
             setLocationHref(toRelHref(LOGIN_PAGE_REDIRECT))
             return 'redirecting'
         }

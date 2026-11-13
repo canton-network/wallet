@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AllowedRoute } from '@canton-network/core-wallet-ui-components'
+import type {
+    AllowedRoute,
+    ToastMessageType,
+} from '@canton-network/core-wallet-ui-components'
 import {
     encryptString,
     destroyTokenKey,
@@ -10,6 +13,12 @@ import {
 
 const NAMESPACE = 'com.splice.wallet'
 const VERSION_PREFIX = `${NAMESPACE}.v1`
+
+export interface PendingToast {
+    title: string
+    message: string
+    type: ToastMessageType
+}
 
 export class StateManager {
     static localStorageKey(item: string, origin: string): string {
@@ -143,20 +152,25 @@ export class StateManager {
         clear: () => this.clearWithStorage('origin', 'current', sessionStorage),
     }
 
-    /** Set when the session ends without the user logging out, so the login page can say why */
-    sessionExpired = {
-        get: () =>
-            this.getWithStorage('sessionExpired', 'current', sessionStorage) ===
-            'true',
-        set: () =>
+    /** A toast to show after the next page load, for actions that navigate away */
+    pendingToast = {
+        get: (): PendingToast | undefined => {
+            const value = this.getWithStorage(
+                'pendingToast',
+                'current',
+                sessionStorage
+            )
+            return value ? (JSON.parse(value) as PendingToast) : undefined
+        },
+        set: (toast: PendingToast) =>
             this.setWithStorage(
-                'sessionExpired',
-                'true',
+                'pendingToast',
+                JSON.stringify(toast),
                 'current',
                 sessionStorage
             ),
         clear: () =>
-            this.clearWithStorage('sessionExpired', 'current', sessionStorage),
+            this.clearWithStorage('pendingToast', 'current', sessionStorage),
     }
 
     sessionId = {

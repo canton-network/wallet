@@ -3,7 +3,12 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@canton-network/core-wallet-ui-components'
-import { fetchDappApiUrl, showToast } from './utils.js'
+import {
+    fetchDappApiUrl,
+    showPendingToast,
+    showToast,
+    showToastAfterNavigation,
+} from './utils.js'
 
 describe('showToast', () => {
     afterEach(() => {
@@ -21,6 +26,28 @@ describe('showToast', () => {
             'Message body'
         )
         expect((toast as HTMLElement & { type: string }).type).toBe('success')
+    })
+})
+
+describe('showToastAfterNavigation', () => {
+    afterEach(() => {
+        document.body.innerHTML = ''
+        sessionStorage.clear()
+    })
+
+    it('shows the toast once, on the next page', () => {
+        showToastAfterNavigation('Saved', 'Network saved.', 'success')
+        expect(document.body.querySelector('custom-toast')).toBeNull()
+
+        showPendingToast()
+        const toast = document.body.querySelector('custom-toast') as
+            | (HTMLElement & { message: string })
+            | null
+        expect(toast?.message).toBe('Network saved.')
+
+        document.body.innerHTML = ''
+        showPendingToast()
+        expect(document.body.querySelector('custom-toast')).toBeNull()
     })
 })
 

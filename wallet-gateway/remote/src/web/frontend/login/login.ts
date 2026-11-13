@@ -26,7 +26,7 @@ import '../index'
 import { redirectToIntendedOrDefault, addUserSession } from '../index'
 import { setLocationHref } from '../navigation.js'
 import { detectCurrentOrigin } from '../listeners.js'
-import { showToast } from '../utils'
+import { showPendingToast } from '../utils'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -95,14 +95,7 @@ export class LoginUI extends BaseElement {
 
     async connectedCallback() {
         super.connectedCallback()
-        if (stateManager.sessionExpired.get()) {
-            stateManager.sessionExpired.clear()
-            showToast(
-                'Session expired',
-                'Your session has ended. Log in again to continue.',
-                'info'
-            )
-        }
+        showPendingToast()
         try {
             // Connecting needs both, so fetch them together and publish them update once both are resolved
 
