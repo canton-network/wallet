@@ -48,6 +48,7 @@ function memoryAuthContext(initial?: AuthContext) {
 
 describe('createAuthService', () => {
     let vaultStatus: VaultStatus
+    let lockVault: () => void
     let store: WalletStore
     let authContext: ReturnType<typeof memoryAuthContext>
     let signIn: Mock<(params: AuthorizationCodeParams) => Promise<string>>
@@ -55,7 +56,23 @@ describe('createAuthService', () => {
     function service(config = defaultConfig()) {
         store = new StoreInternal(config, logger)
         return createAuthService({
-            vault: { ready: Promise.resolve(), status: () => vaultStatus },
+            vault: {
+                ready: Promise.resolve(),
+                status: () => vaultStatus,
+                onLock: vi.fn((listener: () => void) => {
+                    // The real vault runs listeners and sets the status in closeNow().
+                    lockVault = () => {
+                        vaultStatus = 'locked'
+                        listener()
+                    }
+                }),
+                create: vi.fn(),
+                lock: vi.fn(),
+                unlock: vi.fn(),
+                changePassword: vi.fn(),
+                reset: vi.fn(),
+                defineItem: vi.fn(),
+            },
             signIn,
             getStore: () => loadAuthedStore(store, authContext),
             authContext,
@@ -142,5 +159,32 @@ describe('createAuthService', () => {
         await expect(auth.connect(networkId)).rejects.toMatchObject({
             name: VaultErrorName.Locked,
         })
+    })
+
+    it('aborts the sign-in when the vault is locked and unlocked meanwhile', async () => {
+        const auth = service()
+        signIn.mockImplementation(async () => {
+            lockVault()
+            vaultStatus = 'unlocked' // the user unlocks, or resets and creates a new vault
+            return token
+        })
+
+        await expect(auth.connect(networkId)).rejects.toMatchObject({
+            name: VaultErrorName.Locked,
+        })
+        expect(authContext.store).not.toHaveBeenCalled()
+        expect(
+            await (await loadAuthedStore(store, authContext)).listSessions()
+        ).toEqual([])
+    })
+
+    it('connects normally after an earlier lock', async () => {
+        const auth = service()
+        lockVault()
+        vaultStatus = 'unlocked'
+
+        await auth.connect(networkId)
+
+        await expect(auth.getStatus()).resolves.toBe('connected')
     })
 })

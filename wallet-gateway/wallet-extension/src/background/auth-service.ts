@@ -15,7 +15,7 @@ import {
     signInWithAuthorizationCode,
     type AuthorizationCodeParams,
 } from './oauth'
-import { type VaultLockState, VaultLockedError } from './vault'
+import { type Vault, VaultLockedError } from './vault'
 import { isTrustedSender } from './vault-service'
 
 const log = logger.getChild('auth')
@@ -28,7 +28,7 @@ export class UnsupportedAuthMethodError extends Error {
 }
 
 export interface AuthServiceDeps extends UserControllerDeps {
-    vault: VaultLockState
+    vault: Vault
     /** Swapped out in tests. */
     signIn?: (params: AuthorizationCodeParams) => Promise<string>
 }
@@ -45,6 +45,15 @@ export function createAuthService({
         await vault.ready
         if (vault.status() !== 'unlocked') throw new VaultLockedError()
     }
+
+    // Cancel any ongoing sign-in if the vault gets locked.
+    let lockSignal = new AbortController()
+    vault.onLock(() => {
+        lockSignal.abort(
+            new VaultLockedError('The vault was locked during sign-in.')
+        )
+        lockSignal = new AbortController()
+    })
 
     return {
         async getStatus(): Promise<ConnectionStatus> {
@@ -63,6 +72,7 @@ export function createAuthService({
         },
 
         async connect(networkId: string): Promise<void> {
+            const signal = lockSignal.signal // "cancelled if the vault locks"
             await assertUnlocked()
             // Networks and IdPs aren't per user, so this works signed out.
             const store = await getStore()
@@ -86,6 +96,7 @@ export function createAuthService({
                 scope: network.auth.scope,
                 audience: network.auth.audience,
             })
+            signal.throwIfAborted()
 
             // addSession reads the auth context, so store the token first,
             // and put the previous one back if the session can't be added.
