@@ -1,0 +1,36 @@
+{
+    "amulet": {
+        "validatorUrl": "https://validator.example.invalid/api/validator",
+        "registry": "https://scan.sv-1.global.canton.network.digitalasset.com/registry/"
+    },
+    "token": {
+        "validatorUrl": "https://validator.example.invalid/api/validator",
+        "registries": [
+            {
+                "name": "cantonwallet-asset-relayer-instrument-operator",
+                "partyId": "cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c",
+                "url": "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/cantonwallet-asset-relayer-instrument-operator::12202e6dd1f885994b22ca64e10582328bcd1a31b4fe69bf529982d31d57c8cab71c/registry/"
+            },
+            {
+                "name": "CBTC",
+                "partyId": "cbtc-network::12205af3b949a04776fc48cdcc05a060f6bda2e470632935f375d1049a8546a3b262",
+                "url": "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/cbtc-network::12205af3b949a04776fc48cdcc05a060f6bda2e470632935f375d1049a8546a3b262/registry/"
+            },
+            {
+                "name": "trakx-issuer",
+                "partyId": "trakx-issuer::1220f2acce9d7491505ee5fabb548e9975bbf0f8efaae98404d7399922fb48a03aeb",
+                "url": "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/trakx-issuer::1220f2acce9d7491505ee5fabb548e9975bbf0f8efaae98404d7399922fb48a03aeb/registry/"
+            },
+            {
+                "name": "USDCx",
+                "partyId": "decentralized-usdc-interchain-rep::12208115f1e168dd7e792320be9c4ca720c751a02a3053c7606e1c1cd3dad9bf60ef",
+                "url": "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/decentralized-usdc-interchain-rep::12208115f1e168dd7e792320be9c4ca720c751a02a3053c7606e1c1cd3dad9bf60ef/registry/"
+            },
+            {
+                "name": "USDXLR",
+                "partyId": "excellar-issuer::12203d1e36930ee0e3fbb898add7e222a47ae9d2a5f0f6187e3a446ea32f871ce2ca",
+                "url": "https://api.utilities.digitalasset.com/api/token-standard/v0/registrars/excellar-issuer::12203d1e36930ee0e3fbb898add7e222a47ae9d2a5f0f6187e3a446ea32f871ce2ca/registry/"
+            }
+        ]
+    }
+}
