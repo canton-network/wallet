@@ -146,9 +146,7 @@ describe('UserUiApiKeys', () => {
         el = await fixture<UserUiApiKeys>(componentFixture)
 
         await waitUntil(() =>
-            el.shadowRoot?.textContent?.includes(
-                'no service account auth configured'
-            )
+            el.shadowRoot?.textContent?.includes('no service account auth')
         )
         expect(
             el.shadowRoot?.querySelector<HTMLButtonElement>('.btn-add')

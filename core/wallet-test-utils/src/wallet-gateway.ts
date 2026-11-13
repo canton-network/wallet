@@ -927,7 +927,7 @@ export class WalletGateway {
             await newButton.click()
 
             await expect(
-                popup.getByRole('heading', { name: 'Add a new network' }),
+                popup.getByRole('heading', { name: 'Add network' }),
                 'clicking New should open the network form'
             ).toBeVisible()
 
@@ -992,7 +992,7 @@ export class WalletGateway {
         await firstCard.click()
 
         await expect(
-            popup.getByRole('heading', { name: 'Review network' }),
+            popup.getByRole('heading', { name: 'Edit network' }),
             'clicking a read-only network card should not open the review form'
         ).toHaveCount(0)
         await expect(
@@ -1007,7 +1007,7 @@ export class WalletGateway {
 
         const popup = await this.page()
         await expect(
-            popup.getByRole('heading', { name: 'Review network' }),
+            popup.getByRole('heading', { name: 'Edit network' }),
             `clicking the card for ${networkId} should open its review form`
         ).toBeVisible()
     }
@@ -1022,10 +1022,9 @@ export class WalletGateway {
             'Synchronizer ID',
             network.synchronizerId
         )
-        await this.fillNetworkFormField(
-            'Identity provider ID',
-            network.identityProviderId
-        )
+        await popup
+            .locator('network-form #identity-provider')
+            .selectOption(network.identityProviderId)
         await this.fillNetworkFormField(
             'Ledger API base URL',
             network.ledgerApi
@@ -1176,7 +1175,7 @@ export class WalletGateway {
 
             await expect(
                 popup.getByRole('heading', {
-                    name: 'Add a new identity provider',
+                    name: 'Add identity provider',
                 }),
                 'clicking New should open the identity provider form'
             ).toBeVisible()
@@ -1241,7 +1240,7 @@ export class WalletGateway {
 
             await expect(
                 popup.getByRole('heading', {
-                    name: 'Review Identity Provider',
+                    name: 'Edit identity provider',
                 }),
                 'clicking a read-only identity provider card should not open the review form'
             ).toHaveCount(0)
@@ -1258,7 +1257,7 @@ export class WalletGateway {
 
         const popup = await this.page()
         await expect(
-            popup.getByRole('heading', { name: 'Review Identity Provider' }),
+            popup.getByRole('heading', { name: 'Edit identity provider' }),
             `clicking the card for ${idpId} should open its review form`
         ).toBeVisible()
     }

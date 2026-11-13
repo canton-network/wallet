@@ -31,27 +31,19 @@ class WgReadonlyBadge extends BaseElement {
                 background: var(--wg-badge-bg);
                 color: var(--wg-text-secondary);
             }
-
-            code {
-                color: inherit;
-            }
         `,
     ]
 
     render() {
+        const details = `Comes from the ${this.section} section of the config file. Edit it there and restart the Wallet Gateway.`
         return html`
-            <wg-tooltip>
+            <wg-tooltip .text=${details}>
                 <span
                     class="wg-badge badge-readonly"
                     tabindex="0"
-                    aria-describedby="details"
+                    aria-description=${details}
                     >READ-ONLY</span
                 >
-                <span slot="content" id="details">
-                    Defined in the <code>${this.section}</code> section of the
-                    Wallet Gateway config file. To change it, edit the config
-                    file and restart the Wallet Gateway.
-                </span>
             </wg-tooltip>
         `
     }

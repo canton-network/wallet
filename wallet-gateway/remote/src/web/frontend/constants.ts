@@ -40,11 +40,11 @@ export const APPROVE_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/use/approve-and-sign
 export const LOGIN_INFO =
     'Pick the network to log in to. Its identity provider decides how you log in. The Wallet Gateway operator configures which networks you can choose.'
 export const NETWORKS_INFO =
-    "A network is a Canton validator that you can reach through this Wallet Gateway. It points at the validator's Ledger API, picks the synchronizer to use, and references the identity provider that issues the tokens to authenticate with it."
+    'A network is a Canton validator that users can connect to through this Wallet Gateway.'
 export const IDENTITY_PROVIDERS_INFO =
-    "An identity provider (IdP) issues the tokens that users and the Wallet Gateway use to authenticate against a network's Ledger API. Every network references one. Use an OAuth / OpenID Connect provider in production; self-signed tokens are for development and testing only."
+    'An identity provider (IDP) decides how users log in to a network: through OIDC, by signing their own token with their party (self-issued), or with self-signed tokens, which are for testing only.'
 export const API_KEYS_INFO =
-    'API keys let a backend service or CI job submit transactions through the dApp API without a person approving each one. They only work on networks with service account auth configured.'
+    'API keys let your backend services submit transactions without someone approving each one. A key only works on the network you were connected to when you generated it.'
 export const APPROVE_INFO =
     'Shows what a transaction does. Pending ones wait for you to approve or reject them.'
 export const SIGN_MESSAGE_INFO =

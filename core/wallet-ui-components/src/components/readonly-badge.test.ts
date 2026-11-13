@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest'
 
 import './readonly-badge.ts'
 import type { WgReadonlyBadge } from './readonly-badge.ts'
+import type { WgTooltip } from './tooltip.ts'
 
 describe('wg-readonly-badge', () => {
     it('explains which config file section defines the entry', async () => {
@@ -15,11 +16,11 @@ describe('wg-readonly-badge', () => {
         )
 
         const badge = el.shadowRoot!.querySelector('.wg-badge')!
-        const tooltip = el.shadowRoot!.querySelector('[slot="content"]')!
+        const tooltip = el.shadowRoot!.querySelector<WgTooltip>('wg-tooltip')!
+        const details =
+            'Comes from the networks section of the config file. Edit it there and restart the Wallet Gateway.'
         expect(badge.textContent).toBe('READ-ONLY')
-        expect(badge.getAttribute('aria-describedby')).toBe(tooltip.id)
-        expect(tooltip.textContent?.replace(/\s+/g, ' ').trim()).toBe(
-            'Defined in the networks section of the Wallet Gateway config file. To change it, edit the config file and restart the Wallet Gateway.'
-        )
+        expect(badge.getAttribute('aria-description')).toBe(details)
+        expect(tooltip.text).toBe(details)
     })
 })
