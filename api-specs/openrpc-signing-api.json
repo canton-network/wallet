@@ -119,6 +119,11 @@
                                     "title": "txId",
                                     "type": "string",
                                     "description": "Unique identifier of the signed message given by the Signing Provider. This may not be the same as the internal txId given by the Wallet Gateway. Required when status is pending."
+                                },
+                                "failureReason": {
+                                    "title": "failureReason",
+                                    "type": "string",
+                                    "description": "Human readable reason why the Signing Provider rejected or failed to sign the message."
                                 }
                             },
                             "required": ["status"]
@@ -508,6 +513,11 @@
                         "type": "object",
                         "additionalProperties": true,
                         "description": "Additional metadata about the transaction."
+                    },
+                    "failureReason": {
+                        "title": "failureReason",
+                        "type": "string",
+                        "description": "Human readable reason why the Signing Provider rejected or failed to sign the transaction."
                     }
                 },
                 "required": ["txId", "status"]

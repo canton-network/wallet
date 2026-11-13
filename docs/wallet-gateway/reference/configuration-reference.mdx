@@ -146,13 +146,14 @@ Keeps all data in RAM. Useful for testing, not for production.
 
 ## Backups and recovery
 
-The store database holds user sessions, networks and IDPs (seeded from bootstrap, then
-modifiable at runtime), wallet configurations and party mappings, and in-flight transactions.
+The store database holds user sessions, networks and IDPs (from the configuration file or added
+at runtime), wallet configurations and party mappings, and in-flight transactions.
 
 If the database is lost and cannot be restored:
 
 - All sessions are invalidated (users must log in again).
-- Networks and IDPs are re-seeded from bootstrap, but runtime changes are lost.
+- Networks and IDPs from the configuration file are restored on the next start, but networks
+  and IDPs added at runtime are lost.
 - In-flight transactions are lost and may need manual intervention.
 - Wallets referencing lost networks may need reconfiguration.
 
@@ -192,15 +193,13 @@ suffix on the field, for example `clientSecretEnv` or `passwordEnv`:
 
 ```json
 {
-    "bootstrap": {
-        "networks": [
-            {
-                "auth": {
-                    "clientSecretEnv": "OAUTH_CLIENT_SECRET"
-                }
+    "networks": [
+        {
+            "auth": {
+                "clientSecretEnv": "OAUTH_CLIENT_SECRET"
             }
-        ]
-    }
+        }
+    ]
 }
 ```
 

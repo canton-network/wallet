@@ -3,6 +3,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type {
     Network,
@@ -465,6 +466,56 @@ describe('TransactionService', () => {
                 expect(result).toMatchObject({
                     status: 'signed',
                     externalTxId: 'external-tx-1',
+                })
+            })
+
+            it('persists and emits the driver failure reason', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    status: 'rejected',
+                    txId: 'external-tx-1',
+                    failureReason:
+                        'Blockdaemon rejected the signing request (error code M0025)',
+                })
+                const store = createStore(awaitingTransaction)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.BLOCKDAEMON]: createDriver({
+                            getTransaction,
+                        }),
+                    },
+                    notifier
+                )
+                const failureReason =
+                    'Blockdaemon rejected the signing request (error code M0025)'
+
+                const result = await service.refreshTransaction(
+                    authContextWithEmail,
+                    blockdaemonWallet,
+                    pendingTransaction.id
+                )
+
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    'failed',
+                    { externalTxId: 'external-tx-1', failureReason },
+                    { expectedStatus: 'awaiting-signature' }
+                )
+                expect(notifier.emit).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.objectContaining({
+                        status: 'failed',
+                        commandId: awaitingTransaction.commandId,
+                        error: {
+                            code: errorCodes.rpc.transactionRejected,
+                            message: failureReason,
+                        },
+                    })
+                )
+                expect(result).toEqual({
+                    status: 'failed',
+                    externalTxId: 'external-tx-1',
+                    failureReason,
                 })
             })
         })
@@ -1630,6 +1681,10 @@ describe('TransactionService', () => {
                     expect(emit).toHaveBeenCalledWith('txChanged', {
                         ...transaction,
                         status: 'failed',
+                        error: {
+                            code: errorCodes.rpc.transactionRejected,
+                            message: 'INVALID_ARGUMENT: rejected',
+                        },
                     })
 
                     recorder.assertLogged({

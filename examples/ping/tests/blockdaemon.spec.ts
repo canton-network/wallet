@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     test,
     type WalletGateway,
@@ -89,15 +90,31 @@ test.describe('Blockdaemon external signing', () => {
         )
         await setMockBlockdaemonTransactionState(
             submission.externalTxId,
-            'rejected'
+            'rejected',
+            {
+                ErrorCode: 'M0025',
+                ErrorProperties: {
+                    DebugMessage: 'blocked by rule/restriction',
+                },
+            }
         )
+        const failureReason =
+            'Blockdaemon rejected the signing request (error code M0025)'
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 
     test('fails when Blockdaemon fails signing', async () => {
@@ -110,11 +127,21 @@ test.describe('Blockdaemon external signing', () => {
             'failed'
         )
 
+        const failureReason = 'Blockdaemon failed to sign the request'
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 })

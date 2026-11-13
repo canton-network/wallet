@@ -4,6 +4,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { pino, type Logger } from 'pino'
 import { sink } from 'pino-test'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
     type MessageRaw,
@@ -22,6 +23,7 @@ import {
     SignMessageService,
 } from '@canton-network/core-wallet-services'
 import { userController } from './controller.js'
+import type { ConfigManagedIds } from '../config/ConfigUtils.js'
 import { ServerStatusService } from '../notices/server-status-service.js'
 import { ServerNotices } from '../notices/server-notices.js'
 import { GATEWAY_VERSION } from '../version.js'
@@ -290,20 +292,25 @@ function createController(
     context: AuthContext | undefined,
     drivers: Record<string, unknown> = {},
     adminId?: string,
-    serverStatus = new ServerStatusService(new ServerNotices(logger))
+    serverStatus = new ServerStatusService(new ServerNotices(logger)),
+    configManaged: ConfigManagedIds = {
+        idpIds: new Set(),
+        networkIds: new Set(),
+    }
 ) {
-    return userController(
+    return userController({
         kernelInfo,
         userUrl,
         store,
         notificationService,
-        context,
+        authContext: context,
         drivers,
         logger,
-        'HASHING_SCHEME_VERSION_V3',
-        adminId,
-        serverStatus
-    )
+        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        adminUserId: adminId,
+        serverStatus,
+        configManaged,
+    })
 }
 
 describe('userController', () => {
@@ -1321,6 +1328,145 @@ describe('userController', () => {
         })
     })
 
+    describe('config-managed idps and networks', () => {
+        const configManaged: ConfigManagedIds = {
+            idpIds: new Set([idp.id]),
+            networkIds: new Set([storeNetwork.id]),
+        }
+
+        async function createAdminController() {
+            const store = await createStore(logger, adminAuth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId,
+                undefined,
+                configManaged
+            )
+            return { store, controller }
+        }
+
+        it('lists the config-managed ids', async () => {
+            const { controller } = await createAdminController()
+
+            await expect(controller.listIdps()).resolves.toMatchObject({
+                configManagedIds: [idp.id],
+            })
+            await expect(controller.listNetworks()).resolves.toMatchObject({
+                configManagedIds: [storeNetwork.id],
+            })
+        })
+
+        it.each([
+            ['another user', auth],
+            ['an unauthenticated caller', undefined],
+        ])(
+            'does not list the config-managed ids for %s',
+            async (_, context) => {
+                const store = await createStore(logger, context)
+                const controller = createController(
+                    store,
+                    notificationService,
+                    logger,
+                    context,
+                    {},
+                    adminUserId,
+                    undefined,
+                    configManaged
+                )
+
+                expect(await controller.listIdps()).not.toHaveProperty(
+                    'configManagedIds'
+                )
+                expect(await controller.listNetworks()).not.toHaveProperty(
+                    'configManagedIds'
+                )
+            }
+        )
+
+        it('does not return the secrets of config-managed networks', async () => {
+            const { controller } = await createAdminController()
+
+            const { network } = await controller.getNetwork({
+                networkId: storeNetwork.id,
+            })
+
+            expect(network.adminAuth).toMatchObject({
+                method: 'client_credentials',
+                clientId: 'admin-cid',
+                clientSecret: '',
+            })
+        })
+
+        it('returns the secrets of networks managed at runtime', async () => {
+            const store = await createStore(logger, adminAuth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                adminAuth,
+                {},
+                adminUserId
+            )
+
+            const { network } = await controller.getNetwork({
+                networkId: storeNetwork.id,
+            })
+
+            expect(network.adminAuth).toMatchObject({
+                clientSecret: 'admin-secret',
+            })
+        })
+
+        it('rejects changes to config-managed networks', async () => {
+            const { store, controller } = await createAdminController()
+            const updateSpy = vi.spyOn(store, 'updateNetwork')
+            const removeSpy = vi.spyOn(store, 'removeNetwork')
+
+            await expect(
+                controller.addNetwork({
+                    network: {
+                        id: storeNetwork.id,
+                        name: storeNetwork.name,
+                        description: storeNetwork.description,
+                        identityProviderId: storeNetwork.identityProviderId,
+                        ledgerApi: storeNetwork.ledgerApi.baseUrl,
+                        auth: storeNetwork.auth,
+                    },
+                })
+            ).rejects.toThrow(
+                'Network network1 is managed by the config file and cannot be changed at runtime'
+            )
+            await expect(
+                controller.removeNetwork({ networkName: storeNetwork.id })
+            ).rejects.toThrow('is managed by the config file')
+
+            expect(updateSpy).not.toHaveBeenCalled()
+            expect(removeSpy).not.toHaveBeenCalled()
+        })
+
+        it('rejects changes to config-managed idps', async () => {
+            const { store, controller } = await createAdminController()
+            const updateSpy = vi.spyOn(store, 'updateIdp')
+            const removeSpy = vi.spyOn(store, 'removeIdp')
+
+            await expect(
+                controller.addIdp({ idp: { ...idp, issuer: 'http://other' } })
+            ).rejects.toThrow(
+                'Identity provider idp1 is managed by the config file and cannot be changed at runtime'
+            )
+            await expect(
+                controller.removeIdp({ identityProviderId: idp.id })
+            ).rejects.toThrow('is managed by the config file')
+
+            expect(updateSpy).not.toHaveBeenCalled()
+            expect(removeSpy).not.toHaveBeenCalled()
+        })
+    })
+
     describe('setPrimaryWallet', () => {
         it('sets the primary wallet and emits accountsChanged', async () => {
             const store = await createStore(logger, auth)
@@ -1688,6 +1834,10 @@ describe('userController', () => {
             expect(emitSpy).toHaveBeenCalledWith('txChanged', {
                 status: 'failed',
                 commandId: transaction.commandId,
+                error: {
+                    code: errorCodes.provider.userRejectedRequest,
+                    message: 'Rejected by the user',
+                },
             })
             expect(removeSpy.mock.invocationCallOrder[0]).toBeLessThan(
                 emitSpy.mock.invocationCallOrder[0]!
@@ -1941,7 +2091,7 @@ describe('userController', () => {
             expect(mockNetworkStatus).toHaveBeenCalled()
         })
 
-        it('includes adminAuth in listSessions for the admin user', async () => {
+        it('includes adminAuth without secrets in listSessions for the admin user', async () => {
             const store = await createStore(logger, adminAuth, {
                 withSession: false,
             })
@@ -1966,8 +2116,36 @@ describe('userController', () => {
                 adminAuth: expect.objectContaining({
                     method: 'client_credentials',
                     clientId: 'admin-cid',
-                    clientSecret: 'admin-secret',
+                    clientSecret: '',
                 }),
+            })
+        })
+
+        it('does not return the client secret of the session network', async () => {
+            const selfSigned = {
+                method: 'self_signed',
+                issuer: 'issuer',
+                audience: 'aud',
+                scope: 'scope',
+                clientId: 'cid',
+                clientSecret: 'signing-key',
+            } as const
+            const store = await createStore(logger, auth)
+            await store.updateNetwork({ ...storeNetwork, auth: selfSigned })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth,
+                {},
+                adminUserId
+            )
+
+            const result = await controller.listSessions()
+
+            expect(result.sessions[0].network.auth).toEqual({
+                ...selfSigned,
+                clientSecret: '',
             })
         })
 

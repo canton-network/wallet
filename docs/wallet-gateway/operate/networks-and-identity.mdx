@@ -8,9 +8,17 @@ validator's Ledger API and references an **identity provider** (IDP) that issues
 to authenticate against that validator. This guide covers both, plus the authentication
 methods a network can use.
 
-Networks and IDPs are seeded from the `bootstrap` section on first run. After that, the admin
-user (see `server.admin` in [Configure the Wallet Gateway](configure.mdx))
-can manage them at runtime through the User API or User UI.
+Define networks and IDPs in the top-level `networks` and `idps` sections of the configuration
+file. The Wallet Gateway writes them to its database on every start, so the configuration file
+stays the source of truth, and they are read-only at runtime. Prefer `clientSecretEnv` over an
+inline `clientSecret` so secrets come from the environment (or a Kubernetes secret) rather than the
+config file.
+
+In addition, the admin user (see `server.admin` in [Configure the Wallet Gateway](configure.mdx))
+can add networks and IDPs at runtime through the User API or User UI. These are stored in the
+database only. Prefer the configuration file for everything you deploy.
+
+A network in `networks` must reference an IDP from `idps`. IDs must be unique within each section.
 
 ## Identity providers
 
@@ -34,16 +42,14 @@ Integrates with an external OAuth 2.0 / OpenID Connect provider to obtain tokens
 
 ```json
 {
-    "bootstrap": {
-        "idps": [
-            {
-                "id": "idp-production",
-                "type": "oauth",
-                "issuer": "https://auth.example.com",
-                "configUrl": "https://auth.example.com/.well-known/openid-configuration"
-            }
-        ]
-    }
+    "idps": [
+        {
+            "id": "idp-production",
+            "type": "oauth",
+            "issuer": "https://auth.example.com",
+            "configUrl": "https://auth.example.com/.well-known/openid-configuration"
+        }
+    ]
 }
 ```
 
@@ -57,15 +63,13 @@ Generates JWTs locally using a secret. Convenient for development, not for produ
 
 ```json
 {
-    "bootstrap": {
-        "idps": [
-            {
-                "id": "idp-self-signed",
-                "type": "self_signed",
-                "issuer": "self-signed"
-            }
-        ]
-    }
+    "idps": [
+        {
+            "id": "idp-self-signed",
+            "type": "self_signed",
+            "issuer": "self-signed"
+        }
+    ]
 }
 ```
 ### Identity provider management
@@ -95,28 +99,26 @@ is an array, so you can configure several in one Wallet Gateway.
 
 ```json
 {
-    "bootstrap": {
-        "networks": [
-            {
-                "id": "canton:localnet",
-                "name": "Local Network",
-                "description": "Local development network",
-                "synchronizerId": "local",
-                "identityProviderId": "idp-self-signed",
-                "auth": {
-                    "method": "self_signed",
-                    "issuer": "self-signed",
-                    "audience": "https://canton.network.global",
-                    "scope": "openid daml_ledger_api offline_access",
-                    "clientId": "ledger-api-user",
-                    "clientSecret": "unsafe"
-                },
-                "ledgerApi": {
-                    "baseUrl": "http://localhost:2975"
-                }
+    "networks": [
+        {
+            "id": "canton:localnet",
+            "name": "Local Network",
+            "description": "Local development network",
+            "synchronizerId": "local",
+            "identityProviderId": "idp-self-signed",
+            "auth": {
+                "method": "self_signed",
+                "issuer": "self-signed",
+                "audience": "https://canton.network.global",
+                "scope": "openid daml_ledger_api offline_access",
+                "clientId": "ledger-api-user",
+                "clientSecretEnv": "LOCALNET_CLIENT_SECRET"
+            },
+            "ledgerApi": {
+                "baseUrl": "http://localhost:2975"
             }
-        ]
-    }
+        }
+    ]
 }
 ```
 
@@ -153,7 +155,7 @@ A network's `auth` (and optional `adminAuth`) uses one of three methods.
         "audience": "https://canton.network.global",
         "scope": "openid daml_ledger_api offline_access",
         "clientId": "my-service-client",
-        "clientSecret": "my-secure-secret"
+        "clientSecretEnv": "MY_SERVICE_CLIENT_SECRET"
     }
 }
 ```
@@ -172,7 +174,7 @@ authentication uses a different IDP than admin authentication.
         "audience": "https://canton.network.global",
         "scope": "openid daml_ledger_api offline_access",
         "clientId": "ledger-api-user",
-        "clientSecret": "unsafe-secret-for-development"
+        "clientSecretEnv": "LEDGER_API_USER_SECRET"
     }
 }
 ```
@@ -250,3 +252,20 @@ without restarting, using the User API (`addNetwork`, `removeNetwork`, `addIdp`,
 stored in the database, so back it up to avoid losing them. See the
 [User API](../reference/user-api.mdx) and
 [Party management](../use/party-management.mdx).
+
+Networks and IDPs from the `networks` and `idps` sections of the configuration file cannot be
+changed or removed at runtime. The User UI shows them as read-only.
+
+When you remove an entry from the configuration file, the Wallet Gateway keeps it in the database,
+because deleting a network also deletes all wallets on it. The entry becomes editable at runtime,
+so the admin user can delete it on the **Networks** or **Identity Providers** page.
+
+## Migrate from `bootstrap`
+
+The `bootstrap` section is deprecated. Its networks and IDPs are only written to the database
+when the database is empty, so later changes to them are silently ignored. The
+[Administration page](configure.mdx#administration-page) shows a notice while the section is set.
+
+To migrate, move each entry from `bootstrap.idps` to `idps` and from `bootstrap.networks` to
+`networks`, keeping its `id`. On the next start, the Wallet Gateway takes over the existing
+database entry with the same `id`, so existing wallets are kept.

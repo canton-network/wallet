@@ -314,6 +314,21 @@ describe('BitGoSigningDriver', () => {
             expect(result.metadata).toBeUndefined()
         })
 
+        it('passes on the failure reason', async () => {
+            handlerMock.getTransaction.mockResolvedValueOnce({
+                txId: TX_REQUEST_ID,
+                status: 'rejected',
+                failureReason: 'BitGo rejected the signing request (canceled)',
+            })
+            const result = await createDriver()
+                .controller(undefined)
+                .getTransaction({ txId: TX_REQUEST_ID })
+            throwWhenRpcError(result)
+            expect(result.failureReason).toBe(
+                'BitGo rejected the signing request (canceled)'
+            )
+        })
+
         it('returns transaction_not_found when handler returns undefined', async () => {
             handlerMock.getTransaction.mockResolvedValueOnce(undefined)
             const result = await createDriver()

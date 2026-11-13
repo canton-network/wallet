@@ -1253,7 +1253,8 @@ export class WalletGateway {
 
     async expectActivityWithStatus(
         commandId: string,
-        status: ActivityStatus
+        status: ActivityStatus,
+        opts?: { failureReason?: string }
     ): Promise<void> {
         await test.step(`wallet gateway: activity for ${commandId} is ${status}`, async () => {
             await this.reopenActivitiesPage()
@@ -1263,6 +1264,12 @@ export class WalletGateway {
                 card.locator('.status-badge, [data-testid="activity-status"]'),
                 `the wallet activity for ${commandId} should be ${status}`
             ).toHaveText(status)
+            if (opts?.failureReason) {
+                await expect(
+                    card,
+                    `the wallet activity for ${commandId} should show why it failed`
+                ).toContainText(opts.failureReason)
+            }
         })
     }
 

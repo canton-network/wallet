@@ -240,6 +240,109 @@ describe('dappSDKController', () => {
         })
     })
 
+    it('rejects prepareExecuteAndWait with the error reported by the wallet', async () => {
+        const mock = makeProvider()
+        mock.request.mockResolvedValue({
+            userUrl: 'https://wallet.example.com/prepare',
+        })
+
+        const controller = dappSDKController(asProvider(mock))
+        const waitPromise =
+            controller.prepareExecuteAndWait(prepareExecuteParams)
+
+        await vi.waitFor(() => {
+            expect(mock.on).toHaveBeenCalledWith(
+                'txChanged',
+                expect.any(Function)
+            )
+        })
+
+        mock.emit('txChanged', {
+            commandId: '00000000-0000-4000-8000-000000000001',
+            status: 'failed',
+            error: {
+                code: errorCodes.provider.userRejectedRequest,
+                message: 'Rejected by the user',
+            },
+        })
+
+        await expect(waitPromise).rejects.toBeInstanceOf(JsonRpcError)
+        await expect(waitPromise).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+            message:
+                'Transaction with commandId 00000000-0000-4000-8000-000000000001 failed to execute: Rejected by the user',
+        })
+    })
+
+    it.each([
+        ['a non-integer', 1.5],
+        ['an integer outside CIP-103', 9999],
+    ])(
+        'rejects with transactionRejected when the wallet reports %s error code',
+        async (_, code) => {
+            const mock = makeProvider()
+            mock.request.mockResolvedValue({
+                userUrl: 'https://wallet.example.com/prepare',
+            })
+
+            const controller = dappSDKController(asProvider(mock))
+            const waitPromise =
+                controller.prepareExecuteAndWait(prepareExecuteParams)
+
+            await vi.waitFor(() => {
+                expect(mock.on).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.any(Function)
+                )
+            })
+
+            mock.emit('txChanged', {
+                commandId: '00000000-0000-4000-8000-000000000001',
+                status: 'failed',
+                error: { code, message: 'Rejected by policy' },
+            })
+
+            await expect(waitPromise).rejects.toMatchObject({
+                code: errorCodes.rpc.transactionRejected,
+                message:
+                    'Transaction with commandId 00000000-0000-4000-8000-000000000001 failed to execute: Rejected by policy',
+            })
+        }
+    )
+
+    it('rejects signMessage with the error reported by the wallet', async () => {
+        const mock = makeProvider()
+        mock.request.mockResolvedValue({
+            userUrl: 'https://wallet.example.com/sign?messageId=message-1',
+        })
+
+        const controller = dappSDKController(asProvider(mock))
+        const signPromise = controller.signMessage(signMessageParams)
+
+        await vi.waitFor(() => {
+            expect(mock.on).toHaveBeenCalledWith(
+                'messageSignature',
+                expect.any(Function)
+            )
+        })
+
+        mock.emit('messageSignature', {
+            messageId: 'message-1',
+            status: 'failed',
+            error: {
+                code: errorCodes.provider.userRejectedRequest,
+                message: 'Rejected by the user',
+            },
+        })
+
+        await expect(signPromise).rejects.toBeInstanceOf(JsonRpcError)
+        await expect(signPromise).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+            message:
+                'Message signing failed for messageId message-1: Rejected by the user',
+        })
+    })
+
     it('resolves signMessage after a matching signature event', async () => {
         const mock = makeProvider()
         mock.request.mockResolvedValue({

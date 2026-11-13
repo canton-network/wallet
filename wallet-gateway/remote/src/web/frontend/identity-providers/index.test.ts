@@ -79,6 +79,23 @@ describe('UserUiIdentityProviders', () => {
         expect(getIdpCards(el)).toHaveLength(2)
     })
 
+    it('shows config-managed identity providers as read-only for admin users', async () => {
+        mockIdpsPageFlow([makeIdp({ id: 'idp-1' }), makeIdp({ id: 'idp-2' })], {
+            isAdmin: true,
+            configManagedIds: ['idp-2'],
+        })
+
+        el = await fixture<UserUiIdentityProviders>(componentFixture)
+
+        await waitUntil(() => getIdpCards(el).length === 2)
+
+        const cards = Array.from(
+            el.shadowRoot!.querySelectorAll('idp-card')
+        ) as unknown as Array<{ readonly: boolean; configManaged: boolean }>
+        expect(cards.map((card) => card.readonly)).toEqual([false, true])
+        expect(cards.map((card) => card.configManaged)).toEqual([false, true])
+    })
+
     it('shows empty state when there are no identity providers', async () => {
         mockIdpsPageFlow([])
 

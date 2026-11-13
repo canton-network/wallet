@@ -27,10 +27,11 @@ Fires when accounts are added or removed, or the primary account changes.
 
 Fires as a transaction submitted via `prepareExecute` moves through its lifecycle.
 
-| Payload field      | Type                                              | Description                                 |
-| ------------------ | ------------------------------------------------- | ------------------------------------------- |
-| `status`           | `'pending' \| 'signed' \| 'executed' \| 'failed'` | Current transaction state.                  |
-| `payload.updateId` | `string`                                          | Ledger update ID (present when `executed`). |
+| Payload field      | Type                                                | Description                                 |
+| ------------------ | --------------------------------------------------- | ------------------------------------------- |
+| `status`           | `'pending' \| 'signed' \| 'executed' \| 'failed'`   | Current transaction state.                  |
+| `payload.updateId` | `string`                                            | Ledger update ID (present when `executed`). |
+| `error`            | `{ code: number; message: string; data?: unknown }` | CIP-103 error (present when `failed`).      |
 
 ## Related
 
