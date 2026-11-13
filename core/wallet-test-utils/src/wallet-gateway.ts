@@ -1,7 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, type Locator, type Page, test } from '@playwright/test'
+import {
+    expect,
+    type Locator,
+    type Page,
+    type Route,
+    test,
+} from '@playwright/test'
 import { openWalletPicker } from './wallet-picker.js'
 
 export interface NetworkFormInput {
@@ -81,6 +87,12 @@ export type WalletGatewayArgs =
 export type LoginCredentials = {
     clientId?: string
     clientSecret?: string
+}
+
+export type LoginOptions = {
+    credentials?: LoginCredentials
+    /** Runs while the login is redirected away from the gateway, e.g. at the OAuth IdP */
+    whileAtIdp?: () => Promise<void>
 }
 
 export class WalletGateway {
@@ -747,10 +759,7 @@ export class WalletGateway {
     }
 
     // Logs in to a gateway that was opened directly, without a dApp.
-    async login(
-        network: string,
-        credentials?: LoginCredentials
-    ): Promise<void> {
+    async login(network: string, options: LoginOptions = {}): Promise<void> {
         await test.step(`wallet gateway: log in to ${network}`, async () => {
             const page = await this.page()
             const selectNetwork = page.getByLabel('Select a network')
@@ -759,11 +768,41 @@ export class WalletGateway {
                 'the wallet gateway has a network select'
             ).toBeVisible()
             await selectNetwork.selectOption({ label: network })
-            await this.fillLoginCredentials(page, credentials)
+            await this.fillLoginCredentials(page, options.credentials)
+            if (options.whileAtIdp) {
+                await this.pauseAtIdp(page, options.whileAtIdp)
+            }
             await page.getByRole('button', { name: 'Connect' }).click()
             // Wait for the OAuth redirect chain to complete and land on the parties page.
             await page.waitForURL(/\/parties/, { timeout: 30000 })
         })
+    }
+
+    async expectConnectedNetwork(networkId: string): Promise<void> {
+        const page = await this.page()
+        await expect(
+            page.getByTestId('network-status-connected'),
+            `the wallet gateway should be connected to ${networkId}`
+        ).toHaveAttribute('title', networkId)
+    }
+
+    // Holds the first navigation away from the gateway until `whileAtIdp` ran
+    private async pauseAtIdp(
+        page: Page,
+        whileAtIdp: () => Promise<void>
+    ): Promise<void> {
+        const gatewayOrigin = new URL(page.url()).origin
+        const leavesGateway = (url: URL) => url.origin !== gatewayOrigin
+        const handler = async (route: Route) => {
+            // Lets the OIDC discovery and other requests of the login page through
+            if (!route.request().isNavigationRequest()) {
+                return route.fallback()
+            }
+            await whileAtIdp()
+            await route.continue()
+            await page.unroute(leavesGateway, handler)
+        }
+        await page.route(leavesGateway, handler)
     }
 
     async logout(): Promise<void> {

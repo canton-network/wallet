@@ -1004,11 +1004,13 @@ export const paramSchemas: Record<string, z.ZodType> = {
             origin: {
                 title: 'origin',
                 type: 'string',
+                minLength: 1,
                 description: 'origin of the dApp establishing a session',
             },
             networkId: {
                 title: 'networkId',
                 type: 'string',
+                minLength: 1,
                 description: 'Network Id',
             },
         },
