@@ -9,6 +9,8 @@ import {
     type LoginBackEvent,
 } from '../../components/login-form.js'
 
+export type { LoginConnectEvent, LoginBackEvent }
+
 export const LoginForm = createComponent({
     tagName: 'wg-login-form',
     elementClass: WgLoginFormElement,
