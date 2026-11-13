@@ -5,7 +5,6 @@ import { useState } from 'react'
 import type * as sdk from '@canton-network/dapp-sdk'
 
 export function ScopedToken(props: {
-    connectResult?: sdk.dappAPI.ConnectResult
     loading: boolean
     onConnect: (params: sdk.ConnectParams) => void
 }) {
@@ -30,17 +29,12 @@ export function ScopedToken(props: {
                 />
                 <button
                     data-testid="scoped-token-connect"
-                    disabled={props.loading || props.connectResult?.isConnected}
+                    disabled={props.loading}
                     onClick={() => props.onConnect({ scopes })}
                 >
                     connect
                 </button>
             </div>
-            {props.connectResult?.isConnected && (
-                <p>
-                    <i>Disconnect first to connect with requested scopes.</i>
-                </p>
-            )}
             <p>Requested scopes: {JSON.stringify(scopes)}</p>
         </div>
     )

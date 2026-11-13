@@ -29,6 +29,28 @@ function App() {
 
     const [ledgerApiVersion, setLedgerApiVersion] = useState<string>()
 
+    const isConnected = !!connectResult?.isConnected
+    const tabs = [
+        { id: 'accounts', label: 'Accounts', visible: isConnected },
+        { id: 'holdings', label: 'Holdings', visible: isConnected },
+        { id: 'postEvents', label: 'Post Events', visible: !!window.canton },
+        { id: 'windowMessages', label: 'Window Messages', visible: true },
+        { id: 'scopedToken', label: 'Scoped Token', visible: !isConnected },
+        { id: 'ledgerQuery', label: 'Ledger Query', visible: isConnected },
+        {
+            id: 'ledgerSubmission',
+            label: 'Ledger Submission',
+            visible: isConnected,
+        },
+        { id: 'signing', label: 'Signing', visible: isConnected },
+    ]
+
+    // If active tab is not visible, select first the visible one
+    const visibleTabs = tabs.filter((tab) => tab.visible)
+    if (!visibleTabs.some((tab) => tab.id === activeTab)) {
+        setActiveTab(visibleTabs[0].id)
+    }
+
     useEffect(() => {
         if (connectResult?.isNetworkConnected) {
             void sdk
@@ -118,74 +140,15 @@ function App() {
 
             <div className="tabs">
                 <div className="tab-buttons">
-                    {connectResult?.isConnected && (
+                    {visibleTabs.map((tab) => (
                         <button
-                            className={activeTab === 'accounts' ? 'active' : ''}
-                            onClick={() => setActiveTab('accounts')}
+                            key={tab.id}
+                            className={activeTab === tab.id ? 'active' : ''}
+                            onClick={() => setActiveTab(tab.id)}
                         >
-                            Accounts
+                            {tab.label}
                         </button>
-                    )}
-                    {connectResult?.isConnected && (
-                        <button
-                            className={activeTab === 'holdings' ? 'active' : ''}
-                            onClick={() => setActiveTab('holdings')}
-                        >
-                            Holdings
-                        </button>
-                    )}
-                    {window.canton && (
-                        <button
-                            className={
-                                activeTab === 'postEvents' ? 'active' : ''
-                            }
-                            onClick={() => setActiveTab('postEvents')}
-                        >
-                            Post Events
-                        </button>
-                    )}
-                    <button
-                        className={
-                            activeTab === 'windowMessages' ? 'active' : ''
-                        }
-                        onClick={() => setActiveTab('windowMessages')}
-                    >
-                        Window Messages
-                    </button>
-                    <button
-                        className={activeTab === 'scopedToken' ? 'active' : ''}
-                        onClick={() => setActiveTab('scopedToken')}
-                    >
-                        Scoped Token
-                    </button>
-                    {connectResult?.isConnected && (
-                        <button
-                            className={
-                                activeTab === 'ledgerQuery' ? 'active' : ''
-                            }
-                            onClick={() => setActiveTab('ledgerQuery')}
-                        >
-                            Ledger Query
-                        </button>
-                    )}
-                    {connectResult?.isConnected && (
-                        <button
-                            className={
-                                activeTab === 'ledgerSubmission' ? 'active' : ''
-                            }
-                            onClick={() => setActiveTab('ledgerSubmission')}
-                        >
-                            Ledger Submission
-                        </button>
-                    )}
-                    {connectResult?.isConnected && (
-                        <button
-                            className={activeTab === 'signing' ? 'active' : ''}
-                            onClick={() => setActiveTab('signing')}
-                        >
-                            Signing
-                        </button>
-                    )}
+                    ))}
                 </div>
 
                 <div className="tab-content">
@@ -231,7 +194,6 @@ function App() {
                         }}
                     >
                         <ScopedToken
-                            connectResult={connectResult}
                             loading={loading}
                             onConnect={handleConnect}
                         />
