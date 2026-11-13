@@ -5,7 +5,7 @@ import { useWalletSdk } from './useWalletSdk'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PartyId } from '@canton-network/core-types'
 import { useState } from 'react'
-import { queryKeys } from './query-keys'
+import { invalidateAllocationQueries } from './query-keys'
 import type { AllocationRequestV2ActionItem } from '@components/types'
 import { submitViaProvider } from '@lib/submit'
 import { isSpecCovered } from '@utils/v2-allocation-items'
@@ -32,25 +32,6 @@ export function useAllocationRequestV2Actions() {
     const { sdk } = useWalletSdk()
     const queryClient = useQueryClient()
     const [progress, setProgress] = useState<AcceptProgress>({ phase: 'idle' })
-
-    const invalidate = (party: PartyId) => {
-        void queryClient.invalidateQueries({
-            queryKey:
-                queryKeys.walletConnection.allocationRequests.forParty(party),
-        })
-
-        void queryClient.invalidateQueries({
-            queryKey: queryKeys.walletConnection.allocations.forParty(party),
-        })
-
-        void queryClient.invalidateQueries({
-            queryKey: queryKeys.walletConnection.holdings.all,
-        })
-
-        void queryClient.invalidateQueries({
-            queryKey: queryKeys.walletConnection.transactionHistory.all,
-        })
-    }
 
     const accept = useMutation({
         mutationFn: async (
@@ -92,30 +73,20 @@ export function useAllocationRequestV2Actions() {
             } = await sdk.token.v2.allocation.request.acceptForParty({
                 request: item.request,
                 partyId: party,
+                skipSpec: covered,
             })
 
-            const allocatedSpecs =
-                item.request.interfaceViewValue.allocations.filter(
-                    (s) =>
-                        s.authorizer.owner === party &&
-                        !skipped.includes(s.admin)
-                )
-
-            const toSubmit = allocate.filter(
-                (_, i) => !covered(allocatedSpecs[i])
-            )
-
-            for (const [i, prepared] of toSubmit.entries()) {
+            for (const [i, prepared] of allocate.entries()) {
                 setProgress({
                     phase: 'allocating',
                     done: i,
-                    total: toSubmit.length,
+                    total: allocate.length,
                 })
                 try {
                     await submitViaProvider(prepared, party)
                 } catch (error) {
                     throw Error(
-                        `Allocation ${i + 1} of ${toSubmit.length} failed. ${(error as Error).message}.`
+                        `Allocation ${i + 1} of ${allocate.length} failed. ${(error as Error).message}.`
                     )
                 }
             }
@@ -123,7 +94,7 @@ export function useAllocationRequestV2Actions() {
             if (!acceptCommand) {
                 return {
                     status: 'partial',
-                    allocated: toSubmit.length,
+                    allocated: allocate.length,
                     skippedAdmins: skipped,
                 }
             }
@@ -137,12 +108,15 @@ export function useAllocationRequestV2Actions() {
                 )
             }
 
-            return { status: 'accepted', allocated: toSubmit.length }
+            return { status: 'accepted', allocated: allocate.length }
         },
 
         onSettled: (_result, _error, item) => {
             setProgress({ phase: 'idle' })
-            invalidate(item.currentPartyId as PartyId)
+            void invalidateAllocationQueries(
+                queryClient,
+                item.currentPartyId as PartyId
+            )
         },
     })
 
@@ -160,7 +134,10 @@ export function useAllocationRequestV2Actions() {
             )
         },
         onSettled: (_result, _error, item) => {
-            invalidate(item.currentPartyId as PartyId)
+            void invalidateAllocationQueries(
+                queryClient,
+                item.currentPartyId as PartyId
+            )
         },
     })
 

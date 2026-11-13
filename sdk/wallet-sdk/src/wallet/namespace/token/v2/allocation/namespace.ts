@@ -353,6 +353,7 @@ export class AllocationNamespace {
                     requestCid: params.request.contractId,
                     request: view,
                     partyId: params.partyId,
+                    ...(params.skipSpec ? { skipSpec: params.skipSpec } : {}),
                     registry: async (admin) => {
                         try {
                             return await this.registryForAdmin(admin)

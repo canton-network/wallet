@@ -7,7 +7,7 @@ import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { submitViaProvider } from '@lib/submit'
 import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
 import { useWalletSdk } from './useWalletSdk'
-import { queryKeys } from './query-keys'
+import { invalidateAllocationQueries } from './query-keys'
 import type { AllocationV2ActionItem } from '@components/types'
 import { getAllocationActions } from '@utils/v2-allocation-items'
 
@@ -57,16 +57,7 @@ export const useWithdrawAllocationV2 = () => {
         },
         onSettled: (_result, _error, _item) => {
             const party = _item.currentPartyId
-            void queryClient.invalidateQueries({
-                queryKey:
-                    queryKeys.walletConnection.allocations.forParty(party),
-            })
-            void queryClient.invalidateQueries({
-                queryKey: queryKeys.walletConnection.holdings.all,
-            })
-            void queryClient.invalidateQueries({
-                queryKey: queryKeys.walletConnection.transactionHistory.all,
-            })
+            void invalidateAllocationQueries(queryClient, party as PartyId)
         },
     })
 }

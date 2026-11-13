@@ -168,8 +168,11 @@ function getTransactionType(
     if (status === 'Withdrawn') return 'Offer withdrawn'
     if (status === 'Failed') return 'Offer failed'
 
+    if (event.label.type === 'Settlement' || isAllocationSettlement(event))
+        return 'Trade settled'
     if (event.label.type === 'TransferOut') return 'Transfer sent ↗'
     if (event.label.type === 'TransferIn') return 'Transfer received ↘'
+
     if (event.label.type === 'MergeSplit') {
         // Reward collection uses the merge operation but mints new value.
         const mintAmount = toDecimalOrNull(event.label.mintAmount)
@@ -188,8 +191,6 @@ function getTransactionType(
     }
     if (event.label.type === 'ExpireDust') return 'Dust expired'
 
-    if (event.label.type === 'Settlement' || isAllocationSettlement(event))
-        return 'Trade settled'
     if (event.label.type === 'Unlock') return 'Funds unlocked'
     if (event.label.type === 'Lock') return 'Funds locked'
 
@@ -456,11 +457,22 @@ function isIntermediateUnlock(
 }
 
 function getSettlementChange(event: TransactionEvent) {
+    const instrument =
+        getAllocationTransferLeg(event)?.instrumentId ??
+        event.transferInstruction?.transfer?.instrumentId ??
+        getHoldingSummary(event)?.instrumentId
+    if (!instrument) return null
     return sumAmounts(
         [
             ...event.unlockedHoldingsChangeSummaries,
             ...event.lockedHoldingsChangeSummaries,
-        ].map((s) => s.amountChange ?? '0')
+        ]
+            .filter(
+                (s) =>
+                    s.instrumentId.admin === instrument.admin &&
+                    s.instrumentId.id === instrument.id
+            )
+            .map((s) => s.amountChange ?? '0')
     )
 }
 
@@ -484,10 +496,12 @@ function getBalanceEffect(
     return 'none'
 }
 
+/**
+ * v2 settlement choiecs. v1's Allocation_ExecuteTransfer is deliberately left out.
+ */
 const SETTLEMENT_CHOICES = new Set([
     'SettlementFactory_SettleBatch',
     'Allocation_Settle',
-    'Allocation_ExecuteTransfer',
 ])
 
 function isAllocationSettlement(event: TransactionEvent) {

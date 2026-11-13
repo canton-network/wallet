@@ -188,35 +188,21 @@ export function useOfferItems(): OfferItemsResult {
 
         offerItems.push(...transfersByCid.values())
 
-        const allocationCidsShownOnV1Requests = new Set(
-            [...groupedAllocations.values()].flat().map((a) => a.contractId)
+        const v2RequestItems = toAllocationRequestV2Items(
+            allocationRequestsV2.data ?? [],
+            primaryParty
         )
-
-        const v2AllocationItems = [
-            ...toAllocationRequestV2Items(
-                allocationRequestsV2.data ?? [],
-                primaryParty
-            ),
-            ...toAllocationInstructionV2Items(
-                allocationInstructionsV2.data ?? [],
-                primaryParty
-            ),
-            ...toAllocationV2Items(
-                allocationsV2.data ?? [],
-                primaryParty
-            ).filter(
-                (item) => !allocationCidsShownOnV1Requests.has(item.contractId)
-            ),
-        ]
-
-        const v2ContractIds = new Set(
-            v2AllocationItems.map((i) => i.contractId)
+        const v2InstructionItems = toAllocationInstructionV2Items(
+            allocationInstructionsV2.data ?? [],
+            primaryParty
         )
+        const v2RequestCids = new Set(v2RequestItems.map((i) => i.contractId))
 
-        // Normalize allocation requests. Each request can contain multiple transfer legs,
-        // but the current party only needs legs where it is either the sender or receiver.
+        const allocationCidsShownOnV1Requests = new Set<string>()
+
         for (const request of allocationRequests.data ?? []) {
-            if (v2ContractIds.has(request.contractId)) continue
+            if (v2RequestCids.has(request.contractId)) continue
+
             const { settlement, transferLegs } = request.interfaceViewValue
             const typedTransferLegs = transferLegs as Record<
                 string,
@@ -238,21 +224,37 @@ export function useOfferItems(): OfferItemsResult {
                     leg.transferLeg.sender === primaryParty ||
                     leg.transferLeg.receiver === primaryParty
             )
-
             if (relevantLegs.length === 0) continue
 
-            const allocationItem: AllocationActionItem = {
+            for (const leg of relevantLegs) {
+                for (const allocation of leg.allocations) {
+                    allocationCidsShownOnV1Requests.add(allocation.contractId)
+                }
+            }
+
+            offerItems.push({
                 kind: 'allocation',
                 contractId: request.contractId,
                 currentPartyId: primaryParty,
                 expiry: settlement.allocateBefore,
                 settlement,
                 transferLegs: relevantLegs,
-            }
-            offerItems.push(allocationItem)
+            } satisfies AllocationActionItem)
         }
 
-        offerItems.push(...v2AllocationItems)
+        const v2AllocationItems = toAllocationV2Items(
+            allocationsV2.data ?? [],
+            primaryParty
+        ).filter(
+            (item) => !allocationCidsShownOnV1Requests.has(item.contractId)
+        )
+
+        offerItems.push(
+            ...v2RequestItems,
+            ...v2InstructionItems,
+            ...v2AllocationItems
+        )
+
         // Show active items closest to expiry first, with expired items last.
         return [...offerItems].sort(compareOfferItemsByExpiry)
     }, [

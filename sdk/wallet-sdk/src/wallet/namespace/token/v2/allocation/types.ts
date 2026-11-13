@@ -71,6 +71,7 @@ export type AllocationRequestActionParams = {
     request: PrettyContract<AllocationRequestView>
     partyId: PartyId
     actors?: PartyId[]
+    skipSpec?: (spec: AllocationRequestView['allocations'][number]) => boolean
 }
 
 export type SettlementFactoryParams = {
