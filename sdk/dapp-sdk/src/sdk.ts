@@ -679,7 +679,7 @@ export function connect(options: DappSDKConnectOptions): Promise<ConnectResult>
 export function connect(
     arg?: ConnectParams | DappSDKConnectOptions
 ): Promise<ConnectResult> {
-    // Both branches are the same call, narrowing picks the overload
+    // Both branches are the same call, narrowing picks one sdk.connect overload and satisfies TypeScript
     return isDeprecatedConnectOptions(arg) ? sdk.connect(arg) : sdk.connect(arg)
 }
 
