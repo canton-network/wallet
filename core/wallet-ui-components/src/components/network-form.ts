@@ -15,6 +15,7 @@ import { BaseElement } from '../internal/base-element'
 import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.js'
 import './auth-editor.js'
 import './info-tip.js'
+import { chevronDownIcon } from '../icons/index.js'
 
 const AUTH_DOCS_URL =
     'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity#authentication-methods'
@@ -384,36 +385,41 @@ class NetworkForm extends BaseElement {
                             Identity provider
                             <span class="required">*</span>
                         </label>
-                        <select
-                            id="identity-provider"
-                            class="form-select field-control"
-                            required
-                            @change=${(e: Event) => {
-                                this.network.identityProviderId = (
-                                    e.target as HTMLSelectElement
-                                ).value
-                            }}
-                        >
-                            <option
-                                value=""
-                                disabled
-                                ?selected=${!this.network.identityProviderId}
+                        <div class="select-wrap">
+                            <select
+                                id="identity-provider"
+                                class="form-select field-control"
+                                required
+                                @change=${(e: Event) => {
+                                    this.network.identityProviderId = (
+                                        e.target as HTMLSelectElement
+                                    ).value
+                                }}
                             >
-                                Select an identity provider
-                            </option>
-                            ${this.idpOptions().map(
-                                (id) =>
-                                    html`<option
-                                        value=${id}
-                                        ?selected=${
-                                            id ===
-                                            this.network.identityProviderId
-                                        }
-                                    >
-                                        ${id}
-                                    </option>`
-                            )}
-                        </select>
+                                <option
+                                    value=""
+                                    disabled
+                                    ?selected=${!this.network.identityProviderId}
+                                >
+                                    Select an identity provider
+                                </option>
+                                ${this.idpOptions().map(
+                                    (id) =>
+                                        html`<option
+                                            value=${id}
+                                            ?selected=${
+                                                id ===
+                                                this.network.identityProviderId
+                                            }
+                                        >
+                                            ${id}
+                                        </option>`
+                                )}
+                            </select>
+                            <span class="select-chevron"
+                                >${chevronDownIcon}</span
+                            >
+                        </div>
                         <p class="field-help">
                             Issues the tokens that users log in to this network
                             with.
@@ -528,7 +534,7 @@ class NetworkForm extends BaseElement {
                                   >
                                   <input
                                       id="delete-confirmation"
-                                      class="form-control form-control-sm delete-confirm"
+                                      class="form-control field-control delete-confirm"
                                       autocomplete="off"
                                       .value=${this.deleteConfirmation}
                                       @input=${(e: InputEvent) => {
