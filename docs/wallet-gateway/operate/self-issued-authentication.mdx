@@ -114,21 +114,22 @@ Lists keys available in a signing provider, so an existing key can be used by th
 
 Starts party creation - create Wallet row, prepares topology transaction and requests signature of topology transactions hash from signing provider.
 The participant signing provider is rejected, as it's impossible to sign an access token with internal party.
-If the ledger user has no `identityProviderId`, `primary_party_authentication` true, and `primary_party` set, the call is rejected and nothing is created.
+The call is rejected and nothing is created if the ledger user already exists. The ledger user is created later, when the signed access token is submitted.
 Depending on signing provider it may finalize party allocation, or leave wallet in "initialized" status if signature is not ready - in that case `allocateSelfIssuedWallet` is called to poll signing status from signing provider.
-When the returned wallet is allocated, party rights are synced.
 
 ### `allocateSelfIssuedWallet`
 
 Finishes party allocation for a wallet created by the method above.
 It polls signing provider API checking for topology transaction signature. If it's signed, it allocates party on the ledger.
-When the wallet is allocated, party rights are synced.
+No user rights are granted for the party at this point.
 
 ### `signSelfIssuedAccessToken`
 
 Uses authentication party and the user to prepare access token and calls signing provider's method `signMessage` to sign the token.
-If the ledger user does not yet have primary-party authentication, the user is patched: `primary_party` becomes this party id and `primary_party_authentication` becomes true. The wallet is updated with `isAuthParty`.
-If the user already has primary-party authentication, nothing is patched. The wallet must already be `isAuthParty` and its party id must equal the user's primary party.
+If the ledger user does not exist yet, Wallet Gateway waits for the party to appear on the participant and creates the user in a single request with `primary_party` set to this party id, `primary_party_authentication` true, and `CanActAs` rights for the party.
+The user is created before the participant validates the token. If the participant then rejects the token, the user stays configured and the next login attempt follows the existing-user path below.
+If the ledger user exists without primary-party authentication, login is rejected.
+If the user already has primary-party authentication, the user is not changed. The wallet must already be `isAuthParty` and its party id must equal the user's primary party.
 If the participant rejects the token, the session stays tokenless and the call fails. If the participant accepts it, that token is stored on the same session id, other sessions for this user and origin are removed, and the response includes `wallet`, `accessToken`, and `sessionId`.
 
 The response `status` is one of:
