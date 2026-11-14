@@ -83,6 +83,8 @@ export type LoginCredentials = {
     clientSecret?: string
 }
 
+export type TransactionDecision = 'approve' | 'reject'
+
 export class WalletGateway {
     private readonly isPopup: boolean
     private readonly dappPage: Page | undefined
@@ -1335,5 +1337,103 @@ export class WalletGateway {
             popup.getByText('Loading activities...'),
             'the activities page should have finished loading'
         ).not.toBeVisible()
+    }
+
+    /**
+     * Handle several transactions that one dApp action submits back to back,
+     * such as a token standard V2 accept (allocations, then the accept).
+     *
+     * The gateway may show the next request in the same popup instead of closing
+     * it, so success of one approval can't be detected by the popup closing.
+     * Instead, each request is recognised by the commandId in the popup's URL
+     * changing. The popup is expected to close after the last decision.
+     */
+    async handleTransactions(
+        start: () => Promise<void>,
+        decisions: TransactionDecision[],
+        opts?: { waitForClose?: boolean }
+    ): Promise<{ commandIds: string[] }> {
+        return test.step(`wallet gateway: ${decisions.join(', then ')} ${decisions.length} transactions`, async () => {
+            await start()
+
+            const commandIds: string[] = []
+            let popupPage: Page | undefined
+
+            for (const [index, decision] of decisions.entries()) {
+                const next = await this.waitForNextRequest(
+                    commandIds.at(-1),
+                    index
+                )
+                popupPage = next.popupPage
+                commandIds.push(next.commandId)
+
+                if (decision === 'approve') {
+                    await popupPage
+                        .getByRole('button', { name: 'Approve' })
+                        .click()
+                } else {
+                    await this.clickRejectAndConfirm(popupPage)
+                }
+            }
+
+            if (popupPage && opts?.waitForClose !== false) {
+                await this.waitForPopupToCloseAfterAction(popupPage)
+            }
+            return { commandIds }
+        })
+    }
+
+    /** Wait until the popup shows a request other than `previousCommandId` */
+    private async waitForNextRequest(
+        previousCommandId: string | undefined,
+        index: number
+    ): Promise<{ popupPage: Page; commandId: string }> {
+        const currentCommandId = (): string | null => {
+            const popup = this.directPage ?? this._popup
+            if (!popup || popup.isClosed()) return null
+            try {
+                return new URL(popup.url()).searchParams.get('commandId')
+            } catch {
+                return null // mid-navigation
+            }
+        }
+
+        await expect
+            .poll(
+                () => {
+                    const id = currentCommandId()
+                    return id !== null && id !== previousCommandId
+                },
+                {
+                    message: `the wallet should show transaction ${index + 1} for approval`,
+                    timeout: 30_000,
+                }
+            )
+            .toBe(true)
+
+        const popupPage = await this.page()
+        await expect(
+            popupPage.getByRole('button', { name: 'Approve' }),
+            `transaction ${index + 1} should be ready to approve`
+        ).toBeVisible()
+
+        return { popupPage, commandId: currentCommandId()! }
+    }
+
+    /** Reject the shown request, accepting the gateway's confirm dialog */
+    private async clickRejectAndConfirm(popupPage: Page): Promise<void> {
+        let dialogType: string | undefined
+        popupPage.once('dialog', async (dialog) => {
+            dialogType = dialog.type()
+            await dialog.accept()
+        })
+        await popupPage.getByRole('button', { name: 'Reject' }).click()
+        await expect
+            .poll(() => dialogType, {
+                message:
+                    'rejecting a transaction should ask the user to confirm',
+                timeout: 5000,
+            })
+            .toBe('confirm')
     }
 }

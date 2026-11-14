@@ -13,58 +13,9 @@ import {
     tap,
     tapAndCreateAllocation,
     workerClientId,
+    expectHistoryRow,
+    gotoWalletHistory,
 } from './utils'
-
-const BASE_URL = 'http://localhost:8081'
-const HISTORY_TIMEOUT = 30_000
-
-type ExpectedHistoryRow = {
-    activity: string
-    amount: string
-    counterpartyHint: string
-}
-
-const gotoWalletHistory = async (
-    page: Page,
-    walletId: string,
-    walletHint: string
-): Promise<void> => {
-    await page.goto(
-        `${BASE_URL}/dashboard/wallet/${encodeURIComponent(walletId)}`
-    )
-
-    const main = page.locator('main')
-    await expect(main.getByRole('heading', { name: walletHint })).toBeVisible({
-        timeout: 10_000,
-    })
-    await expect(
-        main.getByRole('table', { name: 'Transaction history' })
-    ).toBeVisible({ timeout: HISTORY_TIMEOUT })
-}
-
-const expectHistoryRow = async (
-    page: Page,
-    expected: ExpectedHistoryRow
-): Promise<void> => {
-    const row = page
-        .getByRole('table', { name: 'Transaction history' })
-        .getByRole('row')
-        .filter({
-            has: page.getByRole('cell', {
-                name: expected.activity,
-                exact: true,
-            }),
-        })
-        .filter({
-            has: page.getByRole('cell', {
-                name: expected.amount,
-                exact: true,
-            }),
-        })
-        .filter({ hasText: expected.counterpartyHint.slice(0, 10) })
-
-    await expect(row).toHaveCount(1, { timeout: HISTORY_TIMEOUT })
-}
 
 const setupOtcTrade = async (page: Page) => {
     const rnd = Math.floor(Math.random() * 100000)

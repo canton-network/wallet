@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import type { Account } from './types'
 
 type Tagged = { tag: string }
 
@@ -37,4 +38,8 @@ export function actionAvailability(
     return own
         ? { status: 'available', actors: [party] }
         : { status: 'awaiting', groups }
+}
+
+export function isSameAccount(a: Account, b: Account) {
+    return a.id === b.id && a.owner === b.owner && a.provider === b.provider
 }

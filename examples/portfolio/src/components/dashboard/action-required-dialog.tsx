@@ -8,10 +8,14 @@ import { toast } from 'sonner'
 import type {
     ActionItem,
     AllocationActionItem,
+    AllocationRequestV2ActionItem,
     TransferActionItem,
     TransferLegWithAllocation,
 } from '@components/types'
-import { AllocationActionDialogContent } from '@components/dashboard/allocation-action-dialog-content'
+import {
+    AllocationActionDialogContent,
+    AllocationRequestV2DialogContent,
+} from '@components/dashboard/allocation-action-dialog-content'
 import {
     TransferOfferActionDialogContent,
     type AvailableTransferAction,
@@ -22,6 +26,9 @@ import {
     useExerciseTransfer,
 } from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
+import { useAllocationRequestV2Actions } from '@hooks/useAllocationRequestV2Actions'
+import { AllocationV2DialogContent } from './allocation-v2-dialog-content'
+import { useWithdrawAllocationV2 } from '@hooks/useWithdrawAllocationV2'
 
 interface ActionRequiredDialogProps {
     item: ActionItem | null
@@ -49,12 +56,17 @@ export function ActionRequiredDialog({
     const exerciseTransferMutation = useExerciseTransfer()
     const createAllocationMutation = useCreateAllocation()
     const withdrawAllocationMutation = useWithdrawAllocation()
+    const allocationRequestV2 = useAllocationRequestV2Actions()
+    const withdrawAllocationV2 = useWithdrawAllocationV2()
     const [allocationState, setAllocationState] =
         useState<AllocationDialogState>(EMPTY_ALLOCATION_STATE)
     const isLoading =
         exerciseTransferMutation.isPending ||
         createAllocationMutation.isPending ||
-        withdrawAllocationMutation.isPending
+        withdrawAllocationMutation.isPending ||
+        allocationRequestV2.accept.isPending ||
+        allocationRequestV2.reject.isPending ||
+        withdrawAllocationV2.isPending
     const currentAllocationState =
         allocationState.itemContractId === item?.contractId
             ? allocationState
@@ -63,6 +75,9 @@ export function ActionRequiredDialog({
     const handleClose = () => {
         if (!isLoading) {
             setAllocationState(EMPTY_ALLOCATION_STATE)
+            allocationRequestV2.accept.reset()
+            allocationRequestV2.reject.reset()
+            withdrawAllocationV2.reset()
             onClose()
         }
     }
@@ -174,6 +189,39 @@ export function ActionRequiredDialog({
             }
         )
     }
+    const handleAcceptAllocationRequestV2 = (
+        requestItem: AllocationRequestV2ActionItem
+    ) => {
+        allocationRequestV2.reject.reset()
+        allocationRequestV2.accept.mutate(requestItem, {
+            onSuccess: (result) => {
+                if (result.status === 'accepted') {
+                    toast.success('Allocation accepted successfully')
+                    handleClose()
+                } else {
+                    toast.warning(
+                        'Partial allocation complete. Remaining assets need to be allocate elsewhere'
+                    )
+                }
+            },
+        })
+    }
+
+    const handleRejectAllocationRequestV2 = (
+        requestItem: AllocationRequestV2ActionItem
+    ) => {
+        allocationRequestV2.accept.reset()
+        allocationRequestV2.reject.mutate(requestItem, {
+            onSuccess: () => {
+                toast.success('Allocation rejected successfully')
+                handleClose()
+            },
+            onError: (error) =>
+                toast.error(
+                    `Failed to reject allocation request: ${error.message}`
+                ),
+        })
+    }
 
     return (
         <Dialog
@@ -244,6 +292,38 @@ export function ActionRequiredDialog({
                             handleWithdrawAllocation(item, leg, contractId)
                         }
                     />
+                ) : item?.kind === 'allocation-v2' ? (
+                    <AllocationV2DialogContent
+                        item={item}
+                        isLoading={isLoading}
+                        error={withdrawAllocationV2.error?.message ?? null}
+                        onClose={handleClose}
+                        onWithdraw={() =>
+                            withdrawAllocationV2.mutate(item, {
+                                onSuccess: () => {
+                                    toast.success(
+                                        'Allocation withdrawn, funds released'
+                                    )
+                                    handleClose()
+                                },
+                            })
+                        }
+                    />
+                ) : item?.kind === 'allocation-request-v2' ? (
+                    <AllocationRequestV2DialogContent
+                        item={item}
+                        isLoading={isLoading}
+                        progress={allocationRequestV2.progress}
+                        error={
+                            (
+                                allocationRequestV2.accept.error ??
+                                allocationRequestV2.reject.error
+                            )?.message ?? null
+                        }
+                        onClose={handleClose}
+                        onAccept={() => handleAcceptAllocationRequestV2(item)}
+                        onReject={() => handleRejectAllocationRequestV2(item)}
+                    />
                 ) : (
                     <Typography variant="h4" component="h1">
                         {item ? getItemDialogTitle(item) : ''}
@@ -255,5 +335,15 @@ export function ActionRequiredDialog({
 }
 
 function getItemDialogTitle(item: ActionItem) {
-    return item.kind === 'transfer' ? 'Transfer Offer' : 'Allocation'
+    switch (item.kind) {
+        case 'transfer':
+            return 'Transfer offer'
+        case 'allocation':
+        case 'allocation-request-v2':
+            return 'Allocation Request'
+        case 'allocation-v2':
+            return 'Allocation'
+        case 'allocation-instruction-v2':
+            return 'Allocation Instruction'
+    }
 }

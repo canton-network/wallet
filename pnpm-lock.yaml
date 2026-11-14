@@ -2091,6 +2091,9 @@ importers:
       '@canton-network/core-rpc-transport':
         specifier: 'workspace:'
         version: link:../rpc-transport
+      '@canton-network/core-token-standard-v2':
+        specifier: 'workspace:'
+        version: link:../token-standard-v2
       '@canton-network/core-types':
         specifier: 'workspace:'
         version: link:../types
@@ -2112,6 +2115,9 @@ importers:
       '@playwright/test':
         specifier: 'catalog:'
         version: 1.65.0
+      decimal.js:
+        specifier: 'catalog:'
+        version: 10.6.0
       tweetnacl:
         specifier: 'catalog:'
         version: 1.0.3

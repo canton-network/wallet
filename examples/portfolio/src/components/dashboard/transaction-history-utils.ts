@@ -6,7 +6,6 @@ import type {
     Transaction,
 } from '@canton-network/core-tx-parser'
 import { formatAmount, toDecimalOrNull } from '@utils/decimal'
-
 export type TransactionFilter = 'all' | 'received' | 'sent'
 export type TransactionDirection = 'received' | 'sent' | 'unknown'
 
@@ -82,7 +81,11 @@ export function formatDisplayAmount(
         case 'credit':
             return `+${display.amount}`
         case 'none':
-            return display.amount
+            return display.direction === 'received'
+                ? `+${display.amount}`
+                : display.direction === 'sent'
+                  ? `-${display.amount}`
+                  : display.amount
     }
 }
 
@@ -165,8 +168,11 @@ function getTransactionType(
     if (status === 'Withdrawn') return 'Offer withdrawn'
     if (status === 'Failed') return 'Offer failed'
 
+    if (event.label.type === 'Settlement' || isAllocationSettlement(event))
+        return 'Trade settled'
     if (event.label.type === 'TransferOut') return 'Transfer sent ↗'
     if (event.label.type === 'TransferIn') return 'Transfer received ↘'
+
     if (event.label.type === 'MergeSplit') {
         // Reward collection uses the merge operation but mints new value.
         const mintAmount = toDecimalOrNull(event.label.mintAmount)
@@ -185,7 +191,6 @@ function getTransactionType(
     }
     if (event.label.type === 'ExpireDust') return 'Dust expired'
 
-    if (event.label.type === 'Settlement') return 'Trade settled'
     if (event.label.type === 'Unlock') return 'Funds unlocked'
     if (event.label.type === 'Lock') return 'Funds locked'
 
@@ -234,6 +239,11 @@ function getTransactionAmount(event: TransactionEvent): string | null {
             event.lockedHoldingsChangeSummaries[0]?.amountChange ?? '0'
         )
         return locked ? formatAmount(locked.abs()) : null
+    }
+
+    if (event.label.type === 'Settlement' || isAllocationSettlement(event)) {
+        const change = getSettlementChange(event)
+        return change ? formatAmount(change.abs()) : null
     }
 
     const summary = getHoldingSummary(event)
@@ -286,9 +296,12 @@ function getCounterparty(
 ): string | null {
     const allocationLifecycle = getAllocationLifecycle(event)
     const allocationLeg = getAllocationTransferLeg(event)
-    if (allocationLifecycle === 'reserved' && allocationLeg) {
-        if (allocationLeg.sender === walletId) return allocationLeg.receiver
-        if (allocationLeg.receiver === walletId) return allocationLeg.sender
+    if (allocationLifecycle === 'reserved') {
+        if (allocationLeg) {
+            if (allocationLeg.sender === walletId) return allocationLeg.receiver
+            if (allocationLeg.receiver === walletId) return allocationLeg.sender
+        }
+        return getAllocationCounterParty(event) ?? 'Self'
     }
     if (
         allocationLifecycle === 'withdrawn' ||
@@ -328,6 +341,23 @@ function getCounterparty(
     return null
 }
 
+function getAllocationCounterParty(event: TransactionEvent): string | null {
+    const allocation = getTokenStandardChoice(event)?.choiceArgument
+        ?.allocation as
+        | { transferLegSides?: { otherside: { owner: string | null } }[] }
+        | undefined
+
+    const owners = [
+        ...new Set(
+            (allocation?.transferLegSides ?? []).flatMap((leg) =>
+                leg.otherside.owner ? [leg.otherside.owner] : []
+            )
+        ),
+    ]
+    if (owners.length === 0) return null
+    return owners.length === 1 ? owners[0] : 'Multiple'
+}
+
 function getAllocationLifecycle(event: TransactionEvent): AllocationLifecycle {
     const name =
         getTokenStandardChoiceName(event) === 'EventLog_HoldingsChange'
@@ -337,6 +367,7 @@ function getAllocationLifecycle(event: TransactionEvent): AllocationLifecycle {
     if (name === 'AllocationFactory_Allocate') return 'reserved'
     if (name === 'Allocation_Withdraw') return 'withdrawn'
     if (name === 'Allocation_Cancel') return 'cancelled'
+
     return null
 }
 
@@ -425,6 +456,26 @@ function isIntermediateUnlock(
     )
 }
 
+function getSettlementChange(event: TransactionEvent) {
+    const instrument =
+        getAllocationTransferLeg(event)?.instrumentId ??
+        event.transferInstruction?.transfer?.instrumentId ??
+        getHoldingSummary(event)?.instrumentId
+    if (!instrument) return null
+    return sumAmounts(
+        [
+            ...event.unlockedHoldingsChangeSummaries,
+            ...event.lockedHoldingsChangeSummaries,
+        ]
+            .filter(
+                (s) =>
+                    s.instrumentId.admin === instrument.admin &&
+                    s.instrumentId.id === instrument.id
+            )
+            .map((s) => s.amountChange ?? '0')
+    )
+}
+
 function getBalanceEffect(
     event: TransactionEvent,
     direction: TransactionDirection
@@ -436,5 +487,29 @@ function getBalanceEffect(
     if (direction === 'sent') return 'debit'
     if (direction === 'received') return 'credit'
 
+    if (event.label.type === 'Settlement' || isAllocationSettlement(event)) {
+        const change = getSettlementChange(event)
+        if (change?.isPositive() && !change.isZero()) return 'credit'
+        if (change?.isNegative() && !change.isZero()) return 'debit'
+    }
+
     return 'none'
+}
+
+/**
+ * v2 settlement choiecs. v1's Allocation_ExecuteTransfer is deliberately left out.
+ */
+const SETTLEMENT_CHOICES = new Set([
+    'SettlementFactory_SettleBatch',
+    'Allocation_Settle',
+])
+
+function isAllocationSettlement(event: TransactionEvent) {
+    const name =
+        getTokenStandardChoiceName(event) === 'EventLog_HoldingsChange'
+            ? (event.label as { v2?: { parentChoice: string } }).v2
+                  ?.parentChoice
+            : getTokenStandardChoiceName(event)
+
+    return name !== undefined && SETTLEMENT_CHOICES.has(name)
 }

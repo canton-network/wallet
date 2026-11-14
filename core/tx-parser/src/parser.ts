@@ -613,7 +613,11 @@ export class TransactionParser {
                 const meta = mergeMetas(exercise)
                 const txKind = getMetaKeyValue(TxKindMetaKey, meta)
                 if (txKind) {
-                    result = await this.parseViaTxKind(exercise, txKind)
+                    result = await this.parseViaTxKind(
+                        exercise,
+                        txKind,
+                        tokenStandardChoice
+                    )
                 }
                 break
             }
@@ -671,7 +675,8 @@ export class TransactionParser {
 
     private async parseViaTxKind(
         exercisedEvent: ExercisedEvent,
-        txKind: string
+        txKind: string,
+        tokenStandardChoice: TokenStandardChoice
     ): Promise<ParsedKnownExercisedEvent | null> {
         switch (txKind) {
             case 'transfer':
@@ -684,10 +689,16 @@ export class TransactionParser {
                 return await this.buildBasic(exercisedEvent, 'Unlock', null)
             case 'expire-dust':
                 return await this.buildBasic(exercisedEvent, 'ExpireDust', null)
+            case 'settle-V2-allocation':
+                return await this.buildMergeSplit(
+                    exercisedEvent,
+                    tokenStandardChoice
+                )
             default:
-                throw new Error(
+                console.warn(
                     `Unknown tx-kind '${txKind}' in ${JSON.stringify(exercisedEvent)}`
                 )
+                return null
         }
     }
 

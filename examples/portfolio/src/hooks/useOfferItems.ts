@@ -18,11 +18,19 @@ import type {
 import { getExpiryTime } from '@utils/date-format'
 import { usePrimaryAccount } from './useAccounts'
 import {
+    useAllocationInstructionsV2QueryOptions,
     useAllocationRequestsQueryOptions,
+    useAllocationRequestsV2QueryOptions,
     useAllocationsQueryOptions,
+    useAllocationsV2QueryOptions,
     usePendingTransfersQueryOptions,
     usePendingTransfersV2QueryOptions,
 } from './query-options'
+import {
+    toAllocationInstructionV2Items,
+    toAllocationRequestV2Items,
+    toAllocationV2Items,
+} from '@utils/v2-allocation-items'
 
 export interface OfferItemsResult {
     items: ActionItem[]
@@ -30,6 +38,9 @@ export interface OfferItemsResult {
     isError: boolean
     error: Error | null
 }
+
+const expiryTime = (item: ActionItem) =>
+    item.expiry ? getExpiryTime(item.expiry) : Number.POSITIVE_INFINITY
 
 // Allocation requests and allocations are returned as separate contracts.
 // Use the settlement reference plus transfer leg ID as a stable join key so
@@ -43,24 +54,22 @@ function allocationKey(settlement: SettlementInfo, transferLegId: string) {
 }
 
 function compareOfferItemsByExpiry(left: ActionItem, right: ActionItem) {
-    const leftExpiry = getExpiryTime(left.expiry)
-    const rightExpiry = getExpiryTime(right.expiry)
+    const leftExpiry = expiryTime(left)
+    const rightExpiry = expiryTime(right)
     const now = Date.now()
     const leftExpired = leftExpiry < now
     const rightExpired = rightExpiry < now
-
     if (leftExpired !== rightExpired) {
         return leftExpired ? 1 : -1
     }
-
+    if (leftExpiry === rightExpiry) return 0
     return leftExpiry - rightExpiry
 }
 
 export function useOfferItems(): OfferItemsResult {
     const primaryParty = usePrimaryAccount()?.partyId
 
-    // Offers combine two independent sources: pending transfer instructions (v1 and v2, merged by contractId) and
-    // v1 allocation requests for the current primary wallet.
+    // Offers combine transfers (v1 and v2), v1 allocation requests, and v2 allocation requests, allocations, and instructions
     const pendingTransfers = useQuery(
         usePendingTransfersQueryOptions(primaryParty)
     )
@@ -72,6 +81,14 @@ export function useOfferItems(): OfferItemsResult {
         useAllocationRequestsQueryOptions(primaryParty)
     )
     const allocations = useQuery(useAllocationsQueryOptions(primaryParty))
+
+    const allocationRequestsV2 = useQuery(
+        useAllocationRequestsV2QueryOptions(primaryParty)
+    )
+    const allocationsV2 = useQuery(useAllocationsV2QueryOptions(primaryParty))
+    const allocationInstructionsV2 = useQuery(
+        useAllocationInstructionsV2QueryOptions(primaryParty)
+    )
 
     // Group existing allocations by the allocation request leg they fulfill.
     const groupedAllocations = useMemo(() => {
@@ -171,9 +188,21 @@ export function useOfferItems(): OfferItemsResult {
 
         offerItems.push(...transfersByCid.values())
 
-        // Normalize allocation requests. Each request can contain multiple transfer legs,
-        // but the current party only needs legs where it is either the sender or receiver.
+        const v2RequestItems = toAllocationRequestV2Items(
+            allocationRequestsV2.data ?? [],
+            primaryParty
+        )
+        const v2InstructionItems = toAllocationInstructionV2Items(
+            allocationInstructionsV2.data ?? [],
+            primaryParty
+        )
+        const v2RequestCids = new Set(v2RequestItems.map((i) => i.contractId))
+
+        const allocationCidsShownOnV1Requests = new Set<string>()
+
         for (const request of allocationRequests.data ?? []) {
+            if (v2RequestCids.has(request.contractId)) continue
+
             const { settlement, transferLegs } = request.interfaceViewValue
             const typedTransferLegs = transferLegs as Record<
                 string,
@@ -195,19 +224,36 @@ export function useOfferItems(): OfferItemsResult {
                     leg.transferLeg.sender === primaryParty ||
                     leg.transferLeg.receiver === primaryParty
             )
-
             if (relevantLegs.length === 0) continue
 
-            const allocationItem: AllocationActionItem = {
+            for (const leg of relevantLegs) {
+                for (const allocation of leg.allocations) {
+                    allocationCidsShownOnV1Requests.add(allocation.contractId)
+                }
+            }
+
+            offerItems.push({
                 kind: 'allocation',
                 contractId: request.contractId,
                 currentPartyId: primaryParty,
                 expiry: settlement.allocateBefore,
                 settlement,
                 transferLegs: relevantLegs,
-            }
-            offerItems.push(allocationItem)
+            } satisfies AllocationActionItem)
         }
+
+        const v2AllocationItems = toAllocationV2Items(
+            allocationsV2.data ?? [],
+            primaryParty
+        ).filter(
+            (item) => !allocationCidsShownOnV1Requests.has(item.contractId)
+        )
+
+        offerItems.push(
+            ...v2RequestItems,
+            ...v2InstructionItems,
+            ...v2AllocationItems
+        )
 
         // Show active items closest to expiry first, with expired items last.
         return [...offerItems].sort(compareOfferItemsByExpiry)
@@ -215,6 +261,9 @@ export function useOfferItems(): OfferItemsResult {
         pendingTransfers.data,
         pendingTransfersV2.data,
         allocationRequests.data,
+        allocationInstructionsV2.data,
+        allocationRequestsV2.data,
+        allocationsV2.data,
         groupedAllocations,
         primaryParty,
     ])
@@ -224,6 +273,9 @@ export function useOfferItems(): OfferItemsResult {
         pendingTransfersV2,
         allocations,
         allocationRequests,
+        allocationInstructionsV2,
+        allocationRequestsV2,
+        allocationsV2,
     ]
     const error = queries.find((q) => q.error)?.error ?? null
     return {

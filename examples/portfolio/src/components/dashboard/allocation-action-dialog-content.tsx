@@ -19,6 +19,7 @@ import Decimal from 'decimal.js'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import type {
     AllocationActionItem,
+    AllocationRequestV2ActionItem,
     TransferLegWithAllocation,
 } from '@components/types'
 import { PillButton } from '@components/ui/PillButton'
@@ -31,6 +32,15 @@ import {
 import { formatAmount } from '@utils/decimal'
 import { formatDistanceToNow } from '@utils/date-format'
 import { DateTimeText } from '@components/date-time-text'
+import type { AcceptProgress } from '@hooks/useAllocationRequestV2Actions'
+import type { PartyId } from '@canton-network/core-types'
+import {
+    earliest,
+    getAllocationRequestActions,
+    netAmounts,
+    type InstrumentAmount,
+} from '@utils/v2-allocation-items'
+import { LegList, LockedAmounts } from './allocation-v2-dialog-parts'
 
 interface AllocationActionDialogContentProps {
     item: AllocationActionItem
@@ -44,6 +54,254 @@ interface AllocationActionDialogContentProps {
         leg: TransferLegWithAllocation,
         allocationContractId: string
     ) => void
+}
+
+interface AllocationRequestV2DialogContentProps {
+    item: AllocationRequestV2ActionItem
+    isLoading: boolean
+    progress: AcceptProgress
+    error: string | null
+    onClose: () => void
+    onAccept: () => void
+    onReject: () => void
+}
+
+export function AllocationRequestV2DialogContent({
+    item,
+    isLoading,
+    progress,
+    error,
+    onClose,
+    onAccept,
+    onReject,
+}: AllocationRequestV2DialogContentProps) {
+    const party = item.currentPartyId as PartyId
+    const net = netAmounts(item.ownSpecs)
+    const deadline = earliest(item.ownSpecs.map((s) => s.settlementDeadline))
+    const committed = item.ownSpecs.some((s) => s.committed)
+    const iterated = item.ownSpecs.some((s) => s.nextIterationFunding != null)
+    const [venue, ...otherExecutors] = item.settlement.executors
+
+    const actions = getAllocationRequestActions(item)
+    const canAccept = actions.some(
+        (a) => a.action === 'Accept' && a.status === 'available'
+    )
+    const canReject = actions.some(
+        (a) => a.action === 'Reject' && a.status === 'available'
+    )
+    const awaiting = actions.filter((a) => a.status === 'awaiting')
+
+    return (
+        <Box sx={{ display: 'grid', gap: 3 }}>
+            <Box
+                sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: 2,
+                }}
+            >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="h4" component="h1">
+                        Allocation Request
+                    </Typography>
+                    <Chip
+                        label="V2"
+                        size="small"
+                        sx={{ bgcolor: 'action.selected' }}
+                    />
+                </Box>
+                <IconButton
+                    aria-label="Close allocation request dialog"
+                    disabled={isLoading}
+                    onClick={onClose}
+                    size="small"
+                    sx={{ color: 'secondary.main' }}
+                >
+                    <CloseIcon fontSize="small" />
+                </IconButton>
+            </Box>
+
+            {/* What accepting means for the user, before any detail */}
+            <Box sx={{ display: 'grid' }}>
+                <DetailRow label="You lock">
+                    <LockedAmounts specs={item.ownSpecs}></LockedAmounts>
+                </DetailRow>
+                <DetailRow label="Net effect at settlement">
+                    <AmountList amounts={net} signed />
+                </DetailRow>
+                <DetailRow label="Settlement">
+                    <CopyableIdentifier
+                        value={item.settlement.id}
+                        maxLength={20}
+                    />
+                </DetailRow>
+                <DetailRow
+                    label={otherExecutors.length > 0 ? 'Executors' : 'Venue'}
+                >
+                    <Box
+                        sx={{ display: 'grid', justifyItems: 'end', gap: 0.5 }}
+                    >
+                        {item.settlement.executors.map((executor) => (
+                            <CopyableIdentifier
+                                key={executor}
+                                value={executor}
+                                maxLength={16}
+                            />
+                        ))}
+                        {!venue && <Typography>—</Typography>}
+                    </Box>
+                </DetailRow>
+                {item.settleAt && (
+                    <DetailRow label="Expected settlement">
+                        <TimeWithDistance value={item.settleAt} />
+                    </DetailRow>
+                )}
+                <DetailRow label="Settlement deadline">
+                    {deadline ? (
+                        <TimeWithDistance value={deadline} />
+                    ) : (
+                        <Typography>None</Typography>
+                    )}
+                </DetailRow>
+            </Box>
+
+            {committed && (
+                <Alert severity="info">
+                    The funds stay locked until the trade settles
+                    {deadline ? ' or the deadline passes' : ''}. You can't
+                    withdraw them before then.
+                </Alert>
+            )}
+            {iterated && (
+                <Alert severity="info">
+                    This allocation can be settled more than once. Funding
+                    reserved for the next round is included in the amount you
+                    lock.
+                </Alert>
+            )}
+
+            <Box sx={{ display: 'grid', gap: 1 }}>
+                <LegList
+                    specs={item.ownSpecs}
+                    title="Your transfers in this trade"
+                ></LegList>
+            </Box>
+
+            {error && <Alert severity="error">{error}</Alert>}
+
+            {awaiting.length > 0 && (
+                <Typography variant="body2" color="text.secondary">
+                    {awaiting
+                        .map(
+                            (a) =>
+                                `${a.action}: also needs ${[
+                                    ...new Set(a.groups.flat()),
+                                ]
+                                    .filter((p) => p !== party)
+                                    .join(', ')}`
+                        )
+                        .join('. ')}
+                </Typography>
+            )}
+
+            {(canAccept || canReject) && (
+                <Box
+                    sx={{
+                        display: 'grid',
+                        gridTemplateColumns:
+                            canAccept && canReject ? '1fr 1fr' : '1fr',
+                        gap: 2,
+                    }}
+                >
+                    {canReject && (
+                        <PillButton
+                            tone="danger"
+                            disabled={isLoading}
+                            onClick={onReject}
+                            sx={{ py: 1.25, fontSize: 18 }}
+                        >
+                            Reject
+                        </PillButton>
+                    )}
+                    {canAccept && (
+                        <PillButton
+                            disabled={isLoading}
+                            onClick={onAccept}
+                            sx={{ py: 1.25, fontSize: 18 }}
+                        >
+                            {isLoading ? (
+                                <ProgressLabel progress={progress} />
+                            ) : (
+                                'Accept'
+                            )}
+                        </PillButton>
+                    )}
+                </Box>
+            )}
+        </Box>
+    )
+}
+
+function ProgressLabel({ progress }: { progress: AcceptProgress }) {
+    const text =
+        progress.phase === 'allocating'
+            ? `Allocating ${progress.done + 1} of ${progress.total}`
+            : progress.phase === 'accepting'
+              ? 'Accepting'
+              : 'Preparing'
+    return (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <CircularProgress size={20} color="inherit" />
+            <span>{text}</span>
+        </Box>
+    )
+}
+
+function AmountList({
+    amounts,
+    signed = false,
+}: {
+    amounts: InstrumentAmount[]
+    signed?: boolean
+}) {
+    if (amounts.length === 0) return <Typography>—</Typography>
+    return (
+        <Box sx={{ display: 'grid', justifyItems: 'end' }}>
+            {amounts.map(({ admin, instrumentId, amount }) => {
+                const sign =
+                    signed && amount.isPositive() && !amount.isZero() ? '+' : ''
+                return (
+                    <Typography
+                        key={`${admin}-${instrumentId}`}
+                        sx={{
+                            color: !signed
+                                ? 'text.primary'
+                                : amount.isNegative()
+                                  ? 'error.main'
+                                  : 'success.main',
+                        }}
+                    >
+                        {sign}
+                        {formatAmount(amount.toString())} {instrumentId}
+                    </Typography>
+                )
+            })}
+        </Box>
+    )
+}
+
+function TimeWithDistance({ value }: { value: string }) {
+    return (
+        <Box sx={{ textAlign: 'right' }}>
+            <Typography>
+                <DateTimeText value={value} />
+            </Typography>
+            <Typography color="text.secondary">
+                {formatDistanceToNow(value)}
+            </Typography>
+        </Box>
+    )
 }
 
 export function AllocationActionDialogContent({
