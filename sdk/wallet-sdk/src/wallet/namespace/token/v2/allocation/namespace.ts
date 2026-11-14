@@ -115,14 +115,11 @@ export class AllocationNamespace {
         const { logger } = this.sdkContext.commonCtx
 
         logger.debug(params)
-        const {
-            partyId,
-            settlement,
-            transferLegIds,
-            requireBothSides = true,
-            maxAttempts = 30,
-            retryIntervalMs = 1000,
-        } = params
+        const { partyId, settlement, transferLegIds } = params
+
+        const requireBothSides = params.requireBothSides ?? true
+        const maxAttempts = params.maxAttempts ?? 30
+        const retryIntervalMs = params.retryIntervalMs ?? 1000
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             const allocations = (await this.pending(partyId)).filter((a) =>
@@ -356,6 +353,7 @@ export class AllocationNamespace {
                     requestCid: params.request.contractId,
                     request: view,
                     partyId: params.partyId,
+                    ...(params.skipSpec ? { skipSpec: params.skipSpec } : {}),
                     registry: async (admin) => {
                         try {
                             return await this.registryForAdmin(admin)
@@ -372,24 +370,63 @@ export class AllocationNamespace {
             }
         },
 
-        reject: async (
+        /**
+         * Differs from acceptForParty where this doesn't select input holdings
+         * Useful for retrying after the accept failed in that case where the party's allocations already exist
+         */
+        prepareAccept: async (
             params: AllocationRequestActionParams
         ): Promise<PreparedCommand> => {
-            const actors =
-                params.actors ??
-                params.request.interfaceViewValue.settlement.executors
-            if (!actors) {
+            const view = params.request.interfaceViewValue
+            const groups = decodeAvailableActions<AllocationRequestAction>(
+                view.availableActions
+            ).find(([key]) => key.tag === 'ARA_Accept')
+
+            if (!groups) {
+                throw new Error(`No groups found for ARA_Accept`)
+            }
+            const availability = actionAvailability(groups[1], params.partyId)
+
+            if (!params.actors && availability.status !== 'available') {
                 throw new Error(
-                    `${params.partyId} cannot accept allocation request ${params.request.contractId}`
+                    `${params.partyId} cannot accept allocation request ${params.request.contractId} (${availability.status})`
                 )
             }
 
-            const [command, dc] = this.service.createAllocationRequestChoice(
-                'reject',
-                params.request.contractId,
-                actors
+            return toPrepared(
+                this.service.createAllocationRequestChoice(
+                    'accept',
+                    params.request.contractId,
+                    params.actors ?? [params.partyId]
+                )
             )
-            return [{ ExerciseCommand: command }, dc]
+        },
+        reject: async (
+            params: AllocationRequestActionParams
+        ): Promise<PreparedCommand> => {
+            const view = params.request.interfaceViewValue
+            const groups =
+                decodeAvailableActions<AllocationRequestAction>(
+                    view.availableActions
+                ).find(([key]) => key.tag === 'ARA_Reject')?.[1] ?? []
+
+            if (
+                !params.actors &&
+                actionAvailability(groups, params.partyId).status !==
+                    'available'
+            ) {
+                throw new Error(
+                    `${params.partyId} cannot reject allocation request ${params.request.contractId}`
+                )
+            }
+
+            return toPrepared(
+                this.service.createAllocationRequestChoice(
+                    'reject',
+                    params.request.contractId,
+                    params.actors ?? [params.partyId]
+                )
+            )
         },
 
         withdraw: async (
