@@ -18,17 +18,24 @@ const repoRoot = getRepoRoot()
 
 const outdir = `${repoRoot}/core/ledger-proto/src/_proto`
 
-const version = SUPPORTED_VERSIONS.mainnet.canton.version
+// The newest supported Canton version, as its protos are a superset of older ones
+const version = Object.values(SUPPORTED_VERSIONS)
+    .map((config) => config.canton.version)
+    .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+    .at(-1)!
 
 const roots = [
     `${CANTON_PATH}/${version}/protobuf/community`,
+    `${CANTON_PATH}/${version}/protobuf/admin-api`,
     `${CANTON_PATH}/${version}/protobuf/lib`,
 ]
 const protos = [
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/topology/admin/v30/topology_manager_write_service.proto`,
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/topology/admin/v30/topology_manager_read_service.proto`,
-    `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/topology/admin/v30/common.proto`,
+    `${CANTON_PATH}/${version}/protobuf/admin-api/com/digitalasset/canton/topology/admin/v30/common.proto`,
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/protocol/v30/topology.proto`,
+    `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/protocol/v31/topology.proto`,
+    `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/version/v1/untyped_versioned_message.proto`,
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/crypto/v30/crypto.proto`,
 ]
 
@@ -41,7 +48,7 @@ function generateProtos() {
     ]
 
     try {
-        execFileSync('grpc_tools_node_protoc', protocArgs, { stdio: 'inherit' })
+        execFileSync('protoc', protocArgs, { stdio: 'inherit' })
         console.log('Protobuf files generated successfully.')
     } catch (error) {
         console.error('Error generating protobuf files:', error)
@@ -71,7 +78,6 @@ function generateProtosWithPlugin() {
     const protoRoots = [ledgerApiRoot, ledgerApiValueRoot, libRoot]
 
     const protocArgs = [
-        '--plugin=protoc-gen-ts_proto=$(pnpm bin protoc-gen-ts_proto)',
         `--ts_out=${outdir}`,
         '--ts_opt=generate_dependencies',
         ...protoRoots.map((root) => `-I${root}`),
@@ -81,7 +87,7 @@ function generateProtosWithPlugin() {
     ]
 
     try {
-        execFileSync('grpc_tools_node_protoc', protocArgs, { stdio: 'inherit' })
+        execFileSync('protoc', protocArgs, { stdio: 'inherit' })
         console.log('Protobuf files generated successfully.')
     } catch (error) {
         console.error('Error generating protobuf files:', error)

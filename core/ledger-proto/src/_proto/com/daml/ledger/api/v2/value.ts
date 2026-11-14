@@ -28,6 +28,7 @@ import { Empty } from '../../../../../google/protobuf/empty.js'
  * - NameStrings are strings with length <= 1000 that match the regexp ``[A-Za-z\$_][A-Za-z0-9\$_]*``.
  * - PackageIdStrings are strings with length <= 64 that match the regexp ``[A-Za-z0-9\-_ ]+``.
  * - PartyIdStrings are strings with length <= 255 that match the regexp ``[A-Za-z0-9:\-_ ]+``.
+ * - ParticipantIdStrings are strings with length <= 255 that match the regexp ``[A-Za-z0-9:\-_ ]+``.
  * - LedgerStrings are strings with length <= 255 that match the regexp ``[A-Za-z0-9#:\-_/ ]+``.
  * - UserIdStrings are strings with length <= 128 that match the regexp ``[a-zA-Z0-9@^$.!`\-#+'~_|:]+``.
  *

@@ -8,6 +8,9 @@
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
 import { CommandCompletionService } from './command_completion_service.js'
+import type { GetCompletionByHashResponse } from './command_completion_service.js'
+import type { GetCompletionByHashRequest } from './command_completion_service.js'
+import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { GetCompletionsRequest } from './command_completion_service.js'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
 import type { CompletionStreamResponse } from './command_completion_service.js'
@@ -53,6 +56,22 @@ export interface ICommandCompletionServiceClient {
         input: GetCompletionsRequest,
         options?: RpcOptions
     ): ServerStreamingCall<GetCompletionsRequest, CompletionStreamResponse>
+    /**
+     * Look up a completion by its transaction hash.
+     * This is only available for completions received after upgrading to Canton version 3.5.
+     * A COMPLETION_NOT_FOUND error will be raised if either of the following is true:
+     *
+     * - there is no completion with this transaction hash,
+     * - the completion is not visible to the user,
+     * - the completion was populated before upgrading to Canton version 3.5,
+     * - respective completions are all pruned.
+     *
+     * @generated from protobuf rpc: GetCompletionByHash
+     */
+    getCompletionByHash(
+        input: GetCompletionByHashRequest,
+        options?: RpcOptions
+    ): UnaryCall<GetCompletionByHashRequest, GetCompletionByHashResponse>
 }
 /**
  * Allows clients to observe the status of their submissions.
@@ -115,5 +134,28 @@ export class CommandCompletionServiceClient
             opt,
             input
         )
+    }
+    /**
+     * Look up a completion by its transaction hash.
+     * This is only available for completions received after upgrading to Canton version 3.5.
+     * A COMPLETION_NOT_FOUND error will be raised if either of the following is true:
+     *
+     * - there is no completion with this transaction hash,
+     * - the completion is not visible to the user,
+     * - the completion was populated before upgrading to Canton version 3.5,
+     * - respective completions are all pruned.
+     *
+     * @generated from protobuf rpc: GetCompletionByHash
+     */
+    getCompletionByHash(
+        input: GetCompletionByHashRequest,
+        options?: RpcOptions
+    ): UnaryCall<GetCompletionByHashRequest, GetCompletionByHashResponse> {
+        const method = this.methods[2],
+            opt = this._transport.mergeOptions(options)
+        return stackIntercept<
+            GetCompletionByHashRequest,
+            GetCompletionByHashResponse
+        >('unary', this._transport, method, opt, input)
     }
 }

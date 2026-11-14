@@ -18,6 +18,58 @@ import { Value } from '../../../value.js'
 import { GlobalKeyWithMaintainers } from '../../interactive_submission_common_data.js'
 import { Identifier } from '../../../value.js'
 //
+// External Call Results
+
+/**
+ * Result of an external call made during transaction execution.
+ * External calls are deterministic calls to participant extension services.
+ * Results are stored in the transaction and replayed during validation.
+ *
+ * @generated from protobuf message com.daml.ledger.api.v2.interactive.transaction.v1.ExternalCallResult
+ */
+export interface ExternalCallResult {
+    /**
+     * Extension service identifier.
+     *
+     * Required
+     *
+     * @generated from protobuf field: string extension_id = 1
+     */
+    extensionId: string
+    /**
+     * Function identifier within the extension.
+     *
+     * Required
+     *
+     * @generated from protobuf field: string function_id = 2
+     */
+    functionId: string
+    /**
+     * Extension configuration hash bytes.
+     *
+     * Required: must be non-empty
+     *
+     * @generated from protobuf field: bytes config = 3
+     */
+    config: Uint8Array
+    /**
+     * Input data sent to the extension.
+     *
+     * Required: must be non-empty
+     *
+     * @generated from protobuf field: bytes input = 4
+     */
+    input: Uint8Array
+    /**
+     * Output data returned by the extension.
+     *
+     * Required: must be non-empty
+     *
+     * @generated from protobuf field: bytes output = 5
+     */
+    output: Uint8Array
+}
+//
 // Transaction Nodes
 
 /**
@@ -207,6 +259,19 @@ export interface Exercise {
      * @generated from protobuf field: bool by_key = 16
      */
     byKey: boolean
+    /**
+     * Can only be populated from lf_version dev.
+     *
+     * Results of external calls made during this exercise.
+     * These results are carried for external-call replay and validation.
+     * They are encoded into the prepared transaction hash starting with
+     * HASHING_SCHEME_VERSION_V4.
+     *
+     * Optional: can be empty
+     *
+     * @generated from protobuf field: repeated com.daml.ledger.api.v2.interactive.transaction.v1.ExternalCallResult external_call_results = 17
+     */
+    externalCallResults: ExternalCallResult[]
 }
 /**
  * Create Node
@@ -382,6 +447,135 @@ export interface Node {
               oneofKind: undefined
           }
 }
+// @generated message type with reflection information, may provide speed optimized methods
+class ExternalCallResult$Type extends MessageType<ExternalCallResult> {
+    constructor() {
+        super(
+            'com.daml.ledger.api.v2.interactive.transaction.v1.ExternalCallResult',
+            [
+                {
+                    no: 1,
+                    name: 'extension_id',
+                    kind: 'scalar',
+                    T: 9 /*ScalarType.STRING*/,
+                },
+                {
+                    no: 2,
+                    name: 'function_id',
+                    kind: 'scalar',
+                    T: 9 /*ScalarType.STRING*/,
+                },
+                {
+                    no: 3,
+                    name: 'config',
+                    kind: 'scalar',
+                    T: 12 /*ScalarType.BYTES*/,
+                },
+                {
+                    no: 4,
+                    name: 'input',
+                    kind: 'scalar',
+                    T: 12 /*ScalarType.BYTES*/,
+                },
+                {
+                    no: 5,
+                    name: 'output',
+                    kind: 'scalar',
+                    T: 12 /*ScalarType.BYTES*/,
+                },
+            ]
+        )
+    }
+    create(value?: PartialMessage<ExternalCallResult>): ExternalCallResult {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.extensionId = ''
+        message.functionId = ''
+        message.config = new Uint8Array(0)
+        message.input = new Uint8Array(0)
+        message.output = new Uint8Array(0)
+        if (value !== undefined)
+            reflectionMergePartial<ExternalCallResult>(this, message, value)
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: ExternalCallResult
+    ): ExternalCallResult {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* string extension_id */ 1:
+                    message.extensionId = reader.string()
+                    break
+                case /* string function_id */ 2:
+                    message.functionId = reader.string()
+                    break
+                case /* bytes config */ 3:
+                    message.config = reader.bytes()
+                    break
+                case /* bytes input */ 4:
+                    message.input = reader.bytes()
+                    break
+                case /* bytes output */ 5:
+                    message.output = reader.bytes()
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: ExternalCallResult,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* string extension_id = 1; */
+        if (message.extensionId !== '')
+            writer.tag(1, WireType.LengthDelimited).string(message.extensionId)
+        /* string function_id = 2; */
+        if (message.functionId !== '')
+            writer.tag(2, WireType.LengthDelimited).string(message.functionId)
+        /* bytes config = 3; */
+        if (message.config.length)
+            writer.tag(3, WireType.LengthDelimited).bytes(message.config)
+        /* bytes input = 4; */
+        if (message.input.length)
+            writer.tag(4, WireType.LengthDelimited).bytes(message.input)
+        /* bytes output = 5; */
+        if (message.output.length)
+            writer.tag(5, WireType.LengthDelimited).bytes(message.output)
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.interactive.transaction.v1.ExternalCallResult
+ */
+export const ExternalCallResult = new ExternalCallResult$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class Fetch$Type extends MessageType<Fetch> {
     constructor() {
@@ -706,6 +900,13 @@ class Exercise$Type extends MessageType<Exercise> {
                 kind: 'scalar',
                 T: 8 /*ScalarType.BOOL*/,
             },
+            {
+                no: 17,
+                name: 'external_call_results',
+                kind: 'message',
+                repeat: 2 /*RepeatType.UNPACKED*/,
+                T: () => ExternalCallResult,
+            },
         ])
     }
     create(value?: PartialMessage<Exercise>): Exercise {
@@ -721,6 +922,7 @@ class Exercise$Type extends MessageType<Exercise> {
         message.children = []
         message.choiceObservers = []
         message.byKey = false
+        message.externalCallResults = []
         if (value !== undefined)
             reflectionMergePartial<Exercise>(this, message, value)
         return message
@@ -808,6 +1010,15 @@ class Exercise$Type extends MessageType<Exercise> {
                     break
                 case /* bool by_key */ 16:
                     message.byKey = reader.bool()
+                    break
+                case /* repeated com.daml.ledger.api.v2.interactive.transaction.v1.ExternalCallResult external_call_results */ 17:
+                    message.externalCallResults.push(
+                        ExternalCallResult.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options
+                        )
+                    )
                     break
                 default:
                     let u = options.readUnknownField
@@ -909,6 +1120,13 @@ class Exercise$Type extends MessageType<Exercise> {
         /* bool by_key = 16; */
         if (message.byKey !== false)
             writer.tag(16, WireType.Varint).bool(message.byKey)
+        /* repeated com.daml.ledger.api.v2.interactive.transaction.v1.ExternalCallResult external_call_results = 17; */
+        for (let i = 0; i < message.externalCallResults.length; i++)
+            ExternalCallResult.internalBinaryWrite(
+                message.externalCallResults[i],
+                writer.tag(17, WireType.LengthDelimited).fork(),
+                options
+            ).join()
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(

@@ -166,6 +166,15 @@ export interface Right {
               canExecuteAsAnyParty: Right_CanExecuteAsAnyParty
           }
         | {
+              oneofKind: 'canActAsAnyParty'
+              /**
+               * The user can act as any party on a participant.
+               *
+               * @generated from protobuf field: com.daml.ledger.api.v2.admin.Right.CanActAsAnyParty can_act_as_any_party = 8
+               */
+              canActAsAnyParty: Right_CanActAsAnyParty
+          }
+        | {
               oneofKind: undefined
           }
 }
@@ -241,6 +250,13 @@ export interface Right_CanReadAsAnyParty {}
  * @generated from protobuf message com.daml.ledger.api.v2.admin.Right.CanExecuteAsAnyParty
  */
 export interface Right_CanExecuteAsAnyParty {}
+/**
+ * The right of a user to authorize commands as any party on a participant.
+ * Its utility is predominantly for users that act on behalf of many parties.
+ *
+ * @generated from protobuf message com.daml.ledger.api.v2.admin.Right.CanActAsAnyParty
+ */
+export interface Right_CanActAsAnyParty {}
 // RPC requests and responses
 // ///////////////////////////
 
@@ -823,6 +839,13 @@ class Right$Type extends MessageType<Right> {
                 oneof: 'kind',
                 T: () => Right_CanExecuteAsAnyParty,
             },
+            {
+                no: 8,
+                name: 'can_act_as_any_party',
+                kind: 'message',
+                oneof: 'kind',
+                T: () => Right_CanActAsAnyParty,
+            },
         ])
     }
     create(value?: PartialMessage<Right>): Right {
@@ -924,6 +947,18 @@ class Right$Type extends MessageType<Right> {
                             ),
                     }
                     break
+                case /* com.daml.ledger.api.v2.admin.Right.CanActAsAnyParty can_act_as_any_party */ 8:
+                    message.kind = {
+                        oneofKind: 'canActAsAnyParty',
+                        canActAsAnyParty:
+                            Right_CanActAsAnyParty.internalBinaryRead(
+                                reader,
+                                reader.uint32(),
+                                options,
+                                (message.kind as any).canActAsAnyParty
+                            ),
+                    }
+                    break
                 default:
                     let u = options.readUnknownField
                     if (u === 'throw')
@@ -995,6 +1030,13 @@ class Right$Type extends MessageType<Right> {
             Right_CanExecuteAsAnyParty.internalBinaryWrite(
                 message.kind.canExecuteAsAnyParty,
                 writer.tag(7, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        /* com.daml.ledger.api.v2.admin.Right.CanActAsAnyParty can_act_as_any_party = 8; */
+        if (message.kind.oneofKind === 'canActAsAnyParty')
+            Right_CanActAsAnyParty.internalBinaryWrite(
+                message.kind.canActAsAnyParty,
+                writer.tag(8, WireType.LengthDelimited).fork(),
                 options
             ).join()
         let u = options.writeUnknownFields
@@ -1494,6 +1536,68 @@ class Right_CanExecuteAsAnyParty$Type extends MessageType<Right_CanExecuteAsAnyP
  * @generated MessageType for protobuf message com.daml.ledger.api.v2.admin.Right.CanExecuteAsAnyParty
  */
 export const Right_CanExecuteAsAnyParty = new Right_CanExecuteAsAnyParty$Type()
+// @generated message type with reflection information, may provide speed optimized methods
+class Right_CanActAsAnyParty$Type extends MessageType<Right_CanActAsAnyParty> {
+    constructor() {
+        super('com.daml.ledger.api.v2.admin.Right.CanActAsAnyParty', [])
+    }
+    create(
+        value?: PartialMessage<Right_CanActAsAnyParty>
+    ): Right_CanActAsAnyParty {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        if (value !== undefined)
+            reflectionMergePartial<Right_CanActAsAnyParty>(this, message, value)
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: Right_CanActAsAnyParty
+    ): Right_CanActAsAnyParty {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: Right_CanActAsAnyParty,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.admin.Right.CanActAsAnyParty
+ */
+export const Right_CanActAsAnyParty = new Right_CanActAsAnyParty$Type()
 // @generated message type with reflection information, may provide speed optimized methods
 class CreateUserRequest$Type extends MessageType<CreateUserRequest> {
     constructor() {

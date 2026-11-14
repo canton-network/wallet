@@ -85,6 +85,13 @@ function encodeExercise(
 ): Uint8Array {
     checkLfVersion(exercise.lfVersion, `${at}.lfVersion`)
     checkKeyUse(exercise, at)
+    if (exercise.externalCallResults.length > 0) {
+        throw new TxHashingError(
+            'FIELD_NOT_COVERED_BY_SCHEME',
+            'external call results are not covered by hashing scheme V3',
+            `${at}.externalCallResults`
+        )
+    }
     return concat(
         encodeString(exercise.lfVersion),
         0x01,

@@ -81,6 +81,7 @@ function encodeExercise(
 ): Uint8Array {
     checkLfVersion(exercise.lfVersion, `${at}.lfVersion`)
     checkNoKey(exercise, at)
+    checkNoExternalCallResults(exercise, at)
     return concat(
         ENCODING_VERSION,
         encodeString(exercise.lfVersion),
@@ -165,6 +166,12 @@ function checkLfVersion(lfVersion: string, path: string): void {
 function checkNoKey(node: Exercise | Fetch, at: string): void {
     if (node.key !== undefined) throw notCovered('a contract key', `${at}.key`)
     if (node.byKey) throw notCovered('byKey = true', `${at}.byKey`)
+}
+
+function checkNoExternalCallResults(exercise: Exercise, at: string): void {
+    if (exercise.externalCallResults.length > 0) {
+        throw notCovered('external call results', `${at}.externalCallResults`)
+    }
 }
 
 const notCovered = (what: string, path: string) =>

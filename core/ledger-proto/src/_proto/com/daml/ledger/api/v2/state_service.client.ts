@@ -8,6 +8,8 @@
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
 import { StateService } from './state_service.js'
+import type { ConvertRecordTimeToOffsetResponse } from './state_service.js'
+import type { ConvertRecordTimeToOffsetRequest } from './state_service.js'
 import type { GetLatestPrunedOffsetsResponse } from './state_service.js'
 import type { GetLatestPrunedOffsetsRequest } from './state_service.js'
 import type { GetLedgerEndResponse } from './state_service.js'
@@ -34,6 +36,10 @@ export interface IStateServiceClient {
      * the client SHOULD begin streaming updates from the update service,
      * starting at the GetActiveContractsRequest.active_at_offset specified in this request.
      * Clients SHOULD NOT assume that the set of active contracts they receive reflects the state at the ledger end.
+     * If the given offset is different than the ledger end, and there are (un)assignments in-flight at the given offset,
+     * the snapshot may fail with "FAILED_PRECONDITION/PARTICIPANT_PRUNED_DATA_ACCESSED".
+     * Note that it is ok to request acs snapshots for party migration with offsets other than ledger end, because party
+     * migration is not concerned with incomplete (un)assignments.
      *
      * @generated from protobuf rpc: GetActiveContracts
      */
@@ -88,6 +94,24 @@ export interface IStateServiceClient {
         input: GetLatestPrunedOffsetsRequest,
         options?: RpcOptions
     ): UnaryCall<GetLatestPrunedOffsetsRequest, GetLatestPrunedOffsetsResponse>
+    /**
+     * Translate syncrhonizer record time to an offset
+     * If the requested record time is earlier that the earliest record time known for the given synchronizer
+     * (either because is is before the connection to the synchronizer was established or because it was already pruned),
+     * the request fails with RECORD_TIME_NOT_FOUND error.
+     * If the requested record time is after the latest record time observed for this synchronizer, the request fails with
+     * RECORD_TIME_NOT_OBSERVED_YET error code. This may be transitional condition until participant node catches up with most recent synchronizer updates.
+     * In such case the caller may retry this request.
+     *
+     * @generated from protobuf rpc: ConvertRecordTimeToOffset
+     */
+    convertRecordTimeToOffset(
+        input: ConvertRecordTimeToOffsetRequest,
+        options?: RpcOptions
+    ): UnaryCall<
+        ConvertRecordTimeToOffsetRequest,
+        ConvertRecordTimeToOffsetResponse
+    >
 }
 /**
  * Allows clients to get state from the ledger.
@@ -105,6 +129,10 @@ export class StateServiceClient implements IStateServiceClient, ServiceInfo {
      * the client SHOULD begin streaming updates from the update service,
      * starting at the GetActiveContractsRequest.active_at_offset specified in this request.
      * Clients SHOULD NOT assume that the set of active contracts they receive reflects the state at the ledger end.
+     * If the given offset is different than the ledger end, and there are (un)assignments in-flight at the given offset,
+     * the snapshot may fail with "FAILED_PRECONDITION/PARTICIPANT_PRUNED_DATA_ACCESSED".
+     * Note that it is ok to request acs snapshots for party migration with offsets other than ledger end, because party
+     * migration is not concerned with incomplete (un)assignments.
      *
      * @generated from protobuf rpc: GetActiveContracts
      */
@@ -201,6 +229,31 @@ export class StateServiceClient implements IStateServiceClient, ServiceInfo {
         return stackIntercept<
             GetLatestPrunedOffsetsRequest,
             GetLatestPrunedOffsetsResponse
+        >('unary', this._transport, method, opt, input)
+    }
+    /**
+     * Translate syncrhonizer record time to an offset
+     * If the requested record time is earlier that the earliest record time known for the given synchronizer
+     * (either because is is before the connection to the synchronizer was established or because it was already pruned),
+     * the request fails with RECORD_TIME_NOT_FOUND error.
+     * If the requested record time is after the latest record time observed for this synchronizer, the request fails with
+     * RECORD_TIME_NOT_OBSERVED_YET error code. This may be transitional condition until participant node catches up with most recent synchronizer updates.
+     * In such case the caller may retry this request.
+     *
+     * @generated from protobuf rpc: ConvertRecordTimeToOffset
+     */
+    convertRecordTimeToOffset(
+        input: ConvertRecordTimeToOffsetRequest,
+        options?: RpcOptions
+    ): UnaryCall<
+        ConvertRecordTimeToOffsetRequest,
+        ConvertRecordTimeToOffsetResponse
+    > {
+        const method = this.methods[5],
+            opt = this._transport.mergeOptions(options)
+        return stackIntercept<
+            ConvertRecordTimeToOffsetRequest,
+            ConvertRecordTimeToOffsetResponse
         >('unary', this._transport, method, opt, input)
     }
 }

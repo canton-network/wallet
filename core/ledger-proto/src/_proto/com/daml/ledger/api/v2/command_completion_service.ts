@@ -111,6 +111,44 @@ export interface CompletionStreamResponse {
               oneofKind: undefined
           }
 }
+/**
+ * @generated from protobuf message com.daml.ledger.api.v2.GetCompletionByHashRequest
+ */
+export interface GetCompletionByHashRequest {
+    /**
+     * The transaction hash of the prepared transaction whose completion is being looked up.
+     *
+     * Required: must be non-empty
+     *
+     * @generated from protobuf field: bytes transaction_hash = 1
+     */
+    transactionHash: Uint8Array
+}
+/**
+ * @generated from protobuf message com.daml.ledger.api.v2.GetCompletionByHashResponse
+ */
+export interface GetCompletionByHashResponse {
+    /**
+     * The accepted completion for the given transaction hash (at most one can exist).
+     * Only completions beyond the current pruning offset are visible.
+     *
+     * Optional
+     *
+     * @generated from protobuf field: com.daml.ledger.api.v2.Completion accepted_completion = 1
+     */
+    acceptedCompletion?: Completion
+    /**
+     * Recent rejected completions for the given transaction hash, in descending offset order.
+     * The server may truncate this list if there are too many entries.
+     * Use ``submission_id`` to correlate with a specific command submission.
+     * Only completions beyond the current pruning offset are visible.
+     *
+     * Optional: can be empty
+     *
+     * @generated from protobuf field: repeated com.daml.ledger.api.v2.Completion last_rejected_completions = 2
+     */
+    lastRejectedCompletions: Completion[]
+}
 // @generated message type with reflection information, may provide speed optimized methods
 class CompletionStreamRequest$Type extends MessageType<CompletionStreamRequest> {
     constructor() {
@@ -428,6 +466,201 @@ class CompletionStreamResponse$Type extends MessageType<CompletionStreamResponse
  * @generated MessageType for protobuf message com.daml.ledger.api.v2.CompletionStreamResponse
  */
 export const CompletionStreamResponse = new CompletionStreamResponse$Type()
+// @generated message type with reflection information, may provide speed optimized methods
+class GetCompletionByHashRequest$Type extends MessageType<GetCompletionByHashRequest> {
+    constructor() {
+        super('com.daml.ledger.api.v2.GetCompletionByHashRequest', [
+            {
+                no: 1,
+                name: 'transaction_hash',
+                kind: 'scalar',
+                T: 12 /*ScalarType.BYTES*/,
+            },
+        ])
+    }
+    create(
+        value?: PartialMessage<GetCompletionByHashRequest>
+    ): GetCompletionByHashRequest {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.transactionHash = new Uint8Array(0)
+        if (value !== undefined)
+            reflectionMergePartial<GetCompletionByHashRequest>(
+                this,
+                message,
+                value
+            )
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: GetCompletionByHashRequest
+    ): GetCompletionByHashRequest {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* bytes transaction_hash */ 1:
+                    message.transactionHash = reader.bytes()
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: GetCompletionByHashRequest,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* bytes transaction_hash = 1; */
+        if (message.transactionHash.length)
+            writer
+                .tag(1, WireType.LengthDelimited)
+                .bytes(message.transactionHash)
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.GetCompletionByHashRequest
+ */
+export const GetCompletionByHashRequest = new GetCompletionByHashRequest$Type()
+// @generated message type with reflection information, may provide speed optimized methods
+class GetCompletionByHashResponse$Type extends MessageType<GetCompletionByHashResponse> {
+    constructor() {
+        super('com.daml.ledger.api.v2.GetCompletionByHashResponse', [
+            {
+                no: 1,
+                name: 'accepted_completion',
+                kind: 'message',
+                T: () => Completion,
+            },
+            {
+                no: 2,
+                name: 'last_rejected_completions',
+                kind: 'message',
+                repeat: 2 /*RepeatType.UNPACKED*/,
+                T: () => Completion,
+            },
+        ])
+    }
+    create(
+        value?: PartialMessage<GetCompletionByHashResponse>
+    ): GetCompletionByHashResponse {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.lastRejectedCompletions = []
+        if (value !== undefined)
+            reflectionMergePartial<GetCompletionByHashResponse>(
+                this,
+                message,
+                value
+            )
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: GetCompletionByHashResponse
+    ): GetCompletionByHashResponse {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* com.daml.ledger.api.v2.Completion accepted_completion */ 1:
+                    message.acceptedCompletion = Completion.internalBinaryRead(
+                        reader,
+                        reader.uint32(),
+                        options,
+                        message.acceptedCompletion
+                    )
+                    break
+                case /* repeated com.daml.ledger.api.v2.Completion last_rejected_completions */ 2:
+                    message.lastRejectedCompletions.push(
+                        Completion.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options
+                        )
+                    )
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: GetCompletionByHashResponse,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* com.daml.ledger.api.v2.Completion accepted_completion = 1; */
+        if (message.acceptedCompletion)
+            Completion.internalBinaryWrite(
+                message.acceptedCompletion,
+                writer.tag(1, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        /* repeated com.daml.ledger.api.v2.Completion last_rejected_completions = 2; */
+        for (let i = 0; i < message.lastRejectedCompletions.length; i++)
+            Completion.internalBinaryWrite(
+                message.lastRejectedCompletions[i],
+                writer.tag(2, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.GetCompletionByHashResponse
+ */
+export const GetCompletionByHashResponse =
+    new GetCompletionByHashResponse$Type()
 /**
  * @generated ServiceType for protobuf service com.daml.ledger.api.v2.CommandCompletionService
  */
@@ -447,6 +680,12 @@ export const CommandCompletionService = new ServiceType(
             options: {},
             I: GetCompletionsRequest,
             O: CompletionStreamResponse,
+        },
+        {
+            name: 'GetCompletionByHash',
+            options: {},
+            I: GetCompletionByHashRequest,
+            O: GetCompletionByHashResponse,
         },
     ]
 )

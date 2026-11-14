@@ -364,6 +364,30 @@ describe('hashing scheme V3', () => {
     })
 
     describe('rejections', () => {
+        it('rejects an exercise with external call results', () =>
+            expect(
+                v3(
+                    single(
+                        exerciseNode('0', [], {
+                            externalCallResults: [
+                                {
+                                    extensionId: 'ext',
+                                    functionId: 'fn',
+                                    config: new Uint8Array(),
+                                    input: new Uint8Array(),
+                                    output: new Uint8Array(),
+                                },
+                            ],
+                        })
+                    )
+                )
+            ).rejects.toThrow(
+                rejection(
+                    'FIELD_NOT_COVERED_BY_SCHEME',
+                    'transaction.nodes[0].v1.exercise.externalCallResults'
+                )
+            ))
+
         it.each(['3', 'dev', '2.2', ''])('rejects lf version %j', (lf) =>
             expect(
                 v3(single(createNode('0', { lfVersion: lf })))

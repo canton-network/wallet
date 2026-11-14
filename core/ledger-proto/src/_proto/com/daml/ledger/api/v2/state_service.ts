@@ -15,16 +15,13 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
+import { Timestamp } from '../../../../../google/protobuf/timestamp.js'
+import { SynchronizerTime } from './offset_checkpoint.js'
 import { AssignedEvent } from './reassignment.js'
 import { UnassignedEvent } from './reassignment.js'
 import { CreatedEvent } from './event.js'
 import { EventFormat } from './transaction_filter.js'
 /**
- * If the given offset is different than the ledger end, and there are (un)assignments in-flight at the given offset,
- * the snapshot may fail with "FAILED_PRECONDITION/PARTICIPANT_PRUNED_DATA_ACCESSED".
- * Note that it is ok to request acs snapshots for party migration with offsets other than ledger end, because party
- * migration is not concerned with incomplete (un)assignments.
- *
  * @generated from protobuf message com.daml.ledger.api.v2.GetActiveContractsRequest
  */
 export interface GetActiveContractsRequest {
@@ -57,7 +54,8 @@ export interface GetActiveContractsRequest {
      *
      * - subsequent request must be executed on the same participant with the same version of canton,
      * - subsequent request must have the same active_at_offset,
-     * - subsequent request must have the same event_format
+     * - subsequent request must have the same event_format,
+     * - subsequent request must have the same include_incomplete_reassignments
      * - and the participant must not have been pruned after the active_at_offset.
      *
      * If not specified, the whole active contracts snapshot will be returned.
@@ -67,6 +65,16 @@ export interface GetActiveContractsRequest {
      * @generated from protobuf field: optional bytes stream_continuation_token = 5
      */
     streamContinuationToken?: Uint8Array
+    /**
+     * If this flag is true, the IncompleteAssigned and IncompleteUnassigned events will be included in the stream
+     * based on the specified event_format.
+     * If this flag is set to false, Incomplete Reassignments will be omitted.
+     *
+     * Optional
+     *
+     * @generated from protobuf field: bool include_incomplete_reassignments = 6
+     */
+    includeIncompleteReassignments: boolean
 }
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.GetActiveContractsPageRequest
@@ -110,7 +118,7 @@ export interface GetActiveContractsPageRequest {
      * The page token only works if subsequent requests:
      *
      * - are executed on the same participant,
-     * - use the same active_at_offset and event_format,
+     * - use the same active_at_offset, event_format and include_incomplete_reassignments,
      * - and the participant's store was not pruned to after the active_at_offset.
      *
      * If not specified, the first page of the active contracts snapshot will be returned.
@@ -120,6 +128,16 @@ export interface GetActiveContractsPageRequest {
      * @generated from protobuf field: optional bytes page_token = 4
      */
     pageToken?: Uint8Array
+    /**
+     * If this flag is true, the IncompleteAssigned and IncompleteUnassigned events will be included in the stream
+     * based on the specified event_format.
+     * If this flag is set to false, Incomplete Reassignments will be omitted.
+     *
+     * Optional
+     *
+     * @generated from protobuf field: bool include_incomplete_reassignments = 5
+     */
+    includeIncompleteReassignments: boolean
 }
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.GetActiveContractsResponse
@@ -251,11 +269,12 @@ export interface ActiveContract {
      */
     synchronizerId: string
     /**
-     * Each corresponding assigned and unassigned event has the same reassignment_counter. This strictly increases
-     * with each unassign command for the same contract. Creation of the contract corresponds to reassignment_counter
-     * equals zero.
-     * This field will be the reassignment_counter of the latest observable activation event on this synchronizer, which is
-     * before the active_at_offset.
+     * The reassignment counter of this event.
+     *
+     * Reassignment counters strictly increase with each unassign command for the same contract. Creation
+     * of the contract corresponds to a reassignment_counter equal to zero.
+     * This field will be the reassignment_counter of the latest observable activation event on this synchronizer,
+     * which is before the active_at_offset.
      *
      * Required
      *
@@ -376,7 +395,19 @@ export interface GetConnectedSynchronizersResponse_ConnectedSynchronizer {
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.GetLedgerEndRequest
  */
-export interface GetLedgerEndRequest {}
+export interface GetLedgerEndRequest {
+    /**
+     * Provide synchronizer_times for the specified synchronizers in the response.
+     * If none are specified, only offset will be present in the response.
+     * If the request includes a synchronizer for which no updates were observed, it will be omitted in the output.
+     * If the request includes a synchronizer that participant was never connected to, it will be omitted in the output.
+     *
+     * Optional: can be empty
+     *
+     * @generated from protobuf field: repeated string synchronizer_id = 1
+     */
+    synchronizerId: string[]
+}
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.GetLedgerEndResponse
  */
@@ -391,6 +422,15 @@ export interface GetLedgerEndResponse {
      * @generated from protobuf field: int64 offset = 1
      */
     offset: bigint
+    /**
+     * Final record times observed by this participant for each of the requested synchronizers.
+     * If there is no connection to a sequencer, corresponding record time can be arbitrarily far back in the past.
+     *
+     * Optional: can be empty
+     *
+     * @generated from protobuf field: repeated com.daml.ledger.api.v2.SynchronizerTime synchronizer_times = 2
+     */
+    synchronizerTimes: SynchronizerTime[]
 }
 /**
  * Empty for now, but may contain fields in the future.
@@ -426,6 +466,41 @@ export interface GetLatestPrunedOffsetsResponse {
      * @generated from protobuf field: int64 all_divulged_contracts_pruned_up_to_inclusive = 2
      */
     allDivulgedContractsPrunedUpToInclusive: bigint
+}
+/**
+ * @generated from protobuf message com.daml.ledger.api.v2.ConvertRecordTimeToOffsetRequest
+ */
+export interface ConvertRecordTimeToOffsetRequest {
+    /**
+     * The record time to be converted to an offset
+     * Required
+     *
+     * @generated from protobuf field: google.protobuf.Timestamp record_time = 1
+     */
+    recordTime?: Timestamp
+    /**
+     * The ID of the synchronizer
+     * Must be a synchronizer from which the participant had received at least one update ever.
+     *
+     * Required
+     *
+     * @generated from protobuf field: string synchronizer_id = 2
+     */
+    synchronizerId: string
+}
+/**
+ * @generated from protobuf message com.daml.ledger.api.v2.ConvertRecordTimeToOffsetResponse
+ */
+export interface ConvertRecordTimeToOffsetResponse {
+    /**
+     * The participant's offset, the details of the offset field are described in ``community/ledger-api/README.md``.
+     * Must be a valid absolute offset (positive integer).
+     *
+     * Required
+     *
+     * @generated from protobuf field: int64 offset = 1
+     */
+    offset: bigint
 }
 /**
  * Enum indicating the permission level that the participant has for the party
@@ -479,6 +554,12 @@ class GetActiveContractsRequest$Type extends MessageType<GetActiveContractsReque
                 opt: true,
                 T: 12 /*ScalarType.BYTES*/,
             },
+            {
+                no: 6,
+                name: 'include_incomplete_reassignments',
+                kind: 'scalar',
+                T: 8 /*ScalarType.BOOL*/,
+            },
         ])
     }
     create(
@@ -486,6 +567,7 @@ class GetActiveContractsRequest$Type extends MessageType<GetActiveContractsReque
     ): GetActiveContractsRequest {
         const message = globalThis.Object.create(this.messagePrototype!)
         message.activeAtOffset = 0n
+        message.includeIncompleteReassignments = false
         if (value !== undefined)
             reflectionMergePartial<GetActiveContractsRequest>(
                 this,
@@ -518,6 +600,9 @@ class GetActiveContractsRequest$Type extends MessageType<GetActiveContractsReque
                     break
                 case /* optional bytes stream_continuation_token */ 5:
                     message.streamContinuationToken = reader.bytes()
+                    break
+                case /* bool include_incomplete_reassignments */ 6:
+                    message.includeIncompleteReassignments = reader.bool()
                     break
                 default:
                     let u = options.readUnknownField
@@ -558,6 +643,11 @@ class GetActiveContractsRequest$Type extends MessageType<GetActiveContractsReque
             writer
                 .tag(5, WireType.LengthDelimited)
                 .bytes(message.streamContinuationToken)
+        /* bool include_incomplete_reassignments = 6; */
+        if (message.includeIncompleteReassignments !== false)
+            writer
+                .tag(6, WireType.Varint)
+                .bool(message.includeIncompleteReassignments)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(
@@ -604,12 +694,19 @@ class GetActiveContractsPageRequest$Type extends MessageType<GetActiveContractsP
                 opt: true,
                 T: 12 /*ScalarType.BYTES*/,
             },
+            {
+                no: 5,
+                name: 'include_incomplete_reassignments',
+                kind: 'scalar',
+                T: 8 /*ScalarType.BOOL*/,
+            },
         ])
     }
     create(
         value?: PartialMessage<GetActiveContractsPageRequest>
     ): GetActiveContractsPageRequest {
         const message = globalThis.Object.create(this.messagePrototype!)
+        message.includeIncompleteReassignments = false
         if (value !== undefined)
             reflectionMergePartial<GetActiveContractsPageRequest>(
                 this,
@@ -645,6 +742,9 @@ class GetActiveContractsPageRequest$Type extends MessageType<GetActiveContractsP
                     break
                 case /* optional bytes page_token */ 4:
                     message.pageToken = reader.bytes()
+                    break
+                case /* bool include_incomplete_reassignments */ 5:
+                    message.includeIncompleteReassignments = reader.bool()
                     break
                 default:
                     let u = options.readUnknownField
@@ -686,6 +786,11 @@ class GetActiveContractsPageRequest$Type extends MessageType<GetActiveContractsP
         /* optional bytes page_token = 4; */
         if (message.pageToken !== undefined)
             writer.tag(4, WireType.LengthDelimited).bytes(message.pageToken)
+        /* bool include_incomplete_reassignments = 5; */
+        if (message.includeIncompleteReassignments !== false)
+            writer
+                .tag(5, WireType.Varint)
+                .bool(message.includeIncompleteReassignments)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(
@@ -1617,10 +1722,19 @@ export const GetConnectedSynchronizersResponse_ConnectedSynchronizer =
 // @generated message type with reflection information, may provide speed optimized methods
 class GetLedgerEndRequest$Type extends MessageType<GetLedgerEndRequest> {
     constructor() {
-        super('com.daml.ledger.api.v2.GetLedgerEndRequest', [])
+        super('com.daml.ledger.api.v2.GetLedgerEndRequest', [
+            {
+                no: 1,
+                name: 'synchronizer_id',
+                kind: 'scalar',
+                repeat: 2 /*RepeatType.UNPACKED*/,
+                T: 9 /*ScalarType.STRING*/,
+            },
+        ])
     }
     create(value?: PartialMessage<GetLedgerEndRequest>): GetLedgerEndRequest {
         const message = globalThis.Object.create(this.messagePrototype!)
+        message.synchronizerId = []
         if (value !== undefined)
             reflectionMergePartial<GetLedgerEndRequest>(this, message, value)
         return message
@@ -1636,6 +1750,9 @@ class GetLedgerEndRequest$Type extends MessageType<GetLedgerEndRequest> {
         while (reader.pos < end) {
             let [fieldNo, wireType] = reader.tag()
             switch (fieldNo) {
+                case /* repeated string synchronizer_id */ 1:
+                    message.synchronizerId.push(reader.string())
+                    break
                 default:
                     let u = options.readUnknownField
                     if (u === 'throw')
@@ -1660,6 +1777,11 @@ class GetLedgerEndRequest$Type extends MessageType<GetLedgerEndRequest> {
         writer: IBinaryWriter,
         options: BinaryWriteOptions
     ): IBinaryWriter {
+        /* repeated string synchronizer_id = 1; */
+        for (let i = 0; i < message.synchronizerId.length; i++)
+            writer
+                .tag(1, WireType.LengthDelimited)
+                .string(message.synchronizerId[i])
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(
@@ -1685,11 +1807,19 @@ class GetLedgerEndResponse$Type extends MessageType<GetLedgerEndResponse> {
                 T: 3 /*ScalarType.INT64*/,
                 L: 0 /*LongType.BIGINT*/,
             },
+            {
+                no: 2,
+                name: 'synchronizer_times',
+                kind: 'message',
+                repeat: 2 /*RepeatType.UNPACKED*/,
+                T: () => SynchronizerTime,
+            },
         ])
     }
     create(value?: PartialMessage<GetLedgerEndResponse>): GetLedgerEndResponse {
         const message = globalThis.Object.create(this.messagePrototype!)
         message.offset = 0n
+        message.synchronizerTimes = []
         if (value !== undefined)
             reflectionMergePartial<GetLedgerEndResponse>(this, message, value)
         return message
@@ -1707,6 +1837,15 @@ class GetLedgerEndResponse$Type extends MessageType<GetLedgerEndResponse> {
             switch (fieldNo) {
                 case /* int64 offset */ 1:
                     message.offset = reader.int64().toBigInt()
+                    break
+                case /* repeated com.daml.ledger.api.v2.SynchronizerTime synchronizer_times */ 2:
+                    message.synchronizerTimes.push(
+                        SynchronizerTime.internalBinaryRead(
+                            reader,
+                            reader.uint32(),
+                            options
+                        )
+                    )
                     break
                 default:
                     let u = options.readUnknownField
@@ -1735,6 +1874,13 @@ class GetLedgerEndResponse$Type extends MessageType<GetLedgerEndResponse> {
         /* int64 offset = 1; */
         if (message.offset !== 0n)
             writer.tag(1, WireType.Varint).int64(message.offset)
+        /* repeated com.daml.ledger.api.v2.SynchronizerTime synchronizer_times = 2; */
+        for (let i = 0; i < message.synchronizerTimes.length; i++)
+            SynchronizerTime.internalBinaryWrite(
+                message.synchronizerTimes[i],
+                writer.tag(2, WireType.LengthDelimited).fork(),
+                options
+            ).join()
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(
@@ -1920,6 +2066,187 @@ class GetLatestPrunedOffsetsResponse$Type extends MessageType<GetLatestPrunedOff
  */
 export const GetLatestPrunedOffsetsResponse =
     new GetLatestPrunedOffsetsResponse$Type()
+// @generated message type with reflection information, may provide speed optimized methods
+class ConvertRecordTimeToOffsetRequest$Type extends MessageType<ConvertRecordTimeToOffsetRequest> {
+    constructor() {
+        super('com.daml.ledger.api.v2.ConvertRecordTimeToOffsetRequest', [
+            { no: 1, name: 'record_time', kind: 'message', T: () => Timestamp },
+            {
+                no: 2,
+                name: 'synchronizer_id',
+                kind: 'scalar',
+                T: 9 /*ScalarType.STRING*/,
+            },
+        ])
+    }
+    create(
+        value?: PartialMessage<ConvertRecordTimeToOffsetRequest>
+    ): ConvertRecordTimeToOffsetRequest {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.synchronizerId = ''
+        if (value !== undefined)
+            reflectionMergePartial<ConvertRecordTimeToOffsetRequest>(
+                this,
+                message,
+                value
+            )
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: ConvertRecordTimeToOffsetRequest
+    ): ConvertRecordTimeToOffsetRequest {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* google.protobuf.Timestamp record_time */ 1:
+                    message.recordTime = Timestamp.internalBinaryRead(
+                        reader,
+                        reader.uint32(),
+                        options,
+                        message.recordTime
+                    )
+                    break
+                case /* string synchronizer_id */ 2:
+                    message.synchronizerId = reader.string()
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: ConvertRecordTimeToOffsetRequest,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* google.protobuf.Timestamp record_time = 1; */
+        if (message.recordTime)
+            Timestamp.internalBinaryWrite(
+                message.recordTime,
+                writer.tag(1, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        /* string synchronizer_id = 2; */
+        if (message.synchronizerId !== '')
+            writer
+                .tag(2, WireType.LengthDelimited)
+                .string(message.synchronizerId)
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.ConvertRecordTimeToOffsetRequest
+ */
+export const ConvertRecordTimeToOffsetRequest =
+    new ConvertRecordTimeToOffsetRequest$Type()
+// @generated message type with reflection information, may provide speed optimized methods
+class ConvertRecordTimeToOffsetResponse$Type extends MessageType<ConvertRecordTimeToOffsetResponse> {
+    constructor() {
+        super('com.daml.ledger.api.v2.ConvertRecordTimeToOffsetResponse', [
+            {
+                no: 1,
+                name: 'offset',
+                kind: 'scalar',
+                T: 3 /*ScalarType.INT64*/,
+                L: 0 /*LongType.BIGINT*/,
+            },
+        ])
+    }
+    create(
+        value?: PartialMessage<ConvertRecordTimeToOffsetResponse>
+    ): ConvertRecordTimeToOffsetResponse {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.offset = 0n
+        if (value !== undefined)
+            reflectionMergePartial<ConvertRecordTimeToOffsetResponse>(
+                this,
+                message,
+                value
+            )
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: ConvertRecordTimeToOffsetResponse
+    ): ConvertRecordTimeToOffsetResponse {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* int64 offset */ 1:
+                    message.offset = reader.int64().toBigInt()
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: ConvertRecordTimeToOffsetResponse,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* int64 offset = 1; */
+        if (message.offset !== 0n)
+            writer.tag(1, WireType.Varint).int64(message.offset)
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.ConvertRecordTimeToOffsetResponse
+ */
+export const ConvertRecordTimeToOffsetResponse =
+    new ConvertRecordTimeToOffsetResponse$Type()
 /**
  * @generated ServiceType for protobuf service com.daml.ledger.api.v2.StateService
  */
@@ -1956,6 +2283,12 @@ export const StateService = new ServiceType(
             options: {},
             I: GetLatestPrunedOffsetsRequest,
             O: GetLatestPrunedOffsetsResponse,
+        },
+        {
+            name: 'ConvertRecordTimeToOffset',
+            options: {},
+            I: ConvertRecordTimeToOffsetRequest,
+            O: ConvertRecordTimeToOffsetResponse,
         },
     ]
 )

@@ -143,6 +143,23 @@ export interface UnassignCommand {
      * @generated from protobuf field: string target = 3
      */
     target: string
+    /**
+     * The package id used to validate the contract on the source synchronizer.
+     *
+     * Optional
+     *
+     * @generated from protobuf field: optional string override_source_validation_package_id = 4
+     */
+    overrideSourceValidationPackageId?: string
+    /**
+     * The package id used to validate the contract on the target synchronizer. This
+     * package id will also become the representative package id used in the created event.
+     *
+     * Optional
+     *
+     * @generated from protobuf field: optional string override_target_validation_package_id = 5
+     */
+    overrideTargetValidationPackageId?: string
 }
 /**
  * Assign a contract
@@ -462,6 +479,20 @@ class UnassignCommand$Type extends MessageType<UnassignCommand> {
                 kind: 'scalar',
                 T: 9 /*ScalarType.STRING*/,
             },
+            {
+                no: 4,
+                name: 'override_source_validation_package_id',
+                kind: 'scalar',
+                opt: true,
+                T: 9 /*ScalarType.STRING*/,
+            },
+            {
+                no: 5,
+                name: 'override_target_validation_package_id',
+                kind: 'scalar',
+                opt: true,
+                T: 9 /*ScalarType.STRING*/,
+            },
         ])
     }
     create(value?: PartialMessage<UnassignCommand>): UnassignCommand {
@@ -492,6 +523,12 @@ class UnassignCommand$Type extends MessageType<UnassignCommand> {
                     break
                 case /* string target */ 3:
                     message.target = reader.string()
+                    break
+                case /* optional string override_source_validation_package_id */ 4:
+                    message.overrideSourceValidationPackageId = reader.string()
+                    break
+                case /* optional string override_target_validation_package_id */ 5:
+                    message.overrideTargetValidationPackageId = reader.string()
                     break
                 default:
                     let u = options.readUnknownField
@@ -526,6 +563,16 @@ class UnassignCommand$Type extends MessageType<UnassignCommand> {
         /* string target = 3; */
         if (message.target !== '')
             writer.tag(3, WireType.LengthDelimited).string(message.target)
+        /* optional string override_source_validation_package_id = 4; */
+        if (message.overrideSourceValidationPackageId !== undefined)
+            writer
+                .tag(4, WireType.LengthDelimited)
+                .string(message.overrideSourceValidationPackageId)
+        /* optional string override_target_validation_package_id = 5; */
+        if (message.overrideTargetValidationPackageId !== undefined)
+            writer
+                .tag(5, WireType.LengthDelimited)
+                .string(message.overrideTargetValidationPackageId)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(

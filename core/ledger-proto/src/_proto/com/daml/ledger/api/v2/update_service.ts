@@ -154,6 +154,27 @@ export interface GetUpdateByIdRequest {
     updateFormat?: UpdateFormat
 }
 /**
+ * @generated from protobuf message com.daml.ledger.api.v2.GetUpdateByHashRequest
+ */
+export interface GetUpdateByHashRequest {
+    /**
+     * The transaction hash to look up.
+     *
+     * Required: must be non-empty
+     *
+     * @generated from protobuf field: bytes transaction_hash = 1
+     */
+    transactionHash: Uint8Array
+    /**
+     * The format for the update.
+     *
+     * Required
+     *
+     * @generated from protobuf field: com.daml.ledger.api.v2.UpdateFormat update_format = 2
+     */
+    updateFormat?: UpdateFormat
+}
+/**
  * @generated from protobuf message com.daml.ledger.api.v2.GetUpdateResponse
  */
 export interface GetUpdateResponse {
@@ -785,6 +806,105 @@ class GetUpdateByIdRequest$Type extends MessageType<GetUpdateByIdRequest> {
  */
 export const GetUpdateByIdRequest = new GetUpdateByIdRequest$Type()
 // @generated message type with reflection information, may provide speed optimized methods
+class GetUpdateByHashRequest$Type extends MessageType<GetUpdateByHashRequest> {
+    constructor() {
+        super('com.daml.ledger.api.v2.GetUpdateByHashRequest', [
+            {
+                no: 1,
+                name: 'transaction_hash',
+                kind: 'scalar',
+                T: 12 /*ScalarType.BYTES*/,
+            },
+            {
+                no: 2,
+                name: 'update_format',
+                kind: 'message',
+                T: () => UpdateFormat,
+            },
+        ])
+    }
+    create(
+        value?: PartialMessage<GetUpdateByHashRequest>
+    ): GetUpdateByHashRequest {
+        const message = globalThis.Object.create(this.messagePrototype!)
+        message.transactionHash = new Uint8Array(0)
+        if (value !== undefined)
+            reflectionMergePartial<GetUpdateByHashRequest>(this, message, value)
+        return message
+    }
+    internalBinaryRead(
+        reader: IBinaryReader,
+        length: number,
+        options: BinaryReadOptions,
+        target?: GetUpdateByHashRequest
+    ): GetUpdateByHashRequest {
+        let message = target ?? this.create(),
+            end = reader.pos + length
+        while (reader.pos < end) {
+            let [fieldNo, wireType] = reader.tag()
+            switch (fieldNo) {
+                case /* bytes transaction_hash */ 1:
+                    message.transactionHash = reader.bytes()
+                    break
+                case /* com.daml.ledger.api.v2.UpdateFormat update_format */ 2:
+                    message.updateFormat = UpdateFormat.internalBinaryRead(
+                        reader,
+                        reader.uint32(),
+                        options,
+                        message.updateFormat
+                    )
+                    break
+                default:
+                    let u = options.readUnknownField
+                    if (u === 'throw')
+                        throw new globalThis.Error(
+                            `Unknown field ${fieldNo} (wire type ${wireType}) for ${this.typeName}`
+                        )
+                    let d = reader.skip(wireType)
+                    if (u !== false)
+                        (u === true ? UnknownFieldHandler.onRead : u)(
+                            this.typeName,
+                            message,
+                            fieldNo,
+                            wireType,
+                            d
+                        )
+            }
+        }
+        return message
+    }
+    internalBinaryWrite(
+        message: GetUpdateByHashRequest,
+        writer: IBinaryWriter,
+        options: BinaryWriteOptions
+    ): IBinaryWriter {
+        /* bytes transaction_hash = 1; */
+        if (message.transactionHash.length)
+            writer
+                .tag(1, WireType.LengthDelimited)
+                .bytes(message.transactionHash)
+        /* com.daml.ledger.api.v2.UpdateFormat update_format = 2; */
+        if (message.updateFormat)
+            UpdateFormat.internalBinaryWrite(
+                message.updateFormat,
+                writer.tag(2, WireType.LengthDelimited).fork(),
+                options
+            ).join()
+        let u = options.writeUnknownFields
+        if (u !== false)
+            (u == true ? UnknownFieldHandler.onWrite : u)(
+                this.typeName,
+                message,
+                writer
+            )
+        return writer
+    }
+}
+/**
+ * @generated MessageType for protobuf message com.daml.ledger.api.v2.GetUpdateByHashRequest
+ */
+export const GetUpdateByHashRequest = new GetUpdateByHashRequest$Type()
+// @generated message type with reflection information, may provide speed optimized methods
 class GetUpdateResponse$Type extends MessageType<GetUpdateResponse> {
     constructor() {
         super('com.daml.ledger.api.v2.GetUpdateResponse', [
@@ -1232,6 +1352,12 @@ export const UpdateService = new ServiceType(
             name: 'GetUpdateById',
             options: {},
             I: GetUpdateByIdRequest,
+            O: GetUpdateResponse,
+        },
+        {
+            name: 'GetUpdateByHash',
+            options: {},
+            I: GetUpdateByHashRequest,
             O: GetUpdateResponse,
         },
         {

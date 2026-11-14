@@ -4,8 +4,10 @@
 import {
     HashingSchemeVersion,
     PreparedTransaction,
-    TopologyTransaction,
+    UntypedVersionedMessage,
     decodeUnknownFields,
+    v30_topology,
+    v31_topology,
 } from '@canton-network/core-ledger-proto'
 import {
     computePreparedTransactionHash,
@@ -62,19 +64,58 @@ export const decodePreparedTransaction = (
     return PreparedTransaction.fromBinary(bytes, toReadOptions(options))
 }
 
+/** A decoded topology transaction, tagged with its proto version */
+export type VersionedTopologyTransaction =
+    | { version: 30; transaction: v30_topology.TopologyTransaction }
+    | { version: 31; transaction: v31_topology.TopologyTransaction }
+
 /**
  * Decodes a base64 encoded topology transaction into a well-typed data model, generated directly from Protobuf definitions.
  *
- * @param topologyTx - The topology transaction in base64 format
+ * @param topologyTx - The topology transaction in base64 format, as the Ledger API returns it:
+ *   an `UntypedVersionedMessage` that wraps the serialized `TopologyTransaction` with its proto version
  * @param options - Decode options, e.g. `{ readUnknownField: 'throw' }` to reject unknown fields
- * @returns The decoded topology transaction
+ * @returns The decoded topology transaction with its proto version
+ * @throws if the transaction is not wrapped or has a proto version other than 30 or 31
  */
 export const decodeTopologyTransaction = (
     topologyTx: string,
     options?: DecodeOptions
-): TopologyTransaction => {
-    const bytes = fromBase64(topologyTx)
-    return TopologyTransaction.fromBinary(bytes, toReadOptions(options))
+): VersionedTopologyTransaction => {
+    const readOptions = toReadOptions(options)
+    const message = UntypedVersionedMessage.fromBinary(
+        fromBase64(topologyTx),
+        readOptions
+    )
+    switch (message.version) {
+        case 30:
+            return {
+                version: 30,
+                transaction: v30_topology.TopologyTransaction.fromBinary(
+                    dataOf(message),
+                    readOptions
+                ),
+            }
+        case 31:
+            return {
+                version: 31,
+                transaction: v31_topology.TopologyTransaction.fromBinary(
+                    dataOf(message),
+                    readOptions
+                ),
+            }
+        default:
+            throw new Error(
+                `Unsupported topology transaction proto version ${message.version}, expected 30 or 31`
+            )
+    }
+}
+
+const dataOf = ({ wrapper }: Pick<UntypedVersionedMessage, 'wrapper'>) => {
+    if (wrapper.oneofKind !== 'data') {
+        throw new Error('Topology transaction without data')
+    }
+    return wrapper.data
 }
 
 /**
