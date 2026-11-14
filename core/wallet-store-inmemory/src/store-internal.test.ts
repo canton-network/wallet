@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, test } from 'vitest'
+import { createHash } from 'node:crypto'
 
 import { StoreInternal, type StoreInternalConfig } from './store-internal'
 import {
@@ -507,8 +508,12 @@ implementations.forEach(([name, StoreImpl]) => {
             const result = await store.getSession('test-access-token')
             expect(result).toEqual({
                 ...session,
+                accessToken: sha256Hex('test-access-token'),
                 userId: authContextMock.userId,
             })
+            await expect(
+                store.getSession(sha256Hex('test-access-token'))
+            ).resolves.toBeUndefined()
             await store.removeSession('test-access-token')
             const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
@@ -621,16 +626,38 @@ implementations.forEach(([name, StoreImpl]) => {
                 network: 'network1',
             })
             await expect(store.listSessions()).resolves.toHaveLength(2)
+            const signedMessage: MessageRaw = {
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: 'header.payload',
+                signature: 'sig',
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            }
+            await store.setMessageRaw(signedMessage)
+            await store.setMessageRaw({ ...signedMessage, id: 'other' })
 
             await store.upgradeSelfIssuedLoginSession(
                 'onboarding-session',
-                'new-token'
+                'new-token',
+                'login-message'
+            )
+            // The signed message is the raw token, so it goes with the upgrade
+            await expect(
+                store.getMessageRaw('login-message')
+            ).resolves.toBeUndefined()
+            await expect(store.getMessageRaw('other')).resolves.toEqual(
+                expect.objectContaining({ id: 'other' })
             )
 
             await expect(store.listSessions()).resolves.toEqual([
                 expect.objectContaining({
                     id: 'onboarding-session',
-                    accessToken: 'new-token',
+                    accessToken: sha256Hex('new-token'),
                 }),
             ])
             await expect(store.getSession('new-token')).resolves.toEqual(
@@ -639,7 +666,8 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(
                 store.upgradeSelfIssuedLoginSession(
                     'onboarding-session',
-                    'other'
+                    'other',
+                    'login-message'
                 )
             ).rejects.toThrow('Self-issued login session not found')
         })
@@ -1219,6 +1247,17 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(stored?.signature).toBe('sig')
             expect(await store.listMessageRaws('regular')).toHaveLength(1)
 
+            await store.setMessageRawStatus('msg-1', 'failed', {
+                failureReason: 'rejected',
+                signature: null,
+            })
+            const failed = await store.getMessageRaw('msg-1')
+            expect(failed?.signature).toBeUndefined()
+            expect(failed?.signedAt).toEqual(
+                new Date('2026-01-01T00:01:00.000Z')
+            )
+            expect(failed?.failureReason).toBe('rejected')
+
             await expect(
                 store.setMessageRaw({ ...message, userId: 'other-user' })
             ).rejects.toThrow('userId mismatch')
@@ -1451,3 +1490,7 @@ implementations.forEach(([name, StoreImpl]) => {
         })
     })
 })
+
+function sha256Hex(value: string): string {
+    return createHash('sha256').update(value, 'utf8').digest('hex')
+}

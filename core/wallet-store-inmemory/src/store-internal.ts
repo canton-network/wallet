@@ -30,6 +30,7 @@ import type {
 } from '@canton-network/core-wallet-store'
 import {
     assertUniqueSelfIssuedAudience,
+    hashAccessToken,
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
@@ -309,8 +310,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     // Session methods
     async getSession(accessToken: AccessToken): Promise<Session | undefined> {
+        const tokenHash = await hashAccessToken(accessToken)
         return Array.from(this.getStorage().sessions.values()).find(
-            (session) => session.accessToken === accessToken
+            (session) => session.accessToken === tokenHash
         )
     }
 
@@ -320,8 +322,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async setSession(session: Session): Promise<void> {
         const userId = this.assertConnected()
+        const { accessToken, ...rest } = session
+        const tokenHash = accessToken
+            ? await hashAccessToken(accessToken)
+            : undefined
         const storage = this.getStorage()
-        if (session.accessToken) {
+        if (tokenHash) {
             for (const [id, existingSession] of storage.sessions) {
                 if (
                     existingSession.origin === session.origin &&
@@ -331,14 +337,19 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                 }
             }
         }
-        storage.sessions.set(session.id, { ...session, userId })
+        storage.sessions.set(session.id, {
+            ...rest,
+            ...(tokenHash ? { accessToken: tokenHash } : {}),
+            userId,
+        })
         this.updateStorage(storage)
     }
 
     async removeSession(accessToken: AccessToken): Promise<void> {
+        const tokenHash = await hashAccessToken(accessToken)
         const storage = this.getStorage()
         for (const [id, session] of storage.sessions) {
-            if (session.accessToken === accessToken) {
+            if (session.accessToken === tokenHash) {
                 storage.sessions.delete(id)
             }
         }
@@ -359,8 +370,10 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async upgradeSelfIssuedLoginSession(
         sessionId: string,
-        accessToken: AccessToken
+        accessToken: AccessToken,
+        signedMessageId: string
     ): Promise<Session> {
+        const tokenHash = await hashAccessToken(accessToken)
         const storage = this.getStorage()
         const selfIssuedLoginSession = storage.sessions.get(sessionId)
         if (!selfIssuedLoginSession || selfIssuedLoginSession.accessToken) {
@@ -375,8 +388,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                 storage.sessions.delete(id)
             }
         }
-        const upgraded = { ...selfIssuedLoginSession, accessToken }
+        const upgraded = { ...selfIssuedLoginSession, accessToken: tokenHash }
         storage.sessions.set(sessionId, upgraded)
+        storage.messageRaws.delete(signedMessageId)
         this.updateStorage(storage)
         return upgraded
     }
@@ -437,10 +451,13 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const context = this.authContext
         const selfIssuedLoginSessionId =
             context && !context.isApiKey ? context.sessionId : undefined
+        const tokenHash = context?.accessToken
+            ? await hashAccessToken(context.accessToken)
+            : undefined
         const sessions = this.getStorage().sessions
-        const session = context?.accessToken
+        const session = tokenHash
             ? Array.from(sessions.values()).find(
-                  (s) => s.accessToken === context.accessToken
+                  (s) => s.accessToken === tokenHash
               )
             : selfIssuedLoginSessionId
               ? sessions.get(selfIssuedLoginSessionId)
@@ -698,12 +715,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         updates: MessageRawStatusUpdate = {}
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
-        const signature = updates.signature ?? existing.signature
+        const signature =
+            updates.signature === null
+                ? undefined
+                : (updates.signature ?? existing.signature)
         const externalTxId = updates.externalTxId ?? existing.externalTxId
         const failureReason = updates.failureReason ?? existing.failureReason
+        const { signature: _previousSignature, ...rest } = existing
 
         return {
-            ...existing,
+            ...rest,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),

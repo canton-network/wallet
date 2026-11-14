@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Idp, UserId } from '@canton-network/core-wallet-auth'
-import type {
-    MessageRaw,
-    Network,
-    Session,
-    Transaction,
-    UserLevelRight,
-    Wallet,
+import {
+    hashAccessToken,
+    type MessageRaw,
+    type Network,
+    type Session,
+    type Transaction,
+    type UserLevelRight,
+    type Wallet,
 } from '@canton-network/core-wallet-store'
 import type {
     Memory,
@@ -30,14 +31,18 @@ type MessageRawJson = Omit<MessageRaw, 'createdAt' | 'signedAt'> & {
 /**
  * A `StoreInternal`'s `config` and `memory` in a form that survives JSON.
  * Maps and Sets become arrays or records, and Dates become ISO strings. The
- * `V1` suffix follows the naming in `vault/envelope.ts`.
+ * `V2` suffix follows the naming in `vault/envelope.ts`.
  *
  * Snapshots outlive the build that wrote them, so the decoder checks
  * `version` first. Bump it when core changes Wallet, Session, Transaction,
- * MessageRaw, Network or Idp in a way that old snapshots don't satisfy.
+ * MessageRaw, Network or Idp in a way that old snapshots don't satisfy, and
+ * teach `upgradeSnapshot` to bring the old version forward.
+ *
+ * Version 2: sessions hold the SHA-256 digest of the access token. Version 1
+ * held the raw token.
  */
-export interface SnapshotV1 {
-    version: 1
+export interface SnapshotV2 {
+    version: 2
     config: { idps: Idp[]; networks: Network[] }
     users: Record<
         UserId,
@@ -58,12 +63,58 @@ export class CorruptSnapshotError extends Error {
     }
 }
 
+// A raw token is a JWT and always contains dots, so a value of this form has
+// already been hashed.
+const SHA256_HEX = /^[0-9a-f]{64}$/
+
+/**
+ * Brings an older snapshot up to the current version, so `decodeSnapshot`
+ * only has to read one. `upgraded` tells the caller to save the result, which
+ * replaces the raw tokens in storage. Anything it doesn't recognise is
+ * returned as is, for `decodeSnapshot` to reject.
+ */
+export async function upgradeSnapshot(
+    raw: unknown
+): Promise<{ snapshot: unknown; upgraded: boolean }> {
+    if (!isRecord(raw) || raw.version !== 1 || !isRecord(raw.users)) {
+        return { snapshot: raw, upgraded: false }
+    }
+    const users: Record<string, unknown> = {}
+    for (const [userId, user] of Object.entries(raw.users)) {
+        users[userId] =
+            isRecord(user) && Array.isArray(user.sessions)
+                ? {
+                      ...user,
+                      sessions: await Promise.all(
+                          user.sessions.map(hashSessionToken)
+                      ),
+                  }
+                : user
+    }
+    return { snapshot: { ...raw, version: 2, users }, upgraded: true }
+}
+
+async function hashSessionToken(session: unknown): Promise<unknown> {
+    if (
+        !isRecord(session) ||
+        typeof session.accessToken !== 'string' ||
+        !session.accessToken ||
+        SHA256_HEX.test(session.accessToken)
+    ) {
+        return session
+    }
+    return {
+        ...session,
+        accessToken: await hashAccessToken(session.accessToken),
+    }
+}
+
 export function encodeSnapshot(
     config: StoreInternalConfig,
     memory: Memory
-): SnapshotV1 {
+): SnapshotV2 {
     return {
-        version: 1,
+        version: 2,
         config: { idps: config.idps, networks: config.networks },
         users: Object.fromEntries(
             Array.from(memory, ([userId, storage]) => [
@@ -100,7 +151,7 @@ export function decodeSnapshot(raw: unknown): {
     config: StoreInternalConfig
     memory: Memory
 } {
-    if (!isRecord(raw) || raw.version !== 1) {
+    if (!isRecord(raw) || raw.version !== 2) {
         throw new CorruptSnapshotError(
             'The wallet store snapshot has an unknown version.'
         )

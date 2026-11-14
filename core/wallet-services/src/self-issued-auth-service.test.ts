@@ -785,7 +785,7 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
         })
@@ -896,7 +896,8 @@ describe('SelfIssuedAuthService', () => {
             expect(probeGet).toHaveBeenCalledWith('/v2/authenticated-user')
             expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledWith(
                 'onboarding-session',
-                accessToken
+                accessToken,
+                'login-message'
             )
             expect(result).toMatchObject({
                 status: 'connected',
@@ -991,7 +992,7 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(probeGet).not.toHaveBeenCalled()
@@ -1026,7 +1027,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession
@@ -1047,7 +1051,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession

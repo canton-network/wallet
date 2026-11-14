@@ -6,6 +6,7 @@ import type {
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
+import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { fakeAuthContext } from '@/__tests__/fake-auth-context'
@@ -93,6 +94,46 @@ describe('createWalletStore', () => {
         vi.restoreAllMocks()
     })
 
+    it('hashes the raw tokens of a version 1 snapshot and saves it before use', async () => {
+        const vault = await createdVault()
+        // Written by a build that stored raw tokens
+        const legacy = {
+            version: 1,
+            config: { idps: [], networks: [] },
+            users: {
+                [CONTEXT.userId]: {
+                    wallets: [],
+                    sessions: [SESSION],
+                    transactions: [],
+                    messageRaws: [],
+                    userRightsByNetwork: {},
+                },
+            },
+        }
+        await vault
+            .defineItem<unknown>('walletStore', { fallback: null })
+            .setValue(legacy)
+
+        const store = (await createWalletStore(vault).get()).withAuthContext(
+            CONTEXT
+        )
+
+        const digest = createHash('sha256')
+            .update(CONTEXT.accessToken)
+            .digest('hex')
+        expect(await snapshotIn(vault)).toMatchObject({
+            version: 2,
+            users: {
+                [CONTEXT.userId]: {
+                    sessions: [{ ...SESSION, accessToken: digest }],
+                },
+            },
+        })
+        expect(await store.getSession(CONTEXT.accessToken)).toEqual(
+            expect.objectContaining({ id: SESSION.id })
+        )
+    })
+
     it('returns the same data after a worker restart', async () => {
         const vault = await createdVault()
         const store = (await createWalletStore(vault).get()).withAuthContext(
@@ -111,6 +152,10 @@ describe('createWalletStore', () => {
 
         expect(await reread.getSession(CONTEXT.accessToken)).toEqual({
             ...SESSION,
+            // The store keeps only the SHA-256 digest of the token
+            accessToken: createHash('sha256')
+                .update(CONTEXT.accessToken)
+                .digest('hex'),
             userId: CONTEXT.userId,
         })
         expect(await reread.getWallets()).toEqual([wallet()])

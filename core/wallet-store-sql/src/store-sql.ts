@@ -33,6 +33,7 @@ import type {
 } from '@canton-network/core-wallet-store'
 import {
     assertUniqueSelfIssuedAudience,
+    hashAccessToken,
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
 import {
@@ -475,13 +476,14 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     // Session methods
     async getSession(accessToken: AccessToken): Promise<Session | undefined> {
         const userId = this.assertConnected()
+        const tokenHash = await hashAccessToken(accessToken)
         const row = await this.db
             .selectFrom('sessions')
             .selectAll()
             .where((eb) =>
                 eb.and([
                     eb('userId', '=', userId),
-                    eb('accessToken', '=', accessToken),
+                    eb('accessToken', '=', tokenHash),
                 ])
             )
             .executeTakeFirst()
@@ -505,6 +507,9 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         if (!session.origin) {
             throw new Error('Session origin is required')
         }
+        const tokenHash = session.accessToken
+            ? await hashAccessToken(session.accessToken)
+            : null
 
         await this.db.transaction().execute(async (trx) => {
             if (session.accessToken) {
@@ -527,7 +532,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .insertInto('sessions')
                 .values({
                     ...session,
-                    accessToken: session.accessToken ?? null,
+                    accessToken: tokenHash,
                     userId,
                 })
                 .execute()
@@ -560,9 +565,11 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     async upgradeSelfIssuedLoginSession(
         sessionId: string,
-        accessToken: AccessToken
+        accessToken: AccessToken,
+        signedMessageId: string
     ): Promise<Session> {
         const userId = this.assertConnected()
+        const tokenHash = await hashAccessToken(accessToken)
 
         return this.db.transaction().execute(async (trx) => {
             const row = await trx
@@ -584,22 +591,29 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .execute()
             await trx
                 .updateTable('sessions')
-                .set({ accessToken })
+                .set({ accessToken: tokenHash })
                 .where('id', '=', sessionId)
                 .execute()
+            await trx
+                .deleteFrom('messagesRaw')
+                .where('id', '=', signedMessageId)
+                .where('userId', '=', userId)
+                .where('networkId', '=', row.network)
+                .execute()
 
-            return toSession({ ...row, accessToken })
+            return toSession({ ...row, accessToken: tokenHash })
         })
     }
 
     async removeSession(accessToken: string): Promise<void> {
         const userId = this.assertConnected()
+        const tokenHash = await hashAccessToken(accessToken)
         await this.db
             .deleteFrom('sessions')
             .where((eb) =>
                 eb.and([
                     eb('userId', '=', userId),
-                    eb('accessToken', '=', accessToken),
+                    eb('accessToken', '=', tokenHash),
                 ])
             )
             .execute()
@@ -705,6 +719,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     async getCurrentNetwork(): Promise<Network> {
         const userId = this.assertConnected()
         const token = this.authContext?.accessToken
+            ? await hashAccessToken(this.authContext.accessToken)
+            : undefined
         const selfIssuedLoginSessionId =
             this.authContext && !this.authContext.isApiKey
                 ? this.authContext.sessionId
@@ -1109,12 +1125,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         updates: MessageRawStatusUpdate = {}
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
-        const signature = updates.signature ?? existing.signature
+        const signature =
+            updates.signature === null
+                ? undefined
+                : (updates.signature ?? existing.signature)
         const externalTxId = updates.externalTxId ?? existing.externalTxId
         const failureReason = updates.failureReason ?? existing.failureReason
+        const { signature: _previousSignature, ...rest } = existing
 
         return {
-            ...existing,
+            ...rest,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),

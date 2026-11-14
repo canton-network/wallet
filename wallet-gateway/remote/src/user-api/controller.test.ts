@@ -517,7 +517,11 @@ describe('userController', () => {
             })
             await store
                 .withAuthContext(loginAuth)
-                .upgradeSelfIssuedLoginSession(sessionId, 'access-token')
+                .upgradeSelfIssuedLoginSession(
+                    sessionId,
+                    'access-token',
+                    'login-message'
+                )
 
             await createController(store, notificationService, logger, {
                 ...loginAuth,
@@ -531,12 +535,7 @@ describe('userController', () => {
                         accessToken: 'access-token',
                     })
                     .getSession('access-token')
-            ).resolves.toEqual(
-                expect.objectContaining({
-                    id: sessionId,
-                    accessToken: 'access-token',
-                })
-            )
+            ).resolves.toEqual(expect.objectContaining({ id: sessionId }))
         })
     })
 

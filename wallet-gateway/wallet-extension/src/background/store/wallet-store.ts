@@ -10,7 +10,12 @@ import { type Vault, VaultLockedError } from '../vault'
 import { defaultConfig } from './default-config'
 import type { WalletStore } from './index'
 import { persistent } from './persistent-store'
-import { decodeSnapshot, encodeSnapshot, type SnapshotV1 } from './snapshot'
+import {
+    decodeSnapshot,
+    encodeSnapshot,
+    type SnapshotV2,
+    upgradeSnapshot,
+} from './snapshot'
 
 export interface WalletStoreHolder {
     /**
@@ -38,7 +43,8 @@ export function createWalletStore(
     vault: Pick<Vault, 'ready' | 'status' | 'defineItem' | 'onLock'>
 ): WalletStoreHolder {
     // Never log the snapshot. It holds access tokens and client secrets.
-    const item = vault.defineItem<SnapshotV1 | null>('walletStore', {
+    // Older builds may have stored an earlier version; see upgradeSnapshot.
+    const item = vault.defineItem<SnapshotV2 | null>('walletStore', {
         fallback: null,
     })
     let current: { instance: Instance; store: Promise<WalletStore> } | undefined
@@ -73,13 +79,19 @@ export function createWalletStore(
     }
 
     async function load(instance: Instance): Promise<WalletStore> {
-        const snapshot = await item.getValue()
+        const stored = await item.getValue()
+        const { snapshot, upgraded } = await upgradeSnapshot(stored)
         // The vault may have locked while we were reading.
         assertOpen(instance)
         const { config, memory } =
             snapshot === null
                 ? { config: defaultConfig(), memory: new Map() as Memory }
                 : decodeSnapshot(snapshot)
+        if (upgraded) {
+            // Save before the store is used, so the old form is gone for good.
+            await item.setValue(encodeSnapshot(config, memory))
+            assertOpen(instance)
+        }
         const store = new StoreInternal(config, logger, undefined, memory)
         // One queue for every withAuthContext() copy, so a snapshot never
         // includes another caller's unfinished write.

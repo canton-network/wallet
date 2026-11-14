@@ -17,11 +17,14 @@ import {
     CorruptSnapshotError,
     decodeSnapshot,
     encodeSnapshot,
-    type SnapshotV1,
+    type SnapshotV2,
+    upgradeSnapshot,
 } from './snapshot'
+import { createHash } from 'node:crypto'
 
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 const NETWORK_ID = 'canton:local-oauth'
+const DIGEST = createHash('sha256').update(CONTEXT.accessToken).digest('hex')
 
 const WALLET: Wallet = {
     primary: true,
@@ -73,7 +76,7 @@ async function filledStore() {
 
     const snapshot = JSON.parse(
         JSON.stringify(encodeSnapshot(config, memory))
-    ) as SnapshotV1
+    ) as SnapshotV2
     return { store, snapshot }
 }
 
@@ -109,17 +112,72 @@ describe('wallet store snapshot', () => {
         expect(memory.get(CONTEXT.userId)?.apiKeys).toEqual(new Map())
     })
 
+    it('upgrades a version 1 snapshot by hashing its raw session tokens', async () => {
+        const { snapshot } = await filledStore()
+        const user = snapshot.users[CONTEXT.userId]!
+        const legacy = {
+            ...snapshot,
+            version: 1,
+            users: {
+                [CONTEXT.userId]: {
+                    ...user,
+                    sessions: [
+                        // raw token, as version 1 stored it
+                        {
+                            ...user.sessions[0],
+                            accessToken: CONTEXT.accessToken,
+                        },
+                        // already a digest, left alone
+                        {
+                            ...user.sessions[0],
+                            id: 'hashed',
+                            accessToken: DIGEST,
+                        },
+                        {
+                            ...user.sessions[0],
+                            id: 'tokenless',
+                            accessToken: undefined,
+                        },
+                    ],
+                },
+            },
+        }
+
+        const { snapshot: upgraded, upgraded: changed } = await upgradeSnapshot(
+            JSON.parse(JSON.stringify(legacy))
+        )
+
+        expect(changed).toBe(true)
+        expect(
+            (upgraded as SnapshotV2).users[CONTEXT.userId]!.sessions.map(
+                (s) => s.accessToken
+            )
+        ).toEqual([DIGEST, DIGEST, undefined])
+        const { config, memory } = decodeSnapshot(upgraded)
+        const restored = new StoreInternal(config, logger, CONTEXT, memory)
+        expect((await restored.getCurrentNetwork()).id).toBe(NETWORK_ID)
+    })
+
+    it('leaves a current snapshot as it is', async () => {
+        const { snapshot } = await filledStore()
+
+        await expect(upgradeSnapshot(snapshot)).resolves.toEqual({
+            snapshot,
+            upgraded: false,
+        })
+    })
+
     it('rejects an unknown version', async () => {
         const { snapshot } = await filledStore()
 
-        expect(() => decodeSnapshot({ ...snapshot, version: 2 })).toThrow(
+        expect(() => decodeSnapshot({ ...snapshot, version: 3 })).toThrow(
             CorruptSnapshotError
         )
     })
 
     it('rejects a snapshot without users', async () => {
         const { snapshot } = await filledStore()
-        const withoutUsers: Partial<SnapshotV1> = { ...snapshot }
+        const withoutUsers: Partial<SnapshotV2> = { ...snapshot }
         delete withoutUsers.users
 
         expect(() => decodeSnapshot(withoutUsers)).toThrow(CorruptSnapshotError)
