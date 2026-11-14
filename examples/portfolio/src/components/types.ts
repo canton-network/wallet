@@ -8,15 +8,20 @@ import type {
     TransferLeg,
 } from '@canton-network/core-token-standard'
 import type {
+    AllocationSpecification,
+    AllocationView as AllocationViewV2,
+    SettlementInfo as SettlementInfoV2,
     Account,
     TransferInstructionView as TransferInstructionViewV2,
+    AllocationRequestView as AllocationRequestViewV2,
+    AllocationInstructionView as AllocationInstructionViewV2,
+    AllocationInstruction,
 } from '@canton-network/core-token-standard-v2'
 import type { TokenStandardVersion } from '../types/instruments'
 
 interface ActionItemBase {
     contractId: string
     currentPartyId: string
-    expiry: string
 }
 
 export interface TransferActionItem extends ActionItemBase {
@@ -33,6 +38,7 @@ export interface TransferActionItem extends ActionItemBase {
     senderAccount?: Account
     receiverAccount?: Account
     availableActions?: TransferInstructionViewV2['availableActions']
+    expiry: string
 }
 
 export interface TransferLegWithAllocation {
@@ -46,6 +52,53 @@ export interface AllocationActionItem extends ActionItemBase {
     kind: 'allocation'
     settlement: SettlementInfo
     transferLegs: TransferLegWithAllocation[]
+    expiry: string
 }
 
-export type ActionItem = TransferActionItem | AllocationActionItem
+export type ActionItem =
+    | TransferActionItem
+    | AllocationActionItem
+    | AllocationRequestV2ActionItem
+    | AllocationV2ActionItem
+    | AllocationInstructionV2ActionItem
+
+export interface AllocationRequestV2ActionItem extends ActionItemBase {
+    kind: 'allocation-request-v2'
+    versions: TokenStandardVersion[]
+    settlement: SettlementInfoV2
+    requestedAt: string
+    settleAt: string | null
+    ownSpecs: AllocationSpecification[]
+    allSpecs: AllocationSpecification[]
+    availableActions: AllocationRequestViewV2['availableActions']
+    meta: AllocationRequestViewV2['meta']
+    expiry: string | null
+    request: PrettyContract<AllocationRequestViewV2>
+}
+
+export interface AllocationV2ActionItem extends ActionItemBase {
+    kind: 'allocation-v2'
+    versions: TokenStandardVersion[]
+    settlement: SettlementInfoV2
+    allocation: AllocationSpecification
+    holdingCids: string[]
+    createdAt: string
+    expiresAt: string | null
+    numIterations: number
+    availableActions: AllocationViewV2['availableActions']
+    meta: AllocationViewV2['meta']
+    expiry: string | null
+}
+
+export interface AllocationInstructionV2ActionItem extends ActionItemBase {
+    kind: 'allocation-instruction-v2'
+    versions: TokenStandardVersion[]
+    settlement: SettlementInfoV2
+    originalInstructionCid: string | null
+    allocation: AllocationSpecification
+    requestedAt: string
+    expiresAt: string | null
+    availableActions: AllocationInstructionViewV2['availableActions']
+    meta: AllocationInstruction['meta']
+    expiry: string | null
+}

@@ -8,6 +8,7 @@ import {
     getTransactionDisplay,
     type TransactionHistoryEntry,
     type BalanceEffect,
+    formatDisplayAmount,
 } from './transaction-history-utils'
 
 interface TransactionHistoryRowProps {
@@ -35,12 +36,7 @@ export function TransactionHistoryRow({
 }: TransactionHistoryRowProps) {
     const display = getTransactionDisplay(entry, walletId)
     const amountColor = AMOUNT_COLOR[display.balanceEffect]
-    const amountPrefix =
-        display.direction === 'received'
-            ? '+'
-            : display.direction === 'sent'
-              ? '-'
-              : ''
+    const amount = formatDisplayAmount(display)
 
     return (
         <TableRow
@@ -86,7 +82,7 @@ export function TransactionHistoryRow({
                         whiteSpace: 'nowrap',
                     }}
                 >
-                    {display.amount ? `${amountPrefix}${display.amount}` : '—'}
+                    {amount ?? '—'}
                 </Typography>
             </TableCell>
 

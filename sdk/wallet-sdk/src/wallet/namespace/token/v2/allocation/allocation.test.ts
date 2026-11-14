@@ -145,7 +145,11 @@ describe('allocation namespace', () => {
     it('waits for the receiver side when only the sender side is visible', async () => {
         vi.useFakeTimers()
         try {
-            const settlement = { id: 'settle-1', cid: null }
+            const settlement = {
+                id: 'settle-1',
+                cid: null,
+                executors: ['executor::123'],
+            }
             const senderAllocation = {
                 contractId: 'sender-allocation',
                 interfaceViewValue: {
@@ -581,20 +585,20 @@ describe('allocation namespace', () => {
                 ])
             })
 
-            it('falls back to settlement executors when no actors are given', async () => {
+            it('throws an error when party cannot reject allocation reject', async () => {
                 const spy =
                     mockTokenStandard.v2.allocation
                         .createAllocationRequestChoice
                 spy.mockReturnValue(mockServiceResponse)
 
-                await allocation.request.reject({
-                    request: requestContract,
-                    partyId: 'alice::abc',
-                } as any)
-
-                expect(spy).toHaveBeenCalledWith('reject', 'request-cid', [
-                    'executor::1',
-                ])
+                await expect(
+                    allocation.request.reject({
+                        request: requestContract,
+                        partyId: 'alice::abc',
+                    } as any)
+                ).rejects.toThrow(
+                    'alice::abc cannot reject allocation request request-cid'
+                )
             })
 
             it('throws when neither actors nor settlement executors are available', async () => {
@@ -615,7 +619,7 @@ describe('allocation namespace', () => {
                         partyId: 'alice::abc',
                     } as any)
                 ).rejects.toThrow(
-                    'alice::abc cannot accept allocation request request-cid'
+                    'alice::abc cannot reject allocation request request-cid'
                 )
             })
         })
