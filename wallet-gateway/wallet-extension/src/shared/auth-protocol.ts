@@ -18,20 +18,25 @@ export const EXTENSION_ORIGIN = browser.runtime.getURL('/').replace(/\/$/, '')
  */
 export type ConnectionStatus = 'connected' | 'disconnected'
 
+/**
+ * What `auth.connect` takes. `clientId` and `clientSecret` are what the user
+ * entered for a `self_signed` network; other networks ignore them.
+ */
+export interface ConnectRequest {
+    networkId: string
+    clientId?: string
+    clientSecret?: string
+}
+
 /** Messages the extension pages send to the background's auth service. */
 export interface AuthProtocol {
     'auth.getStatus'(): ConnectionStatus
     /**
      * Signs in to the network's identity provider, stores the token as the
      * auth context and adds the extension's session. The token never leaves
-     * the background. `clientId` and `clientSecret` are what the user entered
-     * for a `self_signed` network; other networks ignore them.
+     * the background.
      */
-    'auth.connect'(data: {
-        networkId: string
-        clientId?: string
-        clientSecret?: string
-    }): void
+    'auth.connect'(data: ConnectRequest): void
 }
 
 export const authMessenger = defineExtensionMessaging<AuthProtocol>()
