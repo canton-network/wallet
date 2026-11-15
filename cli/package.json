@@ -17,8 +17,11 @@
     "dependencies": {
         "@optique/core": "catalog:",
         "@optique/run": "catalog:",
+        "@optique/man": "catalog:",
         "@optique/logtape": "catalog:",
-        "@logtape/logtape": "catalog:"
+        "@optique/discover": "catalog:",
+        "@logtape/logtape": "catalog:",
+        "fs-extra": "catalog:"
     },
     "devDependencies": {
         "@types/node": "catalog:",
