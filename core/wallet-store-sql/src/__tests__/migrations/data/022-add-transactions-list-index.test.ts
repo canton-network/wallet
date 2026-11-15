@@ -17,6 +17,9 @@ import { insertTransaction } from '../seeds/016-add-failure-reason-and-awaiting-
 const TARGET = 22
 const TABLE = 'transactions'
 const INDEX_NAME = 'idx_transactions_user_network_created_at_id'
+// transactions.id is a uuid column on Postgres
+const TX_1 = '00000000-0000-4000-8000-000000000001'
+const TX_2 = '00000000-0000-4000-8000-000000000002'
 
 forEachDialect('migration 022 - transactions list index', ({ getDb }) => {
     test('creates the list index and keeps existing rows', async () => {
@@ -27,14 +30,14 @@ forEachDialect('migration 022 - transactions list index', ({ getDb }) => {
         await insertIdp(db, { id: 'idp1' })
         await insertNetwork(db, { id: 'net1', idpId: 'idp1' })
         await insertTransaction(db, {
-            id: 'tx-1',
+            id: TX_1,
             commandId: 'cmd-1',
             userId: 'user1',
             networkId: 'net1',
             createdAt: '2026-05-08T13:00:00.000Z',
         })
         await insertTransaction(db, {
-            id: 'tx-2',
+            id: TX_2,
             commandId: 'cmd-2',
             userId: 'user1',
             networkId: 'net1',
@@ -47,7 +50,7 @@ forEachDialect('migration 022 - transactions list index', ({ getDb }) => {
         const rows = await sql<{ id: string }>`
             SELECT id FROM transactions ORDER BY id
         `.execute(db)
-        expect(rows.rows.map((r) => r.id)).toEqual(['tx-1', 'tx-2'])
+        expect(rows.rows.map((r) => r.id)).toEqual([TX_1, TX_2])
     })
 
     test('down drops the list index', async () => {

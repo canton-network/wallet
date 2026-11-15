@@ -1292,20 +1292,25 @@ implementations.forEach(([name, StoreImpl]) => {
                     )),
                 ]
 
-                // count, first page, timestamped cursor (+ untimestamped tail), null cursor
-                expect(plans).toHaveLength(5)
+                // count, first page, timestamped cursor, null cursor
+                expect(plans).toHaveLength(4)
                 for (const p of plans) {
                     expect(p).toContain(
                         'idx_transactions_user_network_created_at_id'
                     )
                     expect(p).not.toContain('TEMP B-TREE')
                 }
-                // the cursor queries seek into the index rather than scanning from the start
-                expect(plans[2]).toMatch(
-                    /\(user_id=\? AND network_id=\? AND \(created_at,id\)<\(\?,\?\)\)/
+                // The null cursor query filters with `created_at IS NULL`.
+                // SQLite's EXPLAIN QUERY PLAN prints an IS NULL index
+                // constraint as `created_at=?`, so check the SQL as well.
+                const nullCursorSql = captured.find((q) =>
+                    /from "transactions"/i.test(q.sql)
+                )?.sql
+                expect(nullCursorSql).toMatch(
+                    /"created_at" is null and "id" < \?/
                 )
-                expect(plans[3]).toMatch(
-                    /created_at=\?|created_at IS NULL|created_at=NULL/
+                expect(plans[3]).toContain(
+                    '(user_id=? AND network_id=? AND created_at=? AND id<?)'
                 )
             } finally {
                 await planDb.destroy()
