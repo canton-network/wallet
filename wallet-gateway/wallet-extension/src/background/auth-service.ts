@@ -8,6 +8,7 @@ import {
     AuthErrorName,
     authMessenger,
     type ConnectionStatus,
+    type ConnectRequest,
     EXTENSION_ORIGIN,
 } from '@/shared/auth-protocol.ts'
 import { logger } from '@/shared/logger.ts'
@@ -38,10 +39,7 @@ export class InvalidCredentialsError extends Error {
 }
 
 /** What the user entered to sign in to a `self_signed` network. */
-export interface ConnectCredentials {
-    clientId?: string
-    clientSecret?: string
-}
+export type ConnectCredentials = Omit<ConnectRequest, 'networkId'>
 
 export interface AuthServiceDeps extends UserControllerDeps {
     vault: Vault

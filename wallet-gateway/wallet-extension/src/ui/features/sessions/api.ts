@@ -11,6 +11,7 @@ import {
 import {
     authMessenger,
     type ConnectionStatus,
+    type ConnectRequest,
     EXTENSION_ORIGIN,
 } from '@/shared/auth-protocol.ts'
 import { queryKeys } from '@/ui/lib/query/keys.ts'
@@ -59,11 +60,8 @@ export const currentSessionQuery = () =>
 export function useConnect() {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: (data: {
-            networkId: string
-            clientId?: string
-            clientSecret?: string
-        }) => authMessenger.sendMessage('auth.connect', data),
+        mutationFn: (data: ConnectRequest) =>
+            authMessenger.sendMessage('auth.connect', data),
         onSuccess: async () => {
             queryClient.setQueryData<ConnectionStatus>(
                 queryKeys.sessions.status(),
