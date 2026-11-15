@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { jwtExpired } from '@canton-network/core-wallet-auth'
+import { AuthTokenProvider, jwtExpired } from '@canton-network/core-wallet-auth'
 import { hashAccessToken } from '@canton-network/core-wallet-store'
 
 import {
@@ -28,6 +28,19 @@ export class UnsupportedAuthMethodError extends Error {
         super(message)
         this.name = AuthErrorName.UnsupportedAuthMethod
     }
+}
+
+export class InvalidCredentialsError extends Error {
+    constructor(message = 'The client secret is wrong.') {
+        super(message)
+        this.name = AuthErrorName.InvalidCredentials
+    }
+}
+
+/** What the user entered to sign in to a `self_signed` network. */
+export interface ConnectCredentials {
+    clientId?: string
+    clientSecret?: string
 }
 
 export interface AuthServiceDeps extends UserControllerDeps {
@@ -87,31 +100,60 @@ export function createAuthService({
             return connected ? 'connected' : 'disconnected'
         },
 
-        async connect(networkId: string): Promise<void> {
+        async connect(
+            networkId: string,
+            credentials: ConnectCredentials = {}
+        ): Promise<void> {
             const signal = lockSignal.signal // "cancelled if the vault locks"
             await assertUnlocked()
             // Networks and IdPs aren't per user, so this works signed out.
             const store = await getStore()
             const network = await store.getNetwork(networkId)
-            if (network.auth.method !== 'authorization_code') {
-                throw new UnsupportedAuthMethodError(
-                    `Auth method ${network.auth.method} is not supported yet.`
-                )
-            }
-            const idp = await store.getIdp(network.identityProviderId)
-            if (idp.type !== 'oauth') {
-                throw new UnsupportedAuthMethodError(
-                    `Identity provider type ${idp.type} is not supported yet.`
-                )
-            }
+            const { auth } = network
 
-            log.info('Signing in to {networkId}', { networkId })
-            const token = await signIn({
-                configUrl: idp.configUrl,
-                clientId: network.auth.clientId,
-                scope: network.auth.scope,
-                audience: network.auth.audience,
-            })
+            let token: string
+            if (auth.method === 'authorization_code') {
+                const idp = await store.getIdp(network.identityProviderId)
+                if (idp.type !== 'oauth') {
+                    throw new UnsupportedAuthMethodError(
+                        `Identity provider type ${idp.type} is not supported yet.`
+                    )
+                }
+                log.info('Signing in to {networkId}', { networkId })
+                token = await signIn({
+                    configUrl: idp.configUrl,
+                    clientId: auth.clientId,
+                    scope: auth.scope,
+                    audience: auth.audience,
+                })
+            } else if (auth.method === 'self_signed') {
+                const idp = await store.getIdp(network.identityProviderId)
+                if (idp.type !== 'self_signed') {
+                    throw new UnsupportedAuthMethodError(
+                        `Identity provider type ${idp.type} is not supported for self_signed networks.`
+                    )
+                }
+                // A development-only check, like the remote gateway's.
+                if (credentials.clientSecret !== auth.clientSecret) {
+                    throw new InvalidCredentialsError()
+                }
+                log.info('Signing in to {networkId}', { networkId })
+                token = await new AuthTokenProvider({
+                    method: 'self_signed',
+                    issuer: idp.issuer,
+                    keyId: network.id,
+                    credentials: {
+                        clientId: credentials.clientId || auth.clientId,
+                        clientSecret: auth.clientSecret,
+                        scope: auth.scope,
+                        audience: auth.audience,
+                    },
+                }).getAccessToken()
+            } else {
+                throw new UnsupportedAuthMethodError(
+                    `Auth method ${auth.method} is not supported yet.`
+                )
+            }
 
             await serialized(async () => {
                 signal.throwIfAborted() // check inside the lock, right before writing
@@ -157,6 +199,7 @@ export function registerAuthService(deps: AuthServiceDeps): void {
     })
     authMessenger.onMessage('auth.connect', async ({ type, sender, data }) => {
         assertTrusted(type, sender)
-        await service.connect(data.networkId)
+        const { networkId, ...credentials } = data
+        await service.connect(networkId, credentials)
     })
 }

@@ -24,9 +24,14 @@ export interface AuthProtocol {
     /**
      * Signs in to the network's identity provider, stores the token as the
      * auth context and adds the extension's session. The token never leaves
-     * the background.
+     * the background. `clientId` and `clientSecret` are what the user entered
+     * for a `self_signed` network; other networks ignore them.
      */
-    'auth.connect'(data: { networkId: string }): void
+    'auth.connect'(data: {
+        networkId: string
+        clientId?: string
+        clientSecret?: string
+    }): void
 }
 
 export const authMessenger = defineExtensionMessaging<AuthProtocol>()
@@ -40,6 +45,8 @@ export const AuthErrorName = {
     UnsupportedAuthMethod: 'UnsupportedAuthMethodError',
     /** The user closed the sign-in window or the IdP refused the request. */
     SignInFailed: 'SignInFailedError',
+    /** The client secret entered for a `self_signed` network is wrong. */
+    InvalidCredentials: 'InvalidCredentialsError',
 } as const
 
 export type AuthErrorName = (typeof AuthErrorName)[keyof typeof AuthErrorName]
