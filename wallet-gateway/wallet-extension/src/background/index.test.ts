@@ -93,6 +93,10 @@ describe('startBackground', () => {
                     id: 'canton:local-oauth',
                     name: 'Local (OAuth IDP)',
                 }),
+                expect.objectContaining({
+                    id: 'canton:localnet',
+                    name: 'LocalNet',
+                }),
             ],
         })
     })
