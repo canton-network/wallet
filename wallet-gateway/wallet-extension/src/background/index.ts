@@ -30,6 +30,7 @@ import {
 import { createRegistryStore } from './store/registries.ts'
 import { createTokenSdk } from './token/sdk.ts'
 import { createTokenService } from './token/service.ts'
+import { registerTrustedService } from './trusted-service.ts'
 import { registerVaultService } from './vault-service.ts'
 import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
 
@@ -59,6 +60,7 @@ export function startBackground({
     registerVaultService(vault)
     registerAuthService({ ...deps, vault })
     // The dApp controller scopes the store to each request's user itself.
+    // The content script is its caller, so it takes any sender.
     registerService(
         DAPP_RPC_KEY,
         createDappDispatcher(
@@ -67,8 +69,11 @@ export function startBackground({
             authContext
         )
     )
-    registerService(USER_RPC_KEY, requireUnlocked(vault, userController(deps)))
-    registerService(
+    registerTrustedService(
+        USER_RPC_KEY,
+        requireUnlocked(vault, userController(deps))
+    )
+    registerTrustedService(
         TOKEN_RPC_KEY,
         requireUnlocked(
             vault,
