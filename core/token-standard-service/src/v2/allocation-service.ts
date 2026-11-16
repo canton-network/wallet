@@ -21,7 +21,7 @@ import {
     type DisclosedContract,
     type ExerciseCommand,
 } from '../types'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import type { ContractId, PartyId } from '@canton-network/core-types'
 import { getLogger } from '@logtape/logtape'
 

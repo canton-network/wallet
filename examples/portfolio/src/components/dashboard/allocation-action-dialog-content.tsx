@@ -15,7 +15,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import type {
     AllocationActionItem,

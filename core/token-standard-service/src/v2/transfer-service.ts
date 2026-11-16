@@ -3,7 +3,7 @@
 
 import type { Metadata } from '@canton-network/core-token-standard'
 import type { ContractId, PartyId } from '@canton-network/core-types'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import { TokenStandardService } from '../token-standard-service'
 import {
     type DisclosedContract,

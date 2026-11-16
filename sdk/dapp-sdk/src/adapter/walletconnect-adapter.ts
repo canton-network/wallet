@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import SignClient from '@walletconnect/sign-client'
+import type SignClient from '@walletconnect/sign-client'
 import type { SessionTypes } from '@walletconnect/types'
 import type {
     Provider,
@@ -370,18 +370,22 @@ export class WalletConnectAdapter
         if (this.signClient) return this.signClient
         if (this.initPromise) return this.initPromise
 
-        this.initPromise = SignClient.init({
-            projectId: this.projectId,
-            metadata: this.metadata ?? {
-                name: 'Canton dApp',
-                description: 'Canton Network dApp using WalletConnect',
-                url:
-                    typeof window !== 'undefined'
-                        ? window.location.origin
-                        : 'https://canton.network',
-                icons: [],
-            },
-        })
+        // Optional peer dependency: only load it once WalletConnect is used
+        this.initPromise = import('@walletconnect/sign-client').then(
+            ({ default: Client }) =>
+                Client.init({
+                    projectId: this.projectId,
+                    metadata: this.metadata ?? {
+                        name: 'Canton dApp',
+                        description: 'Canton Network dApp using WalletConnect',
+                        url:
+                            typeof window !== 'undefined'
+                                ? window.location.origin
+                                : 'https://canton.network',
+                        icons: [],
+                    },
+                })
+        )
 
         this.signClient = await this.initPromise
 
