@@ -137,6 +137,23 @@ describe('createTokenService', () => {
         )
     })
 
+    it('builds the SDK with the user whose wallets it checked', async () => {
+        const tokenService = await signedIn()
+        // Another user signs in after the first load, while the call runs.
+        let loads = 0
+        authContext.load = async () =>
+            loads++ === 0
+                ? context
+                : { userId: 'bob', accessToken: 'bob-token' }
+
+        await tokenService.token.v1.utxos.list({ partyId: wallet.partyId })
+
+        expect(loads).toBe(1)
+        expect(sdkCache.get).toHaveBeenCalledWith(
+            expect.objectContaining({ accessToken: context.accessToken })
+        )
+    })
+
     it('doesn’t pass options it doesn’t expose', async () => {
         const tokenService = await signedIn()
 
