@@ -17,7 +17,7 @@ import {
     type AuthorizationCodeParams,
 } from './oauth'
 import { type Vault, VaultLockedError } from './vault'
-import { isTrustedSender } from './vault-service'
+import { isTrustedSender } from './trusted-service'
 
 const log = logger.getChild('auth')
 
