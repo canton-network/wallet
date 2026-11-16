@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import type { AssetBody } from '@canton-network/wallet-sdk'
 import type { AuthContextStore } from '../auth-context'
@@ -57,15 +58,23 @@ export interface TokenServiceDeps {
  * Every method needs a signed-in user and builds the SDK for the current
  * network. A method that takes a `partyId` only accepts the user's wallets.
  */
+interface SignedIn {
+    context: AuthContext
+    store: Store
+}
+
 export function createTokenService({
     authContext,
     getStore,
     registries,
     sdkCache,
 }: TokenServiceDeps): TokenService {
-    /** The SDK for the signed-in user and current network. */
-    async function sdkFor(): Promise<TokenSdk> {
-        const { context, store } = await signedIn()
+    /**
+     * The SDK for `user` and its current network. Callers load the user once
+     * and pass it, so a sign-in that happens meanwhile can't mix one user's
+     * ownership check with another user's token.
+     */
+    async function sdkFor({ context, store }: SignedIn): Promise<TokenSdk> {
         const network = await store.getCurrentNetwork()
         return sdkCache.get({
             network,
@@ -79,7 +88,8 @@ export function createTokenService({
      * check types, so a missing or non-string `partyId` is rejected here.
      */
     async function sdkForParty(partyId: unknown): Promise<TokenSdk> {
-        const { store } = await signedIn()
+        const user = await signedIn()
+        const { store } = user
         if (typeof partyId !== 'string' || partyId === '') {
             throw new Error('A partyId is required')
         }
@@ -87,10 +97,10 @@ export function createTokenService({
         if (!wallets.some((wallet) => wallet.partyId === partyId)) {
             throw new Error(`Party ${partyId} does not belong to user`)
         }
-        return sdkFor()
+        return sdkFor(user)
     }
 
-    async function signedIn() {
+    async function signedIn(): Promise<SignedIn> {
         const context = await authContext.load()
         if (!context) throw new Error('Not signed in')
         return { context, store: await getStore() }
@@ -113,7 +123,8 @@ export function createTokenService({
     return {
         token: {
             async assets() {
-                const assets = await (await sdkFor()).token.assets()
+                const sdk = await sdkFor(await signedIn())
+                const assets = await sdk.token.assets()
                 return assets.map((asset) => ({
                     ...asset,
                     registryUrl: asset.registryUrl.toString(),
