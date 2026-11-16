@@ -47,3 +47,11 @@ export type {
 
 /** Package id of the DAR these bindings were generated from. */
 export { packageId } from '@daml.js/traffic-purchase-models-1.0.0'
+
+/**
+ * The paymaster's off-ledger API: the client, and the wire types it speaks.
+ */
+export * from './traffic-purchase-client.js'
+
+/** The generated OpenAPI types, by spec version. */
+export * as OffLedger from './generated-clients/index.js'
