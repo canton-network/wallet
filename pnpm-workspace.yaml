@@ -68,6 +68,7 @@ catalog:
     '@open-rpc/generator': ^2.1.1
     '@open-rpc/mock-server': ^1.7.8
     '@open-wc/testing-helpers': ^3.0.1
+    '@optique/clack': ^1.3.6
     '@optique/core': ^1.3.6
     '@optique/discover': ^1.3.6
     '@optique/logtape': ^1.3.6

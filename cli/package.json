@@ -20,6 +20,7 @@
         "@optique/man": "catalog:",
         "@optique/logtape": "catalog:",
         "@optique/discover": "catalog:",
+        "@optique/clack": "catalog:",
         "@logtape/logtape": "catalog:",
         "fs-extra": "catalog:"
     },

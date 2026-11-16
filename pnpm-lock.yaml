@@ -251,6 +251,9 @@ catalogs:
     '@open-wc/testing-helpers':
       specifier: ^3.0.1
       version: 3.0.1
+    '@optique/clack':
+      specifier: ^1.3.6
+      version: 1.3.6
     '@optique/core':
       specifier: ^1.3.6
       version: 1.3.6
@@ -618,6 +621,9 @@ importers:
       '@nx/js':
         specifier: 'catalog:'
         version: 24.0.5(@babel/traverse@7.29.12(supports-color@10.2.2))(@swc/core@1.16.22(@swc/helpers@0.5.23))(nx@24.0.5(@swc/core@1.16.22(@swc/helpers@0.5.23)))(supports-color@10.2.2)
+      '@optique/clack':
+        specifier: 'catalog:'
+        version: 1.3.6
       '@optique/discover':
         specifier: 'catalog:'
         version: 1.3.6
@@ -727,6 +733,9 @@ importers:
       '@logtape/logtape':
         specifier: 'catalog:'
         version: 2.4.2
+      '@optique/clack':
+        specifier: 'catalog:'
+        version: 1.3.6
       '@optique/core':
         specifier: 'catalog:'
         version: 1.3.6
@@ -5367,6 +5376,10 @@ packages:
   '@open-wc/testing-helpers@3.0.1':
     resolution: {integrity: sha512-hyNysSatbgT2FNxHJsS3rGKcLEo6+HwDFu1UQL6jcSQUabp/tj3PyX7UnXL3H5YGv0lJArdYLSnvjLnjn3O2fw==}
 
+  '@optique/clack@1.3.6':
+    resolution: {integrity: sha512-iKCzQyjkLZmaVqxDTQlBG5emNmn8ON7UPKPycPnzQpj2g2Vf9b+4aq0GTBD1nrN5FGh5INmbmXh/6cH7xsefOw==}
+    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.12.0'}
+
   '@optique/core@1.3.6':
     resolution: {integrity: sha512-BXVuVyxP9bg8FbyvBYrSHisnAeG3XTf1xcuUjAWgDWKfzZssMGbSrMdiv4tA+BK3+CrSo6no+uHWpiHh4HMKeg==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
@@ -5390,6 +5403,10 @@ packages:
     resolution: {integrity: sha512-4Eti8KXCkjAB1hH5GNpJGXJOo3akUAT+pn2a74vvLBvSKti5hkVtVKl+xpb26QJfDuyjHOypZCvOLREi8SY/pQ==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     hasBin: true
+
+  '@optique/prompt@1.3.6':
+    resolution: {integrity: sha512-a+YNcm5gR983kOm6xcpDrvygvTcaDVklkLSonV6b+XWZJxSTykbRHqQ6Ynytt9wa414vY0hF9RFC2crwimTr/g==}
+    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
   '@optique/run@1.3.6':
     resolution: {integrity: sha512-uxlHO8vG/5ni1V+t+jdmYqiyYYY5uOevO/6U866oBpnlOxOGn2ZWIlPpDXAU3e5GRu4VecbeXoNff18yRDGoQw==}
@@ -14519,6 +14536,12 @@ snapshots:
       lit: 3.3.3
       lit-html: 3.3.3
 
+  '@optique/clack@1.3.6':
+    dependencies:
+      '@clack/prompts': 1.7.0
+      '@optique/core': 1.3.6
+      '@optique/prompt': 1.3.6
+
   '@optique/core@1.3.6': {}
 
   '@optique/discover@1.3.6':
@@ -14535,6 +14558,10 @@ snapshots:
     dependencies:
       '@optique/core': 1.3.6
       '@optique/run': 1.3.6
+
+  '@optique/prompt@1.3.6':
+    dependencies:
+      '@optique/core': 1.3.6
 
   '@optique/run@1.3.6':
     dependencies:

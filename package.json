@@ -98,6 +98,7 @@
     "dependencies": {
         "@logtape/logtape": "catalog:",
         "@nx/js": "catalog:",
+        "@optique/clack": "catalog:",
         "@optique/discover": "catalog:",
         "@optique/logtape": "catalog:",
         "@optique/man": "catalog:",
