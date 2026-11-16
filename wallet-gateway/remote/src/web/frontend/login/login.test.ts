@@ -434,6 +434,12 @@ describe('LoginUI', () => {
         expect(redirectUrl).toContain('response_type=code')
         expect(redirectUrl).toContain('client_id=oauth-client-id')
         expect(redirectUrl).toContain('code_challenge_method=S256')
+        const state = JSON.parse(
+            atob(new URL(redirectUrl).searchParams.get('state')!)
+        )
+        expect(sessionStorage.getItem(`oauth-network-${state.stateId}`)).toBe(
+            'net-oauth'
+        )
         expect(mockRedirectToIntendedOrDefault).not.toHaveBeenCalled()
     })
 })

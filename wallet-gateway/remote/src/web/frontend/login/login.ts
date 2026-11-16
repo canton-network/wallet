@@ -203,6 +203,12 @@ export class LoginUI extends BaseElement {
                         `oauth-pkce-${statePayload.stateId}`,
                         verifier
                     )
+                    // The callback takes the network from here: unlike the
+                    // localStorage, no other tab or auth check clears it
+                    sessionStorage.setItem(
+                        `oauth-network-${statePayload.stateId}`,
+                        selectedNetwork.id
+                    )
 
                     const params = new URLSearchParams({
                         response_type: 'code',
