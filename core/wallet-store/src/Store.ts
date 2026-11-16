@@ -94,13 +94,24 @@ export interface Session {
     origin: string
     network: string
     /**
-     * The raw access token when passed to setSession. Stores keep and return
-     * only its SHA-256 digest (see hashAccessToken), so a session read back
-     * from a store can't be used as a credential.
+     * SHA-256 digest of the access token (see hashAccessToken). Stores keep
+     * and return only this digest, so a session read back from a store can't
+     * be used as a credential.
      * Absent only while self-issued onboarding is in progress.
      */
-    accessToken?: string
+    accessTokenHash?: string
     userId?: string
+}
+
+/**
+ * What setSession takes: the raw token, which the store hashes.
+ * accessTokenHash is forbidden so a session read back from a store can't be
+ * passed in and hashed twice. userId is set by the store from the
+ * authenticated context.
+ */
+export type NewSession = Omit<Session, 'accessTokenHash' | 'userId'> & {
+    accessToken?: string
+    accessTokenHash?: never
 }
 
 export interface Transaction {
@@ -214,7 +225,7 @@ export interface Store {
      */
     listSessions(): Promise<Array<Session>>
 
-    setSession(session: Session): Promise<void>
+    setSession(session: NewSession): Promise<void>
 
     /**
      * removeSession is keyed by the accessToken, which is unique per session. It removes the session associated with the provided accessToken.

@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { SelfIssuedTokenService } from '@canton-network/core-wallet-auth'
 import type { Network } from './config/schema.js'
 
 // Throws if the given network has a self-issued audience that is already used by another network.
@@ -65,4 +66,25 @@ export async function hashAccessToken(accessToken: string): Promise<string> {
     return Array.from(new Uint8Array(digest), (byte) =>
         byte.toString(16).padStart(2, '0')
     ).join('')
+}
+
+/**
+ * SHA-256 digest of a self-issued access token rebuilt from its signing
+ * input and stored signature. Returns undefined if the signature isn't
+ * a usable JWT signature.
+ */
+export async function hashReconstructedAccessToken(
+    signingInput: string,
+    base64Signature: string
+): Promise<string | undefined> {
+    try {
+        return await hashAccessToken(
+            SelfIssuedTokenService.appendJwtSignature(
+                signingInput,
+                base64Signature
+            )
+        )
+    } catch {
+        return undefined
+    }
 }

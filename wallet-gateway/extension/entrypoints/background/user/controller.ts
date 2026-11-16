@@ -415,7 +415,7 @@ export const userController = (
             // them up first so their notification ports can be closed.
             const replacedSessions = (await store.listSessions()).filter(
                 (session) =>
-                    session.origin === params.origin && session.accessToken
+                    session.origin === params.origin && session.accessTokenHash
             )
 
             await store.setSession({

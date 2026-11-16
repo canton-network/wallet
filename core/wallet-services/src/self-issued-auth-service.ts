@@ -324,10 +324,26 @@ export class SelfIssuedAuthService {
         }
 
         const username = this.session.userId
-        const existingUser = await this.getExistingUser()
-        const authPartyWallet = canUserUseSelfIssuedAuth(existingUser)
-            ? this.requireExistingAuthParty(wallet, existingUser.primaryParty)
-            : await this.setUserAuthParty(username, wallet)
+        let authPartyWallet: Wallet
+        try {
+            const existingUser = await this.getExistingUser()
+            authPartyWallet = canUserUseSelfIssuedAuth(existingUser)
+                ? this.requireExistingAuthParty(
+                      wallet,
+                      existingUser.primaryParty
+                  )
+                : await this.setUserAuthParty(username, wallet)
+        } catch (error) {
+            // The signature is already stored. Clear it so a retry can't
+            // rebuild the token from this message.
+            await this.failTokenMessage(
+                messageId,
+                error instanceof Error
+                    ? error.message
+                    : 'Self-issued login could not be completed.'
+            )
+            throw error
+        }
 
         const accessToken = SelfIssuedTokenService.appendJwtSignature(
             message.message,

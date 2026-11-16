@@ -9,6 +9,7 @@ import type { DB } from '../../../schema.js'
 import { up } from '../../../migrations/022-hash-session-access-token'
 import {
     forEachDialect,
+    hasColumn,
     migrateDownThrough,
     migrateUpThrough,
     migrateUpToBefore,
@@ -20,6 +21,23 @@ const TARGET = 22
 
 const sha256Hex = (value: string) =>
     createHash('sha256').update(value, 'utf8').digest('hex')
+
+const SIGNATURE = 'c2lnbmF0dXJl'
+
+function accessTokenFrom(signingInput: string, signature = SIGNATURE): string {
+    return `${signingInput}.${Buffer.from(signature, 'base64').toString('base64url')}`
+}
+
+// Must match SELF_ISSUED_LOGIN_EXPIRED in core-wallet-services.
+const SELF_ISSUED_LOGIN_EXPIRED =
+    'Self-issued access token expired before login could be completed.'
+
+async function sessionHashes(db: Kysely<DB>) {
+    const result = await sql<{ id: string; accessTokenHash: string | null }>`
+        SELECT id, access_token_hash FROM sessions ORDER BY id
+    `.execute(db)
+    return result.rows
+}
 
 async function sessionTokens(db: Kysely<DB>) {
     const result = await sql<{ id: string; accessToken: string | null }>`
@@ -71,12 +89,14 @@ forEachDialect('migration 022 - hash session access token', ({ getDb }) => {
 
         await migrateUpThrough(db, TARGET)
 
-        expect(await sessionTokens(db)).toEqual([
+        expect(await hasColumn(db, 'sessions', 'access_token_hash')).toBe(true)
+        expect(await hasColumn(db, 'sessions', 'access_token')).toBe(false)
+        expect(await sessionHashes(db)).toEqual([
             {
                 id: 'logged-in',
-                accessToken: sha256Hex('header.payload.signature'),
+                accessTokenHash: sha256Hex('header.payload.signature'),
             },
-            { id: 'onboarding', accessToken: null },
+            { id: 'onboarding', accessTokenHash: null },
         ])
     })
 
@@ -86,10 +106,10 @@ forEachDialect('migration 022 - hash session access token', ({ getDb }) => {
         await seedSessions(db)
 
         await migrateUpThrough(db, TARGET)
-        const afterFirstRun = await sessionTokens(db)
+        const afterFirstRun = await sessionHashes(db)
         await up(db)
 
-        expect(await sessionTokens(db)).toEqual(afterFirstRun)
+        expect(await sessionHashes(db)).toEqual(afterFirstRun)
     })
 
     test('cleans up self-issued token messages but keeps unfinished logins', async () => {
@@ -106,7 +126,7 @@ forEachDialect('migration 022 - hash session access token', ({ getDb }) => {
             ...message,
             kind: 'self-issued-token',
             status: 'signed',
-            signature: 'c2lnbmF0dXJl',
+            signature: SIGNATURE,
         }
         await insertMessageRaw(db, {
             ...signedToken,
@@ -147,25 +167,89 @@ forEachDialect('migration 022 - hash session access token', ({ getDb }) => {
 
         const result = await sql<{
             id: string
+            status: string
             signature: string | null
             failureReason: string | null
         }>`
-            SELECT id, signature, failure_reason FROM messages_raw ORDER BY id
+            SELECT id, status, signature, failure_reason
+            FROM messages_raw
+            ORDER BY id
         `.execute(db)
         expect(result.rows).toEqual([
-            { id: 'alice-failed', signature: null, failureReason: 'rejected' },
-            { id: 'alice-pending', signature: null, failureReason: null },
+            {
+                id: 'alice-failed',
+                status: 'failed',
+                signature: null,
+                failureReason: 'rejected',
+            },
+            {
+                id: 'alice-pending',
+                status: 'awaiting-signature',
+                signature: null,
+                failureReason: null,
+            },
             {
                 id: 'alice-regular',
-                signature: 'c2lnbmF0dXJl',
+                status: 'signed',
+                signature: SIGNATURE,
                 failureReason: null,
+            },
+            {
+                id: 'bob-expired',
+                status: 'failed',
+                signature: null,
+                failureReason: SELF_ISSUED_LOGIN_EXPIRED,
             },
             {
                 id: 'bob-unfinished',
-                signature: 'c2lnbmF0dXJl',
+                status: 'signed',
+                signature: SIGNATURE,
                 failureReason: null,
             },
         ])
+    })
+
+    test('deletes a completed login message even when a tokenless session remains', async () => {
+        const db = getDb()
+        await migrateUpToBefore(db, TARGET)
+        const completedInput = signingInput(() => nowSeconds() + 3600)
+        const openInput = signingInput(() => nowSeconds() + 7200)
+        await insertSession(db, {
+            id: 'alice-logged-in',
+            network: 'network-1',
+            accessToken: accessTokenFrom(completedInput),
+            userId: 'alice',
+            origin: 'https://app.example',
+        })
+        await insertSession(db, {
+            id: 'alice-login',
+            network: 'network-1',
+            userId: 'alice',
+            origin: 'https://example.com',
+        })
+        const signedToken = {
+            ...message,
+            kind: 'self-issued-token',
+            status: 'signed',
+            signature: SIGNATURE,
+        }
+        await insertMessageRaw(db, {
+            ...signedToken,
+            id: 'alice-used',
+            message: completedInput,
+        })
+        await insertMessageRaw(db, {
+            ...signedToken,
+            id: 'alice-open',
+            message: openInput,
+        })
+
+        await migrateUpThrough(db, TARGET)
+
+        const result = await sql<{ id: string }>`
+            SELECT id FROM messages_raw ORDER BY id
+        `.execute(db)
+        expect(result.rows).toEqual([{ id: 'alice-open' }])
     })
 
     test('down drops sessions with a hashed token and keeps tokenless ones', async () => {
@@ -176,6 +260,8 @@ forEachDialect('migration 022 - hash session access token', ({ getDb }) => {
 
         await migrateDownThrough(db, TARGET)
 
+        expect(await hasColumn(db, 'sessions', 'access_token')).toBe(true)
+        expect(await hasColumn(db, 'sessions', 'access_token_hash')).toBe(false)
         expect(await sessionTokens(db)).toEqual([
             { id: 'onboarding', accessToken: null },
         ])

@@ -14,6 +14,7 @@ import type {
     Store,
     Wallet,
     PartyId,
+    NewSession,
     Session,
     WalletFilter,
     Transaction,
@@ -31,6 +32,7 @@ import type {
 import {
     assertUniqueSelfIssuedAudience,
     hashAccessToken,
+    hashReconstructedAccessToken,
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
@@ -227,7 +229,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async removeSelfIssuedLoginSession(sessionId: string): Promise<void> {
         const storage = this.getStorage()
         const session = storage.sessions.get(sessionId)
-        if (!session || session.accessToken) return
+        if (!session || session.accessTokenHash) return
         storage.sessions.delete(sessionId)
         this.updateStorage(storage)
     }
@@ -312,7 +314,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     async getSession(accessToken: AccessToken): Promise<Session | undefined> {
         const tokenHash = await hashAccessToken(accessToken)
         return Array.from(this.getStorage().sessions.values()).find(
-            (session) => session.accessToken === tokenHash
+            (session) => session.accessTokenHash === tokenHash
         )
     }
 
@@ -320,7 +322,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return Array.from(this.getStorage().sessions.values())
     }
 
-    async setSession(session: Session): Promise<void> {
+    async setSession(session: NewSession): Promise<void> {
         const userId = this.assertConnected()
         const { accessToken, ...rest } = session
         const tokenHash = accessToken
@@ -331,7 +333,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             for (const [id, existingSession] of storage.sessions) {
                 if (
                     existingSession.origin === session.origin &&
-                    existingSession.accessToken
+                    existingSession.accessTokenHash
                 ) {
                     storage.sessions.delete(id)
                 }
@@ -339,7 +341,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         }
         storage.sessions.set(session.id, {
             ...rest,
-            ...(tokenHash ? { accessToken: tokenHash } : {}),
+            ...(tokenHash ? { accessTokenHash: tokenHash } : {}),
             userId,
         })
         this.updateStorage(storage)
@@ -349,7 +351,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const tokenHash = await hashAccessToken(accessToken)
         const storage = this.getStorage()
         for (const [id, session] of storage.sessions) {
-            if (session.accessToken === tokenHash) {
+            if (session.accessTokenHash === tokenHash) {
                 storage.sessions.delete(id)
             }
         }
@@ -361,7 +363,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     ): Promise<Session | undefined> {
         for (const storage of this.userStorage.values()) {
             const session = storage.sessions.get(sessionId)
-            if (session && !session.accessToken) {
+            if (session && !session.accessTokenHash) {
                 return session
             }
         }
@@ -376,7 +378,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const tokenHash = await hashAccessToken(accessToken)
         const storage = this.getStorage()
         const selfIssuedLoginSession = storage.sessions.get(sessionId)
-        if (!selfIssuedLoginSession || selfIssuedLoginSession.accessToken) {
+        if (!selfIssuedLoginSession || selfIssuedLoginSession.accessTokenHash) {
             throw new Error('Self-issued login session not found')
         }
 
@@ -388,9 +390,29 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                 storage.sessions.delete(id)
             }
         }
-        const upgraded = { ...selfIssuedLoginSession, accessToken: tokenHash }
+        const upgraded = {
+            ...selfIssuedLoginSession,
+            accessTokenHash: tokenHash,
+        }
         storage.sessions.set(sessionId, upgraded)
         storage.messageRaws.delete(signedMessageId)
+        for (const [id, message] of storage.messageRaws) {
+            if (
+                id === signedMessageId ||
+                message.kind !== 'self-issued-token' ||
+                message.status !== 'signed' ||
+                !message.signature
+            ) {
+                continue
+            }
+            const reconstructed = await hashReconstructedAccessToken(
+                message.message,
+                message.signature
+            )
+            if (reconstructed === tokenHash) {
+                storage.messageRaws.delete(id)
+            }
+        }
         this.updateStorage(storage)
         return upgraded
     }
@@ -457,12 +479,12 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const sessions = this.getStorage().sessions
         const session = tokenHash
             ? Array.from(sessions.values()).find(
-                  (s) => s.accessToken === tokenHash
+                  (s) => s.accessTokenHash === tokenHash
               )
             : selfIssuedLoginSessionId
               ? sessions.get(selfIssuedLoginSessionId)
               : undefined
-        if (!session || (!context?.accessToken && session.accessToken)) {
+        if (!session || (!context?.accessToken && session.accessTokenHash)) {
             throw providerErrors.unauthorized({ message: 'No session found' })
         }
         const networkId = session.network

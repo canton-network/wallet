@@ -999,6 +999,46 @@ describe('SelfIssuedAuthService', () => {
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
         })
 
+        it('clears the signature when looking up the ledger user fails', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            ledgerClient.get.mockRejectedValue(new Error('ledger unavailable'))
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('ledger unavailable')
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                { failureReason: 'ledger unavailable', signature: null }
+            )
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('clears the signature when setting the auth party fails', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            ledgerClient.patch.mockRejectedValue(new Error('patch failed'))
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('patch failed')
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                { failureReason: 'patch failed', signature: null }
+            )
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
         describe('when the participant probe fails', () => {
             beforeEach(() => {
                 store.getMessageRaw.mockResolvedValue(

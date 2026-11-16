@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type {
-    Session,
+    NewSession,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
@@ -19,7 +19,7 @@ const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 const NETWORK_ID = 'canton:local-oauth'
 
 // The store finds the current network through the session with this token.
-const SESSION: Session = {
+const SESSION: NewSession = {
     id: 'session-1',
     origin: 'popup',
     network: NETWORK_ID,
@@ -125,7 +125,14 @@ describe('createWalletStore', () => {
             version: 2,
             users: {
                 [CONTEXT.userId]: {
-                    sessions: [{ ...SESSION, accessToken: digest }],
+                    sessions: [
+                        {
+                            id: SESSION.id,
+                            origin: SESSION.origin,
+                            network: SESSION.network,
+                            accessTokenHash: digest,
+                        },
+                    ],
                 },
             },
         })
@@ -151,9 +158,11 @@ describe('createWalletStore', () => {
         ).withAuthContext(CONTEXT)
 
         expect(await reread.getSession(CONTEXT.accessToken)).toEqual({
-            ...SESSION,
+            id: SESSION.id,
+            origin: SESSION.origin,
+            network: SESSION.network,
             // The store keeps only the SHA-256 digest of the token
-            accessToken: createHash('sha256')
+            accessTokenHash: createHash('sha256')
                 .update(CONTEXT.accessToken)
                 .digest('hex'),
             userId: CONTEXT.userId,

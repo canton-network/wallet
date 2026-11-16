@@ -38,8 +38,8 @@ type MessageRawJson = Omit<MessageRaw, 'createdAt' | 'signedAt'> & {
  * MessageRaw, Network or Idp in a way that old snapshots don't satisfy, and
  * teach `upgradeSnapshot` to bring the old version forward.
  *
- * Version 2: sessions hold the SHA-256 digest of the access token. Version 1
- * held the raw token.
+ * Version 2: sessions hold the SHA-256 digest of the access token in
+ * `accessTokenHash`. Version 1 held the raw token in `accessToken`.
  */
 export interface SnapshotV2 {
     version: 2
@@ -95,17 +95,18 @@ export async function upgradeSnapshot(
 }
 
 async function hashSessionToken(session: unknown): Promise<unknown> {
-    if (
-        !isRecord(session) ||
-        typeof session.accessToken !== 'string' ||
-        !session.accessToken ||
-        SHA256_HEX.test(session.accessToken)
-    ) {
+    if (!isRecord(session)) {
         return session
     }
+    const { accessToken, accessTokenHash: _ignored, ...rest } = session
+    if (typeof accessToken !== 'string' || !accessToken) {
+        return rest
+    }
     return {
-        ...session,
-        accessToken: await hashAccessToken(session.accessToken),
+        ...rest,
+        accessTokenHash: SHA256_HEX.test(accessToken)
+            ? accessToken
+            : await hashAccessToken(accessToken),
     }
 }
 

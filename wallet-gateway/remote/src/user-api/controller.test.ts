@@ -9,7 +9,7 @@ import {
     type MessageRaw,
     type Network as StoreNetwork,
     PartyLevelRight,
-    type Session,
+    type NewSession,
     type Transaction,
     type Wallet,
 } from '@canton-network/core-wallet-store'
@@ -184,7 +184,7 @@ const adminAuth: AuthContext = {
     accessToken: 'admin-access-token',
 }
 
-const session: Session = {
+const session: NewSession = {
     id: 'session-1',
     origin: 'dapp-1',
     network: 'network1',

@@ -150,7 +150,7 @@ describe('wallet store snapshot', () => {
         expect(changed).toBe(true)
         expect(
             (upgraded as SnapshotV2).users[CONTEXT.userId]!.sessions.map(
-                (s) => s.accessToken
+                (s) => s.accessTokenHash
             )
         ).toEqual([DIGEST, DIGEST, undefined])
         const { config, memory } = decodeSnapshot(upgraded)

@@ -14,6 +14,7 @@ import type {
     Store as BaseStore,
     Wallet,
     PartyId,
+    NewSession,
     Session,
     WalletFilter,
     Transaction,
@@ -34,6 +35,7 @@ import type {
 import {
     assertUniqueSelfIssuedAudience,
     hashAccessToken,
+    hashReconstructedAccessToken,
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
 import {
@@ -483,7 +485,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .where((eb) =>
                 eb.and([
                     eb('userId', '=', userId),
-                    eb('accessToken', '=', tokenHash),
+                    eb('accessTokenHash', '=', tokenHash),
                 ])
             )
             .executeTakeFirst()
@@ -501,7 +503,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return rows.map((row) => toSession(row))
     }
 
-    async setSession(session: Session): Promise<void> {
+    async setSession(session: NewSession): Promise<void> {
         const userId = this.assertConnected()
 
         if (!session.origin) {
@@ -521,7 +523,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                         eb.and([
                             eb('userId', '=', userId),
                             eb('origin', '=', session.origin),
-                            eb('accessToken', 'is not', null),
+                            eb('accessTokenHash', 'is not', null),
                         ])
                     )
                     .execute()
@@ -531,8 +533,10 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             const inserted = await trx
                 .insertInto('sessions')
                 .values({
-                    ...session,
-                    accessToken: tokenHash,
+                    id: session.id,
+                    origin: session.origin,
+                    network: session.network,
+                    accessTokenHash: tokenHash,
                     userId,
                 })
                 .execute()
@@ -548,7 +552,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .selectFrom('sessions')
             .selectAll()
             .where('id', '=', sessionId)
-            .where('accessToken', 'is', null)
+            .where('accessTokenHash', 'is', null)
             .executeTakeFirst()
         return row ? toSession(row) : undefined
     }
@@ -559,7 +563,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .deleteFrom('sessions')
             .where('id', '=', sessionId)
             .where('userId', '=', userId)
-            .where('accessToken', 'is', null)
+            .where('accessTokenHash', 'is', null)
             .execute()
     }
 
@@ -577,7 +581,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .selectAll()
                 .where('id', '=', sessionId)
                 .where('userId', '=', userId)
-                .where('accessToken', 'is', null)
+                .where('accessTokenHash', 'is', null)
                 .executeTakeFirst()
             if (!row) {
                 throw new Error('Self-issued login session not found')
@@ -591,17 +595,43 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .execute()
             await trx
                 .updateTable('sessions')
-                .set({ accessToken: tokenHash })
+                .set({ accessTokenHash: tokenHash })
                 .where('id', '=', sessionId)
                 .execute()
+            const signedMessages = await trx
+                .selectFrom('messagesRaw')
+                .select(['id', 'message', 'signature'])
+                .where('userId', '=', userId)
+                .where('networkId', '=', row.network)
+                .where('kind', '=', 'self-issued-token')
+                .where((eb) =>
+                    eb.or([
+                        eb('id', '=', signedMessageId),
+                        eb('status', '=', 'signed'),
+                    ])
+                )
+                .execute()
+            const idsToDelete = new Set<string>([signedMessageId])
+            for (const message of signedMessages) {
+                if (message.id === signedMessageId || !message.signature) {
+                    continue
+                }
+                const reconstructed = await hashReconstructedAccessToken(
+                    message.message,
+                    message.signature
+                )
+                if (reconstructed === tokenHash) {
+                    idsToDelete.add(message.id)
+                }
+            }
             await trx
                 .deleteFrom('messagesRaw')
-                .where('id', '=', signedMessageId)
+                .where('id', 'in', [...idsToDelete])
                 .where('userId', '=', userId)
                 .where('networkId', '=', row.network)
                 .execute()
 
-            return toSession({ ...row, accessToken: tokenHash })
+            return toSession({ ...row, accessTokenHash: tokenHash })
         })
     }
 
@@ -613,7 +643,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .where((eb) =>
                 eb.and([
                     eb('userId', '=', userId),
-                    eb('accessToken', '=', tokenHash),
+                    eb('accessTokenHash', '=', tokenHash),
                 ])
             )
             .execute()
@@ -735,10 +765,10 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .where('userId', '=', userId)
             .where((eb) =>
                 token
-                    ? eb('accessToken', '=', token)
+                    ? eb('accessTokenHash', '=', token)
                     : eb.and([
                           eb('id', '=', selfIssuedLoginSessionId!),
-                          eb('accessToken', 'is', null),
+                          eb('accessTokenHash', 'is', null),
                       ])
             )
             .executeTakeFirst()
