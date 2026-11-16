@@ -7,12 +7,16 @@ import { registerService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
-import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys.ts'
+import {
+    DAPP_RPC_KEY,
+    TOKEN_RPC_KEY,
+    USER_RPC_KEY,
+} from '@/shared/service-keys.ts'
 
 import { createAuthContextStore } from './auth-context.ts'
 import { registerAuthService } from './auth-service.ts'
 import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
-import { requireUnlocked, userController } from './controllers/user/index.ts'
+import { userController } from './controllers/user/index.ts'
 import {
     currentSessionSubscriber,
     registerNotificationPorts,
@@ -23,8 +27,11 @@ import {
     createWalletStore,
     loadAuthedStore,
 } from './store/index.ts'
+import { createRegistryStore } from './store/registries.ts'
+import { createTokenSdkCache } from './token/sdk.ts'
+import { createTokenService } from './token/service.ts'
 import { registerVaultService } from './vault-service.ts'
-import { createVault, type Vault } from './vault/index.ts'
+import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
 
 /**
  * Runs in the service worker. Every listener is added in the first turn,
@@ -61,6 +68,18 @@ export function startBackground({
         )
     )
     registerService(USER_RPC_KEY, requireUnlocked(vault, userController(deps)))
+    registerService(
+        TOKEN_RPC_KEY,
+        requireUnlocked(
+            vault,
+            createTokenService({
+                getStore,
+                authContext,
+                registries: createRegistryStore(vault),
+                sdkCache: createTokenSdkCache({ vault }),
+            })
+        )
+    )
     registerNotificationPorts(
         notificationService,
         currentSessionSubscriber(getStore, authContext)
