@@ -101,6 +101,24 @@ describe('createTokenService', () => {
         expect(sdkCache.get).not.toHaveBeenCalled()
     })
 
+    it.each([
+        ['missing', {}],
+        ['null', { partyId: null }],
+        ['not a string', { partyId: 42 }],
+        ['empty', { partyId: '' }],
+        ['no params', undefined],
+    ])('rejects a %s partyId', async (_, params) => {
+        const tokenService = await signedIn()
+
+        await expect(
+            tokenService.token.v1.utxos.list(params as never)
+        ).rejects.toThrow('A partyId is required')
+        await expect(
+            tokenService.token.v2.utxos.list(params as never)
+        ).rejects.toThrow('A partyId is required')
+        expect(sdkCache.get).not.toHaveBeenCalled()
+    })
+
     it('lists the holdings of one of the user’s wallets', async () => {
         const tokenService = await signedIn()
         const params = { partyId: wallet.partyId, limit: 10 }
