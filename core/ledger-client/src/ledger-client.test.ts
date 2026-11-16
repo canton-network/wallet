@@ -335,6 +335,43 @@ describe('LedgerClient', () => {
         })
     })
 
+    describe('waitForParty', () => {
+        it('resolves once the party appears without granting rights', async () => {
+            fetchMock
+                .mockResolvedValueOnce(versionResponse())
+                .mockResolvedValueOnce(
+                    jsonResponse({ message: 'not found' }, 404)
+                )
+                .mockResolvedValueOnce(
+                    jsonResponse({
+                        partyDetails: [{ party: 'alice::namespace' }],
+                    })
+                )
+
+            await expect(
+                createLedgerClient().waitForParty('alice::namespace', 5, 1)
+            ).resolves.toBeUndefined()
+            expect(fetchMock).toHaveBeenCalledTimes(3)
+        })
+
+        it('throws when the party never appears', async () => {
+            fetchMock
+                .mockResolvedValueOnce(versionResponse())
+                .mockResolvedValueOnce(
+                    jsonResponse({ message: 'not found' }, 404)
+                )
+                .mockResolvedValueOnce(
+                    jsonResponse({ message: 'not found' }, 404)
+                )
+
+            await expect(
+                createLedgerClient().waitForParty('alice::namespace', 2, 1)
+            ).rejects.toThrow(
+                'timed out waiting for new party to appear after 2 tries'
+            )
+        })
+    })
+
     describe('waitForPartyAndGrantUserRights', () => {
         it('waits for party then grants rights', async () => {
             fetchMock

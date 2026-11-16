@@ -40,42 +40,83 @@ export class PartyAllocationService {
     }
 
     /**
-     * Allocates an internal participant party for a user.
-     * @param userId The ID of the user.
+     * Allocates an internal participant party.
      * @param hint A hint for the party ID.
      */
-    async allocateParty(userId: string, hint: string): Promise<AllocatedParty>
+    async allocateParty(hint: string): Promise<AllocatedParty>
 
     /**
-     * Allocates an externally signed party for a user.
-     * @param userId The ID of the user.
+     * Allocates an externally signed party.
      * @param hint A hint for the party ID.
-     * @param publicKey The public key of the user.
+     * @param publicKey The public key of the party.
      * @param signingCallback A callback function that asynchronously signs the onboarding request hash.
      */
     async allocateParty(
-        userId: string,
         hint: string,
         publicKey: string,
         signingCallback: SigningCbFn
     ): Promise<AllocatedParty>
 
     async allocateParty(
+        hint: string,
+        publicKey?: string,
+        signingCallback?: SigningCbFn
+    ): Promise<AllocatedParty> {
+        if (publicKey !== undefined && signingCallback !== undefined) {
+            return this.allocateExternalParty(hint, publicKey, signingCallback)
+        }
+        return this.allocateInternalParty(hint)
+    }
+
+    /**
+     * Allocates an internal participant party and grants a user rights to it.
+     * @param userId The ID of the user.
+     * @param hint A hint for the party ID.
+     */
+    async allocatePartyAndGrantRights(
+        userId: string,
+        hint: string
+    ): Promise<AllocatedParty>
+
+    /**
+     * Allocates an externally signed party and grants a user rights to it.
+     * @param userId The ID of the user.
+     * @param hint A hint for the party ID.
+     * @param publicKey The public key of the party.
+     * @param signingCallback A callback function that asynchronously signs the onboarding request hash.
+     */
+    async allocatePartyAndGrantRights(
+        userId: string,
+        hint: string,
+        publicKey: string,
+        signingCallback: SigningCbFn
+    ): Promise<AllocatedParty>
+
+    async allocatePartyAndGrantRights(
         userId: string,
         hint: string,
         publicKey?: string,
         signingCallback?: SigningCbFn
     ): Promise<AllocatedParty> {
         if (publicKey !== undefined && signingCallback !== undefined) {
-            return this.allocateExternalParty(
-                userId,
+            const party = await this.allocateExternalParty(
                 hint,
                 publicKey,
                 signingCallback
             )
-        } else {
-            return this.allocateInternalParty(userId, hint)
+            await this.grantUserRights(userId, party.partyId)
+            return party
         }
+        return this.allocateInternalParty(hint, userId)
+    }
+
+    /**
+     * Grants a user rights to act as a party.
+     * @param userId The ID of the user.
+     * @param partyId The ID of the party.
+     */
+    async grantUserRights(userId: string, partyId: string): Promise<void> {
+        await this.ledgerClient.waitForPartyAndGrantUserRights(userId, partyId)
     }
 
     /**
@@ -147,24 +188,21 @@ export class PartyAllocationService {
     }
 
     /**
-     * Allocate party with wallet
-     * @param namespace The namespace of wallet.
-     * @param transactions There are topology transactions.
-     * @param signature A transaction signature from signingProviderId
-     * @param userId The ID of the user.
+     * Allocates a party using topology transactions signed by an existing wallet.
+     * @param namespace The namespace of the wallet.
+     * @param transactions The topology transactions.
+     * @param signature A transaction signature from the signing provider.
      */
     async allocatePartyWithExistingWallet(
         namespace: string,
         transactions: string[],
-        signature: string,
-        userId: string
+        signature: string
     ): Promise<string>
 
     async allocatePartyWithExistingWallet(
         namespace: string,
         transactions: string[],
-        signature: string,
-        userId: string
+        signature: string
     ): Promise<string> {
         const synchronizerId =
             this.synchronizerId ?? (await this.ledgerClient.getSynchronizerId())
@@ -183,16 +221,39 @@ export class PartyAllocationService {
             ]
         )
 
-        await this.ledgerClient.waitForPartyAndGrantUserRights(
-            userId,
-            res.partyId
-        )
         return res.partyId
     }
 
+    /**
+     * Allocates a party using topology transactions signed by an existing
+     * wallet and grants user rights to it.
+     * @param namespace The namespace of the wallet.
+     * @param transactions The topology transactions.
+     * @param signature A transaction signature from the signing provider.
+     * @param userId The ID of the user.
+     */
+    async allocatePartyWithExistingWalletAndGrantRights(
+        namespace: string,
+        transactions: string[],
+        signature: string,
+        userId: string
+    ): Promise<string> {
+        const partyId = await this.allocatePartyWithExistingWallet(
+            namespace,
+            transactions,
+            signature
+        )
+        await this.grantUserRights(userId, partyId)
+        return partyId
+    }
+
+    /**
+     * @param hint A hint for the party ID.
+     * @param userId If set, the participant grants this user act-as rights as part of the allocation.
+     */
     private async allocateInternalParty(
-        userId: string,
-        hint: string
+        hint: string,
+        userId?: string
     ): Promise<AllocatedParty> {
         const { participantId } = await this.ledgerClient.getWithRetry(
             '/v2/parties/participant-id'
@@ -212,22 +273,16 @@ export class PartyAllocationService {
             synchronizerId:
                 this.synchronizerId ??
                 (await this.ledgerClient.getSynchronizerId()),
-            userId,
+            ...(userId && { userId }),
         })
 
         if (!res.partyDetails?.party) {
             throw new Error('Failed to allocate party')
         }
-        await this.ledgerClient.waitForPartyAndGrantUserRights(
-            userId,
-            res.partyDetails.party
-        )
-
         return { hint, namespace, partyId: res.partyDetails.party }
     }
 
     private async allocateExternalParty(
-        userId: string,
         hint: string,
         publicKey: string,
         signingCallback: SigningCbFn
@@ -258,10 +313,6 @@ export class PartyAllocationService {
             ]
         )
 
-        await this.ledgerClient.waitForPartyAndGrantUserRights(
-            userId,
-            res.partyId
-        )
         return { hint, partyId: res.partyId, namespace }
     }
 }
