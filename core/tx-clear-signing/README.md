@@ -65,7 +65,7 @@ interface ClearSigningResult {
 `intent` is, in order of preference:
 
 1. `described`: the descriptor's `interpolatedIntent`, with each `{path}` replaced by its field's value. An operation without one shows its stable `intent`.
-2. `fallback`: a placeholder's field could not be shown, so the descriptor's stable `intent`, as ERC-7730 does.
+2. `fallback`: a placeholder's field could not be shown. `intent` is "The descriptor does not match this transaction." It is not the descriptor's stable intent. `reason` names each placeholder that failed, and `fields` still lists what resolved and what did not.
 3. `undescribed`, `invalid`, `undescribable`: a generic sentence, `Create Module:Entity` or `Exercise Choice on Module:Entity`. `undescribed`: no descriptor words the node. `invalid`: the bound descriptor fails validation, or two descriptors bind the template. `undescribable`: the node is not a create or an exercise, or the contract it exercises is missing, repeated or of another template.
 
 A Daml `Text` value is shown as a JSON string literal, in the intent and in its field, so a value such as `x" and send 1000 to "Mallory` cannot pass as the descriptor's wording. Control, format and line-separator characters in values are escaped.
@@ -81,7 +81,7 @@ A Daml `Text` value is shown as a JSON string literal, in the intent and in its 
 1. **Decodes** the transaction ([src/roots.ts](src/roots.ts)), and indexes the contracts an exercise can act on: the input contracts, and the contracts the transaction creates.
 2. **Binds** each root template to its descriptor, and validates that descriptor ([src/descriptor.ts](src/descriptor.ts)).
 3. **Selects** the entry: `create` for a create node. For an exercise, the `exercises` entry whose choice and interface both equal the node's. An entry without an interface matches only the template's own choice.
-4. **Resolves fields** ([src/path.ts](src/path.ts)) and **formats** them ([src/format.ts](src/format.ts)). A path starts at the create or choice argument. In an exercise, a `@.contract.` path starts at the create argument of the exercised contract.
+4. **Resolves fields** ([src/path.ts](src/path.ts)) and **formats** them ([src/format.ts](src/format.ts)). A path starts at the create or choice argument. In an exercise, a `@.contract.` path starts at the create argument of the exercised contract. `@.contractId`, `@.signatories`, `@.stakeholders`, `@.synchronizerId` and `@.actAs` read the prepared transaction, on a create and an exercise. `@.actingParties`, `@.choiceObservers` and `@.consuming` do so on an exercise only. A party list is shown with `raw`.
 5. **Interpolates** the intent ([src/intent.ts](src/intent.ts)).
 
 Only root nodes are described. A child node is a consequence of its root's choice, which the root's descriptor words. Every root is shown, described or not.
@@ -94,4 +94,4 @@ A field fails on `None`. The ledger leaves trailing `None` fields out of a recor
 
 Set `optional: true` when the path may pass through an `Optional`. `None` is then shown as `None`, and a `Some` with the field's `format`.
 
-The descriptors the wallet gateways ship, and merging uploads over them, live in `@canton-network/core-wallet-services/clear-signing`.
+Example descriptors live in [examples/descriptors](examples/descriptors). A wallet stores the descriptors a user uploads and passes that list to `clearSign`.

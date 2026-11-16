@@ -30,6 +30,8 @@ import type {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
+    ClearSigningDescriptor,
+    ClearSigningDescriptorKey,
 } from '@canton-network/core-wallet-store'
 import {
     assertUniqueSelfIssuedAudience,
@@ -61,6 +63,8 @@ import {
     fromApiKey,
     toApiKey,
     toSession,
+    fromClearSigningDescriptor,
+    toClearSigningDescriptor,
 } from './schema.js'
 import pg from 'pg'
 import type { AccessToken } from '@canton-network/core-types'
@@ -1286,6 +1290,62 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     eb('networkId', '=', network.id),
                 ])
             )
+            .execute()
+    }
+
+    async listClearSigningDescriptors(): Promise<
+        Array<Record<string, unknown>>
+    > {
+        const userId = this.assertConnected()
+        const rows = await this.db
+            .selectFrom('clearSigningDescriptors')
+            .selectAll()
+            .where('userId', '=', userId)
+            .orderBy('packageId', 'asc')
+            .orderBy('moduleName', 'asc')
+            .orderBy('entityName', 'asc')
+            .execute()
+        return rows.map(toClearSigningDescriptor)
+    }
+
+    async setClearSigningDescriptor(
+        record: ClearSigningDescriptor
+    ): Promise<void> {
+        const userId = this.assertConnected()
+        const row = fromClearSigningDescriptor(
+            record,
+            userId,
+            new Date().toISOString()
+        )
+        await this.db
+            .insertInto('clearSigningDescriptors')
+            .values(row)
+            .onConflict((oc) =>
+                oc
+                    .columns([
+                        'userId',
+                        'packageId',
+                        'moduleName',
+                        'entityName',
+                    ])
+                    .doUpdateSet({
+                        descriptor: row.descriptor,
+                        createdAt: row.createdAt,
+                    })
+            )
+            .execute()
+    }
+
+    async removeClearSigningDescriptor(
+        key: ClearSigningDescriptorKey
+    ): Promise<void> {
+        const userId = this.assertConnected()
+        await this.db
+            .deleteFrom('clearSigningDescriptors')
+            .where('userId', '=', userId)
+            .where('packageId', '=', key.packageId)
+            .where('moduleName', '=', key.moduleName)
+            .where('entityName', '=', key.entityName)
             .execute()
     }
 }

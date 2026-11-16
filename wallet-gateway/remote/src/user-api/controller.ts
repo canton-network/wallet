@@ -51,6 +51,10 @@ import type {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
+    ListClearSigningDescriptorsResult,
+    SetClearSigningDescriptorParams,
+    SetClearSigningDescriptorResult,
+    RemoveClearSigningDescriptorParams,
     ListTransactionsParams,
     ListSigningProvidersResult,
     ChangeSigningProviderParams,
@@ -77,6 +81,7 @@ import {
     resolveAuthIdentityProviderId,
     assertIsConnected,
 } from '@canton-network/core-wallet-auth'
+import { templateIdOf } from '@canton-network/core-wallet-services/clear-signing'
 import type { KernelInfo } from '../config/Config.js'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
 import { PartyAllocationService } from '../ledger/party-allocation-service.js'
@@ -1409,6 +1414,35 @@ export const userController = (
         },
         removeApiKey: async (params: RemoveApiKeyParams): Promise<Null> => {
             await store.removeApiKey(params.id)
+            return null
+        },
+        listClearSigningDescriptors:
+            async (): Promise<ListClearSigningDescriptorsResult> => {
+                return {
+                    descriptors: await store.listClearSigningDescriptors(),
+                }
+            },
+        setClearSigningDescriptor: async (
+            params: SetClearSigningDescriptorParams
+        ): Promise<SetClearSigningDescriptorResult> => {
+            let template
+            try {
+                template = templateIdOf(params.descriptor)
+            } catch (error) {
+                const message =
+                    error instanceof Error ? error.message : String(error)
+                throw rpcErrors.invalidParams({ message })
+            }
+            await store.setClearSigningDescriptor({
+                ...template,
+                descriptor: params.descriptor,
+            })
+            return { descriptor: params.descriptor }
+        },
+        removeClearSigningDescriptor: async (
+            params: RemoveClearSigningDescriptorParams
+        ): Promise<Null> => {
+            await store.removeClearSigningDescriptor(params)
             return null
         },
         listSigningProviders:

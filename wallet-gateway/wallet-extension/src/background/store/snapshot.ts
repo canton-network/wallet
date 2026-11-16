@@ -144,6 +144,7 @@ function decodeUser(user: unknown): UserStorage {
         transactions: byId(user.transactions.map(decodeTransaction)),
         messageRaws: byId(user.messageRaws.map(decodeMessageRaw)),
         apiKeys: new Map(),
+        clearSigningDescriptors: new Map(),
         userRightsByNetwork: new Map(
             Object.entries(user.userRightsByNetwork).map(
                 ([networkId, rights]) => {

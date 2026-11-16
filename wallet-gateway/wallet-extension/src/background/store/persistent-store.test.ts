@@ -120,6 +120,17 @@ describe('persistent wallet store', () => {
         await expect(store.listApiKeys()).rejects.toMatchObject({
             code: errorCodes.rpc.methodNotSupported,
         })
+        await expect(store.listClearSigningDescriptors()).rejects.toMatchObject(
+            { code: errorCodes.rpc.methodNotSupported }
+        )
+        await expect(
+            store.setClearSigningDescriptor({
+                packageId: 'pkg',
+                moduleName: 'Mod',
+                entityName: 'Ent',
+                descriptor: {},
+            })
+        ).rejects.toMatchObject({ code: errorCodes.rpc.methodNotSupported })
 
         expect(access.write).not.toHaveBeenCalled()
         expect(memory.get(CONTEXT.userId)?.apiKeys.size ?? 0).toBe(0)

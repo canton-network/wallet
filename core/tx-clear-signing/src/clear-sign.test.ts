@@ -8,8 +8,12 @@ import {
     type Value,
 } from '@canton-network/core-ledger-proto'
 import { decode } from './roots.js'
-import { HashMismatchError, clearSign } from './clear-sign.js'
-import { parseDescriptor, type Descriptor } from './descriptor.js'
+import { HashMismatchError, MISMATCH_INTENT, clearSign } from './clear-sign.js'
+import {
+    DescriptorError,
+    parseDescriptor,
+    type Descriptor,
+} from './descriptor.js'
 import {
     described,
     encode,
@@ -348,7 +352,8 @@ describe('clearSign', () => {
         expect(result.complete).toBe(false)
         expect(result.operations[0]).toMatchObject({
             status: 'fallback',
-            intent: 'Abort ping',
+            intent: MISMATCH_INTENT,
+            reason: "placeholder '{anyone}' failed: 'anyone' is None",
             fields: [
                 { value: `"${PING_ID}"` },
                 { value: ALICE },
@@ -554,7 +559,7 @@ describe('clearSign', () => {
         ])
     })
 
-    it('falls back to the stable intent when a placeholder fails', async () => {
+    it('says the descriptor does not match when a placeholder fails', async () => {
         const variants = vectorDescriptor('Variants', {
             create: {
                 intent: 'Variants',
@@ -574,7 +579,8 @@ describe('clearSign', () => {
         expect(result.complete).toBe(false)
         expect(result.operations[0]).toMatchObject({
             status: 'fallback',
-            intent: 'Variants',
+            intent: MISMATCH_INTENT,
+            reason: "placeholder '{colors.Red}' failed: 'Red' applied to list",
             fields: [
                 { value: '2' },
                 { error: "'Red' applied to list" },
@@ -674,6 +680,108 @@ describe('clearSign', () => {
         ).rejects.toThrow(HashMismatchError)
     })
 
+    it('reads container fields of an exercise', async () => {
+        const tx = exercisePing()
+        const nodeType = rootNodeType(tx)
+        if (nodeType.oneofKind !== 'exercise') {
+            throw new Error('fixture is not an exercise')
+        }
+        const exercise = nodeType.exercise
+        exercise.actingParties = [ALICE]
+        exercise.choiceObservers = []
+        exercise.consuming = false
+        if (!tx.metadata) {
+            throw new Error('fixture has no metadata')
+        }
+        tx.metadata.synchronizerId = 'sync::1'
+        tx.metadata.submitterInfo = { actAs: [ALICE], commandId: 'cmd' }
+        const descriptor = parseDescriptor({
+            $schema: pingJson.$schema,
+            context: pingJson.context,
+            metadata: pingJson.metadata,
+            display: {
+                exercises: [
+                    {
+                        choice: 'Respond',
+                        intent: 'Respond to ping',
+                        interpolatedIntent:
+                            'Contract {@.contractId} on {@.synchronizerId}, consuming {@.consuming}',
+                        fields: [
+                            { path: '@.contractId', format: 'contractId' },
+                            { path: '@.actingParties', format: 'raw' },
+                            { path: '@.consuming', format: 'boolean' },
+                            { path: '@.synchronizerId', format: 'string' },
+                            { path: '@.choiceObservers', format: 'raw' },
+                            { path: '@.actAs', format: 'raw' },
+                        ],
+                    },
+                ],
+            },
+        })
+        const [op] = (await described(encode(tx), [descriptor])).operations
+        expect(op).toMatchObject({
+            status: 'described',
+            intent: `Contract ${exercise.contractId} on "sync::1", consuming false`,
+            fields: [
+                { value: exercise.contractId },
+                { value: `["${ALICE}"]` },
+                { value: 'false' },
+                { value: '"sync::1"' },
+                { value: '[]' },
+                { value: `["${ALICE}"]` },
+            ],
+        })
+    })
+
+    it('reads container fields of a create', async () => {
+        const created = decode(builtinPingCreate)
+        const nodeType = rootNodeType(created)
+        if (nodeType.oneofKind !== 'create') {
+            throw new Error('fixture is not a create')
+        }
+        const { signatories, contractId } = nodeType.create
+        const descriptor = parseDescriptor({
+            $schema: pingJson.$schema,
+            context: pingJson.context,
+            metadata: pingJson.metadata,
+            display: {
+                create: {
+                    intent: 'Create',
+                    fields: [
+                        { path: '@.signatories', format: 'raw' },
+                        { path: '@.contractId', format: 'contractId' },
+                    ],
+                },
+            },
+        })
+        const [op] = (await described(builtinPingCreate, [descriptor]))
+            .operations
+        expect(op).toMatchObject({
+            status: 'described',
+            intent: 'Create',
+            fields: [
+                { value: JSON.stringify(signatories) },
+                { value: contractId },
+            ],
+        })
+    })
+
+    it('rejects an exercise container field on a create', () => {
+        expect(() =>
+            parseDescriptor({
+                $schema: pingJson.$schema,
+                context: pingJson.context,
+                metadata: pingJson.metadata,
+                display: {
+                    create: {
+                        intent: 'Create',
+                        fields: [{ path: '@.consuming', format: 'boolean' }],
+                    },
+                },
+            })
+        ).toThrow(DescriptorError)
+    })
+
     it('rejects a transaction that cannot be hashed', async () => {
         const tx = exercisePing()
         tx.transaction!.nodeSeeds = []
@@ -743,6 +851,10 @@ describe('optional fields', () => {
         )
         const [op] = result.operations
         expect(op?.status).toBe('fallback')
+        expect(op?.intent).toBe(MISMATCH_INTENT)
+        expect(op?.reason).toBe(
+            "placeholder '{values.missingValue}' failed: 'missingValue' is not in the transaction"
+        )
         expect(shown(op?.fields[0])).toBe(
             "'missingValue' is not in the transaction"
         )

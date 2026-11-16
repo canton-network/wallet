@@ -2,80 +2,52 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    mergeDescriptors,
-    shippedDescriptors,
+    templateIdOf,
     templateKeyOf,
-    type ActiveDescriptor,
     type Descriptor,
 } from '@canton-network/core-wallet-services/clear-signing'
-import { VERSION_PREFIX } from './state-manager.js'
+import { detectCurrentOrigin } from './listeners.js'
+import { createUserClient } from './rpc-client.js'
+import { stateManager } from './state-manager.js'
 
-export type { ActiveDescriptor, Descriptor }
+export type { Descriptor }
 
-// Uploaded descriptors are unverified and stay in this browser. They only change how the approve
-// page here describes a transaction. The key must carry the app's prefix, or StateManager deletes
-// it when a page loads.
-const STORAGE_KEY = `${VERSION_PREFIX}.clear-signing-descriptors`
+async function userClient() {
+    const origin = await detectCurrentOrigin()
+    const token = await stateManager.accessToken.get(origin)
+    return createUserClient(token)
+}
 
-/** The uploaded descriptors that name a template. One that does not is skipped, so it cannot break approval. */
-export function uploadedDescriptors(): Descriptor[] {
-    const parsed: Descriptor[] = []
-    for (const json of readStored()) {
-        try {
-            templateKeyOf(json)
-            parsed.push(json as Descriptor)
-        } catch (error) {
-            console.warn('Skipping an uploaded descriptor:', error)
-        }
-    }
-    return parsed
+/** The descriptors stored for the logged-in user. A new user has none. */
+export async function listDescriptors(): Promise<Descriptor[]> {
+    const client = await userClient()
+    const result = await client.request({
+        method: 'listClearSigningDescriptors',
+    })
+    return result.descriptors as Descriptor[]
 }
 
 /**
- * Stores a descriptor. An earlier upload for the same template is replaced.
+ * Stores a descriptor for the logged-in user. An earlier one for the same
+ * package, module and entity is replaced.
  *
  * @throws Error when the JSON does not name a template
  */
-export function addDescriptor(json: unknown): Descriptor {
-    const key = templateKeyOf(json)
-    const others = readStored().filter((stored) => storedKey(stored) !== key)
-    writeStored([...others, json])
-    return json as Descriptor
+export async function addDescriptor(json: unknown): Promise<Descriptor> {
+    templateKeyOf(json)
+    const client = await userClient()
+    const result = await client.request({
+        method: 'setClearSigningDescriptor',
+        params: { descriptor: json as Descriptor },
+    })
+    return result.descriptor as Descriptor
 }
 
-export function removeDescriptor(descriptor: Descriptor): void {
-    const key = templateKeyOf(descriptor)
-    writeStored(readStored().filter((stored) => storedKey(stored) !== key))
-}
-
-/**
- * The descriptors the approve page describes transactions with: the built-in ones, each replaced by an
- * upload for the same template, followed by the other uploads. At most one per template, so an
- * upload never makes a shipped template invalid in `clearSign`.
- */
-export function activeDescriptors(): ActiveDescriptor[] {
-    return mergeDescriptors(shippedDescriptors(), uploadedDescriptors())
-}
-
-function readStored(): unknown[] {
-    try {
-        const parsed: unknown = JSON.parse(
-            localStorage.getItem(STORAGE_KEY) ?? '[]'
-        )
-        return Array.isArray(parsed) ? parsed : []
-    } catch {
-        return []
-    }
-}
-
-function writeStored(entries: unknown[]): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
-}
-
-function storedKey(json: unknown): string | undefined {
-    try {
-        return templateKeyOf(json)
-    } catch {
-        return undefined
-    }
+export async function removeDescriptor(descriptor: Descriptor): Promise<void> {
+    const template = templateIdOf(descriptor)
+    const client = await userClient()
+    await client.request({
+        method: 'removeClearSigningDescriptor',
+        params: template,
+    })
 }

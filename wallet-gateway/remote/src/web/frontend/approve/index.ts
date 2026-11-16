@@ -21,7 +21,7 @@ import {
     HashMismatchError,
     type ClearSigningResult,
 } from '@canton-network/core-tx-clear-signing'
-import { activeDescriptors } from '../descriptors-store.js'
+import { listDescriptors } from '../descriptors-store.js'
 import { createUserClient } from '../rpc-client'
 import { setLocationHref } from '../navigation.js'
 import { stateManager } from '../state-manager'
@@ -384,7 +384,12 @@ export class ApproveUi extends BaseElement {
      */
     private async describeTransaction(claimedHash: string) {
         this.parseTransaction()
-        const descriptors = activeDescriptors().map((a) => a.descriptor)
+        let descriptors: Awaited<ReturnType<typeof listDescriptors>> = []
+        try {
+            descriptors = await listDescriptors()
+        } catch (error) {
+            console.error('Failed to load clear-signing descriptors:', error)
+        }
         try {
             this.clearSigning = await clearSign(
                 this.tx,

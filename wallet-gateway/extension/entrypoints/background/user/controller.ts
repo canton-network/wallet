@@ -600,5 +600,20 @@ export const userController = (
         changeSigningProvider: async () => {
             throw new Error('Function changeSigningProvider not implemented.')
         },
+        listClearSigningDescriptors: async () => {
+            throw new Error(
+                'Function listClearSigningDescriptors not implemented.'
+            )
+        },
+        setClearSigningDescriptor: async () => {
+            throw new Error(
+                'Function setClearSigningDescriptor not implemented.'
+            )
+        },
+        removeClearSigningDescriptor: async () => {
+            throw new Error(
+                'Function removeClearSigningDescriptor not implemented.'
+            )
+        },
     })
 }

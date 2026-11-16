@@ -14,7 +14,7 @@ import {
 } from '@canton-network/core-ledger-proto'
 import { decode } from '../roots.js'
 import { type Descriptor, parseDescriptor } from '../descriptor.js'
-import externalPartyAmuletRules from '../../../wallet-services/src/clear-signing/descriptors/external-party-amulet-rules.json'
+import externalPartyAmuletRules from '../../examples/descriptors/external-party-amulet-rules.json'
 import { encode, rootNodeType } from './helpers.js'
 import { allocationV2Multileg } from './fixtures/allocation-v2-multileg.js'
 

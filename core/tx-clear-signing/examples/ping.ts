@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// A fixed Ping create, clear-signed with the shipped Ping descriptor.
+// A fixed Ping create, clear-signed with the example Ping descriptor.
 //
 // From the wallet repository:
 //   pnpm exec tsx core/tx-clear-signing/examples/ping.ts
 
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import ping from '../../wallet-services/src/clear-signing/descriptors/ping.json'
+import ping from './descriptors/ping.json'
 import { clearSign, type Descriptor } from '../src/index.js'
 import { builtinPingCreate } from '../src/__tests__/fixtures/ping.js'
 

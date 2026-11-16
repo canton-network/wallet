@@ -22,6 +22,7 @@ import {
     SignMessageService,
 } from '@canton-network/core-wallet-services'
 import { userController } from './controller.js'
+import { paramSchemas } from './rpc-gen/schemas.js'
 import { ServerStatusService } from '../notices/server-status-service.js'
 import { ServerNotices } from '../notices/server-notices.js'
 import { GATEWAY_VERSION } from '../version.js'
@@ -1343,6 +1344,75 @@ describe('userController', () => {
                     expect.objectContaining({ partyId: 'party::namespace' }),
                 ])
             )
+        })
+    })
+
+    describe('clear-signing descriptors', () => {
+        const descriptor = (packageId: string, name: string) => ({
+            context: {
+                template: {
+                    packageId,
+                    moduleName: 'Mod',
+                    entityName: 'Ent',
+                },
+            },
+            metadata: { name },
+        })
+
+        it('keeps a descriptor body through param validation', () => {
+            const body = descriptor('pkg-1', 'first')
+            expect(
+                paramSchemas.setClearSigningDescriptor.parse({
+                    descriptor: body,
+                })
+            ).toEqual({ descriptor: body })
+        })
+
+        it('stores one descriptor per package id and replaces the same key', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await controller.setClearSigningDescriptor({
+                descriptor: descriptor('pkg-1', 'first'),
+            })
+            await controller.setClearSigningDescriptor({
+                descriptor: descriptor('pkg-2', 'second'),
+            })
+            await controller.setClearSigningDescriptor({
+                descriptor: descriptor('pkg-1', 'replaced'),
+            })
+
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([
+                descriptor('pkg-1', 'replaced'),
+                descriptor('pkg-2', 'second'),
+            ])
+
+            await expect(
+                controller.setClearSigningDescriptor({
+                    descriptor: { metadata: { name: 'no template' } },
+                })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(/no template/),
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toHaveLength(2)
+
+            await controller.removeClearSigningDescriptor({
+                packageId: 'pkg-1',
+                moduleName: 'Mod',
+                entityName: 'Ent',
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([descriptor('pkg-2', 'second')])
         })
     })
 

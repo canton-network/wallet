@@ -6,6 +6,98 @@ import type { Value } from '@canton-network/core-ledger-proto'
 /** The prefix of a path that reads the exercised contract's create argument. */
 export const CONTRACT_PREFIX = '@.contract.'
 
+/** Container fields of the prepared transaction, shared by create and exercise. */
+const SHARED_CONTAINER = new Set([
+    'contractId',
+    'signatories',
+    'stakeholders',
+    'synchronizerId',
+    'actAs',
+])
+
+/** Container fields that exist only on an exercise node. */
+const EXERCISE_CONTAINER = new Set([
+    'actingParties',
+    'choiceObservers',
+    'consuming',
+])
+
+/** The prepared-transaction values a container path reads. */
+export interface ContainerFields {
+    kind: 'create' | 'exercise'
+    contractId: string
+    signatories: readonly string[]
+    stakeholders: readonly string[]
+    actingParties: readonly string[]
+    choiceObservers: readonly string[]
+    consuming: boolean
+    synchronizerId: string
+    actAs: readonly string[]
+}
+
+/**
+ * The name of a container path such as `@.contractId`. `@.contract.<path>` is not one: that prefix
+ * reads the exercised contract.
+ */
+export function containerFieldName(path: string): string | undefined {
+    if (!path.startsWith('@.') || path.startsWith(CONTRACT_PREFIX)) {
+        return undefined
+    }
+    const name = path.slice(2)
+    return /^[A-Za-z_][A-Za-z0-9_]*$/.test(name) ? name : undefined
+}
+
+/**
+ * The value a container path names. An exercise-only field on a create, or an unknown name, fails.
+ *
+ * @throws PathError when the path does not name a container field of this node
+ */
+export function containerValue(name: string, source: ContainerFields): Value {
+    if (EXERCISE_CONTAINER.has(name) && source.kind !== 'exercise') {
+        throw new PathError(`'@.${name}' is only valid on an exercise`)
+    }
+    if (!SHARED_CONTAINER.has(name) && !EXERCISE_CONTAINER.has(name)) {
+        throw new PathError(`unknown container field '@.${name}'`)
+    }
+    switch (name) {
+        case 'contractId':
+            return contractIdValue(source.contractId)
+        case 'signatories':
+            return parties(source.signatories)
+        case 'stakeholders':
+            return parties(source.stakeholders)
+        case 'actingParties':
+            return parties(source.actingParties)
+        case 'choiceObservers':
+            return parties(source.choiceObservers)
+        case 'consuming':
+            return { sum: { oneofKind: 'bool', bool: source.consuming } }
+        case 'synchronizerId':
+            return { sum: { oneofKind: 'text', text: source.synchronizerId } }
+        case 'actAs':
+            return parties(source.actAs)
+        default:
+            throw new PathError(`unknown container field '@.${name}'`)
+    }
+}
+
+function parties(ids: readonly string[]): Value {
+    return {
+        sum: {
+            oneofKind: 'list',
+            list: {
+                elements: ids.map((party) => ({
+                    sum: { oneofKind: 'party' as const, party },
+                })),
+            },
+        },
+    }
+}
+
+function contractIdValue(id: string): Value {
+    return { sum: { oneofKind: 'contractId', contractId: id } }
+}
+
 export type Step = { kind: 'name'; name: string } | { kind: 'key'; key: string }
 
 export class PathError extends Error {

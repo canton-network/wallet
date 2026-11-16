@@ -1,133 +1,140 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { shippedDescriptors } from '@canton-network/core-wallet-services/clear-signing'
-import { StateManager } from './state-manager.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Descriptor } from '@canton-network/core-wallet-services/clear-signing'
+
+const { request, createUserClient } = vi.hoisted(() => ({
+    request: vi.fn(),
+    createUserClient: vi.fn(),
+}))
+
+vi.mock('./listeners.js', () => ({
+    detectCurrentOrigin: () => Promise.resolve('http://localhost'),
+}))
+vi.mock('./state-manager.js', () => ({
+    stateManager: {
+        accessToken: { get: () => Promise.resolve('session-token') },
+    },
+}))
+vi.mock('./rpc-client.js', () => ({
+    createUserClient: (token?: string) => {
+        createUserClient(token)
+        return Promise.resolve({ request })
+    },
+}))
+
 import {
-    activeDescriptors,
     addDescriptor,
+    listDescriptors,
     removeDescriptor,
-    uploadedDescriptors,
 } from './descriptors-store.js'
 
-const builtInPing = shippedDescriptors().find(
-    (d) => d.context.template.entityName === 'Ping'
-)!
-
-function otherTemplate(entityName: string, name = entityName) {
+function template(
+    packageId: string,
+    entityName: string,
+    name = entityName
+): Descriptor {
     return {
-        ...builtInPing,
+        $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
         context: {
-            template: { ...builtInPing.context.template, entityName },
+            template: {
+                packageId,
+                moduleName: 'Canton.Internal.Ping',
+                entityName,
+            },
         },
-        metadata: { ...builtInPing.metadata, name },
-    }
+        metadata: { version: '1', publisher: 'test', name },
+        display: {},
+        signatures: [],
+    } as Descriptor
 }
 
 describe('descriptors store', () => {
-    afterEach(() => {
-        localStorage.clear()
-    })
+    let stored: Descriptor[]
 
-    it('starts with the built-in descriptors only', () => {
-        expect(uploadedDescriptors()).toEqual([])
-        expect(activeDescriptors().map((a) => a.source)).toEqual(
-            shippedDescriptors().map(() => 'built-in')
+    beforeEach(() => {
+        stored = []
+        request.mockImplementation(
+            async ({
+                method,
+                params,
+            }: {
+                method: string
+                params?: {
+                    descriptor?: Descriptor
+                    packageId?: string
+                    moduleName?: string
+                    entityName?: string
+                }
+            }) => {
+                if (method === 'listClearSigningDescriptors') {
+                    return { descriptors: stored }
+                }
+                if (method === 'setClearSigningDescriptor') {
+                    const descriptor = params?.descriptor
+                    if (!descriptor) throw new Error('missing descriptor')
+                    const key = descriptor.context.template
+                    stored = [
+                        ...stored.filter(
+                            (item) =>
+                                item.context.template.packageId !==
+                                    key.packageId ||
+                                item.context.template.moduleName !==
+                                    key.moduleName ||
+                                item.context.template.entityName !==
+                                    key.entityName
+                        ),
+                        descriptor,
+                    ]
+                    return { descriptor }
+                }
+                if (method === 'removeClearSigningDescriptor') {
+                    stored = stored.filter(
+                        (item) =>
+                            item.context.template.packageId !==
+                                params?.packageId ||
+                            item.context.template.moduleName !==
+                                params?.moduleName ||
+                            item.context.template.entityName !==
+                                params?.entityName
+                    )
+                    return null
+                }
+                throw new Error(`unexpected method ${method}`)
+            }
         )
     })
 
-    it('adds an upload and replaces an earlier one for the same template', () => {
-        addDescriptor(otherTemplate('Pong', 'first'))
-        addDescriptor(otherTemplate('Pong', 'second'))
-
-        expect(uploadedDescriptors().map((d) => d.metadata.name)).toEqual([
-            'second',
-        ])
-        expect(activeDescriptors().at(-1)).toMatchObject({
-            source: 'uploaded',
-            descriptor: { metadata: { name: 'second' } },
-        })
+    it('starts empty', async () => {
+        expect(await listDescriptors()).toEqual([])
+        expect(createUserClient).toHaveBeenCalledWith('session-token')
     })
 
-    it('replaces a built-in descriptor for the same template', () => {
-        addDescriptor({
-            ...builtInPing,
-            metadata: { ...builtInPing.metadata, name: 'Edited ping' },
-        })
+    it('keeps two package ids and replaces the same one', async () => {
+        await addDescriptor(template('pkg-1', 'Ping', 'first'))
+        await addDescriptor(template('pkg-2', 'Ping', 'second'))
+        await addDescriptor(template('pkg-1', 'Ping', 'replaced'))
 
-        const active = activeDescriptors()
-        expect(active).toHaveLength(shippedDescriptors().length)
         expect(
-            active.find(
-                (a) => a.descriptor.context.template.entityName === 'Ping'
-            )
-        ).toMatchObject({
-            source: 'replaces built-in',
-            descriptor: { metadata: { name: 'Edited ping' } },
-        })
+            (await listDescriptors()).map((d) => d.metadata.name).sort()
+        ).toEqual(['replaced', 'second'])
     })
 
-    it('rejects a descriptor without a template and stores nothing', () => {
-        expect(() => addDescriptor({ ...builtInPing, context: {} })).toThrow(
+    it('rejects a descriptor without a template and stores nothing', async () => {
+        await expect(addDescriptor({ context: {} })).rejects.toThrow(
             /no template/
         )
-        expect(uploadedDescriptors()).toEqual([])
+        expect(request).not.toHaveBeenCalled()
+        expect(await listDescriptors()).toEqual([])
     })
 
-    it('skips a stored entry that no longer parses', () => {
-        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
-        localStorage.setItem(
-            'com.splice.wallet.v1.clear-signing-descriptors',
-            JSON.stringify([{ broken: true }, otherTemplate('Pong')])
-        )
-
-        expect(uploadedDescriptors().map((d) => d.metadata.name)).toEqual([
-            'Pong',
+    it('removes one descriptor', async () => {
+        const ping = await addDescriptor(template('pkg-1', 'Ping'))
+        await addDescriptor(template('pkg-2', 'Ping', 'other'))
+        await removeDescriptor(ping)
+        expect((await listDescriptors()).map((d) => d.metadata.name)).toEqual([
+            'other',
         ])
-        expect(warn).toHaveBeenCalledOnce()
-        warn.mockRestore()
-    })
-
-    it('keeps uploads when a page loads the state manager', () => {
-        addDescriptor(otherTemplate('Pong'))
-        new StateManager()
-        expect(uploadedDescriptors().map((d) => d.metadata.name)).toEqual([
-            'Pong',
-        ])
-    })
-
-    it('removes an upload', () => {
-        const pong = addDescriptor(otherTemplate('Pong'))
-        removeDescriptor(pong)
-        expect(uploadedDescriptors()).toEqual([])
-    })
-
-    it('keeps both interface entries of one descriptor, and replaces the built-in', () => {
-        const iface = (entityName: string) => ({
-            moduleName: 'Canton.Internal.Ping',
-            entityName,
-        })
-        addDescriptor({
-            ...builtInPing,
-            metadata: { ...builtInPing.metadata, name: 'Ping with interfaces' },
-            display: {
-                exercises: ['V1', 'V2'].map((name) => ({
-                    choice: 'Respond',
-                    interface: iface(name),
-                    intent: `Respond through ${name}`,
-                })),
-            },
-        })
-
-        const active = activeDescriptors().find(
-            (a) => a.descriptor.context.template.entityName === 'Ping'
-        )
-        expect(active?.source).toBe('replaces built-in')
-        expect(
-            active?.descriptor.display.exercises?.map(
-                (e) => e.interface?.entityName
-            )
-        ).toEqual(['V1', 'V2'])
     })
 })

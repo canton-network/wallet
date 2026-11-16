@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Identifier, Value } from '@canton-network/core-ledger-proto'
+import type {
+    Identifier,
+    Metadata,
+    Value,
+} from '@canton-network/core-ledger-proto'
 import {
     DescriptorError,
     parseDescriptor,
@@ -15,10 +19,13 @@ import { hashesTo } from './hash.js'
 import { parseIntent } from './intent.js'
 import {
     CONTRACT_PREFIX,
+    containerFieldName,
+    containerValue,
     isNone,
     parsePath,
     PathError,
     resolvePath,
+    type ContainerFields,
 } from './path.js'
 import {
     contractArgument,
@@ -32,6 +39,9 @@ import {
     type TemplateRef,
 } from './roots.js'
 
+/** Shown when an interpolated intent cannot be filled from the transaction. */
+export const MISMATCH_INTENT = 'The descriptor does not match this transaction.'
+
 /** A field as shown to the user: its formatted value, or why it cannot be shown. */
 export type DescribedField =
     | { label: string; value: string }
@@ -41,8 +51,9 @@ export type DescribedField =
  * How one root node of a prepared transaction is shown.
  *
  * `kind`, `template`, `choiceId` and `interface` are read from the transaction, so a descriptor
- * cannot change what the user is told is being done. `intent`, `fields` and `descriptor` come from
- * the descriptor bound to `template`.
+ * cannot change what the user is told is being done. `fields` and `descriptor` come from the
+ * descriptor bound to `template`. `intent` does too, except when interpolation fails: then it says
+ * the descriptor does not match the transaction.
  */
 export interface OperationDescription {
     kind: 'create' | 'exercise' | 'other'
@@ -55,7 +66,8 @@ export interface OperationDescription {
     /**
      * - `described`: `intent` is the descriptor's interpolated intent, or its stable intent when it
      *   has no interpolated one.
-     * - `fallback`: a placeholder's field could not be shown, so `intent` is the stable intent.
+     * - `fallback`: a placeholder's field could not be shown, so `intent` says the descriptor does
+     *   not match the transaction. `reason` names the placeholder.
      * - `undescribed`: no descriptor words the node, so `intent` is generic.
      * - `invalid`: the descriptor bound to the node is not valid, or there is more than one, so
      *   `intent` is generic and `reason` says why.
@@ -122,7 +134,7 @@ export async function clearSign(
     const contracts = contractsOf(prepared)
     const bindings = bindDescriptors(descriptors, roots.map(nodeHeader))
     const operations = roots.map((node) =>
-        describeNode(node, contracts, bindings)
+        describeNode(node, contracts, bindings, prepared.metadata)
     )
     const complete = operations.every(
         (op) =>
@@ -192,7 +204,8 @@ type Header = Pick<
 function describeNode(
     node: RootNode,
     contracts: ContractSet,
-    bindings: Map<string, Binding>
+    bindings: Map<string, Binding>,
+    metadata: Metadata | undefined
 ): OperationDescription {
     const header = nodeHeader(node)
     const generic = { ...header, intent: genericIntent(node), fields: [] }
@@ -222,7 +235,7 @@ function describeNode(
     if (!operation) {
         return { ...described, status: 'undescribed' }
     }
-    const args = argumentsOf(node, contracts)
+    const args = argumentsOf(node, contracts, metadata)
     if ('reason' in args) {
         return { ...described, status: 'undescribable', reason: args.reason }
     }
@@ -303,25 +316,77 @@ function exerciseEntry(
 interface Arguments {
     argument: Value | undefined
     contract: Value | undefined
+    container: ContainerFields
 }
 
 function argumentsOf(
     node: Exclude<RootNode, { kind: 'other' }>,
-    contracts: ContractSet
+    contracts: ContractSet,
+    metadata: Metadata | undefined
 ): Arguments | { reason: string } {
+    const container = containerOf(node, metadata)
     if (node.kind === 'create') {
-        return { argument: node.create.argument, contract: undefined }
+        return {
+            argument: node.create.argument,
+            contract: undefined,
+            container,
+        }
     }
     const lookedUp = contractArgument(contracts, node.exercise)
     if ('reason' in lookedUp) return lookedUp
-    return { argument: node.exercise.chosenValue, contract: lookedUp.argument }
+    return {
+        argument: node.exercise.chosenValue,
+        contract: lookedUp.argument,
+        container,
+    }
+}
+
+function containerOf(
+    node: Exclude<RootNode, { kind: 'other' }>,
+    metadata: Metadata | undefined
+): ContainerFields {
+    const shared = {
+        synchronizerId: metadata?.synchronizerId ?? '',
+        actAs: metadata?.submitterInfo?.actAs ?? [],
+    }
+    if (node.kind === 'create') {
+        const { contractId, signatories, stakeholders } = node.create
+        return {
+            kind: 'create',
+            contractId,
+            signatories,
+            stakeholders,
+            actingParties: [],
+            choiceObservers: [],
+            consuming: false,
+            ...shared,
+        }
+    }
+    const {
+        contractId,
+        signatories,
+        stakeholders,
+        actingParties,
+        choiceObservers,
+        consuming,
+    } = node.exercise
+    return {
+        kind: 'exercise',
+        contractId,
+        signatories,
+        stakeholders,
+        actingParties,
+        choiceObservers,
+        consuming,
+        ...shared,
+    }
 }
 
 function describeOperation(
     op: Operation,
     args: Arguments,
     enums: EnumTables
-): Pick<OperationDescription, 'status' | 'intent' | 'fields'> {
+): Pick<OperationDescription, 'status' | 'intent' | 'reason' | 'fields'> {
     const declared = op.fields ?? []
     const fields = declared.map((f) => describeField(f, args, enums))
     if (op.interpolatedIntent === undefined) {
@@ -330,9 +395,30 @@ function describeOperation(
     const byPath = new Map(declared.map((f, i) => [f.path, fields[i]]))
     const intent = interpolate(op.interpolatedIntent, byPath)
     if (intent === undefined) {
-        return { status: 'fallback', intent: op.intent, fields }
+        return {
+            status: 'fallback',
+            intent: MISMATCH_INTENT,
+            reason: mismatchReason(op.interpolatedIntent, byPath),
+            fields,
+        }
     }
     return { status: 'described', intent, fields }
+}
+
+/** Why an interpolated intent could not be filled, one failing placeholder at a time. */
+function mismatchReason(
+    interpolatedIntent: string,
+    fields: Map<string, DescribedField | undefined>
+): string {
+    const failed: string[] = []
+    for (const segment of parseIntent(interpolatedIntent)) {
+        if (segment.kind !== 'placeholder') continue
+        const field = fields.get(segment.path)
+        if (field && 'value' in field) continue
+        const error = field && 'error' in field ? field.error : 'has no field'
+        failed.push(`placeholder '{${segment.path}}' failed: ${error}`)
+    }
+    return failed.join('; ')
 }
 
 /** Fills each placeholder with its field's value. Undefined when a field has no value. */
@@ -373,6 +459,14 @@ function describeField(
  * field the ledger left out.
  */
 function fieldValue(field: Field, args: Arguments, enums: EnumTables): string {
+    const container = containerFieldName(field.path)
+    if (container !== undefined) {
+        return formatValue(
+            containerValue(container, args.container),
+            field,
+            enums
+        )
+    }
     const readsContract = field.path.startsWith(CONTRACT_PREFIX)
     const start = readsContract ? args.contract : args.argument
     if (!start) {

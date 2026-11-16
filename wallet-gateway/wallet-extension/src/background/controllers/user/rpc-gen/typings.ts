@@ -292,6 +292,33 @@ export type CursorAsString = string
  *
  */
 export type Cursor = CursorAsString
+type AlwaysTrue = any
+/**
+ *
+ * The stored clear-signing descriptor.
+ *
+ */
+export interface ClearSigningDescriptor {
+    [key: string]: any
+}
+/**
+ *
+ * Package id of the template the descriptor is bound to.
+ *
+ */
+export type PackageId = string
+/**
+ *
+ * Daml module of the template the descriptor is bound to.
+ *
+ */
+export type ModuleName = string
+/**
+ *
+ * Daml entity of the template the descriptor is bound to.
+ *
+ */
+export type EntityName = string
 /**
  *
  * The public key of the party.
@@ -447,7 +474,6 @@ export interface SignSelfIssuedAccessTokenFailed {
     messageId: MessageId
     failureReason: FailureReason
 }
-type AlwaysTrue = any
 /**
  *
  * Party ids of non-disabled wallets added in this syncWallets call.
@@ -680,6 +706,12 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
+ * The stored clear-signing descriptors.
+ *
+ */
+export type Descriptors = ClearSigningDescriptor[]
+/**
+ *
  * The IDs of the available signing providers.
  *
  */
@@ -806,6 +838,14 @@ export interface GenerateApiKeyParams {
 }
 export interface RemoveApiKeyParams {
     id: Id
+}
+export interface SetClearSigningDescriptorParams {
+    descriptor: ClearSigningDescriptor
+}
+export interface RemoveClearSigningDescriptorParams {
+    packageId: PackageId
+    moduleName: ModuleName
+    entityName: EntityName
 }
 export interface ListSigningProviderKeysParams {
     signingProviderId: SigningProviderId
@@ -961,6 +1001,12 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
+export interface ListClearSigningDescriptorsResult {
+    descriptors: Descriptors
+}
+export interface SetClearSigningDescriptorResult {
+    descriptor: ClearSigningDescriptor
+}
 export interface ListSigningProvidersResult {
     signingProviders: SigningProviders
 }
@@ -1057,6 +1103,14 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListClearSigningDescriptors =
+    () => Promise<ListClearSigningDescriptorsResult>
+export type SetClearSigningDescriptor = (
+    params: SetClearSigningDescriptorParams
+) => Promise<SetClearSigningDescriptorResult>
+export type RemoveClearSigningDescriptor = (
+    params: RemoveClearSigningDescriptorParams
+) => Promise<Null>
 export type ListSigningProviders = () => Promise<ListSigningProvidersResult>
 export type ListSigningProviderKeys = (
     params: ListSigningProviderKeysParams

@@ -17,6 +17,76 @@ import {
 } from '../__tests__/test-helpers.js'
 import { pingCreate, pingCreateHash } from '../__tests__/ping-transaction.js'
 
+// The example Ping descriptor (core/tx-clear-signing/examples/descriptors/ping.json).
+// Stored here so this project does not import a file outside its TypeScript program.
+const pingDescriptor = {
+    $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
+    context: {
+        template: {
+            packageId:
+                'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54',
+            moduleName: 'Canton.Internal.Ping',
+            entityName: 'Ping',
+        },
+    },
+    metadata: {
+        version: '1.2.0',
+        publisher: 'Blockdaemon',
+        name: 'Canton ping',
+    },
+    display: {
+        create: {
+            intent: 'Ping',
+            interpolatedIntent: 'Ping {id} from {initiator} to {responder}',
+            fields: [
+                { path: 'id', label: 'Ping ID', format: 'string' },
+                { path: 'initiator', label: 'Initiator', format: 'party' },
+                { path: 'responder', label: 'Responder', format: 'party' },
+            ],
+        },
+        exercises: [
+            {
+                choice: 'Respond',
+                intent: 'Respond to ping',
+                interpolatedIntent:
+                    'Respond to ping {@.contract.id} from {@.contract.initiator}',
+                fields: [
+                    {
+                        path: '@.contract.id',
+                        label: 'Ping ID',
+                        format: 'string',
+                    },
+                    {
+                        path: '@.contract.initiator',
+                        label: 'Initiator',
+                        format: 'party',
+                    },
+                ],
+            },
+            {
+                choice: 'AbortPing',
+                intent: 'Abort ping',
+                interpolatedIntent:
+                    'Abort ping {@.contract.id} from {@.contract.initiator}, as {anyone}',
+                fields: [
+                    {
+                        path: '@.contract.id',
+                        label: 'Ping ID',
+                        format: 'string',
+                    },
+                    {
+                        path: '@.contract.initiator',
+                        label: 'Initiator',
+                        format: 'party',
+                    },
+                    { path: 'anyone', label: 'Aborted by', format: 'party' },
+                ],
+            },
+        ],
+    },
+    signatures: [],
+}
+
 // A fetch root decodes and hashes. clearSign reports it as undescribable, because only a create or
 // an exercise root is described. An empty prepared transaction cannot be hashed, which would also
 // disable approval.
@@ -108,6 +178,9 @@ function mockApproveState(
         }
         if (method === 'deleteTransaction') {
             return undefined
+        }
+        if (method === 'listClearSigningDescriptors') {
+            return { descriptors: [pingDescriptor] }
         }
         return undefined
     })
@@ -254,7 +327,7 @@ describe('UserUiApprove', () => {
     })
 
     describe('clear signing', () => {
-        it('describes the transaction with the bundled descriptors', async () => {
+        it('describes the transaction with the stored descriptors', async () => {
             mockApproveState(
                 makeTransaction({ preparedTransaction: pingCreate })
             )
@@ -377,6 +450,12 @@ describe('UserUiApprove', () => {
         })
 
         it('hashes the transaction itself and describes it', async () => {
+            mockRequest.mockImplementation(async ({ method }) => {
+                if (method === 'listClearSigningDescriptors') {
+                    return { descriptors: [pingDescriptor] }
+                }
+                return undefined
+            })
             history.replaceState(
                 {},
                 '',
@@ -390,7 +469,14 @@ describe('UserUiApprove', () => {
             expect(el.txHash).toBe(pingCreateHash)
             expect(el.reviewedHash).toBe(pingCreateHash)
             expect(el.clearSigning?.complete).toBe(true)
-            expect(mockRequest).not.toHaveBeenCalled()
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    method: 'listClearSigningDescriptors',
+                })
+            )
+            expect(mockRequest).not.toHaveBeenCalledWith(
+                expect.objectContaining({ method: 'getTransaction' })
+            )
             expect(
                 el.shadowRoot?.querySelector('.alert-warning')?.textContent
             ).toContain('not a transaction to sign')

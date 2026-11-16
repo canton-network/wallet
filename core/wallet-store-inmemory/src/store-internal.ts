@@ -27,6 +27,8 @@ import type {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
+    ClearSigningDescriptor,
+    ClearSigningDescriptorKey,
 } from '@canton-network/core-wallet-store'
 import {
     assertUniqueSelfIssuedAudience,
@@ -42,6 +44,7 @@ export interface UserStorage {
     /** Keyed by session id. */
     sessions: Map<string, Session>
     apiKeys: Map<string, ApiKey>
+    clearSigningDescriptors: Map<string, Record<string, unknown>>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
 
@@ -90,6 +93,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             messageRaws: new Map<string, MessageRaw>(),
             sessions: new Map<string, Session>(),
             apiKeys: new Map<string, ApiKey>(),
+            clearSigningDescriptors: new Map<string, Record<string, unknown>>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
     }
@@ -835,6 +839,41 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         storage.apiKeys.delete(apiKeyId)
         this.updateStorage(storage)
     }
+
+    async listClearSigningDescriptors(): Promise<
+        Array<Record<string, unknown>>
+    > {
+        this.assertConnected()
+        const storage = this.getStorage()
+        return Array.from(storage.clearSigningDescriptors.entries())
+            .sort(([left], [right]) => left.localeCompare(right))
+            .map(([, descriptor]) => descriptor)
+    }
+
+    async setClearSigningDescriptor(
+        record: ClearSigningDescriptor
+    ): Promise<void> {
+        this.assertConnected()
+        const storage = this.getStorage()
+        storage.clearSigningDescriptors.set(
+            clearSigningDescriptorKey(record),
+            record.descriptor
+        )
+        this.updateStorage(storage)
+    }
+
+    async removeClearSigningDescriptor(
+        key: ClearSigningDescriptorKey
+    ): Promise<void> {
+        this.assertConnected()
+        const storage = this.getStorage()
+        storage.clearSigningDescriptors.delete(clearSigningDescriptorKey(key))
+        this.updateStorage(storage)
+    }
+}
+
+function clearSigningDescriptorKey(key: ClearSigningDescriptorKey): string {
+    return JSON.stringify([key.packageId, key.moduleName, key.entityName])
 }
 
 const byCreatedAtDesc = (

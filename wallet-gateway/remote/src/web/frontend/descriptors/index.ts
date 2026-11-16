@@ -9,9 +9,8 @@ import type { Descriptor } from '@canton-network/core-wallet-services/clear-sign
 
 import '../index'
 import {
-    activeDescriptors,
-    type ActiveDescriptor,
     addDescriptor,
+    listDescriptors,
     removeDescriptor,
 } from '../descriptors-store.js'
 import { showToast } from '../utils.js'
@@ -29,18 +28,17 @@ function choiceLabel(entry: unknown): string {
         : choice
 }
 
-const SOURCE_BADGE: Record<ActiveDescriptor['source'], string> = {
-    'built-in': 'text-bg-secondary',
-    uploaded: 'text-bg-primary',
-    'replaces built-in': 'text-bg-warning',
+function fileOrigin(file: File): string {
+    return file.webkitRelativePath || file.name
 }
 
 @customElement('user-ui-descriptors')
 export class UserUiDescriptors extends BaseElement {
-    @state() accessor descriptors: ActiveDescriptor[] = []
+    @state() accessor descriptors: Descriptor[] = []
     @state() accessor pasted = ''
     /** Why the last upload was rejected, one line per problem. */
     @state() accessor problems: string[] = []
+    @state() accessor loadError = ''
 
     static styles = [
         BaseElement.styles,
@@ -94,21 +92,24 @@ export class UserUiDescriptors extends BaseElement {
 
     connectedCallback(): void {
         super.connectedCallback()
-        this.reload()
+        void this.reload()
     }
 
-    private reload() {
-        this.descriptors = activeDescriptors()
-    }
-
-    private add(json: unknown, origin: string): boolean {
+    private async reload() {
         try {
-            const d = addDescriptor(json)
-            showToast(
-                '',
-                `Added '${d.metadata?.name ?? 'descriptor'}' (${origin})`,
-                'success'
-            )
+            this.descriptors = await listDescriptors()
+            this.loadError = ''
+        } catch (error) {
+            this.descriptors = []
+            this.loadError =
+                error instanceof Error ? error.message : String(error)
+        }
+    }
+
+    /** Stores one descriptor. A failure is recorded against `origin` and does not stop a batch. */
+    private async storeOne(json: unknown, origin: string): Promise<boolean> {
+        try {
+            await addDescriptor(json)
             return true
         } catch (error) {
             const message =
@@ -118,54 +119,100 @@ export class UserUiDescriptors extends BaseElement {
         }
     }
 
-    private addPasted() {
+    private async addPasted() {
         this.problems = []
         try {
-            if (this.add(JSON.parse(this.pasted), 'pasted JSON')) {
+            const json: unknown = JSON.parse(this.pasted)
+            if (await this.storeOne(json, 'pasted JSON')) {
                 this.pasted = ''
+                const name =
+                    json !== null &&
+                    typeof json === 'object' &&
+                    'metadata' in json &&
+                    json.metadata !== null &&
+                    typeof json.metadata === 'object' &&
+                    'name' in json.metadata &&
+                    typeof json.metadata.name === 'string'
+                        ? json.metadata.name
+                        : 'descriptor'
+                showToast('', `Added '${name}' (pasted JSON)`, 'success')
             }
         } catch {
             this.problems = ['pasted JSON: not valid JSON']
         }
-        this.reload()
+        await this.reload()
     }
 
     private async addFiles(e: Event) {
         const input = e.target as HTMLInputElement
-        this.problems = []
-        for (const file of Array.from(input.files ?? [])) {
-            try {
-                this.add(JSON.parse(await file.text()), file.name)
-            } catch {
-                this.problems = [
-                    ...this.problems,
-                    `${file.name}: not valid JSON`,
-                ]
-            }
-        }
+        await this.addBatch(Array.from(input.files ?? []))
         input.value = ''
-        this.reload()
     }
 
-    private deleteUpload(d: Descriptor) {
-        removeDescriptor(d)
+    private async addDirectory(e: Event) {
+        const input = e.target as HTMLInputElement
+        const files = Array.from(input.files ?? []).filter((file) =>
+            file.name.toLowerCase().endsWith('.json')
+        )
+        if (files.length === 0) {
+            this.problems = ['no JSON files in that directory']
+            input.value = ''
+            return
+        }
+        await this.addBatch(files)
+        input.value = ''
+    }
+
+    private async addBatch(files: File[]) {
+        this.problems = []
+        let added = 0
+        for (const file of files) {
+            const origin = fileOrigin(file)
+            try {
+                if (
+                    await this.storeOne(JSON.parse(await file.text()), origin)
+                ) {
+                    added++
+                }
+            } catch {
+                this.problems = [...this.problems, `${origin}: not valid JSON`]
+            }
+        }
+        const rejected = this.problems.length
         showToast(
             '',
-            `Removed '${d.metadata?.name ?? 'descriptor'}'`,
-            'success'
+            `Added ${added}, ${rejected} rejected`,
+            rejected === 0 ? 'success' : 'error'
         )
-        this.reload()
+        await this.reload()
+    }
+
+    private async deleteUpload(d: Descriptor) {
+        try {
+            await removeDescriptor(d)
+            showToast(
+                '',
+                `Removed '${d.metadata?.name ?? 'descriptor'}'`,
+                'success'
+            )
+        } catch (error) {
+            const message =
+                error instanceof Error ? error.message : String(error)
+            this.problems = [message]
+        }
+        await this.reload()
     }
 
     protected render() {
         return html`
             <h1 class="h4 fw-semibold">Clear-signing descriptors</h1>
             <p class="text-body-secondary small">
-                Uploaded descriptors are stored in this browser only and are
-                used by the approve page here. They are not verified. An upload
-                is kept when it names a template, and one for the template of a
-                built-in descriptor replaces it. The approve page reports a
-                descriptor that is not valid.
+                Descriptors are stored for your account and start empty. They
+                are used by the approve page and are not verified. An upload is
+                kept when it names a template. One for the same package, module
+                and entity replaces the stored one, so two package versions of a
+                template can both be kept. The approve page reports a descriptor
+                that is not valid.
             </p>
 
             <section class="upload">
@@ -179,6 +226,17 @@ export class UserUiDescriptors extends BaseElement {
                     accept=".json,application/json"
                     multiple
                     @change=${this.addFiles}
+                />
+                <label class="form-label mb-0" for="descriptor-directory"
+                    >Upload a directory</label
+                >
+                <input
+                    id="descriptor-directory"
+                    class="form-control"
+                    type="file"
+                    webkitdirectory
+                    multiple
+                    @change=${this.addDirectory}
                 />
                 <label class="form-label mb-0" for="descriptor-json"
                     >Or paste descriptor JSON</label
@@ -202,6 +260,16 @@ export class UserUiDescriptors extends BaseElement {
                     </button>
                 </div>
                 ${
+                    this.loadError
+                        ? html`<div
+                              class="alert alert-danger small mb-0"
+                              role="alert"
+                          >
+                              ${this.loadError}
+                          </div>`
+                        : nothing
+                }
+                ${
                     this.problems.length
                         ? html`<div
                               class="alert alert-danger small mb-0"
@@ -215,13 +283,13 @@ export class UserUiDescriptors extends BaseElement {
                 }
             </section>
 
-            ${this.descriptors.map((a) => this.renderCard(a))}
+            ${this.descriptors.map((descriptor) => this.renderCard(descriptor))}
         `
     }
 
-    private renderCard(active: ActiveDescriptor) {
+    private renderCard(descriptor: Descriptor) {
         try {
-            return this.renderDescriptor(active)
+            return this.renderDescriptor(descriptor)
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : String(error)
@@ -231,7 +299,7 @@ export class UserUiDescriptors extends BaseElement {
         }
     }
 
-    private renderDescriptor({ descriptor, source }: ActiveDescriptor) {
+    private renderDescriptor(descriptor: Descriptor) {
         // An upload is kept once it names a template, so exercises may not be a list.
         // Mapping a non-list throws, and Lit then draws no cards at all.
         const shown = descriptor as {
@@ -258,9 +326,6 @@ export class UserUiDescriptors extends BaseElement {
                     <h2 class="h6 fw-semibold mb-0">
                         ${metadata?.name ?? 'Untitled descriptor'}
                     </h2>
-                    <span class="badge rounded-pill ${SOURCE_BADGE[source]}"
-                        >${source}</span
-                    >
                 </div>
                 <dl class="small">
                     <dt>Version</dt>
@@ -291,19 +356,15 @@ export class UserUiDescriptors extends BaseElement {
                     <pre class="mb-0">
 ${JSON.stringify(descriptor, null, 2)}</pre>
                 </details>
-                ${
-                    source === 'built-in'
-                        ? nothing
-                        : html`<div>
-                              <button
-                                  class="btn btn-outline-danger btn-sm rounded-pill"
-                                  type="button"
-                                  @click=${() => this.deleteUpload(descriptor)}
-                              >
-                                  Delete
-                              </button>
-                          </div>`
-                }
+                <div>
+                    <button
+                        class="btn btn-outline-danger btn-sm rounded-pill"
+                        type="button"
+                        @click=${() => this.deleteUpload(descriptor)}
+                    >
+                        Delete
+                    </button>
+                </div>
             </section>
         `
     }

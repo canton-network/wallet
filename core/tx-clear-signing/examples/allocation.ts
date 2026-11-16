@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A fixed two-leg AllocationFactory_Allocate, exercised through the V2 token-standard interface
-// and clear-signed with the shipped ExternalPartyAmuletRules descriptor.
+// and clear-signed with the example ExternalPartyAmuletRules descriptor.
 //
 // From the wallet repository:
 //   pnpm exec tsx core/tx-clear-signing/examples/allocation.ts
 
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import externalPartyAmuletRules from '../../wallet-services/src/clear-signing/descriptors/external-party-amulet-rules.json'
+import externalPartyAmuletRules from './descriptors/external-party-amulet-rules.json'
 import { clearSign, type Descriptor } from '../src/index.js'
 import { allocationV2Multileg } from '../src/__tests__/fixtures/allocation-v2-multileg.js'
 

@@ -2,27 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { clearSign } from '../../../tx-clear-signing/src/clear-sign.js'
-import {
-    hashEither,
-    intentText,
-    shown,
-} from '../../../tx-clear-signing/src/__tests__/helpers.js'
-import { allocationV2Multileg } from '../../../tx-clear-signing/src/__tests__/fixtures/allocation-v2-multileg.js'
-import { builtinPingCreate } from '../../../tx-clear-signing/src/__tests__/fixtures/ping.js'
-import { shippedDescriptors } from './shipped.js'
+import { clearSign, type Descriptor } from '../index.js'
+import { hashEither, intentText, shown } from './helpers.js'
+import { allocationV2Multileg } from './fixtures/allocation-v2-multileg.js'
+import { builtinPingCreate } from './fixtures/ping.js'
 
-// The whole shipped set is passed: descriptors for templates the transaction does not use are ignored.
+// The example directory is what a user uploads. Every file is passed: descriptors for templates
+// the transaction does not use are ignored.
+const descriptorFiles = import.meta.glob<Descriptor>(
+    '../../examples/descriptors/*.json',
+    { eager: true, import: 'default' }
+)
+
+function exampleDescriptors(): Descriptor[] {
+    return Object.values(descriptorFiles)
+}
+
 async function described(tx: string) {
-    return clearSign(tx, shippedDescriptors(), await hashEither(tx))
+    return clearSign(tx, exampleDescriptors(), await hashEither(tx))
 }
 
 const pingPackageId =
     'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54'
 
-describe('shippedDescriptors', () => {
+describe('example descriptors', () => {
     it('fully describes the builtin Ping create', async () => {
-        const descriptor = shippedDescriptors().find(
+        const descriptor = exampleDescriptors().find(
             (d) => d.context.template.entityName === 'Ping'
         )
 

@@ -23,6 +23,9 @@ export const unsupported = (): Pick<
     | 'removeApiKey'
     | 'listSigningProviderKeys'
     | 'changeSigningProvider'
+    | 'listClearSigningDescriptors'
+    | 'setClearSigningDescriptor'
+    | 'removeClearSigningDescriptor'
 > => ({
     startSelfIssuedLoginSession: async () => {
         throw new Error('Function startSelfIssuedLoginSession not implemented.')
@@ -68,5 +71,14 @@ export const unsupported = (): Pick<
     },
     changeSigningProvider: async () => {
         throw new Error('Function changeSigningProvider not implemented.')
+    },
+    listClearSigningDescriptors: async () => {
+        throw rpcErrors.methodNotSupported()
+    },
+    setClearSigningDescriptor: async () => {
+        throw rpcErrors.methodNotSupported()
+    },
+    removeClearSigningDescriptor: async () => {
+        throw rpcErrors.methodNotSupported()
     },
 })

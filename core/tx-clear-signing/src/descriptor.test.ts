@@ -59,16 +59,37 @@ describe('parseDescriptor', () => {
     })
 
     it.each([
-        '@.actAs',
         '$.context.template.packageId',
         '$.metadata.constants.network',
-    ])('rejects a path that is not an argument or the contract: %s', (path) => {
+        '@.foo',
+        '@.consuming',
+        '@.actingParties',
+        '@.contract.id',
+    ])(
+        'rejects a create path that is not an argument or a shared container field: %s',
+        (path) => {
+            expect(() =>
+                parseDescriptor({
+                    ...ping,
+                    display: { create: { intent: 'Ping', fields: [{ path }] } },
+                })
+            ).toThrow('path')
+        }
+    )
+
+    it.each([
+        '@.contractId',
+        '@.signatories',
+        '@.stakeholders',
+        '@.synchronizerId',
+        '@.actAs',
+    ])('accepts a shared container path on a create: %s', (path) => {
         expect(() =>
             parseDescriptor({
                 ...ping,
                 display: { create: { intent: 'Ping', fields: [{ path }] } },
             })
-        ).toThrow('path')
+        ).not.toThrow()
     })
 
     it.each([

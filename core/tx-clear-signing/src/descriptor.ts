@@ -18,10 +18,17 @@ const STEPS = `${NAME_STEP}(?:\\.${NAME_STEP})*`
 
 const identifier = new RegExp(`^${NAME}$`)
 const dottedName = new RegExp(`^${NAME}(?:\\.${NAME})*$`)
-/** A path of an exercise field, which may read the exercised contract. */
-const pathPattern = new RegExp(`^(?:${STEPS}|@\\.contract\\.${STEPS})$`)
-/** A path of a create field: there is no contract to read. */
-const argumentPathPattern = new RegExp(`^${STEPS}$`)
+const SHARED_CONTAINER =
+    'contractId|signatories|stakeholders|synchronizerId|actAs'
+const EXERCISE_CONTAINER = `${SHARED_CONTAINER}|actingParties|choiceObservers|consuming`
+/** A path of an exercise field: the choice argument, the exercised contract, or a container field. */
+const pathPattern = new RegExp(
+    `^(?:${STEPS}|@\\.contract\\.${STEPS}|@\\.(?:${EXERCISE_CONTAINER}))$`
+)
+/** A path of a create field: the create argument, or a container field shared with exercises. */
+const argumentPathPattern = new RegExp(
+    `^(?:${STEPS}|@\\.(?:${SHARED_CONTAINER}))$`
+)
 const enumRef = new RegExp(`^\\$\\.metadata\\.enums\\.${NAME}$`)
 const semver =
     /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/
@@ -76,7 +83,7 @@ function fieldSchema(path: RegExp) {
         })
 }
 
-/** A field of a create: its path starts at the create argument. */
+/** A field of a create: an argument path, or a container field shared with exercises. */
 const ArgumentFieldSchema: z.ZodType<Field> = fieldSchema(argumentPathPattern)
 /** A field of an exercise: its path may read the exercised contract. */
 const ExerciseFieldSchema: z.ZodType<Field> = fieldSchema(pathPattern)

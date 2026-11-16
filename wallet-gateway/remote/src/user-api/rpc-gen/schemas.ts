@@ -1117,6 +1117,48 @@ export const paramSchemas: Record<string, z.ZodType> = {
         },
         required: ['id'],
     }),
+    listClearSigningDescriptors: noParams,
+    setClearSigningDescriptor: z.fromJSONSchema({
+        title: 'SetClearSigningDescriptorParams',
+        type: 'object',
+        additionalProperties: { type: 'null' },
+        properties: {
+            descriptor: {
+                title: 'ClearSigningDescriptor',
+                type: 'object',
+                additionalProperties: true,
+                description:
+                    'A clear-signing descriptor. It must name a template in context.template.',
+            },
+        },
+        required: ['descriptor'],
+    }),
+    removeClearSigningDescriptor: z.fromJSONSchema({
+        title: 'RemoveClearSigningDescriptorParams',
+        type: 'object',
+        additionalProperties: { type: 'null' },
+        properties: {
+            packageId: {
+                title: 'packageId',
+                type: 'string',
+                description:
+                    'Package id of the template the descriptor is bound to.',
+            },
+            moduleName: {
+                title: 'moduleName',
+                type: 'string',
+                description:
+                    'Daml module of the template the descriptor is bound to.',
+            },
+            entityName: {
+                title: 'entityName',
+                type: 'string',
+                description:
+                    'Daml entity of the template the descriptor is bound to.',
+            },
+        },
+        required: ['packageId', 'moduleName', 'entityName'],
+    }),
     listSigningProviders: noParams,
     listSigningProviderKeys: z.fromJSONSchema({
         title: 'ListSigningProviderKeysParams',
