@@ -14,7 +14,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Timestamp } from '../../../../../../google/protobuf/timestamp.js'
+import { Timestamp } from '../../../../../../google/protobuf/timestamp.ts'
 /**
  * * Topology transaction collection used during bootstrapping of synchronizer nodes and on the admin API
  *

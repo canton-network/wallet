@@ -15,9 +15,9 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { ArchivedEvent } from './event.js'
-import { CreatedEvent } from './event.js'
-import { EventFormat } from './transaction_filter.js'
+import { ArchivedEvent } from './event.ts'
+import { CreatedEvent } from './event.ts'
+import { EventFormat } from './transaction_filter.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.GetEventsByContractIdRequest
  */

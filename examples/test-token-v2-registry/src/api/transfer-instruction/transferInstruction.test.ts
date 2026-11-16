@@ -28,14 +28,6 @@ const tokenRulesContext = {
     },
 }
 
-vi.mock('../../common/sdk', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
-
-    return {
-        default: importedMock.sdk,
-    }
-})
-
 vi.mock('../../common/state', async () => {
     const { mock: importedMock } = await import('../../__tests__/mocks')
 

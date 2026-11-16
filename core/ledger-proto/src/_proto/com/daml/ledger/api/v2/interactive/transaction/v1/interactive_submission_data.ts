@@ -14,9 +14,9 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Value } from '../../../value.js'
-import { GlobalKeyWithMaintainers } from '../../interactive_submission_common_data.js'
-import { Identifier } from '../../../value.js'
+import { Value } from '../../../value.ts'
+import { GlobalKeyWithMaintainers } from '../../interactive_submission_common_data.ts'
+import { Identifier } from '../../../value.ts'
 //
 // Transaction Nodes
 

@@ -25,7 +25,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Any } from '../protobuf/any.js'
+import { Any } from '../protobuf/any.ts'
 /**
  * The `Status` type defines a logical error model that is suitable for
  * different programming environments, including REST APIs and RPC APIs. It is

@@ -14,8 +14,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { TrafficControlParameters } from './traffic_control_parameters.js'
-import { Duration } from '../../../../../google/protobuf/duration.js'
+import { TrafficControlParameters } from './traffic_control_parameters.ts'
+import { Duration } from '../../../../../google/protobuf/duration.ts'
 /**
  * catch-up configuration parameters
  *

@@ -7,10 +7,10 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { VersionService } from './version_service.js'
+import { VersionService } from './version_service.ts'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetLedgerApiVersionResponse } from './version_service.js'
-import type { GetLedgerApiVersionRequest } from './version_service.js'
+import type { GetLedgerApiVersionResponse } from './version_service.ts'
+import type { GetLedgerApiVersionRequest } from './version_service.ts'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**

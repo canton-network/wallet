@@ -15,11 +15,11 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Value } from '../value.js'
-import { Identifier } from '../value.js'
-import { Command } from '../commands.js'
-import { Completion } from '../completion.js'
-import { Timestamp } from '../../../../../../google/protobuf/timestamp.js'
+import { Value } from '../value.ts'
+import { Identifier } from '../value.ts'
+import { Command } from '../commands.ts'
+import { Completion } from '../completion.ts'
+import { Timestamp } from '../../../../../../google/protobuf/timestamp.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.admin.GetCommandStatusRequest
  */

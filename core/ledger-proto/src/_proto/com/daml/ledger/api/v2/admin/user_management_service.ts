@@ -15,8 +15,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { FieldMask } from '../../../../../../google/protobuf/field_mask.js'
-import { ObjectMeta } from './object_meta.js'
+import { FieldMask } from '../../../../../../google/protobuf/field_mask.ts'
+import { ObjectMeta } from './object_meta.ts'
 // Users and rights
 // /////////////////
 

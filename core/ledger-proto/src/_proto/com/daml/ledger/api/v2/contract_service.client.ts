@@ -7,10 +7,10 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { ContractService } from './contract_service.js'
+import { ContractService } from './contract_service.ts'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetContractResponse } from './contract_service.js'
-import type { GetContractRequest } from './contract_service.js'
+import type { GetContractResponse } from './contract_service.ts'
+import type { GetContractRequest } from './contract_service.ts'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**

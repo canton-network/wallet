@@ -15,8 +15,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { ReassignmentCommands } from './reassignment_commands.js'
-import { Commands } from './commands.js'
+import { ReassignmentCommands } from './reassignment_commands.ts'
+import { Commands } from './commands.ts'
 /**
  * The submitted commands will be processed atomically in a single transaction. Moreover, each ``Command`` in ``commands`` will be executed in the order specified by the request.
  *

@@ -7,12 +7,12 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { CommandSubmissionService } from './command_submission_service.js'
-import type { SubmitReassignmentResponse } from './command_submission_service.js'
-import type { SubmitReassignmentRequest } from './command_submission_service.js'
+import { CommandSubmissionService } from './command_submission_service.ts'
+import type { SubmitReassignmentResponse } from './command_submission_service.ts'
+import type { SubmitReassignmentRequest } from './command_submission_service.ts'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { SubmitResponse } from './command_submission_service.js'
-import type { SubmitRequest } from './command_submission_service.js'
+import type { SubmitResponse } from './command_submission_service.ts'
+import type { SubmitRequest } from './command_submission_service.ts'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**

@@ -3,7 +3,6 @@
     "compilerOptions": {
         "lib": ["ESNext", "DOM"],
         "types": ["node"],
-        "erasableSyntaxOnly": true,
-        "rewriteRelativeImportExtensions": true
+        "erasableSyntaxOnly": true
     }
 }

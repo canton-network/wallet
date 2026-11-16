@@ -8,14 +8,6 @@ import { getAllocationFactory } from './getAllocationFactory'
 
 const { res, next } = expressContext
 
-vi.mock('../../common/sdk', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
-
-    return {
-        default: importedMock.sdk,
-    }
-})
-
 vi.mock('../../common/state', async () => {
     const { mock: importedMock } = await import('../../__tests__/mocks')
 

@@ -15,12 +15,12 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Reassignment } from './reassignment.js'
-import { EventFormat } from './transaction_filter.js'
-import { ReassignmentCommands } from './reassignment_commands.js'
-import { Transaction } from './transaction.js'
-import { TransactionFormat } from './transaction_filter.js'
-import { Commands } from './commands.js'
+import { Reassignment } from './reassignment.ts'
+import { EventFormat } from './transaction_filter.ts'
+import { ReassignmentCommands } from './reassignment_commands.ts'
+import { Transaction } from './transaction.ts'
+import { TransactionFormat } from './transaction_filter.ts'
+import { Commands } from './commands.ts'
 /**
  * These commands are executed as a single atomic transaction.
  *

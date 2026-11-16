@@ -15,11 +15,11 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { TopologyTransaction } from './topology_transaction.js'
-import { OffsetCheckpoint } from './offset_checkpoint.js'
-import { Reassignment } from './reassignment.js'
-import { Transaction } from './transaction.js'
-import { UpdateFormat } from './transaction_filter.js'
+import { TopologyTransaction } from './topology_transaction.ts'
+import { OffsetCheckpoint } from './offset_checkpoint.ts'
+import { Reassignment } from './reassignment.ts'
+import { Transaction } from './transaction.ts'
+import { UpdateFormat } from './transaction_filter.ts'
 /**
  * Exclusive lower bound offset of the requested ledger section (non-negative integer).
  * The response will only contain transactions whose offset is strictly greater than this.
