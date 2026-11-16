@@ -63,22 +63,37 @@ export function createTokenService({
     registries,
     sdkCache,
 }: TokenServiceDeps): TokenService {
-    async function sdkFor(partyId?: PartyId): Promise<TokenSdk> {
-        const context = await authContext.load()
-        if (!context) throw new Error('Not signed in')
-        const store = await getStore()
-        if (partyId !== undefined) {
-            const wallets = await store.getWallets()
-            if (!wallets.some((wallet) => wallet.partyId === partyId)) {
-                throw new Error(`Party ${partyId} does not belong to user`)
-            }
-        }
+    /** The SDK for the signed-in user and current network. */
+    async function sdkFor(): Promise<TokenSdk> {
+        const { context, store } = await signedIn()
         const network = await store.getCurrentNetwork()
         return sdkCache.get({
             network,
             accessToken: context.accessToken,
             registries: await registries.forNetwork(network.id),
         })
+    }
+
+    /**
+     * The SDK, once `partyId` is one of the user's wallets. Messaging doesn't
+     * check types, so a missing or non-string `partyId` is rejected here.
+     */
+    async function sdkForParty(partyId: unknown): Promise<TokenSdk> {
+        const { store } = await signedIn()
+        if (typeof partyId !== 'string' || partyId === '') {
+            throw new Error('A partyId is required')
+        }
+        const wallets = await store.getWallets()
+        if (!wallets.some((wallet) => wallet.partyId === partyId)) {
+            throw new Error(`Party ${partyId} does not belong to user`)
+        }
+        return sdkFor()
+    }
+
+    async function signedIn() {
+        const context = await authContext.load()
+        if (!context) throw new Error('Not signed in')
+        return { context, store: await getStore() }
     }
 
     // Spell out the fields, so that a caller can't pass options the
@@ -107,7 +122,7 @@ export function createTokenService({
             v1: {
                 utxos: {
                     async list(params) {
-                        const sdk = await sdkFor(params.partyId)
+                        const sdk = await sdkForParty(params?.partyId)
                         return sdk.token.v1.utxos.list(holdingsParams(params))
                     },
                 },
@@ -115,7 +130,7 @@ export function createTokenService({
             v2: {
                 utxos: {
                     async list(params) {
-                        const sdk = await sdkFor(params.partyId)
+                        const sdk = await sdkForParty(params?.partyId)
                         return sdk.token.v2.utxos.list(holdingsParams(params))
                     },
                 },
