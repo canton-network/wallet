@@ -6,9 +6,8 @@ import { prompt } from '@optique/clack'
 import { defineCommand } from '@optique/discover'
 import { logger, loggingParser } from '../../../logger'
 import { path } from '@optique/run'
-import { downloadTemplate } from './template'
 
-const techStackOptions = ['vue', 'react', 'lit'] as const
+const availableTemplates = ['vue', 'react', 'lit'] as const
 
 export default defineCommand({
     path: ['dapp', 'create'],
@@ -16,24 +15,24 @@ export default defineCommand({
         object({
             output: prompt(option('--out', path()), {
                 type: 'text',
-                message: 'Output path:',
+                message: `Output path (${process.cwd()}):`,
             }),
-            tech: prompt(option('--tech', choice(techStackOptions)), {
+            template: prompt(option('--template', choice(availableTemplates)), {
                 type: 'select',
-                message: 'Choose tech stack (currently unused value):',
-                options: techStackOptions,
+                message: 'Choose template (currently unused):',
+                options: availableTemplates,
             }),
         }),
         loggingParser
     ),
     metadata: {
-        brief: message`Create dApp UI boilerplate.`,
+        brief: message`Create dApp UI template.`,
     },
     async handler(value) {
-        logger.debug('Creating dApp boilerplate')
+        logger.debug('Creating dApp template')
 
         try {
-            await downloadTemplate(value.output)
+            // TODO: perform the main magic here
             logger.info(`Created dApp in ${value.output}`)
         } catch (error) {
             logger.error(
