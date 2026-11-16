@@ -28,6 +28,7 @@ import type {
 } from '@canton-network/core-splice-provider'
 import type {
     StatusEvent,
+    ConnectParams,
     ConnectResult,
     PrepareExecuteParams,
     PrepareExecuteAndWaitResult,
@@ -61,6 +62,30 @@ export interface DappSDKConnectOptions<
     defaultAdapters?: TDefaultAdapter[]
     additionalAdapters?: ProviderAdapter[] | undefined
     enableSuggestedWallets?: boolean
+}
+
+/**
+ * Checks whether connect argument are using deprecated way of initializing SDK through connect by passing options as param.
+ * It uses duck typing in the following way:
+ * - if any of deprecated init options properties are present then it's deprecated init options
+ * - if it's an empty object then it's deprecated init options
+ * - if it's undefined, or object with different keys then it's the new dapp-api connect params
+ */
+function isDeprecatedConnectOptions(
+    arg: ConnectParams | DappSDKConnectOptions | undefined
+): arg is DappSDKConnectOptions {
+    const DEPRECATED_CONNECT_OPTION_KEYS: string[] = [
+        'defaultAdapters',
+        'additionalAdapters',
+        'enableSuggestedWallets',
+    ] satisfies Array<keyof DappSDKConnectOptions>
+
+    if (arg === undefined) return false
+    const keys = Object.keys(arg)
+    return (
+        keys.length === 0 ||
+        keys.some((key) => DEPRECATED_CONNECT_OPTION_KEYS.includes(key))
+    )
 }
 
 function defaultTrue(b: boolean | undefined): boolean {
@@ -349,23 +374,42 @@ export class DappSDK {
         // are registered even if discovery was already created by an earlier call
         // (e.g. status() on cold start). Serialize behind the existing initPromise
         // to avoid concurrent discovery mutations.
+        const ensureDiscoveryWithAdapters = () =>
+            this.ensureDiscovery(this.configuredAdapters)
         this.initPromise = this.initPromise
-            ? this.initPromise.then(() =>
-                  this.ensureDiscovery(this.configuredAdapters)
+            ? // 2 args `then` makes chained ensureDiscovery execute even if the one from previous init failed.
+              // This prevents a single rejected initPromise from blocking all calls to ensureDiscovery in subsequent calls to `init`
+              this.initPromise.then(
+                  ensureDiscoveryWithAdapters,
+                  ensureDiscoveryWithAdapters
               )
-            : this.ensureDiscovery(this.configuredAdapters)
+            : ensureDiscoveryWithAdapters()
         await this.initPromise
     }
 
-    async connect(): Promise<ConnectResult>
+    /**
+     * Opens the wallet picker and connects to the selected wallet.
+     * Passes `params` to the `connect` method of dapp-api.
+     * `options` here is a legacy convenience that forwards to {@link DappSDK.init};
+     * prefer {@link init} with adapters at startup.
+     */
+    async connect(params?: ConnectParams): Promise<ConnectResult>
     /** @deprecated Pass options to `init()` instead. */
     async connect(options: DappSDKConnectOptions): Promise<ConnectResult>
-    async connect(options?: DappSDKConnectOptions): Promise<ConnectResult> {
+    async connect(
+        // A single discriminated union argument for either deprecated init options or dapp-api connect params.
+        // A single argument was chosen rather than adding second one because it enables removing deprecated init options
+        // without introducing a breaking change of moving connect params from second to first argument.
+        arg?: ConnectParams | DappSDKConnectOptions
+    ): Promise<ConnectResult> {
+        let connectParams: ConnectParams | undefined
         // Prefer init({ ... }) once at startup. Passing options here remains supported
         // for older call sites; it is equivalent to init(options) then connect().
-        if (options) {
-            await this.init(options)
+        // For connecting with a scoped access token, init must be used instead of passing DappSDKConnectOptions here.
+        if (isDeprecatedConnectOptions(arg)) {
+            await this.init(arg)
         } else {
+            connectParams = arg
             await this.init()
         }
 
@@ -424,7 +468,7 @@ export class DappSDK {
                 try {
                     // creates provider based on the adapter
                     // provider stores (and reads from storage) the session token and the access token
-                    await discovery.connect(targetId)
+                    await discovery.connect(targetId, connectParams)
 
                     const session = discovery.getActiveSession()
                     if (!session) {
@@ -627,21 +671,19 @@ export class DappSDK {
 export const sdk = new DappSDK()
 
 /**
- * Opens the wallet picker and connects. Prefer {@link init} with adapters at startup;
- * `options` here is a legacy convenience that forwards to {@link DappSDK.init}.
+ * Opens the wallet picker and connects to the selected wallet.
+ * Passes `params` to the `connect` method of dapp-api.
+ * `options` here is a legacy convenience that forwards to {@link DappSDK.init};
+ * prefer {@link init} with adapters at startup.
  */
-export function connect(): Promise<ConnectResult>
+export function connect(params?: ConnectParams): Promise<ConnectResult>
 /** @deprecated Pass options to `init()` instead. */
 export function connect(options: DappSDKConnectOptions): Promise<ConnectResult>
 export function connect(
-    options?: DappSDKConnectOptions
+    arg?: ConnectParams | DappSDKConnectOptions
 ): Promise<ConnectResult> {
-    // TODO we probably shouldn't add logic in the convenience exported methods
-    //  that would not execute if called through sdk.connect
-    if (options) {
-        return sdk.init(options).then(() => sdk.connect())
-    }
-    return sdk.connect()
+    // Both branches are the same call, narrowing picks one sdk.connect overload and satisfies TypeScript
+    return isDeprecatedConnectOptions(arg) ? sdk.connect(arg) : sdk.connect(arg)
 }
 
 export const init = (options?: DappSDKConnectOptions): Promise<void> =>

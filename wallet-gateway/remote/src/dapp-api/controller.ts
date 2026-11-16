@@ -8,6 +8,7 @@ import {
 } from '@canton-network/core-wallet-auth'
 import buildController from './rpc-gen/index.js'
 import type {
+    ConnectParams,
     ConnectResult,
     LedgerApiParams,
     LedgerApiResult,
@@ -97,8 +98,16 @@ export const dappController = ({
         return session
     }
 
+    function loginUrl(scopes: string[] = []): string {
+        const query = new URLSearchParams(
+            scopes.map((scope) => ['scopes', scope])
+        ).toString()
+        return `${userUrl}/login/${query ? `?${query}` : ''}`
+    }
+
     return buildController({
-        connect: async () => {
+        connect: async (params?: ConnectParams) => {
+            const connectUserUrl = loginUrl(params?.scopes)
             const session =
                 context && (await store.getSession(context.accessToken))
 
@@ -107,7 +116,7 @@ export const dappController = ({
                     isConnected: false,
                     isNetworkConnected: false,
                     networkReason: 'Unauthenticated',
-                    userUrl: `${userUrl}/login/`,
+                    userUrl: connectUserUrl,
                 } satisfies ConnectResult
             }
 
@@ -133,7 +142,7 @@ export const dappController = ({
                 reason: 'OK',
                 isNetworkConnected: status.isConnected,
                 networkReason: status.reason ? status.reason : 'OK',
-                userUrl: `${userUrl}/login/`,
+                userUrl: connectUserUrl,
             }
             const statusEvent: StatusEvent = {
                 provider,

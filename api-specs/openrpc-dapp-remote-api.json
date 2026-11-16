@@ -19,7 +19,16 @@
         },
         {
             "name": "connect",
-            "params": [],
+            "params": [
+                {
+                    "name": "params",
+                    "required": false,
+                    "schema": {
+                        "title": "connectParams",
+                        "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/ConnectRequest"
+                    }
+                }
+            ],
             "result": {
                 "name": "result",
                 "schema": {
