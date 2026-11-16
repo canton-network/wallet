@@ -18,8 +18,9 @@ src/
 │   ├── controllers/
 │   │   ├── dapp/     dApp API: controller.ts, the dispatch.ts entry point and rpc-gen/
 │   │   └── user/     user API: one module per area (sessions.ts, wallets.ts, …) and rpc-gen/
-│   ├── vault/        the encrypted vault: crypto, envelope format and the lock/unlock coordinator
-│   ├── store/        the wallet store: the holder that keeps it in the vault, the snapshot format and the default config
+│   ├── vault/        the encrypted vault: crypto, envelope format, the lock/unlock coordinator and requireUnlocked
+│   ├── store/        the wallet store: the holder that keeps it in the vault, the snapshot format, the default config and the registries item
+│   ├── token/        the token service: sdk.ts builds and caches the wallet SDK, service.ts is what the pages call
 │   ├── vault-service.ts  vault messages for the extension pages
 │   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
@@ -49,7 +50,7 @@ Chrome stops an idle service worker and starts it again for the next message or 
 
 `background/vault/` keeps data encrypted in `local:vault`. The key comes from the user's password through PBKDF2-SHA-256, and the data is encrypted with AES-256-GCM. While the vault is unlocked, the decrypted data is in the background's memory and the key is cached in `session:vaultSession`. After a service worker restart, `startBackground()` restores the vault from that cached key without the password. Closing the browser, reloading the extension or pressing Lock clears it. Store secrets with `vault.defineItem(key, { fallback })`, which has the same shape as a WXT storage item.
 
-The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet-store)), the auth context (item `authContext`), which is the signed-in user's access token and user ID, and the signing keys and signing transactions of the wallet-kernel driver (item `signingStore`). `createAuthContextStore(vault)` in `background/auth-context.ts` reads and writes the auth context, and its methods reject with `VaultLockedError` while the vault is locked. A lock doesn't sign the user out, so after an unlock the same user is signed in again. A reset deletes the token with everything else.
+The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet-store)), the auth context (item `authContext`), which is the signed-in user's access token and user ID, the signing keys and signing transactions of the wallet-kernel driver (item `signingStore`), and the token standard registry URLs by network ID (item `registries`, see [Token service](#token-service)). `createAuthContextStore(vault)` in `background/auth-context.ts` reads and writes the auth context, and its methods reject with `VaultLockedError` while the vault is locked. A lock doesn't sign the user out, so after an unlock the same user is signed in again. A reset deletes the token with everything else.
 
 The pages send `vault.getStatus`, `vault.create`, `vault.unlock` and `vault.lock` through `vaultMessenger` (`shared/vault-protocol.ts`). `vault-service.ts` answers them only from `popup.html` and `app.html`. Errors arrive as plain `Error`s, so compare `error.name` with `VaultErrorName`. While the vault isn't unlocked, every user API method rejects with `VaultLockedError`. The dApp dispatcher answers `status`, `isConnected` and `connect` with a not-connected result whose reason is `Locked`, and every other method with error 4100. Its `connect` also opens the unlock page.
 
@@ -61,7 +62,10 @@ The pages connect to a network through `authMessenger` (`shared/auth-protocol.ts
 The pages and the content script call the background through [`@webext-core/proxy-service`](https://webext-core.aklinker1.dev/proxy-service/installation). `shared/service-keys.ts` defines the keys:
 
 - `USER_RPC_KEY` is the user API, for the extension pages.
+- `TOKEN_RPC_KEY` is the token service, for the extension pages. See [Token service](#token-service).
 - `DAPP_RPC_KEY` is the dApp dispatcher, for the content script. The content script calls `request(request, location.origin)`. The dispatcher builds the dApp controller for that origin, calls only the controller's own methods (`Object.hasOwn`) and always resolves to a JSON-RPC response. Thrown errors become JSON-RPC errors that keep their code.
+
+The user API and the token service sit behind `requireUnlocked` (`background/vault/`), which wraps every method, nested ones included, so it rejects with `VaultLockedError` while the vault isn't unlocked.
 
 The content script answers every dApp request that has an id. When the background can't be reached, for example after an extension reload, it replies with a JSON-RPC error.
 
@@ -71,6 +75,15 @@ The wallet store holds the networks, IdPs, parties, sessions and transactions. I
 
 - `canton:local-oauth` is the Canton participant on `http://127.0.0.1:5003`, with the mock OAuth IdP on `http://127.0.0.1:8889`.
 - `canton:localnet` is the Splice LocalNet ledger on `http://localhost:2975`. It signs in with `self_signed` tokens and the secret `unsafe`. A vault created before this network was added doesn't have it until it's reset.
+
+### Token service
+
+The background builds the wallet SDK (`@canton-network/wallet-sdk`) for the signed-in user and the current network, and the pages call it through `TOKEN_RPC_KEY`, so the access token never leaves the background. The service has the SDK's nesting but only a few read methods: `token.assets()`, `token.v1.utxos.list()` and `token.v2.utxos.list()`. It never hands out the SDK itself, which also has the ledger, party and keys APIs. Every method needs a signed-in user, and a method that takes a `partyId` rejects a party that isn't one of the user's wallets.
+
+- `token/sdk.ts` keeps one SDK, keyed by network ID, access token and registry URLs. It builds it on first use and drops it on lock. A network without a `synchronizerId` defaults to the connected synchronizer with the alias `global`, or the first one.
+- The SDK is built with `registryAuth: 'none'`. Without it the SDK sends the user's ledger token to every registry.
+- Registry URLs come from the vault item `registries` (`store/registries.ts`). A new vault starts with `http://scan.localhost:4000` for `canton:localnet`.
+- Results have to survive runtime messaging, which turns a `URL` into a string and a `Date` into an ISO string. `token.assets()` returns `registryUrl` as a string.
 
 ### Controllers
 
