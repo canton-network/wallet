@@ -37,3 +37,8 @@ export type EventsConfig = {
     websocketURL: URLInput
     auth: TokenProviderConfig
 }
+
+export type TrafficConfig = RegistryAuthConfig & {
+    auth: TokenProviderConfig
+    registries: URLInput[]
+}
