@@ -6,6 +6,25 @@ import {
     type ToastMessageType,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
+import { stateManager } from './state-manager'
+
+/** Shows a toast on the next page, for actions that navigate away */
+export const showToastAfterNavigation = (
+    title: string,
+    message: string,
+    type: ToastMessageType
+): void => {
+    stateManager.pendingToast.set({ title, message, type })
+}
+
+/** Shows the toast that the previous page left for this one, if any */
+export const showPendingToast = (): void => {
+    const toast = stateManager.pendingToast.get()
+    if (toast) {
+        stateManager.pendingToast.clear()
+        showToast(toast.title, toast.message, toast.type)
+    }
+}
 
 export const showToast = (
     title: string,

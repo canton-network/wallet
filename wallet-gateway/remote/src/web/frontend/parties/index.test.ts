@@ -380,7 +380,7 @@ describe('UserUiParties', () => {
             await waitUntil(() => callsOf('listWallets').length > walletLoads)
             expect(callsOf('syncWallets')).toHaveLength(1)
             expect(showToast).toHaveBeenCalledWith(
-                'Wallet Sync Complete',
+                'Parties refreshed',
                 'Added: 1, Updated: 0, Disabled: 0.',
                 'success'
             )

@@ -218,7 +218,7 @@ export class ApproveUi extends BaseElement {
         if (this.status === 'awaiting-signature') {
             showToast(
                 'Awaiting external signature',
-                'Approval the request with your signing provider. This page will update automatically.',
+                'Approve the request with your signing provider. This page will update automatically.',
                 'info'
             )
             return

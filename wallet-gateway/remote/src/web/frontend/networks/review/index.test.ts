@@ -4,7 +4,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { NetworkEditCancelEvent } from '@canton-network/core-wallet-ui-components'
+import {
+    NetworkEditCancelEvent,
+    type WgPageHeader,
+} from '@canton-network/core-wallet-ui-components'
 import {
     createMockUserClient,
     makeNetwork,
@@ -15,15 +18,20 @@ import {
     networkEditSaveEventFrom,
 } from '../../__tests__/test-helpers.js'
 
-const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
-    () => ({
-        mockCreateUserClient: vi.fn(),
-        handleErrorToast: vi.fn(),
-        setLocationHref: vi.fn(),
-    })
-)
+const {
+    showToastAfterNavigation,
+    mockCreateUserClient,
+    handleErrorToast,
+    setLocationHref,
+} = vi.hoisted(() => ({
+    showToastAfterNavigation: vi.fn(),
+    mockCreateUserClient: vi.fn(),
+    handleErrorToast: vi.fn(),
+    setLocationHref: vi.fn(),
+}))
 
 vi.mock('../../index.js', () => ({}))
+vi.mock('../../utils.js', () => ({ showToastAfterNavigation }))
 vi.mock('../../navigation.js', () => ({ setLocationHref }))
 vi.mock('../../rpc-client.js', () => ({
     createUserClient: mockCreateUserClient,
@@ -57,10 +65,6 @@ describe('UserUiReviewNetwork', () => {
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockReviewNetworkFlow({ id: 'net-review', name: 'Review Net' })
         history.replaceState({}, '', '?id=net-review')
-        vi.stubGlobal(
-            'confirm',
-            vi.fn(() => true)
-        )
         el = await fixture<UserUiReviewNetwork>(componentFixture)
     })
 
@@ -73,9 +77,10 @@ describe('UserUiReviewNetwork', () => {
     it('loads and renders the review form for the network in the URL', async () => {
         await waitUntil(() => el.network?.id === 'net-review')
 
-        expect(el.shadowRoot?.querySelector('h1')?.textContent).toBe(
-            'Review network'
-        )
+        expect(
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+                ?.heading
+        ).toBe('Edit network')
         expect(el.shadowRoot?.querySelector('network-form')).not.toBeNull()
     })
 
@@ -124,7 +129,7 @@ describe('UserUiReviewNetwork', () => {
         )
     })
 
-    it('calls removeNetwork when delete is confirmed', async () => {
+    it('calls removeNetwork when the form asks to delete', async () => {
         await waitUntil(() => el.network !== null)
 
         el.shadowRoot
@@ -231,21 +236,6 @@ describe('UserUiReviewNetwork', () => {
         expect(handleErrorToast).toHaveBeenCalled()
     })
 
-    it('does not delete when confirmation is declined', async () => {
-        await waitUntil(() => el.network !== null)
-        vi.mocked(confirm).mockReturnValue(false)
-
-        el.shadowRoot
-            ?.querySelector('network-form')
-            ?.dispatchEvent(
-                networkDeleteEvent({ id: 'net-review', name: 'Review Net' })
-            )
-
-        expect(
-            mockRequest.mock.calls.some((c) => c[0]?.method === 'removeNetwork')
-        ).toBe(false)
-    })
-
     it('calls handleErrorToast when delete fails', async () => {
         await waitUntil(() => el.network !== null)
 
@@ -310,5 +300,23 @@ describe('UserUiReviewNetwork', () => {
                 }),
             },
         })
+    })
+
+    it('confirms on the list page that the network was deleted', async () => {
+        await waitUntil(() => el.network !== null)
+
+        el.shadowRoot
+            ?.querySelector('network-form')
+            ?.dispatchEvent(
+                networkDeleteEvent({ id: 'net-review', name: 'Review Net' })
+            )
+
+        await waitUntil(() => setLocationHref.mock.calls.length > 0)
+
+        expect(showToastAfterNavigation).toHaveBeenCalledWith(
+            'Network deleted',
+            'Deleted the network "Review Net".',
+            'success'
+        )
     })
 })

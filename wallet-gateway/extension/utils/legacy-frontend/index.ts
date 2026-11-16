@@ -146,12 +146,12 @@ export class UserApp extends LitElement {
         try {
             const dappApiUrl = await fetchDappApiUrl()
             await navigator.clipboard.writeText(dappApiUrl)
-            showToast('Copied', 'Dapp API URL copied to clipboard.', 'success')
+            showToast('Copied', 'dApp API URL copied to clipboard.', 'success')
         } catch (error) {
             logger.debug('Failed to copy dApp API URL: {*}', { error })
             showToast(
                 'Copy failed',
-                'Could not copy the Dapp API URL.',
+                'Could not copy the dApp API URL.',
                 'error'
             )
         }

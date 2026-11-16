@@ -157,13 +157,13 @@ export const CopyDappApiUrl: Story = {
         const trigger = await menuButton(canvasElement)
         await userEvent.click(trigger)
 
-        // The URL is in the name, and shows on hover
+        // The URL is in the name and shown below the label
         const copy = await menuItem(
             canvasElement,
             `Copy dApp API URL: ${dappApiUrl}`
         )
-        await expect(copy).toHaveAccessibleDescription(dappApiUrl)
-        await expect(copy).toHaveTextContent('Dapp API URL')
+        await expect(copy).toHaveTextContent('dApp API URL')
+        await expect(copy).toHaveTextContent(dappApiUrl)
         await waitFor(() => expect(copy).toBeVisible())
 
         await userEvent.click(copy)

@@ -1469,7 +1469,7 @@
         },
         {
             "name": "generateApiKey",
-            "description": "Generates a new API key for the current user and network.",
+            "description": "Generates a new API key for the current user and network. Fails if the network has no service account auth configured.",
             "params": [
                 {
                     "name": "params",
@@ -1514,9 +1514,14 @@
                                 "$ref": "#/components/schemas/ApiKey"
                             },
                             "description": "The list of API keys."
+                        },
+                        "apiKeysSupported": {
+                            "title": "apiKeysSupported",
+                            "type": "boolean",
+                            "description": "Whether the current network has service account auth configured. API keys can only submit transactions on such networks."
                         }
                     },
-                    "required": ["apiKeys"]
+                    "required": ["apiKeys", "apiKeysSupported"]
                 }
             }
         },

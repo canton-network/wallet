@@ -67,9 +67,15 @@ export const Pending: Story = {
             queryByShadowRole(canvasElement, 'link', { name: 'Back' })
         ).not.toBeInTheDocument()
 
-        await expect(
+        await userEvent.hover(
             await findByShadowText(canvasElement, '06/01/2025, 02:34 PM GMT+2')
-        ).toHaveAttribute('title', '2025-06-01 12:34:56 UTC')
+        )
+        await expect(
+            await findByShadowRole(canvasElement, 'tooltip')
+        ).toHaveTextContent('2025-06-01 12:34:56 UTC')
+        await userEvent.unhover(
+            await findByShadowText(canvasElement, '06/01/2025, 02:34 PM GMT+2')
+        )
 
         // Everything with a value can be copied
         for (const name of [

@@ -13,7 +13,7 @@ import {
     getActivityStatusLabel,
     getActivityType,
 } from '../internal/activity-utils.js'
-import { formatDateTime, formatUtcDateTime } from '../date-time.js'
+import './timestamp.js'
 
 /** Emitted when the user clicks an activity card */
 export class TransactionCardReviewEvent extends Event {
@@ -161,7 +161,6 @@ class WgTransactionCard extends BaseElement {
     protected render() {
         const activityType = getActivityType(this.parsed)
         const amount = getActivityAmount(this.parsed)
-        const createdAt = formatDateTime(this.createdAt)
 
         return html`
             <button
@@ -217,10 +216,12 @@ class WgTransactionCard extends BaseElement {
                         title: activityType,
                         truncate: true,
                     })}
-                    ${this.renderFieldRow('Created at', createdAt, {
-                        title: formatUtcDateTime(this.createdAt),
-                        truncate: true,
-                    })}
+                    ${this.renderFieldRow(
+                        'Created at',
+                        html`<wg-timestamp
+                            .value=${this.createdAt}
+                        ></wg-timestamp>`
+                    )}
                     ${this.renderFieldRow('Amount', amount, {
                         title: amount,
                         truncate: true,

@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { waitUntil } from '@open-wc/testing-helpers'
-import { LOGIN_PAGE_REDIRECT } from './constants.js'
+import { LOGIN_PAGE_REDIRECT, SESSION_EXPIRED_TOAST } from './constants.js'
 import {
     attemptRemoveSession,
     createUserClient,
@@ -20,6 +20,7 @@ const {
     mockSetLocationHref,
     mockClearAuthState,
     authState,
+    mockPendingToastSet,
 } = vi.hoisted(() => {
     const mockRemoveSession = vi.fn()
     const mockRequest = vi.fn()
@@ -44,6 +45,7 @@ const {
         mockToRelHref: vi.fn((path: string) => path),
         mockSetLocationHref: vi.fn(),
         mockClearAuthState: vi.fn(),
+        mockPendingToastSet: vi.fn(),
         authState: { accessToken: undefined as string | undefined },
     }
 })
@@ -80,6 +82,7 @@ vi.mock('./state-manager.js', () => ({
         },
         clearAuthState: mockClearAuthState,
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
+        pendingToast: { set: mockPendingToastSet },
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', () => ({
@@ -101,6 +104,7 @@ describe('rpc-client', () => {
         mockRequest.mockReset()
         HttpTransportSpy.mockClear()
         mockClearAuthState.mockClear()
+        mockPendingToastSet.mockClear()
         mockSetLocationHref.mockClear()
         mockGetCurrentRoute.mockReturnValue('/parties')
         mockToRelHref.mockImplementation((path: string) => path)
@@ -213,6 +217,9 @@ describe('rpc-client', () => {
             expect(mockSetLocationHref).toHaveBeenCalledWith(
                 LOGIN_PAGE_REDIRECT
             )
+            expect(mockPendingToastSet).toHaveBeenCalledWith(
+                SESSION_EXPIRED_TOAST
+            )
         })
 
         it('does not redirect when already on the login page', async () => {
@@ -225,6 +232,7 @@ describe('rpc-client', () => {
 
             expect(mockClearAuthState).toHaveBeenCalled()
             expect(mockSetLocationHref).not.toHaveBeenCalled()
+            expect(mockPendingToastSet).not.toHaveBeenCalled()
         })
 
         it('skips removeSession when there is no access token', async () => {

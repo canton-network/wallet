@@ -282,6 +282,24 @@ export const Review: Story = {
     },
 }
 
+export const DeleteBlockedByNetworks: Story = {
+    args: { mode: 'review', idp: oauthIdp, usedByNetworks: ['Main Net'] },
+    play: async ({ canvasElement }) => {
+        // Deleting fails on the server while networks use the IdP, so say so up front
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'Delete identity provider',
+            })
+        ).toBeDisabled()
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                'Used by Main Net. Change or delete that network first.'
+            )
+        ).toBeInTheDocument()
+    },
+}
+
 export const ReviewSelfIssued: Story = {
     args: { mode: 'review', idp: selfIssuedIdp },
     play: async ({ canvasElement }) => {

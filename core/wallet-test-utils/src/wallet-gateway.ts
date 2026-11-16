@@ -887,7 +887,7 @@ export class WalletGateway {
             await newButton.click()
 
             await expect(
-                popup.getByRole('heading', { name: 'Add a new network' }),
+                popup.getByRole('heading', { name: 'Add network' }),
                 'clicking New should open the network form'
             ).toBeVisible()
 
@@ -952,7 +952,7 @@ export class WalletGateway {
         await firstCard.click()
 
         await expect(
-            popup.getByRole('heading', { name: 'Review network' }),
+            popup.getByRole('heading', { name: 'Edit network' }),
             'clicking a read-only network card should not open the review form'
         ).toHaveCount(0)
         await expect(
@@ -967,7 +967,7 @@ export class WalletGateway {
 
         const popup = await this.page()
         await expect(
-            popup.getByRole('heading', { name: 'Review network' }),
+            popup.getByRole('heading', { name: 'Edit network' }),
             `clicking the card for ${networkId} should open its review form`
         ).toBeVisible()
     }
@@ -975,19 +975,19 @@ export class WalletGateway {
     private async fillNetworkForm(network: NetworkFormInput): Promise<void> {
         const popup = await this.page()
 
-        await this.fillNetworkFormField('Network Id', network.id)
+        await this.fillNetworkFormField('Network ID', network.id)
         await this.fillNetworkFormField('Name', network.name)
         await this.fillNetworkFormField('Description', network.description)
         await this.fillNetworkFormField(
-            'Synchronizer Id',
+            'Synchronizer ID',
             network.synchronizerId
         )
+        // The identity provider is picked from the existing ones
+        await popup
+            .locator('network-form #identity-provider')
+            .selectOption(network.identityProviderId)
         await this.fillNetworkFormField(
-            'Identity Provider Id',
-            network.identityProviderId
-        )
-        await this.fillNetworkFormField(
-            'Ledger API Base Url',
+            'Ledger API base URL',
             network.ledgerApi
         )
 
@@ -1014,7 +1014,7 @@ export class WalletGateway {
         // so locate the input via the field group that contains the label text.
         // The React form's labels are associated, so it is found by its label.
         // Either way the first match in the page is the network's own field,
-        // ahead of the auth editors' (e.g. "Identity Provider Id Override").
+        // ahead of the auth editors' (e.g. "Identity provider ID override").
         const input = popup
             .locator(
                 `network-form .field-group:has(> label:has-text("${label}")) input`
@@ -1136,7 +1136,7 @@ export class WalletGateway {
 
             await expect(
                 popup.getByRole('heading', {
-                    name: 'Add a new identity provider',
+                    name: 'Add identity provider',
                 }),
                 'clicking New should open the identity provider form'
             ).toBeVisible()
@@ -1201,7 +1201,7 @@ export class WalletGateway {
 
             await expect(
                 popup.getByRole('heading', {
-                    name: 'Review Identity Provider',
+                    name: 'Edit identity provider',
                 }),
                 'clicking a read-only identity provider card should not open the review form'
             ).toHaveCount(0)
@@ -1218,7 +1218,7 @@ export class WalletGateway {
 
         const popup = await this.page()
         await expect(
-            popup.getByRole('heading', { name: 'Review Identity Provider' }),
+            popup.getByRole('heading', { name: 'Edit identity provider' }),
             `clicking the card for ${idpId} should open its review form`
         ).toBeVisible()
     }

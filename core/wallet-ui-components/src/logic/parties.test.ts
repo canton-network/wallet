@@ -86,7 +86,7 @@ describe('walletSyncResultToast', () => {
                 disabled: [],
             })
         ).toEqual({
-            title: 'Wallet Sync Complete',
+            title: 'Parties refreshed',
             message: 'Added: 1, Updated: 2, Disabled: 0.',
             type: 'success',
         })

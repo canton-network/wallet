@@ -38,10 +38,16 @@ export const Default: Story = {
         await expect(
             await findByShadowText(canvasElement, '1234-5678-0000')
         ).toBeInTheDocument()
-        // Shown in the viewer's locale and time zone (pinned in vitest.config.ts), with UTC as tooltip
-        await expect(
+        // Shown in the viewer's locale and time zone (pinned in vitest.config.ts), with UTC in a tooltip
+        await userEvent.hover(
             await findByShadowText(canvasElement, '06/01/2025, 02:00 AM GMT+2')
-        ).toHaveAttribute('title', '2025-06-01 00:00:00 UTC')
+        )
+        await expect(
+            await findByShadowRole(canvasElement, 'tooltip')
+        ).toHaveTextContent('2025-06-01 00:00:00 UTC')
+        await userEvent.unhover(
+            await findByShadowText(canvasElement, '06/01/2025, 02:00 AM GMT+2')
+        )
 
         await userEvent.click(
             await findByShadowRole(canvasElement, 'button', { name: 'Revoke' })

@@ -2846,4 +2846,54 @@ describe('userController', () => {
             expect(walletSyncMocks.isWalletSyncNeeded).not.toHaveBeenCalled()
         })
     })
+
+    describe('API keys', () => {
+        const serviceAccountAuth = {
+            method: 'client_credentials',
+            identityProviderId: idp.id,
+            clientId: 'sa-cid',
+            clientSecret: 'sa-secret',
+            audience: 'sa-aud',
+            scope: 'sa-scope',
+        } as const
+
+        it('reports that a network without service account auth does not support API keys', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(controller.listApiKeys()).resolves.toEqual({
+                apiKeys: [],
+                apiKeysSupported: false,
+            })
+            await expect(
+                controller.generateApiKey({ name: 'ci' })
+            ).rejects.toThrow(/no service account auth configured/)
+        })
+
+        it('generates API keys on a network with service account auth', async () => {
+            const store = await createStore(logger, auth)
+            vi.spyOn(store, 'getCurrentNetwork').mockResolvedValue({
+                ...storeNetwork,
+                serviceAccountAuth,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const generated = await controller.generateApiKey({ name: 'ci' })
+
+            await expect(controller.listApiKeys()).resolves.toMatchObject({
+                apiKeys: [{ id: generated.id, name: 'ci' }],
+                apiKeysSupported: true,
+            })
+        })
+    })
 })

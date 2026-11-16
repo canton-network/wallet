@@ -4,6 +4,7 @@
 import { css, html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element'
+import './tooltip.js'
 import { toRelPath } from '../routing'
 import { menuIcon, clipboardIcon } from '../icons'
 import cantonLogo from '../../images/logos/canton-logo.png'
@@ -198,6 +199,20 @@ class AppHeader extends BaseElement {
                 gap: var(--wg-space-2);
             }
 
+            .menu-item-text {
+                display: flex;
+                flex-direction: column;
+                min-width: 0;
+            }
+
+            .menu-item-detail {
+                color: var(--wg-text-secondary);
+                font-size: var(--wg-font-size-xs);
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
             .menu-item-icon {
                 display: inline-flex;
                 align-items: center;
@@ -264,11 +279,12 @@ class AppHeader extends BaseElement {
         const label = `${this.warningCount} server ${
             this.warningCount === 1 ? 'warning' : 'warnings'
         }`
-        return html`<span
-            class="badge rounded-pill text-bg-warning"
-            title=${label}
-            aria-label=${label}
-            >${this.warningCount}</span
+        return html`<wg-tooltip .text=${label} placement="left"
+            ><span
+                class="badge rounded-pill text-bg-warning"
+                aria-label=${label}
+                >${this.warningCount}</span
+            ></wg-tooltip
         >`
     }
 
@@ -375,7 +391,6 @@ class AppHeader extends BaseElement {
                         <button
                             type="button"
                             class="menu-item menu-item-with-icon"
-                            title=${this.dappApiUrl || 'Copy dApp API URL'}
                             aria-label=${
                                 this.dappApiUrl
                                     ? `Copy dApp API URL: ${this.dappApiUrl}`
@@ -383,7 +398,16 @@ class AppHeader extends BaseElement {
                             }
                             @click=${this.copyDappApiUrl}
                         >
-                            <span>Dapp API URL</span>
+                            <span class="menu-item-text">
+                                <span>dApp API URL</span>
+                                ${
+                                    this.dappApiUrl
+                                        ? html`<span class="menu-item-detail"
+                                              >${this.dappApiUrl}</span
+                                          >`
+                                        : ''
+                                }
+                            </span>
                             <span class="menu-item-icon" aria-hidden="true"
                                 >${clipboardIcon}</span
                             >
