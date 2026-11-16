@@ -14,5 +14,5 @@ declare global {
     }
 }
 
-export * from './DappSyncProvider'
-export * from './DappAsyncProvider'
+export * from './DappSyncProvider.ts'
+export * from './DappAsyncProvider.ts'

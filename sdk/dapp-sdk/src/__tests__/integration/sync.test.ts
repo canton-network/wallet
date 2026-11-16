@@ -21,8 +21,8 @@ import {
     type SpliceMessage,
 } from '@canton-network/core-types'
 import { popup } from '@canton-network/core-wallet-ui-components'
-import { DappSDK } from '../../sdk'
-import * as storage from '../../storage'
+import { DappSDK } from '../../sdk.ts'
+import * as storage from '../../storage.ts'
 import {
     extensionConnectResult,
     extensionPrepareExecuteAndWaitResult,
@@ -31,7 +31,7 @@ import {
     MOCK_EXTENSION_PROVIDER_ID,
     MOCK_EXTENSION_TARGET,
     startMockExtension,
-} from './mock-extension/mock-extension'
+} from './mock-extension/mock-extension.ts'
 
 type ListenerFn = (...args: unknown[]) => void
 

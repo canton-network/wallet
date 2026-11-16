@@ -4,7 +4,7 @@
 import { describe, it, expect } from 'vitest'
 import type { Idp } from '@canton-network/core-wallet-auth'
 import type { Network } from '@canton-network/core-wallet-store'
-import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
+import { assertTokenClaimsMatchNetwork } from './token-network-matching.ts'
 
 const ISSUER = 'unsafe-auth'
 const AUDIENCE = 'https://canton.network.global'

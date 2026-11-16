@@ -27,7 +27,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { GetSelfIssuedLoginModeResult } from '@canton-network/core-wallet-user-rpc-client'
 import type { Logger } from 'pino'
-import type { SignMessageService } from './sign-message-service.js'
+import type { SignMessageService } from './sign-message-service.ts'
 
 export type SelfIssuedLoginSession = {
     userId: string

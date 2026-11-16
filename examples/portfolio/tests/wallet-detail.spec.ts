@@ -10,7 +10,7 @@ import {
     gotoDashboard,
     setupRegistry,
     tap,
-} from './utils'
+} from './utils.ts'
 
 // Wallet detail tests involve wallet setup and a tap transaction, so give them
 // more time than the default 30s.

@@ -26,7 +26,7 @@ import {
     toWallet,
     toWalletStatus,
     toWalletUpdateProperties,
-} from './schema.js'
+} from './schema.ts'
 
 const oauthIdp: Idp = {
     id: 'idp-oauth',

@@ -2,25 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { TokenProviderConfig } from '@canton-network/core-wallet-auth'
-import type { AllowedLogAdapters } from '../../logger/types.js'
-import type { KeysNamespace } from '../../namespace/keys/index.js'
-import type { LedgerNamespace } from '../../namespace/ledger/index.js'
-import type { PartyNamespace } from '../../namespace/party/index.js'
-import type { UserNamespace } from '../../namespace/user/index.js'
-import type { SDKUtilsNamespace } from '../../namespace/utils/index.js'
-import type { AmuletNamespace } from '../../namespace/amulet/namespace.js'
-import type { AssetNamespace, TokenNamespace } from '../../sdk.js'
-import type { EventsNamespace } from '../../namespace/events/namespace.js'
+import type { AllowedLogAdapters } from '../../logger/types.ts'
+import type { KeysNamespace } from '../../namespace/keys/index.ts'
+import type { LedgerNamespace } from '../../namespace/ledger/index.ts'
+import type { PartyNamespace } from '../../namespace/party/index.ts'
+import type { UserNamespace } from '../../namespace/user/index.ts'
+import type { SDKUtilsNamespace } from '../../namespace/utils/index.ts'
+import type { AmuletNamespace } from '../../namespace/amulet/namespace.ts'
+import type { AssetNamespace, TokenNamespace } from '../../sdk.ts'
+import type { EventsNamespace } from '../../namespace/events/namespace.ts'
 import type {
     AmuletConfig,
     AssetConfig,
     EventsConfig,
     TokenConfig,
-} from './config.js'
+} from './config.ts'
 import type { Provider } from '@canton-network/core-splice-provider'
 import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
-import type { SDKPlugin, SDKPluginContext } from '../plugin.js'
-import type { SynchronizerIdOption } from '../synchronizer.js'
+import type { SDKPlugin, SDKPluginContext } from '../plugin.ts'
+import type { SynchronizerIdOption } from '../synchronizer.ts'
 
 // SDK OPTIONS
 

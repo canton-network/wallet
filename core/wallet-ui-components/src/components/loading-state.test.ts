@@ -4,7 +4,7 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import { WgLoadingState } from './loading-state.js'
+import { WgLoadingState } from './loading-state.ts'
 
 describe('wg-loading-state', () => {
     afterEach(() => {

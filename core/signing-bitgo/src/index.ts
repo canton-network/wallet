@@ -25,7 +25,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { z } from 'zod'
-import { BitGoHandler, type BitGoConfig } from './bitgo.js'
+import { BitGoHandler, type BitGoConfig } from './bitgo.ts'
 
 const BitGoConfigUpdateSchema = z.object({
     accessToken: z.string().min(1).optional(),
@@ -34,7 +34,7 @@ const BitGoConfigUpdateSchema = z.object({
     coin: z.string().min(1).optional(),
 })
 
-export { BitGoHandler, type BitGoConfig } from './bitgo.js'
+export { BitGoHandler, type BitGoConfig } from './bitgo.ts'
 
 export default class BitGoSigningDriver implements SigningDriverInterface {
     private handler: BitGoHandler

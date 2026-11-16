@@ -10,7 +10,7 @@ import {
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,
-} from './hashing_scheme_v2.js'
+} from './hashing_scheme_v2.ts'
 import {
     type DecodeOptions,
     decodePreparedTransaction,
@@ -20,12 +20,12 @@ import {
     type ParsedTransactionInfo,
     parsePreparedTransaction,
     validateAuthorizedPartyIds,
-} from './index.js'
+} from './index.ts'
 import camelcaseKeys from 'camelcase-keys'
 import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
 import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
 import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
-import { fromBase64, fromHex, toBase64, toHex } from './utils'
+import { fromBase64, fromHex, toBase64, toHex } from './utils.ts'
 
 const parsedTxInfo: ParsedTransactionInfo = {
     jsonString:

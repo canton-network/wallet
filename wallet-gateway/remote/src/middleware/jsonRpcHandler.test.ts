@@ -7,8 +7,8 @@ import { pino } from 'pino'
 import { sink } from 'pino-test'
 import type { JsonRpcResponse } from '@canton-network/core-types'
 import { rpcErrors, toHttpErrorCode } from '@canton-network/core-rpc-errors'
-import { handleRpcError, jsonRpcHandler } from './jsonRpcHandler.js'
-import { paramSchemas as dappParamSchemas } from '../dapp-api/rpc-gen/schemas.js'
+import { handleRpcError, jsonRpcHandler } from './jsonRpcHandler.ts'
+import { paramSchemas as dappParamSchemas } from '../dapp-api/rpc-gen/schemas.ts'
 import { z } from 'zod'
 
 function errorPayload(body: JsonRpcResponse) {

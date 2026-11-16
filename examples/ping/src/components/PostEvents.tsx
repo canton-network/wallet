@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useAllEvents } from '../hooks/useAllEvents'
-import { prettyjson } from '../utils'
+import { useAllEvents } from '../hooks/useAllEvents.ts'
+import { prettyjson } from '../utils.ts'
 import type * as sdk from '@canton-network/dapp-sdk'
 
 export function PostEvents(props: {

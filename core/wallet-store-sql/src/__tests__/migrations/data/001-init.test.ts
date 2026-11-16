@@ -10,8 +10,8 @@ import {
     columnNames,
     primaryKeyColumns,
     tableExists,
-} from '../helpers.js'
-import { insertIdp, insertNetwork, insertWallet } from '../seeds/001-init'
+} from '../helpers.ts'
+import { insertIdp, insertNetwork, insertWallet } from '../seeds/001-init.ts'
 
 const TARGET = 1
 

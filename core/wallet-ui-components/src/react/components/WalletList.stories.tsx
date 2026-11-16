@@ -12,7 +12,7 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor } from 'storybook/test'
-import { WalletList } from './WalletList'
+import { WalletList } from './WalletList.ts'
 
 const makeWallet = (overrides: Partial<Wallet> = {}): Wallet => ({
     primary: false,

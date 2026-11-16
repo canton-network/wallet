@@ -6,7 +6,7 @@ import type { Request, Response, NextFunction } from 'express'
 import type { AuthAware, AuthContext } from '@canton-network/core-wallet-auth'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { sessionHandler } from './sessionHandler.js'
+import { sessionHandler } from './sessionHandler.ts'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import type { Store } from '@canton-network/core-wallet-store'
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { error, getArgValue } from './lib/utils.js'
+import { error, getArgValue } from './lib/utils.ts'
 
 // this clears policies, with each deployment blockdaemon re-enables them
 const POLICY_IDS = [12, 29]

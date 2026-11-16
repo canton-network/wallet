@@ -21,8 +21,8 @@ import type {
 } from '@canton-network/core-wallet-user-rpc-client'
 import type { MessageSignatureEvent } from '@canton-network/core-wallet-dapp-rpc-client'
 import { errorCodes } from '@canton-network/core-rpc-errors'
-import type { SigningDrivers } from './types.js'
-import type { Notifier } from './notification/index.js'
+import type { SigningDrivers } from './types.ts'
+import type { Notifier } from './notification/index.ts'
 
 export class SignMessageService {
     constructor(

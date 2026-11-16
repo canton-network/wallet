@@ -3,9 +3,9 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { AuthErrorName } from '@/shared/auth-protocol'
-import { networksQuery, idpsQuery } from '@/ui/features/networks'
-import { useConnect } from './api'
+import { AuthErrorName } from '@/shared/auth-protocol.ts'
+import { networksQuery, idpsQuery } from '@/ui/features/networks/index.ts'
+import { useConnect } from './api.ts'
 import {
     LoginForm,
     type LoginConnectEvent,

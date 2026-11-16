@@ -7,8 +7,8 @@ import {
     type Error as RpcError,
     type KeyIdentifier,
 } from '@canton-network/core-signing-lib'
-import BitGoSigningDriver from './index.js'
-import type { BitGoConfig, BitGoTransaction } from './bitgo.js'
+import BitGoSigningDriver from './index.ts'
+import type { BitGoConfig, BitGoTransaction } from './bitgo.ts'
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -38,8 +38,8 @@ const handlerMock = vi.hoisted(() => ({
     getWalletId: vi.fn(),
 }))
 
-vi.mock('./bitgo.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./bitgo.js')>()
+vi.mock('./bitgo.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./bitgo.ts')>()
     return {
         ...actual,
         BitGoHandler: vi.fn(function BitGoHandler() {
@@ -559,7 +559,7 @@ describe('BitGoSigningDriver', () => {
         })
 
         it('rebuilds handler after config update', async () => {
-            const { BitGoHandler } = await import('./bitgo.js')
+            const { BitGoHandler } = await import('./bitgo.ts')
             const callsBefore = (BitGoHandler as ReturnType<typeof vi.fn>).mock
                 .calls.length
 

@@ -7,7 +7,7 @@ import {
     AppHeader as AppHeaderElement,
     type LogoutEvent,
     type CopyDappApiUrlEvent,
-} from '../../components/app-header.js'
+} from '../../components/app-header.ts'
 
 export const AppHeader = createComponent({
     tagName: 'app-header',

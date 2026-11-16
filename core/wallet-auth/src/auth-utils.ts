@@ -3,7 +3,7 @@
 
 import { decodeJwt } from 'jose'
 import { z } from 'zod'
-import { IdpUnavailableError, type AuthContext } from './auth-service.js'
+import { IdpUnavailableError, type AuthContext } from './auth-service.ts'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 
 export function assertIsConnected(

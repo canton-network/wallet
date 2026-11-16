@@ -10,18 +10,18 @@ import {
     makeApiKey,
     mockApiKeysPageFlow,
     mockRequest,
-} from '../__tests__/test-helpers.js'
+} from '../__tests__/test-helpers.ts'
 
 const { mockCreateUserClient, handleErrorToast } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
 }))
 
-vi.mock('../index.js', () => ({}))
-vi.mock('../rpc-client.js', () => ({
+vi.mock('../index.ts', () => ({}))
+vi.mock('../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../state-manager.js', () => ({
+vi.mock('../state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
@@ -35,8 +35,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     return { ...actual, handleErrorToast }
 })
 
-import './index.js'
-import type { UserUiApiKeys } from './index.js'
+import './index.ts'
+import type { UserUiApiKeys } from './index.ts'
 
 function getApiKeyCards(el: UserUiApiKeys) {
     return Array.from(

@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createHash } from 'node:crypto'
-import type { SigningProviderMockRoute } from '../server.js'
-import { createMockTxStore } from '../tx-store.js'
+import type { SigningProviderMockRoute } from '../server.ts'
+import { createMockTxStore } from '../tx-store.ts'
 import {
     createMockEd25519KeyPairFromSeed,
     type MockEd25519KeyPair,
     signMultiHashHex,
-} from '../crypto.js'
+} from '../crypto.ts'
 
 type AdminSigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
 

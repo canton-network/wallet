@@ -15,7 +15,7 @@ import {
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 import path from 'path'
 import fs from 'fs'
 import crypto from 'crypto'

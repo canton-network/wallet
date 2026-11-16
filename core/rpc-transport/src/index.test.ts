@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
-import { HttpTransport, jsonRpcRequest, jsonRpcResponse } from './index.js'
+import { HttpTransport, jsonRpcRequest, jsonRpcResponse } from './index.ts'
 
 describe('jsonRpc helpers', () => {
     it('builds request and response envelopes', () => {

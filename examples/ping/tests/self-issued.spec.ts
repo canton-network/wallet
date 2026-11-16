@@ -14,7 +14,7 @@ import {
     expectDappDisconnected,
     GATEWAY_NAME,
     SELF_ISSUED_NETWORK,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 async function executePing(wg: WalletGateway, dappPage: Page): Promise<void> {
     const { commandId } =

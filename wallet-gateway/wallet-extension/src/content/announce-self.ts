@@ -6,7 +6,7 @@ import {
     CANTON_REQUEST_PROVIDER_EVENT,
 } from '@canton-network/core-types'
 import { browser } from 'wxt/browser'
-import { WALLET_NAME } from '@/shared/brand'
+import { WALLET_NAME } from '@/shared/brand.ts'
 
 /**
  * This function announces the Wallet Extension to the dApp page, via EIP-6963

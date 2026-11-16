@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { DfnsHandler, type DfnsCredentials } from './dfns.js'
+import { DfnsHandler, type DfnsCredentials } from './dfns.ts'
 
 const ORG_ID = 'or-test-org'
 const BASE_URL = 'https://api.dfns.io'

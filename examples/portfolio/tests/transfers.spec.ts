@@ -26,8 +26,8 @@ import {
     selectTransferVersion,
     recordTransferChoiceContexts,
     amuletSupportsTransferV2,
-} from './utils'
-import type { TokenStandardVersion } from '../src/types/instruments'
+} from './utils.ts'
+import type { TokenStandardVersion } from '../src/types/instruments.ts'
 
 // Transfer tests involve multiple ledger transactions (tap + transfer + accept/reject/withdraw),
 // so give them more time than the default 30s.

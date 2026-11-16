@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMemo } from 'react'
-import { useOffers, type OfferItem } from './useOffers'
+import { useOffers, type OfferItem } from './useOffers.ts'
 
 export interface ActionRequiredItemsResult {
     items: OfferItem[]

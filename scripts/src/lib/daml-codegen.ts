@@ -4,7 +4,7 @@
 import * as path from 'path'
 import * as fs from 'fs'
 import { execSync } from 'child_process'
-import { info, error, getRepoRoot } from './utils.js'
+import { info, error, getRepoRoot } from './utils.ts'
 
 /**
  * Returns the directory containing the DARs shipped with localnet, fetching localnet if needed.

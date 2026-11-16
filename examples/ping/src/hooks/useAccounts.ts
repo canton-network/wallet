@@ -3,7 +3,7 @@
 
 import { useContext, useEffect, useState } from 'react'
 import * as sdk from '@canton-network/dapp-sdk'
-import { ErrorContext } from '../ErrorContext'
+import { ErrorContext } from '../ErrorContext.ts'
 
 /** Wallets sometimes emit a single {@link sdk.dappAPI.Wallet} instead of {@link sdk.dappAPI.Wallet[]}. */
 function normalizeWalletList(value: unknown): sdk.dappAPI.Wallet[] {

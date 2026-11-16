@@ -16,17 +16,17 @@ import {
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { KernelInfo } from '../config/Config.js'
+import type { KernelInfo } from '../config/Config.ts'
 import {
     NotificationService,
     SELF_ISSUED_LOGIN_EXPIRED,
     SignMessageService,
 } from '@canton-network/core-wallet-services'
-import { userController } from './controller.js'
-import type { ConfigManagedIds } from '../config/ConfigUtils.js'
-import { ServerStatusService } from '../notices/server-status-service.js'
-import { ServerNotices } from '../notices/server-notices.js'
-import { GATEWAY_VERSION } from '../version.js'
+import { userController } from './controller.ts'
+import type { ConfigManagedIds } from '../config/ConfigUtils.ts'
+import { ServerStatusService } from '../notices/server-status-service.ts'
+import { ServerNotices } from '../notices/server-notices.ts'
+import { GATEWAY_VERSION } from '../version.ts'
 import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({
@@ -121,19 +121,19 @@ vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
     }
 })
 
-vi.mock('../ledger/wallet-allocation/wallet-allocation-service.js', () => ({
+vi.mock('../ledger/wallet-allocation/wallet-allocation-service.ts', () => ({
     WalletAllocationService: vi.fn(function WalletAllocationServiceMock() {
         return walletAllocationMocks
     }),
 }))
 
-vi.mock('../ledger/wallet-sync-service.js', () => ({
+vi.mock('../ledger/wallet-sync-service.ts', () => ({
     WalletSyncService: vi.fn(function WalletSyncServiceMock() {
         return walletSyncMocks
     }),
 }))
 
-vi.mock('../ledger/party-allocation-service.js', () => ({
+vi.mock('../ledger/party-allocation-service.ts', () => ({
     PartyAllocationService: vi.fn(),
 }))
 

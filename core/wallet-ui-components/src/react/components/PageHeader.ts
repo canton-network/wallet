@@ -3,7 +3,7 @@
 
 import React from 'react'
 import { createComponent } from '@lit/react'
-import { WgPageHeader as WgPageHeaderElement } from '../../components/page-header.js'
+import { WgPageHeader as WgPageHeaderElement } from '../../components/page-header.ts'
 
 export const PageHeader = createComponent({
     tagName: 'wg-page-header',

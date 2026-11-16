@@ -5,7 +5,7 @@ import { IconButton, Tooltip } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
-import { logger } from '../logger'
+import { logger } from '../logger.ts'
 
 interface CopyButtonProps {
     onCopy?: (value: string) => void

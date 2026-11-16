@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ACEvent, ACSState, PaginatedACSState } from '../../types'
+import type { ACEvent, ACSState, PaginatedACSState } from '../../types.ts'
 import type { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import {
     type ResolvedAcsOptions,
     AcsService,
     type PaginatedResolvedAcsOptions,
-} from '../../service'
+} from '../../service.ts'
 import { getLogger } from '@logtape/logtape'
 
 export const logger = getLogger(['core', 'acs-reader', 'cache'])

@@ -22,7 +22,7 @@ import {
     LockedAmounts,
     SettlementRows,
     TimeWithDistance,
-} from './allocation-v2-dialog-parts'
+} from './allocation-v2-dialog-parts.tsx'
 
 interface AllocationV2DialogContentProps {
     item: AllocationV2ActionItem

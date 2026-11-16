@@ -13,7 +13,7 @@ import {
     getNetworkArg,
     type Network,
     getArgValue,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 import { existsSync } from 'fs'
 import pm2 from 'pm2'
 import path from 'path'

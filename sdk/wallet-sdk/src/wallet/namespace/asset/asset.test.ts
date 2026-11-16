@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi } from 'vitest'
-import { type AssetContext, AssetNamespace } from './index.js'
+import { type AssetContext, AssetNamespace } from './index.ts'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { SDKErrorHandler } from '../../error/handler.js'
-import { SDKLogger } from '../../logger/logger'
-import { capabilities, ctx } from '../../__tests__/mocks'
+import { SDKErrorHandler } from '../../error/handler.ts'
+import { SDKLogger } from '../../logger/logger.ts'
+import { capabilities, ctx } from '../../__tests__/mocks.ts'
 
 const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     request: vi.fn().mockResolvedValue(undefined),

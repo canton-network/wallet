@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Kysely } from 'kysely'
-import { StoreSql } from './store-sql.js'
+import { StoreSql } from './store-sql.ts'
 import {
     assertUniqueSelfIssuedAudience,
     type BootstrapConfig,
 } from '@canton-network/core-wallet-store'
-import { fromIdp, fromNetwork, toNetwork, type DB } from './schema'
+import { fromIdp, fromNetwork, toNetwork, type DB } from './schema.ts'
 
 export async function bootstrap(
     db: Kysely<DB>,

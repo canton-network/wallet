@@ -12,13 +12,13 @@ import {
     PARTY_STATUS_PARAM,
     WALLET_STATUS_CODE,
 } from '@canton-network/core-wallet-ui-components/logic'
-import { createUserClient } from '../../rpc-client'
-import { setLocationHref } from '../../navigation.js'
-import { stateManager } from '../../state-manager'
-import '../../index'
+import { createUserClient } from '../../rpc-client.ts'
+import { setLocationHref } from '../../navigation.ts'
+import { stateManager } from '../../state-manager.ts'
+import '../../index.ts'
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../../listeners.js'
-import { UserUiAddOrEditParty } from '../common.js'
+import { detectCurrentOrigin } from '../../listeners.ts'
+import { UserUiAddOrEditParty } from '../common.ts'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
 @customElement('user-ui-edit-party')

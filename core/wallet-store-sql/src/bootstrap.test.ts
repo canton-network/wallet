@@ -4,10 +4,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'vitest'
 import type { Kysely } from 'kysely'
 import type { BootstrapConfig } from '@canton-network/core-wallet-store'
-import { bootstrap, upsertIdpsAndNetworks } from './bootstrap.js'
-import { migrator } from './migrator.js'
-import { connection } from './store-sql.js'
-import type { DB } from './schema.js'
+import { bootstrap, upsertIdpsAndNetworks } from './bootstrap.ts'
+import { migrator } from './migrator.ts'
+import { connection } from './store-sql.ts'
+import type { DB } from './schema.ts'
 
 const bootstrapConfig: BootstrapConfig = {
     idps: [

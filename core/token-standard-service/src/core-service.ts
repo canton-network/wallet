@@ -42,8 +42,8 @@ import type {
     JsTransaction,
     OffsetCheckpointUpdate,
     TransactionUpdate,
-} from './types.js'
-import { isApiVersion, TokenStandardService } from './token-standard-service.js'
+} from './types.ts'
+import { isApiVersion, TokenStandardService } from './token-standard-service.ts'
 import { getLogger } from '@logtape/logtape'
 
 export class CoreService {

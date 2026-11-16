@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ScanClient } from './scan-client.js'
+import { ScanClient } from './scan-client.ts'
 import {
     createAccessTokenProvider,
     getRequestHeaders,
     getRequestMethod,
     jsonResponse,
-} from './__tests__/test-utils.js'
+} from './__tests__/test-utils.ts'
 
 const BASE_URL = new URL('https://scan.example/')
 

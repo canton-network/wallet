@@ -3,14 +3,14 @@
 
 import { html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { chevronDownIcon } from '../icons/index.js'
-import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
+import { chevronDownIcon } from '../icons/index.ts'
+import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.ts'
 import type {
     KeyName,
     PartyHint,
     SigningProviderId,
 } from '@canton-network/core-wallet-user-rpc-client'
-export { SigningProviderChangeEvent } from './wallet-form.js'
+export { SigningProviderChangeEvent } from './wallet-form.ts'
 
 export class WalletCreateEvent extends Event {
     constructor(

@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getRegistryInfo } from './getRegistryInfo'
-import { getInstrument } from './getInstrument'
-import { listInstruments } from './listInstruments'
-import { instruments, supportedApis } from './common'
-import { expressContext, type RequestType } from '../../__tests__/mocks'
-import { APIError } from '../common'
+import { getRegistryInfo } from './getRegistryInfo.ts'
+import { getInstrument } from './getInstrument.ts'
+import { listInstruments } from './listInstruments.ts'
+import { instruments, supportedApis } from './common.ts'
+import { expressContext, type RequestType } from '../../__tests__/mocks.ts'
+import { APIError } from '../common.ts'
 
 const { req, res, next } = expressContext
 
-vi.mock('../../common/state', () => ({
+vi.mock('../../common/state.ts', () => ({
     RegistryState: {
         instance: {
             operator: {

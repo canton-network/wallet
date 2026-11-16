@@ -9,7 +9,7 @@ import type {
 } from '@canton-network/core-splice-client'
 import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 
-import { AmuletServiceBase } from './amulet-service-base'
+import { AmuletServiceBase } from './amulet-service-base.ts'
 
 /** AmuletService extends TokenStandardService to provide features that are
  *  available for amulet but not in the token standard, such as:

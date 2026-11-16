@@ -3,14 +3,14 @@
 
 import { LitElement, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import { stateManager } from '../state-manager'
-import { addUserSession, redirectToIntendedOrDefault } from '..'
+import { stateManager } from '../state-manager.ts'
+import { addUserSession, redirectToIntendedOrDefault } from '../index.ts'
 import {
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import { detectCurrentOrigin } from '../listeners'
-import { LOGIN_PAGE_REDIRECT } from '../constants'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { LOGIN_PAGE_REDIRECT } from '../constants.ts'
 import {
     fetchOidcDiscovery,
     jwtExpiresAt,

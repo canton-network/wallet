@@ -6,8 +6,8 @@ import {
     type HoldingView,
 } from '@canton-network/core-token-standard-v2'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import type { TokenNamespaceConfig } from '../../namespace.js'
-import type { ListHoldingsParams } from '../../utxos/types.js'
+import type { TokenNamespaceConfig } from '../../namespace.ts'
+import type { ListHoldingsParams } from '../../utxos/types.ts'
 
 export class UtxoNamespace {
     constructor(private readonly sdkContext: TokenNamespaceConfig) {}

@@ -8,8 +8,8 @@ import {
 } from '@canton-network/core-signing-lib'
 import { beforeEach, describe, expect, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { createVault, type Vault, VaultLockedError } from '../vault'
-import { createVaultSigningStore } from './signing-store'
+import { createVault, type Vault, VaultLockedError } from '../vault/index.ts'
+import { createVaultSigningStore } from './signing-store.ts'
 
 const PASSWORD = 'first password 1'
 const USER_ID = 'alice'

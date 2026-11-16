@@ -3,16 +3,16 @@
 
 import type express from 'express'
 import cors from 'cors'
-import { dappController, type DappControllerOptions } from './controller.js'
-import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
-import type { Methods } from './rpc-gen/index.js'
-import { paramSchemas } from './rpc-gen/schemas.js'
+import { dappController, type DappControllerOptions } from './controller.ts'
+import { jsonRpcHandler } from '../middleware/jsonRpcHandler.ts'
+import type { Methods } from './rpc-gen/index.ts'
+import { paramSchemas } from './rpc-gen/schemas.ts'
 import type { Store } from '@canton-network/core-wallet-store'
 import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Server } from 'http'
-import type { ServerConfig } from '../config/Config.js'
+import type { ServerConfig } from '../config/Config.ts'
 import { subscribeNotifications } from '@canton-network/core-wallet-services'
-import { SseNotificationSink } from './sse-sink.js'
+import { SseNotificationSink } from './sse-sink.ts'
 
 export interface DappApiOptions extends Omit<
     DappControllerOptions,

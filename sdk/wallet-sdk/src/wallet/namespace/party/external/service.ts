@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PublicKey } from '@canton-network/core-signing-lib'
-import type { SDKContext } from '../../../sdk.js'
-import type { ParticipantEndpointConfig } from './types.js'
-import { PreparedPartyCreationService } from './prepared.js'
-import type { CreatePartyOptions } from './types.js'
-import type { SDKLogger } from '../../../logger/index.js'
+import type { SDKContext } from '../../../sdk.ts'
+import type { ParticipantEndpointConfig } from './types.ts'
+import { PreparedPartyCreationService } from './prepared.ts'
+import type { CreatePartyOptions } from './types.ts'
+import type { SDKLogger } from '../../../logger/index.ts'
 import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { SynchronizerResolver } from '../../../init/synchronizer.js'
+import { SynchronizerResolver } from '../../../init/synchronizer.ts'
 
 export class ExternalPartyNamespace {
     private readonly logger: SDKLogger

@@ -40,7 +40,7 @@ import {
     netAmounts,
     type InstrumentAmount,
 } from '@utils/v2-allocation-items'
-import { LegList, LockedAmounts } from './allocation-v2-dialog-parts'
+import { LegList, LockedAmounts } from './allocation-v2-dialog-parts.tsx'
 
 interface AllocationActionDialogContentProps {
     item: AllocationActionItem

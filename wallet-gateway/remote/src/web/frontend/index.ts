@@ -3,11 +3,11 @@
 
 import { css, html, LitElement } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import { createUserClient, attemptRemoveSession } from './rpc-client'
-import { setLocationHref } from './navigation.js'
+import { createUserClient, attemptRemoveSession } from './rpc-client.ts'
+import { setLocationHref } from './navigation.ts'
 
 import '@canton-network/core-wallet-ui-components'
-import { stateManager } from './state-manager'
+import { stateManager } from './state-manager.ts'
 import { WalletEvent } from '@canton-network/core-types'
 import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
 import {
@@ -16,7 +16,7 @@ import {
     LOGIN_PAGE_REDIRECT,
     TOKEN_EXPIRED_SKEW_MS,
     TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
-} from './constants'
+} from './constants.ts'
 import {
     type AllowedRoute,
     getCurrentRoute,
@@ -25,9 +25,9 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import './listeners'
-import { detectCurrentOrigin } from './listeners'
-import { fetchDappApiUrl, showToast } from './utils'
+import './listeners.ts'
+import { detectCurrentOrigin } from './listeners.ts'
+import { fetchDappApiUrl, showToast } from './utils.ts'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `

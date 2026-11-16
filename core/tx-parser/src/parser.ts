@@ -10,14 +10,14 @@ import {
     hasInterface,
     mergeMetas,
     removeParsedMetaKeys,
-} from './utils.js'
+} from './utils.ts'
 import {
     BurnedMetaKey,
     matchInterfaceIds,
     ReasonMetaKey,
     SenderMetaKey,
     TxKindMetaKey,
-} from './constants.js'
+} from './constants.ts'
 import type {
     Holding as HoldingWithContractId,
     HoldingsChangeSummary,
@@ -30,8 +30,8 @@ import type {
     TransferInstructionCurrentTag,
     TransferObject,
     Holding,
-} from './types.js'
-import { InstrumentMap } from './instrumentmap.js'
+} from './types.ts'
+import { InstrumentMap } from './instrumentmap.ts'
 
 import {
     EventFilterBySetup,
@@ -62,7 +62,7 @@ import {
     sameAccount,
     toHolding,
     type V2LabelDetails,
-} from './v2-events.js'
+} from './v2-events.ts'
 
 type ArchivedEvent = LedgerCommonSchemas['ArchivedEvent']
 type CreatedEvent = LedgerCommonSchemas['CreatedEvent']

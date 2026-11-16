@@ -31,7 +31,7 @@ import {
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { jwtAuthService } from './jwt-auth-service.js'
+import { jwtAuthService } from './jwt-auth-service.ts'
 
 const mockFetch = vi.hoisted(() => vi.fn())
 const mockCreateRemoteJWKSet = vi.hoisted(() => vi.fn())

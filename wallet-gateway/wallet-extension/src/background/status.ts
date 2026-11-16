@@ -6,7 +6,10 @@ import {
     LOGOUT_EVENT,
 } from '@canton-network/core-wallet-services'
 import { browser } from 'wxt/browser'
-import type { Provider, StatusEvent } from './controllers/dapp/rpc-gen/typings'
+import type {
+    Provider,
+    StatusEvent,
+} from './controllers/dapp/rpc-gen/typings.ts'
 
 /** Provider details reported by `status` and in `statusChanged` events. */
 export const extensionProvider: Provider = {

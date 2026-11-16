@@ -18,7 +18,7 @@ import {
     walletStatusToCode,
     walletSyncResultToast,
     WALLET_STATUS_CODE,
-} from './parties.js'
+} from './parties.ts'
 
 const wallet = (overrides: Partial<Wallet>): Wallet =>
     ({

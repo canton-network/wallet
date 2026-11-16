@@ -4,7 +4,7 @@
 import type { ComponentProps } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, fn, within } from 'storybook/test'
-import { ApprovalActions } from './ApprovalActions'
+import { ApprovalActions } from './ApprovalActions.tsx'
 
 type Props = ComponentProps<typeof ApprovalActions>
 

@@ -11,9 +11,9 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
-import { insertMessageRaw as insertMessageRaw012 } from '../seeds/012-add-messages-to-sign'
-import { insertMessageRaw as insertMessageRaw020 } from '../seeds/020-add-message-external-tx-id-and-failure-reason'
+} from '../helpers.ts'
+import { insertMessageRaw as insertMessageRaw012 } from '../seeds/012-add-messages-to-sign.ts'
+import { insertMessageRaw as insertMessageRaw020 } from '../seeds/020-add-message-external-tx-id-and-failure-reason.ts'
 
 const TARGET = 20
 const TABLE = 'messages_raw'

@@ -3,7 +3,7 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect } from 'storybook/test'
-import { LoadingState } from './LoadingState'
+import { LoadingState } from './LoadingState.tsx'
 
 const meta: Meta<typeof LoadingState> = {
     title: 'LoadingState',

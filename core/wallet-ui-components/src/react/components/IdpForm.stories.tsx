@@ -14,7 +14,7 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor } from 'storybook/test'
-import { IdpForm } from './IdpForm'
+import { IdpForm } from './IdpForm.tsx'
 
 const oauthIdp: OauthIdp = {
     id: 'review-idp',

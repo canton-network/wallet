@@ -3,10 +3,10 @@
 
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { getTokenRulesContext } from '../getTokenRulesContext'
+import { getTokenRulesContext } from '../getTokenRulesContext.ts'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
-import { RegistryState } from '../../common/state'
-import { APIError } from '../common'
+import { RegistryState } from '../../common/state.ts'
+import { APIError } from '../common.ts'
 import z from 'zod'
 
 const settlementArgumentsSchema = z.looseObject({

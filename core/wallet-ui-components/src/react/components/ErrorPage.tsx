@@ -7,7 +7,7 @@ import {
     WgErrorPage as WgErrorPageElement,
     type ErrorPageBackEvent,
     type ErrorPageRefreshEvent,
-} from '../../components/error-page.js'
+} from '../../components/error-page.ts'
 
 export const ErrorPage = createComponent({
     tagName: 'wg-error-page',

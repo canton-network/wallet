@@ -17,8 +17,8 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor, type Mock } from 'storybook/test'
-import type { LoginConnectEvent } from '../../components/login-form'
-import { LoginForm } from './LoginForm'
+import type { LoginConnectEvent } from '../../components/login-form.ts'
+import { LoginForm } from './LoginForm.tsx'
 
 const oauthIdp: Idp = {
     id: 'idp-oauth',

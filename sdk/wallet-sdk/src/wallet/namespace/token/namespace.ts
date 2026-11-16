@@ -1,19 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AllocationNamespace } from './allocation/index.js'
-import { UtxoNamespace } from './utxos/index.js'
-import { TransferNamespace } from './transfer/index.js'
+import { AllocationNamespace } from './allocation/index.ts'
+import { UtxoNamespace } from './utxos/index.ts'
+import { TransferNamespace } from './transfer/index.ts'
 import type {
     TokenStandardService,
     AssetBody,
 } from '@canton-network/core-token-standard-service'
 import type { PartyId } from '@canton-network/core-types'
 import type { PrettyTransactions } from '@canton-network/core-tx-parser'
-import type { SDKContext } from '../../init/types/context.js'
-import { ParsedURL, type URLInput, parseAssets } from '../utils/url.js'
-import { findAsset } from '../asset/index.js'
-import { TokenV2Namespace } from './v2/namespace.js'
+import type { SDKContext } from '../../init/types/context.ts'
+import { ParsedURL, type URLInput, parseAssets } from '../utils/url.ts'
+import { findAsset } from '../asset/index.ts'
+import { TokenV2Namespace } from './v2/namespace.ts'
 
 export type TokenNamespaceConfig = {
     tokenStandardService: TokenStandardService

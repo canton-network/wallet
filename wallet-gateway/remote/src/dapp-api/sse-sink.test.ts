@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest'
 import type express from 'express'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { SseNotificationSink } from './sse-sink.js'
+import { SseNotificationSink } from './sse-sink.ts'
 
 function fakeResponse() {
     return {

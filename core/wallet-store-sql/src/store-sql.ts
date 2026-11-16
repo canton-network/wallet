@@ -61,7 +61,7 @@ import {
     fromApiKey,
     toApiKey,
     toSession,
-} from './schema.js'
+} from './schema.ts'
 import pg from 'pg'
 import type { AccessToken } from '@canton-network/core-types'
 

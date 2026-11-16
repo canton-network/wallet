@@ -6,8 +6,8 @@ import type {
     DamlTransaction,
     DamlTransaction_Node,
 } from '@canton-network/core-ledger-proto'
-import { checkForest } from '../forest.js'
-import { DEFAULT_LIMITS } from '../limits.js'
+import { checkForest } from '../forest.ts'
+import { DEFAULT_LIMITS } from '../limits.ts'
 import {
     chain,
     createNode,
@@ -17,8 +17,8 @@ import {
     rollbackNode,
     seed,
     tx,
-} from './helpers/builders.js'
-import { rejection } from './helpers/matchers.js'
+} from './helpers/builders.ts'
+import { rejection } from './helpers/matchers.ts'
 
 const check = (input: DamlTransaction) => checkForest(input, DEFAULT_LIMITS)
 

@@ -3,8 +3,8 @@
 
 import { css, html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { clipboardIcon } from '../icons'
+import { BaseElement } from '../internal/base-element.ts'
+import { clipboardIcon } from '../icons/index.ts'
 
 export class CopySuccessEvent extends Event {
     constructor(public value: string) {

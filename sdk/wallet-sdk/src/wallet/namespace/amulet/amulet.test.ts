@@ -6,13 +6,13 @@ import {
     AmuletNamespace,
     type AmuletNamespaceConfig,
     fetchAmulet,
-} from './namespace'
-import * as mock from '../../__tests__/mocks'
+} from './namespace.ts'
+import * as mock from '../../__tests__/mocks.ts'
 import { Decimal } from 'decimal.js'
 import type { AssetBody } from '@canton-network/core-token-standard-service'
 /* oxlint-disable typescript/no-explicit-any */
 
-vi.mock('../utils/url.js', () => ({
+vi.mock('../utils/url.ts', () => ({
     ParsedURL: class MockedParsedURL extends URL {
         constructor(
             public ctx: any,

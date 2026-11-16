@@ -2,13 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as mock from '../../../__tests__/mocks'
-import type { TokenNamespaceConfig } from '../index'
-import { ParsedURL } from '../../utils/url'
-import { TransferNamespace } from './namespace'
-import type { ProxyDelegationCommandArgs } from './proxyDelegation'
+import * as mock from '../../../__tests__/mocks.ts'
+import type { TokenNamespaceConfig } from '../index.ts'
+import { ParsedURL } from '../../utils/url.ts'
+import { TransferNamespace } from './namespace.ts'
+import type { ProxyDelegationCommandArgs } from './proxyDelegation.ts'
 import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
-import type { TransferAllocationChoiceParams, TransferParamsV1 } from './types'
+import type {
+    TransferAllocationChoiceParams,
+    TransferParamsV1,
+} from './types.ts'
 /* oxlint-disable typescript/no-explicit-any */
 const { ctx, mockLogger } = mock
 

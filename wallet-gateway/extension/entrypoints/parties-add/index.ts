@@ -10,17 +10,17 @@ import {
     handleErrorToast,
 } from '@canton-network/core-wallet-ui-components'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
-import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
-import { toRelHref, toRelPath } from '@/utils/legacy-frontend/routing'
-import { stateManager } from '@/utils/legacy-frontend/state-manager'
-import '@/utils/legacy-frontend'
+import { createUserClient } from '@/utils/legacy-frontend/rpc-client.ts'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.ts'
+import { toRelHref, toRelPath } from '@/utils/legacy-frontend/routing.ts'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
+import '@/utils/legacy-frontend/index.ts'
 import {
     buildCreateWalletParams,
     PARTY_STATUS_PARAM,
     walletStatusToCode,
 } from '@canton-network/core-wallet-ui-components/logic'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {

@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { dapp } from './dapp-api/server.js'
-import { user } from './user-api/server.js'
-import { web } from './web/server.js'
+import { dapp } from './dapp-api/server.ts'
+import { user } from './user-api/server.ts'
+import { web } from './web/server.ts'
 import type { Logger } from 'pino'
 import {
     StoreSql,
@@ -18,34 +18,34 @@ import {
     connection as signingConnection,
     migrator as signingMigrator,
 } from '@canton-network/core-signing-store-sql'
-import { ConfigUtils } from './config/ConfigUtils.js'
-import { jwtAuthService } from './auth/jwt-auth-service.js'
+import { ConfigUtils } from './config/ConfigUtils.ts'
+import { jwtAuthService } from './auth/jwt-auth-service.ts'
 import express from 'express'
-import type { CliOptions } from './index.js'
-import { jwtAuth } from './middleware/jwtAuth.js'
+import type { CliOptions } from './index.ts'
+import { jwtAuth } from './middleware/jwtAuth.ts'
 import {
     authenticatedRateLimiter,
     preAuthIpRateLimiter,
     rateLimiter,
-} from './middleware/rateLimit.js'
-import type { Config } from './config/Config.js'
-import { configManagedIds, deriveUrls } from './config/ConfigUtils.js'
+} from './middleware/rateLimit.ts'
+import type { Config } from './config/Config.ts'
+import { configManagedIds, deriveUrls } from './config/ConfigUtils.ts'
 import { existsSync } from 'fs'
-import { GATEWAY_VERSION } from './version.js'
-import { sessionHandler } from './middleware/sessionHandler.js'
+import { GATEWAY_VERSION } from './version.ts'
+import { sessionHandler } from './middleware/sessionHandler.ts'
 import { sql } from 'kysely'
-import { createServiceAccountRunContextResolver } from './signing/service-account-session.js'
-import { apiKeyAuth } from './middleware/apiKeyAuth.js'
-import { securityHeaders } from './middleware/securityHeaders.js'
+import { createServiceAccountRunContextResolver } from './signing/service-account-session.ts'
+import { apiKeyAuth } from './middleware/apiKeyAuth.ts'
+import { securityHeaders } from './middleware/securityHeaders.ts'
 import {
     type HASHING_SCHEME_VERSION,
     NotificationService,
     SigningWorker,
 } from '@canton-network/core-wallet-services'
-import { errorHandler } from './middleware/errorHandler.js'
-import { registerSigningProviders } from './signing-providers-registration.js'
-import { ServerNotices } from './notices/server-notices.js'
-import { ServerStatusService } from './notices/server-status-service.js'
+import { errorHandler } from './middleware/errorHandler.ts'
+import { registerSigningProviders } from './signing-providers-registration.ts'
+import { ServerNotices } from './notices/server-notices.ts'
+import { ServerStatusService } from './notices/server-status-service.ts'
 
 let isReady = false
 let signingWorker: SigningWorker | undefined

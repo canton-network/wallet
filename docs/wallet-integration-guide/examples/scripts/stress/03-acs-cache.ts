@@ -2,9 +2,9 @@ import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     localNetGlobalSynchronizer,
-} from '../utils/index.js'
+} from '../utils/index.ts'
 
-import { configureLogging } from '../utils/configure-logging.js'
+import { configureLogging } from '../utils/configure-logging.ts'
 const logger = await configureLogging()
 
 const partiesToCreate = parseInt(process.env.PARTIES_AMOUNT ?? '') || 25

@@ -19,7 +19,7 @@ import {
     OfferPartyBlock,
     OfferRowGrid,
     OfferRowShell,
-} from './offer-row-layout'
+} from './offer-row-layout.tsx'
 import type {
     OfferItem,
     OfferStatus,

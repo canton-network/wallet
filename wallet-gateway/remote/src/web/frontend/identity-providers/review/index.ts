@@ -13,11 +13,11 @@ import {
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
-import { createUserClient } from '../../rpc-client'
-import { setLocationHref } from '../../navigation.js'
-import { stateManager } from '../../state-manager'
-import '../../index'
-import { detectCurrentOrigin } from '../../listeners.js'
+import { createUserClient } from '../../rpc-client.ts'
+import { setLocationHref } from '../../navigation.ts'
+import { stateManager } from '../../state-manager.ts'
+import '../../index.ts'
+import { detectCurrentOrigin } from '../../listeners.ts'
 
 @customElement('user-ui-review-idp')
 export class UserUiReviewIdp extends BaseElement {

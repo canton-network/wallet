@@ -7,7 +7,7 @@ import {
     connectPingDapp,
     createPingDappWalletGateway,
     DEFAULT_NETWORK,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 // Network whose user `operator` is the configured gateway admin.
 const adminNetwork = DEFAULT_NETWORK

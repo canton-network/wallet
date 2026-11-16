@@ -3,8 +3,8 @@
 
 import { afterEach, describe, expect, it } from 'vitest'
 import { JsonRpcError } from '@canton-network/core-rpc-errors'
-import './components/custom-toast.js'
-import { handleErrorToast } from './handle-errors.js'
+import './components/custom-toast.ts'
+import { handleErrorToast } from './handle-errors.ts'
 
 type ToastElement = HTMLElement & {
     title: string

@@ -5,9 +5,9 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import type { Logger } from 'pino'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { signingProvidersConfigSchema } from './config/Config.js'
-import { registerSigningProviders } from './signing-providers-registration.js'
-import { ServerNotices } from './notices/server-notices.js'
+import { signingProvidersConfigSchema } from './config/Config.ts'
+import { registerSigningProviders } from './signing-providers-registration.ts'
+import { ServerNotices } from './notices/server-notices.ts'
 
 const providerConstructors = vi.hoisted(() => ({
     bitgo: vi.fn(),

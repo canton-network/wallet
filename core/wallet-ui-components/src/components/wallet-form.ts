@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { css, html, nothing, type TemplateResult } from 'lit'
-import { BaseElement } from '../internal/base-element.js'
+import { BaseElement } from '../internal/base-element.ts'
 import type {
     Key,
     SigningProviderId,

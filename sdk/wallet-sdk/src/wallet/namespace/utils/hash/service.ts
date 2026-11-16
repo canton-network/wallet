@@ -11,8 +11,8 @@ import {
     type HashOptions,
     TxHashingError,
 } from '@canton-network/core-tx-hashing'
-import type { OfflineSDKContext } from '../../../sdk.js'
-import { Converter } from './converter.js'
+import type { OfflineSDKContext } from '../../../sdk.ts'
+import { Converter } from './converter.ts'
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,

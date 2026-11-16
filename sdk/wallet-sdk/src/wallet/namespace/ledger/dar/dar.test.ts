@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DarNamespace } from '.'
-import * as mock from '../../../__tests__/mocks'
+import { DarNamespace } from './index.ts'
+import * as mock from '../../../__tests__/mocks.ts'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 const { ledgerProvider, ctx } = mock

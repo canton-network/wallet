@@ -13,8 +13,8 @@ import {
     SigningProvider,
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
-import type { Notifier } from './notification/index.js'
-import { SignMessageService } from './sign-message-service.js'
+import type { Notifier } from './notification/index.ts'
+import { SignMessageService } from './sign-message-service.ts'
 
 const authContext: AuthContext = {
     userId: 'user-1',

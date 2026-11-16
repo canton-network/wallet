@@ -18,9 +18,9 @@ import {
     SelfIssuedAuthService,
     type SelfIssuedWalletAllocationService,
     type SelfIssuedWalletSyncService,
-} from './self-issued-auth-service.js'
-import type { SignMessageService } from './sign-message-service.js'
-import { decodeBase64, encodeBase64 } from './__tests__/test-utils.js'
+} from './self-issued-auth-service.ts'
+import type { SignMessageService } from './sign-message-service.ts'
+import { decodeBase64, encodeBase64 } from './__tests__/test-utils.ts'
 
 const { probeGet, syncRights, syncAuthParty } = vi.hoisted(() => ({
     probeGet: vi.fn(),

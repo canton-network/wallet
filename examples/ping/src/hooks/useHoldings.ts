@@ -3,7 +3,7 @@
 
 import { useContext, useEffect, useState } from 'react'
 import * as sdk from '@canton-network/dapp-sdk'
-import { ErrorContext } from '../ErrorContext'
+import { ErrorContext } from '../ErrorContext.ts'
 import * as walletSDK from '@canton-network/wallet-sdk'
 
 export function useHoldings(

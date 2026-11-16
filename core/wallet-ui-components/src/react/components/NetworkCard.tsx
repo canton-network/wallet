@@ -8,7 +8,7 @@ import {
     type NetworkCardReviewEvent,
     type NetworkCardDeleteEvent,
     type NetworkCardUpdateEvent,
-} from '../../components/network-card.js'
+} from '../../components/network-card.ts'
 
 export const NetworkCard = createComponent({
     tagName: 'network-card',

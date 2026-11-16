@@ -33,7 +33,7 @@ import {
     toSigningDriverConfig,
     type SigningKeyTable,
     type StoreConfig,
-} from './schema.js'
+} from './schema.ts'
 
 export class StoreSql implements SigningDriverStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined

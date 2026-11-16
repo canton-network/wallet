@@ -16,14 +16,14 @@ import {
     fromSigningTransaction,
     toSigningDriverConfig,
     fromSigningDriverConfig,
-} from './schemas.js'
+} from './schemas.ts'
 import {
     signingKeysItem,
     type SigningKeyRecord,
     signingTransactionsItem,
     type SigningTransactionRecord,
     signingDriverConfigItem,
-} from './items.js'
+} from './items.ts'
 
 // Every signing-transaction mutation reads and replaces the whole stored array.
 // This module-level queue runs those mutations one at a time for every WxtStore

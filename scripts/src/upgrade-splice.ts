@@ -13,7 +13,7 @@ import {
     getArgValue,
     type Network,
     type SupportedVersions,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 async function getNetworkInput(): Promise<Network> {
     const networkArg = getArgValue('network')

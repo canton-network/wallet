@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi } from 'vitest'
-import { TransferServiceV2 } from './transfer-service.js'
-import type { CoreService } from '../core-service.js'
-import { TokenStandardService } from '../token-standard-service.js'
-import { EMPTY_META } from '../types.js'
+import { TransferServiceV2 } from './transfer-service.ts'
+import type { CoreService } from '../core-service.ts'
+import { TokenStandardService } from '../token-standard-service.ts'
+import { EMPTY_META } from '../types.ts'
 import {
     type Account,
     type TransferFactory_Transfer as TransferFactory_TransferV2,

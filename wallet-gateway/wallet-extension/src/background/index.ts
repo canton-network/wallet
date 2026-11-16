@@ -5,20 +5,24 @@ import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import { registerService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
-import { logger } from '@/shared/logger'
-import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
-import { createAuthContextStore } from './auth-context'
-import { registerAuthService } from './auth-service'
-import { createDappDispatcher } from './controllers/dapp/dispatch'
-import { requireUnlocked, userController } from './controllers/user'
+import { logger } from '@/shared/logger.ts'
+import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys.ts'
+import { createAuthContextStore } from './auth-context.ts'
+import { registerAuthService } from './auth-service.ts'
+import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
+import { requireUnlocked, userController } from './controllers/user/index.ts'
 import {
     currentSessionSubscriber,
     registerNotificationPorts,
-} from './notifications'
-import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui'
-import { createSigningStore, createWalletStore, loadAuthedStore } from './store'
-import { createVault, type Vault } from './vault'
-import { registerVaultService } from './vault-service'
+} from './notifications.ts'
+import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui.ts'
+import {
+    createSigningStore,
+    createWalletStore,
+    loadAuthedStore,
+} from './store/index.ts'
+import { createVault, type Vault } from './vault/index.ts'
+import { registerVaultService } from './vault-service.ts'
 
 /**
  * Runs in the service worker. Every listener is added in the first turn,

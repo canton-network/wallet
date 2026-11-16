@@ -15,9 +15,9 @@ import {
     SigningProvider,
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
-import type { Notifier } from './notification/index.js'
-import { TransactionService } from './transaction-service.js'
-import { initializeLogRecorder } from './__tests__/test-utils.js'
+import type { Notifier } from './notification/index.ts'
+import { TransactionService } from './transaction-service.ts'
+import { initializeLogRecorder } from './__tests__/test-utils.ts'
 
 const authContext: AuthContext = {
     userId: 'user-1',

@@ -6,8 +6,8 @@ import { createComponent, type EventName } from '@lit/react'
 import {
     WgWalletCreateForm as WgWalletCreateFormElement,
     type WalletCreateEvent,
-} from '../../components/wallet-create-form.js'
-import type { SigningProviderChangeEvent } from '../../components/wallet-form.js'
+} from '../../components/wallet-create-form.ts'
+import type { SigningProviderChangeEvent } from '../../components/wallet-form.ts'
 
 export const WalletCreateForm = createComponent({
     tagName: 'wg-wallet-create-form',

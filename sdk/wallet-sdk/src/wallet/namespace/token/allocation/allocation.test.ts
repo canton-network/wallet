@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as mock from '../../../__tests__/mocks'
-import type { TokenNamespaceConfig } from '../index'
-import { ParsedURL } from '../../utils/url'
-import { AllocationNamespace } from './service'
+import * as mock from '../../../__tests__/mocks.ts'
+import type { TokenNamespaceConfig } from '../index.ts'
+import { ParsedURL } from '../../utils/url.ts'
+import { AllocationNamespace } from './service.ts'
 import type {
     AllocationContextParams,
     AllocationInstructionCreateParams,
-} from './types'
+} from './types.ts'
 import {
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,

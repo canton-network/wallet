@@ -4,7 +4,7 @@
 import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, fn } from 'storybook/test'
-import { SigningProviderSelect } from './SigningProviderSelect'
+import { SigningProviderSelect } from './SigningProviderSelect.tsx'
 
 const meta: Meta = {
     title: 'SigningProviderSelect',

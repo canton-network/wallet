@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { IdpUnavailableError } from './auth-service.js'
-import { createOidcClient, OIDC_CACHE_TTL_MS } from './oidc-client.js'
+import { IdpUnavailableError } from './auth-service.ts'
+import { createOidcClient, OIDC_CACHE_TTL_MS } from './oidc-client.ts'
 
 describe('createOidcClient', () => {
     const configUrl = 'http://idp/.well-known/openid-configuration'

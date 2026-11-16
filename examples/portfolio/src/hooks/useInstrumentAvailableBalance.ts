@@ -6,11 +6,11 @@ import {
     aggregateHoldings,
     getInstrumentKey,
     type AggregatedAccountBalance,
-} from '../utils/aggregate-holdings'
+} from '../utils/aggregate-holdings.ts'
 import { useMemo } from 'react'
 import type { Account } from '@canton-network/core-token-standard-v2'
-import { useWalletSdk } from './useWalletSdk'
-import { holdingsQueryOptions } from './query-options'
+import { useWalletSdk } from './useWalletSdk.ts'
+import { holdingsQueryOptions } from './query-options.ts'
 import { useQuery } from '@tanstack/react-query'
 import { basicAccount } from '@utils/holdings'
 

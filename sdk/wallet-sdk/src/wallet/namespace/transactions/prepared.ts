@@ -5,11 +5,11 @@ import {
     type PrivateKey,
     signTransactionHash,
 } from '@canton-network/core-signing-lib'
-import { SignedTransaction } from './signed.js'
-import type { SDKContext } from '../../init/types/context.js'
+import { SignedTransaction } from './signed.ts'
+import type { SDKContext } from '../../init/types/context.ts'
 import type { Ops } from '@canton-network/core-provider-ledger'
 import { decodePreparedTransaction } from '@canton-network/core-tx-visualizer'
-import type { LedgerNamespace } from '../ledger/index.js'
+import type { LedgerNamespace } from '../ledger/index.ts'
 
 export class PreparedTransaction {
     constructor(

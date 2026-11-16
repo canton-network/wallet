@@ -8,8 +8,8 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
+import { configureLogging } from './utils/configure-logging.ts'
 
 const logger = await configureLogging()
 

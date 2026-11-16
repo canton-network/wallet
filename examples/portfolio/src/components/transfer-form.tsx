@@ -28,12 +28,12 @@ import { usePrimaryAccount } from '@hooks/useAccounts'
 import type { useCreateTransfer } from '@hooks/useCreateTransfer'
 import { useInstrumentAvailableBalance } from '@hooks/useInstrumentAvailableBalance'
 import { toDecimalOrNull } from '@utils/decimal'
-import { InstrumentSelect } from './instrument-select'
+import { InstrumentSelect } from './instrument-select.tsx'
 import type {
     SelectableInstrument,
     SubmittedTransfer,
     TransferFormData,
-} from './transfer-types'
+} from './transfer-types.ts'
 
 interface TransferFormProps {
     initialValues?: TransferFormData

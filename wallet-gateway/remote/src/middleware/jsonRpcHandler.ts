@@ -15,7 +15,7 @@ import {
 } from '@canton-network/core-types'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import { isJsCantonError } from '@canton-network/core-ledger-client'
-import { errorLogLevel } from './errorHandler.js'
+import { errorLogLevel } from './errorHandler.ts'
 import { z } from 'zod'
 
 interface JsonRpcHttpOptions<T> {

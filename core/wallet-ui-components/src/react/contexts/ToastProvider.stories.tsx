@@ -5,10 +5,13 @@ import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Button } from '@mui/material'
 import { JsonRpcError } from '@canton-network/core-rpc-errors'
 import { expect, waitForElementToBeRemoved, within } from 'storybook/test'
-import { useErrorToast, type ErrorToastFallback } from '../hooks/useErrorToast'
-import { useToast } from '../hooks/useToast'
-import { ToastProvider } from './ToastProvider'
-import type { ToastOptions } from './ToastContext'
+import {
+    useErrorToast,
+    type ErrorToastFallback,
+} from '../hooks/useErrorToast.ts'
+import { useToast } from '../hooks/useToast.ts'
+import { ToastProvider } from './ToastProvider.tsx'
+import type { ToastOptions } from './ToastContext.ts'
 
 const ShowToast = (options: ToastOptions) => {
     const { showToast } = useToast()

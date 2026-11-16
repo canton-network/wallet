@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect } from 'vitest'
-import type { Ops } from './index.js'
+import type { Ops } from './index.ts'
 import type { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 
 const MOCK_LEDGER_VERSION = 'example-ledger-version'
@@ -70,7 +70,7 @@ const tokenProvider = {
 
 describe('LedgerProvider', () => {
     it('should call ledger client with a GET request', async () => {
-        const LPM = await import('./LedgerProvider.js')
+        const LPM = await import('./LedgerProvider.ts')
         const provider = new LPM.LedgerProvider({
             baseUrl: 'https://example.com',
             accessTokenProvider: tokenProvider,
@@ -88,7 +88,7 @@ describe('LedgerProvider', () => {
     })
 
     it('should call ledger client with a POST request', async () => {
-        const LPM = await import('./LedgerProvider.js')
+        const LPM = await import('./LedgerProvider.ts')
         const provider = new LPM.LedgerProvider({
             baseUrl: 'https://example.com',
             accessTokenProvider: tokenProvider,
@@ -111,7 +111,7 @@ describe('LedgerProvider', () => {
     })
 
     it('should call ledger client with a PATCH request', async () => {
-        const LPM = await import('./LedgerProvider.js')
+        const LPM = await import('./LedgerProvider.ts')
         const provider = new LPM.LedgerProvider({
             baseUrl: 'https://example.com',
             accessTokenProvider: tokenProvider,
@@ -142,7 +142,7 @@ describe('LedgerProvider', () => {
     })
 
     it('should call ledger client with a DELETE request', async () => {
-        const LPM = await import('./LedgerProvider.js')
+        const LPM = await import('./LedgerProvider.ts')
         const provider = new LPM.LedgerProvider({
             baseUrl: 'https://example.com',
             accessTokenProvider: tokenProvider,
@@ -163,7 +163,7 @@ describe('LedgerProvider', () => {
     })
 
     it('should fail on an unsupported method', async () => {
-        const LPM = await import('./LedgerProvider.js')
+        const LPM = await import('./LedgerProvider.ts')
         const provider = new LPM.LedgerProvider({
             baseUrl: 'https://example.com',
             accessTokenProvider: tokenProvider,
@@ -179,7 +179,7 @@ describe('LedgerProvider', () => {
     })
 
     it('should test query and upload params', async () => {
-        const LPM = await import('./LedgerProvider.js')
+        const LPM = await import('./LedgerProvider.ts')
         const provider = new LPM.LedgerProvider({
             baseUrl: 'https://example.com',
             accessTokenProvider: tokenProvider,

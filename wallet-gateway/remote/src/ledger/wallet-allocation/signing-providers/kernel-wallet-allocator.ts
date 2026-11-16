@@ -12,12 +12,12 @@ import {
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import type { PartyAllocationService } from '../../party-allocation-service.js'
-import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
+import type { PartyAllocationService } from '../../party-allocation-service.ts'
+import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
 import {
     handleSigningProviderError,
     type WalletAllocator,
-} from '../wallet-allocation-service.js'
+} from '../wallet-allocation-service.ts'
 
 export class KernelWalletAllocator implements WalletAllocator {
     constructor(

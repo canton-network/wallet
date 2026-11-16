@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SDKContext } from '../../../sdk.js'
+import type { SDKContext } from '../../../sdk.ts'
 import type {
     CreatePartyOptions,
     ExecuteOptions,
     ParticipantEndpointConfig,
     MultiHashSignatures,
     OnboardingTransactions,
-} from './types.js'
+} from './types.ts'
 
 import type { PartyId } from '@canton-network/core-types'
 import {
@@ -18,9 +18,9 @@ import {
 } from '@canton-network/core-provider-ledger'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import type { PrivateKey, PublicKey } from '@canton-network/core-signing-lib'
-import { ExternalPartyNamespace } from './service.js'
-import { LedgerNamespace } from '../../ledger/index.js'
-import { SynchronizerResolver } from '../../../init/synchronizer.js'
+import { ExternalPartyNamespace } from './service.ts'
+import { LedgerNamespace } from '../../ledger/index.ts'
+import { SynchronizerResolver } from '../../../init/synchronizer.ts'
 
 /**
  * Represents a signed party creation, ready to be allocated on the ledger.

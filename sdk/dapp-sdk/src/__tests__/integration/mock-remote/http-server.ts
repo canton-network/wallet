@@ -8,7 +8,7 @@ import {
     handleMockJsonRpc,
     MOCK_DAPP_API_PATH,
     MOCK_SSE_PUSH_PATH,
-} from './json-rpc-handlers'
+} from './json-rpc-handlers.ts'
 
 const cors = {
     'Access-Control-Allow-Origin': '*',

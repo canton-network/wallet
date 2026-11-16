@@ -8,7 +8,7 @@ import { Command } from '@commander-js/extra-typings'
 import fs from 'node:fs'
 import path from 'node:path'
 import manifest from '../../docs/docs-sync.json' with { type: 'json' }
-import { error, getRepoRoot, warn } from './lib/utils.js'
+import { error, getRepoRoot, warn } from './lib/utils.ts'
 
 const repoRoot = getRepoRoot()
 

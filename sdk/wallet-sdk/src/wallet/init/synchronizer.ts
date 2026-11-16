@@ -5,8 +5,8 @@ import type {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'
-import type { SDKErrorHandler } from '../error/handler.js'
-import type { SDKContext } from './types/context.js'
+import type { SDKErrorHandler } from '../error/handler.ts'
+import type { SDKContext } from './types/context.ts'
 
 export type ConnectedSynchronizer = NonNullable<
     Ops.GetV2StateConnectedSynchronizers['ledgerApi']['result']['connectedSynchronizers']

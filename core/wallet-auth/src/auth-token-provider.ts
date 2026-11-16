@@ -5,11 +5,11 @@ import type {
     AccessTokenProvider,
     AuthContext,
     ClientCredentials,
-} from './auth-service'
-import { jwtExpired, jwtUserEmail, jwtUserId } from './auth-utils'
-import { clientCredentialsService } from './client-credentials-service'
-import { SelfSignedTokenService } from './self-signed-token-service'
-import type { Auth, Idp } from './config/schema'
+} from './auth-service.ts'
+import { jwtExpired, jwtUserEmail, jwtUserId } from './auth-utils.ts'
+import { clientCredentialsService } from './client-credentials-service.ts'
+import { SelfSignedTokenService } from './self-signed-token-service.ts'
+import type { Auth, Idp } from './config/schema.ts'
 import { getLogger, lazy } from '@logtape/logtape'
 
 export type TokenProviderConfig =

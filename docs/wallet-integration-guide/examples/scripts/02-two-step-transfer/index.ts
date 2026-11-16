@@ -1,17 +1,17 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
-import _accept from './_accept.js'
-import type { TransferTestScriptParameters } from './types.js'
-import _reject from './_reject.js'
-import _withdraw from './_withdraw.js'
-import _expire from './_expire.js'
+import _accept from './_accept.ts'
+import type { TransferTestScriptParameters } from './types.ts'
+import _reject from './_reject.ts'
+import _withdraw from './_withdraw.ts'
+import _expire from './_expire.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from '../utils/index.js'
+} from '../utils/index.ts'
 
-import { configureLogging } from '../utils/configure-logging.js'
+import { configureLogging } from '../utils/configure-logging.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({

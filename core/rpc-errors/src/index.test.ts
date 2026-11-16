@@ -11,7 +11,7 @@ import {
     rpcErrors,
     toHttpErrorCode,
     toJsonRpcError,
-} from './index'
+} from './index.ts'
 
 describe('core/rpc-errors', () => {
     /** Pins the table in https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md */

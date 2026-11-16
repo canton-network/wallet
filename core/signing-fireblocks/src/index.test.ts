@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import FireblocksSigningDriver from './index.js'
+import FireblocksSigningDriver from './index.ts'
 
 import {
     isRpcError,
@@ -17,7 +17,7 @@ import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type {
     FireblocksApiKeyInfo,
     FireblocksTransaction,
-} from './fireblocks.js'
+} from './fireblocks.ts'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'
@@ -60,8 +60,8 @@ const fireblocksHandlerMock = vi.hoisted(() => ({
     signTransaction: vi.fn(),
 }))
 
-vi.mock('./fireblocks.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./fireblocks.js')>()
+vi.mock('./fireblocks.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./fireblocks.ts')>()
     return {
         ...actual,
         FireblocksHandler: vi.fn(function FireblocksHandler() {

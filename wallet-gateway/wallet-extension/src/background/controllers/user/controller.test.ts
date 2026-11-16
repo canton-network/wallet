@@ -23,12 +23,12 @@ import {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { createWalletStore, loadAuthedStore } from '../../store'
-import { createVaultSigningStore } from '../../store/signing-store'
-import { createTestWalletStore } from '../../store/test-store'
-import { createVault, type Vault, VaultLockedError } from '../../vault'
-import { userController } from '.'
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+import { createWalletStore, loadAuthedStore } from '../../store/index.ts'
+import { createVaultSigningStore } from '../../store/signing-store.ts'
+import { createTestWalletStore } from '../../store/test-store.ts'
+import { createVault, type Vault, VaultLockedError } from '../../vault/index.ts'
+import { userController } from './index.ts'
 
 const networkId = 'canton:local-oauth'
 const authContext = { userId: 'user-1', accessToken: 'token-1' }

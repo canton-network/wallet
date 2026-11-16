@@ -12,7 +12,7 @@ import {
     getAllFilesWithExtension,
     SUPPORTED_VERSIONS,
     CANTON_PATH,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 const repoRoot = getRepoRoot()
 

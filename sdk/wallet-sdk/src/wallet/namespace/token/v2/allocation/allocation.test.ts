@@ -10,10 +10,10 @@ import {
     type MockedFunction,
 } from 'vitest'
 import type { AssetBody } from '@canton-network/core-token-standard-service'
-import * as mock from '../../../../__tests__/mocks'
-import type { TokenNamespaceConfig } from '../../index'
-import { ParsedURL } from '../../../utils/url'
-import { AllocationNamespace } from './namespace'
+import * as mock from '../../../../__tests__/mocks.ts'
+import type { TokenNamespaceConfig } from '../../index.ts'
+import { ParsedURL } from '../../../utils/url.ts'
+import { AllocationNamespace } from './namespace.ts'
 import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
@@ -21,15 +21,15 @@ import {
 
 /* oxlint-disable typescript/no-explicit-any */
 
-vi.mock('./types', async (importActual) => {
-    const actual = await importActual<typeof import('./types')>()
+vi.mock('./types.ts', async (importActual) => {
+    const actual = await importActual<typeof import('./types.ts')>()
     return {
         ...actual,
         actorsFor: vi.fn(),
     }
 })
 
-import { actorsFor, type AllocationChoiceParams } from './types'
+import { actorsFor, type AllocationChoiceParams } from './types.ts'
 
 const { ctx, mockLogger } = mock
 

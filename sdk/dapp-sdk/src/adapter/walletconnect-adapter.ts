@@ -26,8 +26,8 @@ import type {
     ProviderType,
     StatusEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { WALLETCONNECT_ICON } from '../assets'
-import { composeSIWXMessage } from '../util'
+import { WALLETCONNECT_ICON } from '../assets.ts'
+import { composeSIWXMessage } from '../util.ts'
 
 const CANTON_WC_METHODS = [
     'canton_prepareSignExecute',

@@ -7,7 +7,7 @@ import type {
     RequestPayload,
     SuccessResponse,
 } from '@canton-network/core-types'
-import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
+import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index.ts'
 import { createProxyService } from '@webext-core/proxy-service'
 
 export const attemptRemoveSession = async (

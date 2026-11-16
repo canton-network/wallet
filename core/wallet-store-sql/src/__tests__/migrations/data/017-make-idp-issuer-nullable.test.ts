@@ -10,9 +10,9 @@ import {
     migrateDownThrough,
     migrateUpThrough,
     migrateUpToBefore,
-} from '../helpers'
-import { insertNetwork } from '../seeds/001-init'
-import { insertIdp } from '../seeds/017-make-idp-issuer-nullable'
+} from '../helpers.ts'
+import { insertNetwork } from '../seeds/001-init.ts'
+import { insertIdp } from '../seeds/017-make-idp-issuer-nullable.ts'
 
 const TARGET = 17
 

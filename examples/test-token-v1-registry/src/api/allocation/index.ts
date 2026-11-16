@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Router } from 'express'
-import { getAllocationCancelContext } from './getAllocationCancelContext'
-import { getAllocationTransferContext } from './getAllocationTransferContext'
-import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
+import { getAllocationCancelContext } from './getAllocationCancelContext.ts'
+import { getAllocationTransferContext } from './getAllocationTransferContext.ts'
+import { getAllocationWithdrawContext } from './getAllocationWithdrawContext.ts'
 import type { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
 import z from 'zod'
-import { choiceContextRequestSchema } from '../common'
+import { choiceContextRequestSchema } from '../common.ts'
 
 const pathSchema = z.object({
     allocationId: z.string(),

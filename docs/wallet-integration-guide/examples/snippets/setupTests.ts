@@ -10,7 +10,7 @@ import {
     type SynchronizerSelector,
     getValidatorParty,
 } from '@canton-network/wallet-sdk'
-import { localNetGlobalSynchronizer } from '../scripts/utils/index.js'
+import { localNetGlobalSynchronizer } from '../scripts/utils/index.ts'
 
 declare global {
     var EXISTING_PARTY_1: PartyId

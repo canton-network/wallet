@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import z from 'zod'
-import { APIError } from '../common'
+import { APIError } from '../common.ts'
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { getTransferFactoryContext } from './getTransferFactoryContext'
+import { getTransferFactoryContext } from './getTransferFactoryContext.ts'
 
 const accountSchema = z.object({
     owner: z.string().nullable(),

@@ -12,7 +12,7 @@ import type {
     SigningKeyRecord,
     SigningTransactionRecord,
     SigningDriverConfigRecord,
-} from './items.js'
+} from './items.ts'
 
 export const fromSigningKey = (
     key: SigningKey,

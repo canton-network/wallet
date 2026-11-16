@@ -5,7 +5,7 @@ import { Command, Option } from '@commander-js/extra-typings'
 import { execFileSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { getRepoRoot, SUPPORTED_VERSIONS, type Network } from './lib/utils.js'
+import { getRepoRoot, SUPPORTED_VERSIONS, type Network } from './lib/utils.ts'
 
 const rootDir = getRepoRoot()
 const LOCALNET_DIR = path.join(rootDir, '.localnet/docker-compose/localnet')

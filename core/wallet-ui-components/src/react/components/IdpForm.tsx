@@ -9,7 +9,7 @@ import {
     type IdpFormDeleteEvent,
     type IdpFormCancelEvent,
     type IdpFormBackEvent,
-} from '../../components/idp-form.js'
+} from '../../components/idp-form.ts'
 
 export const IdpForm = createComponent({
     tagName: 'idp-form',

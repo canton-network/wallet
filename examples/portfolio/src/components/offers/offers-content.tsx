@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Alert, Box, Skeleton } from '@mui/material'
-import { OfferRowGrid, OfferRowShell } from './offer-row-layout'
+import { OfferRowGrid, OfferRowShell } from './offer-row-layout.tsx'
 import type { OfferCategory, OfferItem } from '@hooks/useOffers'
-import { OfferRow } from './offer-row'
+import { OfferRow } from './offer-row.tsx'
 
 const OFFER_CATEGORY_LABELS = {
     transfers: 'transfer offers',

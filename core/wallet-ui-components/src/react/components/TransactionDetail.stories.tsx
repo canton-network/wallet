@@ -12,7 +12,7 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor } from 'storybook/test'
-import { TransactionDetail } from './TransactionDetail'
+import { TransactionDetail } from './TransactionDetail.tsx'
 
 const parsed: ParsedTransactionInfo = {
     isCreate: false,

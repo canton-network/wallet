@@ -4,8 +4,8 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { findByShadowRole } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { fillField } from '../__tests__/fields'
-import { ApiKeyForm } from './ApiKeyForm'
+import { fillField } from '../__tests__/fields.ts'
+import { ApiKeyForm } from './ApiKeyForm.tsx'
 
 const meta = {
     title: 'ApiKeyForm',

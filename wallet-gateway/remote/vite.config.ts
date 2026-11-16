@@ -3,8 +3,8 @@
 
 import { defineConfig } from 'vite'
 import { resolve } from 'path'
-import { standardDecorators } from '../../vite.decorators.js'
-import { resolveRouteInputs } from './src/web/route-inputs.js'
+import { standardDecorators } from '../../vite.decorators.ts'
+import { resolveRouteInputs } from './src/web/route-inputs.ts'
 
 const frontendRoot = resolve(import.meta.dirname, 'src/web/frontend')
 

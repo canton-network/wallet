@@ -15,7 +15,7 @@ import {
     SUPPORTED_VERSIONS,
     getNetworkArg,
     warn,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as yaml from 'js-yaml'

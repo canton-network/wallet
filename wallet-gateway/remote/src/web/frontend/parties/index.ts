@@ -25,13 +25,13 @@ import {
     syncWallets,
     walletSyncResultToast,
 } from '@canton-network/core-wallet-ui-components/logic'
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
+import { createUserClient } from '../rpc-client.ts'
+import { setLocationHref } from '../navigation.ts'
 
-import '../index'
-import { stateManager } from '../state-manager'
-import { showToast } from '../utils'
-import { detectCurrentOrigin } from '../listeners.js'
+import '../index.ts'
+import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 
 @customElement('user-ui-parties')

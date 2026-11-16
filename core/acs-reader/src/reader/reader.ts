@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
-import type { AcsOptions, PaginatedAcsOptions } from '../service'
-import { BaseReader } from './base'
+import type { AcsOptions, PaginatedAcsOptions } from '../service.ts'
+import { BaseReader } from './base.ts'
 import {
     ACSCacheCollection,
     type ACSCacheCollectionOptions,
     PaginatedACSCacheCollection,
-} from '../cache/collection'
+} from '../cache/collection/index.ts'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 function isPageResponse(

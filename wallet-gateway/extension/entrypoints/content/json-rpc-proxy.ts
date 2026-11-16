@@ -10,8 +10,8 @@ import {
 } from '@canton-network/core-types'
 
 import { createProxyService } from '@webext-core/proxy-service'
-import type { Methods } from '../background/dapp/rpc-gen'
-import type { NotificationRelay } from './notification-relay'
+import type { Methods } from '../background/dapp/rpc-gen/index.ts'
+import type { NotificationRelay } from './notification-relay.ts'
 
 /**
  * Proxies JSON-RPC requests, responses, between the dApp page (window message events),

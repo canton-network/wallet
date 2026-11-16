@@ -14,7 +14,7 @@ import {
 import { Decimal } from 'decimal.js'
 import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
 import type { InstrumentId } from '@canton-network/core-token-standard'
-import type { SelectableInstrument } from './transfer-types'
+import type { SelectableInstrument } from './transfer-types.ts'
 
 interface InstrumentSelectProps {
     partyId: string | undefined

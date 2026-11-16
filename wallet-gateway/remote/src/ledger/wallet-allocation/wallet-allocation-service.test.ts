@@ -13,12 +13,12 @@ import {
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import type { Logger } from 'pino'
-import { WalletAllocationService } from './wallet-allocation-service.js'
-import type { PartyAllocationService } from '../party-allocation-service.js'
+import { WalletAllocationService } from './wallet-allocation-service.ts'
+import type { PartyAllocationService } from '../party-allocation-service.ts'
 import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
-import type { AllocatedParty } from '../party-allocation-service.js'
+import type { AllocatedParty } from '../party-allocation-service.ts'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 
 const createWallet = (

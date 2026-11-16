@@ -6,7 +6,7 @@ import {
     CANTON_ANNOUNCE_PROVIDER_EVENT,
     CANTON_REQUEST_PROVIDER_EVENT,
 } from '@canton-network/core-types'
-import { requestAnnouncedProviders } from './announce-discovery'
+import { requestAnnouncedProviders } from './announce-discovery.ts'
 
 describe('requestAnnouncedProviders', () => {
     beforeEach(() => {

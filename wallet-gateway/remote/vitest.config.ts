@@ -3,7 +3,7 @@
 
 import { defineConfig } from 'vitest/config'
 import { resolve } from 'path'
-import { standardDecorators } from '../../vite.decorators.js'
+import { standardDecorators } from '../../vite.decorators.ts'
 import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 
 export default defineConfig({

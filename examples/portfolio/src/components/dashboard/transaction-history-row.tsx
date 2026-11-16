@@ -9,7 +9,7 @@ import {
     type TransactionHistoryEntry,
     type BalanceEffect,
     formatDisplayAmount,
-} from './transaction-history-utils'
+} from './transaction-history-utils.ts'
 
 interface TransactionHistoryRowProps {
     entry: TransactionHistoryEntry

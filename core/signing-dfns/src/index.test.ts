@@ -11,8 +11,8 @@ import {
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
 
-import DfnsSigningDriver, { type DfnsCredentials } from './index.js'
-import type { DfnsKey, DfnsSignature } from './dfns.js'
+import DfnsSigningDriver, { type DfnsCredentials } from './index.ts'
+import type { DfnsKey, DfnsSignature } from './dfns.ts'
 
 const TEST_USER_ID = 'test-user-id'
 const TEST_KEY_ID = 'key-test-1'
@@ -53,8 +53,8 @@ const dfnsHandlerMock = vi.hoisted(() => ({
     createKey: vi.fn(),
 }))
 
-vi.mock('./dfns.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./dfns.js')>()
+vi.mock('./dfns.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./dfns.ts')>()
     return {
         ...actual,
         DfnsHandler: vi.fn(function DfnsHandler() {

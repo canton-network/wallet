@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, test } from 'vitest'
 
-import { StoreInternal, type StoreInternalConfig } from './store-internal'
+import { StoreInternal, type StoreInternalConfig } from './store-internal.ts'
 import {
     type Wallet,
     type Session,

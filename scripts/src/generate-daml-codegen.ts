@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as path from 'path'
-import { getArgValue, getRepoRoot, info, warn } from './lib/utils.js'
-import { installDPM } from './install-dpm.js'
-import { ensureLocalnetDars, runDamlCodegen } from './lib/daml-codegen.js'
+import { getArgValue, getRepoRoot, info, warn } from './lib/utils.ts'
+import { installDPM } from './install-dpm.ts'
+import { ensureLocalnetDars, runDamlCodegen } from './lib/daml-codegen.ts'
 import { existsSync } from 'fs'
 
 const defaultDarFiles = [

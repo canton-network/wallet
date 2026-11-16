@@ -24,13 +24,13 @@ import {
     type Transaction,
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
-import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.js'
+import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.ts'
 
 export {
     SigningAPIClient,
     cantonCaip2Values,
     type CantonCaip2,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
 
 export interface BlockdaemonConfig {
     baseUrl: string

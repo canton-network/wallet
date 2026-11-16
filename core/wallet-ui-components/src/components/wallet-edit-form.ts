@@ -3,8 +3,8 @@
 
 import { css, html, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { chevronDownIcon } from '../icons/index.js'
-import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
+import { chevronDownIcon } from '../icons/index.ts'
+import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.ts'
 import type {
     Key,
     SigningProviderId,

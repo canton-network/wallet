@@ -8,9 +8,9 @@
 
 import * as fs from 'fs'
 import * as path from 'path'
-import { getRepoRoot } from './lib/utils.js'
-import { installDPM } from './install-dpm.js'
-import { ensureLocalnetDars, runDamlCodegen } from './lib/daml-codegen.js'
+import { getRepoRoot } from './lib/utils.ts'
+import { installDPM } from './install-dpm.ts'
+import { ensureLocalnetDars, runDamlCodegen } from './lib/daml-codegen.ts'
 
 const repoRoot = getRepoRoot()
 

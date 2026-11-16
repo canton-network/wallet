@@ -5,7 +5,7 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
-import { routeTree } from './routeTree.gen'
+import { routeTree } from './routeTree.gen.ts'
 import ReactDOM from 'react-dom/client'
 
 import { loadPortfolioConfig } from '@config/portfolio-config'

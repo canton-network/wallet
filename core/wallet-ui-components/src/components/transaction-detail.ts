@@ -3,18 +3,18 @@
 
 import { html, css, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import './back-link.js'
-import './copy-button.js'
-import { BaseElement } from '../internal/base-element.js'
+import './back-link.ts'
+import './copy-button.ts'
+import { BaseElement } from '../internal/base-element.ts'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
-import { chevronDownIcon } from '../icons/index.js'
+import { chevronDownIcon } from '../icons/index.ts'
 import {
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
-} from '../internal/activity-utils.js'
-import { formatDateTime, formatUtcDateTime } from '../date-time.js'
-import { renderCopyableValue } from '../internal/activity-render.js'
+} from '../internal/activity-utils.ts'
+import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
+import { renderCopyableValue } from '../internal/activity-render.ts'
 
 /** Emitted when the user clicks the "Approve" button */
 export class TransactionApproveEvent extends Event {

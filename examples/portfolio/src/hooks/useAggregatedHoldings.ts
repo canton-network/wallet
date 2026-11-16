@@ -6,9 +6,9 @@ import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
-} from '../utils/aggregate-holdings'
-import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
+} from '../utils/aggregate-holdings.ts'
+import { holdingsQueryOptions } from './query-options.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export const useAggregatedHoldings = (partyId: string | undefined) => {
     const instruments = useInstruments()

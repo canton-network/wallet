@@ -10,10 +10,10 @@ import type {
     EventsConfig,
     TokenConfig,
     TokenProviderConfig,
-} from '../sdk.js'
-import type { SDKLogger } from '../logger/logger.js'
-import { SDKErrorHandler } from '../error/handler.js'
-import type { SDKContext } from '../init/types/context.js'
+} from '../sdk.ts'
+import type { SDKLogger } from '../logger/logger.ts'
+import { SDKErrorHandler } from '../error/handler.ts'
+import type { SDKContext } from '../init/types/context.ts'
 
 const exampleLink = 'http://example.com'
 

@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { pino } from 'pino'
-import { ServerNotices } from './server-notices.js'
+import { ServerNotices } from './server-notices.ts'
 
 describe('ServerNotices', () => {
     const logger = pino({ level: 'silent' })

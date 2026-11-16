@@ -3,7 +3,7 @@
 
 import { expect, test } from 'vitest'
 
-import { ParticipantSigningDriver } from './controller.js'
+import { ParticipantSigningDriver } from './controller.ts'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 const TEST_TRANSACTION = 'test-tx'

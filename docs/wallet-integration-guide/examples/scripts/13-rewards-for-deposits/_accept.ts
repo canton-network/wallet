@@ -1,5 +1,5 @@
-import type { RewardsForDepositsTestScriptParameters } from './types.js'
-import { partiesUtxos } from './utils.js'
+import type { RewardsForDepositsTestScriptParameters } from './types.ts'
+import { partiesUtxos } from './utils.ts'
 
 export default async (args: RewardsForDepositsTestScriptParameters) => {
     const {

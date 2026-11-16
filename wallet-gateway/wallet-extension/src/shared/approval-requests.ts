@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { browser } from 'wxt/browser'
-import { WALLET_NAME } from './brand'
-import { type ApprovalRequest, approvalRequestsItem } from './storage'
+import { WALLET_NAME } from './brand.ts'
+import { type ApprovalRequest, approvalRequestsItem } from './storage.ts'
 
-export type { ApprovalRequest } from './storage'
+export type { ApprovalRequest } from './storage.ts'
 
 async function updateActionBadge(requests: ApprovalRequest[]): Promise<void> {
     const action = browser.action

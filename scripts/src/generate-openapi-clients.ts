@@ -20,12 +20,12 @@ import {
     hasFlag,
     warn,
     success,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 import * as fs from 'fs'
 import generateSchema, { astToString } from 'openapi-typescript'
 import * as path from 'path'
 import crypto from 'crypto'
-import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.js'
+import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.ts'
 import { load as loadYaml } from 'js-yaml'
 
 /**

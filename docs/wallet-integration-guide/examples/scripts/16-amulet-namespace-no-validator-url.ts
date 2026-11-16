@@ -10,9 +10,9 @@ import {
     AMULET_NAMESPACE_CONFIG_SIMPLE,
     TOKEN_NAMESPACE_CONFIG_SIMPLE,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
+} from './utils/index.ts'
 
-import { configureLogging } from './utils/configure-logging.js'
+import { configureLogging } from './utils/configure-logging.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({

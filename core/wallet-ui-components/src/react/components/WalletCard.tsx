@@ -9,7 +9,7 @@ import {
     type WalletCardEditEvent,
     type WalletAllocateEvent,
     type WalletCardSelectEvent,
-} from '../../components/wallet-card.js'
+} from '../../components/wallet-card.ts'
 
 export const WalletCard = createComponent({
     tagName: 'wg-wallet-card',

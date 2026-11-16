@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import z from 'zod'
-import { APIError } from '../common'
+import { APIError } from '../common.ts'
 import type { OffLedger } from '@canton-network/core-token-standard'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { getTokenRulesFactory } from '../getTokenRulesFactory'
+import { getTokenRulesFactory } from '../getTokenRulesFactory.ts'
 
 export const getTransferFactoryChoiceArgumentsSchema = z.looseObject({
     transfer: z.looseObject({

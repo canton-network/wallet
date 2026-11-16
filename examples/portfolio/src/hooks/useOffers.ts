@@ -11,7 +11,7 @@ import type {
     TransferActionItem,
 } from '@components/types'
 import { isExpired } from '@utils/date-format'
-import { useOfferItems, type OfferItemsResult } from './useOfferItems'
+import { useOfferItems, type OfferItemsResult } from './useOfferItems.ts'
 import {
     getAllocationRequestActions,
     needsUserAction,

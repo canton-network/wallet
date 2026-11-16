@@ -2,12 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { expressContext, mock, type RequestType } from '../../__tests__/mocks'
-import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
-import { APIError } from '../common'
-import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
-import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
-import { getTransferFactory } from './getTransferFactory'
+import {
+    expressContext,
+    mock,
+    type RequestType,
+} from '../../__tests__/mocks.ts'
+import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext.ts'
+import { APIError } from '../common.ts'
+import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext.ts'
+import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext.ts'
+import { getTransferFactory } from './getTransferFactory.ts'
 import type { Account } from '@canton-network/core-token-standard-v2'
 
 const { res, next } = expressContext
@@ -28,8 +32,8 @@ const tokenRulesContext = {
     },
 }
 
-vi.mock('../../common/state', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
+vi.mock('../../common/state.ts', async () => {
+    const { mock: importedMock } = await import('../../__tests__/mocks.ts')
 
     return importedMock.state
 })

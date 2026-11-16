@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RpcTransport } from '@canton-network/core-rpc-transport'
 import { WalletEvent } from '@canton-network/core-types'
-import { DappSyncProvider } from './DappSyncProvider'
+import { DappSyncProvider } from './DappSyncProvider.ts'
 
 describe('DappSyncProvider', () => {
     afterEach(() => {

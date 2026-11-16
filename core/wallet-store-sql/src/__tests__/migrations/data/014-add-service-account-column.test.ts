@@ -11,9 +11,12 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
-import { insertIdp, insertNetwork as insertNetwork001 } from '../seeds/001-init'
-import { insertNetwork as insertNetwork014 } from '../seeds/014-add-service-account-column'
+} from '../helpers.ts'
+import {
+    insertIdp,
+    insertNetwork as insertNetwork001,
+} from '../seeds/001-init.ts'
+import { insertNetwork as insertNetwork014 } from '../seeds/014-add-service-account-column.ts'
 
 const TARGET = 14
 

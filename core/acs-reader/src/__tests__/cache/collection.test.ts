@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     ACSCacheCollection,
     PaginatedACSCacheCollection,
-} from '../../cache/collection'
+} from '../../cache/collection/index.ts'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
 const { mockCache, MockACSCache } = vi.hoisted(() => {
@@ -30,7 +30,7 @@ const { mockCache, MockACSCache } = vi.hoisted(() => {
     return { mockCache, MockACSCache }
 })
 
-vi.mock('../../cache/item', () => {
+vi.mock('../../cache/item/index.ts', () => {
     return {
         ACSCache: MockACSCache,
         PaginatedACSCache: MockACSCache,

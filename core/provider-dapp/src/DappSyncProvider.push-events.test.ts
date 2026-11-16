@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
-import { DappSyncProvider } from './DappSyncProvider'
+import { DappSyncProvider } from './DappSyncProvider.ts'
 
 // Regression coverage for https://github.com/canton-network/wallet/issues/1815.
 //

@@ -18,7 +18,7 @@ import {
     type Network,
     getNetworkArg,
     hasFlag,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 import * as fs from 'fs'
 import crypto from 'crypto'
 

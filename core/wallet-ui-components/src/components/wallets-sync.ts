@@ -3,8 +3,8 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { refreshIcon } from '../icons'
+import { BaseElement } from '../internal/base-element.ts'
+import { refreshIcon } from '../icons/index.ts'
 
 export class WalletsSyncEvent extends Event {
     constructor() {

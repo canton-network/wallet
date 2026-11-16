@@ -3,11 +3,11 @@
 
 import { customElement, property } from 'lit/decorators.js'
 import { ifDefined } from 'lit/directives/if-defined.js'
-import { BaseElement } from '../internal/base-element'
+import { BaseElement } from '../internal/base-element.ts'
 import { css, html } from 'lit'
 import type { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
-import { cardStyles } from '../styles/card'
-import { formatDateTime, formatUtcDateTime } from '../date-time'
+import { cardStyles } from '../styles/card.ts'
+import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 
 /** Emitted when the user clicks the "Revoke" button on a api key card */
 export class ApiKeyCardRevokeEvent extends Event {

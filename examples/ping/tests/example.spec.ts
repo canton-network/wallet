@@ -12,7 +12,7 @@ import {
     expectDappConnected,
     expectDappDisconnected,
     GATEWAY_NAME,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 test('dApp: execute externally signed tx', async ({
     page: dappPage,

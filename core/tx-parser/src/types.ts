@@ -9,7 +9,7 @@ import type {
     Account,
     InstrumentId,
 } from '@canton-network/core-token-standard-v2'
-import type { V2LabelDetails } from './v2-events'
+import type { V2LabelDetails } from './v2-events.ts'
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined
 export type JsActiveContract = LedgerCommonSchemas['JsActiveContract']

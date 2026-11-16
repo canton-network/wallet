@@ -37,7 +37,7 @@ describe('defaultSdk', () => {
     beforeEach(() => {})
 
     it('should create a default instance of wallet-sdk', async () => {
-        await import('./defaultSdk')
+        await import('./defaultSdk.ts')
 
         expect(mocks.create).toHaveBeenLastCalledWith({
             auth: {

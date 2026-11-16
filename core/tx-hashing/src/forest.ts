@@ -5,8 +5,8 @@ import type {
     DamlTransaction,
     DamlTransaction_Node,
 } from '@canton-network/core-ledger-proto'
-import { TxHashingError, type TxHashingErrorCode } from './errors.js'
-import type { TraversalLimits } from './limits.js'
+import { TxHashingError, type TxHashingErrorCode } from './errors.ts'
+import type { TraversalLimits } from './limits.ts'
 
 /** Nodes checked to form a forest: unique canonical ids, each node reached from `roots` by exactly one reference */
 export interface Forest {

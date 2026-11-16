@@ -14,15 +14,15 @@ import {
     type KeysList,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
-import { setLocationHref } from '../navigation.js'
+import { setLocationHref } from '../navigation.ts'
 import type {
     SigningProviderId,
     SigningProviders,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../listeners.js'
-import { createUserClient } from '../rpc-client.js'
-import { stateManager } from '../state-manager.js'
-import { showToast } from '../utils.js'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
 
 export abstract class UserUiAddOrEditParty extends BaseElement {
     protected abstract get form(): TemplateResult

@@ -18,7 +18,7 @@
 
 import fs from 'fs'
 import path from 'path'
-import { error, getRepoRoot, success } from './lib/utils.js'
+import { error, getRepoRoot, success } from './lib/utils.ts'
 import child_process from 'child_process'
 
 const dir = path.join(

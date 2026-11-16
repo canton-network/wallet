@@ -6,7 +6,7 @@ import type * as openrpcgen from '@open-rpc/generator'
 import * as fs from 'fs'
 import lodash from 'lodash'
 import { execSync } from 'child_process'
-import { validateOpenRpc } from './validate-openrpc.js'
+import { validateOpenRpc } from './validate-openrpc.ts'
 const { template } = lodash
 
 const onlyHandleTS = ({ language }: openrpcgen.components.IComponent) => {

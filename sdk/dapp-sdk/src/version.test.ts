@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 import packageJson from '../package.json' with { type: 'json' }
-import { SDK_VERSION } from './version.js'
+import { SDK_VERSION } from './version.ts'
 
 describe('SDK version', () => {
     it('matches package.json and is installed on the page', () => {

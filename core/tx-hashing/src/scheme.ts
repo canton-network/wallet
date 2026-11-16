@@ -10,10 +10,10 @@ import type {
     Metadata,
     Metadata_InputContract,
 } from '@canton-network/core-ledger-proto'
-import { concat, sha256 } from './bytes.js'
-import { encodeRepeated, encodeString, encodeTime } from './encoding.js'
-import { TxHashingError } from './errors.js'
-import type { Forest } from './forest.js'
+import { concat, sha256 } from './bytes.ts'
+import { encodeRepeated, encodeString, encodeTime } from './encoding.ts'
+import { TxHashingError } from './errors.ts'
+import type { Forest } from './forest.ts'
 
 // Code shared by hashing schemes V2 and V3. Neither hashes
 // metadata.globalKeyMapping (deprecated, left empty by the participant) or

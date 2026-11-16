@@ -11,7 +11,7 @@ import {
     queryByShadowRole,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor } from 'storybook/test'
-import { WalletCreateForm } from './WalletCreateForm'
+import { WalletCreateForm } from './WalletCreateForm.tsx'
 
 const keys: Key[] = [
     { id: 'key-1', name: 'Vault A', publicKey: 'pk1' },

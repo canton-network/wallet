@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { GenerateTransactionResponse } from './types.js'
+import type { GenerateTransactionResponse } from './types.ts'
 import {
     type PrivateKey,
     type PublicKey,
     signTransactionHash,
 } from '@canton-network/core-signing-lib'
-import type { SDKContext } from '../../../sdk.js'
-import { SignedPartyCreationService } from './signed.js'
-import type { CreatePartyOptions } from './types.js'
+import type { SDKContext } from '../../../sdk.ts'
+import { SignedPartyCreationService } from './signed.ts'
+import type { CreatePartyOptions } from './types.ts'
 
 /**
  * Represents a prepared (but unsigned) party creation transaction.

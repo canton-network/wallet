@@ -7,7 +7,7 @@ import {
     WgLoginForm as WgLoginFormElement,
     type LoginConnectEvent,
     type LoginBackEvent,
-} from '../../components/login-form.js'
+} from '../../components/login-form.ts'
 
 export type { LoginConnectEvent, LoginBackEvent }
 

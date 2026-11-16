@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AllKnownMetaKeys, matchInterfaceIds } from './constants.js'
+import { AllKnownMetaKeys, matchInterfaceIds } from './constants.ts'
 
-import type { TransferInstructionView } from './types.js'
+import type { TransferInstructionView } from './types.ts'
 import {
     type HoldingView,
     HOLDING_INTERFACE_ID,

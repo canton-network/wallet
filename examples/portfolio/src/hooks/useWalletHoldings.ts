@@ -8,9 +8,9 @@ import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedHolding,
-} from '../utils/aggregate-holdings'
-import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
+} from '../utils/aggregate-holdings.ts'
+import { holdingsQueryOptions } from './query-options.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 import type { PortfolioHolding } from '@utils/holdings'
 
 export interface WalletHoldingsResult {

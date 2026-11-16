@@ -8,10 +8,10 @@ import {
     type InfiniteData,
 } from '@tanstack/react-query'
 import type { Transaction } from '@canton-network/core-tx-parser'
-import { useConnection } from '../contexts/ConnectionContext'
-import type { TransactionHistoryResponse } from '../services/transaction-history-service'
-import { queryKeys } from './query-keys'
-import { transactionHistoryServiceQueryOptions } from './query-options'
+import { useConnection } from '../contexts/ConnectionContext.tsx'
+import type { TransactionHistoryResponse } from '../services/transaction-history-service.ts'
+import { queryKeys } from './query-keys.ts'
+import { transactionHistoryServiceQueryOptions } from './query-options.ts'
 
 export const useTransactionHistoryForParty = (
     partyId: string | undefined

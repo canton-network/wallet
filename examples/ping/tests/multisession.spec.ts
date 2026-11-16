@@ -15,7 +15,7 @@ import {
     DAPP_API_PORT,
     DAPP_URL,
     DEFAULT_NETWORK,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 // A popup session opened through a dApp and a direct WG tab should be
 // independent: logging out of the direct tab must not close the popup.

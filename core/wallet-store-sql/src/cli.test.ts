@@ -9,8 +9,8 @@ import type {
     BootstrapConfig,
     StoreConfig,
 } from '@canton-network/core-wallet-store'
-import { createCLI } from './cli.js'
-import { connection } from './store-sql.js'
+import { createCLI } from './cli.ts'
+import { connection } from './store-sql.ts'
 
 const idp = {
     id: 'idp-1',

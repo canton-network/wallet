@@ -7,16 +7,16 @@ import {
     localNetGlobalSynchronizer,
     TOKEN_NAMESPACE_CONFIG_SIMPLE,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
-} from './utils/index.js'
-import type { PartyInfo } from './04-token-standard-allocation.js'
+} from './utils/index.ts'
+import type { PartyInfo } from './04-token-standard-allocation.ts'
 import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
 import { Decimal } from 'decimal.js'
 import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_V2_REGISTRY } from './utils/constants.js'
-import { assertV2 } from './utils/assert.js'
+import { TEST_TOKEN_V2_REGISTRY } from './utils/constants.ts'
+import { assertV2 } from './utils/assert.ts'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 
 /*

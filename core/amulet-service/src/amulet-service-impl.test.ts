@@ -3,14 +3,14 @@
 
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-import { AmuletServiceScanProxy } from './amulet-service-scan-proxy'
+import { AmuletServiceScanProxy } from './amulet-service-scan-proxy.ts'
 import {
     amuletRules,
     activeRoundNormalized,
     renewCommand,
     devnetTapCommand,
-} from './amulet-service-consts.test'
-import { AmuletServiceScanOnly } from './amulet-service-scan'
+} from './amulet-service-consts.test.ts'
+import { AmuletServiceScanOnly } from './amulet-service-scan.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 

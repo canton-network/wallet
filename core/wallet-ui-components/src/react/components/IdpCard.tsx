@@ -8,7 +8,7 @@ import {
     type IdpCardReviewEvent,
     type IdpCardDeleteEvent,
     type IdpCardUpdateEvent,
-} from '../../components/idp-card.js'
+} from '../../components/idp-card.ts'
 
 export const IdpCard = createComponent({
     tagName: 'idp-card',

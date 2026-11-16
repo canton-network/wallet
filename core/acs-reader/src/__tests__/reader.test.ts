@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ACSReader } from '../reader'
+import { ACSReader } from '../reader/index.ts'
 
 const { mockCacheCollection, MockACSCacheCollection } = vi.hoisted(() => {
     const readFromCache = vi.fn()
@@ -39,14 +39,14 @@ const { mockService, MockAcsService } = vi.hoisted(() => {
     return { mockService, MockAcsService }
 })
 
-vi.mock('../cache/collection', () => {
+vi.mock('../cache/collection/index.ts', () => {
     return {
         ACSCacheCollection: MockACSCacheCollection,
         PaginatedACSCacheCollection: MockACSCacheCollection,
     }
 })
 
-vi.mock('../service', () => {
+vi.mock('../service.ts', () => {
     return {
         AcsService: MockAcsService,
     }

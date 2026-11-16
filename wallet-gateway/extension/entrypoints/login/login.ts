@@ -11,19 +11,19 @@ import {
     type LoginConnectEvent,
     type WgLoginForm,
 } from '@canton-network/core-wallet-ui-components'
-import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
+import { createUserClient } from '@/utils/legacy-frontend/rpc-client.ts'
 import type {
     PublicNetwork,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { stateManager } from '@/utils/legacy-frontend/state-manager'
-import '@/utils/legacy-frontend'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
+import '@/utils/legacy-frontend/index.ts'
 import {
     redirectToIntendedOrDefault,
     addUserSession,
-} from '@/utils/legacy-frontend'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
-import { buildAuthorization, fetchToken } from '@/utils/reusable/oauth'
+} from '@/utils/legacy-frontend/index.ts'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
+import { buildAuthorization, fetchToken } from '@/utils/reusable/oauth.ts'
 import { jwtExpiresAt } from '@canton-network/core-wallet-auth'
 
 @customElement('user-ui-login')

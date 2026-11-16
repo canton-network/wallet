@@ -11,13 +11,13 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
+} from '../helpers.ts'
 import {
     insertIdp,
     insertNetwork,
     insertWallet as insertWallet001,
-} from '../seeds/001-init'
-import { insertWallet as insertWallet005 } from '../seeds/005-add-wallet-disabled-reason'
+} from '../seeds/001-init.ts'
+import { insertWallet as insertWallet005 } from '../seeds/005-add-wallet-disabled-reason.ts'
 
 const TARGET = 5
 

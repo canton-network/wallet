@@ -9,11 +9,11 @@ import type {
     PrepareExecuteParams,
     SignMessageParams,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { DappClient } from './client'
-import { makeMockProvider } from './__tests__/test-utils'
-import * as util from './util'
+import { DappClient } from './client.ts'
+import { makeMockProvider } from './__tests__/test-utils.ts'
+import * as util from './util.ts'
 
-vi.mock('./util', () => ({
+vi.mock('./util.ts', () => ({
     clearAllLocalState: vi.fn(),
 }))
 

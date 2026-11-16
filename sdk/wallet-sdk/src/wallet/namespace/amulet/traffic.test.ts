@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import { TrafficNamespace } from './traffic'
-import { type AmuletNamespaceConfig, fetchAmulet } from './namespace'
-import * as mock from '../../__tests__/mocks'
+import { TrafficNamespace } from './traffic.ts'
+import { type AmuletNamespaceConfig, fetchAmulet } from './namespace.ts'
+import * as mock from '../../__tests__/mocks.ts'
 /* oxlint-disable typescript/no-explicit-any */
 
-vi.mock('./namespace.js', () => ({
+vi.mock('./namespace.ts', () => ({
     fetchAmulet: vi.fn(),
 }))
 

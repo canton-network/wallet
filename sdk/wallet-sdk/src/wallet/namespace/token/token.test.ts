@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as mock from '../../__tests__/mocks'
-import { TokenNamespace, type TokenNamespaceConfig } from './index'
-import { ParsedURL } from '../utils/url'
+import * as mock from '../../__tests__/mocks.ts'
+import { TokenNamespace, type TokenNamespaceConfig } from './index.ts'
+import { ParsedURL } from '../utils/url.ts'
 /* oxlint-disable typescript/no-explicit-any */
 
 const { ctx, mockLogger } = mock

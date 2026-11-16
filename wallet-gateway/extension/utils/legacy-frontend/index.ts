@@ -6,28 +6,28 @@ import { customElement, state } from 'lit/decorators.js'
 import {
     createUserClient,
     attemptRemoveSession,
-} from '@/utils/legacy-frontend/rpc-client'
-import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
+} from '@/utils/legacy-frontend/rpc-client.ts'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.ts'
 
 import '@canton-network/core-wallet-ui-components'
-import { stateManager } from '@/utils/legacy-frontend/state-manager'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
 import { WalletEvent } from '@canton-network/core-types'
 import {
     DEFAULT_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
     TOKEN_EXPIRED_SKEW_MS,
-} from '@/utils/legacy-frontend/constants'
+} from '@/utils/legacy-frontend/constants.ts'
 import {
     type AllowedRoute,
     getCurrentRoute,
     isAllowedRoute,
     toRelHref,
     toRelPath,
-} from './routing'
-import '@/utils/legacy-frontend/listeners'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners'
-import { fetchDappApiUrl, showToast } from '@/utils/legacy-frontend/utils'
+} from './routing.ts'
+import '@/utils/legacy-frontend/listeners.ts'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
+import { fetchDappApiUrl, showToast } from '@/utils/legacy-frontend/utils.ts'
 import { createProxyService } from '@webext-core/proxy-service'
 
 const globalPageResetStyle = document.createElement('style')

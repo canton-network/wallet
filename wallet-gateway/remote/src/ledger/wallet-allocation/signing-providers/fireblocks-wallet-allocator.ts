@@ -12,17 +12,17 @@ import {
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import type { PartyAllocationService } from '../../party-allocation-service.js'
+import type { PartyAllocationService } from '../../party-allocation-service.ts'
 import type {
     KeyName,
     PartyHint,
     Primary,
-} from '../../../user-api/rpc-gen/typings.js'
+} from '../../../user-api/rpc-gen/typings.ts'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import {
     handleSigningProviderError,
     type WalletAllocator,
-} from '../wallet-allocation-service.js'
+} from '../wallet-allocation-service.ts'
 
 export class FireblocksWalletAllocator implements WalletAllocator {
     constructor(

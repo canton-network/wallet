@@ -4,16 +4,16 @@
 import { css, html, nothing, type TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { ifDefined } from 'lit/directives/if-defined.js'
-import { BaseElement } from '../internal/base-element.js'
-import { cardStyles } from '../styles/card.js'
+import { BaseElement } from '../internal/base-element.ts'
+import { cardStyles } from '../styles/card.ts'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import {
     getActivityAmount,
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
-} from '../internal/activity-utils.js'
-import { formatDateTime, formatUtcDateTime } from '../date-time.js'
+} from '../internal/activity-utils.ts'
+import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 
 /** Emitted when the user clicks an activity card */
 export class TransactionCardReviewEvent extends Event {

@@ -4,11 +4,11 @@
 import type { SigningDriverStore } from '@canton-network/core-signing-lib'
 import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
-import type { AuthContextStore } from '../auth-context'
-import type { Vault } from '../vault'
-import { createVaultSigningStore } from './signing-store'
+import type { AuthContextStore } from '../auth-context.ts'
+import type { Vault } from '../vault/index.ts'
+import { createVaultSigningStore } from './signing-store.ts'
 
-export { createWalletStore } from './wallet-store'
+export { createWalletStore } from './wallet-store.ts'
 
 export type WalletStore = Store & AuthAware<Store>
 

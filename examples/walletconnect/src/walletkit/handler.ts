@@ -3,21 +3,21 @@
 
 import type { WalletKitTypes } from '@reown/walletkit'
 import type { SessionTypes } from '@walletconnect/types'
-import { initWalletKit, getWalletKit } from './client'
+import { initWalletKit, getWalletKit } from './client.ts'
 import {
     callDappApi,
     bootstrapSession,
     getPrimaryPartyId,
     prepareSignExecute,
     signMessageFlow,
-} from './gateway'
+} from './gateway.ts'
 import type {
     PendingProposal,
     PendingRequest,
     SessionInfo,
     QueuedProposal,
     QueuedRequest,
-} from './types'
+} from './types.ts'
 
 const CANTON_PREFIX = 'canton_'
 const DEFAULT_CHAIN = 'canton:devnet'

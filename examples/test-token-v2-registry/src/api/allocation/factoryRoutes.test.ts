@@ -5,16 +5,16 @@ import { afterAll, beforeAll, beforeEach, expect, it, vi } from 'vitest'
 import express, { type ErrorRequestHandler } from 'express'
 import { createServer } from 'node:http'
 import { once } from 'node:events'
-import allocationRouter from './index'
-import allocationInstructionRouter from '../allocation-instruction/index'
-import { mock } from '../../__tests__/mocks'
+import allocationRouter from './index.ts'
+import allocationInstructionRouter from '../allocation-instruction/index.ts'
+import { mock } from '../../__tests__/mocks.ts'
 
-vi.mock('../../common/state', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
+vi.mock('../../common/state.ts', async () => {
+    const { mock: importedMock } = await import('../../__tests__/mocks.ts')
     return importedMock.state
 })
 
-vi.mock('../getTokenRulesFactory', () => ({
+vi.mock('../getTokenRulesFactory.ts', () => ({
     getTokenRulesFactory: vi.fn().mockResolvedValue({
         contractId: 'rules',
         templateId: 'rules-template',

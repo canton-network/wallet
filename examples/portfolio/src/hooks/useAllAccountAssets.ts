@@ -9,10 +9,10 @@ import {
     enrichWithInstrumentInfo,
     type AggregatedAccountBalance,
     type AggregatedHolding,
-} from '../utils/aggregate-holdings'
-import { useAccounts } from './useAccounts'
-import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
+} from '../utils/aggregate-holdings.ts'
+import { useAccounts } from './useAccounts.ts'
+import { holdingsQueryOptions } from './query-options.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 import type { PortfolioHolding } from '@utils/holdings'
 import { Decimal } from 'decimal.js'
 

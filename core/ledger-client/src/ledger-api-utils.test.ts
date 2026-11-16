@@ -9,9 +9,9 @@ import {
     defaultRetryableOptions,
     isJsCantonError,
     retryable,
-} from './ledger-api-utils.js'
-import type { LedgerClient } from './ledger-client.js'
-import { grpcError } from './__tests__/test-utils.js'
+} from './ledger-api-utils.ts'
+import type { LedgerClient } from './ledger-client.ts'
+import { grpcError } from './__tests__/test-utils.ts'
 
 const cantonError = { code: 'NOT_FOUND', cause: 'missing', errorCategory: 1 }
 

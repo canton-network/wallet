@@ -15,7 +15,7 @@ import { normalizeRegistryUrl } from '@utils/registry'
 import type {
     RegistryEntry,
     RegistryReachabilityStatus,
-} from '../types/registries'
+} from '../types/registries.ts'
 import { queryKeys } from '@hooks/query-keys'
 
 const STORAGE_KEY = 'registries'

@@ -3,8 +3,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { AuthErrorName } from '@/shared/auth-protocol'
-import { signInWithAuthorizationCode } from './oauth'
+import { AuthErrorName } from '@/shared/auth-protocol.ts'
+import { signInWithAuthorizationCode } from './oauth.ts'
 
 const params = {
     configUrl: 'https://idp.example/.well-known/openid-configuration',

@@ -10,10 +10,10 @@ import {
     fetchOidcUserInfo,
     fetchOidcDiscovery,
     jwtExpired,
-} from './auth-utils.js'
-import { IdpUnavailableError } from './auth-service.js'
-import type { TokenProviderConfig } from './auth-token-provider.js'
-import { SelfSignedTokenService } from './self-signed-token-service.js'
+} from './auth-utils.ts'
+import { IdpUnavailableError } from './auth-service.ts'
+import type { TokenProviderConfig } from './auth-token-provider.ts'
+import { SelfSignedTokenService } from './self-signed-token-service.ts'
 import { SignJWT } from 'jose'
 
 describe('Auth Utils', () => {

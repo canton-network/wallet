@@ -8,9 +8,9 @@ import {
     StoreInternal,
 } from '@canton-network/core-wallet-store-inmemory'
 import { describe, expect, it, vi } from 'vitest'
-import { logger } from '@/shared/logger'
-import { defaultConfig } from './default-config'
-import { persistent, type StoreAccess } from './persistent-store'
+import { logger } from '@/shared/logger.ts'
+import { defaultConfig } from './default-config.ts'
+import { persistent, type StoreAccess } from './persistent-store.ts'
 
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 

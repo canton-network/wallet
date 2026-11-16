@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import * as mock from '../../__tests__/mocks'
+import * as mock from '../../__tests__/mocks.ts'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { SignedTransaction } from '../transactions/signed'
-import type { SDKContext } from '../../sdk'
+import { SignedTransaction } from '../transactions/signed.ts'
+import type { SDKContext } from '../../sdk.ts'
 
 const defaultSignedTransactionResponse = {
     preparedTransaction: 'txn',
@@ -48,23 +48,23 @@ vi.doMock('@canton-network/core-acs-reader', () => ({
     ACSReader: MockACSReader,
 }))
 
-vi.doMock('../transactions/signed', () => ({
+vi.doMock('../transactions/signed.ts', () => ({
     SignedTransaction: MockSignedTransaction,
 }))
 
-vi.doMock('../transactions/prepared', () => ({
+vi.doMock('../transactions/prepared.ts', () => ({
     PreparedTransaction: MockPreparedTransaction,
 }))
 
-vi.doMock('./dar', () => ({
+vi.doMock('./dar/index.ts', () => ({
     DarNamespace: MockDarNamespace,
 }))
 
-vi.doMock('./internal', () => ({
+vi.doMock('./internal/index.ts', () => ({
     InternalLedgerNamespace: MockInternalLedgerNamespace,
 }))
 
-const { LedgerNamespace } = await import('./namespace')
+const { LedgerNamespace } = await import('./namespace.ts')
 type LedgerNamespaceType = InstanceType<typeof LedgerNamespace>
 
 describe('Ledger Namespace', () => {

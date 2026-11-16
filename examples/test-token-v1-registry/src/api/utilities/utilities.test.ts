@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { expressContext } from '../../__tests__/mocks'
-import { getUtilityOperator } from './getUtilityOperator'
+import { expressContext } from '../../__tests__/mocks.ts'
+import { getUtilityOperator } from './getUtilityOperator.ts'
 
 const { res } = expressContext
 
-vi.mock('../../common/state', () => ({
+vi.mock('../../common/state.ts', () => ({
     RegistryState: {
         instance: {
             operator: {

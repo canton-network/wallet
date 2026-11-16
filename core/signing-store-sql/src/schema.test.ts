@@ -14,7 +14,7 @@ import {
     toSigningDriverConfig,
     toSigningKey,
     toSigningTransaction,
-} from './schema.js'
+} from './schema.ts'
 
 const userId = 'user-1'
 const createdAt = new Date('2024-06-01T12:00:00.000Z')

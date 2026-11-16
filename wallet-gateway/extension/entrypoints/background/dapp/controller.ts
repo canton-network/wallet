@@ -13,8 +13,8 @@ import {
     type PrepareSubmissionResponse,
 } from '@canton-network/core-ledger-client'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
-import { AuthService } from '../auth-service.js'
-import buildController from './rpc-gen'
+import { AuthService } from '../auth-service.ts'
+import buildController from './rpc-gen/index.ts'
 import type {
     ConnectResult,
     LedgerApiParams,
@@ -25,12 +25,12 @@ import type {
     StatusEvent,
     TxChangedPendingEvent,
     Wallet,
-} from './rpc-gen/typings.js'
+} from './rpc-gen/typings.ts'
 
 import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { enqueueApprovalRequest } from '@/utils/approval-requests.js'
-import { extensionProvider, notifySessionTerminated } from '../status.js'
+import { enqueueApprovalRequest } from '@/utils/approval-requests.ts'
+import { extensionProvider, notifySessionTerminated } from '../status.ts'
 
 export const dappController = (
     getStore: () => Promise<Store>,

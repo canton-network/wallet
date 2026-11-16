@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import { KeysNamespace } from './index.js'
+import { KeysNamespace } from './index.ts'
 import {
     signTransactionHash,
     verifySignedTxHash,

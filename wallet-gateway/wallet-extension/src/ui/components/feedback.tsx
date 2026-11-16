@@ -9,7 +9,7 @@ import Stack from '@mui/material/Stack'
 import { useQueryErrorResetBoundary } from '@tanstack/react-query'
 import { type ErrorComponentProps, useRouter } from '@tanstack/react-router'
 import { useEffect } from 'react'
-import { ButtonLink } from './ButtonLink'
+import { ButtonLink } from './ButtonLink.tsx'
 
 export function PageLoader() {
     return (

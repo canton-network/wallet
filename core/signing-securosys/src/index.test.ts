@@ -11,8 +11,8 @@ import {
     vi,
 } from 'vitest'
 import type { Key, Transaction } from '@canton-network/core-signing-lib'
-import SecurosysSigningDriver, { SECUROSYS_SIGNING_PROVIDER } from './index.js'
-import { TsbApiError, type SigningAPIClient } from './signing-api-sdk.js'
+import SecurosysSigningDriver, { SECUROSYS_SIGNING_PROVIDER } from './index.ts'
+import { TsbApiError, type SigningAPIClient } from './signing-api-sdk.ts'
 
 // Raw Ed25519 public key whose base64 form contains '+', '/' and '=' padding,
 // so the derived TSB label differs from the public key.

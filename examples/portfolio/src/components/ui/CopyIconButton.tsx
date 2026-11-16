@@ -2,7 +2,7 @@ import { useState, type MouseEvent } from 'react'
 import CheckIcon from '@mui/icons-material/Check'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { IconButton, Tooltip, type IconButtonProps } from '@mui/material'
-import { normalizeSx } from './utils'
+import { normalizeSx } from './utils.ts'
 
 type CopyIconButtonProps = Omit<IconButtonProps, 'onClick'> & {
     value: string

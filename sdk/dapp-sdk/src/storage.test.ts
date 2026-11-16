@@ -10,7 +10,7 @@ import {
     removeKernelSession,
     setKernelDiscovery,
     setKernelSession,
-} from './storage'
+} from './storage.ts'
 
 const kernelSession = (): StatusEvent => ({
     provider: {

@@ -8,7 +8,7 @@ import '../../themes/default.css'
 
 import bootstrapCss from 'bootstrap/dist/css/bootstrap.min.css?inline'
 import defaultTheme from '../../themes/default.css?inline'
-import mainStyles from '../styles/index.js'
+import mainStyles from '../styles/index.ts'
 
 /**
  * Use this element as the base class for all custom elements to ensure consistent theming

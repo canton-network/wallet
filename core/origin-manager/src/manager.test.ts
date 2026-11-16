@@ -11,7 +11,10 @@ import {
     type Mock,
     beforeAll,
 } from 'vitest'
-import { ParentWindowOriginManager, ChildWindowOriginManager } from './manager'
+import {
+    ParentWindowOriginManager,
+    ChildWindowOriginManager,
+} from './manager.ts'
 import { WalletEvent } from '@canton-network/core-types'
 
 const { postMessage, exampleOrigin, falseOrigin, sessionStorage } = vi.hoisted(

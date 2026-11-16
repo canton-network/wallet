@@ -3,8 +3,8 @@
 
 import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { chevronDownIcon } from '../icons/index.js'
+import { BaseElement } from '../internal/base-element.ts'
+import { chevronDownIcon } from '../icons/index.ts'
 import type {
     Auth,
     AuthorizationCodeAuth,

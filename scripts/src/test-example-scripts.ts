@@ -9,7 +9,7 @@ import {
     success,
     SUPPORTED_VERSIONS,
     getNetworkArg,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 import child_process from 'child_process'
 
 const maxIoListeners = Number.parseInt(process.env.MAX_IO_LISTENERS ?? '', 10)

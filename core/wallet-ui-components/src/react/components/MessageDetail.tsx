@@ -7,7 +7,7 @@ import {
     WgMessageDetail as WgMessageDetailElement,
     type MessageApproveEvent,
     type MessageDeleteEvent,
-} from '../../components/message-detail.js'
+} from '../../components/message-detail.ts'
 
 export const MessageDetail = createComponent({
     tagName: 'wg-message-detail',

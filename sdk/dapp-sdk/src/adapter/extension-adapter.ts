@@ -14,7 +14,7 @@ import type {
     ProviderId,
     ProviderType,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import * as storage from '../storage'
+import * as storage from '../storage.ts'
 
 const BROWSER_PROVIDER_ID: ProviderId = 'browser'
 const EXTENSION_DETECT_TIMEOUT_MS = 2000

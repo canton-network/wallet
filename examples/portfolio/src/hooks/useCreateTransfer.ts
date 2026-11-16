@@ -4,10 +4,10 @@
 import type { PartyId } from '@canton-network/core-types'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { submitViaProvider } from '@lib/submit'
-import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
-import { queryKeys } from './query-keys'
-import { useWalletSdk } from './useWalletSdk'
-import type { TokenStandardVersion } from '../types/instruments'
+import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
+import { queryKeys } from './query-keys.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
+import type { TokenStandardVersion } from '../types/instruments.ts'
 import type { AssetBody } from '@canton-network/wallet-sdk'
 
 export interface CreateTransferArgs {

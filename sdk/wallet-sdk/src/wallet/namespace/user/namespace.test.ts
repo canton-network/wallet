@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi } from 'vitest'
-import { SDKLogger } from '../../logger'
-import { SDKErrorHandler } from '../../error/handler'
-import { UserNamespace } from './namespace'
+import { SDKLogger } from '../../logger/index.ts'
+import { SDKErrorHandler } from '../../error/handler.ts'
+import { UserNamespace } from './namespace.ts'
 
 const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     request: vi.fn().mockResolvedValue(undefined),

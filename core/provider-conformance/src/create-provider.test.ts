@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from 'vitest'
-import { createProvider } from './create-provider.js'
-import type { Provider } from './test-provider.js'
+import { createProvider } from './create-provider.ts'
+import type { Provider } from './test-provider.ts'
 
 describe('createProvider', () => {
     it('forwards requests unchanged and preserves their results and errors', async () => {

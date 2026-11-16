@@ -9,9 +9,9 @@ import type {
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import { TransactionService } from './transaction-service.js'
-import type { HASHING_SCHEME_VERSION, SigningDrivers } from './types.js'
-import type { Notifier } from './notification/index.js'
+import { TransactionService } from './transaction-service.ts'
+import type { HASHING_SCHEME_VERSION, SigningDrivers } from './types.ts'
+import type { Notifier } from './notification/index.ts'
 
 const logger = getLogger(['core', 'wallet-services', 'signing-worker'])
 

@@ -10,8 +10,8 @@ import {
     UserRejectedError,
     WalletNotFoundError,
     WalletNotInstalledError,
-} from './errors.js'
-import { DiscoveryClient } from './client.js'
+} from './errors.ts'
+import { DiscoveryClient } from './client.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 const {
@@ -24,7 +24,7 @@ const {
     mockClearPesristedSession: vi.fn(),
 }))
 
-vi.mock('./storage', () => ({
+vi.mock('./storage.ts', () => ({
     persistSession: mockPersistSession,
     loadPersistedSession: mockLoadPersistedSession,
     clearPersistedSession: mockClearPesristedSession,

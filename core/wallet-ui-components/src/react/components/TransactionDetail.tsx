@@ -7,7 +7,7 @@ import {
     WgTransactionDetail as WgTransactionDetailElement,
     type TransactionApproveEvent,
     type TransactionDeleteEvent,
-} from '../../components/transaction-detail.js'
+} from '../../components/transaction-detail.ts'
 
 export const TransactionDetail = createComponent({
     tagName: 'wg-transaction-detail',

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { AcsService, buildActiveContractFilter } from '../service'
-import { PaginatedACSCache } from '../cache/item'
+import { AcsService, buildActiveContractFilter } from '../service.ts'
+import { PaginatedACSCache } from '../cache/item/index.ts'
 
 const ledgerProvider = vi.hoisted(() => ({
     request: vi.fn(),

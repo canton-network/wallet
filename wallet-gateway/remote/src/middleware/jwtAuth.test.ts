@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
-import { jwtAuth } from './jwtAuth.js'
+import { jwtAuth } from './jwtAuth.ts'
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import { IdpUnavailableError } from '@canton-network/core-wallet-auth'
 import { pino } from 'pino'

@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { Box, Paper, Typography } from '@mui/material'
 import { PillButton } from '@components/ui/PillButton'
 import { useIsDevNet } from '@hooks/useIsDevNet'
-import { DevNetTapDialog } from './devnet-tap-dialog'
+import { DevNetTapDialog } from './devnet-tap-dialog.tsx'
 
 export function DevNetTapSection() {
     const { data: isDevNet } = useIsDevNet()

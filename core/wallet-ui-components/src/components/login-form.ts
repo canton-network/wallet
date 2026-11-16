@@ -3,13 +3,13 @@
 
 import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import './back-link.js'
-import { BaseElement } from '../internal/base-element.js'
+import './back-link.ts'
+import { BaseElement } from '../internal/base-element.ts'
 import type {
     PublicNetwork,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { chevronDownIcon } from '../icons'
+import { chevronDownIcon } from '../icons/index.ts'
 import cantonLogo from '../../images/logos/canton-logo.png'
 
 /** Emitted when the user clicks the Connect button */

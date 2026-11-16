@@ -6,7 +6,7 @@ import type { NextFunction, Request, Response } from 'express'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
-import { errorHandler, errorLogLevel } from './errorHandler.js'
+import { errorHandler, errorLogLevel } from './errorHandler.ts'
 
 describe('errorHandler', () => {
     const logger = pino({ level: 'silent' }, sink())

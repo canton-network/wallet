@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Identifier, Value } from '@canton-network/core-ledger-proto'
-import { concat, concatAll, hexToBytes } from './bytes.js'
-import { TxHashingError } from './errors.js'
+import { concat, concatAll, hexToBytes } from './bytes.ts'
+import { TxHashingError } from './errors.ts'
 
 // Mirrors daml_transaction_hashing_common.py (canton v3.5.1, 08-interactive-submission)
 

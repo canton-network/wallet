@@ -5,11 +5,11 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EventListener } from '@canton-network/core-splice-provider'
 import type { StatusEvent } from '@canton-network/core-wallet-dapp-rpc-client'
 import { JsonRpcError } from '@canton-network/core-rpc-errors'
-import { WALLETCONNECT_ICON } from '../assets'
+import { WALLETCONNECT_ICON } from '../assets.ts'
 import {
     WalletConnectAdapter,
     type WalletConnectAdapterConfig,
-} from './walletconnect-adapter'
+} from './walletconnect-adapter.ts'
 
 const { mockSession, mockSignClient, SignClientInit, sessionEventHandler } =
     vi.hoisted(() => {

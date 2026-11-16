@@ -8,9 +8,9 @@ import {
 } from '@canton-network/core-wallet-store'
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.js'
-import './auth-editor.js'
+import { BaseElement } from '../internal/base-element.ts'
+import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.ts'
+import './auth-editor.ts'
 
 /**
  * Emitted when the user clicks the Cancel button on the form

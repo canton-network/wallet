@@ -5,19 +5,19 @@ import {
     AuthTokenProvider,
     type AccessTokenProvider,
 } from '@canton-network/core-wallet-auth'
-import { parseAssets, ParsedURL } from '../namespace/utils/url.js'
-import { KeysNamespace } from '../namespace/keys/index.js'
-import { LedgerNamespace } from '../namespace/ledger/index.js'
-import { PartyNamespace } from '../namespace/party/index.js'
-import { UserNamespace } from '../namespace/user/index.js'
-import { TokenNamespace } from '../namespace/token/index.js'
-import { AssetNamespace } from '../namespace/asset/index.js'
+import { parseAssets, ParsedURL } from '../namespace/utils/url.ts'
+import { KeysNamespace } from '../namespace/keys/index.ts'
+import { LedgerNamespace } from '../namespace/ledger/index.ts'
+import { PartyNamespace } from '../namespace/party/index.ts'
+import { UserNamespace } from '../namespace/user/index.ts'
+import { TokenNamespace } from '../namespace/token/index.ts'
+import { AssetNamespace } from '../namespace/asset/index.ts'
 import {
     type OfflineSDKContext,
     type SDKContext,
     getValidatorParty,
-} from '../sdk.js'
-import { SDKUtilsNamespace } from '../namespace/utils/index.js'
+} from '../sdk.ts'
+import { SDKUtilsNamespace } from '../namespace/utils/index.ts'
 import type {
     AmuletConfig,
     AssetConfig,
@@ -32,12 +32,12 @@ import type {
     SDKInterface,
     TokenConfig,
     RegistryAuth,
-} from './types/index.js'
+} from './types/index.ts'
 import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { AmuletService } from '@canton-network/core-amulet-service'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { AmuletNamespace } from '../namespace/amulet/namespace.js'
-import { EventsNamespace } from '../namespace/events/index.js'
+import { AmuletNamespace } from '../namespace/amulet/namespace.ts'
+import { EventsNamespace } from '../namespace/events/index.ts'
 
 const noAuthProvider: AccessTokenProvider = {
     async getAccessToken() {

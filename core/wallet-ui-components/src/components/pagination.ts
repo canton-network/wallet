@@ -3,8 +3,8 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { arrowLeftIcon, arrowRightIcon } from '../icons'
+import { BaseElement } from '../internal/base-element.ts'
+import { arrowLeftIcon, arrowRightIcon } from '../icons/index.ts'
 
 export class PageChangeEvent extends CustomEvent<{ page: number }> {
     constructor(page: number) {

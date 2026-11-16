@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Kysely, sql } from 'kysely'
-import type { DB } from '../../../schema.js'
+import type { DB } from '../../../schema.ts'
 
 export async function insertSession(
     db: Kysely<DB>,

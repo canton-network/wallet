@@ -15,8 +15,8 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-} from './ping-test-helpers.js'
-import { setMockBlockdaemonTransactionState } from './external-signing-test-helpers.js'
+} from './ping-test-helpers.ts'
+import { setMockBlockdaemonTransactionState } from './external-signing-test-helpers.ts'
 
 test.describe('Blockdaemon external signing', () => {
     test.describe.configure({ mode: 'serial' })

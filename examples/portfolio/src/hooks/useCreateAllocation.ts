@@ -6,10 +6,10 @@ import type { AllocationSpecification } from '@canton-network/core-token-standar
 import type { PartyId } from '@canton-network/core-types'
 import { submitViaProvider } from '@lib/submit'
 import { resolveAllocationAsset } from '@utils/allocation'
-import { useInstruments } from './useInstruments'
-import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
-import { useWalletSdk } from './useWalletSdk'
-import { queryKeys } from './query-keys'
+import { useInstruments } from './useInstruments.ts'
+import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
+import { queryKeys } from './query-keys.ts'
 
 export const useCreateAllocation = () => {
     const { sdk } = useWalletSdk()

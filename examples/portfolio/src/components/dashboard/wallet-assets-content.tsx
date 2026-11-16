@@ -13,7 +13,7 @@ import {
     getInstrumentKey,
     type AggregatedHolding,
 } from '@utils/aggregate-holdings'
-import { DashboardEmptyState } from './dashboard-empty-state'
+import { DashboardEmptyState } from './dashboard-empty-state.tsx'
 
 export function WalletAssetsContent({
     instruments,

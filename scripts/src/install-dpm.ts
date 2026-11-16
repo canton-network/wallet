@@ -11,7 +11,7 @@ import {
     success,
     error,
     warn,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 function getDpmHomeDir(): string {
     const configuredDpmHome = process.env.DPM_HOME?.trim()

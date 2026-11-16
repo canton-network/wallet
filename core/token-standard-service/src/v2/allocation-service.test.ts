@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi } from 'vitest'
-import { AllocationService } from './allocation-service.js'
-import type { CoreService } from '../core-service.js'
+import { AllocationService } from './allocation-service.ts'
+import type { CoreService } from '../core-service.ts'
 import type {
     AllocationFactory_Allocate as AllocationFactory_AllocateV2,
     AllocationSpecification,

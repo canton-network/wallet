@@ -1,14 +1,14 @@
 import { useContext, useState } from 'react'
-import { ErrorContext } from '../ErrorContext'
+import { ErrorContext } from '../ErrorContext.ts'
 import {
     createPingCommand,
     exercisePongCommand,
-} from '../commands/createPingCommand'
-import { useTransactions } from '../hooks/useTransactions'
+} from '../commands/createPingCommand.ts'
+import { useTransactions } from '../hooks/useTransactions.ts'
 import { parsePreparedTransaction } from '@canton-network/core-tx-visualizer'
 
 import * as sdk from '@canton-network/dapp-sdk'
-import { prettyjson } from '../utils'
+import { prettyjson } from '../utils.ts'
 
 export function LedgerSubmission(props: {
     primaryParty?: string

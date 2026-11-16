@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useContext, useState } from 'react'
-import { ErrorContext } from '../ErrorContext'
+import { ErrorContext } from '../ErrorContext.ts'
 import * as sdk from '@canton-network/dapp-sdk'
-import { prettyjson } from '../utils'
+import { prettyjson } from '../utils.ts'
 
 export function Signing(props: { connectResult?: sdk.dappAPI.ConnectResult }) {
     const { setErrorMsg } = useContext(ErrorContext)

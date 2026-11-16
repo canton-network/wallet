@@ -10,19 +10,19 @@ import {
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import type { PartyAllocationService } from '../party-allocation-service.js'
+import type { PartyAllocationService } from '../party-allocation-service.ts'
 import type {
     KeyName,
     PartyHint,
     Primary,
-} from '../../user-api/rpc-gen/typings.js'
-import { ParticipantWalletAllocator } from './signing-providers/participant-wallet-allocator.js'
-import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.js'
-import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.js'
-import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.js'
-import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.js'
-import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.js'
-import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.js'
+} from '../../user-api/rpc-gen/typings.ts'
+import { ParticipantWalletAllocator } from './signing-providers/participant-wallet-allocator.ts'
+import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.ts'
+import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.ts'
+import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.ts'
+import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.ts'
+import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.ts'
+import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.ts'
 
 export interface WalletAllocator {
     createWallet(

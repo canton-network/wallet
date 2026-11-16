@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test } from './fixtures.js'
-import { ExtensionPage, PingPage } from './pages/index.js'
+import { test } from './fixtures.ts'
+import { ExtensionPage, PingPage } from './pages/index.ts'
 
 test('creates and approves a Ping contract with the Canton Wallet extension', async ({
     dappPage,

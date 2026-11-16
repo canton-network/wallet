@@ -19,9 +19,9 @@ import {
     type DisclosedContract,
     type ExerciseCommand,
     REQUESTED_AT_SKEW_MS,
-} from '../types.js'
-import { TokenStandardService } from '../token-standard-service.js'
-import type { CoreService } from '../core-service.js'
+} from '../types.ts'
+import { TokenStandardService } from '../token-standard-service.ts'
+import type { CoreService } from '../core-service.ts'
 export class TransferService {
     private logger = getLogger([
         'core',

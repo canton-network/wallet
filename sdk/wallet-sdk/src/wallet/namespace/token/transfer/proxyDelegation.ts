@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { TokenNamespaceConfig } from '../../../sdk.js'
+import type { TokenNamespaceConfig } from '../../../sdk.ts'
 import {
     type Beneficiaries,
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
-import { localNetStaticConfig } from '../../../../config.js'
-import type { LedgerCommonSchemas } from '../../../sdk.js'
-import type { FeaturedAppRight } from '../../amulet/types.js'
+import { localNetStaticConfig } from '../../../../config.ts'
+import type { LedgerCommonSchemas } from '../../../sdk.ts'
+import type { FeaturedAppRight } from '../../amulet/types.ts'
 import type { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { LedgerNamespace } from '../../ledger/index.js'
-import { ParsedURL, type URLInput } from '../../utils/url.js'
-import { resolveProviderParty } from '../utils.js'
-import { SynchronizerResolver } from '../../../init/synchronizer.js'
+import { LedgerNamespace } from '../../ledger/index.ts'
+import { ParsedURL, type URLInput } from '../../utils/url.ts'
+import { resolveProviderParty } from '../utils.ts'
+import { SynchronizerResolver } from '../../../init/synchronizer.ts'
 
 export type ProxyDelegationCommandArgs = {
     proxyCid: string

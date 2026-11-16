@@ -27,7 +27,7 @@ import {
 } from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
 import { useAllocationRequestV2Actions } from '@hooks/useAllocationRequestV2Actions'
-import { AllocationV2DialogContent } from './allocation-v2-dialog-content'
+import { AllocationV2DialogContent } from './allocation-v2-dialog-content.tsx'
 import { useWithdrawAllocationV2 } from '@hooks/useWithdrawAllocationV2'
 
 interface ActionRequiredDialogProps {

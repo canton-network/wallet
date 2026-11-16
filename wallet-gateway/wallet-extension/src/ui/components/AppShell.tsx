@@ -10,7 +10,7 @@ import Toolbar from '@mui/material/Toolbar'
 import Typography from '@mui/material/Typography'
 import { useRouter } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { useLockVault } from '@/ui/features/vault'
+import { useLockVault } from '@/ui/features/vault/index.ts'
 
 // Placeholder layout. Navigation and the account menu come with the ported pages.
 export function AppShell({ children }: { children: ReactNode }) {

@@ -12,11 +12,11 @@ import {
     decodeAvailableActions,
     actionAvailability,
 } from '@canton-network/core-token-standard-v2'
-import type { TokenNamespaceConfig } from '../../namespace'
+import type { TokenNamespaceConfig } from '../../namespace.ts'
 import type { PartyId } from '@canton-network/core-types'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
-import type { PreparedCommand } from '../../../transactions/types.js'
-import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.js'
+import type { PreparedCommand } from '../../../transactions/types.ts'
+import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.ts'
 import {
     actorsFor,
     sameSettlement,
@@ -29,7 +29,7 @@ import {
     type AllocationScanParams,
     type PreparedCommands,
     type SettlementFactoryParams,
-} from './types'
+} from './types.ts'
 import type {
     DisclosedContract,
     ExerciseCommand,

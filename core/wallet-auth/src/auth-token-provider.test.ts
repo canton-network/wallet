@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { assertConnected, jwtExpired } from './auth-utils.js'
+import { assertConnected, jwtExpired } from './auth-utils.ts'
 import {
     AuthTokenProvider,
     type TokenProviderConfig,
-} from './auth-token-provider.js'
-import type { Auth, Idp } from './config/schema.js'
-import { clientCredentialsService } from './client-credentials-service.js'
-import { SelfSignedTokenService } from './self-signed-token-service.js'
+} from './auth-token-provider.ts'
+import type { Auth, Idp } from './config/schema.ts'
+import { clientCredentialsService } from './client-credentials-service.ts'
+import { SelfSignedTokenService } from './self-signed-token-service.ts'
 import { SignJWT } from 'jose'
 
-vi.mock('./client-credentials-service.js', () => {
+vi.mock('./client-credentials-service.ts', () => {
     return {
         clientCredentialsService: vi.fn(() => ({
             fetchToken: vi.fn(),

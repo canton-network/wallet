@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import type { RequestArgs } from '@canton-network/core-types'
-import { AbstractProvider } from './index'
+import { AbstractProvider } from './index.ts'
 
 type TestRpcTypes = {
     ping: {

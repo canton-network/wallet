@@ -4,11 +4,11 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import type { PreparedCommand } from '@canton-network/wallet-sdk'
-import { utilityOperatorQueryOptions } from './query-options'
-import { queryKeys } from './query-keys'
-import type { WalletSdk } from './useWalletSdk'
+import { utilityOperatorQueryOptions } from './query-options.ts'
+import { queryKeys } from './query-keys.ts'
+import type { WalletSdk } from './useWalletSdk.ts'
 import { submitViaProvider } from '@lib/submit'
-import type { PreapprovalRow } from '../types/preapprovals'
+import type { PreapprovalRow } from '../types/preapprovals.ts'
 
 type TogglePreapprovalInput = {
     row: PreapprovalRow

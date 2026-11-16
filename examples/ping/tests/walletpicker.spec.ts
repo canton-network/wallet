@@ -16,7 +16,7 @@ import {
     expectDappConnected,
     expectDappDisconnected,
     GATEWAY_NAME,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 test('wallet picker: handling error cases', async ({
     page: dappPage,

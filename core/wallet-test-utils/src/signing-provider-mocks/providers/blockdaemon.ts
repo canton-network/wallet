@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SigningProviderMockRoute } from '../server.js'
-import { createMockTxStore } from '../tx-store.js'
+import type { SigningProviderMockRoute } from '../server.ts'
+import { createMockTxStore } from '../tx-store.ts'
 import {
     createMockEd25519KeyPair,
     type MockEd25519KeyPair,
     signMultiHashBase64,
-} from '../crypto.js'
+} from '../crypto.ts'
 
 type SigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
 

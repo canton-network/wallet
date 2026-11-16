@@ -3,7 +3,7 @@
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
 import { errorCodes } from '@canton-network/core-rpc-errors'
-import buildController from './rpc-gen/index.js'
+import buildController from './rpc-gen/index.ts'
 import {
     SigningProvider,
     type SigningDriverInterface,
@@ -22,22 +22,22 @@ import type {
     Auth,
     Status,
     UserLevelRight,
-} from './rpc-gen/typings.js'
+} from './rpc-gen/typings.ts'
 import {
     assertConnected,
     AuthTokenProvider,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import { AuthService } from '../auth-service.js'
-import { createExtensionWallet } from './create-wallet.js'
+import { AuthService } from '../auth-service.ts'
+import { createExtensionWallet } from './create-wallet.ts'
 import {
     type INotificationService,
     LOGOUT_EVENT,
     type SigningDrivers,
     TransactionService,
 } from '@canton-network/core-wallet-services'
-import { notifySessionTerminated } from '../status.js'
-import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.js'
+import { notifySessionTerminated } from '../status.ts'
+import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.ts'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     switch (auth.method) {

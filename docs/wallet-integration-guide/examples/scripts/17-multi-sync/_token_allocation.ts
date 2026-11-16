@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Logger } from 'pino'
-import type { MultiSyncSetup } from './_setup.js'
+import type { MultiSyncSetup } from './_setup.ts'
 import { TestToken } from '@canton-network/core-splice-codegen'
-import { pollUntilFound } from './_poll.js'
+import { pollUntilFound } from './_poll.ts'
 
 export async function allocateTokenForBob(
     setup: MultiSyncSetup,

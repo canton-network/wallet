@@ -10,7 +10,7 @@ import {
     Alert,
 } from '@mui/material'
 import { useState } from 'react'
-import type { NetworkInfo } from '../walletkit'
+import type { NetworkInfo } from '../walletkit/index.ts'
 
 interface NetworkSelectModalProps {
     open: boolean

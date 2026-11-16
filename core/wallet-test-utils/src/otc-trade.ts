@@ -12,7 +12,7 @@ import {
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
 import { getLogger } from '@logtape/logtape'
-import { localNetGlobalSynchronizer } from './localnet.js'
+import { localNetGlobalSynchronizer } from './localnet.ts'
 
 // This example needs uploaded .dar for splice-token-test-trading-app
 // It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script

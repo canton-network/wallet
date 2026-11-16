@@ -7,7 +7,7 @@ import type {
     Fetch,
     Metadata,
 } from '@canton-network/core-ledger-proto'
-import { concat } from './bytes.js'
+import { concat } from './bytes.ts'
 import {
     encodeBool,
     encodeHex,
@@ -18,15 +18,15 @@ import {
     encodeString,
     encodeTime,
     encodeValue,
-} from './encoding.js'
-import { TxHashingError } from './errors.js'
+} from './encoding.ts'
+import { TxHashingError } from './errors.ts'
 import {
     encodeInputContracts,
     encodeStrings,
     submitterInfoOf,
     type QueryByKey,
     type Scheme,
-} from './scheme.js'
+} from './scheme.ts'
 
 // Hashing scheme V3, after daml_transaction_hashing_v3.py (canton v3.5.1,
 // 08-interactive-submission). Unlike V2: no encoding version in nodes and

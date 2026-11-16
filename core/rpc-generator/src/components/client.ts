@@ -7,7 +7,7 @@ import * as fs from 'fs'
 import { readFile, rename, writeFile } from 'fs/promises'
 import lodash from 'lodash'
 import { execSync } from 'child_process'
-import { validateOpenRpc } from './validate-openrpc.js'
+import { validateOpenRpc } from './validate-openrpc.ts'
 const { template } = lodash
 
 const tsTemplate =

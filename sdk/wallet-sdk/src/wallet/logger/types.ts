@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type CustomLogAdapter from './adapter/custom.js'
-import { SDKLogger } from './logger.js' // oxlint-disable-line no-unused-vars -- for JSDoc only
+import type CustomLogAdapter from './adapter/custom.ts'
+import { SDKLogger } from './logger.ts' // oxlint-disable-line no-unused-vars -- for JSDoc only
 
 /**
  * Contextual metadata for log entries.

@@ -8,7 +8,7 @@ import {
     type NetworkEditCancelEvent,
     type NetworkEditSaveEvent,
     type NetworkDeleteEvent,
-} from '../../components/network-form.js'
+} from '../../components/network-form.ts'
 
 export const NetworkForm = createComponent({
     tagName: 'network-form',

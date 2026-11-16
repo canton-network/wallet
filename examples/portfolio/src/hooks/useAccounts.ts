@@ -3,7 +3,7 @@
 
 import { useMemo } from 'react'
 import type * as sdk from '@canton-network/dapp-sdk'
-import { useConnection } from '../contexts/ConnectionContext'
+import { useConnection } from '../contexts/ConnectionContext.tsx'
 
 export const useAccounts = (): sdk.dappAPI.Wallet[] => useConnection().accounts
 

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
-import type { vetDarFactory } from './common'
+import type { vetDarFactory } from './common.ts'
 
 export type SpliceWrappedCommand = WrappedCommand<
     'CreateCommand' | 'ExerciseCommand'

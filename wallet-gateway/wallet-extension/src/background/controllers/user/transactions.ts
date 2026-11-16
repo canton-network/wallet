@@ -9,17 +9,17 @@ import {
 } from '@canton-network/core-wallet-auth'
 import { TransactionService } from '@canton-network/core-wallet-services'
 import type { Session, Store } from '@canton-network/core-wallet-store'
-import { logger } from '@/shared/logger'
-import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings'
-import { toSigningDrivers, type UserControllerDeps } from './deps'
-import type { Methods } from './rpc-gen'
+import { logger } from '@/shared/logger.ts'
+import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.ts'
+import { toSigningDrivers, type UserControllerDeps } from './deps.ts'
+import type { Methods } from './rpc-gen/index.ts'
 import type {
     DeleteTransactionParams,
     ExecuteParams,
     GetTransactionParams,
     GetTransactionResult,
     SignParams,
-} from './rpc-gen/typings'
+} from './rpc-gen/typings.ts'
 
 async function requireSession(
     store: Store,

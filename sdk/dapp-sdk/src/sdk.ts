@@ -42,18 +42,18 @@ import type {
     SignMessageResult,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import { providerErrors } from '@canton-network/core-rpc-errors'
-import { DappClient } from './client'
-import { ExtensionAdapter } from './adapter/extension-adapter'
+import { DappClient } from './client.ts'
+import { ExtensionAdapter } from './adapter/extension-adapter.ts'
 import {
     RemoteAdapter,
     type RemoteAdapterConfig,
-} from './adapter/remote-adapter'
-import * as storage from './storage'
-import { clearAllLocalState } from './util'
+} from './adapter/remote-adapter.ts'
+import * as storage from './storage.ts'
+import { clearAllLocalState } from './util.ts'
 import defaultGatewayList from './gateways.json'
 import defaultExtensionsList from './wallets.json'
-import { CANTON_LOGO_PNG } from './assets'
-import { requestAnnouncedProviders } from './announce-discovery'
+import { CANTON_LOGO_PNG } from './assets.ts'
+import { requestAnnouncedProviders } from './announce-discovery.ts'
 
 export interface DappSDKConnectOptions<
     TDefaultAdapter extends ProviderAdapter = ProviderAdapter,

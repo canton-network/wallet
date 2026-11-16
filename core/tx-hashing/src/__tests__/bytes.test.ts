@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { concat, concatAll, fromBase64, hexToBytes, sha256 } from '../bytes.js'
-import { toHex } from './helpers/hex.js'
+import { concat, concatAll, fromBase64, hexToBytes, sha256 } from '../bytes.ts'
+import { toHex } from './helpers/hex.ts'
 
 const utf8 = (s: string) => new TextEncoder().encode(s)
 

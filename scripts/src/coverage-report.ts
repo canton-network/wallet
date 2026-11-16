@@ -4,7 +4,7 @@
 import { execSync } from 'node:child_process'
 import { appendFileSync, existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { getArgValue, getRepoRoot } from './lib/utils.js'
+import { getArgValue, getRepoRoot } from './lib/utils.ts'
 
 interface CoverageMetric {
     total: number

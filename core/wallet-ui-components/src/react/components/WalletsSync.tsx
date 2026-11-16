@@ -6,7 +6,7 @@ import { createComponent, type EventName } from '@lit/react'
 import {
     WgWalletsSync as WgWalletsSyncElement,
     type WalletsSyncEvent,
-} from '../../components/wallets-sync.js'
+} from '../../components/wallets-sync.ts'
 
 export const WalletsSync = createComponent({
     tagName: 'wg-wallets-sync',

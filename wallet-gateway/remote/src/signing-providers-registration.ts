@@ -15,13 +15,13 @@ import SecurosysSigningProvider, {
 } from '@canton-network/core-signing-securosys'
 import type { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import type { Logger } from 'pino'
-import type { ServerNotices } from './notices/server-notices.js'
+import type { ServerNotices } from './notices/server-notices.ts'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
 import {
     signingProvidersConfigSchema,
     type SigningProvidersConfig,
-} from './config/Config.js'
-import { Env } from './env.js'
+} from './config/Config.ts'
+import { Env } from './env.ts'
 
 const fireblocksSchema =
     signingProvidersConfigSchema.shape.fireblocks.unwrap().shape

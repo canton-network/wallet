@@ -22,13 +22,13 @@ import {
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import { jwtExpiresAt } from '@canton-network/core-wallet-auth'
-import { createUserClient } from '../rpc-client.js'
-import { showToast } from '../utils.js'
-import { stateManager } from '../state-manager.js'
-import { detectCurrentOrigin } from '../listeners.js'
-import { redirectToIntendedOrDefault, shareUserSession } from '../index.js'
-import { LOGIN_PAGE_REDIRECT } from '../constants.js'
-import { setLocationHref } from '../navigation.js'
+import { createUserClient } from '../rpc-client.ts'
+import { showToast } from '../utils.ts'
+import { stateManager } from '../state-manager.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { redirectToIntendedOrDefault, shareUserSession } from '../index.ts'
+import { LOGIN_PAGE_REDIRECT } from '../constants.ts'
+import { setLocationHref } from '../navigation.ts'
 
 import '@canton-network/core-wallet-ui-components'
 

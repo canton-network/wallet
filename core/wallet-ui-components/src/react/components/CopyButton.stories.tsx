@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
-import { CopyButton } from './CopyButton'
+import { CopyButton } from './CopyButton.tsx'
 import { fn, expect, screen, spyOn, waitFor } from 'storybook/test'
 
 const meta: Meta = {

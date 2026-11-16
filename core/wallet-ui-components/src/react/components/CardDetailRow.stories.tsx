@@ -4,7 +4,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Button, Chip } from '@mui/material'
 import { expect, fn } from 'storybook/test'
-import { CardDetailRow } from './CardDetailRow'
+import { CardDetailRow } from './CardDetailRow.tsx'
 
 const meta: Meta<typeof CardDetailRow> = {
     title: 'CardDetailRow',

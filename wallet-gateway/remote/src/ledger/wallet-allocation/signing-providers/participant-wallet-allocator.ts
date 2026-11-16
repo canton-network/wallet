@@ -5,9 +5,9 @@ import type { UserId } from '@canton-network/core-wallet-auth'
 import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import type { PartyAllocationService } from '../../party-allocation-service.js'
-import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
-import type { WalletAllocator } from '../wallet-allocation-service.js'
+import type { PartyAllocationService } from '../../party-allocation-service.ts'
+import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
+import type { WalletAllocator } from '../wallet-allocation-service.ts'
 
 export class ParticipantWalletAllocator implements WalletAllocator {
     constructor(

@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
-import type { SDKLogger } from '../../logger/logger.js'
-import type { SDKErrorHandler } from '../../error/handler.js'
+import type { SDKLogger } from '../../logger/logger.ts'
+import type { SDKErrorHandler } from '../../error/handler.ts'
 
 export type SDKContext = {
     ledgerProvider: AbstractLedgerProvider

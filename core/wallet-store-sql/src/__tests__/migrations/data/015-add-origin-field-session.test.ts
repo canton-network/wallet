@@ -13,8 +13,8 @@ import {
     indexExists,
     listColumns,
     primaryKeyColumns,
-} from '../helpers'
-import { insertSession } from '../seeds/004-add-session-id'
+} from '../helpers.ts'
+import { insertSession } from '../seeds/004-add-session-id.ts'
 
 const TARGET = 15
 

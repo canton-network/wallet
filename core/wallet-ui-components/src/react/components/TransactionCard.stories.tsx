@@ -10,7 +10,7 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { TransactionCard } from './TransactionCard'
+import { TransactionCard } from './TransactionCard.tsx'
 
 const parsed: ParsedTransactionInfo = {
     isCreate: false,

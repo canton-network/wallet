@@ -7,7 +7,7 @@ import os from 'os'
 import fs from 'fs'
 import path from 'path'
 import { execSync } from 'child_process'
-import { getRepoRoot } from './utils.js'
+import { getRepoRoot } from './utils.ts'
 
 const repoRoot = getRepoRoot()
 

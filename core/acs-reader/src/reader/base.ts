@@ -8,16 +8,16 @@ import type {
 import type {
     ACSCacheCollection,
     PaginatedACSCacheCollection,
-} from '../cache/collection/collection'
+} from '../cache/collection/collection.ts'
 import {
     type AcsOptions,
     type PaginatedAcsOptions,
     AcsService,
     type PaginatedResolvedAcsOptions,
     type ResolvedAcsOptions,
-} from '../service'
+} from '../service.ts'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { ACSCacheCollectionOptions } from '../cache/collection'
+import type { ACSCacheCollectionOptions } from '../cache/collection/index.ts'
 
 export abstract class BaseReader<
     Options extends AcsOptions | PaginatedAcsOptions,

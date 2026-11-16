@@ -12,7 +12,7 @@ import {
     normalizePublicKey,
     normalizeSignature,
     SigningAPIClient,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
 
 describe('SigningAPIClient', () => {
     let fetchMock: ReturnType<typeof vi.fn>

@@ -16,7 +16,7 @@ import {
     switchWallet,
     tap,
     togglePreapproval,
-} from './utils'
+} from './utils.ts'
 
 const AMULET_INSTRUMENT = 'Amulet (AMT)'
 

@@ -19,13 +19,13 @@ import type {
     ProviderId,
     ProviderType,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import * as storage from '../storage'
+import * as storage from '../storage.ts'
 import type { StatusEvent } from '@canton-network/core-wallet-dapp-remote-rpc-client'
-import { clearAllLocalState } from '../util'
+import { clearAllLocalState } from '../util.ts'
 import { WalletEvent } from '@canton-network/core-types'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import { DappAsyncProvider } from '@canton-network/core-provider-dapp'
-import { dappSDKController } from '../sdk-controller'
+import { dappSDKController } from '../sdk-controller.ts'
 
 export interface RemoteAdapterConfig extends ProviderAdapterConfig {
     providerId?: string | undefined

@@ -4,8 +4,8 @@
 import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import './copy-button.js'
-import { CopySuccessEvent, type WgCopyButton } from './copy-button.js'
+import './copy-button.ts'
+import { CopySuccessEvent, type WgCopyButton } from './copy-button.ts'
 
 describe('wg-copy-button', () => {
     afterEach(() => {

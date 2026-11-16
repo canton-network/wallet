@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
+import { BaseElement } from '../internal/base-element.ts'
 import { css, html } from 'lit'
-import { eyeFillIcon, eyeSlashIcon } from '../icons'
+import { eyeFillIcon, eyeSlashIcon } from '../icons/index.ts'
 
 /**
  * Emitted when the value of an individual form input changes

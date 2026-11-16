@@ -3,9 +3,9 @@
 
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { logger } from '@/shared/logger'
-import { defaultConfig } from './default-config'
-import type { WalletStore } from './index'
+import { logger } from '@/shared/logger.ts'
+import { defaultConfig } from './default-config.ts'
+import type { WalletStore } from './index.ts'
 
 /**
  * For tests: a plain in-memory store with the default config, not kept in

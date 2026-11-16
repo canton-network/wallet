@@ -15,8 +15,8 @@ import {
     ASSET_CONFIG,
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
-} from '../utils/index.js'
-import type { KnownSynchronizers } from '../utils/index.js'
+} from '../utils/index.ts'
+import type { KnownSynchronizers } from '../utils/index.ts'
 import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
 
 export type PartyInfo = Omit<

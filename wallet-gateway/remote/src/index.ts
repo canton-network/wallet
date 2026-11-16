@@ -6,18 +6,18 @@ import dotenv from 'dotenv'
 dotenv.config({ quiet: true, path: ['.env', '.env.local'] })
 
 import { Option, Command } from '@commander-js/extra-typings'
-import { initialize } from './init.js'
+import { initialize } from './init.ts'
 
 import { createCLI } from '@canton-network/core-wallet-store-sql'
 import { createCLI as createSigningCLI } from '@canton-network/core-signing-store-sql'
-import { ConfigUtils } from './config/ConfigUtils.js'
+import { ConfigUtils } from './config/ConfigUtils.ts'
 
 import pino, { type Logger } from 'pino'
 import z from 'zod'
-import { rawConfigSchema } from './config/Config.js'
-import exampleConfig from './example-config.js'
-import { GATEWAY_VERSION } from './version.js'
-import { nestedRedact } from './utils.js'
+import { rawConfigSchema } from './config/Config.ts'
+import exampleConfig from './example-config.ts'
+import { GATEWAY_VERSION } from './version.ts'
+import { nestedRedact } from './utils.ts'
 
 import { getPinoSink } from '@logtape/adaptor-pino'
 import {

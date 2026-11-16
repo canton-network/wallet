@@ -14,7 +14,7 @@ import {
     type PendingRequest,
     type SessionInfo,
     type NetworkInfo,
-} from '../walletkit'
+} from '../walletkit/index.ts'
 
 interface Wallet {
     partyId: string

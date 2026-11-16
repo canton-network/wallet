@@ -3,7 +3,7 @@
 
 import { Umzug, type MigrationMeta, type UmzugStorage } from 'umzug'
 import type { Kysely } from 'kysely'
-import type { DB } from './schema'
+import type { DB } from './schema.ts'
 
 class KyselyStorage implements UmzugStorage {
     constructor(private db: Kysely<DB>) {}

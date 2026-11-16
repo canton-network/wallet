@@ -12,11 +12,11 @@ import {
     hasColumn,
     listColumns,
     primaryKeyColumns,
-} from '../helpers'
-import type { DB } from '../../../schema'
-import { insertIdp, insertNetwork } from '../seeds/001-init'
-import { insertTransaction as insertTransaction003 } from '../seeds/003-transaction-origin'
-import { insertTransaction as insertTransaction008 } from '../seeds/008-transaction-external-tx-id'
+} from '../helpers.ts'
+import type { DB } from '../../../schema.ts'
+import { insertIdp, insertNetwork } from '../seeds/001-init.ts'
+import { insertTransaction as insertTransaction003 } from '../seeds/003-transaction-origin.ts'
+import { insertTransaction as insertTransaction008 } from '../seeds/008-transaction-external-tx-id.ts'
 
 const TARGET = 10
 

@@ -3,8 +3,8 @@
 
 import type { Logger } from 'pino'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
-import type { MultiSyncSetup } from './_setup.js'
-import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
+import type { MultiSyncSetup } from './_setup.ts'
+import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.ts'
 import { OTCTrade } from '@canton-network/core-splice-codegen'
 
 export interface SettleParams {

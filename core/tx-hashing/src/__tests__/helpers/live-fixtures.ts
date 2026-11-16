@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
-import { fromBase64 } from '../../bytes.js'
-import { loadVectors } from './load-vectors.js'
+import { fromBase64 } from '../../bytes.ts'
+import { loadVectors } from './load-vectors.ts'
 
 type Scheme = 'HASHING_SCHEME_VERSION_V2' | 'HASHING_SCHEME_VERSION_V3'
 

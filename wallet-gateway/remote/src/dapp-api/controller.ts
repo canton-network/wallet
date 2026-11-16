@@ -6,7 +6,7 @@ import {
     type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
-import buildController from './rpc-gen/index.js'
+import buildController from './rpc-gen/index.ts'
 import type {
     ConnectResult,
     LedgerApiParams,
@@ -18,7 +18,7 @@ import type {
     SignMessageResult,
     StatusEvent,
     Wallet,
-} from './rpc-gen/typings.js'
+} from './rpc-gen/typings.ts'
 import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import {
     LedgerClient,
@@ -28,7 +28,7 @@ import {
     isValidGetEndpoint,
     isValidPostEndpoint,
 } from '@canton-network/core-ledger-client'
-import type { KernelInfo as KernelInfoConfig } from '../config/Config.js'
+import type { KernelInfo as KernelInfoConfig } from '../config/Config.ts'
 import type { Logger } from 'pino'
 import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 

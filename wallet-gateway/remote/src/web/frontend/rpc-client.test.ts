@@ -3,12 +3,12 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { waitUntil } from '@open-wc/testing-helpers'
-import { LOGIN_PAGE_REDIRECT } from './constants.js'
+import { LOGIN_PAGE_REDIRECT } from './constants.ts'
 import {
     attemptRemoveSession,
     createUserClient,
     resetRpcClientCachesForTests,
-} from './rpc-client.js'
+} from './rpc-client.ts'
 
 const {
     mockRemoveSession,
@@ -69,10 +69,10 @@ vi.mock('@canton-network/core-rpc-transport', async (importOriginal) => {
         HttpTransport: SpiedHttpTransport,
     }
 })
-vi.mock('./navigation.js', () => ({
+vi.mock('./navigation.ts', () => ({
     setLocationHref: mockSetLocationHref,
 }))
-vi.mock('./state-manager.js', () => ({
+vi.mock('./state-manager.ts', () => ({
     stateManager: {
         accessToken: {
             get: () => authState.accessToken,

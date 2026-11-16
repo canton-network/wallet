@@ -19,9 +19,9 @@ import {
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import type { Kysely } from 'kysely'
-import { migrator } from './migrator'
-import type { DB } from './schema'
-import { connection, StoreSql } from './store-sql'
+import { migrator } from './migrator.ts'
+import type { DB } from './schema.ts'
+import { connection, StoreSql } from './store-sql.ts'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',

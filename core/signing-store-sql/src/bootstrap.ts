@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Kysely } from 'kysely'
-import { StoreSql } from './store-sql.js'
-import type { DB } from './schema'
+import { StoreSql } from './store-sql.ts'
+import type { DB } from './schema.ts'
 
 export async function bootstrap(db: Kysely<DB>): Promise<void> {
     new StoreSql(db)

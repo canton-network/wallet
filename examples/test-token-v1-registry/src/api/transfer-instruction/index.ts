@@ -2,14 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Router } from 'express'
-import { getTransferFactory } from './getTransferFactory'
-import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
-import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
-import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
+import { getTransferFactory } from './getTransferFactory.ts'
+import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext.ts'
+import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext.ts'
+import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext.ts'
 import type { OffLedger } from '@canton-network/core-token-standard'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
 import z, { type ZodType } from 'zod'
-import { choiceContextRequestSchema } from '../common'
+import { choiceContextRequestSchema } from '../common.ts'
 
 const pathSchema = z.object({
     transferInstructionId: z.string(),

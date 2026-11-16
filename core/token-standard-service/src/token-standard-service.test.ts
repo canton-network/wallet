@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi } from 'vitest'
-import { TokenStandardService } from './token-standard-service.js'
-import { CoreService } from './core-service.js'
+import { TokenStandardService } from './token-standard-service.ts'
+import { CoreService } from './core-service.ts'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { HoldingView } from '@canton-network/core-token-standard'
 import { Decimal } from 'decimal.js'

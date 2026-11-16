@@ -3,13 +3,13 @@
 
 import { expect, it } from 'vitest'
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
-import { fromBase64 } from '../bytes.js'
-import { TxHashingError, type TxHashingErrorCode } from '../errors.js'
-import { computePreparedTransactionHash } from '../index.js'
-import { toHex } from './helpers/hex.js'
-import { liveFixtures } from './helpers/live-fixtures.js'
-import { loadVectors, V2, V3 } from './helpers/load-vectors.js'
-import { changedBytes, changedText, changedTime } from './helpers/one-byte.js'
+import { fromBase64 } from '../bytes.ts'
+import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
+import { computePreparedTransactionHash } from '../index.ts'
+import { toHex } from './helpers/hex.ts'
+import { liveFixtures } from './helpers/live-fixtures.ts'
+import { loadVectors, V2, V3 } from './helpers/load-vectors.ts'
+import { changedBytes, changedText, changedTime } from './helpers/one-byte.ts'
 
 interface Leaf {
     path: string

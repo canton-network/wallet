@@ -16,7 +16,7 @@ import type {
     TransferActionItem,
 } from '@components/types'
 import { getExpiryTime } from '@utils/date-format'
-import { usePrimaryAccount } from './useAccounts'
+import { usePrimaryAccount } from './useAccounts.ts'
 import {
     useAllocationInstructionsV2QueryOptions,
     useAllocationRequestsQueryOptions,
@@ -25,7 +25,7 @@ import {
     useAllocationsV2QueryOptions,
     usePendingTransfersQueryOptions,
     usePendingTransfersV2QueryOptions,
-} from './query-options'
+} from './query-options.ts'
 import {
     toAllocationInstructionV2Items,
     toAllocationRequestV2Items,

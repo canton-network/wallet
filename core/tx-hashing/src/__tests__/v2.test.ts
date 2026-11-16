@@ -6,9 +6,9 @@ import {
     PreparedTransaction,
     type Metadata,
 } from '@canton-network/core-ledger-proto'
-import { fromBase64, hexToBytes, sha256 } from '../bytes.js'
-import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.js'
-import { schemeV2 } from '../v2.js'
+import { fromBase64, hexToBytes, sha256 } from '../bytes.ts'
+import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.ts'
+import { schemeV2 } from '../v2.ts'
 import {
     chain,
     contractId,
@@ -36,11 +36,11 @@ import {
     tx,
     unit,
     withInputContract,
-} from './helpers/builders.js'
-import { toHex } from './helpers/hex.js'
-import { int64sBeyond2To53 } from './helpers/int64.js'
-import { liveFixtures } from './helpers/live-fixtures.js'
-import { hx, rejection } from './helpers/matchers.js'
+} from './helpers/builders.ts'
+import { toHex } from './helpers/hex.ts'
+import { int64sBeyond2To53 } from './helpers/int64.ts'
+import { liveFixtures } from './helpers/live-fixtures.ts'
+import { hx, rejection } from './helpers/matchers.ts'
 import bigInt64V2 from './fixtures/big-int64-v2.json'
 
 // Expected values that do not come from a participant were produced by running

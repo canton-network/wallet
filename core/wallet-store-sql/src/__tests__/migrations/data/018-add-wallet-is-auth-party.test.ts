@@ -11,9 +11,9 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
-import { insertIdp, insertNetwork } from '../seeds/001-init'
-import { insertWallet } from '../seeds/005-add-wallet-disabled-reason'
+} from '../helpers.ts'
+import { insertIdp, insertNetwork } from '../seeds/001-init.ts'
+import { insertWallet } from '../seeds/005-add-wallet-disabled-reason.ts'
 
 const TARGET = 18
 

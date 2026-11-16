@@ -15,12 +15,12 @@ import {
     Typography,
 } from '@mui/material'
 import { useInView } from 'react-intersection-observer'
-import { TransactionHistoryRow } from './transaction-history-row'
+import { TransactionHistoryRow } from './transaction-history-row.tsx'
 import {
     getEmptyMessage,
     type TransactionFilter,
     type TransactionHistoryEntry,
-} from './transaction-history-utils'
+} from './transaction-history-utils.ts'
 
 interface TransactionHistoryContentProps {
     filter: TransactionFilter

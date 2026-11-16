@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import type { NextFunction, Request, Response } from 'express'
-import { securityHeaders } from './securityHeaders.js'
+import { securityHeaders } from './securityHeaders.ts'
 
 describe('securityHeaders', () => {
     it('sets the expected security response headers', () => {

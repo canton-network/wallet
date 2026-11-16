@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TxHashingErrorCode } from '../../errors.js'
-import type { TraversalLimits } from '../../limits.js'
+import type { TxHashingErrorCode } from '../../errors.ts'
+import type { TraversalLimits } from '../../limits.ts'
 
 export const V2 = 'HASHING_SCHEME_VERSION_V2'
 export const V3 = 'HASHING_SCHEME_VERSION_V3'

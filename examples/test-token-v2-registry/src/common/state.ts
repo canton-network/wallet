@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { SDKInterface } from '@canton-network/wallet-sdk'
-import defaultSdk from './defaultSdk'
+import defaultSdk from './defaultSdk.ts'
 
 export interface RegistryConfig {
     sdk: SDKInterface

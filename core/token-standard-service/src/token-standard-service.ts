@@ -34,13 +34,13 @@ import {
     KEY_MAPPING,
     SUPPORTED_VERSIONS,
     type UpdateFormat,
-} from './types.js'
-import { TransferServiceV2 } from './v2/transfer-service.js'
-import { TransferService } from './v1/transfer-service.js'
-import { AllocationService } from './v1/allocation-service.js'
-import { CoreService } from './core-service.js'
+} from './types.ts'
+import { TransferServiceV2 } from './v2/transfer-service.ts'
+import { TransferService } from './v1/transfer-service.ts'
+import { AllocationService } from './v1/allocation-service.ts'
+import { CoreService } from './core-service.ts'
 import { getLogger } from '@logtape/logtape'
-import { AllocationService as AllocationServiceV2 } from './v2/allocation-service.js'
+import { AllocationService as AllocationServiceV2 } from './v2/allocation-service.ts'
 
 export function isApiVersion(v: string): v is ApiVersion {
     return (SUPPORTED_VERSIONS as readonly string[]).includes(v)

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { base64ToBytes, fingerprintPublicKey } from './index'
+import { base64ToBytes, fingerprintPublicKey } from './index.ts'
 
 describe('base64ToBytes', () => {
     it('decodes standard Base64 and ignores whitespace', () => {

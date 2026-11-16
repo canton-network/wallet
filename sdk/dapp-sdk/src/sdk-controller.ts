@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
-import buildController from './dapp-api/rpc-gen'
+import buildController from './dapp-api/rpc-gen/index.ts'
 import type {
     ConnectResult,
     LedgerApiParams,
@@ -13,7 +13,7 @@ import type {
     SignMessageParams,
     SignMessageResult,
     Wallet,
-} from './dapp-api/rpc-gen/typings'
+} from './dapp-api/rpc-gen/typings.ts'
 import {
     isCip103ErrorCode,
     JsonRpcError,

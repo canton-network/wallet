@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TokenNamespaceConfig } from '../../../sdk.js'
+import type { TokenNamespaceConfig } from '../../../sdk.ts'
 import type { HoldingView, Metadata } from '@canton-network/core-token-standard'
 import type {
     DisclosedContract,
@@ -9,9 +9,9 @@ import type {
 } from '@canton-network/core-token-standard-service'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
-import { LedgerNamespace } from '../../ledger/index.js'
-import type { UtxoNamespace } from './index.js'
-import { resolveProviderParty } from '../utils.js'
+import { LedgerNamespace } from '../../ledger/index.ts'
+import type { UtxoNamespace } from './index.ts'
+import { resolveProviderParty } from '../utils.ts'
 import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 
 export class MergeDelegationNamespace {

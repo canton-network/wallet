@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TestTokenID, TestTokenV1 } from './dar'
+import { TestTokenID, TestTokenV1 } from './dar.ts'
 import {
     Allocation,
     AllocationFactory,
@@ -10,13 +10,13 @@ import {
     TransferInstruction,
 } from '@canton-network/core-token-standard'
 import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
-import { generateCommand, type TestTokenHoldingView } from '../common'
+import { generateCommand, type TestTokenHoldingView } from '../common.ts'
 import type {
     Token,
     TokenAllocation,
     TokenRules,
     TokenTransferOffer,
-} from './types'
+} from './types.ts'
 
 const commands = {
     create: {

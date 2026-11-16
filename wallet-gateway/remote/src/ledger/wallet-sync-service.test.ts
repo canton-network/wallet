@@ -31,8 +31,8 @@ import {
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-import { WalletSyncService } from './wallet-sync-service.js'
-import { PartyAllocationService } from './party-allocation-service.js'
+import { WalletSyncService } from './wallet-sync-service.ts'
+import { PartyAllocationService } from './party-allocation-service.ts'
 import { getLogger } from '@logtape/logtape'
 
 type LedgerGet = (path: string, ...rest: unknown[]) => Promise<unknown>

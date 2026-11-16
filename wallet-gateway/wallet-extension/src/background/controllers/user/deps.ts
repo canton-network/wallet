@@ -10,7 +10,7 @@ import type {
     SigningDrivers,
 } from '@canton-network/core-wallet-services'
 import type { Store } from '@canton-network/core-wallet-store'
-import type { AuthContextStore } from '../../auth-context'
+import type { AuthContextStore } from '../../auth-context.ts'
 
 /** What every area module of the user controller gets. */
 export interface UserControllerDeps {

@@ -6,7 +6,7 @@ import { createComponent, type EventName } from '@lit/react'
 import {
     WgPagination as WgPaginationElement,
     type PageChangeEvent,
-} from '../../components/pagination.js'
+} from '../../components/pagination.ts'
 
 export const Pagination = createComponent({
     tagName: 'wg-pagination',

@@ -6,7 +6,7 @@ import type { Server } from 'http'
 import path, { dirname } from 'path'
 import { fileURLToPath } from 'url'
 import ViteExpress from 'vite-express'
-import { GATEWAY_VERSION } from '../version.js'
+import { GATEWAY_VERSION } from '../version.ts'
 
 export const web = (
     app: express.Express,

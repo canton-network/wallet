@@ -3,7 +3,7 @@
 
 import { describe, expect, it, vi, beforeEach } from 'vitest'
 import type { Request, Response, NextFunction } from 'express'
-import { apiKeyAuth } from './apiKeyAuth.js'
+import { apiKeyAuth } from './apiKeyAuth.ts'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
 import type { Store } from '@canton-network/core-wallet-store'

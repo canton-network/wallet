@@ -7,14 +7,14 @@ import {
     deduplicateTransactionHistory,
     useTransactionHistoryForParty,
 } from '@hooks/useTransactionHistory'
-import { TransactionHistoryContent } from './transaction-history-content'
-import { TransactionHistoryTabs } from './transaction-history-tabs'
+import { TransactionHistoryContent } from './transaction-history-content.tsx'
+import { TransactionHistoryTabs } from './transaction-history-tabs.tsx'
 import {
     createTransactionHistoryEntries,
     FILTER_LABEL_BY_FILTER,
     filterTransactionHistoryEntries,
     type TransactionFilter,
-} from './transaction-history-utils'
+} from './transaction-history-utils.ts'
 
 interface TransactionHistoryProps {
     walletId: string

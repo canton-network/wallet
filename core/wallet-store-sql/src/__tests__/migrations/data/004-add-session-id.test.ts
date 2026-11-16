@@ -11,9 +11,9 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
-import { insertSession as insertSession001 } from '../seeds/001-init'
-import { insertSession as insertSession004 } from '../seeds/004-add-session-id'
+} from '../helpers.ts'
+import { insertSession as insertSession001 } from '../seeds/001-init.ts'
+import { insertSession as insertSession004 } from '../seeds/004-add-session-id.ts'
 
 const TARGET = 4
 

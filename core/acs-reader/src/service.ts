@@ -7,7 +7,7 @@ import type {
 } from '@canton-network/core-provider-ledger'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
-import { PaginatedACSCache } from './cache/item'
+import { PaginatedACSCache } from './cache/item/index.ts'
 
 type Types = LedgerCommonSchemas
 

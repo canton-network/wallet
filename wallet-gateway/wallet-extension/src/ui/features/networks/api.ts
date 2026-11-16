@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { queryOptions } from '@tanstack/react-query'
-import { queryKeys } from '@/ui/lib/query/keys'
-import { getUserClient } from '@/ui/lib/user-client'
+import { queryKeys } from '@/ui/lib/query/keys.ts'
+import { getUserClient } from '@/ui/lib/user-client.ts'
 
 /** The configured networks. */
 export const networksQuery = () =>

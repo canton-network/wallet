@@ -71,7 +71,7 @@ describe('PartyAllocationService', () => {
     let service: any
 
     beforeEach(async () => {
-        const pas = await import('./party-allocation-service.js')
+        const pas = await import('./party-allocation-service.ts')
 
         // Mock AccessTokenProvider
         const mockAccessTokenProvider: AccessTokenProvider = {

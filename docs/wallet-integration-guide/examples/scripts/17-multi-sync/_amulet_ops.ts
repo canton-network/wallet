@@ -6,8 +6,8 @@ import {
     localNetStaticConfig,
     resolveCapabilities,
 } from '@canton-network/wallet-sdk'
-import type { MultiSyncSetup } from './_setup.js'
-import { ALICE_AMULET_TAP_AMOUNT } from './_constants.js'
+import type { MultiSyncSetup } from './_setup.ts'
+import { ALICE_AMULET_TAP_AMOUNT } from './_constants.ts'
 
 export async function mintAmuletForAlice(
     setup: MultiSyncSetup,

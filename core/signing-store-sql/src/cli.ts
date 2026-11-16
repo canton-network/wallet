@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Command } from 'commander'
-import { connection } from './store-sql.js'
-import { migrator } from './migrator.js'
-import { bootstrap } from './bootstrap.js'
-import type { StoreConfig } from './schema.js'
+import { connection } from './store-sql.ts'
+import { migrator } from './migrator.ts'
+import { bootstrap } from './bootstrap.ts'
+import type { StoreConfig } from './schema.ts'
 import { getLogger } from '@logtape/logtape'
 
 const logger = getLogger(['core', 'signing-store-sql', 'cli'])

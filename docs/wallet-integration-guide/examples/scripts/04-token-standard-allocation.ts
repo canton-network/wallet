@@ -3,16 +3,16 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
 import type { KeyPair } from '@canton-network/core-signing-lib'
-import { ASSET_CONFIG } from './utils/index.js'
+import { ASSET_CONFIG } from './utils/index.ts'
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
+} from './utils/index.ts'
 
-import { configureLogging } from './utils/configure-logging.js'
+import { configureLogging } from './utils/configure-logging.ts'
 const logger = await configureLogging()
 
 export type PartyInfo = Omit<

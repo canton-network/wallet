@@ -4,7 +4,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { findByShadowRole, findByShadowText } from 'shadow-dom-testing-library'
 import { expect } from 'storybook/test'
-import { NotFound } from './NotFound'
+import { NotFound } from './NotFound.ts'
 
 const meta = {
     title: 'NotFound',

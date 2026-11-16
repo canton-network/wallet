@@ -8,11 +8,11 @@ import {
     initializeSigningStore,
     initializeWalletStore,
     loadAuthedStore,
-} from './store'
-import { dappController } from './dapp/controller'
-import { userController } from './user/controller'
-import { AuthService } from './auth-service'
-import { registerNotificationPorts } from './notifications'
+} from './store.ts'
+import { dappController } from './dapp/controller.ts'
+import { userController } from './user/controller.ts'
+import { AuthService } from './auth-service.ts'
+import { registerNotificationPorts } from './notifications.ts'
 
 export default defineBackground(() => {
     registerService(AUTH_SERVICE_KEY, AuthService)

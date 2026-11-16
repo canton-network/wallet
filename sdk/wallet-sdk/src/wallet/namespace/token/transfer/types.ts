@@ -3,9 +3,9 @@
 
 import type { PartyId } from '@canton-network/core-types'
 import type { Metadata } from '@canton-network/core-token-standard'
-import type { URLInput } from '../../utils/url'
+import type { URLInput } from '../../utils/url.ts'
 import type { Account } from '@canton-network/core-token-standard-v2'
-import { toBasicAccount } from '../utils'
+import { toBasicAccount } from '../utils.ts'
 
 export type AccountRef = PartyId | Account
 

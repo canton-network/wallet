@@ -11,9 +11,9 @@ import {
     authMessenger,
     type ConnectionStatus,
     EXTENSION_ORIGIN,
-} from '@/shared/auth-protocol'
-import { queryKeys } from '@/ui/lib/query/keys'
-import { getUserClient } from '@/ui/lib/user-client'
+} from '@/shared/auth-protocol.ts'
+import { queryKeys } from '@/ui/lib/query/keys.ts'
+import { getUserClient } from '@/ui/lib/user-client.ts'
 
 /**
  * Whether the extension pages are connected to a network, from the

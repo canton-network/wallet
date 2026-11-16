@@ -12,11 +12,11 @@ import {
     type HashingScheme,
     type HashOptions,
 } from '@canton-network/core-tx-hashing'
-import { fromBase64, toBase64, toHex } from './utils.js'
+import { fromBase64, toBase64, toHex } from './utils.ts'
 export {
     computeSha256CantonHash,
     computeMultiHashForTopology,
-} from './hashing_scheme_v2.js'
+} from './hashing_scheme_v2.ts'
 export {
     decodeUnknownFields,
     type RawFields,

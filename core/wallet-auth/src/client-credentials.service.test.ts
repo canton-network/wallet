@@ -13,8 +13,8 @@ import {
 import {
     ClientCredentialsService,
     clientCredentialsService,
-} from './client-credentials-service.js'
-import type { ClientCredentials } from './auth-service.js'
+} from './client-credentials-service.ts'
+import type { ClientCredentials } from './auth-service.ts'
 import { configure, reset } from '@logtape/logtape'
 import { createLogRecorder } from '@logtape/testing/recorder'
 

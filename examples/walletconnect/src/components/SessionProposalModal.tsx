@@ -10,7 +10,7 @@ import {
     Link,
 } from '@mui/material'
 import { useState } from 'react'
-import type { PendingProposal as Proposal } from '../walletkit'
+import type { PendingProposal as Proposal } from '../walletkit/index.ts'
 
 interface SessionProposalModalProps {
     proposal: Proposal | null

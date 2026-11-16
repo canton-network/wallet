@@ -6,7 +6,7 @@ import {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
-import type { TokenStandardVersion } from '../src/types/instruments'
+import type { TokenStandardVersion } from '../src/types/instruments.ts'
 import type { Request } from '@playwright/test'
 
 const BASE_URL = 'http://localhost:8081'

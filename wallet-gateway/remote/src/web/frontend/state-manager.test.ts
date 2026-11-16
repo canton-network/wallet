@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { StateManager, stateManager } from './state-manager.js'
+import { StateManager, stateManager } from './state-manager.ts'
 
 const origin = 'http://localhost'
 

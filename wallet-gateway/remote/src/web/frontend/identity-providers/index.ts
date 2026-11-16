@@ -14,11 +14,11 @@ import {
 
 import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
-import '../index'
-import { stateManager } from '../state-manager'
-import { detectCurrentOrigin } from '../listeners.js'
+import { createUserClient } from '../rpc-client.ts'
+import { setLocationHref } from '../navigation.ts'
+import '../index.ts'
+import { stateManager } from '../state-manager.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
 
 @customElement('user-ui-identity-providers')
 export class UserUiIdentityProviders extends BaseElement {

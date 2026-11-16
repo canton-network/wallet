@@ -4,16 +4,16 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from '../utils/index.js'
+} from '../utils/index.ts'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import fs from 'node:fs/promises'
-import type { RewardsForDepositsTestScriptParameters } from './types.js'
-import _accept from './_accept.js'
-import _withdraw from './_withdraw.js'
-import _reject from './_reject.js'
+import type { RewardsForDepositsTestScriptParameters } from './types.ts'
+import _accept from './_accept.ts'
+import _withdraw from './_withdraw.ts'
+import _reject from './_reject.ts'
 
-import { configureLogging } from '../utils/configure-logging.js'
+import { configureLogging } from '../utils/configure-logging.ts'
 const logger = await configureLogging()
 
 // This example script implements https://docs.digitalasset.com/integrate/devnet/exchange-integration/extensions.html#earning-app-rewards-for-deposits

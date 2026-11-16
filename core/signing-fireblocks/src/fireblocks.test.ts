@@ -37,7 +37,7 @@ vi.mock('@fireblocks/ts-sdk', () => ({
     },
 }))
 
-import { FireblocksHandler } from './fireblocks.js'
+import { FireblocksHandler } from './fireblocks.ts'
 
 const USER_ID = 'user-1'
 const NOTE = 'Signing transaction'

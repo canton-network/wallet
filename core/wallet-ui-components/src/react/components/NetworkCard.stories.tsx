@@ -10,8 +10,8 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn, type Mock } from 'storybook/test'
-import type { NetworkCardReviewEvent } from '../../components/network-card'
-import { NetworkCard } from './NetworkCard'
+import type { NetworkCardReviewEvent } from '../../components/network-card.ts'
+import { NetworkCard } from './NetworkCard.tsx'
 
 const network: PublicNetwork = {
     id: 'canton:devnet',

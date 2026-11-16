@@ -8,7 +8,7 @@ import {
     decodeProtectedHeader,
     decodeJwt,
 } from 'jose'
-import { SelfIssuedTokenService } from './self-issued-token-service.js'
+import { SelfIssuedTokenService } from './self-issued-token-service.ts'
 
 function bytesToBase64(bytes: Uint8Array): string {
     let binary = ''

@@ -9,7 +9,7 @@ import {
     queryByShadowRole,
 } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { ApiKeyCard } from './ApiKeyCard'
+import { ApiKeyCard } from './ApiKeyCard.tsx'
 
 const apiKey: ApiKey = {
     name: 'My API Key',

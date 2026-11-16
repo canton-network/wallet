@@ -11,10 +11,10 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
-import { insertIdp, insertNetwork } from '../seeds/001-init'
-import { insertTransaction as insertTransaction002 } from '../seeds/002-transaction-timestamps'
-import { insertTransaction as insertTransaction003 } from '../seeds/003-transaction-origin'
+} from '../helpers.ts'
+import { insertIdp, insertNetwork } from '../seeds/001-init.ts'
+import { insertTransaction as insertTransaction002 } from '../seeds/002-transaction-timestamps.ts'
+import { insertTransaction as insertTransaction003 } from '../seeds/003-transaction-origin.ts'
 
 const TARGET = 3
 

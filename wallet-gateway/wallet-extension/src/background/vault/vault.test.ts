@@ -3,8 +3,8 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { InvalidPasswordError, VaultLockedError } from './errors'
-import { createVault, type Vault } from './vault'
+import { InvalidPasswordError, VaultLockedError } from './errors.ts'
+import { createVault, type Vault } from './vault.ts'
 
 const PASSWORD = 'first password 1'
 

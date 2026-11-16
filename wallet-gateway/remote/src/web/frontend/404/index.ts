@@ -8,7 +8,7 @@ import {
 } from '@canton-network/core-wallet-ui-components'
 import { html, css } from 'lit'
 import { customElement } from 'lit/decorators.js'
-import '../index'
+import '../index.ts'
 
 @customElement('user-ui-404')
 export class NotFoundUi extends BaseElement {

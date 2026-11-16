@@ -15,8 +15,8 @@ import {
     ipRateLimitKeyGenerator,
     preAuthIpRateLimiter,
     rateLimitKeyGenerator,
-} from './rateLimit.js'
-import { jwtAuth } from './jwtAuth.js'
+} from './rateLimit.ts'
+import { jwtAuth } from './jwtAuth.ts'
 
 describe('ipRateLimitKeyGenerator', () => {
     test('uses request ip address', () => {

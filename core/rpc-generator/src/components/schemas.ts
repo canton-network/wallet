@@ -5,7 +5,7 @@ import * as path from 'path'
 import type { components } from '@open-rpc/generator'
 import { execSync } from 'child_process'
 import lodash from 'lodash'
-import { validateOpenRpc } from './validate-openrpc.js'
+import { validateOpenRpc } from './validate-openrpc.ts'
 const { template } = lodash
 
 // Unknown keys are still rejected unless null (e.g. fields the Scan app returns as null).

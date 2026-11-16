@@ -12,7 +12,7 @@ import {
     createMockUserClient,
     makeWallet,
     mockRequest,
-} from '../../__tests__/test-helpers.js'
+} from '../../__tests__/test-helpers.ts'
 
 const {
     mockCreateUserClient,
@@ -28,13 +28,13 @@ const {
     mockNetworkIdGet: vi.fn<() => string | undefined>(() => 'network1'),
 }))
 
-vi.mock('../../index.js', () => ({}))
-vi.mock('../../navigation.js', () => ({ setLocationHref }))
-vi.mock('../../utils.js', () => ({ showToast }))
-vi.mock('../../rpc-client.js', () => ({
+vi.mock('../../index.ts', () => ({}))
+vi.mock('../../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../../utils.ts', () => ({ showToast }))
+vi.mock('../../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../../state-manager.js', () => ({
+vi.mock('../../state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         networkId: { get: mockNetworkIdGet },
@@ -52,8 +52,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     }
 })
 
-import './index.js'
-import type { UserUiAddParty } from './index.js'
+import './index.ts'
+import type { UserUiAddParty } from './index.ts'
 import { WALLET_STATUS_CODE } from '@canton-network/core-wallet-ui-components/logic'
 import type { Key } from '@canton-network/core-signing-lib'
 

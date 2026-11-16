@@ -16,16 +16,16 @@ import {
     fetchOidcDiscovery,
     jwtExpiresAt,
 } from '@canton-network/core-wallet-auth'
-import { createUserClient } from '../rpc-client'
+import { createUserClient } from '../rpc-client.ts'
 import type {
     PublicNetwork,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { stateManager } from '../state-manager'
-import '../index'
-import { redirectToIntendedOrDefault, addUserSession } from '../index'
-import { setLocationHref } from '../navigation.js'
-import { detectCurrentOrigin } from '../listeners.js'
+import { stateManager } from '../state-manager.ts'
+import '../index.ts'
+import { redirectToIntendedOrDefault, addUserSession } from '../index.ts'
+import { setLocationHref } from '../navigation.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 

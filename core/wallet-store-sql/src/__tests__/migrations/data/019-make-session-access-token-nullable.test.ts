@@ -11,8 +11,8 @@ import {
     migrateDownThrough,
     migrateUpThrough,
     migrateUpToBefore,
-} from '../helpers'
-import { insertSession } from '../seeds/019-make-session-access-token-nullable'
+} from '../helpers.ts'
+import { insertSession } from '../seeds/019-make-session-access-token-nullable.ts'
 
 const TARGET = 19
 

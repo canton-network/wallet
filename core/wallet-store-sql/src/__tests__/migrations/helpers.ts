@@ -5,11 +5,11 @@ import { afterEach, beforeEach, describe } from 'vitest'
 import { type Kysely, sql } from 'kysely'
 import pg from 'pg'
 
-import { connection } from '../../store-sql.js'
-import { migrator } from '../../migrator.js'
-import type { DB } from '../../schema.js'
-import { PG_ENV } from './global-setup.js'
-import { isPostgres } from '../../utils'
+import { connection } from '../../store-sql.ts'
+import { migrator } from '../../migrator.ts'
+import type { DB } from '../../schema.ts'
+import { PG_ENV } from './global-setup.ts'
+import { isPostgres } from '../../utils.ts'
 
 export type Dialect = 'sqlite' | 'postgres'
 

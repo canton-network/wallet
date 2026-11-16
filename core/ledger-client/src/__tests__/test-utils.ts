@@ -3,7 +3,7 @@
 
 import { vi } from 'vitest'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import { LedgerClient } from '../ledger-client.js'
+import { LedgerClient } from '../ledger-client.ts'
 import { createLogRecorder } from '@logtape/testing/recorder'
 
 import { configure } from '@logtape/logtape'

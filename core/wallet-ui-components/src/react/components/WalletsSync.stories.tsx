@@ -5,10 +5,10 @@ import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { findByShadowRole } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor, within } from 'storybook/test'
-import { ToastProvider } from '../contexts/ToastProvider'
-import { useErrorToast } from '../hooks/useErrorToast'
-import { useToast } from '../hooks/useToast'
-import { WalletsSync } from './WalletsSync'
+import { ToastProvider } from '../contexts/ToastProvider.tsx'
+import { useErrorToast } from '../hooks/useErrorToast.ts'
+import { useToast } from '../hooks/useToast.ts'
+import { WalletsSync } from './WalletsSync.tsx'
 
 const meta = {
     title: 'WalletsSync',

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { TokenNamespaceConfig } from './namespace.js'
+import type { TokenNamespaceConfig } from './namespace.ts'
 import type { Account } from '@canton-network/core-token-standard-v2'
 
 export function resolveProviderParty(

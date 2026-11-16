@@ -4,7 +4,7 @@
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import type { v3_6, v3_7 } from '@canton-network/core-ledger-client-types'
 import { vi, describe, it, expect, beforeEach, type Mocked } from 'vitest'
-import { TransactionParser } from './parser.js'
+import { TransactionParser } from './parser.ts'
 import eventsByContractIdResponsesJsonMixed from './__tests__/data/mock/mixed-events/eventsByContractIdResponses.json'
 import txsMockJsonMixed from './__tests__/data/mock/mixed-events/txs.json'
 import txsExpectedMixed from './__tests__/data/expected/mixed-events/txs.json'

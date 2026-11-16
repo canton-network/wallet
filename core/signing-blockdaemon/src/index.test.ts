@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, expect, describe, test, beforeEach, type Mocked } from 'vitest'
-import BlockdaemonSigningDriver from './index.js'
-import type { SigningAPIClient } from './signing-api-sdk.js'
+import BlockdaemonSigningDriver from './index.ts'
+import type { SigningAPIClient } from './signing-api-sdk.ts'
 import type { Transaction, Key } from '@canton-network/core-signing-lib'
 
 describe('BlockdaemonSigningDriver constructor', () => {

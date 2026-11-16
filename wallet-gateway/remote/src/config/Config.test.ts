@@ -3,12 +3,12 @@
 
 import { readFileSync } from 'node:fs'
 import { describe, expect, test } from 'vitest'
-import { ConfigUtils } from './ConfigUtils.js'
+import { ConfigUtils } from './ConfigUtils.ts'
 import {
     configSchema,
     rawConfigSchema,
     signingProvidersConfigSchema,
-} from './Config.js'
+} from './Config.ts'
 
 test('config from json file', async () => {
     const resp = ConfigUtils.loadConfigFile('../test/config.json').config

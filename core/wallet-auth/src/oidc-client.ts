@@ -3,13 +3,13 @@
 
 import { base64url } from 'jose'
 import { LRUCache } from 'typescript-lru-cache'
-import { IdpUnavailableError } from './auth-service.js'
+import { IdpUnavailableError } from './auth-service.ts'
 import {
     fetchOidcDiscovery,
     fetchOidcUserInfo,
     type OidcDiscovery,
     type OidcUserInfo,
-} from './auth-utils.js'
+} from './auth-utils.ts'
 
 /**
  * How long discovery documents and userinfo responses are reused. Matches

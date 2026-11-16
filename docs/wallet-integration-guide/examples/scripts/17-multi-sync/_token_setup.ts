@@ -3,8 +3,8 @@
 
 import type { Logger } from 'pino'
 import { TestToken } from '@canton-network/core-splice-codegen'
-import type { MultiSyncSetup } from './_setup.js'
-import { BOB_TOKEN_MINT_AMOUNT } from './_constants.js'
+import type { MultiSyncSetup } from './_setup.ts'
+import { BOB_TOKEN_MINT_AMOUNT } from './_constants.ts'
 
 /**
  * Mints TestTokens for the TokenAdmin and offers them to Bob via the registry's

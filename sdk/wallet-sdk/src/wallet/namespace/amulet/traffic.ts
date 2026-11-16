@@ -2,10 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { PreparedCommand } from '../transactions/types.js'
+import type { PreparedCommand } from '../transactions/types.ts'
 import type { Ops } from '@canton-network/core-provider-ledger'
-import { type AmuletNamespaceConfig, fetchAmulet } from './namespace.js'
-import { SynchronizerResolver } from '../../init/synchronizer.js'
+import { type AmuletNamespaceConfig, fetchAmulet } from './namespace.ts'
+import { SynchronizerResolver } from '../../init/synchronizer.ts'
 
 export class TrafficNamespace {
     constructor(private readonly sdkContext: AmuletNamespaceConfig) {}

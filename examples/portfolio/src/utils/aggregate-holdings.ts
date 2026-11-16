@@ -3,8 +3,8 @@
 
 import { Decimal } from 'decimal.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
-import type { Instruments } from '../types/instruments'
-import { isBasicAccount, type PortfolioHolding } from './holdings'
+import type { Instruments } from '../types/instruments.ts'
+import { isBasicAccount, type PortfolioHolding } from './holdings.ts'
 import type { Account } from '@canton-network/core-token-standard-v2'
 
 export interface AggregatedAccountBalance {

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vitest/config'
-import { standardDecorators } from '../../vite.decorators.js'
+import { standardDecorators } from '../../vite.decorators.ts'
 import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 import path from 'node:path'
 import { readdirSync, readFileSync } from 'node:fs'

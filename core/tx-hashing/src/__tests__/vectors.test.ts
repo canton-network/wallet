@@ -2,20 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import type { TxHashingErrorCode } from '../errors.js'
+import type { TxHashingErrorCode } from '../errors.ts'
 import {
     computePreparedTransactionHash,
     DEFAULT_LIMITS,
     type HashingScheme,
-} from '../index.js'
-import { toHex } from './helpers/hex.js'
+} from '../index.ts'
+import { toHex } from './helpers/hex.ts'
 import {
     loadVectors,
     V2,
     V3,
     vectorFiles,
     type Vector,
-} from './helpers/load-vectors.js'
+} from './helpers/load-vectors.ts'
 
 // Fails to compile when a code is added to or removed from the union
 const ERROR_CODES: Record<TxHashingErrorCode, true> = {

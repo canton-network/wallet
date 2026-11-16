@@ -2,26 +2,26 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { SDKContext } from '../../init/types/context.js'
-import type { PreparedCommand } from '../transactions/types.js'
+import type { SDKContext } from '../../init/types/context.ts'
+import type { PreparedCommand } from '../transactions/types.ts'
 import type {
     FeaturedAppRight,
     GrantFeaturedAppRightsOptions,
     LookupFeaturedAppRightsOptions,
     RevokeFeaturedAppRightsOptions,
-} from './types.js'
+} from './types.ts'
 import type { AmuletService } from '@canton-network/core-amulet-service'
-import { SynchronizerResolver } from '../../init/synchronizer.js'
+import { SynchronizerResolver } from '../../init/synchronizer.ts'
 import type {
     AssetBody,
     TokenStandardService,
 } from '@canton-network/core-token-standard-service'
-import { TrafficNamespace } from './traffic.js'
-import { LedgerNamespace } from '../ledger/namespace.js'
-import { PreapprovalNamespace } from './preapproval.js'
+import { TrafficNamespace } from './traffic.ts'
+import { LedgerNamespace } from '../ledger/namespace.ts'
+import { PreapprovalNamespace } from './preapproval.ts'
 import { Decimal } from 'decimal.js'
-import { parseAssets, ParsedURL } from '../utils/url.js'
-import { resolveProviderParty } from './utils.js'
+import { parseAssets, ParsedURL } from '../utils/url.ts'
+import { resolveProviderParty } from './utils.ts'
 
 const defaultMaxRetries = 10
 const defaultDelayMs = 5000

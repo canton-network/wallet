@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { CoreService } from '../core-service'
+import type { CoreService } from '../core-service.ts'
 import {
     type AllocationFactory_Allocate,
     type AllocationSpecification,
@@ -20,7 +20,7 @@ import {
     REQUESTED_AT_SKEW_MS,
     type DisclosedContract,
     type ExerciseCommand,
-} from '../types'
+} from '../types.ts'
 import { Decimal } from 'decimal.js'
 import type { ContractId, PartyId } from '@canton-network/core-types'
 import { getLogger } from '@logtape/logtape'

@@ -17,7 +17,7 @@ import type {
     AllocationInstructionView as AllocationInstructionViewV2,
     AllocationInstruction,
 } from '@canton-network/core-token-standard-v2'
-import type { TokenStandardVersion } from '../types/instruments'
+import type { TokenStandardVersion } from '../types/instruments.ts'
 
 interface ActionItemBase {
     contractId: string

@@ -17,8 +17,8 @@ import {
     EMPTY_META,
     type ExerciseCommand,
     REQUESTED_AT_SKEW_MS,
-} from '../types.js'
-import type { CoreService } from '../core-service.js'
+} from '../types.ts'
+import type { CoreService } from '../core-service.ts'
 
 export class AllocationService {
     constructor(private core: CoreService) {}

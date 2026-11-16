@@ -12,8 +12,8 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor, type Mock, type userEvent } from 'storybook/test'
-import { fillField } from '../__tests__/fields'
-import { NetworkForm } from './NetworkForm'
+import { fillField } from '../__tests__/fields.ts'
+import { NetworkForm } from './NetworkForm.tsx'
 
 type User = ReturnType<typeof userEvent.setup>
 

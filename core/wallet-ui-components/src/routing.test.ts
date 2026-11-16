@@ -8,7 +8,7 @@ import {
     isAllowedRoute,
     toRelHref,
     toRelPath,
-} from './routing.js'
+} from './routing.ts'
 
 describe('isAllowedRoute', () => {
     it('accepts every configured route', () => {

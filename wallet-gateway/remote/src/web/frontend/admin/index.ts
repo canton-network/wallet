@@ -14,10 +14,10 @@ import {
 
 import type { GetServerStatusResult } from '@canton-network/core-wallet-user-rpc-client'
 
-import { createUserClient } from '../rpc-client'
-import '../index'
-import { stateManager } from '../state-manager'
-import { detectCurrentOrigin } from '../listeners.js'
+import { createUserClient } from '../rpc-client.ts'
+import '../index.ts'
+import { stateManager } from '../state-manager.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
 
 @customElement('user-ui-admin')
 export class UserUiAdmin extends BaseElement {

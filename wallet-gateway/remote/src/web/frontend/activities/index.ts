@@ -16,13 +16,13 @@ import {
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
 
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
+import { createUserClient } from '../rpc-client.ts'
+import { setLocationHref } from '../navigation.ts'
 
-import '../index'
-import { stateManager } from '../state-manager'
+import '../index.ts'
+import { stateManager } from '../state-manager.ts'
 import type { Transaction } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../listeners.js'
+import { detectCurrentOrigin } from '../listeners.ts'
 
 @customElement('user-ui-activities')
 export class UserUiActivities extends BaseElement {

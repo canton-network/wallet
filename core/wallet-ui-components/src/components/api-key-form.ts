@@ -3,7 +3,7 @@
 
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
+import { BaseElement } from '../internal/base-element.ts'
 import type { GenerateApiKeyParams } from '@canton-network/core-wallet-user-rpc-client'
 
 /**

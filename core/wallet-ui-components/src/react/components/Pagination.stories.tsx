@@ -5,7 +5,7 @@ import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { findByShadowRole, findByShadowText } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { Pagination } from './Pagination'
+import { Pagination } from './Pagination.tsx'
 
 const meta = {
     title: 'Pagination',

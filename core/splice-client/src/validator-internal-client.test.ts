@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { ValidatorInternalClient } from './validator-internal-client.js'
+import { ValidatorInternalClient } from './validator-internal-client.ts'
 import {
     createAccessTokenProvider,
     getRequestHeaders,
     getRequestMethod,
     jsonResponse,
-} from './__tests__/test-utils.js'
+} from './__tests__/test-utils.ts'
 
 const VALIDATOR_BASE_URL = new URL('https://validator.example/')
 

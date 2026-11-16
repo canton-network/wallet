@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SDKLogger } from './logger/logger.js'
-import { SDKErrorHandler } from './error/handler.js'
+import { SDKLogger } from './logger/logger.ts'
+import { SDKErrorHandler } from './error/handler.ts'
 import {
     type AbstractLedgerProvider,
     LedgerProvider,
@@ -15,7 +15,7 @@ import {
     type OfflineSDKInterface,
     type GetExtendedKeys,
     type SDKInterface,
-} from './init/types/sdk.js'
+} from './init/types/sdk.ts'
 import {
     AuthTokenProvider,
     type TokenProviderConfig,
@@ -23,45 +23,45 @@ import {
 import {
     ExtendedInitializedSDK,
     OfflineInitializedSDK,
-} from './init/initializedSDK.js'
+} from './init/initializedSDK.ts'
 import type {
     LedgerTypes as LedgerRpc,
     LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
-import type { AllowedLogAdapters } from './logger/types.js'
+import type { AllowedLogAdapters } from './logger/types.ts'
 import type { DappLedgerRpc } from '@canton-network/core-provider-dapp'
-import type { SDKContext } from './index.js'
-import { SynchronizerResolver } from './init/synchronizer.js'
+import type { SDKContext } from './index.ts'
+import { SynchronizerResolver } from './init/synchronizer.ts'
 import { ValidatorInternalClient } from '@canton-network/core-splice-client'
 export {
     resolveCapabilities,
     type AssetBody,
 } from '@canton-network/core-token-standard-service'
-export { findAsset } from './namespace/asset/index.js'
-export type * from './namespace/asset/index.js'
-export type * from './namespace/token/index.js'
-export type * from './namespace/amulet/index.js'
+export { findAsset } from './namespace/asset/index.ts'
+export type * from './namespace/asset/index.ts'
+export type * from './namespace/token/index.ts'
+export type * from './namespace/amulet/index.ts'
 export { type TokenProviderConfig } from '@canton-network/core-wallet-auth'
 export { LedgerProvider } from '@canton-network/core-provider-ledger'
 export {
     type Event,
     type CompletionEvent,
     type UpdateEvent,
-} from './namespace/events/index.js'
-export type * from './namespace/transactions/types.js'
+} from './namespace/events/index.ts'
+export type * from './namespace/transactions/types.ts'
 export {
     signTransactionHash,
     getPublicKeyFromPrivate,
 } from '@canton-network/core-signing-lib'
 export type { LedgerCommonSchemas }
 
-export * from './init/index.js'
+export * from './init/index.ts'
 export type {
     PrepareOptions,
     ExecuteOptions,
-} from './namespace/ledger/index.js'
-export * from './namespace/transactions/prepared.js'
-export * from './namespace/transactions/signed.js'
+} from './namespace/ledger/index.ts'
+export * from './namespace/transactions/prepared.ts'
+export * from './namespace/transactions/signed.ts'
 export { ScanProxyClient } from '@canton-network/core-splice-client'
 
 export class SDK {

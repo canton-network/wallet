@@ -4,7 +4,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
 import { JsonRpcError } from '@canton-network/core-rpc-errors'
-import { WindowTransport } from './index.js'
+import { WindowTransport } from './index.ts'
 
 // only tested when running in browser environment
 

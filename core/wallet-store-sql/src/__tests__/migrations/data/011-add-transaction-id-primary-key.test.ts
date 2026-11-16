@@ -13,9 +13,9 @@ import {
     indexExists,
     listColumns,
     primaryKeyColumns,
-} from '../helpers'
-import { insertIdp, insertNetwork } from '../seeds/001-init'
-import { insertTransaction } from '../seeds/010-transaction-with-network'
+} from '../helpers.ts'
+import { insertIdp, insertNetwork } from '../seeds/001-init.ts'
+import { insertTransaction } from '../seeds/010-transaction-with-network.ts'
 
 const TARGET = 11
 const COMMAND_NETWORK_IDX = 'transactions_command_user_network_idx'

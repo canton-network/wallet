@@ -4,7 +4,7 @@
 import { expect, test, vi } from 'vitest'
 
 // import request from 'supertest'
-import { InternalSigningDriver } from './controller.js'
+import { InternalSigningDriver } from './controller.ts'
 import {
     createKeyPair,
     type Error as RpcError,

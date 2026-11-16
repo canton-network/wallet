@@ -9,9 +9,9 @@ import type {
     PrepareExecuteParams,
     StatusEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import * as storage from '../storage'
-import { clearAllLocalState } from '../util'
-import { RemoteAdapter } from './remote-adapter'
+import * as storage from '../storage.ts'
+import { clearAllLocalState } from '../util.ts'
+import { RemoteAdapter } from './remote-adapter.ts'
 
 const RPC_URL = 'https://gateway.example.com'
 
@@ -76,11 +76,11 @@ vi.mock('@canton-network/core-provider-dapp', () => ({
     DappAsyncProvider: DappAsyncProviderMock,
 }))
 
-vi.mock('../sdk-controller', () => ({
+vi.mock('../sdk-controller.ts', () => ({
     dappSDKController: dappSDKControllerMock,
 }))
 
-vi.mock('../util', () => ({
+vi.mock('../util.ts', () => ({
     clearAllLocalState: vi.fn(),
 }))
 

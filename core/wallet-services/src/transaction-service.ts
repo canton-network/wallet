@@ -23,8 +23,8 @@ import {
     type Methods as SigningController,
     type SignTransactionParams,
 } from '@canton-network/core-signing-lib'
-import type { SigningDrivers, HASHING_SCHEME_VERSION } from './types.js'
-import type { Notifier } from './notification/index.js'
+import type { SigningDrivers, HASHING_SCHEME_VERSION } from './types.ts'
+import type { Notifier } from './notification/index.ts'
 import type {
     ExecuteParams,
     ExecuteResult,
@@ -38,7 +38,7 @@ import type {
     TxChangedSignedEvent,
     UserId,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { ledgerPrepareParams, type PrepareParams } from './utils.js'
+import { ledgerPrepareParams, type PrepareParams } from './utils.ts'
 import {
     type AuthContext,
     AuthTokenProvider,

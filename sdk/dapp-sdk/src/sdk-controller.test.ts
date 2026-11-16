@@ -16,9 +16,9 @@ import type {
     LedgerApiParams,
     PrepareExecuteParams,
     SignMessageParams,
-} from './dapp-api/rpc-gen/typings'
+} from './dapp-api/rpc-gen/typings.ts'
 import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
-import { dappSDKController } from './sdk-controller'
+import { dappSDKController } from './sdk-controller.ts'
 
 const { popupOpen } = vi.hoisted(() => ({
     popupOpen: vi.fn(),

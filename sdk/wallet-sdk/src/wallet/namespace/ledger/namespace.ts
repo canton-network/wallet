@@ -2,19 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { SDKContext } from '../../init/types/context.js'
+import type { SDKContext } from '../../init/types/context.ts'
 import type {
     PrepareOptions,
     ExecuteOptions,
     AcsRequestOptions,
-} from './types.js'
-import { PreparedTransaction } from '../transactions/prepared.js'
-import { SignedTransaction } from '../transactions/signed.js'
+} from './types.ts'
+import { PreparedTransaction } from '../transactions/prepared.ts'
+import { SignedTransaction } from '../transactions/signed.ts'
 import type { Ops } from '@canton-network/core-provider-ledger'
-import { InternalLedgerNamespace } from './internal/index.js'
+import { InternalLedgerNamespace } from './internal/index.ts'
 import { ACSReader } from '@canton-network/core-acs-reader'
-import { DarNamespace } from './dar/index.js'
-import { SynchronizerResolver } from '../../init/synchronizer.js'
+import { DarNamespace } from './dar/index.ts'
+import { SynchronizerResolver } from '../../init/synchronizer.ts'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace

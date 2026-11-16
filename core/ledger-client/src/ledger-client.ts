@@ -16,7 +16,7 @@ import {
     defaultRetryableOptions,
     retryable,
     type RetryableOptions,
-} from './ledger-api-utils.js'
+} from './ledger-api-utils.ts'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import { getLogger } from '@logtape/logtape'
 

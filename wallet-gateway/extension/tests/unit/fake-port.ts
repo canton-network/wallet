@@ -3,7 +3,7 @@
 
 import type { Browser } from 'wxt/browser'
 import { vi } from 'vitest'
-import { NOTIFICATIONS_PORT_NAME } from '@/utils/notifications.js'
+import { NOTIFICATIONS_PORT_NAME } from '@/utils/notifications.ts'
 
 type Listener<T extends unknown[]> = (...args: T) => void
 

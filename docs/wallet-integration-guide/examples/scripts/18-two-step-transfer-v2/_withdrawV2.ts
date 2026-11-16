@@ -1,6 +1,6 @@
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
-import type { TransferTestScriptParameters } from './types.js'
-import { assertV2 } from '../utils/assert.js'
+import type { TransferTestScriptParameters } from './types.ts'
+import { assertV2 } from '../utils/assert.ts'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 
 export default async (args: TransferTestScriptParameters) => {

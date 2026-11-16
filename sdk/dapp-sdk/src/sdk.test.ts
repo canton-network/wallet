@@ -31,7 +31,7 @@ import type {
     StatusEvent,
     TxChangedEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import * as storage from './storage'
+import * as storage from './storage.ts'
 import defaultGatewayList from './gateways.json'
 import {
     DappSDK,
@@ -57,7 +57,7 @@ import {
     removeOnTxChanged,
     sdk,
     status,
-} from './sdk'
+} from './sdk.ts'
 
 const {
     mockRequestAnnouncedProviders,
@@ -141,15 +141,15 @@ const {
     }
 })
 
-vi.mock('./announce-discovery', () => ({
+vi.mock('./announce-discovery.ts', () => ({
     requestAnnouncedProviders: mockRequestAnnouncedProviders,
 }))
 
-vi.mock('./util', () => ({
+vi.mock('./util.ts', () => ({
     clearAllLocalState: mockClearAllLocalState,
 }))
 
-vi.mock('./adapter/remote-adapter', () => ({
+vi.mock('./adapter/remote-adapter.ts', () => ({
     RemoteAdapter: RemoteAdapterMock,
 }))
 

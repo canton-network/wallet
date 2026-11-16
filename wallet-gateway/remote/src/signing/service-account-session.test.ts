@@ -9,7 +9,7 @@ import type { Idp } from '@canton-network/core-wallet-auth'
 import {
     createServiceAccountRunContextResolver,
     resolveAutomationRunContext,
-} from './service-account-session.js'
+} from './service-account-session.ts'
 
 vi.mock('@canton-network/core-wallet-auth', async () => {
     const actual = await vi.importActual<

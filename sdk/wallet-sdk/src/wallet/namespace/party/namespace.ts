@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import { ExternalPartyNamespace } from './external/index.js'
+import { ExternalPartyNamespace } from './external/index.ts'
 import type { Ops } from '@canton-network/core-provider-ledger'
-import type { SDKContext } from '../../init/types/context.js'
-import { InternalPartyNamespace } from './index.js'
-import { SDKUtilsNamespace } from '../utils/index.js'
+import type { SDKContext } from '../../init/types/context.ts'
+import { InternalPartyNamespace } from './index.ts'
+import { SDKUtilsNamespace } from '../utils/index.ts'
 
 export class PartyNamespace {
     public readonly internal: InternalPartyNamespace

@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { PaginatedACSCache } from '../../../cache/item'
+import { PaginatedACSCache } from '../../../cache/item/index.ts'
 
 const {
     getPaginatedActiveContracts,

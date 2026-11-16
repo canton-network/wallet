@@ -14,9 +14,9 @@ import type { Provider } from '@canton-network/core-splice-provider'
 import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
 import { WalletEvent } from '@canton-network/core-types'
 import { errorCodes } from '@canton-network/core-rpc-errors'
-import type { PrepareExecuteParams } from '../../index'
-import { DappSDK } from '../../sdk'
-import { RemoteAdapter } from '../../adapter'
+import type { PrepareExecuteParams } from '../../index.ts'
+import { DappSDK } from '../../sdk.ts'
+import { RemoteAdapter } from '../../adapter/index.ts'
 import { popup } from '@canton-network/core-wallet-ui-components'
 import {
     APPROVE_URL,
@@ -26,12 +26,12 @@ import {
     SIGN_MESSAGE_ID,
     statusConnected,
     USER_URL,
-} from './mock-remote/json-rpc-handlers'
-import * as storage from '../../storage'
+} from './mock-remote/json-rpc-handlers.ts'
+import * as storage from '../../storage.ts'
 
 // This test file doesn't validate browser extension wallets, so skip the
 // wait for CANTON_ANNOUNCE_PROVIDER_EVENT discovery step to save 600ms per test
-vi.mock('../../announce-discovery', () => ({
+vi.mock('../../announce-discovery.ts', () => ({
     requestAnnouncedProviders: async () => [],
 }))
 

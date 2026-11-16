@@ -3,11 +3,11 @@
 
 import type { Logger } from 'pino'
 import type { SDKInterface } from '@canton-network/wallet-sdk'
-import type { MultiSyncSetup } from './_setup.js'
-import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.js'
+import type { MultiSyncSetup } from './_setup.ts'
+import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.ts'
 import { OTCTrade } from '@canton-network/core-splice-codegen'
 import type { TransferLeg } from '@canton-network/core-token-standard'
-import { pollUntilFound } from './_poll.js'
+import { pollUntilFound } from './_poll.ts'
 
 const MS_30_MIN = 30 * 60 * 1000
 const MS_1_HOUR = 60 * 60 * 1000

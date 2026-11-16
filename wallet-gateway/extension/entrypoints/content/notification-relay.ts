@@ -10,7 +10,7 @@ import type { Browser } from 'wxt/browser'
 import {
     NOTIFICATIONS_PORT_NAME,
     type NotificationPortMessage,
-} from '@/utils/notifications.js'
+} from '@/utils/notifications.ts'
 
 type Port = Browser.runtime.Port
 

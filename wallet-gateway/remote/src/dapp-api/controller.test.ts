@@ -21,9 +21,9 @@ import {
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { KernelInfo } from '../config/Config.js'
+import type { KernelInfo } from '../config/Config.ts'
 import { NotificationService } from '@canton-network/core-wallet-services'
-import { dappController, type DappControllerDeps } from './controller.js'
+import { dappController, type DappControllerDeps } from './controller.ts'
 import { getLogger } from '@logtape/logtape'
 
 const ledgerMocks = vi.hoisted(() => ({

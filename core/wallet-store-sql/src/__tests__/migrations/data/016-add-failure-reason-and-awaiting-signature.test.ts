@@ -11,9 +11,9 @@ import {
     listColumns,
     migrateDownThrough,
     hasColumn,
-} from '../helpers'
-import { insertIdp, insertNetwork } from '../seeds/001-init'
-import { insertTransaction } from '../seeds/016-add-failure-reason-and-awaiting-signature'
+} from '../helpers.ts'
+import { insertIdp, insertNetwork } from '../seeds/001-init.ts'
+import { insertTransaction } from '../seeds/016-add-failure-reason-and-awaiting-signature.ts'
 
 const TARGET = 16
 

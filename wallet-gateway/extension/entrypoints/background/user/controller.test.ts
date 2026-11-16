@@ -22,9 +22,9 @@ import {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { AuthService } from '../auth-service'
-import { initializeWalletStore } from '../store'
-import { userController } from './controller'
+import { AuthService } from '../auth-service.ts'
+import { initializeWalletStore } from '../store.ts'
+import { userController } from './controller.ts'
 
 const networkId = 'canton:local-oauth'
 const authContext = { userId: 'user-1', accessToken: 'token-1' }

@@ -25,7 +25,7 @@ import {
 import { usePreapprovalStatuses } from '@hooks/usePreapprovalStatuses'
 import { useTogglePreapproval } from '@hooks/useTogglePreapproval'
 import { useWalletSdk } from '@hooks/useWalletSdk'
-import type { PreapprovalRow } from '../../types/preapprovals'
+import type { PreapprovalRow } from '../../types/preapprovals.ts'
 
 export function PreapprovalsSection() {
     const primaryParty = usePrimaryAccount()?.partyId

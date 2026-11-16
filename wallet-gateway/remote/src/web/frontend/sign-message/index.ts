@@ -8,14 +8,14 @@ import {
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
-import { stateManager } from '../state-manager'
-import '../index'
-import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
-import { showToast } from '../utils'
+import { createUserClient } from '../rpc-client.ts'
+import { setLocationHref } from '../navigation.ts'
+import { stateManager } from '../state-manager.ts'
+import '../index.ts'
+import { ACTIVITIES_PAGE_REDIRECT } from '../constants.ts'
+import { showToast } from '../utils.ts'
 import type { GetSignMessageStatusResult } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../listeners.js'
+import { detectCurrentOrigin } from '../listeners.ts'
 
 const POLL_INTERVAL_MS = 3000
 

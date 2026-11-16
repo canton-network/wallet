@@ -7,4 +7,4 @@ export {
     toTemplateContract,
     toTemplateContracts,
     expectTemplateContract,
-} from './typed-contract.js'
+} from './typed-contract.ts'

@@ -3,10 +3,10 @@
 
 import { describe, expect, it, vi } from 'vitest'
 import { popup } from '@canton-network/core-wallet-ui-components'
-import * as storage from './storage'
-import { clearAllLocalState, composeSIWXMessage } from './util'
+import * as storage from './storage.ts'
+import { clearAllLocalState, composeSIWXMessage } from './util.ts'
 
-vi.mock('./storage', () => ({
+vi.mock('./storage.ts', () => ({
     removeKernelSession: vi.fn(),
     removeKernelDiscovery: vi.fn(),
 }))

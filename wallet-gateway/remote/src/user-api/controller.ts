@@ -4,7 +4,7 @@
 // Disabled unused vars rule to allow for future implementations
 /* oxlint-disable no-unused-vars */
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import buildController from './rpc-gen/index.js'
+import buildController from './rpc-gen/index.ts'
 import type {
     AddNetworkParams,
     RemoveNetworkParams,
@@ -63,7 +63,7 @@ import type {
     GetTransactionStatusResult,
     GetSignMessageStatusParams,
     GetSignMessageStatusResult,
-} from './rpc-gen/typings.js'
+} from './rpc-gen/typings.ts'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
 import {
@@ -77,22 +77,22 @@ import {
     resolveAuthIdentityProviderId,
     assertIsConnected,
 } from '@canton-network/core-wallet-auth'
-import type { KernelInfo } from '../config/Config.js'
-import type { ConfigManagedIds } from '../config/ConfigUtils.js'
+import type { KernelInfo } from '../config/Config.ts'
+import type { ConfigManagedIds } from '../config/ConfigUtils.ts'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
-import { PartyAllocationService } from '../ledger/party-allocation-service.js'
-import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
-import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
-import type { TxChangedFailedEvent } from '../dapp-api/rpc-gen/typings.js'
+import { PartyAllocationService } from '../ledger/party-allocation-service.ts'
+import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.ts'
+import { WalletSyncService } from '../ledger/wallet-sync-service.ts'
+import type { StatusEvent } from '../dapp-api/rpc-gen/typings.ts'
+import type { TxChangedFailedEvent } from '../dapp-api/rpc-gen/typings.ts'
 import {
     errorCodes,
     providerErrors,
     rpcErrors,
 } from '@canton-network/core-rpc-errors'
 import { randomBytes, createHash, timingSafeEqual } from 'crypto'
-import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
-import type { ServerStatusService } from '../notices/server-status-service.js'
+import { assertTokenClaimsMatchNetwork } from './token-network-matching.ts'
+import type { ServerStatusService } from '../notices/server-status-service.ts'
 import {
     assertLoginAllowed,
     SelfIssuedAuthService,

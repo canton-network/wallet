@@ -9,7 +9,7 @@ import {
     Chip,
 } from '@mui/material'
 import { useState } from 'react'
-import type { PendingRequest } from '../walletkit'
+import type { PendingRequest } from '../walletkit/index.ts'
 
 interface RequestApprovalModalProps {
     request: PendingRequest | null

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { FlatPack } from './lib/flat-pack.js'
+import { FlatPack } from './lib/flat-pack.ts'
 import { Command } from '@commander-js/extra-typings'
 
 const command = new Command()

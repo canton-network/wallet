@@ -5,8 +5,8 @@ import { useCallback } from 'react'
 import {
     getErrorToastContent,
     type ErrorToastFallback,
-} from '../../internal/error-toast'
-import { useToast } from './useToast'
+} from '../../internal/error-toast.ts'
+import { useToast } from './useToast.ts'
 
 export type { ErrorToastFallback }
 

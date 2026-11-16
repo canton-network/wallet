@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { MergeUtxosParams, ListHoldingsParams } from './types.js'
+import type { MergeUtxosParams, ListHoldingsParams } from './types.ts'
 import {
     HOLDING_INTERFACE_ID,
     type HoldingView,
@@ -12,11 +12,11 @@ import {
     findAsset,
     type LedgerCommonSchemas,
     type TokenNamespaceConfig,
-} from '../../../sdk.js'
+} from '../../../sdk.ts'
 import { Decimal } from 'decimal.js'
-import type { TransferNamespace } from '../transfer/index.js'
-import { MergeDelegationNamespace } from './mergeDelegation.js'
-import { parseAssets } from '../../utils/url.js'
+import type { TransferNamespace } from '../transfer/index.ts'
+import { MergeDelegationNamespace } from './mergeDelegation.ts'
+import { parseAssets } from '../../utils/url.ts'
 import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 
 export class UtxoNamespace {

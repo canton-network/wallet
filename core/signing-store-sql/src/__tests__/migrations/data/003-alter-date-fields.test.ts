@@ -12,12 +12,12 @@ import {
     migrateDownThrough,
     migrateUpThrough,
     migrateUpToBefore,
-} from '../helpers.js'
+} from '../helpers.ts'
 import {
     insertSigningKey,
     insertSigningTransaction,
-} from '../seeds/001-init.js'
-import { insertSigningTransaction002 } from '../seeds/002-add-signed-at.js'
+} from '../seeds/001-init.ts'
+import { insertSigningTransaction002 } from '../seeds/002-add-signed-at.ts'
 
 const TARGET = 3
 

@@ -1,6 +1,6 @@
 import type * as sdk from '@canton-network/dapp-sdk'
-import { useHoldings } from '../hooks/useHoldings'
-import { useAccounts } from '../hooks/useAccounts'
+import { useHoldings } from '../hooks/useHoldings.ts'
+import { useAccounts } from '../hooks/useAccounts.ts'
 import { useState } from 'react'
 
 export default function Holdings(props: {

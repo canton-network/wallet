@@ -6,7 +6,7 @@ import {
     encryptString,
     decryptString,
     destroyTokenKey,
-} from './access-token-utils'
+} from './access-token-utils.ts'
 
 describe('access token utils', () => {
     beforeEach(async () => {

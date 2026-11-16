@@ -6,7 +6,7 @@ import { createComponent, type EventName } from '@lit/react'
 import {
     WgTransactionCard as WgTransactionCardElement,
     type TransactionCardReviewEvent,
-} from '../../components/transaction-card.js'
+} from '../../components/transaction-card.ts'
 
 export const TransactionCard = createComponent({
     tagName: 'wg-transaction-card',

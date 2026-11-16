@@ -4,7 +4,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { TextField } from '@mui/material'
 import { expect, fn } from 'storybook/test'
-import { WalletForm } from './WalletForm'
+import { WalletForm } from './WalletForm.tsx'
 
 const meta: Meta = {
     title: 'WalletForm',

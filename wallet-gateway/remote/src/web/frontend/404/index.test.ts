@@ -5,10 +5,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 
-vi.mock('../index.js', () => ({}))
+vi.mock('../index.ts', () => ({}))
 
-import './index.js'
-import type { NotFoundUi } from './index.js'
+import './index.ts'
+import type { NotFoundUi } from './index.ts'
 
 describe('NotFoundUi', () => {
     afterEach(() => {

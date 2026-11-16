@@ -9,9 +9,9 @@ import {
     type Instruments,
     type PortfolioInstrument,
     toPortfolioInstrument,
-} from '../types/instruments'
+} from '../types/instruments.ts'
 import { resolveRegistryClient } from '@lib/registry-client'
-import { useRegistryUrls } from './useRegistryUrls'
+import { useRegistryUrls } from './useRegistryUrls.ts'
 import { queryKeys } from '@hooks/query-keys'
 
 const fetchAllInstruments = async (url: string): Promise<Instrument[]> => {

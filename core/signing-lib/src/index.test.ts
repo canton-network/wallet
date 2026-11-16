@@ -10,7 +10,7 @@ import {
     signMessage,
     signTransactionHash,
     verifySignedTxHash,
-} from './index'
+} from './index.ts'
 
 const TX_HASH =
     '88beb0783e394f6128699bad42906374ab64197d260db05bb0cfeeb518ba3ac2'

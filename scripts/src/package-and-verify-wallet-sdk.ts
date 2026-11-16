@@ -5,8 +5,8 @@ import { execSync } from 'child_process'
 import * as fs from 'fs'
 import os from 'os'
 import * as path from 'path'
-import { error, success, repoRoot } from './lib/utils.js'
-import { FlatPack } from './lib/flat-pack.js'
+import { error, success, repoRoot } from './lib/utils.ts'
+import { FlatPack } from './lib/flat-pack.ts'
 
 function run(cmd: string, opts: { cwd?: string } = {}) {
     console.log(`$ ${cmd}`)

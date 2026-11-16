@@ -7,9 +7,9 @@ import {
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
+} from './utils/index.ts'
 
-import { configureLogging } from './utils/configure-logging.js'
+import { configureLogging } from './utils/configure-logging.ts'
 const logger = await configureLogging()
 
 const userId = localNetStaticConfig.LOCALNET_USER_ID

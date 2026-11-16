@@ -13,7 +13,7 @@ import {
 } from '@canton-network/wallet-sdk'
 import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
 import { getLogger } from '@logtape/logtape'
-import { localNetGlobalSynchronizer } from './localnet.js'
+import { localNetGlobalSynchronizer } from './localnet.ts'
 
 // This example needs the uploaded .dar for splice-token-test-trading-app-v2.
 // It ships with LocalNet but isn't uploaded to the participant, so we do it here.

@@ -3,13 +3,13 @@
 
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-import { AmuletService } from './amulet-service'
-import { AmuletServiceScanOnly } from './amulet-service-scan'
-import { AmuletServiceScanProxy } from './amulet-service-scan-proxy'
+import { AmuletService } from './amulet-service.ts'
+import { AmuletServiceScanOnly } from './amulet-service-scan.ts'
+import { AmuletServiceScanProxy } from './amulet-service-scan-proxy.ts'
 import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 
-vi.mock('./amulet-service-scan-proxy')
-vi.mock('./amulet-service-scan')
+vi.mock('./amulet-service-scan-proxy.ts')
+vi.mock('./amulet-service-scan.ts')
 /* oxlint-disable typescript/no-explicit-any */
 
 const registryUrl = new URL('https://registry.example.com')

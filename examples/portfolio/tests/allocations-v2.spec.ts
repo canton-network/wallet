@@ -21,7 +21,7 @@ import {
     switchWallet,
     tap,
     workerClientId,
-} from './utils'
+} from './utils.ts'
 
 // Amounts (OTCTradeV2 defaults): Alice sends 10 to Bob, Bob sends 2 to Alice,
 // Bob sends 0.5 to Carol. Net per trader: Alice -8, Bob +7.5, Carol +0.5.

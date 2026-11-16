@@ -2,12 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, expect } from 'vitest'
-import { parseAssets, ParsedURL } from './url.js'
-import type { SDKContext } from '../../init/types/context.js'
-import { SDKLogger } from '../../logger/index.js'
-import { SDKError, SDKErrorHandler } from '../../error/index.js'
-import { SDKUtilsNamespace } from './index.js'
-import { capabilities } from '../../__tests__/mocks'
+import { parseAssets, ParsedURL } from './url.ts'
+import type { SDKContext } from '../../init/types/context.ts'
+import { SDKLogger } from '../../logger/index.ts'
+import { SDKError, SDKErrorHandler } from '../../error/index.ts'
+import { SDKUtilsNamespace } from './index.ts'
+import { capabilities } from '../../__tests__/mocks.ts'
 import {
     HashingSchemeVersion,
     PreparedTransaction,
@@ -16,7 +16,7 @@ import {
     TxHashingError,
     type TxHashingErrorCode,
 } from '@canton-network/core-tx-hashing'
-import { base64ToBytes } from './encoding.js'
+import { base64ToBytes } from './encoding.ts'
 
 const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     request: vi.fn().mockResolvedValue(undefined),

@@ -6,7 +6,7 @@ import { createComponent, type EventName } from '@lit/react'
 import {
     ApiKeyCard as ApiKeyCardElement,
     type ApiKeyCardRevokeEvent,
-} from '../../components/api-key-card.js'
+} from '../../components/api-key-card.ts'
 
 export const ApiKeyCard = createComponent({
     tagName: 'api-key-card',

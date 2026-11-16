@@ -15,7 +15,7 @@ import {
     workerClientId,
     expectHistoryRow,
     gotoWalletHistory,
-} from './utils'
+} from './utils.ts'
 
 const setupOtcTrade = async (page: Page) => {
     const rnd = Math.floor(Math.random() * 100000)

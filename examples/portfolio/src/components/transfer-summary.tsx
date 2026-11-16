@@ -6,7 +6,7 @@ import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DescriptionText } from '@components/description-text'
 import { PillButton } from '@components/ui/PillButton'
 import { DateTimeText } from '@components/date-time-text'
-import type { SubmittedTransfer } from './transfer-types'
+import type { SubmittedTransfer } from './transfer-types.ts'
 
 interface TransferSummaryProps {
     transfer: SubmittedTransfer

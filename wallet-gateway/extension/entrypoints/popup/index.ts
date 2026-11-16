@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { browser } from 'wxt/browser'
-import { consumeNextApprovalRequest } from '@/utils/approval-requests.js'
+import { consumeNextApprovalRequest } from '@/utils/approval-requests.ts'
 
 async function initializePopup(): Promise<void> {
     let approvalRequest
@@ -23,7 +23,7 @@ async function initializePopup(): Promise<void> {
         return
     }
 
-    await import('@/utils/legacy-frontend')
+    await import('@/utils/legacy-frontend/index.ts')
 }
 
 void initializePopup()

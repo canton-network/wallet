@@ -14,7 +14,7 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { IdpCard } from './IdpCard'
+import { IdpCard } from './IdpCard.tsx'
 
 const oauthIdp: OauthIdp = {
     id: 'my-idp',

@@ -20,8 +20,8 @@ import {
     useReachableRegistryUrls,
     useRegistryMutations,
 } from '@hooks/useRegistryUrls'
-import type { RegistryReachabilityStatus } from '../../types/registries'
-import { AddRegistryDialog } from './add-registry-dialog'
+import type { RegistryReachabilityStatus } from '../../types/registries.ts'
+import { AddRegistryDialog } from './add-registry-dialog.tsx'
 
 const statusDetails: Record<
     RegistryReachabilityStatus,

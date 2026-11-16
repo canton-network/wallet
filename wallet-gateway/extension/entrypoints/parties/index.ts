@@ -23,16 +23,16 @@ import {
     walletSyncResultToast,
 } from '@canton-network/core-wallet-ui-components/logic'
 
-import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
-import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
+import { createUserClient } from '@/utils/legacy-frontend/rpc-client.ts'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.ts'
 
-import { stateManager } from '@/utils/legacy-frontend/state-manager'
-import { showToast } from '@/utils/legacy-frontend/utils'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
-import { toRelHref } from '@/utils/legacy-frontend/routing'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
+import { showToast } from '@/utils/legacy-frontend/utils.ts'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
+import { toRelHref } from '@/utils/legacy-frontend/routing.ts'
 
 import '@canton-network/core-wallet-ui-components'
-import '@/utils/legacy-frontend'
+import '@/utils/legacy-frontend/index.ts'
 
 @customElement('user-ui-parties')
 export class UserUiParties extends BaseElement {

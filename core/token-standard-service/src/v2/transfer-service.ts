@@ -4,13 +4,13 @@
 import type { Metadata } from '@canton-network/core-token-standard'
 import type { ContractId, PartyId } from '@canton-network/core-types'
 import { Decimal } from 'decimal.js'
-import { TokenStandardService } from '../token-standard-service'
+import { TokenStandardService } from '../token-standard-service.ts'
 import {
     type DisclosedContract,
     EMPTY_META,
     type ExerciseCommand,
     REQUESTED_AT_SKEW_MS,
-} from '../types'
+} from '../types.ts'
 import {
     type Account,
     type TransferFactory_Transfer as TransferFactory_TransferV2,
@@ -20,7 +20,7 @@ import {
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
     TransferInstruction,
 } from '@canton-network/core-token-standard-v2'
-import type { CoreService } from '../core-service.js'
+import type { CoreService } from '../core-service.ts'
 import { getLogger } from '@logtape/logtape'
 
 export class TransferServiceV2 {
