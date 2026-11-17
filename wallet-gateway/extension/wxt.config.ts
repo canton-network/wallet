@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { resolve } from 'path'
+
 import { defineConfig } from 'wxt'
+
 import { standardDecorators } from '../../vite.decorators.ts'
 
 // See https://wxt.dev/api/config.html

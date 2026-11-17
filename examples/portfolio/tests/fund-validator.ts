@@ -7,6 +7,7 @@ import {
     SDK,
     type TokenProviderConfig,
 } from '@canton-network/wallet-sdk'
+
 import { globalSynchronizer } from '../src/lib/synchronizer.ts'
 
 const localNetStaticAuth: TokenProviderConfig = {

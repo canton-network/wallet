@@ -1,14 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     PreparedTransaction,
     type Metadata,
 } from '@canton-network/core-ledger-proto'
+import { describe, expect, it } from 'vitest'
+
 import { fromBase64, hexToBytes, sha256 } from '../bytes.ts'
 import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.ts'
 import { schemeV2 } from '../v2.ts'
+import bigInt64V2 from './fixtures/big-int64-v2.json'
 import {
     chain,
     contractId,
@@ -41,7 +43,6 @@ import { toHex } from './helpers/hex.ts'
 import { int64sBeyond2To53 } from './helpers/int64.ts'
 import { liveFixtures } from './helpers/live-fixtures.ts'
 import { hx, rejection } from './helpers/matchers.ts'
-import bigInt64V2 from './fixtures/big-int64-v2.json'
 
 // Expected values that do not come from a participant were produced by running
 // daml_transaction_hashing_v2.py (canton v3.5.1, 08-interactive-submission) on

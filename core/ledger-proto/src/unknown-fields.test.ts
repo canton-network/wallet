@@ -3,6 +3,7 @@
 
 import { BinaryWriter, WireType } from '@protobuf-ts/runtime'
 import { describe, expect, it } from 'vitest'
+
 import { Empty } from './_proto/google/protobuf/empty.ts'
 import { decodeUnknownFields } from './unknown-fields.ts'
 

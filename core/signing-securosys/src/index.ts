@@ -26,6 +26,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { getLogger } from '@logtape/logtape'
+
 import {
     keyLabelFromPublicKey,
     SigningAPIClient,

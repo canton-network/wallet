@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { SigningAPIClient } from './signing-api-sdk.ts'
 
 describe('SigningAPIClient', () => {

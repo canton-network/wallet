@@ -1,19 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
-import type { AuthContextStore } from './auth-context.ts'
-import { createAuthService } from './auth-service.ts'
-import type { AuthorizationCodeParams } from './oauth.ts'
+
 import { AuthErrorName, EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
 import { logger } from '@/shared/logger.ts'
 import { VaultErrorName, type VaultStatus } from '@/shared/vault-protocol.ts'
-import { loadAuthedStore, type WalletStore } from './store/index.ts'
+
+import type { AuthContextStore } from './auth-context.ts'
+import { createAuthService } from './auth-service.ts'
+import type { AuthorizationCodeParams } from './oauth.ts'
 import { defaultConfig } from './store/default-config.ts'
+import { loadAuthedStore, type WalletStore } from './store/index.ts'
 
 const networkId = 'canton:local-oauth'
 

@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
+import type { InstrumentId } from '@canton-network/core-token-standard'
+import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import {
     Box,
@@ -12,8 +13,8 @@ import {
     Typography,
 } from '@mui/material'
 import { Decimal } from 'decimal.js'
-import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
-import type { InstrumentId } from '@canton-network/core-token-standard'
+import { useMemo } from 'react'
+
 import type { SelectableInstrument } from './transfer-types.ts'
 
 interface InstrumentSelectProps {

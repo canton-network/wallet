@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import type { Network } from '@canton-network/core-wallet-store'
 import type {
     AccessTokenProvider,
     AuthContext,
 } from '@canton-network/core-wallet-auth'
+import type { Network } from '@canton-network/core-wallet-store'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
 
 type AsyncFn = () => Promise<unknown>
 

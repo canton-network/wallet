@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { getLogger, lazy } from '@logtape/logtape'
+
 import type { ClientCredentials } from './auth-service.ts'
 import {
     fetchOidcDiscovery,

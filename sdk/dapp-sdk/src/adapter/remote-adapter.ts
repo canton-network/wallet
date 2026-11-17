@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { DappAsyncProvider } from '@canton-network/core-provider-dapp'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     EventListener,
     Provider,
@@ -9,23 +11,22 @@ import type {
     ProviderAdapterConfig,
     RequestArgs,
 } from '@canton-network/core-types'
+import { WalletEvent } from '@canton-network/core-types'
+import type { StatusEvent } from '@canton-network/core-wallet-dapp-remote-rpc-client'
 import type { RpcTypes as DappRpcTypes } from '@canton-network/core-wallet-dapp-rpc-client'
-import { popup } from '@canton-network/core-wallet-ui-components'
-import type {
-    ProviderAdapter,
-    WalletInfo,
-} from '@canton-network/core-wallet-discovery'
 import type {
     ProviderId,
     ProviderType,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import * as storage from '../storage.ts'
-import type { StatusEvent } from '@canton-network/core-wallet-dapp-remote-rpc-client'
-import { clearAllLocalState } from '../util.ts'
-import { WalletEvent } from '@canton-network/core-types'
-import { providerErrors } from '@canton-network/core-rpc-errors'
-import { DappAsyncProvider } from '@canton-network/core-provider-dapp'
+import type {
+    ProviderAdapter,
+    WalletInfo,
+} from '@canton-network/core-wallet-discovery'
+import { popup } from '@canton-network/core-wallet-ui-components'
+
 import { dappSDKController } from '../sdk-controller.ts'
+import * as storage from '../storage.ts'
+import { clearAllLocalState } from '../util.ts'
 
 export interface RemoteAdapterConfig extends ProviderAdapterConfig {
     providerId?: string | undefined

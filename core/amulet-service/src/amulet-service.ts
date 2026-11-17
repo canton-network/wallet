@@ -6,9 +6,10 @@ import {
     type ScanProxyClient,
 } from '@canton-network/core-splice-client'
 import type { TokenStandardService } from '@canton-network/core-token-standard-service'
-import { AmuletServiceScanOnly } from './amulet-service-scan.ts'
-import { AmuletServiceScanProxy } from './amulet-service-scan-proxy.ts'
+
 import type { AmuletServiceBase } from './amulet-service-base.ts'
+import { AmuletServiceScanProxy } from './amulet-service-scan-proxy.ts'
+import { AmuletServiceScanOnly } from './amulet-service-scan.ts'
 
 export class AmuletService {
     private readonly serviceImpl: AmuletServiceBase

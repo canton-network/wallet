@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Meta, StoryObj } from '@storybook/react-vite'
 import { Button, Chip } from '@mui/material'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, fn } from 'storybook/test'
+
 import { CardDetailRow } from './CardDetailRow.tsx'
 
 const meta: Meta<typeof CardDetailRow> = {

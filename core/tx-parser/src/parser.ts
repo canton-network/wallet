@@ -1,16 +1,27 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/* oxlint-disable typescript/no-explicit-any */
 import {
-    ensureInterfaceViewIsPresent,
-    getInterfaceView,
-    getKnownInterfaceView,
-    getMetaKeyValue,
-    hasInterface,
-    mergeMetas,
-    removeParsedMetaKeys,
-} from './utils.ts'
+    EventFilterBySetup,
+    type LedgerCommonSchemas,
+} from '@canton-network/core-ledger-client-types'
+import type {
+    Ops,
+    AbstractLedgerProvider,
+} from '@canton-network/core-provider-ledger'
+import {
+    HOLDING_INTERFACE_ID,
+    type HoldingView,
+    type Lock,
+    TRANSFER_INSTRUCTION_INTERFACE_ID,
+} from '@canton-network/core-token-standard'
+import {
+    HOLDING_INTERFACE_ID_V2,
+    type HoldingView as HoldingViewV2,
+} from '@canton-network/core-token-standard-v2'
+import type { PartyId } from '@canton-network/core-types'
+import BigNumber from 'bignumber.js'
+
 import {
     BurnedMetaKey,
     matchInterfaceIds,
@@ -18,6 +29,7 @@ import {
     SenderMetaKey,
     TxKindMetaKey,
 } from './constants.ts'
+import { InstrumentMap } from './instrumentmap.ts'
 import type {
     Holding as HoldingWithContractId,
     HoldingsChangeSummary,
@@ -31,28 +43,16 @@ import type {
     TransferObject,
     Holding,
 } from './types.ts'
-import { InstrumentMap } from './instrumentmap.ts'
-
+/* oxlint-disable typescript/no-explicit-any */
 import {
-    EventFilterBySetup,
-    type LedgerCommonSchemas,
-} from '@canton-network/core-ledger-client-types'
-import BigNumber from 'bignumber.js'
-import type { PartyId } from '@canton-network/core-types'
-import {
-    HOLDING_INTERFACE_ID,
-    type HoldingView,
-    type Lock,
-    TRANSFER_INSTRUCTION_INTERFACE_ID,
-} from '@canton-network/core-token-standard'
-import {
-    HOLDING_INTERFACE_ID_V2,
-    type HoldingView as HoldingViewV2,
-} from '@canton-network/core-token-standard-v2'
-import type {
-    Ops,
-    AbstractLedgerProvider,
-} from '@canton-network/core-provider-ledger'
+    ensureInterfaceViewIsPresent,
+    getInterfaceView,
+    getKnownInterfaceView,
+    getMetaKeyValue,
+    hasInterface,
+    mergeMetas,
+    removeParsedMetaKeys,
+} from './utils.ts'
 import {
     deriveV2Label,
     holdingCidsOf,

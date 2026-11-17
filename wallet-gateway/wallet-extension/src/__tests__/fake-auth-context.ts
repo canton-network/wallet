@@ -3,6 +3,7 @@
 
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { vi } from 'vitest'
+
 import type { AuthContextStore } from '@/background/auth-context.ts'
 
 /** An auth context store whose `load()` resolves to `context`. */

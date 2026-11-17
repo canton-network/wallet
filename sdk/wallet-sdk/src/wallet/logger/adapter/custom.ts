@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { LogAdapter } from '../types.ts'
 import { SDKLogger } from '../logger.ts' // oxlint-disable-line no-unused-vars -- for JSDoc only
+import type { LogAdapter } from '../types.ts'
 
 /**
  * CustomLogAdapter allows users to provide their own logging implementation.

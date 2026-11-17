@@ -1,8 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import child_process from 'child_process'
 import fs from 'fs'
 import path from 'path'
+
 import {
     error,
     getRepoRoot,
@@ -10,7 +12,6 @@ import {
     SUPPORTED_VERSIONS,
     getNetworkArg,
 } from './lib/utils.ts'
-import child_process from 'child_process'
 
 const maxIoListeners = Number.parseInt(process.env.MAX_IO_LISTENERS ?? '', 10)
 if (Number.isFinite(maxIoListeners) && maxIoListeners > 0) {

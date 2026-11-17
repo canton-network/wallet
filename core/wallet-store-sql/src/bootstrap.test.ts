@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
-import type { Kysely } from 'kysely'
 import type { BootstrapConfig } from '@canton-network/core-wallet-store'
+import type { Kysely } from 'kysely'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+
 import { bootstrap, upsertIdpsAndNetworks } from './bootstrap.ts'
 import { migrator } from './migrator.ts'
-import { connection } from './store-sql.ts'
 import type { DB } from './schema.ts'
+import { connection } from './store-sql.ts'
 
 const bootstrapConfig: BootstrapConfig = {
     idps: [

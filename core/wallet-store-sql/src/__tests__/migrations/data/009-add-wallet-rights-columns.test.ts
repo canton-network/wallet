@@ -5,11 +5,10 @@ import {
     PartyLevelRight,
     UserLevelRight,
 } from '@canton-network/core-wallet-store'
-import { expect, test } from 'vitest'
 import { type Kysely, sql } from 'kysely'
+import { expect, test } from 'vitest'
 
 import type { DB } from '../../../schema.ts'
-
 import {
     columnNames,
     forEachDialect,

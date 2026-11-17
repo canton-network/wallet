@@ -6,22 +6,23 @@ import type {
     ProviderId,
     RpcTypes as DappRpcTypes,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import type { ProviderAdapter, WalletInfo, WalletPickerFn } from './types.ts'
-import {
-    EventEmitter,
-    type DiscoveryClientEventName,
-    type DiscoveryClientEventHandler,
-} from './events.ts'
+
 import {
     WalletNotFoundError,
     NotConnectedError,
     DiscoveryError,
 } from './errors.ts'
 import {
+    EventEmitter,
+    type DiscoveryClientEventName,
+    type DiscoveryClientEventHandler,
+} from './events.ts'
+import {
     loadPersistedSession,
     persistSession,
     clearPersistedSession,
 } from './storage.ts'
+import type { ProviderAdapter, WalletInfo, WalletPickerFn } from './types.ts'
 
 export interface DiscoveryClientConfig {
     /** Adapters to register on init. */

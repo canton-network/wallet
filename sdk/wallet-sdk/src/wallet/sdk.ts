@@ -1,13 +1,29 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { SDKLogger } from './logger/logger.ts'
-import { SDKErrorHandler } from './error/handler.ts'
+import type {
+    LedgerTypes as LedgerRpc,
+    LedgerCommonSchemas,
+} from '@canton-network/core-ledger-client-types'
+import type { DappLedgerRpc } from '@canton-network/core-provider-dapp'
 import {
     type AbstractLedgerProvider,
     LedgerProvider,
     type Ops,
 } from '@canton-network/core-provider-ledger'
+import { ValidatorInternalClient } from '@canton-network/core-splice-client'
+import {
+    AuthTokenProvider,
+    type TokenProviderConfig,
+} from '@canton-network/core-wallet-auth'
+
+import { SDKErrorHandler } from './error/handler.ts'
+import type { SDKContext } from './index.ts'
+import {
+    ExtendedInitializedSDK,
+    OfflineInitializedSDK,
+} from './init/initializedSDK.ts'
+import { SynchronizerResolver } from './init/synchronizer.ts'
 import {
     EXTENDED_SDK_OPTION_KEYS,
     type ExtendedSDKOptions,
@@ -16,23 +32,8 @@ import {
     type GetExtendedKeys,
     type SDKInterface,
 } from './init/types/sdk.ts'
-import {
-    AuthTokenProvider,
-    type TokenProviderConfig,
-} from '@canton-network/core-wallet-auth'
-import {
-    ExtendedInitializedSDK,
-    OfflineInitializedSDK,
-} from './init/initializedSDK.ts'
-import type {
-    LedgerTypes as LedgerRpc,
-    LedgerCommonSchemas,
-} from '@canton-network/core-ledger-client-types'
+import { SDKLogger } from './logger/logger.ts'
 import type { AllowedLogAdapters } from './logger/types.ts'
-import type { DappLedgerRpc } from '@canton-network/core-provider-dapp'
-import type { SDKContext } from './index.ts'
-import { SynchronizerResolver } from './init/synchronizer.ts'
-import { ValidatorInternalClient } from '@canton-network/core-splice-client'
 export {
     resolveCapabilities,
     type AssetBody,

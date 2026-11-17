@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { existsSync } from 'fs'
 import * as path from 'path'
-import { getArgValue, getRepoRoot, info, warn } from './lib/utils.ts'
+
 import { installDPM } from './install-dpm.ts'
 import { ensureLocalnetDars, runDamlCodegen } from './lib/daml-codegen.ts'
-import { existsSync } from 'fs'
+import { getArgValue, getRepoRoot, info, warn } from './lib/utils.ts'
 
 const defaultDarFiles = [
     'splice-test-token-v1-1.0.0',

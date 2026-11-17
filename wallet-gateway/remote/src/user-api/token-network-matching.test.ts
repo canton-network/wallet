@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect } from 'vitest'
 import type { Idp } from '@canton-network/core-wallet-auth'
 import type { Network } from '@canton-network/core-wallet-store'
+import { describe, it, expect } from 'vitest'
+
 import { assertTokenClaimsMatchNetwork } from './token-network-matching.ts'
 
 const ISSUER = 'unsafe-auth'

@@ -1,17 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type express from 'express'
+import type { Server } from 'http'
+
+import type { AuthAware } from '@canton-network/core-wallet-auth'
+import { subscribeNotifications } from '@canton-network/core-wallet-services'
+import type { Store } from '@canton-network/core-wallet-store'
 import cors from 'cors'
-import { dappController, type DappControllerOptions } from './controller.ts'
+import type express from 'express'
+
+import type { ServerConfig } from '../config/Config.ts'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.ts'
+import { dappController, type DappControllerOptions } from './controller.ts'
 import type { Methods } from './rpc-gen/index.ts'
 import { paramSchemas } from './rpc-gen/schemas.ts'
-import type { Store } from '@canton-network/core-wallet-store'
-import type { AuthAware } from '@canton-network/core-wallet-auth'
-import type { Server } from 'http'
-import type { ServerConfig } from '../config/Config.ts'
-import { subscribeNotifications } from '@canton-network/core-wallet-services'
 import { SseNotificationSink } from './sse-sink.ts'
 
 export interface DappApiOptions extends Omit<

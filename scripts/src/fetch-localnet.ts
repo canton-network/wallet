@@ -1,6 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import crypto from 'crypto'
+import fs from 'fs'
+import path from 'path'
+
 import {
     error,
     ensureDir,
@@ -11,9 +15,6 @@ import {
     hasFlag,
     setSpliceHash,
 } from './lib/utils.ts'
-import path from 'path'
-import fs from 'fs'
-import crypto from 'crypto'
 
 const LOCALNET_PATH = path.join(process.cwd(), '.localnet')
 

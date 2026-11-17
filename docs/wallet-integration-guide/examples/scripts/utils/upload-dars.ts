@@ -1,18 +1,18 @@
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
-import {
-    TOKEN_PROVIDER_CONFIG_DEFAULT,
-    localNetGlobalSynchronizer,
-} from './index.ts'
 
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from '../utils/configure-logging.ts'
 /*
 This script is so that the CI can run all the scripts in parallel
 We first run the uploadDars script and then all of the tests
 */
-
-import { configureLogging } from '../utils/configure-logging.ts'
+import {
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+    localNetGlobalSynchronizer,
+} from './index.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({

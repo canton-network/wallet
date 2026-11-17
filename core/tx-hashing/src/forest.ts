@@ -5,6 +5,7 @@ import type {
     DamlTransaction,
     DamlTransaction_Node,
 } from '@canton-network/core-ledger-proto'
+
 import { TxHashingError, type TxHashingErrorCode } from './errors.ts'
 import type { TraversalLimits } from './limits.ts'
 

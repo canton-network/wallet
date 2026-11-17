@@ -1,16 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
-import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
-import type { Logger } from 'pino'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     PartyLevelRight,
     type MessageRaw,
     type Store,
     type Wallet,
 } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
+
+import { decodeBase64, encodeBase64 } from './__tests__/test-utils.ts'
 import {
     SELF_ISSUED_LOGIN_EXPIRED,
     SELF_ISSUED_LOGIN_UNAVAILABLE,
@@ -20,7 +22,6 @@ import {
     type SelfIssuedWalletSyncService,
 } from './self-issued-auth-service.ts'
 import type { SignMessageService } from './sign-message-service.ts'
-import { decodeBase64, encodeBase64 } from './__tests__/test-utils.ts'
 
 const { probeGet, syncRights, syncAuthParty } = vi.hoisted(() => ({
     probeGet: vi.fn(),

@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { RpcTransport } from '@canton-network/core-rpc-transport'
 import { WalletEvent } from '@canton-network/core-types'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
 import { DappSyncProvider } from './DappSyncProvider.ts'
 
 describe('DappSyncProvider', () => {

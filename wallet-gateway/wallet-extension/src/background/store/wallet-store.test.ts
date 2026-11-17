@@ -8,7 +8,9 @@ import type {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+
 import { createVault, type Vault, VaultLockedError } from '../vault/index.ts'
 import { loadAuthedStore } from './index.ts'
 import { createWalletStore } from './wallet-store.ts'

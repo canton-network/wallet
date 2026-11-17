@@ -8,6 +8,7 @@ import {
     queryByShadowRole,
 } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
+
 import { ErrorPage } from './ErrorPage.tsx'
 
 const meta = {

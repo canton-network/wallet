@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, test } from 'vitest'
+import type { Idp } from '@canton-network/core-wallet-auth'
 import {
     PartyLevelRight,
     UserLevelRight,
@@ -10,7 +10,8 @@ import {
     type Transaction,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import type { Idp } from '@canton-network/core-wallet-auth'
+import { describe, expect, test } from 'vitest'
+
 import {
     fromIdp,
     fromMessageRaw,

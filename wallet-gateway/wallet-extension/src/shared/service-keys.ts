@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ProxyServiceKey } from '@webext-core/proxy-service'
+
 import type { DappDispatcher } from '@/background/controllers/dapp/dispatch.ts'
 import type { Methods as UserRpcMethods } from '@/background/controllers/user/rpc-gen/index.ts'
 

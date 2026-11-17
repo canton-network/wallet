@@ -3,6 +3,11 @@
 
 /* oxlint-disable typescript/no-explicit-any */
 
+import * as fs from 'fs'
+import * as path from 'path'
+
+import * as yaml from 'js-yaml'
+
 import {
     cleanupStaleVersionedFiles,
     getRepoRoot,
@@ -16,9 +21,6 @@ import {
     getNetworkArg,
     warn,
 } from './lib/utils.ts'
-import * as fs from 'fs'
-import * as path from 'path'
-import * as yaml from 'js-yaml'
 
 function generateTypesFromSchema(
     schemaName: string,

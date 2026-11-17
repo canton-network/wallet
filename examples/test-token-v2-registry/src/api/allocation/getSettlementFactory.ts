@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { getTokenRulesContext } from '../getTokenRulesContext.ts'
-import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+import z from 'zod'
+
 import { RegistryState } from '../../common/state.ts'
 import { APIError } from '../common.ts'
-import z from 'zod'
+import { getTokenRulesContext } from '../getTokenRulesContext.ts'
 
 const settlementArgumentsSchema = z.looseObject({
     allocations: z.array(z.object({ allocationCid: z.string() })),

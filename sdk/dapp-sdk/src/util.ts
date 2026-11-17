@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { popup } from '@canton-network/core-wallet-ui-components'
-import { removeKernelDiscovery, removeKernelSession } from './storage.ts'
+
 import type { SIWXMessageParams } from './adapter/walletconnect-adapter.ts'
+import { removeKernelDiscovery, removeKernelSession } from './storage.ts'
 
 export const clearAllLocalState = ({
     closePopup,

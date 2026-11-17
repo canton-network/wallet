@@ -5,20 +5,20 @@ export * as v3_6 from './generated-clients/openapi-3.6.4.ts'
 export * as v3_7 from './generated-clients/openapi-3.7.2.ts'
 export * as v3_6_async from './generated-clients/asyncapi-3.6.4.ts'
 export * as v3_7_async from './generated-clients/asyncapi-3.7.2.ts'
-import * as V3_6_provider from './generated-clients/openapi-3.6.4-provider-types.ts'
-import * as V3_7_provider from './generated-clients/openapi-3.7.2-provider-types.ts'
-import * as openapi_v3_6 from './generated-clients/openapi-3.6.4.ts'
-import * as openapi_v3_7 from './generated-clients/openapi-3.7.2.ts'
 import * as asyncapi_v3_6 from './generated-clients/asyncapi-3.6.4.ts'
 import * as asyncapi_v3_7 from './generated-clients/asyncapi-3.7.2.ts'
 import {
     getPaths as getPaths_v3_6,
     postPaths as postPaths_v3_6,
 } from './generated-clients/openapi-3.6.4-paths.ts'
+import * as V3_6_provider from './generated-clients/openapi-3.6.4-provider-types.ts'
+import * as openapi_v3_6 from './generated-clients/openapi-3.6.4.ts'
 import {
     getPaths as getPaths_v3_7,
     postPaths as postPaths_v3_7,
 } from './generated-clients/openapi-3.7.2-paths.ts'
+import * as V3_7_provider from './generated-clients/openapi-3.7.2-provider-types.ts'
+import * as openapi_v3_7 from './generated-clients/openapi-3.7.2.ts'
 
 export * from './utils.ts'
 

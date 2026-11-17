@@ -1,22 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { NextFunction, Request, Response } from 'express'
-import type { Logger } from 'pino'
+import { isJsCantonError } from '@canton-network/core-ledger-client'
 import {
     JsonRpcError,
     rpcErrors,
     toHttpErrorCode,
 } from '@canton-network/core-rpc-errors'
+import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
 import {
     ErrorResponse,
     JsonRpcRequest,
     type JsonRpcResponse,
 } from '@canton-network/core-types'
-import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
-import { isJsCantonError } from '@canton-network/core-ledger-client'
-import { errorLogLevel } from './errorHandler.ts'
+import type { NextFunction, Request, Response } from 'express'
+import type { Logger } from 'pino'
 import { z } from 'zod'
+
+import { errorLogLevel } from './errorHandler.ts'
 
 interface JsonRpcHttpOptions<T> {
     logger: Logger

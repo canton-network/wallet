@@ -10,9 +10,11 @@ import {
 } from '@canton-network/core-types'
 import { createProxyService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
+
 import type { DappDispatcher } from '@/background/controllers/dapp/dispatch.ts'
 import { logger } from '@/shared/logger.ts'
 import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
+
 import type { NotificationRelay } from './notification-relay.ts'
 
 export interface JsonRpcProxyOptions {

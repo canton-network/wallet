@@ -7,6 +7,11 @@ import {
     type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
+import {
+    MOCK_FIREBLOCKS_VAULT_NAME,
+    setMockFireblocksTransactionState,
+} from './external-signing-test-helpers.ts'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -16,10 +21,6 @@ import {
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
 } from './ping-test-helpers.ts'
-import {
-    MOCK_FIREBLOCKS_VAULT_NAME,
-    setMockFireblocksTransactionState,
-} from './external-signing-test-helpers.ts'
 
 test.describe('Fireblocks external signing', () => {
     test.describe.configure({ mode: 'serial' })

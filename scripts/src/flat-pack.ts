@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { FlatPack } from './lib/flat-pack.ts'
 import { Command } from '@commander-js/extra-typings'
+
+import { FlatPack } from './lib/flat-pack.ts'
 
 const command = new Command()
     .description('Flat pack a package and its dependencies')

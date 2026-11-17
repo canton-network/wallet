@@ -1,18 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { Account } from '@canton-network/core-token-standard-v2'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
 import {
     expressContext,
     mock,
     type RequestType,
 } from '../../__tests__/mocks.ts'
-import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext.ts'
 import { APIError } from '../common.ts'
+import { getTransferFactory } from './getTransferFactory.ts'
+import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext.ts'
 import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext.ts'
 import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext.ts'
-import { getTransferFactory } from './getTransferFactory.ts'
-import type { Account } from '@canton-network/core-token-standard-v2'
 
 const { res, next } = expressContext
 

@@ -3,6 +3,7 @@
 
 import { test, expect } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
 import {
     connectPingDapp,
     connectWalletGateway,

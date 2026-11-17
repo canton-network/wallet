@@ -1,12 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { storage } from 'wxt/utils/storage'
-import { browser } from 'wxt/browser'
 import type { AllowedRoute } from '@canton-network/core-wallet-ui-components'
-import { destroyTokenKey } from './access-token-utils.ts'
 import { createProxyService } from '@webext-core/proxy-service'
+import { browser } from 'wxt/browser'
+import { storage } from 'wxt/utils/storage'
+
 import { AUTH_SERVICE_KEY } from '@/utils/constants.ts'
+
+import { destroyTokenKey } from './access-token-utils.ts'
 
 const STORAGE_PREFIX = 'com.splice.wallet.'
 const VERSION_PREFIX = `${STORAGE_PREFIX}v1`

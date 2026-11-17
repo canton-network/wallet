@@ -6,7 +6,10 @@
  * and place it in the canton/ directory.
  */
 
+import crypto from 'crypto'
+import * as fs from 'fs'
 import path from 'path'
+
 import {
     API_SPECS_PATH,
     SUPPORTED_VERSIONS,
@@ -19,8 +22,6 @@ import {
     getNetworkArg,
     hasFlag,
 } from './lib/utils.ts'
-import * as fs from 'fs'
-import crypto from 'crypto'
 
 async function main(network: Network) {
     const updateHash = hasFlag('updateHash')

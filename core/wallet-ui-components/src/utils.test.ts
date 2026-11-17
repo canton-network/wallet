@@ -3,6 +3,7 @@
 
 import { css } from 'lit'
 import { describe, expect, it } from 'vitest'
+
 import { cssToString } from './utils.ts'
 
 describe('cssToString', () => {

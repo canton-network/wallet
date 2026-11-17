@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import {
     isRpcError,
     SigningProvider,
@@ -10,9 +8,10 @@ import {
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import DfnsSigningDriver, { type DfnsCredentials } from './index.ts'
 import type { DfnsKey, DfnsSignature } from './dfns.ts'
+import DfnsSigningDriver, { type DfnsCredentials } from './index.ts'
 
 const TEST_USER_ID = 'test-user-id'
 const TEST_KEY_ID = 'key-test-1'

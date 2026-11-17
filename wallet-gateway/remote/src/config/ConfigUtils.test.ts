@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync } from 'node:fs'
+
 import { describe, expect, it } from 'vitest'
+
 import { ConfigUtils } from './ConfigUtils.ts'
 
 const testConfig = JSON.parse(readFileSync('../test/config.json', 'utf-8'))

@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import type {
     DamlTransaction,
     DamlTransaction_Node,
 } from '@canton-network/core-ledger-proto'
+import { describe, expect, it } from 'vitest'
+
 import { checkForest } from '../forest.ts'
 import { DEFAULT_LIMITS } from '../limits.ts'
 import {

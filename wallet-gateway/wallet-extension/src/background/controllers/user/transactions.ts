@@ -9,7 +9,9 @@ import {
 } from '@canton-network/core-wallet-auth'
 import { TransactionService } from '@canton-network/core-wallet-services'
 import type { Session, Store } from '@canton-network/core-wallet-store'
+
 import { logger } from '@/shared/logger.ts'
+
 import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.ts'
 import { toSigningDrivers, type UserControllerDeps } from './deps.ts'
 import type { Methods } from './rpc-gen/index.ts'

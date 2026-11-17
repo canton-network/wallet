@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     Exercise,
     HashingSchemeVersion,
     PreparedTransaction,
 } from '@canton-network/core-ledger-proto'
+import { describe, expect, it } from 'vitest'
+
 import { concat, fromBase64 } from '../bytes.ts'
 import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
 import {

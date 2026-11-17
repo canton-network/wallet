@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
+
 import { concat, concatAll, fromBase64, hexToBytes, sha256 } from '../bytes.ts'
 import { toHex } from './helpers/hex.ts'
 

@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import {
     HOLDING_INTERFACE_ID_V2,
     type HoldingView,
 } from '@canton-network/core-token-standard-v2'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+
 import type { TokenNamespaceConfig } from '../../namespace.ts'
 import type { ListHoldingsParams } from '../../utxos/types.ts'
 

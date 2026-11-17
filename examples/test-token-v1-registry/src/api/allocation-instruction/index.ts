@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Router } from 'express'
-import { getAllocationFactory } from './getAllocationFactory.ts'
 import type { OffLedger } from '@canton-network/core-token-standard'
+import { Router } from 'express'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
 import z, { type ZodType } from 'zod'
+
+import { getAllocationFactory } from './getAllocationFactory.ts'
 
 const allocationInstructionAPIRouter: Router = Router()
 

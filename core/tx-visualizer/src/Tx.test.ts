@@ -1,12 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test, it, describe } from 'vitest'
 import {
     DamlTransaction,
     HashingSchemeVersion,
     PreparedTransaction,
 } from '@canton-network/core-ledger-proto'
+import camelcaseKeys from 'camelcase-keys'
+import { expect, test, it, describe } from 'vitest'
+
+import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
+import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
+import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,
@@ -21,10 +26,6 @@ import {
     parsePreparedTransaction,
     validateAuthorizedPartyIds,
 } from './index.ts'
-import camelcaseKeys from 'camelcase-keys'
-import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
-import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
-import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
 import { fromBase64, fromHex, toBase64, toHex } from './utils.ts'
 
 const parsedTxInfo: ParsedTransactionInfo = {

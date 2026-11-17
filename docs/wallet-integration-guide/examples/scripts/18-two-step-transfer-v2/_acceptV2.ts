@@ -1,6 +1,7 @@
-import type { TransferTestScriptParameters } from './types.ts'
-import { assertV2 } from '../utils/assert.ts'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+
+import { assertV2 } from '../utils/assert.ts'
+import type { TransferTestScriptParameters } from './types.ts'
 
 export default async (args: TransferTestScriptParameters) => {
     const {

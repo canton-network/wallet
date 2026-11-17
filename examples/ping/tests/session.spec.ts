@@ -9,6 +9,7 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
 import {
     DAPP_API_PORT,
     DEFAULT_NETWORK,

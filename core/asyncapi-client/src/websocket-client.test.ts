@@ -10,6 +10,7 @@ import {
     afterEach,
     type Mock,
 } from 'vitest'
+
 import { WebSocketClient } from './websocket-client.ts'
 /* oxlint-disable typescript/no-explicit-any */
 

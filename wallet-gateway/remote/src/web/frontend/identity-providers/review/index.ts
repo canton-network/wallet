@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
     type IdpFormSaveEvent,
@@ -13,11 +11,14 @@ import {
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
 import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
-import { createUserClient } from '../../rpc-client.ts'
-import { setLocationHref } from '../../navigation.ts'
-import { stateManager } from '../../state-manager.ts'
-import '../../index.ts'
+import { css, html, nothing } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
 import { detectCurrentOrigin } from '../../listeners.ts'
+import { setLocationHref } from '../../navigation.ts'
+import { createUserClient } from '../../rpc-client.ts'
+import '../../index.ts'
+import { stateManager } from '../../state-manager.ts'
 
 @customElement('user-ui-review-idp')
 export class UserUiReviewIdp extends BaseElement {

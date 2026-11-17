@@ -1,11 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TestTokenID, TestTokenV2 } from './dar.ts'
-
-import type { PartyId } from '@canton-network/core-types'
-import { generateCommand, type TestTokenHoldingView } from '../common.ts'
-
+import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
+import {
+    AllocationFactory as AllocationFactoryV1,
+    TransferFactory as TransferFactoryV1,
+    TransferInstruction as TransferInstructionV1,
+    AllocationInstruction as AllocationInstructionV1,
+    Allocation as AllocationV1,
+} from '@canton-network/core-token-standard'
 import {
     Allocation,
     AllocationFactory,
@@ -16,20 +19,16 @@ import {
     TransferFactory,
     TransferInstruction,
 } from '@canton-network/core-token-standard-v2'
+import type { PartyId } from '@canton-network/core-types'
 import type {
     Transfer,
     Allocation as AllocationT,
     AccountConfig,
 } from '@daml.js/splice-test-token-v2-1.0.0/lib/Splice/Testing/Tokens/TestTokenV2'
-import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 import type { Token } from '@daml.js/splice-test-token-v2-1.0.0/lib/Splice/Testing/Tokens/TestTokenV2/Holding'
-import {
-    AllocationFactory as AllocationFactoryV1,
-    TransferFactory as TransferFactoryV1,
-    TransferInstruction as TransferInstructionV1,
-    AllocationInstruction as AllocationInstructionV1,
-    Allocation as AllocationV1,
-} from '@canton-network/core-token-standard'
+
+import { generateCommand, type TestTokenHoldingView } from '../common.ts'
+import { TestTokenID, TestTokenV2 } from './dar.ts'
 
 const commands = {
     create: {

@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { getLogger } from '@logtape/logtape'
+import { providerErrors } from '@canton-network/core-rpc-errors'
+import type { AccessToken } from '@canton-network/core-types'
 import {
     type AuthContext,
     type UserId,
@@ -9,7 +10,6 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
-import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store as BaseStore,
     Wallet,
@@ -35,6 +35,8 @@ import {
     assertUniqueSelfIssuedAudience,
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
+import { getLogger } from '@logtape/logtape'
+import Database from 'better-sqlite3'
 import {
     CamelCasePlugin,
     Kysely,
@@ -42,7 +44,8 @@ import {
     SqliteDialect,
     sql,
 } from 'kysely'
-import Database from 'better-sqlite3'
+import pg from 'pg'
+
 import {
     type DB,
     fromIdp,
@@ -62,8 +65,6 @@ import {
     toApiKey,
     toSession,
 } from './schema.ts'
-import pg from 'pg'
-import type { AccessToken } from '@canton-network/core-types'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     private logger = getLogger(['core', 'wallet-store-sql', 'StoreSql'])

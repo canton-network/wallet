@@ -6,7 +6,9 @@ import type {
     JsonRpcRequest,
     JsonRpcResponse,
 } from '@canton-network/core-types'
+
 import { logger } from '@/shared/logger.ts'
+
 import type { AuthContextStore } from '../../auth-context.ts'
 import { type VaultLockState, VaultLockedError } from '../../vault/index.ts'
 import {

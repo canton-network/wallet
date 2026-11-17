@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
 import { TestToken } from '@canton-network/core-splice-codegen'
-import type { MultiSyncSetup } from './_setup.ts'
+import type { Logger } from 'pino'
+
 import { BOB_TOKEN_MINT_AMOUNT } from './_constants.ts'
+import type { MultiSyncSetup } from './_setup.ts'
 
 /**
  * Mints TestTokens for the TokenAdmin and offers them to Bob via the registry's

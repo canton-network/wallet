@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TestToken } from '@canton-network/core-splice-codegen'
+
 import { RegistryState } from '../common/state.ts'
 import { APIError } from './common.ts'
 

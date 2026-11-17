@@ -7,6 +7,8 @@ import {
     type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
+import { setMockDfnsTransactionState } from './external-signing-test-helpers.ts'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -16,7 +18,6 @@ import {
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
 } from './ping-test-helpers.ts'
-import { setMockDfnsTransactionState } from './external-signing-test-helpers.ts'
 
 test.describe('Dfns external signing', () => {
     test.describe.configure({ mode: 'serial' })

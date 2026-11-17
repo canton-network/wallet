@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineBackground } from 'wxt/utils/define-background'
+
 import { startBackground } from '@/background/index.ts'
 
 // Use the object form: `wxt prepare` strips `main` (and the imports only it

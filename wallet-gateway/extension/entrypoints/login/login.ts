@@ -1,30 +1,30 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-
-import '@canton-network/core-wallet-ui-components'
+import { jwtExpiresAt } from '@canton-network/core-wallet-auth'
 import {
     BaseElement,
     handleErrorToast,
     type LoginConnectEvent,
     type WgLoginForm,
 } from '@canton-network/core-wallet-ui-components'
-import { createUserClient } from '@/utils/legacy-frontend/rpc-client.ts'
+import '@canton-network/core-wallet-ui-components'
 import type {
     PublicNetwork,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
-import '@/utils/legacy-frontend/index.ts'
+import { html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
 import {
     redirectToIntendedOrDefault,
     addUserSession,
 } from '@/utils/legacy-frontend/index.ts'
+import '@/utils/legacy-frontend/index.ts'
 import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
+import { createUserClient } from '@/utils/legacy-frontend/rpc-client.ts'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
 import { buildAuthorization, fetchToken } from '@/utils/reusable/oauth.ts'
-import { jwtExpiresAt } from '@canton-network/core-wallet-auth'
 
 @customElement('user-ui-login')
 export class LoginUI extends BaseElement {

@@ -3,7 +3,6 @@
 
 // Import global Window augmentation for `window.canton`
 import '@canton-network/core-provider-dapp'
-
 import './version.ts'
 export { SDK_VERSION } from './version.ts'
 

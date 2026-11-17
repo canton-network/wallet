@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { grpcError } from './__tests__/test-utils.ts'
 import {
     asGrpcError,
     asJsCantonError,
@@ -11,7 +13,6 @@ import {
     retryable,
 } from './ledger-api-utils.ts'
 import type { LedgerClient } from './ledger-client.ts'
-import { grpcError } from './__tests__/test-utils.ts'
 
 const cantonError = { code: 'NOT_FOUND', cause: 'missing', errorCategory: 1 }
 

@@ -1,6 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CopyableIdentifier } from '@components/copyable-identifier'
+import { usePrimaryAccount } from '@hooks/useAccounts'
+import {
+    formatInstrumentName,
+    usePreapprovalRows,
+} from '@hooks/usePreapprovalRows'
+import { usePreapprovalStatuses } from '@hooks/usePreapprovalStatuses'
+import { useTogglePreapproval } from '@hooks/useTogglePreapproval'
+import { useWalletSdk } from '@hooks/useWalletSdk'
 import {
     Alert,
     Box,
@@ -16,15 +25,7 @@ import {
     TableRow,
     Typography,
 } from '@mui/material'
-import { CopyableIdentifier } from '@components/copyable-identifier'
-import { usePrimaryAccount } from '@hooks/useAccounts'
-import {
-    formatInstrumentName,
-    usePreapprovalRows,
-} from '@hooks/usePreapprovalRows'
-import { usePreapprovalStatuses } from '@hooks/usePreapprovalStatuses'
-import { useTogglePreapproval } from '@hooks/useTogglePreapproval'
-import { useWalletSdk } from '@hooks/useWalletSdk'
+
 import type { PreapprovalRow } from '../../types/preapprovals.ts'
 
 export function PreapprovalsSection() {

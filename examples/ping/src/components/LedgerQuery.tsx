@@ -1,6 +1,6 @@
+import * as sdk from '@canton-network/dapp-sdk'
 import { useState } from 'react'
 
-import * as sdk from '@canton-network/dapp-sdk'
 import { prettyjson } from '../utils.ts'
 
 export function LedgerQuery(props: {

@@ -10,6 +10,7 @@ import type {
     Metadata,
     Metadata_InputContract,
 } from '@canton-network/core-ledger-proto'
+
 import { concat, sha256 } from './bytes.ts'
 import { encodeRepeated, encodeString, encodeTime } from './encoding.ts'
 import { TxHashingError } from './errors.ts'

@@ -1,4 +1,3 @@
-import { beforeAll } from 'vitest'
 import { PartyId } from '@canton-network/core-types'
 import {
     localNetStaticConfig,
@@ -10,6 +9,8 @@ import {
     type SynchronizerSelector,
     getValidatorParty,
 } from '@canton-network/wallet-sdk'
+import { beforeAll } from 'vitest'
+
 import { localNetGlobalSynchronizer } from '../scripts/utils/index.ts'
 
 declare global {

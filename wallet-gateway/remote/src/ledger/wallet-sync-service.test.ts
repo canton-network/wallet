@@ -1,26 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { pino, type Logger } from 'pino'
-import { sink } from 'pino-test'
+import type { LedgerClient } from '@canton-network/core-ledger-client'
+import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import {
     SigningProvider,
     type SigningDriverInterface,
     type GetKeysResult,
 } from '@canton-network/core-signing-lib'
-import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { ParticipantSigningDriver } from '@canton-network/core-signing-participant'
 import {
     StoreSql,
     connection,
     migrator,
 } from '@canton-network/core-signing-store-sql'
+import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import type {
     AccessTokenProvider,
     AuthContext,
 } from '@canton-network/core-wallet-auth'
-import type { LedgerClient } from '@canton-network/core-ledger-client'
 import {
     type Wallet,
     type Network,
@@ -30,10 +28,13 @@ import {
     type WalletStatus,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-import { WalletSyncService } from './wallet-sync-service.ts'
-import { PartyAllocationService } from './party-allocation-service.ts'
 import { getLogger } from '@logtape/logtape'
+import { pino, type Logger } from 'pino'
+import { sink } from 'pino-test'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+
+import { PartyAllocationService } from './party-allocation-service.ts'
+import { WalletSyncService } from './wallet-sync-service.ts'
 
 type LedgerGet = (path: string, ...rest: unknown[]) => Promise<unknown>
 

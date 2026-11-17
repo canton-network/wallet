@@ -3,6 +3,7 @@
 
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { defineConfig } from 'wxt'
+
 import { WALLET_NAME } from './src/shared/brand.ts'
 
 // See https://wxt.dev/api/config.html

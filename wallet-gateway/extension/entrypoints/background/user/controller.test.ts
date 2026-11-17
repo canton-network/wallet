@@ -22,6 +22,7 @@ import {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+
 import { AuthService } from '../auth-service.ts'
 import { initializeWalletStore } from '../store.ts'
 import { userController } from './controller.ts'

@@ -1,22 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, LitElement } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-import { createUserClient, attemptRemoveSession } from './rpc-client.ts'
-import { setLocationHref } from './navigation.ts'
-
-import '@canton-network/core-wallet-ui-components'
-import { stateManager } from './state-manager.ts'
-import { WalletEvent } from '@canton-network/core-types'
 import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
-import {
-    DEFAULT_PAGE_REDIRECT,
-    NOT_FOUND_PAGE_REDIRECT,
-    LOGIN_PAGE_REDIRECT,
-    TOKEN_EXPIRED_SKEW_MS,
-    TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
-} from './constants.ts'
+import { WalletEvent } from '@canton-network/core-types'
 import {
     type AllowedRoute,
     getCurrentRoute,
@@ -25,8 +11,22 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import './listeners.ts'
+import { css, html, LitElement } from 'lit'
+import '@canton-network/core-wallet-ui-components'
+import { customElement, state } from 'lit/decorators.js'
+
+import {
+    DEFAULT_PAGE_REDIRECT,
+    NOT_FOUND_PAGE_REDIRECT,
+    LOGIN_PAGE_REDIRECT,
+    TOKEN_EXPIRED_SKEW_MS,
+    TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS,
+} from './constants.ts'
 import { detectCurrentOrigin } from './listeners.ts'
+import { setLocationHref } from './navigation.ts'
+import { createUserClient, attemptRemoveSession } from './rpc-client.ts'
+import './listeners.ts'
+import { stateManager } from './state-manager.ts'
 import { fetchDappApiUrl, showToast } from './utils.ts'
 
 const globalPageResetStyle = document.createElement('style')

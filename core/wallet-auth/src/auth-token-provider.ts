@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { getLogger, lazy } from '@logtape/logtape'
+
 import type {
     AccessTokenProvider,
     AuthContext,
@@ -8,9 +10,8 @@ import type {
 } from './auth-service.ts'
 import { jwtExpired, jwtUserEmail, jwtUserId } from './auth-utils.ts'
 import { clientCredentialsService } from './client-credentials-service.ts'
-import { SelfSignedTokenService } from './self-signed-token-service.ts'
 import type { Auth, Idp } from './config/schema.ts'
-import { getLogger, lazy } from '@logtape/logtape'
+import { SelfSignedTokenService } from './self-signed-token-service.ts'
 
 export type TokenProviderConfig =
     | {

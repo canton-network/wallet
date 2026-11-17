@@ -9,6 +9,7 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { BrowserContext, Page } from '@playwright/test'
+
 import {
     connectWalletGateway,
     createPingDappWalletGateway,

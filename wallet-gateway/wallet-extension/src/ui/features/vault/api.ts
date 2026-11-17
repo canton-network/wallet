@@ -6,6 +6,7 @@ import {
     useMutation,
     useQueryClient,
 } from '@tanstack/react-query'
+
 import { vaultMessenger, type VaultStatus } from '@/shared/vault-protocol.ts'
 import { queryKeys } from '@/ui/lib/query/keys.ts'
 

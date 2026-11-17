@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { browser, type Browser } from 'wxt/browser'
+
 import { logger } from '@/shared/logger.ts'
 import { vaultMessenger } from '@/shared/vault-protocol.ts'
+
 import type { Vault } from './vault/index.ts'
 
 /** The extension pages that may use the vault service. */

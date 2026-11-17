@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import * as mock from '../../__tests__/mocks.ts'
+import { SDK } from '../../index.ts'
 import {
     EXTENDED_SDK_OPTION_KEYS,
     SDKPlugin,
     type SDKPluginContext,
 } from '../index.ts'
-import * as mock from '../../__tests__/mocks.ts'
-import { SDK } from '../../index.ts'
 
 const testPluginFactory = <T extends string>(key: T) => {
     return vi.fn(

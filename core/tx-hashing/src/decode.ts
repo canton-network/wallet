@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
+
 import { fromBase64 } from './bytes.ts'
 import { TxHashingError } from './errors.ts'
 

@@ -1,18 +1,20 @@
-import { useContext, useEffect, useState } from 'react'
-import './App.css'
 import * as sdk from '@canton-network/dapp-sdk'
-import { useAccounts } from './hooks/useAccounts.ts'
-import { useConnect } from './hooks/useConnect.ts'
-import { Status } from './components/Status.tsx'
-import { ErrorContext } from './ErrorContext.ts'
+
+import './App.css'
+import { useContext, useEffect, useState } from 'react'
+
+import { Accounts } from './components/Accounts.tsx'
+import Holdings from './components/Holdings.tsx'
 import { LedgerQuery } from './components/LedgerQuery.tsx'
 import { LedgerSubmission } from './components/LedgerSubmission.tsx'
-import { Accounts } from './components/Accounts.tsx'
 import { PostEvents } from './components/PostEvents.tsx'
-import { WindowMessages } from './components/WindowMessages.tsx'
 import { Signing } from './components/Signing.tsx'
+import { Status } from './components/Status.tsx'
+import { WindowMessages } from './components/WindowMessages.tsx'
+import { ErrorContext } from './ErrorContext.ts'
+import { useAccounts } from './hooks/useAccounts.ts'
+import { useConnect } from './hooks/useConnect.ts'
 import { useStatus } from './hooks/useStatus.ts'
-import Holdings from './components/Holdings.tsx'
 
 function App() {
     const { errorMsg, setErrorMsg } = useContext(ErrorContext)

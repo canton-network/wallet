@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import nacl from 'tweetnacl'
 import naclUtil from 'tweetnacl-util'
+import { describe, expect, it } from 'vitest'
+
 import {
     createKeyPair,
     getPublicKeyFromPrivate,

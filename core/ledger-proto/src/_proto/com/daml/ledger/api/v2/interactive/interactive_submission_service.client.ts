@@ -7,6 +7,10 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
+import { stackIntercept } from '@protobuf-ts/runtime-rpc'
+import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
+import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
 import { InteractiveSubmissionService } from './interactive_submission_service.ts'
 import type { GetPreferredPackagesResponse } from './interactive_submission_service.ts'
 import type { GetPreferredPackagesRequest } from './interactive_submission_service.ts'
@@ -18,11 +22,8 @@ import type { ExecuteSubmissionAndWaitResponse } from './interactive_submission_
 import type { ExecuteSubmissionAndWaitRequest } from './interactive_submission_service.ts'
 import type { ExecuteSubmissionResponse } from './interactive_submission_service.ts'
 import type { ExecuteSubmissionRequest } from './interactive_submission_service.ts'
-import { stackIntercept } from '@protobuf-ts/runtime-rpc'
 import type { PrepareSubmissionResponse } from './interactive_submission_service.ts'
 import type { PrepareSubmissionRequest } from './interactive_submission_service.ts'
-import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
-import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**
  * Service allowing interactive construction of command submissions
  *

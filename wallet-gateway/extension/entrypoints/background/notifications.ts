@@ -9,6 +9,7 @@ import {
     subscribeNotifications,
 } from '@canton-network/core-wallet-services'
 import type { Browser } from 'wxt/browser'
+
 import {
     NOTIFICATIONS_PORT_NAME,
     type NotificationPortMessage,

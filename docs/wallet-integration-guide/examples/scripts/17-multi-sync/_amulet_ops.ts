@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
 import {
     localNetStaticConfig,
     resolveCapabilities,
 } from '@canton-network/wallet-sdk'
-import type { MultiSyncSetup } from './_setup.ts'
+import type { Logger } from 'pino'
+
 import { ALICE_AMULET_TAP_AMOUNT } from './_constants.ts'
+import type { MultiSyncSetup } from './_setup.ts'
 
 export async function mintAmuletForAlice(
     setup: MultiSyncSetup,

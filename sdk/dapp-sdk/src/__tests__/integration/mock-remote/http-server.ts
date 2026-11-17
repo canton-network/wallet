@@ -4,6 +4,7 @@
 // Actual server acting as mock wallet using HTTP with SSE transport for testing CIP-0103 async API.
 
 import * as http from 'node:http'
+
 import {
     handleMockJsonRpc,
     MOCK_DAPP_API_PATH,

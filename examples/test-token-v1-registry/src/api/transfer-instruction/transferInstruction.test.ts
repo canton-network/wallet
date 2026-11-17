@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext.ts'
-import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext.ts'
-import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext.ts'
-import { getTransferFactory } from './getTransferFactory.ts'
-import { APIError, emptyChoiceContext } from '../common.ts'
+
 import {
     expressContext,
     mock,
     type RequestType,
 } from '../../__tests__/mocks.ts'
+import { APIError, emptyChoiceContext } from '../common.ts'
+import { getTransferFactory } from './getTransferFactory.ts'
+import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext.ts'
+import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext.ts'
+import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext.ts'
 
 const { res, next } = expressContext
 

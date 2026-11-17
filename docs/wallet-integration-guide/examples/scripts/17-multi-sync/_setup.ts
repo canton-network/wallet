@@ -1,15 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
+import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { Provider as Ops } from '@canton-network/core-ledger-client-types'
+import type { KeyPair } from '@canton-network/core-signing-lib'
+import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
 import {
     localNetStaticConfig,
     SDK,
     type SDKInterface,
 } from '@canton-network/wallet-sdk'
-import type { KeyPair } from '@canton-network/core-signing-lib'
-import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
-import type { Provider as Ops } from '@canton-network/core-ledger-client-types'
+import type { Logger } from 'pino'
+
 import {
     AMULET_NAMESPACE_CONFIG,
     ASSET_CONFIG,
@@ -17,7 +19,6 @@ import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
 } from '../utils/index.ts'
 import type { KnownSynchronizers } from '../utils/index.ts'
-import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
 
 export type PartyInfo = Omit<
     GenerateTransactionResponse,

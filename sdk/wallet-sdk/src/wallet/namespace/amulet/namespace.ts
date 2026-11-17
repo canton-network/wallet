@@ -1,26 +1,27 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AmuletService } from '@canton-network/core-amulet-service'
+import type {
+    AssetBody,
+    TokenStandardService,
+} from '@canton-network/core-token-standard-service'
 import type { PartyId } from '@canton-network/core-types'
+import { Decimal } from 'decimal.js'
+
+import { SynchronizerResolver } from '../../init/synchronizer.ts'
 import type { SDKContext } from '../../init/types/context.ts'
+import { LedgerNamespace } from '../ledger/namespace.ts'
 import type { PreparedCommand } from '../transactions/types.ts'
+import { parseAssets, ParsedURL } from '../utils/url.ts'
+import { PreapprovalNamespace } from './preapproval.ts'
+import { TrafficNamespace } from './traffic.ts'
 import type {
     FeaturedAppRight,
     GrantFeaturedAppRightsOptions,
     LookupFeaturedAppRightsOptions,
     RevokeFeaturedAppRightsOptions,
 } from './types.ts'
-import type { AmuletService } from '@canton-network/core-amulet-service'
-import { SynchronizerResolver } from '../../init/synchronizer.ts'
-import type {
-    AssetBody,
-    TokenStandardService,
-} from '@canton-network/core-token-standard-service'
-import { TrafficNamespace } from './traffic.ts'
-import { LedgerNamespace } from '../ledger/namespace.ts'
-import { PreapprovalNamespace } from './preapproval.ts'
-import { Decimal } from 'decimal.js'
-import { parseAssets, ParsedURL } from '../utils/url.ts'
 import { resolveProviderParty } from './utils.ts'
 
 const defaultMaxRetries = 10

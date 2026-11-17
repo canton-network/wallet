@@ -25,6 +25,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { z } from 'zod'
+
 import { BitGoHandler, type BitGoConfig } from './bitgo.ts'
 
 const BitGoConfigUpdateSchema = z.object({

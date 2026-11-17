@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { Transaction } from '@canton-network/core-tx-parser'
 import {
     useInfiniteQuery,
     useQueryClient,
     type UseInfiniteQueryResult,
     type InfiniteData,
 } from '@tanstack/react-query'
-import type { Transaction } from '@canton-network/core-tx-parser'
+
 import { useConnection } from '../contexts/ConnectionContext.tsx'
 import type { TransactionHistoryResponse } from '../services/transaction-history-service.ts'
 import { queryKeys } from './query-keys.ts'

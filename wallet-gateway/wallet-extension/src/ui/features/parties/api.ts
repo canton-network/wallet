@@ -18,8 +18,9 @@ import {
     useMutation,
     useQueryClient,
 } from '@tanstack/react-query'
-import { getUserClient } from '@/ui/lib/user-client.ts'
+
 import { queryKeys } from '@/ui/lib/query/keys.ts'
+import { getUserClient } from '@/ui/lib/user-client.ts'
 
 export const walletsQuery = () =>
     queryOptions({

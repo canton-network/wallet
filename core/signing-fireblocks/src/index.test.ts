@@ -1,10 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-import FireblocksSigningDriver from './index.ts'
-
 import {
     isRpcError,
     type Transaction,
@@ -12,12 +8,15 @@ import {
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
-import { PublicKeyInformationAlgorithmEnum } from '@fireblocks/ts-sdk'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { PublicKeyInformationAlgorithmEnum } from '@fireblocks/ts-sdk'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import type {
     FireblocksApiKeyInfo,
     FireblocksTransaction,
 } from './fireblocks.ts'
+import FireblocksSigningDriver from './index.ts'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'

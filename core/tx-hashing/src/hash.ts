@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { HashingSchemeVersion } from '@canton-network/core-ledger-proto'
+
 import { readPreparedTransaction } from './decode.ts'
 import { TxHashingError } from './errors.ts'
 import { checkForest } from './forest.ts'

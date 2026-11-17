@@ -9,6 +9,7 @@ import {
     queryByShadowRole,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor } from 'storybook/test'
+
 import { AppHeader } from './AppHeader.tsx'
 
 const dappApiUrl = 'http://localhost:3030/api/v0/dapp'

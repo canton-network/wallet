@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { OffLedger } from '@canton-network/core-token-standard'
-import { instruments } from './common.ts'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+
+import { instruments } from './common.ts'
 
 /**
  * @returns API payload containing the full in-memory list of instrument metadata.

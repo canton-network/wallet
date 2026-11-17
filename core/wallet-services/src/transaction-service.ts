@@ -9,12 +9,6 @@ import {
     type Types,
 } from '@canton-network/core-ledger-client'
 import { errorCodes } from '@canton-network/core-rpc-errors'
-import type {
-    Store,
-    Transaction,
-    Wallet,
-    Network,
-} from '@canton-network/core-wallet-store'
 import {
     type Error as SigningError,
     type GetTransactionResult,
@@ -23,14 +17,10 @@ import {
     type Methods as SigningController,
     type SignTransactionParams,
 } from '@canton-network/core-signing-lib'
-import type { SigningDrivers, HASHING_SCHEME_VERSION } from './types.ts'
-import type { Notifier } from './notification/index.ts'
-import type {
-    ExecuteParams,
-    ExecuteResult,
-    SignParams,
-    SignResult,
-} from '@canton-network/core-wallet-user-rpc-client'
+import {
+    type AuthContext,
+    AuthTokenProvider,
+} from '@canton-network/core-wallet-auth'
 import type {
     TxChangedExecutedEvent,
     TxChangedFailedEvent,
@@ -38,12 +28,23 @@ import type {
     TxChangedSignedEvent,
     UserId,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { ledgerPrepareParams, type PrepareParams } from './utils.ts'
-import {
-    type AuthContext,
-    AuthTokenProvider,
-} from '@canton-network/core-wallet-auth'
+import type {
+    Store,
+    Transaction,
+    Wallet,
+    Network,
+} from '@canton-network/core-wallet-store'
+import type {
+    ExecuteParams,
+    ExecuteResult,
+    SignParams,
+    SignResult,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { getLogger } from '@logtape/logtape'
+
+import type { Notifier } from './notification/index.ts'
+import type { SigningDrivers, HASHING_SCHEME_VERSION } from './types.ts'
+import { ledgerPrepareParams, type PrepareParams } from './utils.ts'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 

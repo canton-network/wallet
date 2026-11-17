@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { expressContext } from '../../__tests__/mocks.ts'
 import { getUtilityOperator } from './getUtilityOperator.ts'
 

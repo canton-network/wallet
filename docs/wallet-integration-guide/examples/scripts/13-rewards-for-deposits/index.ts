@@ -1,19 +1,20 @@
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from '../utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
 } from '../utils/index.ts'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import fs from 'node:fs/promises'
-import type { RewardsForDepositsTestScriptParameters } from './types.ts'
 import _accept from './_accept.ts'
-import _withdraw from './_withdraw.ts'
 import _reject from './_reject.ts'
-
-import { configureLogging } from '../utils/configure-logging.ts'
+import _withdraw from './_withdraw.ts'
+import type { RewardsForDepositsTestScriptParameters } from './types.ts'
 const logger = await configureLogging()
 
 // This example script implements https://docs.digitalasset.com/integrate/devnet/exchange-integration/extensions.html#earning-app-rewards-for-deposits

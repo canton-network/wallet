@@ -7,12 +7,13 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { CommandInspectionService } from './command_inspection_service.ts'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetCommandStatusResponse } from './command_inspection_service.ts'
-import type { GetCommandStatusRequest } from './command_inspection_service.ts'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { CommandInspectionService } from './command_inspection_service.ts'
+import type { GetCommandStatusResponse } from './command_inspection_service.ts'
+import type { GetCommandStatusRequest } from './command_inspection_service.ts'
 /**
  * Status: experimental interface, will change before it is deemed production
  * ready

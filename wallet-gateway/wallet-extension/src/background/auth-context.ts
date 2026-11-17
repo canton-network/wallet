@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type AuthContext, jwtUserId } from '@canton-network/core-wallet-auth'
+
 import { logger } from '@/shared/logger.ts'
+
 import type { Vault } from './vault/index.ts'
 
 /** The signed-in user's token and user ID. */

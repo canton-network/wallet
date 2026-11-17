@@ -3,6 +3,7 @@
 
 import type { WalletPickerEntry } from '@canton-network/core-types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { makeWalletPickerEntry } from '../components/__tests__/fixtures.ts'
 import { popup } from './popup.ts'
 import {

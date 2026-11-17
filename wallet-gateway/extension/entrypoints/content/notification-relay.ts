@@ -7,6 +7,7 @@ import {
     WalletEvent,
 } from '@canton-network/core-types'
 import type { Browser } from 'wxt/browser'
+
 import {
     NOTIFICATIONS_PORT_NAME,
     type NotificationPortMessage,

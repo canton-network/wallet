@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { rpcErrors, toHttpErrorCode } from '@canton-network/core-rpc-errors'
+import type { JsonRpcResponse } from '@canton-network/core-types'
 import type { Request, Response } from 'express'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import type { JsonRpcResponse } from '@canton-network/core-types'
-import { rpcErrors, toHttpErrorCode } from '@canton-network/core-rpc-errors'
-import { handleRpcError, jsonRpcHandler } from './jsonRpcHandler.ts'
-import { paramSchemas as dappParamSchemas } from '../dapp-api/rpc-gen/schemas.ts'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { z } from 'zod'
+
+import { paramSchemas as dappParamSchemas } from '../dapp-api/rpc-gen/schemas.ts'
+import { handleRpcError, jsonRpcHandler } from './jsonRpcHandler.ts'
 
 function errorPayload(body: JsonRpcResponse) {
     if (!('error' in body)) {

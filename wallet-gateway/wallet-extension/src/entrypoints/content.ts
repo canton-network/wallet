@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineContentScript } from 'wxt/utils/define-content-script'
+
 import { startContent } from '@/content/index.ts'
 
 export default defineContentScript({

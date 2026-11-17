@@ -3,6 +3,7 @@
 
 import { SpliceMessage, WalletEvent } from '@canton-network/core-types'
 import { browser } from 'wxt/browser'
+
 import { logger } from '@/shared/logger.ts'
 
 /**

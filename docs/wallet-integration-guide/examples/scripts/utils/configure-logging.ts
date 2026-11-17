@@ -1,6 +1,6 @@
-import { pino, type Logger } from 'pino'
-import { configure } from '@logtape/logtape'
 import { getPinoSink } from '@logtape/adaptor-pino'
+import { configure } from '@logtape/logtape'
+import { pino, type Logger } from 'pino'
 
 export const configureLogging = async (): Promise<Logger> => {
     const logger = pino({

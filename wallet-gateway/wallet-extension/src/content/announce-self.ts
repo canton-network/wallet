@@ -6,6 +6,7 @@ import {
     CANTON_REQUEST_PROVIDER_EVENT,
 } from '@canton-network/core-types'
 import { browser } from 'wxt/browser'
+
 import { WALLET_NAME } from '@/shared/brand.ts'
 
 /**

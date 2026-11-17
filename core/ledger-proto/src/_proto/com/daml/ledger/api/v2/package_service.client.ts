@@ -7,6 +7,10 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
+import { stackIntercept } from '@protobuf-ts/runtime-rpc'
+import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
+import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
 import { PackageService } from './package_service.ts'
 import type { ListVettedPackagesResponse } from './package_service.ts'
 import type { ListVettedPackagesRequest } from './package_service.ts'
@@ -14,11 +18,8 @@ import type { GetPackageStatusResponse } from './package_service.ts'
 import type { GetPackageStatusRequest } from './package_service.ts'
 import type { GetPackageResponse } from './package_service.ts'
 import type { GetPackageRequest } from './package_service.ts'
-import { stackIntercept } from '@protobuf-ts/runtime-rpc'
 import type { ListPackagesResponse } from './package_service.ts'
 import type { ListPackagesRequest } from './package_service.ts'
-import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
-import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**
  * Allows clients to query the Daml-LF packages that are supported by the server.
  *

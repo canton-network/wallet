@@ -3,6 +3,7 @@
 
 import type { WalletKitTypes } from '@reown/walletkit'
 import type { SessionTypes } from '@walletconnect/types'
+
 import { initWalletKit, getWalletKit } from './client.ts'
 import {
     callDappApi,

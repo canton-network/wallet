@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useQuery, type UseQueryResult } from '@tanstack/react-query'
+
 import { useIsDevNetQueryOptions } from './query-options.ts'
 
 export const useIsDevNet = (): UseQueryResult<boolean> => {

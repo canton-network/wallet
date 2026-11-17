@@ -1,8 +1,8 @@
 {
     "version": 1,
     "migrations": {
-        "001-init": "2131ca1cc7023c4870bde28e1302033c57ed7abf7097655bb37938d10c46d536",
-        "002-add-signed-at": "878f4b39d566e8cdb19c50c0d0805cf60d9fa5fbd7707b835b00130ae17000ae",
-        "003-alter-date-fields": "a4a3e1d40699f1114e0f04117c6d63aa7c787fbea80183d5875ca06287d2e4c7"
+        "001-init": "70083036198dbb91ff2e176bc6c25d40583266288cc63f0a246d19d445b4d554",
+        "002-add-signed-at": "a062287ea114115262da1a6776c26ceaa1dd1c28062fb42300411dbeb1e063cf",
+        "003-alter-date-fields": "b5a34854f9b6f6488b236ee17feb421a91ce0c9476524a4ff230e06ebb8923d3"
     }
 }

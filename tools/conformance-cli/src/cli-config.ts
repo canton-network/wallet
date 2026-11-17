@@ -3,6 +3,7 @@
 
 import { readFile } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
+
 import { cliConfigSchema, type CliConfig } from './config.ts'
 
 async function loadConfig(configPath?: string): Promise<CliConfig> {

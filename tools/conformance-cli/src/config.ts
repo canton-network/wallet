@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { resolve } from 'node:path'
-import { z } from 'zod'
+
 import { ConfigSchema } from '@canton-network/tool-conformance-dapp'
+import { z } from 'zod'
 
 /** Relative paths resolve against `baseDir`, i.e. the config file's directory. */
 export function cliConfigSchema(baseDir = '.') {

@@ -25,10 +25,11 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Duration } from '../../protobuf/duration.ts'
-import { Timestamp } from '../../protobuf/timestamp.ts'
-import { Struct } from '../../protobuf/struct.ts'
+
 import { Any } from '../../protobuf/any.ts'
+import { Duration } from '../../protobuf/duration.ts'
+import { Struct } from '../../protobuf/struct.ts'
+import { Timestamp } from '../../protobuf/timestamp.ts'
 /**
  * This message defines the standard attribute vocabulary for Google APIs.
  *

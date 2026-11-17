@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { SignJWT } from 'jose'
 import { describe, it, expect, vi, afterEach } from 'vitest'
-import { assertConnected, jwtExpired } from './auth-utils.ts'
+
 import {
     AuthTokenProvider,
     type TokenProviderConfig,
 } from './auth-token-provider.ts'
-import type { Auth, Idp } from './config/schema.ts'
+import { assertConnected, jwtExpired } from './auth-utils.ts'
 import { clientCredentialsService } from './client-credentials-service.ts'
+import type { Auth, Idp } from './config/schema.ts'
 import { SelfSignedTokenService } from './self-signed-token-service.ts'
-import { SignJWT } from 'jose'
 
 vi.mock('./client-credentials-service.ts', () => {
     return {

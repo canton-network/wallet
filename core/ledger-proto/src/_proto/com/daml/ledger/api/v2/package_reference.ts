@@ -14,6 +14,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
+
 import { Empty } from '../../../../../google/protobuf/empty.ts'
 import { Timestamp } from '../../../../../google/protobuf/timestamp.ts'
 /**

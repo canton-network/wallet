@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, type Locator, type Page, test } from '@playwright/test'
 import {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
-import type { TokenStandardVersion } from '../src/types/instruments.ts'
+import { expect, type Locator, type Page, test } from '@playwright/test'
 import type { Request } from '@playwright/test'
+
+import type { TokenStandardVersion } from '../src/types/instruments.ts'
 
 const BASE_URL = 'http://localhost:8081'
 

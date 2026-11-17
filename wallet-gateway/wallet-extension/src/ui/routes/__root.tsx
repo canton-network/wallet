@@ -3,6 +3,7 @@
 
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
+
 import type { RouterContext } from '@/ui/app/router-context.ts'
 
 // `wxt build` replaces import.meta.env.DEV with false, so the devtools chunk

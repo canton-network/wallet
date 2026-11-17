@@ -8,8 +8,9 @@ import type {
 } from '@canton-network/core-signing-lib'
 import { afterEach, describe, expect, beforeEach, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { WxtStore } from './store-wxt.ts'
+
 import { signingKeysItem, signingTransactionsItem } from './items.ts'
+import { WxtStore } from './store-wxt.ts'
 
 describe('storage wxt', () => {
     beforeEach(() => {

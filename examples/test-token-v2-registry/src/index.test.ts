@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from 'vitest'
+
 import { mock } from './__tests__/mocks.ts'
 import { stopRegistry } from './index.ts'
 

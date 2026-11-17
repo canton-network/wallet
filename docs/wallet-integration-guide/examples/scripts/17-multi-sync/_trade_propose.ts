@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
-import type { SDKInterface } from '@canton-network/wallet-sdk'
-import type { MultiSyncSetup } from './_setup.ts'
-import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.ts'
 import { OTCTrade } from '@canton-network/core-splice-codegen'
 import type { TransferLeg } from '@canton-network/core-token-standard'
+import type { SDKInterface } from '@canton-network/wallet-sdk'
+import type { Logger } from 'pino'
+
+import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.ts'
 import { pollUntilFound } from './_poll.ts'
+import type { MultiSyncSetup } from './_setup.ts'
 
 const MS_30_MIN = 30 * 60 * 1000
 const MS_1_HOUR = 60 * 60 * 1000

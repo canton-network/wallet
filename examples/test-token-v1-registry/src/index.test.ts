@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from 'vitest'
-import { stopRegistry } from './index.ts'
+
 import { mock } from './__tests__/mocks.ts'
+import { stopRegistry } from './index.ts'
 
 const mocks = vi.hoisted(() => {
     const use = vi.fn().mockReturnThis()

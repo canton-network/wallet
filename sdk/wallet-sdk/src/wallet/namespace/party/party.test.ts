@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import * as mock from '../../__tests__/mocks.ts'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { signTransactionHash } from '@canton-network/core-signing-lib'
 import { it, describe, beforeEach, vi, expect } from 'vitest'
+
+import * as mock from '../../__tests__/mocks.ts'
 import {
     PartyNamespace,
     PreparedPartyCreationService,
     SignedPartyCreationService,
 } from './index.ts'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import { signTransactionHash } from '@canton-network/core-signing-lib'
 
 const { ctx, ledgerProvider } = mock
 

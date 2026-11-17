@@ -12,6 +12,7 @@ import {
     type HashingScheme,
     type HashOptions,
 } from '@canton-network/core-tx-hashing'
+
 import { fromBase64, toBase64, toHex } from './utils.ts'
 export {
     computeSha256CantonHash,

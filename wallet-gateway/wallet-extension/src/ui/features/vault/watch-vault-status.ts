@@ -3,6 +3,7 @@
 
 import type { QueryClient } from '@tanstack/react-query'
 import type { AnyRouter } from '@tanstack/react-router'
+
 import { vaultStatusItem } from '@/shared/storage.ts'
 
 /**

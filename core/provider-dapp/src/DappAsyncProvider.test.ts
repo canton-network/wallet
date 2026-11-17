@@ -19,8 +19,9 @@ let sseHandlers: Record<string, (event: MessageEvent) => void>
 let sessionToken: string
 let tokenCounter = 0
 
-import { DappAsyncProvider } from './DappAsyncProvider.ts'
 import { WalletEvent } from '@canton-network/core-types'
+
+import { DappAsyncProvider } from './DappAsyncProvider.ts'
 
 function emitSseEvent(eventName: string, data: unknown) {
     const handler = sseHandlers[eventName]

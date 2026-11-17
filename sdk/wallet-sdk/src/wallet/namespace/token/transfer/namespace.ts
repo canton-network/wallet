@@ -1,21 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TokenNamespaceConfig } from '../namespace.ts'
-import type { PartyId } from '@canton-network/core-types'
 import {
     TRANSFER_INSTRUCTION_INTERFACE_ID,
     type TransferInstructionView,
 } from '@canton-network/core-token-standard'
+import type { PartyId } from '@canton-network/core-types'
+
+import { findAsset } from '../../asset/index.ts'
+import type { PreparedCommand } from '../../transactions/types.ts'
+import { parseAssets, ParsedURL } from '../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../namespace.ts'
+import { ProxyDelegationNamespace } from './proxyDelegation.ts'
 import type {
     TransferAllocationChoiceParams,
     TransferParams,
     TransferParamsV1,
 } from './types.ts'
-import type { PreparedCommand } from '../../transactions/types.ts'
-import { ProxyDelegationNamespace } from './proxyDelegation.ts'
-import { findAsset } from '../../asset/index.ts'
-import { parseAssets, ParsedURL } from '../../utils/url.ts'
 
 export class TransferNamespace {
     public readonly delegatedProxy: ProxyDelegationNamespace

@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PreparedCommand } from '../../../transactions/types.ts'
 import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 import type { AssetBody } from '@canton-network/core-token-standard-service'
 import type {
@@ -13,6 +12,8 @@ import type {
 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
+
+import type { PreparedCommand } from '../../../transactions/types.ts'
 
 export type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']

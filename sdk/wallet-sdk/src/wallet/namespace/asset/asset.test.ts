@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi } from 'vitest'
-import { type AssetContext, AssetNamespace } from './index.ts'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import { describe, it, expect, vi } from 'vitest'
+
+import { capabilities, ctx } from '../../__tests__/mocks.ts'
 import { SDKErrorHandler } from '../../error/handler.ts'
 import { SDKLogger } from '../../logger/logger.ts'
-import { capabilities, ctx } from '../../__tests__/mocks.ts'
+import { type AssetContext, AssetNamespace } from './index.ts'
 
 const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     request: vi.fn().mockResolvedValue(undefined),

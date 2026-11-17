@@ -1,5 +1,6 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
+
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     localNetGlobalSynchronizer,

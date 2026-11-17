@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { PreparedCommand } from '@canton-network/wallet-sdk'
+import { submitViaProvider } from '@lib/submit'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import type { PreparedCommand } from '@canton-network/wallet-sdk'
-import { utilityOperatorQueryOptions } from './query-options.ts'
-import { queryKeys } from './query-keys.ts'
-import type { WalletSdk } from './useWalletSdk.ts'
-import { submitViaProvider } from '@lib/submit'
+
 import type { PreapprovalRow } from '../types/preapprovals.ts'
+import { queryKeys } from './query-keys.ts'
+import { utilityOperatorQueryOptions } from './query-options.ts'
+import type { WalletSdk } from './useWalletSdk.ts'
 
 type TogglePreapprovalInput = {
     row: PreapprovalRow

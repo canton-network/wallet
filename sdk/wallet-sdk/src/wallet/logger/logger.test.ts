@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+
 import ConsoleLogAdapter from './adapter/console.ts'
 import CustomLogAdapter from './adapter/custom.ts'
 import { SDKLogger } from './logger.ts'

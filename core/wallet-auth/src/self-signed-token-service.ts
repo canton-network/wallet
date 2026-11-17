@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ClientCredentials } from './auth-service.ts'
-import { SignJWT } from 'jose'
 import { getLogger } from '@logtape/logtape'
+import { SignJWT } from 'jose'
+
+import type { ClientCredentials } from './auth-service.ts'
 
 export class SelfSignedTokenService {
     private static logger = getLogger([

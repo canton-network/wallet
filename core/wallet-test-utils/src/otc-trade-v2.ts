@@ -4,15 +4,17 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import { Decimal } from 'decimal.js'
+
+import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
 import type { PartyId } from '@canton-network/core-types'
 import {
     SDK,
     type TokenProviderConfig,
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
-import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
 import { getLogger } from '@logtape/logtape'
+import { Decimal } from 'decimal.js'
+
 import { localNetGlobalSynchronizer } from './localnet.ts'
 
 // This example needs the uploaded .dar for splice-token-test-trading-app-v2.

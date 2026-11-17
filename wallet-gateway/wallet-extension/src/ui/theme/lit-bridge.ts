@@ -11,6 +11,7 @@
 // the MUI theme object.
 
 import type { CSSObject } from '@mui/material/styles'
+
 import { walletColors } from './tokens.ts'
 
 interface LitTokens {

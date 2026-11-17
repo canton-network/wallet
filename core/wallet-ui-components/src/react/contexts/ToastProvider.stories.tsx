@@ -1,17 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Meta, StoryObj } from '@storybook/react-vite'
-import { Button } from '@mui/material'
 import { JsonRpcError } from '@canton-network/core-rpc-errors'
+import { Button } from '@mui/material'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, waitForElementToBeRemoved, within } from 'storybook/test'
+
 import {
     useErrorToast,
     type ErrorToastFallback,
 } from '../hooks/useErrorToast.ts'
 import { useToast } from '../hooks/useToast.ts'
-import { ToastProvider } from './ToastProvider.tsx'
 import type { ToastOptions } from './ToastContext.ts'
+import { ToastProvider } from './ToastProvider.tsx'
 
 const ShowToast = (options: ToastOptions) => {
     const { showToast } = useToast()

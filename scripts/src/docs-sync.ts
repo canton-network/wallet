@@ -4,9 +4,11 @@
 // Syncs the files listed in docs/docs-sync.json with the central docs
 // repository (canton-network/cf-docs), see docs/README.md.
 
-import { Command } from '@commander-js/extra-typings'
 import fs from 'node:fs'
 import path from 'node:path'
+
+import { Command } from '@commander-js/extra-typings'
+
 import manifest from '../../docs/docs-sync.json' with { type: 'json' }
 import { error, getRepoRoot, warn } from './lib/utils.ts'
 

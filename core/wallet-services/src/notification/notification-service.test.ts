@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { initializeLogRecorder } from '../__tests__/test-utils.ts'
 import { NotificationService } from './notification-service.ts'
 

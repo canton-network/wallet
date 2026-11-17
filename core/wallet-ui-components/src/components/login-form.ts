@@ -1,16 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing, type PropertyValues } from 'lit'
-import { customElement, property, state } from 'lit/decorators.js'
-import './back-link.ts'
-import { BaseElement } from '../internal/base-element.ts'
 import type {
     PublicNetwork,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { chevronDownIcon } from '../icons/index.ts'
+import { css, html, nothing, type PropertyValues } from 'lit'
+
+import './back-link.ts'
+import { customElement, property, state } from 'lit/decorators.js'
+
 import cantonLogo from '../../images/logos/canton-logo.png'
+import { chevronDownIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 /** Emitted when the user clicks the Connect button */
 export class LoginConnectEvent extends Event {

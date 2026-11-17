@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { getRegistryInfo } from './getRegistryInfo.ts'
-import { getInstrument } from './getInstrument.ts'
-import { listInstruments } from './listInstruments.ts'
-import { instruments, supportedApis } from './common.ts'
+
 import { expressContext, type RequestType } from '../../__tests__/mocks.ts'
 import { APIError } from '../common.ts'
+import { instruments, supportedApis } from './common.ts'
+import { getInstrument } from './getInstrument.ts'
+import { getRegistryInfo } from './getRegistryInfo.ts'
+import { listInstruments } from './listInstruments.ts'
 
 const { req, res, next } = expressContext
 

@@ -27,10 +27,11 @@
     - SCRIPT_NAME: Run only a single script (full name match, e.g. '06-multi-hosted-party')
 */
 
+import child_process from 'child_process'
 import fs from 'fs'
 import path from 'path'
+
 import { error, getRepoRoot, success } from './lib/utils.ts'
-import child_process from 'child_process'
 
 const maxIoListeners = Number.parseInt(process.env.MAX_IO_LISTENERS ?? '', 10)
 if (Number.isFinite(maxIoListeners) && maxIoListeners > 0) {

@@ -1,25 +1,24 @@
-import { logAllContracts, TOKEN_NAMESPACE_CONFIG } from '../utils/index.ts'
-import { setupMultiSyncTrade } from './_setup.ts'
-import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.ts'
-import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.ts'
-import { mintAndTransferTokenToBob } from './_token_setup.ts'
-import { allocateTokenForBob } from './_token_allocation.ts'
-import { aliceTransferToCharlie } from './_token_transfer.ts'
-import { createAndInitiateOtcTrade } from './_trade_propose.ts'
-import { settleOtcTrade } from './_trade_settle.ts'
+import { TestToken } from '@canton-network/core-splice-codegen'
 import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v1-registry'
-import { TestToken } from '@canton-network/core-splice-codegen'
 
+import { assertV1 } from '../utils/assert.ts'
+import { configureLogging } from '../utils/configure-logging.ts'
+import { TEST_TOKEN_V1_REGISTRY } from '../utils/constants.ts'
+import { logAllContracts, TOKEN_NAMESPACE_CONFIG } from '../utils/index.ts'
+import { mintAmuletForAlice, allocateAmuletForAlice } from './_amulet_ops.ts'
+import { TRADE_AMULET_AMOUNT, TRADE_TOKEN_AMOUNT } from './_constants.ts'
+import { setupMultiSyncTrade } from './_setup.ts'
+import { allocateTokenForBob } from './_token_allocation.ts'
+import { mintAndTransferTokenToBob } from './_token_setup.ts'
 // Multi-Synchronizer DvP: Alice pays 100 Amulet on global; Bob delivers 20 TestToken from app-sync.
 // app-user participant hosts Alice + TradingApp, app-provider hosts Bob (+ TokenAdmin); both
 // app-user and app-provider connect to the global + app synchronizers, sv is global-only.
-
-import { configureLogging } from '../utils/configure-logging.ts'
-import { TEST_TOKEN_V1_REGISTRY } from '../utils/constants.ts'
-import { assertV1 } from '../utils/assert.ts'
+import { aliceTransferToCharlie } from './_token_transfer.ts'
+import { createAndInitiateOtcTrade } from './_trade_propose.ts'
+import { settleOtcTrade } from './_trade_settle.ts'
 const logger = await configureLogging()
 
 // ── Setup: create SDKs, discover synchronizers, vet DARs, allocate parties ───

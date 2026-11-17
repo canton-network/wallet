@@ -1,7 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo, useState } from 'react'
+import { CopyableIdentifier } from '@components/copyable-identifier'
+import { PillButton } from '@components/ui/PillButton'
+import { formatCharacterCount } from '@components/utils'
+import { usePrimaryAccount } from '@hooks/useAccounts'
+import type { useCreateTransfer } from '@hooks/useCreateTransfer'
+import { useInstrumentAvailableBalance } from '@hooks/useInstrumentAvailableBalance'
 import CloseIcon from '@mui/icons-material/Close'
 import {
     Alert,
@@ -20,14 +25,10 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers'
 import { useForm } from '@tanstack/react-form'
 import type { AnyFieldApi } from '@tanstack/react-form'
-import { z } from 'zod'
-import { CopyableIdentifier } from '@components/copyable-identifier'
-import { formatCharacterCount } from '@components/utils'
-import { PillButton } from '@components/ui/PillButton'
-import { usePrimaryAccount } from '@hooks/useAccounts'
-import type { useCreateTransfer } from '@hooks/useCreateTransfer'
-import { useInstrumentAvailableBalance } from '@hooks/useInstrumentAvailableBalance'
 import { toDecimalOrNull } from '@utils/decimal'
+import { useMemo, useState } from 'react'
+import { z } from 'zod'
+
 import { InstrumentSelect } from './instrument-select.tsx'
 import type {
     SelectableInstrument,

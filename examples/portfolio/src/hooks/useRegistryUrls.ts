@@ -1,22 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useMemo } from 'react'
+import type { PartyId } from '@canton-network/core-types'
+import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
+import { queryKeys } from '@hooks/query-keys'
+import { fetchRegistryInfo } from '@lib/registry-client'
 import {
     useMutation,
     useQueries,
     useQuery,
     useQueryClient,
 } from '@tanstack/react-query'
-import type { PartyId } from '@canton-network/core-types'
-import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
-import { fetchRegistryInfo } from '@lib/registry-client'
 import { normalizeRegistryUrl } from '@utils/registry'
+import { useCallback, useMemo } from 'react'
+
 import type {
     RegistryEntry,
     RegistryReachabilityStatus,
 } from '../types/registries.ts'
-import { queryKeys } from '@hooks/query-keys'
 
 const STORAGE_KEY = 'registries'
 

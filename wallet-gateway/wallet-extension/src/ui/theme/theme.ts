@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createTheme } from '@mui/material/styles'
+
 import { components } from './components.ts'
 import { darkScheme, lightScheme } from './tokens.ts'
 

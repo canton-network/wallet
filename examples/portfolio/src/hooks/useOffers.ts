@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
 import type {
     ActionItem,
     AllocationActionItem,
@@ -11,11 +10,13 @@ import type {
     TransferActionItem,
 } from '@components/types'
 import { isExpired } from '@utils/date-format'
-import { useOfferItems, type OfferItemsResult } from './useOfferItems.ts'
 import {
     getAllocationRequestActions,
     needsUserAction,
 } from '@utils/v2-allocation-items'
+import { useMemo } from 'react'
+
+import { useOfferItems, type OfferItemsResult } from './useOfferItems.ts'
 
 export type OfferDirection = 'incoming' | 'outgoing'
 export type OfferCategory = 'transfers' | 'allocations'

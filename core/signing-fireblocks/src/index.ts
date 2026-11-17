@@ -10,7 +10,6 @@ import {
     SigningProvider,
     type SignMessageResult,
 } from '@canton-network/core-signing-lib'
-
 import type {
     SignMessageParams,
     SignTransactionParams,
@@ -29,11 +28,12 @@ import type {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
-import type { FireblocksApiKeyInfo } from './fireblocks.ts'
-import { FireblocksHandler } from './fireblocks.ts'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import _ from 'lodash'
 import { z } from 'zod'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
+
+import type { FireblocksApiKeyInfo } from './fireblocks.ts'
+import { FireblocksHandler } from './fireblocks.ts'
 
 export interface FireblocksConfig {
     defaultKeyInfo?: FireblocksApiKeyInfo

@@ -1,16 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import type {
-    RpcTypes as DappRpcTypes,
-    LedgerApiParams,
-    PrepareExecuteParams,
-    SignMessageParams,
-    StatusEvent,
-    TxChangedEvent,
-    Wallet,
-} from '@canton-network/core-wallet-dapp-rpc-client'
 import type {
     AbstractProvider,
     Provider,
@@ -20,7 +10,18 @@ import {
     WalletEvent,
     type SpliceMessage,
 } from '@canton-network/core-types'
+import type {
+    RpcTypes as DappRpcTypes,
+    LedgerApiParams,
+    PrepareExecuteParams,
+    SignMessageParams,
+    StatusEvent,
+    TxChangedEvent,
+    Wallet,
+} from '@canton-network/core-wallet-dapp-rpc-client'
 import { popup } from '@canton-network/core-wallet-ui-components'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+
 import { DappSDK } from '../../sdk.ts'
 import * as storage from '../../storage.ts'
 import {

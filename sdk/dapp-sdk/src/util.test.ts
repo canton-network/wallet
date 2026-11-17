@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, vi } from 'vitest'
 import { popup } from '@canton-network/core-wallet-ui-components'
+import { describe, expect, it, vi } from 'vitest'
+
 import * as storage from './storage.ts'
 import { clearAllLocalState, composeSIWXMessage } from './util.ts'
 

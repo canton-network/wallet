@@ -3,10 +3,11 @@
 
 /* oxlint-disable typescript/no-explicit-any */
 
-import os from 'os'
-import fs from 'fs'
-import path from 'path'
 import { execSync } from 'child_process'
+import fs from 'fs'
+import os from 'os'
+import path from 'path'
+
 import { getRepoRoot } from './utils.ts'
 
 const repoRoot = getRepoRoot()

@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+import { DiscoveryClient } from './client.ts'
 import {
     DiscoveryError,
     NotConnectedError,
@@ -11,7 +13,6 @@ import {
     WalletNotFoundError,
     WalletNotInstalledError,
 } from './errors.ts'
-import { DiscoveryClient } from './client.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 const {

@@ -8,6 +8,7 @@ import {
     type Route,
     test,
 } from '@playwright/test'
+
 import { openWalletPicker } from './wallet-picker.ts'
 
 export interface NetworkFormInput {

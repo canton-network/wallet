@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { expect, test } from 'vitest'
 
 import { ParticipantSigningDriver } from './controller.ts'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 const TEST_TRANSACTION = 'test-tx'
 const TEST_TRANSACTION_HASH =

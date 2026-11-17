@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fixture, waitUntil } from '@open-wc/testing-helpers'
-import { html } from 'lit'
 import {
     WalletAllocateEvent,
     WalletSetPrimaryEvent,
     WalletsSyncEvent,
 } from '@canton-network/core-wallet-ui-components'
+import { fixture, waitUntil } from '@open-wc/testing-helpers'
+import { html } from 'lit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createMockUserClient,
     makeWallet,
@@ -49,8 +50,9 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './index.ts'
-import type { UserUiParties } from './index.ts'
 import { WALLET_STATUS_CODE } from '@canton-network/core-wallet-ui-components/logic'
+
+import type { UserUiParties } from './index.ts'
 
 // The cards are inside wg-wallet-list's shadow root
 const getCards = async (el: UserUiParties) => {

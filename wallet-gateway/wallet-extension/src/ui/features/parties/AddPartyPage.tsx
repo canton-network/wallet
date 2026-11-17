@@ -10,6 +10,7 @@ import {
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
+
 import { signingProvidersQuery, useCreateWallet } from './api.ts'
 
 export function AddPartyPage() {

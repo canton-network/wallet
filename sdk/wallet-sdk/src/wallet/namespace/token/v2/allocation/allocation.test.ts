@@ -1,6 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AssetBody } from '@canton-network/core-token-standard-service'
+import {
+    ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
+    ALLOCATION_REQUEST_INTERFACE_ID_V2,
+} from '@canton-network/core-token-standard-v2'
 import {
     describe,
     it,
@@ -9,15 +14,11 @@ import {
     expect,
     type MockedFunction,
 } from 'vitest'
-import type { AssetBody } from '@canton-network/core-token-standard-service'
+
 import * as mock from '../../../../__tests__/mocks.ts'
-import type { TokenNamespaceConfig } from '../../index.ts'
 import { ParsedURL } from '../../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../../index.ts'
 import { AllocationNamespace } from './namespace.ts'
-import {
-    ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
-    ALLOCATION_REQUEST_INTERFACE_ID_V2,
-} from '@canton-network/core-token-standard-v2'
 
 /* oxlint-disable typescript/no-explicit-any */
 

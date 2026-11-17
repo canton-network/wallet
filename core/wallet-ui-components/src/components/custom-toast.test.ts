@@ -4,6 +4,7 @@
 import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import './custom-toast.ts'
 import type { Toast } from './custom-toast.ts'
 describe('custom-toast', () => {

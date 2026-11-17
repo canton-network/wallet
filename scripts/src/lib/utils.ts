@@ -1,18 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import zlib from 'zlib'
-import { pipeline } from 'stream/promises'
+import { exec } from 'child_process'
 import crypto from 'crypto'
 import * as fs from 'fs'
+import { tmpdir } from 'os'
 import * as path from 'path'
 import * as process from 'process'
-import { white, green, italic, red, yellow, bold } from 'yoctocolors'
+import { pipeline } from 'stream/promises'
+import { promisify } from 'util'
+import zlib from 'zlib'
+
 import * as jsonc from 'jsonc-parser'
 import * as tar from 'tar-fs'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import { tmpdir } from 'os'
+import { white, green, italic, red, yellow, bold } from 'yoctocolors'
 
 const ex = promisify(exec)
 

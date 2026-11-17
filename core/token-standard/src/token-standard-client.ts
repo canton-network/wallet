@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import createClient, { type Client } from 'openapi-fetch'
 
-import type { paths as allocationPaths } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.ts'
 import type { paths as allocationInstructionPaths } from './generated-clients/splice-api-token-allocation-instruction-v1/allocation-instruction-v1.ts'
+import type { paths as allocationPaths } from './generated-clients/splice-api-token-allocation-v1/allocation-v1.ts'
 import type { paths as metadataPaths } from './generated-clients/splice-api-token-metadata-v1/token-metadata-v1.ts'
 import type { paths as transferInstructionPaths } from './generated-clients/splice-api-token-transfer-instruction-v1/transfer-instruction-v1.ts'
-import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 // TODO: switch to logtape like the other core packages (see #2667)
 type Logger = Pick<Console, 'debug' | 'info' | 'warn' | 'error'>

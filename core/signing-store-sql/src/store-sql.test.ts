@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, test, beforeEach, afterEach } from 'vitest'
 import type {
     SigningDriverConfig,
     SigningKey,
@@ -9,6 +8,8 @@ import type {
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Kysely } from 'kysely'
+import { describe, expect, test, beforeEach, afterEach } from 'vitest'
+
 import { migrator } from './migrator.ts'
 import type { DB } from './schema.ts'
 import { connection, StoreSql } from './store-sql.ts'

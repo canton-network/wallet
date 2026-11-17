@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fixture, waitUntil } from '@open-wc/testing-helpers'
-import { html } from 'lit'
 import {
     PageChangeEvent,
     TransactionCardReviewEvent,
     type WgTransactionCard,
 } from '@canton-network/core-wallet-ui-components'
+import { fixture, waitUntil } from '@open-wc/testing-helpers'
+import { html } from 'lit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createMockUserClient,
     makeTransaction,

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
 import { IdpUnavailableError } from './auth-service.ts'
 import { createOidcClient, OIDC_CACHE_TTL_MS } from './oidc-client.ts'
 

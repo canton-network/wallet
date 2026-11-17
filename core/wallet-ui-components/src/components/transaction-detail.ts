@@ -1,20 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { html, css, nothing } from 'lit'
-import { customElement, property, state } from 'lit/decorators.js'
+
 import './back-link.ts'
 import './copy-button.ts'
-import { BaseElement } from '../internal/base-element.ts'
-import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
+import { customElement, property, state } from 'lit/decorators.js'
+
+import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 import { chevronDownIcon } from '../icons/index.ts'
+import { renderCopyableValue } from '../internal/activity-render.ts'
 import {
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
 } from '../internal/activity-utils.ts'
-import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
-import { renderCopyableValue } from '../internal/activity-render.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 /** Emitted when the user clicks the "Approve" button */
 export class TransactionApproveEvent extends Event {

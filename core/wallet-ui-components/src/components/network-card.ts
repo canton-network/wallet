@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element.ts'
-import { css, html } from 'lit'
 import type { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
+import { css, html } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+
+import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
 import './copy-button.ts'
 

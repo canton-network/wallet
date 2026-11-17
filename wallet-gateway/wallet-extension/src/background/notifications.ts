@@ -11,11 +11,13 @@ import {
 } from '@canton-network/core-wallet-services'
 import type { Store } from '@canton-network/core-wallet-store'
 import { browser, type Browser } from 'wxt/browser'
+
 import { logger } from '@/shared/logger.ts'
 import {
     NOTIFICATIONS_PORT_NAME,
     type NotificationPortMessage,
 } from '@/shared/ports.ts'
+
 import type { AuthContextStore } from './auth-context.ts'
 import { VaultLockedError } from './vault/index.ts'
 

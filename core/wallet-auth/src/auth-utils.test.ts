@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { SignJWT } from 'jose'
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+
+import { IdpUnavailableError } from './auth-service.ts'
+import type { TokenProviderConfig } from './auth-token-provider.ts'
 import {
     jwtUserEmail,
     jwtUserId,
@@ -11,10 +15,7 @@ import {
     fetchOidcDiscovery,
     jwtExpired,
 } from './auth-utils.ts'
-import { IdpUnavailableError } from './auth-service.ts'
-import type { TokenProviderConfig } from './auth-token-provider.ts'
 import { SelfSignedTokenService } from './self-signed-token-service.ts'
-import { SignJWT } from 'jose'
 
 describe('Auth Utils', () => {
     const fetchMock = vi.fn()

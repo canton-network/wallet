@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PartyId } from '@canton-network/core-types'
-import type { AmuletNamespaceConfig } from '../../sdk.ts'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { PreapprovalParties } from './types.ts'
+import type { PartyId } from '@canton-network/core-types'
+
+import { SynchronizerResolver } from '../../init/synchronizer.ts'
+import type { SDKLogger } from '../../logger/logger.ts'
+import type { AmuletNamespaceConfig } from '../../sdk.ts'
 import { LedgerNamespace } from '../ledger/namespace.ts'
 import { fetchAmulet } from './namespace.ts'
-import type { SDKLogger } from '../../logger/logger.ts'
+import type { PreapprovalParties } from './types.ts'
 import { resolveProviderParty } from './utils.ts'
-import { SynchronizerResolver } from '../../init/synchronizer.ts'
 
 const EMPTY_COMMAND_RESULT = [null, []] as const
 

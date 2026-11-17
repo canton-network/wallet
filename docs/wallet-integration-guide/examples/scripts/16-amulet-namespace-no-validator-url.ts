@@ -1,18 +1,18 @@
-import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { HoldingView } from '@canton-network/core-token-standard'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
 import {
     getValidatorParty,
     localNetStaticConfig,
     SDK,
 } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG_SIMPLE,
     TOKEN_NAMESPACE_CONFIG_SIMPLE,
     localNetGlobalSynchronizer,
 } from './utils/index.ts'
-
-import { configureLogging } from './utils/configure-logging.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({

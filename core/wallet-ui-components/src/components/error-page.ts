@@ -3,12 +3,13 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element.ts'
+
 import {
     arrowLeftIcon,
     refreshIcon,
     warningTriangleIcon,
 } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 import { toRelPath } from '../routing.ts'
 
 export type ErrorPageMode = 'back' | 'refresh'

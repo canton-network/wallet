@@ -6,22 +6,23 @@ import {
     defaultRetryableOptions,
     isJsCantonError,
 } from '@canton-network/core-ledger-client'
+import {
+    type SigningDriverInterface,
+    SigningProvider,
+} from '@canton-network/core-signing-lib'
+import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { canUserUseSelfIssuedAuth } from '@canton-network/core-wallet-services'
 import {
     type Store,
     type Wallet,
     PartyLevelRight,
     UserLevelRight,
 } from '@canton-network/core-wallet-store'
-import {
-    type SigningDriverInterface,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import { canUserUseSelfIssuedAuth } from '@canton-network/core-wallet-services'
-import type { PartyAllocationService } from './party-allocation-service.ts'
+
 import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.ts'
-import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+import type { PartyAllocationService } from './party-allocation-service.ts'
 
 type ProviderKey = { id: string; publicKey: string; fingerprint: string }
 /** Maps provider IDs to their corresponding provider keys */

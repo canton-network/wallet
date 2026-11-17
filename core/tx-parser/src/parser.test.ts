@@ -1,19 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import type { v3_6, v3_7 } from '@canton-network/core-ledger-client-types'
+import type { LedgerProvider } from '@canton-network/core-provider-ledger'
 import { vi, describe, it, expect, beforeEach, type Mocked } from 'vitest'
-import { TransactionParser } from './parser.ts'
-import eventsByContractIdResponsesJsonMixed from './__tests__/data/mock/mixed-events/eventsByContractIdResponses.json'
-import txsMockJsonMixed from './__tests__/data/mock/mixed-events/txs.json'
-import txsExpectedMixed from './__tests__/data/expected/mixed-events/txs.json'
 
+import txsExpectedMixed from './__tests__/data/expected/mixed-events/txs.json'
 import aliceTransferObjectsExpectedV1 from './__tests__/data/expected/v1/alice-transfer-objects.json'
 import bobTransferObjectsExpectedV1 from './__tests__/data/expected/v1/bob-transfer-objects.json'
-import txsMockJsonV1 from './__tests__/data/mock/v1/txs.json'
 import txsExpectedV1 from './__tests__/data/expected/v1/txs.json'
+import eventsByContractIdResponsesJsonMixed from './__tests__/data/mock/mixed-events/eventsByContractIdResponses.json'
+import txsMockJsonMixed from './__tests__/data/mock/mixed-events/txs.json'
 import eventsByContractIdResponsesJsonV1 from './__tests__/data/mock/v1/eventsByContractIdResponses.json'
+import txsMockJsonV1 from './__tests__/data/mock/v1/txs.json'
+import { TransactionParser } from './parser.ts'
 
 type JsTransaction =
     | v3_6.components['schemas']['JsTransaction']

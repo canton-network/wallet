@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+
 import type { LedgerCommonSchemas } from './index.ts'
 
 type EventFormat = LedgerCommonSchemas['EventFormat']

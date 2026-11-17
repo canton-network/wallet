@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-
+import {
+    type ParsedTransactionInfo,
+    parsePreparedTransaction,
+} from '@canton-network/core-tx-visualizer'
 import {
     BaseElement,
     type PageChangeEvent,
@@ -11,18 +12,15 @@ import {
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import {
-    type ParsedTransactionInfo,
-    parsePreparedTransaction,
-} from '@canton-network/core-tx-visualizer'
-
-import { createUserClient } from '../rpc-client.ts'
-import { setLocationHref } from '../navigation.ts'
-
-import '../index.ts'
-import { stateManager } from '../state-manager.ts'
 import type { Transaction } from '@canton-network/core-wallet-user-rpc-client'
+import { css, html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
 import { detectCurrentOrigin } from '../listeners.ts'
+import '../index.ts'
+import { setLocationHref } from '../navigation.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
 
 @customElement('user-ui-activities')
 export class UserUiActivities extends BaseElement {

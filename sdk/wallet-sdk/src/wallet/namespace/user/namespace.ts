@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SDKContext } from '../../init/types/context.ts'
+import type { Ops } from '@canton-network/core-provider-ledger'
 
+import type { SDKContext } from '../../init/types/context.ts'
 import type { SDKLogger } from '../../logger/logger.ts'
 import type { CreateUserParams, GrantOrRevokeRightsParams } from './types.ts'
-import type { Ops } from '@canton-network/core-provider-ledger'
 import type { UserRights } from './types.ts'
 
 export class UserNamespace {

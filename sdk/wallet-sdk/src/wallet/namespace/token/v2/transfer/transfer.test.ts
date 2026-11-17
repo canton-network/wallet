@@ -1,18 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as mock from '../../../../__tests__/mocks.ts'
-import type { TokenNamespaceConfig } from '../../index.ts'
-import { ParsedURL } from '../../../utils/url.ts'
-import { TransferNamespace } from './namespace.ts'
 import {
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
     type Account,
 } from '@canton-network/core-token-standard-v2'
-import type { TransferParamsV2 } from '../../transfer/types.ts'
 import type { PartyId } from '@canton-network/core-types'
+import { describe, it, vi, beforeEach, expect } from 'vitest'
+
+import * as mock from '../../../../__tests__/mocks.ts'
+import { ParsedURL } from '../../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../../index.ts'
+import type { TransferParamsV2 } from '../../transfer/types.ts'
 import { toBasicAccount } from '../../utils.ts'
+import { TransferNamespace } from './namespace.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 const { ctx, mockLogger } = mock

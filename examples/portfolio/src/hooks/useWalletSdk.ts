@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import * as dappSdk from '@canton-network/dapp-sdk'
 import * as walletSdk from '@canton-network/wallet-sdk'
-import { useConnection } from '../contexts/ConnectionContext.tsx'
 import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
+import { globalSynchronizer } from '@lib/synchronizer'
+import { WalletSDKUtilitiesPlugin } from '@lib/utilities-wallet-sdk-plugin'
+import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
+
+import { useConnection } from '../contexts/ConnectionContext.tsx'
 import { queryKeys } from './query-keys.ts'
 import { useReachableRegistryUrls } from './useRegistryUrls.ts'
-import { WalletSDKUtilitiesPlugin } from '@lib/utilities-wallet-sdk-plugin'
-import { globalSynchronizer } from '@lib/synchronizer'
 
 const deriveScanApiUrl = (registryUrl: string): URL => {
     const url = new URL(registryUrl)

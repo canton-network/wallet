@@ -14,6 +14,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
+
 import { Identifier } from './value.ts'
 /**
  * The union of a set of template filters, interface filters, or a wildcard.

@@ -4,6 +4,7 @@
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
+
 import { makeWallet } from '../components/__tests__/fixtures.ts'
 import '../components/wallet-list.ts'
 import type { WgWalletList } from '../components/wallet-list.ts'

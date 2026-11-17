@@ -5,7 +5,9 @@ import {
     type Memory,
     StoreInternal,
 } from '@canton-network/core-wallet-store-inmemory'
+
 import { logger } from '@/shared/logger.ts'
+
 import { type Vault, VaultLockedError } from '../vault/index.ts'
 import { defaultConfig } from './default-config.ts'
 import type { WalletStore } from './index.ts'

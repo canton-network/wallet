@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { browser } from 'wxt/browser'
+
 import { WALLET_NAME } from './brand.ts'
 import { type ApprovalRequest, approvalRequestsItem } from './storage.ts'
 

@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { OffLedger } from '@canton-network/core-token-standard'
+import { Router } from 'express'
+import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
+import z from 'zod'
+
+import { getInstrument } from './getInstrument.ts'
 import { getRegistryInfo } from './getRegistryInfo.ts'
 import { listInstruments } from './listInstruments.ts'
-import { getInstrument } from './getInstrument.ts'
-import type { OffLedger } from '@canton-network/core-token-standard'
-import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import { Router } from 'express'
-import z from 'zod'
 
 const metadataAPIRouter: Router = Router()
 

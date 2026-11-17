@@ -11,7 +11,9 @@ import {
     StoreInternal,
 } from '@canton-network/core-wallet-store-inmemory'
 import { describe, expect, it } from 'vitest'
+
 import { logger } from '@/shared/logger.ts'
+
 import { defaultConfig } from './default-config.ts'
 import {
     CorruptSnapshotError,

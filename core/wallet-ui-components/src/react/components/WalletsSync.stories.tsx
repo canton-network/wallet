@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import { useState } from 'react'
 import { findByShadowRole } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor, within } from 'storybook/test'
+
 import { ToastProvider } from '../contexts/ToastProvider.tsx'
 import { useErrorToast } from '../hooks/useErrorToast.ts'
 import { useToast } from '../hooks/useToast.ts'

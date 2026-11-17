@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AllowedRoute } from '@canton-network/core-wallet-ui-components'
+
 import {
     encryptString,
     destroyTokenKey,

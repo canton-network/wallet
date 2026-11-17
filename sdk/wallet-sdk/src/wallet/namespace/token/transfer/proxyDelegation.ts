@@ -1,20 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PartyId } from '@canton-network/core-types'
-import type { TokenNamespaceConfig } from '../../../sdk.ts'
 import {
     type Beneficiaries,
     FEATURED_APP_DELEGATE_PROXY_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
+import type { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { PartyId } from '@canton-network/core-types'
+
 import { localNetStaticConfig } from '../../../../config.ts'
+import { SynchronizerResolver } from '../../../init/synchronizer.ts'
+import type { TokenNamespaceConfig } from '../../../sdk.ts'
 import type { LedgerCommonSchemas } from '../../../sdk.ts'
 import type { FeaturedAppRight } from '../../amulet/types.ts'
-import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 import { LedgerNamespace } from '../../ledger/index.ts'
 import { ParsedURL, type URLInput } from '../../utils/url.ts'
 import { resolveProviderParty } from '../utils.ts'
-import { SynchronizerResolver } from '../../../init/synchronizer.ts'
 
 export type ProxyDelegationCommandArgs = {
     proxyCid: string

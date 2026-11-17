@@ -1,23 +1,28 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { WalletEvent } from '@canton-network/core-types'
+import { createProxyService } from '@webext-core/proxy-service'
 import { css, html, LitElement } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import {
-    createUserClient,
-    attemptRemoveSession,
-} from '@/utils/legacy-frontend/rpc-client.ts'
-import { setLocationHref } from '@/utils/legacy-frontend/navigation.ts'
-
 import '@canton-network/core-wallet-ui-components'
-import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
-import { WalletEvent } from '@canton-network/core-types'
+
 import {
     DEFAULT_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
     LOGIN_PAGE_REDIRECT,
     TOKEN_EXPIRED_SKEW_MS,
 } from '@/utils/legacy-frontend/constants.ts'
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.ts'
+import {
+    createUserClient,
+    attemptRemoveSession,
+} from '@/utils/legacy-frontend/rpc-client.ts'
+import '@/utils/legacy-frontend/listeners.ts'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
+import { fetchDappApiUrl, showToast } from '@/utils/legacy-frontend/utils.ts'
+
 import {
     type AllowedRoute,
     getCurrentRoute,
@@ -25,10 +30,6 @@ import {
     toRelHref,
     toRelPath,
 } from './routing.ts'
-import '@/utils/legacy-frontend/listeners.ts'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
-import { fetchDappApiUrl, showToast } from '@/utils/legacy-frontend/utils.ts'
-import { createProxyService } from '@webext-core/proxy-service'
 
 const globalPageResetStyle = document.createElement('style')
 globalPageResetStyle.textContent = `

@@ -1,28 +1,29 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AuthContext, UserId } from '@canton-network/core-wallet-auth'
-import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import {
     type Error as SigningProviderError,
     type Keys,
     type SigningDriverInterface,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
+import type { AuthContext, UserId } from '@canton-network/core-wallet-auth'
+import type { Store, Wallet } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
-import type { PartyAllocationService } from '../party-allocation-service.ts'
+
 import type {
     KeyName,
     PartyHint,
     Primary,
 } from '../../user-api/rpc-gen/typings.ts'
-import { ParticipantWalletAllocator } from './signing-providers/participant-wallet-allocator.ts'
-import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.ts'
-import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.ts'
+import type { PartyAllocationService } from '../party-allocation-service.ts'
+import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.ts'
 import { BlockdaemonWalletAllocator } from './signing-providers/blockdaemon-wallet-allocator.ts'
 import { DfnsWalletAllocator } from './signing-providers/dfns-wallet-allocator.ts'
+import { FireblocksWalletAllocator } from './signing-providers/fireblocks-wallet-allocator.ts'
+import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.ts'
+import { ParticipantWalletAllocator } from './signing-providers/participant-wallet-allocator.ts'
 import { SecurosysWalletAllocator } from './signing-providers/securosys-wallet-allocator.ts'
-import { BitGoWalletAllocator } from './signing-providers/bitgo-wallet-allocator.ts'
 
 export interface WalletAllocator {
     createWallet(

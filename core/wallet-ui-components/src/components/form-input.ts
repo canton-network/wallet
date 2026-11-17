@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element.ts'
 import { css, html } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+
 import { eyeFillIcon, eyeSlashIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 /**
  * Emitted when the value of an individual form input changes

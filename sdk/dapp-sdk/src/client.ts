@@ -23,6 +23,7 @@ import type {
     TxChangedEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import { popup } from '@canton-network/core-wallet-ui-components'
+
 import { clearAllLocalState } from './util.ts'
 
 export interface DappClientOptions {

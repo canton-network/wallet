@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi } from 'vitest'
-import { ledgerPrepareParams, logDynamically, networkStatus } from './utils.ts'
-
 import type { LedgerClient } from '@canton-network/core-ledger-client'
+import { describe, it, expect, vi } from 'vitest'
+
 import { createTestLogger } from './__tests__/test-utils.ts'
+import { ledgerPrepareParams, logDynamically, networkStatus } from './utils.ts'
 
 describe('utils', () => {
     it('should call ledgerPrepareParams', () => {

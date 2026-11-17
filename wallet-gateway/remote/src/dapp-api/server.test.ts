@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test, vi } from 'vitest'
+import { createServer } from 'http'
 
-import cors from 'cors'
-import request from 'supertest'
-import express from 'express'
-import { dapp } from './server.ts'
-import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.ts'
 import { NotificationService } from '@canton-network/core-wallet-services'
+import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
+import { getLogger } from '@logtape/logtape'
+import cors from 'cors'
+import express from 'express'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { createServer } from 'http'
-import { getLogger } from '@logtape/logtape'
+import request from 'supertest'
+import { expect, test, vi } from 'vitest'
+
+import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.ts'
+import { dapp } from './server.ts'
 
 const configPath = '../test/config.json'
 const config = ConfigUtils.loadConfigFile(configPath).config

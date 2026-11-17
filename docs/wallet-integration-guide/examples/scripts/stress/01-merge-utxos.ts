@@ -1,4 +1,7 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import { Decimal } from 'decimal.js'
+
+import { configureLogging } from '../utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
@@ -6,9 +9,6 @@ import {
     localNetGlobalSynchronizer,
 } from '../utils/index.ts'
 import { batchTap } from './utils.ts'
-import { Decimal } from 'decimal.js'
-
-import { configureLogging } from '../utils/configure-logging.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({

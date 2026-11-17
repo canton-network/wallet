@@ -1,21 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    afterEach,
-    beforeEach,
-    describe,
-    expect,
-    it,
-    vi,
-    type Mock,
-} from 'vitest'
+import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
 import type {
     EventListener,
     Provider,
 } from '@canton-network/core-splice-provider'
-import type { ProviderAdapter } from '@canton-network/core-wallet-discovery'
-import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
 import type {
     AccountsChangedEvent,
     ConnectResult,
@@ -31,7 +21,17 @@ import type {
     StatusEvent,
     TxChangedEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import * as storage from './storage.ts'
+import type { ProviderAdapter } from '@canton-network/core-wallet-discovery'
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    vi,
+    type Mock,
+} from 'vitest'
+
 import defaultGatewayList from './gateways.json'
 import {
     DappSDK,
@@ -58,6 +58,7 @@ import {
     sdk,
     status,
 } from './sdk.ts'
+import * as storage from './storage.ts'
 
 const {
     mockRequestAnnouncedProviders,

@@ -3,12 +3,13 @@
 
 /* oxlint-disable typescript/no-explicit-any */
 
-import type { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { Metadata, HoldingView } from '@canton-network/core-token-standard'
 import type {
     Account,
     InstrumentId,
 } from '@canton-network/core-token-standard-v2'
+
 import type { V2LabelDetails } from './v2-events.ts'
 
 export type ViewValue = LedgerCommonSchemas['JsInterfaceView']['viewValue'] // unknown | undefined

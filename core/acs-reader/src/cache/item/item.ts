@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ACEvent, ACSState } from '../../types.ts'
-import { ACS_UPDATE_CONFIG } from '../../types.ts'
-import type { Ops } from '@canton-network/core-provider-ledger'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { Ops } from '@canton-network/core-provider-ledger'
+import type { ContractId } from '@canton-network/core-types'
+
 import {
     type ResolvedAcsOptions,
     buildActiveContractFilter,
 } from '../../service.ts'
-import type { ContractId } from '@canton-network/core-types'
+import type { ACEvent, ACSState } from '../../types.ts'
+import { ACS_UPDATE_CONFIG } from '../../types.ts'
 import { BaseACSCache, isCreatedEvent, logger } from './base.ts'
 
 export class ACSCache extends BaseACSCache {

@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
 import { type Kysely, sql } from 'kysely'
+import { expect, test } from 'vitest'
 
+import type { DB } from '../../../schema.ts'
 import {
     forEachDialect,
     migrateDownThrough,
@@ -13,7 +14,6 @@ import {
     listColumns,
     primaryKeyColumns,
 } from '../helpers.ts'
-import type { DB } from '../../../schema.ts'
 import { insertIdp, insertNetwork } from '../seeds/001-init.ts'
 import { insertTransaction as insertTransaction003 } from '../seeds/003-transaction-origin.ts'
 import { insertTransaction as insertTransaction008 } from '../seeds/008-transaction-external-tx-id.ts'

@@ -3,8 +3,10 @@
 
 import { css, html, unsafeCSS } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import defaultTheme from '../../themes/default.css?inline'
+
 import { BaseElement } from '../internal/base-element.ts'
+
+import defaultTheme from '../../themes/default.css?inline'
 import './app-header.ts'
 
 export

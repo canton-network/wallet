@@ -1,7 +1,8 @@
 import type * as sdk from '@canton-network/dapp-sdk'
-import { useHoldings } from '../hooks/useHoldings.ts'
-import { useAccounts } from '../hooks/useAccounts.ts'
 import { useState } from 'react'
+
+import { useAccounts } from '../hooks/useAccounts.ts'
+import { useHoldings } from '../hooks/useHoldings.ts'
 
 export default function Holdings(props: {
     connectResult?: sdk.dappAPI.ConnectResult

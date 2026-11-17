@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Network } from '@canton-network/core-wallet-store'
+
 import type { UserControllerDeps } from './deps.ts'
 import type { Methods } from './rpc-gen/index.ts'
 import type {

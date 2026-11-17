@@ -1,4 +1,5 @@
 import type * as sdk from '@canton-network/dapp-sdk'
+
 import { useAccounts } from '../hooks/useAccounts.ts'
 
 export function Accounts(props: { connectResult?: sdk.dappAPI.ConnectResult }) {

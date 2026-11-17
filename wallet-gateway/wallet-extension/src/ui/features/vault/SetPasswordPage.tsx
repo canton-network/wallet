@@ -8,8 +8,10 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
+
 import { passwordProblems } from '@/shared/password-policy.ts'
 import { VaultErrorName } from '@/shared/vault-protocol.ts'
+
 import { useCreateVault } from './api.ts'
 
 export function SetPasswordPage() {

@@ -10,6 +10,7 @@ import type {
     SigningKey,
     SigningTransaction,
 } from '@canton-network/core-signing-lib'
+
 import type { Vault } from '../vault/index.ts'
 
 interface Timestamps {

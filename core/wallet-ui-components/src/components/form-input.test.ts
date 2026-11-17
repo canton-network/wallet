@@ -4,6 +4,7 @@
 import { fixture, elementUpdated } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
 import './form-input.ts'
 import { type FormInput, FormInputChangedEvent } from './form-input.ts'
 

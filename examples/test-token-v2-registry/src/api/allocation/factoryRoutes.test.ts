@@ -1,13 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterAll, beforeAll, beforeEach, expect, it, vi } from 'vitest'
-import express, { type ErrorRequestHandler } from 'express'
-import { createServer } from 'node:http'
 import { once } from 'node:events'
-import allocationRouter from './index.ts'
-import allocationInstructionRouter from '../allocation-instruction/index.ts'
+import { createServer } from 'node:http'
+
+import express, { type ErrorRequestHandler } from 'express'
+import { afterAll, beforeAll, beforeEach, expect, it, vi } from 'vitest'
+
 import { mock } from '../../__tests__/mocks.ts'
+import allocationInstructionRouter from '../allocation-instruction/index.ts'
+import allocationRouter from './index.ts'
 
 vi.mock('../../common/state.ts', async () => {
     const { mock: importedMock } = await import('../../__tests__/mocks.ts')

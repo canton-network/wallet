@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { css, html, nothing, type TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { ifDefined } from 'lit/directives/if-defined.js'
-import { BaseElement } from '../internal/base-element.ts'
-import { cardStyles } from '../styles/card.ts'
-import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
+
+import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 import {
     getActivityAmount,
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
 } from '../internal/activity-utils.ts'
-import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
+import { BaseElement } from '../internal/base-element.ts'
+import { cardStyles } from '../styles/card.ts'
 
 /** Emitted when the user clicks an activity card */
 export class TransactionCardReviewEvent extends Event {

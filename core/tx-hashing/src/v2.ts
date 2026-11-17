@@ -7,6 +7,7 @@ import type {
     Fetch,
     Metadata,
 } from '@canton-network/core-ledger-proto'
+
 import { concat } from './bytes.ts'
 import {
     encodeBool,

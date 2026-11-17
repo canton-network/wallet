@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AssetBody } from '@canton-network/core-token-standard-service'
+import { Decimal } from 'decimal.js'
 import { describe, it, vi, beforeEach, expect, type Mock } from 'vitest'
+
+import * as mock from '../../__tests__/mocks.ts'
 import {
     AmuletNamespace,
     type AmuletNamespaceConfig,
     fetchAmulet,
 } from './namespace.ts'
-import * as mock from '../../__tests__/mocks.ts'
-import { Decimal } from 'decimal.js'
-import type { AssetBody } from '@canton-network/core-token-standard-service'
 /* oxlint-disable typescript/no-explicit-any */
 
 vi.mock('../utils/url.ts', () => ({

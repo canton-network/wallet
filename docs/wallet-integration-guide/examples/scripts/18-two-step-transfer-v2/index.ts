@@ -1,23 +1,22 @@
+import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+import {
+    startRegistry,
+    stopRegistry,
+} from '@canton-network/example-test-token-v2-registry'
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
-import _acceptV2 from './_acceptV2.ts'
-import type { TransferTestScriptParameters } from './types.ts'
 
+import { assertV2 } from '../utils/assert.ts'
+import { configureLogging } from '../utils/configure-logging.ts'
+import { TEST_TOKEN_V2_REGISTRY } from '../utils/constants.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     localNetGlobalSynchronizer,
 } from '../utils/index.ts'
+import _acceptV2 from './_acceptV2.ts'
 import _rejectV2 from './_rejectV2.ts'
 import _withdrawV2 from './_withdrawV2.ts'
-
-import { configureLogging } from '../utils/configure-logging.ts'
-import {
-    startRegistry,
-    stopRegistry,
-} from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_V2_REGISTRY } from '../utils/constants.ts'
-import { assertV2 } from '../utils/assert.ts'
-import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+import type { TransferTestScriptParameters } from './types.ts'
 const logger = await configureLogging()
 
 const basicSdk = await SDK.create({

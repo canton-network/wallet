@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { isSpliceMessageEvent, WalletEvent } from '@canton-network/core-types'
+
 import { stateManager } from './state-manager.ts'
 
 const handleMessage = (event: MessageEvent) => {

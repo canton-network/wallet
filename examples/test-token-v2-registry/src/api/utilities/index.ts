@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Router } from 'express'
+
 import { getUtilityOperator } from './getUtilityOperator.ts'
 
 const utilitiesAPIRouter: Router = Router()

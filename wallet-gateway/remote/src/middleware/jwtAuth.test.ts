@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, vi, beforeEach } from 'vitest'
-import type { Request, Response, NextFunction } from 'express'
-import { jwtAuth } from './jwtAuth.ts'
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
 import { IdpUnavailableError } from '@canton-network/core-wallet-auth'
+import type { Request, Response, NextFunction } from 'express'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+
+import { jwtAuth } from './jwtAuth.ts'
 
 describe('jwtAuth', () => {
     const verifyToken = vi.fn()

@@ -1,23 +1,25 @@
-import pino from 'pino'
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
+
+import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
+import {
+    startRegistry,
+    stopRegistry,
+} from '@canton-network/example-test-token-v2-registry'
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import { Decimal } from 'decimal.js'
+import pino from 'pino'
+
+import type { PartyInfo } from './04-token-standard-allocation.ts'
+import { assertV2 } from './utils/assert.ts'
+import { TEST_TOKEN_V2_REGISTRY } from './utils/constants.ts'
 import {
     localNetGlobalSynchronizer,
     TOKEN_NAMESPACE_CONFIG_SIMPLE,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
 } from './utils/index.ts'
-import type { PartyInfo } from './04-token-standard-allocation.ts'
-import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
-import { Decimal } from 'decimal.js'
-import {
-    startRegistry,
-    stopRegistry,
-} from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_V2_REGISTRY } from './utils/constants.ts'
-import { assertV2 } from './utils/assert.ts'
-import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 
 /*
 Used the TokenStandardV2AllocationIntegrationTest: https://github.com/canton-network/splice/blob/main/apps/app/src/test/scala/org/lfdecentralizedtrust/splice/integration/tests/TokenStandardV2AllocationIntegrationTest.scala

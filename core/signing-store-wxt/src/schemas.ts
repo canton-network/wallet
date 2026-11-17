@@ -8,6 +8,7 @@ import type {
     SigningTransaction,
 } from '@canton-network/core-signing-lib'
 import type { UserId } from '@canton-network/core-wallet-auth'
+
 import type {
     SigningKeyRecord,
     SigningTransactionRecord,

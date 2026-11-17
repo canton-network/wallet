@@ -4,7 +4,9 @@
 import { WalletEvent } from '@canton-network/core-types'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import type { Browser } from 'wxt/browser'
+
 import { asPort, type FakePort, fakePort } from '@/tests/unit/fake-port.ts'
+
 import { isConnectedResponse, NotificationRelay } from './notification-relay.ts'
 
 const connectedStatus = {

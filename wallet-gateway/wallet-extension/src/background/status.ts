@@ -6,6 +6,7 @@ import {
     LOGOUT_EVENT,
 } from '@canton-network/core-wallet-services'
 import { browser } from 'wxt/browser'
+
 import type {
     Provider,
     StatusEvent,

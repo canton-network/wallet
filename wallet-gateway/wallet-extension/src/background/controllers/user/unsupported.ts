@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { rpcErrors } from '@canton-network/core-rpc-errors'
+
 import type { Methods } from './rpc-gen/index.ts'
 
 /**

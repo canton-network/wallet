@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
+
 import {
     expressContext,
     mock,
     type RequestType,
 } from '../../__tests__/mocks.ts'
-import { getAllocationFactory } from './getAllocationFactory.ts'
 import { APIError, emptyChoiceContext } from '../common.ts'
+import { getAllocationFactory } from './getAllocationFactory.ts'
 import { getAllocationInstructionAcceptContext } from './getAllocationInstructionAcceptContext.ts'
 import { getAllocationInstructionWithdrawContext } from './getAllocationInstructionWithdrawContext.ts'
 

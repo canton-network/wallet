@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ComponentProps } from 'react'
 import type { Meta, StoryObj } from '@storybook/react-vite'
+import type { ComponentProps } from 'react'
 import { expect, fn, within } from 'storybook/test'
+
 import { ApprovalActions } from './ApprovalActions.tsx'
 
 type Props = ComponentProps<typeof ApprovalActions>

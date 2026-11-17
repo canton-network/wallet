@@ -3,6 +3,7 @@
 
 import { html, css } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
+
 import { BaseElement } from '../internal/base-element.ts'
 import './error-page.ts' // ensure wg-error-page is registered
 

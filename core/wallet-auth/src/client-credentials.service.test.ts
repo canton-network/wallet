@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { configure, reset } from '@logtape/logtape'
+import { createLogRecorder } from '@logtape/testing/recorder'
 import {
     vi,
     describe,
@@ -10,13 +12,12 @@ import {
     type MockedFunction,
     afterEach,
 } from 'vitest'
+
+import type { ClientCredentials } from './auth-service.ts'
 import {
     ClientCredentialsService,
     clientCredentialsService,
 } from './client-credentials-service.ts'
-import type { ClientCredentials } from './auth-service.ts'
-import { configure, reset } from '@logtape/logtape'
-import { createLogRecorder } from '@logtape/testing/recorder'
 
 const recorder = createLogRecorder()
 const category = ['core', 'wallet-auth', 'client-credentials-service']

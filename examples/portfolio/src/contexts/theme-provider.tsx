@@ -1,5 +1,6 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { CssBaseline, ThemeProvider } from '@mui/material'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+
 import { ThemeContext } from '../contexts/theme-context.tsx'
 import { darkTheme, lightTheme } from '../lib/theme.ts'
 

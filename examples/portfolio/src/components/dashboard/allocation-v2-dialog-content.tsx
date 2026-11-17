@@ -1,7 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from 'react'
+import type { PartyId } from '@canton-network/core-types'
+import type { AllocationV2ActionItem } from '@components/types'
+import { PillButton } from '@components/ui/PillButton'
 import {
     Alert,
     AlertTitle,
@@ -9,11 +11,10 @@ import {
     CircularProgress,
     Typography,
 } from '@mui/material'
-import type { PartyId } from '@canton-network/core-types'
-import { PillButton } from '@components/ui/PillButton'
-import type { AllocationV2ActionItem } from '@components/types'
 import { isExpired } from '@utils/date-format'
 import { getAllocationActions, netAmounts } from '@utils/v2-allocation-items'
+import { useState } from 'react'
+
 import {
     AmountList,
     DetailRow,

@@ -2,6 +2,7 @@ import {
     type FeaturedAppRight,
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
+
 import type { RewardsForDepositsTestScriptParameters } from './types.ts'
 import { partiesUtxos } from './utils.ts'
 

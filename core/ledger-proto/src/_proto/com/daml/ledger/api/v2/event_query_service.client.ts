@@ -7,12 +7,13 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { EventQueryService } from './event_query_service.ts'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetEventsByContractIdResponse } from './event_query_service.ts'
-import type { GetEventsByContractIdRequest } from './event_query_service.ts'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { EventQueryService } from './event_query_service.ts'
+import type { GetEventsByContractIdResponse } from './event_query_service.ts'
+import type { GetEventsByContractIdRequest } from './event_query_service.ts'
 /**
  * Query events by contract id.
  *

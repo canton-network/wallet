@@ -7,12 +7,13 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { ParticipantPruningService } from './participant_pruning_service.ts'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { PruneResponse } from './participant_pruning_service.ts'
-import type { PruneRequest } from './participant_pruning_service.ts'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { ParticipantPruningService } from './participant_pruning_service.ts'
+import type { PruneResponse } from './participant_pruning_service.ts'
+import type { PruneRequest } from './participant_pruning_service.ts'
 // Status: experimental interface, will change before it is deemed production
 // ready
 

@@ -3,6 +3,7 @@
 
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { describe, expect, it, vi } from 'vitest'
+
 import {
     allocationResultToast,
     buildCreateWalletParams,

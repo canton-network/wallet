@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
 import { vi, describe, it, expect, beforeEach } from 'vitest'
 
-import { AmuletService } from './amulet-service.ts'
-import { AmuletServiceScanOnly } from './amulet-service-scan.ts'
 import { AmuletServiceScanProxy } from './amulet-service-scan-proxy.ts'
-import { ScanClient, ScanProxyClient } from '@canton-network/core-splice-client'
+import { AmuletServiceScanOnly } from './amulet-service-scan.ts'
+import { AmuletService } from './amulet-service.ts'
 
 vi.mock('./amulet-service-scan-proxy.ts')
 vi.mock('./amulet-service-scan.ts')

@@ -2,15 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Metadata } from '@canton-network/core-token-standard'
-import type { ContractId, PartyId } from '@canton-network/core-types'
-import { Decimal } from 'decimal.js'
-import { TokenStandardService } from '../token-standard-service.ts'
-import {
-    type DisclosedContract,
-    EMPTY_META,
-    type ExerciseCommand,
-    REQUESTED_AT_SKEW_MS,
-} from '../types.ts'
 import {
     type Account,
     type TransferFactory_Transfer as TransferFactory_TransferV2,
@@ -20,8 +11,18 @@ import {
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
     TransferInstruction,
 } from '@canton-network/core-token-standard-v2'
-import type { CoreService } from '../core-service.ts'
+import type { ContractId, PartyId } from '@canton-network/core-types'
 import { getLogger } from '@logtape/logtape'
+import { Decimal } from 'decimal.js'
+
+import type { CoreService } from '../core-service.ts'
+import { TokenStandardService } from '../token-standard-service.ts'
+import {
+    type DisclosedContract,
+    EMPTY_META,
+    type ExerciseCommand,
+    REQUESTED_AT_SKEW_MS,
+} from '../types.ts'
 
 export class TransferServiceV2 {
     private logger = getLogger([

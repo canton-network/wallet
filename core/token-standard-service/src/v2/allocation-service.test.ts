@@ -1,9 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi } from 'vitest'
-import { AllocationService } from './allocation-service.ts'
-import type { CoreService } from '../core-service.ts'
 import type {
     AllocationFactory_Allocate as AllocationFactory_AllocateV2,
     AllocationSpecification,
@@ -22,6 +19,10 @@ import {
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
+import { describe, it, expect, vi } from 'vitest'
+
+import type { CoreService } from '../core-service.ts'
+import { AllocationService } from './allocation-service.ts'
 
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']

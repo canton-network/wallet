@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Decimal } from 'decimal.js'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { Account } from '@canton-network/core-token-standard-v2'
+import { Decimal } from 'decimal.js'
+
 import type { Instruments } from '../types/instruments.ts'
 import { isBasicAccount, type PortfolioHolding } from './holdings.ts'
-import type { Account } from '@canton-network/core-token-standard-v2'
 
 export interface AggregatedAccountBalance {
     account: Account

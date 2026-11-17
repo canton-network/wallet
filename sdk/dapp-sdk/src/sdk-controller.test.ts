@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
+import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
+import type { EventListener } from '@canton-network/core-splice-provider'
 import {
     afterEach,
     beforeEach,
@@ -10,14 +13,12 @@ import {
     vi,
     type Mock,
 } from 'vitest'
-import type { EventListener } from '@canton-network/core-splice-provider'
-import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
+
 import type {
     LedgerApiParams,
     PrepareExecuteParams,
     SignMessageParams,
 } from './dapp-api/rpc-gen/typings.ts'
-import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
 import { dappSDKController } from './sdk-controller.ts'
 
 const { popupOpen } = vi.hoisted(() => ({

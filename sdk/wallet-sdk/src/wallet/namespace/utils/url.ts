@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SDKContext } from '../../init/types/context.ts'
 import type {
     AssetBody,
     TokenStandardService,
 } from '@canton-network/core-token-standard-service'
+
+import type { SDKContext } from '../../init/types/context.ts'
 
 export type URLInput = URL | string
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { Tab, Tabs } from '@mui/material'
+
 import type { TransactionFilter } from './transaction-history-utils.ts'
 
 const FILTERS: { value: TransactionFilter; label: string }[] = [

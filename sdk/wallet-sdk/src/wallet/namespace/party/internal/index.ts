@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Ops } from '@canton-network/core-provider-ledger'
-import type { SDKContext } from '../../../sdk.ts'
 import type { PartyId } from '@canton-network/core-types'
-import type { SDKLogger } from '../../../logger/logger.ts'
+
 import { SynchronizerResolver } from '../../../init/synchronizer.ts'
+import type { SDKLogger } from '../../../logger/logger.ts'
+import type { SDKContext } from '../../../sdk.ts'
 
 export class InternalPartyNamespace {
     private readonly logger: SDKLogger

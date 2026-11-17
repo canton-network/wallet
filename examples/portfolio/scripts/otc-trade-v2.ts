@@ -3,6 +3,7 @@
 
 import { OTCTradeV2 } from '@canton-network/core-wallet-test-utils'
 import { input, confirm } from '@inquirer/prompts'
+
 import { REGISTRY_URL } from '../tests/utils.ts'
 
 const venue = await input({ message: 'Party ID for Venue' })

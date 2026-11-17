@@ -2,25 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    vi,
-    describe,
-    it,
-    expect,
-    beforeAll,
-    beforeEach,
-    afterEach,
-} from 'vitest'
-import { getLogger } from '@logtape/logtape'
-import { pino, type Logger } from 'pino'
-import { sink } from 'pino-test'
-import {
-    createLocalJWKSet,
-    exportJWK,
-    generateKeyPair,
-    SignJWT,
-    type JWK,
-} from 'jose'
-import {
     IdpUnavailableError,
     type AuthContext,
     type AuthService,
@@ -31,6 +12,26 @@ import {
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
+import { getLogger } from '@logtape/logtape'
+import {
+    createLocalJWKSet,
+    exportJWK,
+    generateKeyPair,
+    SignJWT,
+    type JWK,
+} from 'jose'
+import { pino, type Logger } from 'pino'
+import { sink } from 'pino-test'
+import {
+    vi,
+    describe,
+    it,
+    expect,
+    beforeAll,
+    beforeEach,
+    afterEach,
+} from 'vitest'
+
 import { jwtAuthService } from './jwt-auth-service.ts'
 
 const mockFetch = vi.hoisted(() => vi.fn())

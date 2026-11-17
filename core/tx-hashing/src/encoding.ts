@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Identifier, Value } from '@canton-network/core-ledger-proto'
+
 import { concat, concatAll, hexToBytes } from './bytes.ts'
 import { TxHashingError } from './errors.ts'
 

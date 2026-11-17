@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import {
     type Network as StoreNetwork,
     networkSchema,
 } from '@canton-network/core-wallet-store'
+import type { Network as ApiNetwork } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html, nothing } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
+
 import { BaseElement } from '../internal/base-element.ts'
 import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.ts'
 import './auth-editor.ts'

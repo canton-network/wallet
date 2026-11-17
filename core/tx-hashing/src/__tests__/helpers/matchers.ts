@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect } from 'vitest'
+
 import type { TxHashingErrorCode } from '../../errors.ts'
 
 export const hx = (s: string) => s.replace(/\s+/g, '')

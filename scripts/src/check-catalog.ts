@@ -15,7 +15,9 @@
 import { execSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+
 import { load } from 'js-yaml'
+
 import { getRepoRoot } from './lib/utils.ts'
 
 const DEPENDENCY_FIELDS = [

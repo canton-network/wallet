@@ -2,13 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { SDKLogger } from '../logger/index.ts'
+import type { SDKContext } from './types/context.ts'
 import {
     EXTENDED_SDK_OPTION_KEYS,
     type ExtendedFullSDKInterface,
     type ExtendedSDKOptions,
     type SDKInterface,
 } from './types/sdk.ts'
-import type { SDKContext } from './types/context.ts'
 
 export type SDKPluginContext<
     ExtendedItems extends keyof ExtendedFullSDKInterface = never,

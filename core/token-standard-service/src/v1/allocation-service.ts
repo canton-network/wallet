@@ -12,13 +12,14 @@ import {
     type OffLedger,
 } from '@canton-network/core-token-standard'
 import type { ContractId, PartyId } from '@canton-network/core-types'
+
+import type { CoreService } from '../core-service.ts'
 import {
     type DisclosedContract,
     EMPTY_META,
     type ExerciseCommand,
     REQUESTED_AT_SKEW_MS,
 } from '../types.ts'
-import type { CoreService } from '../core-service.ts'
 
 export class AllocationService {
     constructor(private core: CoreService) {}

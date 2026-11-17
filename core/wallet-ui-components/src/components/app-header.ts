@@ -3,10 +3,11 @@
 
 import { css, html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
+
+import cantonLogo from '../../images/logos/canton-logo.png'
+import { menuIcon, clipboardIcon } from '../icons/index.ts'
 import { BaseElement } from '../internal/base-element.ts'
 import { toRelPath } from '../routing.ts'
-import { menuIcon, clipboardIcon } from '../icons/index.ts'
-import cantonLogo from '../../images/logos/canton-logo.png'
 
 export class LogoutEvent extends Event {
     constructor() {

@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
 import { describe, it, vi, beforeEach, expect } from 'vitest'
+
 import * as mock from '../../../__tests__/mocks.ts'
-import type { TokenNamespaceConfig } from '../index.ts'
 import { ParsedURL } from '../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../index.ts'
 import { TransferNamespace } from './namespace.ts'
 import type { ProxyDelegationCommandArgs } from './proxyDelegation.ts'
-import { TRANSFER_INSTRUCTION_INTERFACE_ID } from '@canton-network/core-token-standard'
 import type {
     TransferAllocationChoiceParams,
     TransferParamsV1,

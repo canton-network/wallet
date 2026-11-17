@@ -5,9 +5,10 @@ import type {
     TokenStandardService,
     AssetBody,
 } from '@canton-network/core-token-standard-service'
+
 import type { SDKErrorHandler } from '../../error/index.ts'
-import { ParsedURL, type URLInput } from '../utils/url.ts'
 import type { SDKContext } from '../../sdk.ts'
+import { ParsedURL, type URLInput } from '../utils/url.ts'
 
 export type AssetContext = {
     tokenStandardService: TokenStandardService

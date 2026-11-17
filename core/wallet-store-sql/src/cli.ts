@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Command } from 'commander'
-import { connection } from './store-sql.ts'
-import { migrator } from './migrator.ts'
 import type {
     StoreConfig,
     BootstrapConfig,
 } from '@canton-network/core-wallet-store'
-import { bootstrap, upsertIdpsAndNetworks } from './bootstrap.ts'
 import { getLogger } from '@logtape/logtape'
+import { Command } from 'commander'
+
+import { bootstrap, upsertIdpsAndNetworks } from './bootstrap.ts'
+import { migrator } from './migrator.ts'
+import { connection } from './store-sql.ts'
 
 const logger = getLogger(['core', 'wallet-store-sql', 'cli'])
 

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
+
 import { createProvider } from './create-provider.ts'
 import type { Provider } from './test-provider.ts'
 import {

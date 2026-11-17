@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect, beforeEach } from 'vitest'
-import { SDKError } from './SDKError.ts'
-import { SDKErrorHandler } from './handler.ts'
+
 import type { SDKLogger } from '../logger/logger.ts'
+import { SDKErrorHandler } from './handler.ts'
+import { SDKError } from './SDKError.ts'
 
 describe('SDKError', () => {
     it('sets message from context and is the instance of Error', () => {

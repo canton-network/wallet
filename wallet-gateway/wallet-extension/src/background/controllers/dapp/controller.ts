@@ -20,8 +20,10 @@ import type {
     Network as StoreNetwork,
     Transaction,
 } from '@canton-network/core-wallet-store'
+
 import { enqueueApprovalRequest } from '@/shared/approval-requests.ts'
 import { logger } from '@/shared/logger.ts'
+
 import { openWalletUi } from '../../open-ui.ts'
 import {
     disconnectedStatusEvent,

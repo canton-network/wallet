@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import { useQueryClient, useMutation } from '@tanstack/react-query'
-import { submitViaProvider } from '@lib/submit'
-import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
-import { queryKeys } from './query-keys.ts'
-import { useWalletSdk } from './useWalletSdk.ts'
-import type { TokenStandardVersion } from '../types/instruments.ts'
 import type { AssetBody } from '@canton-network/wallet-sdk'
+import { submitViaProvider } from '@lib/submit'
+import { useQueryClient, useMutation } from '@tanstack/react-query'
+
+import type { TokenStandardVersion } from '../types/instruments.ts'
+import { queryKeys } from './query-keys.ts'
+import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export interface CreateTransferArgs {
     sender: string
