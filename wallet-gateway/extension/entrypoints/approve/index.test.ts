@@ -17,26 +17,26 @@ vi.mock('@canton-network/core-tx-visualizer', async (importOriginal) => ({
     >()),
     parsePreparedTransaction: vi.fn().mockReturnValue({}),
 }))
-vi.mock('@/utils/legacy-frontend', () => ({}))
-vi.mock('@/utils/legacy-frontend/listeners.js', () => ({
+vi.mock('@/utils/legacy-frontend/index.ts', () => ({}))
+vi.mock('@/utils/legacy-frontend/listeners.ts', () => ({
     detectCurrentOrigin: vi.fn().mockResolvedValue('https://dapp.example'),
 }))
-vi.mock('@/utils/legacy-frontend/state-manager', () => ({
+vi.mock('@/utils/legacy-frontend/state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: vi.fn().mockResolvedValue('token-1') },
     },
 }))
-vi.mock('@/utils/legacy-frontend/rpc-client', () => ({
+vi.mock('@/utils/legacy-frontend/rpc-client.ts', () => ({
     createUserClient: vi.fn(async () => ({ request })),
 }))
-vi.mock('@/utils/legacy-frontend/navigation.js', () => ({
+vi.mock('@/utils/legacy-frontend/navigation.ts', () => ({
     setLocationHref: vi.fn(),
 }))
-vi.mock('@/utils/legacy-frontend/utils', () => ({ showToast: vi.fn() }))
+vi.mock('@/utils/legacy-frontend/utils.ts', () => ({ showToast: vi.fn() }))
 
-const { ApproveUi } = await import('./index')
+const { ApproveUi } = await import('./index.ts')
 const { preparedTransaction, preparedTransactionHash } =
-    await import('../background/user/__tests__/prepared-transactions')
+    await import('../background/user/__tests__/prepared-transactions.ts')
 
 const transactionId = 'tx-1'
 const partyId = 'party::namespace'

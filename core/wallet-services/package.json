@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-wallet-services",
-    "version": "2.2.0",
+    "version": "2.4.0",
     "type": "module",
     "description": "Services needed to implement a Wallet.",
     "license": "Apache-2.0",
@@ -31,7 +31,7 @@
     },
     "dependencies": {
         "@canton-network/core-ledger-client": "workspace:",
-        "@canton-network/core-ledger-proto": "workspace:",
+        "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-signing-lib": "workspace:",
         "@canton-network/core-tx-clear-signing": "workspace:",
         "@canton-network/core-tx-hashing": "workspace:",

@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, test, beforeEach, afterEach } from 'vitest'
-
 import type {
     AuthContext,
     AuthorizationCodeAuth,
@@ -20,9 +18,11 @@ import {
     type ClearSigningDescriptor,
 } from '@canton-network/core-wallet-store'
 import type { Kysely } from 'kysely'
-import { migrator } from './migrator'
-import type { DB } from './schema'
-import { connection, StoreSql } from './store-sql'
+import { describe, expect, test, beforeEach, afterEach } from 'vitest'
+
+import { migrator } from './migrator.ts'
+import type { DB } from './schema.ts'
+import { connection, StoreSql } from './store-sql.ts'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',
@@ -694,6 +694,59 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.removeNetwork('network1')
             const afterRemove = await store.listNetworks()
             expect(afterRemove).toHaveLength(0)
+        })
+
+        test('should remove networks of other users and without an owner', async () => {
+            // e.g. from bootstrap or the config file
+            const withoutOwner = new StoreImpl(db)
+            await withoutOwner.addIdp(idp)
+            await withoutOwner.addNetwork(network)
+            const otherUser = new StoreImpl(db, {
+                userId: 'other-user-id',
+                accessToken: 'other-access-token',
+            })
+            await otherUser.addNetwork({ ...network, id: 'network2' })
+
+            const store = new StoreImpl(db, authContextMock)
+            await store.removeNetwork(network.id)
+            await store.removeNetwork('network2')
+
+            const rows = await db.selectFrom('networks').select('id').execute()
+            expect(rows).toEqual([])
+        })
+
+        test('should keep the owner of a network on update', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+
+            await store.updateNetwork({ ...network, name: 'Renamed' })
+
+            const row = await db
+                .selectFrom('networks')
+                .select(['name', 'userId'])
+                .where('id', '=', network.id)
+                .executeTakeFirstOrThrow()
+            expect(row).toEqual({
+                name: 'Renamed',
+                userId: authContextMock.userId,
+            })
+        })
+
+        test('should clear optional auth fields removed on update', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork({
+                ...network,
+                adminAuth: network.auth,
+                serviceAccountAuth: network.auth,
+            })
+
+            await store.updateNetwork(network)
+
+            const fetched = await store.getNetwork('network1')
+            expect(fetched.adminAuth).toBeUndefined()
+            expect(fetched.serviceAccountAuth).toBeUndefined()
         })
 
         test('should reject a second self-issued network with the same audience', async () => {

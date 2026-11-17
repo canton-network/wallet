@@ -3,8 +3,8 @@
 
 import { TokenStandardClient } from '@canton-network/core-token-standard'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import { pino } from 'pino'
 import { normalizeRegistryUrl } from '@utils/registry'
+import { pino } from 'pino'
 
 const logger = pino({ name: 'example-portfolio-registry', level: 'debug' })
 const registryClients = new Map<string, TokenStandardClient>()

@@ -1,24 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Descriptor } from '@canton-network/core-wallet-services/clear-signing'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import type { Descriptor } from '@canton-network/core-wallet-services/clear-signing'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { request, showToast } = vi.hoisted(() => ({
     request: vi.fn(),
     showToast: vi.fn(),
 }))
 
-vi.mock('../index.js', () => ({}))
-vi.mock('../utils.js', () => ({ showToast }))
-vi.mock('../rpc-client.js', () => ({
+vi.mock('../index.ts', () => ({}))
+vi.mock('../utils.ts', () => ({ showToast }))
+vi.mock('../rpc-client.ts', () => ({
     createUserClient: () => Promise.resolve({ request }),
 }))
 
-import './index.js'
-import type { UserUiDescriptors } from './index.js'
+import './index.ts'
+import type { UserUiDescriptors } from './index.ts'
 
 function named(
     packageId: string,

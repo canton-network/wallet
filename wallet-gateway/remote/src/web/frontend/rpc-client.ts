@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { HttpTransport } from '@canton-network/core-rpc-transport'
-import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
-import { stateManager } from './state-manager'
-import { LOGIN_PAGE_REDIRECT } from './constants'
-import { setLocationHref } from './navigation.js'
 import {
     getCurrentRoute,
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import { detectCurrentOrigin } from './listeners.js'
+import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
+
+import { LOGIN_PAGE_REDIRECT } from './constants.ts'
+import { detectCurrentOrigin } from './listeners.ts'
+import { setLocationHref } from './navigation.ts'
+import { stateManager } from './state-manager.ts'
 
 let isLoggingOut = false
 let userApiPathPromise: Promise<URL> | null = null

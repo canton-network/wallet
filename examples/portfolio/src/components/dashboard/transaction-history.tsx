@@ -1,20 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useMemo, useState } from 'react'
-import { Box } from '@mui/material'
 import {
     deduplicateTransactionHistory,
     useTransactionHistoryForParty,
 } from '@hooks/useTransactionHistory'
-import { TransactionHistoryContent } from './transaction-history-content'
-import { TransactionHistoryTabs } from './transaction-history-tabs'
+import { Box } from '@mui/material'
+import { useCallback, useMemo, useState } from 'react'
+
+import { TransactionHistoryContent } from './transaction-history-content.tsx'
+import { TransactionHistoryTabs } from './transaction-history-tabs.tsx'
 import {
     createTransactionHistoryEntries,
     FILTER_LABEL_BY_FILTER,
     filterTransactionHistoryEntries,
     type TransactionFilter,
-} from './transaction-history-utils'
+} from './transaction-history-utils.ts'
 
 interface TransactionHistoryProps {
     walletId: string

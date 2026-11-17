@@ -22,19 +22,21 @@ import {
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fakeBrowser } from 'wxt/testing/fake-browser'
+
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
 import {
     preparedTransaction,
     preparedTransactionHash,
     secondPreparedTransaction,
     secondPreparedTransactionHash,
 } from '@/__tests__/prepared-transactions'
-import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { createWalletStore, loadAuthedStore } from '../../store'
-import { createVaultSigningStore } from '../../store/signing-store'
-import { createTestWalletStore } from '../../store/test-store'
-import { createVault, type Vault, VaultLockedError } from '../../vault'
-import { userController } from '.'
+
+import { createWalletStore, loadAuthedStore } from '../../store/index.ts'
+import { createVaultSigningStore } from '../../store/signing-store.ts'
+import { createTestWalletStore } from '../../store/test-store.ts'
+import { createVault, type Vault, VaultLockedError } from '../../vault/index.ts'
+import { userController } from './index.ts'
 
 const networkId = 'canton:local-oauth'
 const authContext = { userId: 'user-1', accessToken: 'token-1' }
@@ -55,7 +57,7 @@ describe('userController.addSession', () => {
     }
 
     beforeEach(() => {
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         const store = createTestWalletStore(authContext)
         controller = userController({
             getStore: async () => store,
@@ -156,7 +158,7 @@ describe('userController transactions', () => {
             .spyOn(LedgerClient.prototype, 'postWithRetry')
             .mockResolvedValue(ledgerResult)
 
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         store = createTestWalletStore(authContext)
         const vault = createVault({ iterations: 1000 })
         await vault.create('abcde1')
@@ -536,7 +538,7 @@ describe('userController wallets', () => {
         vault = createVault({ iterations: 1000 })
         await vault.create(password)
         signingStore = createVaultSigningStore(vault)
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         sink = newSink()
 
         generateTopology = vi

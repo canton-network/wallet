@@ -1,29 +1,36 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
-
+import { NotificationService } from '@canton-network/core-wallet-services'
+import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
+import { getLogger } from '@logtape/logtape'
 import cors from 'cors'
 import express from 'express'
-import request from 'supertest'
-import { user } from './server.js'
-import { ServerNotices } from '../notices/server-notices.js'
-import { ServerStatusService } from '../notices/server-status-service.js'
-import { jwtAuthService } from '../auth/jwt-auth-service.js'
-import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.js'
-import { NotificationService } from '@canton-network/core-wallet-services'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { getLogger } from '@logtape/logtape'
+import request from 'supertest'
+import { expect, test } from 'vitest'
+
+import { jwtAuthService } from '../auth/jwt-auth-service.ts'
+import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.ts'
+import { ServerNotices } from '../notices/server-notices.ts'
+import { ServerStatusService } from '../notices/server-status-service.ts'
+import { user } from './server.ts'
 
 const configPath = '../test/config.json'
 const config = ConfigUtils.loadConfigFile(configPath).config
 
-const store = new StoreInternal(config.bootstrap, getLogger('mock'))
+const store = new StoreInternal(
+    { idps: config.idps, networks: config.networks },
+    getLogger('mock')
+)
 
-const notificationService = new NotificationService(pino(sink()))
+const notificationService = new NotificationService()
 const serverStatus = new ServerStatusService(new ServerNotices(pino(sink())))
+const configManaged = {
+    idpIds: new Set<string>(),
+    networkIds: new Set<string>(),
+}
 
 test('call listNetworks rpc', async () => {
     const drivers = {}
@@ -33,19 +40,20 @@ test('call listNetworks rpc', async () => {
 
     const { publicUrl } = deriveUrls(config)
     const response = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
             drivers,
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+            configManaged,
+        })
     )
         .post('/api/v0/user')
         .send({ jsonrpc: '2.0', id: 0, method: 'listNetworks', params: [] })
@@ -80,19 +88,20 @@ test('selfSignedAccessToken rpc', async () => {
 
     const { publicUrl } = deriveUrls(config)
     const response = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
             drivers,
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+            configManaged,
+        })
     )
         .post('/api/v0/user')
         .send({
@@ -126,19 +135,20 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
 
     const { publicUrl } = deriveUrls(config)
     const mintResponse = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
-            {},
+            drivers: {},
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+            configManaged,
+        })
     )
         .post('/api/v0/user')
         .send({
@@ -166,19 +176,20 @@ test('selfSignedAccessToken rpc rejects a mismatched client secret', async () =>
 
     const { publicUrl } = deriveUrls(config)
     const response = await request(
-        user(
-            '/api/v0/user',
+        user({
+            route: '/api/v0/user',
             app,
-            pino(sink()),
-            config.kernel,
-            publicUrl,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
             notificationService,
-            {},
+            drivers: {},
             store,
-            'HASHING_SCHEME_VERSION_V3',
-            undefined,
-            serverStatus
-        )
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+            configManaged,
+        })
     )
         .post('/api/v0/user')
         .send({

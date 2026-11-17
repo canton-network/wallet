@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { templateIdOf, templateKeyOf } from './merge.js'
+
+import { templateIdOf, templateKeyOf } from './merge.ts'
 
 const ping = {
     context: {

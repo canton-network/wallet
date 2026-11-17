@@ -8,13 +8,14 @@ import {
     AuthTokenProvider,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import { createKernelWallet } from './create-wallet'
-import { toSigningDrivers, type UserControllerDeps } from './deps'
-import type { Methods } from './rpc-gen'
+
+import { createKernelWallet } from './create-wallet.ts'
+import { toSigningDrivers, type UserControllerDeps } from './deps.ts'
+import type { Methods } from './rpc-gen/index.ts'
 import type {
     CreateWalletParams,
     SetPrimaryWalletParams,
-} from './rpc-gen/typings'
+} from './rpc-gen/typings.ts'
 
 export const wallets = ({
     getStore,

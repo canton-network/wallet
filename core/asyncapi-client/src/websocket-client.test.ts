@@ -10,7 +10,8 @@ import {
     afterEach,
     type Mock,
 } from 'vitest'
-import { WebSocketClient } from './websocket-client.js'
+
+import { WebSocketClient } from './websocket-client.ts'
 /* oxlint-disable typescript/no-explicit-any */
 
 const MOCK_CHANNELS = vi.hoisted(() => ({
@@ -23,9 +24,9 @@ const mockEventFilterBySetup = vi.hoisted(() =>
 )
 vi.mock('@canton-network/core-ledger-client-types', () => ({
     asyncApiByVersion: {
-        '3.5': { CHANNELS: MOCK_CHANNELS },
+        '3.6': { CHANNELS: MOCK_CHANNELS },
     },
-    supportedAsyncApiVersions: ['3.5'],
+    supportedAsyncApiVersions: ['3.6'],
     EventFilterBySetup: mockEventFilterBySetup,
 }))
 
@@ -59,7 +60,7 @@ class MockWebSocket {
 
 let lastWsInstance: MockWebSocket
 
-const makeClient = (version?: '3.5') => {
+const makeClient = (version?: '3.6') => {
     const accessTokenProvider = {
         getAccessToken: vi.fn().mockResolvedValue('test-token'),
         getAuthContext: vi.fn().mockResolvedValue(''),

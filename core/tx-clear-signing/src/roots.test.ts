@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     Fetch,
     PreparedTransaction,
     Rollback,
     type Identifier,
 } from '@canton-network/core-ledger-proto'
-import { rootNodes } from './roots.js'
+import { describe, expect, it } from 'vitest'
+
+import { rootNodes } from './roots.ts'
 
 const templateId: Identifier = {
     packageId: 'ab',

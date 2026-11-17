@@ -4,7 +4,7 @@
 // Captured Splice fixtures for splice-contracts.test.ts, and the reference descriptors those tests
 // describe them with. Each fixture is a prepared transaction from a local Canton.
 
-import { type Descriptor, parseDescriptor } from '../descriptor.js'
+import { type Descriptor, parseDescriptor } from '../descriptor.ts'
 
 interface Fixture {
     id: string

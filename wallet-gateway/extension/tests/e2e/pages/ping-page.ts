@@ -3,7 +3,8 @@
 
 import { openWalletPicker } from '@canton-network/core-wallet-test-utils'
 import type { Locator, Page } from '@playwright/test'
-import { expect } from '../fixtures.js'
+
+import { expect } from '../fixtures.ts'
 
 const CANTON_WALLET_GATEWAY_ID = 'browser:ext:canton-wallet'
 

@@ -1,13 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
 import {
-    BaseElement,
-    handleErrorToast,
-    toRelHref,
-} from '@canton-network/core-wallet-ui-components'
+    clearSign,
+    HashMismatchError,
+    type ClearSigningResult,
+} from '@canton-network/core-tx-clear-signing'
 import {
     computePreparedTransactionHash,
     TxHashingError,
@@ -16,24 +14,27 @@ import {
     type ParsedTransactionInfo,
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
+import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import {
-    clearSign,
-    HashMismatchError,
-    type ClearSigningResult,
-} from '@canton-network/core-tx-clear-signing'
-import { listDescriptors } from '../descriptors-store.js'
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
-import { stateManager } from '../state-manager'
-import '../index'
-import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
-import { showToast } from '../utils'
+    BaseElement,
+    handleErrorToast,
+    toRelHref,
+} from '@canton-network/core-wallet-ui-components'
 import type {
     SignResult,
     GetTransactionStatusResult,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { PartyLevelRight } from '@canton-network/core-wallet-store'
-import { detectCurrentOrigin } from '../listeners.js'
+import { html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
+import { ACTIVITIES_PAGE_REDIRECT } from '../constants.ts'
+import { listDescriptors } from '../descriptors-store.ts'
+import '../index.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { setLocationHref } from '../navigation.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
 
 const POLL_INTERVAL_MS = 3000
 

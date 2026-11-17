@@ -5,5 +5,5 @@ export {
     clearSign,
     HashMismatchError,
     type ClearSigningResult,
-} from './clear-sign.js'
-export type { Descriptor } from './descriptor.js'
+} from './clear-sign.ts'
+export type { Descriptor } from './descriptor.ts'

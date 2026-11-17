@@ -21,16 +21,17 @@ import {
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { fakeBrowser } from 'wxt/testing/fake-browser'
+
+import { AuthService } from '../auth-service.ts'
+import { initializeWalletStore } from '../store.ts'
 import {
     preparedTransaction,
     preparedTransactionHash,
     secondPreparedTransaction,
     secondPreparedTransactionHash,
 } from './__tests__/prepared-transactions'
-import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { AuthService } from '../auth-service'
-import { initializeWalletStore } from '../store'
-import { userController } from './controller'
+import { userController } from './controller.ts'
 
 const networkId = 'canton:local-oauth'
 const authContext = { userId: 'user-1', accessToken: 'token-1' }
@@ -52,7 +53,7 @@ describe('userController.addSession', () => {
 
     beforeEach(async () => {
         vi.spyOn(AuthService, 'loadAuthContext').mockResolvedValue(authContext)
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         const store = await initializeWalletStore()
         controller = userController(
             async () => store,
@@ -154,7 +155,7 @@ describe('userController transactions', () => {
             .spyOn(LedgerClient.prototype, 'postWithRetry')
             .mockResolvedValue(ledgerResult)
 
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         store = await initializeWalletStore()
         signingStore = new WxtStore(authContext.userId)
         await signingStore.setSigningKey(authContext.userId, {

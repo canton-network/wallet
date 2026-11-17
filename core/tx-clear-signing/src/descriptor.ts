@@ -2,12 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { z } from 'zod'
-import { ENUM_REF_PREFIX, UNSAFE_CLASS } from './format.js'
-import { parseIntent } from './intent.js'
+
+import { ENUM_REF_PREFIX, UNSAFE_CLASS } from './format.ts'
+import { parseIntent } from './intent.ts'
 import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
     SHARED_CONTAINER_FIELDS,
-} from './path.js'
+} from './path.ts'
 
 // The patterns are those of canton-clear-signing-v1.schema.json. The conformance test runs the
 // schema and this parser on the same examples.

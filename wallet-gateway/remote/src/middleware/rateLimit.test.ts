@@ -1,22 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, test } from 'vitest'
-import express, { type Request } from 'express'
-import request from 'supertest'
-import { pino } from 'pino'
-import { sink } from 'pino-test'
 import {
     IdpUnavailableError,
     type AuthService,
 } from '@canton-network/core-wallet-auth'
+import express, { type Request } from 'express'
+import { pino } from 'pino'
+import { sink } from 'pino-test'
+import request from 'supertest'
+import { describe, expect, test } from 'vitest'
+
+import { jwtAuth } from './jwtAuth.ts'
 import {
     authenticatedRateLimiter,
     ipRateLimitKeyGenerator,
     preAuthIpRateLimiter,
     rateLimitKeyGenerator,
-} from './rateLimit.js'
-import { jwtAuth } from './jwtAuth.js'
+} from './rateLimit.ts'
 
 describe('ipRateLimitKeyGenerator', () => {
     test('uses request ip address', () => {

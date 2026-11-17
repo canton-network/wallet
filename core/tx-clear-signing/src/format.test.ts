@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import type { Value } from '@canton-network/core-ledger-proto'
-import type { Field } from './descriptor.js'
-import { formatValue, FormatError } from './format.js'
+import { describe, expect, it } from 'vitest'
+
+import type { Field } from './descriptor.ts'
+import { formatValue, FormatError } from './format.ts'
 
 const text = (t: string): Value => ({ sum: { oneofKind: 'text', text: t } })
 const int64 = (n: string): Value => ({ sum: { oneofKind: 'int64', int64: n } })

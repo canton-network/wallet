@@ -15,5 +15,6 @@
         "core/tx-clear-signing/examples/descriptors/schema",
         "core/tx-clear-signing/examples/descriptors/invalid",
         "core/tx-clear-signing/examples/descriptors/splice"
-    ]
+    ],
+    "sortImports": true
 }

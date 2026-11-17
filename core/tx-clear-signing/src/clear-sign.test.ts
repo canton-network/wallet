@@ -1,19 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     Exercise,
     PreparedTransaction,
     type Value,
 } from '@canton-network/core-ledger-proto'
-import { decode } from './roots.js'
-import { HashMismatchError, MISMATCH_INTENT, clearSign } from './clear-sign.js'
+import { describe, expect, it } from 'vitest'
+
+import pingJson from '../examples/descriptors/ping.json'
 import {
-    DescriptorError,
-    parseDescriptor,
-    type Descriptor,
-} from './descriptor.js'
+    adminWorkflowsPingCreate,
+    builtinPingCreate,
+} from './__tests__/fixtures/ping.ts'
+import allValues from './__tests__/fixtures/v2-create-all-values.json'
+import createAndExercise from './__tests__/fixtures/v2-create-and-exercise.json'
+import exerciseInterface from './__tests__/fixtures/v2-exercise-interface.json'
+import nestedCreates from './__tests__/fixtures/v2-exercise-nested-creates.json'
+import maps from './__tests__/fixtures/v2-maps.json'
+import variantEnum from './__tests__/fixtures/v2-variant-enum.json'
 import {
     described,
     encode,
@@ -24,18 +29,14 @@ import {
     OWNER,
     VECTOR_PACKAGE,
     vectorDescriptor,
-} from './__tests__/helpers.js'
-import pingJson from '../examples/descriptors/ping.json'
+} from './__tests__/helpers.ts'
+import { HashMismatchError, MISMATCH_INTENT, clearSign } from './clear-sign.ts'
 import {
-    adminWorkflowsPingCreate,
-    builtinPingCreate,
-} from './__tests__/fixtures/ping.js'
-import allValues from './__tests__/fixtures/v2-create-all-values.json'
-import createAndExercise from './__tests__/fixtures/v2-create-and-exercise.json'
-import exerciseInterface from './__tests__/fixtures/v2-exercise-interface.json'
-import nestedCreates from './__tests__/fixtures/v2-exercise-nested-creates.json'
-import maps from './__tests__/fixtures/v2-maps.json'
-import variantEnum from './__tests__/fixtures/v2-variant-enum.json'
+    DescriptorError,
+    parseDescriptor,
+    type Descriptor,
+} from './descriptor.ts'
+import { decode } from './roots.ts'
 
 const ping = parseDescriptor(pingJson)
 const ALICE =

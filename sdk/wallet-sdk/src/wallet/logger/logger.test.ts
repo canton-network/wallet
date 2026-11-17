@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import ConsoleLogAdapter from './adapter/console'
-import CustomLogAdapter from './adapter/custom'
-import { SDKLogger } from './logger'
-import type { LogAdapter } from './types'
+
+import ConsoleLogAdapter from './adapter/console.ts'
+import CustomLogAdapter from './adapter/custom.ts'
+import { SDKLogger } from './logger.ts'
+import type { LogAdapter } from './types.ts'
 
 function makeCustomAdapter() {
     const log = vi.fn()

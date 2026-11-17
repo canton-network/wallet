@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createMockUserClient,
     makeNetwork,
@@ -11,7 +12,7 @@ import {
     mockRequest,
     networkEditSaveEvent,
     networkEditSaveEventFrom,
-} from '../../__tests__/test-helpers.js'
+} from '../../__tests__/test-helpers.ts'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
     () => ({
@@ -21,12 +22,12 @@ const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
     })
 )
 
-vi.mock('../../index.js', () => ({}))
-vi.mock('../../navigation.js', () => ({ setLocationHref }))
-vi.mock('../../rpc-client.js', () => ({
+vi.mock('../../index.ts', () => ({}))
+vi.mock('../../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../../state-manager.js', () => ({
+vi.mock('../../state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
@@ -40,8 +41,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     return { ...actual, handleErrorToast }
 })
 
-import './index.js'
-import type { UserUiAddNetwork } from './index.js'
+import './index.ts'
+import type { UserUiAddNetwork } from './index.ts'
 
 describe('UserUiAddNetwork', () => {
     let el: UserUiAddNetwork

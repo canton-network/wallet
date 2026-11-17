@@ -5,12 +5,12 @@
 // optionals, tuples, maps and V1/V2 interface choices with the same name. Each test pins what the
 // wallet shows, including the fields that fail.
 
-import { describe, expect, it } from 'vitest'
 import { HashingSchemeVersion } from '@canton-network/core-ledger-proto'
 import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
-import { toBase64 } from './bytes.js'
-import type { OperationDescription } from './clear-sign.js'
-import { described, intentText, shown } from './__tests__/helpers.js'
+import { describe, expect, it } from 'vitest'
+
+import v1Allocate from './__tests__/fixtures/token-standard/amulet-v1-allocation-factory-allocate.json'
+import { described, intentText, shown } from './__tests__/helpers.ts'
 import {
     ALICE,
     BOB,
@@ -18,8 +18,9 @@ import {
     captured,
     capturedIds,
     spliceDescriptors,
-} from './__tests__/splice.js'
-import v1Allocate from './__tests__/fixtures/token-standard/amulet-v1-allocation-factory-allocate.json'
+} from './__tests__/splice.ts'
+import { toBase64 } from './bytes.ts'
+import type { OperationDescription } from './clear-sign.ts'
 
 async function describeOne(
     preparedTransaction: string

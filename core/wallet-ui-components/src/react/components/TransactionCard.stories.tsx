@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Meta, StoryObj } from '@storybook/react-vite'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
     findAllByShadowText,
     findByShadowRole,
@@ -10,7 +10,8 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { TransactionCard } from './TransactionCard'
+
+import { TransactionCard } from './TransactionCard.tsx'
 
 const parsed: ParsedTransactionInfo = {
     isCreate: false,
@@ -105,6 +106,36 @@ export const Failed: Story = {
         await expect(
             await findByShadowText(canvasElement, 'failed')
         ).toBeInTheDocument()
+        await expect(
+            queryByShadowText(canvasElement, 'Failure reason')
+        ).not.toBeInTheDocument()
+    },
+}
+
+export const FailedWithLongReason: Story = {
+    args: {
+        status: 'failed',
+        failureReason: 'Dfns rejected the signing request (Denied by policy)',
+    },
+    decorators: [
+        (Story) => (
+            <div style={{ width: 360 }}>
+                <Story />
+            </div>
+        ),
+    ],
+    play: async ({ args, canvasElement }) => {
+        // Wraps instead of truncating, so users can read why it failed
+        const reason = await findByShadowText(
+            canvasElement,
+            args.failureReason!
+        )
+        await expect(reason.scrollWidth).toBeLessThanOrEqual(reason.clientWidth)
+        await expect(reason.getBoundingClientRect().height).toBeGreaterThan(
+            (
+                await findByShadowText(canvasElement, 'Failure reason')
+            ).getBoundingClientRect().height
+        )
     },
 }
 

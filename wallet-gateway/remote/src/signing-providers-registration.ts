@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import BlockdaemonSigningProvider, {
     type CantonCaip2,
 } from '@canton-network/core-signing-blockdaemon'
-import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import DfnsSigningProvider from '@canton-network/core-signing-dfns'
 import FireblocksSigningProvider from '@canton-network/core-signing-fireblocks'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
@@ -14,14 +14,15 @@ import SecurosysSigningProvider, {
     type TsbSignatureAlgorithm,
 } from '@canton-network/core-signing-securosys'
 import type { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
-import type { Logger } from 'pino'
-import type { ServerNotices } from './notices/server-notices.js'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
+import type { Logger } from 'pino'
+
 import {
     signingProvidersConfigSchema,
     type SigningProvidersConfig,
-} from './config/Config.js'
-import { Env } from './env.js'
+} from './config/Config.ts'
+import { Env } from './env.ts'
+import type { ServerNotices } from './notices/server-notices.ts'
 
 const fireblocksSchema =
     signingProvidersConfigSchema.shape.fireblocks.unwrap().shape

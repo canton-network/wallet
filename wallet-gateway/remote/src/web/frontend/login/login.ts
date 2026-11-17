@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-
-import '@canton-network/core-wallet-ui-components'
+import {
+    fetchOidcDiscovery,
+    jwtExpiresAt,
+} from '@canton-network/core-wallet-auth'
 import {
     BaseElement,
     handleErrorToast,
@@ -12,20 +12,20 @@ import {
     type WgLoginForm,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import {
-    fetchOidcDiscovery,
-    jwtExpiresAt,
-} from '@canton-network/core-wallet-auth'
-import { createUserClient } from '../rpc-client'
+import '@canton-network/core-wallet-ui-components'
 import type {
     PublicNetwork,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { stateManager } from '../state-manager'
-import '../index'
-import { redirectToIntendedOrDefault, addUserSession } from '../index'
-import { setLocationHref } from '../navigation.js'
-import { detectCurrentOrigin } from '../listeners.js'
+import { html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
+import { redirectToIntendedOrDefault, addUserSession } from '../index.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
+import '../index.ts'
+import { setLocationHref } from '../navigation.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -202,6 +202,12 @@ export class LoginUI extends BaseElement {
                     sessionStorage.setItem(
                         `oauth-pkce-${statePayload.stateId}`,
                         verifier
+                    )
+                    // The callback takes the network from here: unlike the
+                    // localStorage, no other tab or auth check clears it
+                    sessionStorage.setItem(
+                        `oauth-network-${statePayload.stateId}`,
+                        selectedNetwork.id
                     )
 
                     const params = new URLSearchParams({

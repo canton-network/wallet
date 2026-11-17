@@ -12,10 +12,11 @@
 
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { clearSign } from '../src/index.js'
-import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
-import amuletAllocationV2 from './descriptors/splice/amulet-allocation-v2.json'
+
 import showcaseTransaction from '../src/__tests__/fixtures/showcase-transaction.json'
+import { clearSign } from '../src/index.ts'
+import amuletAllocationV2 from './descriptors/splice/amulet-allocation-v2.json'
+import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
 
 /** Base64 prepared transaction. */
 export const preparedTransaction = showcaseTransaction.preparedTransaction

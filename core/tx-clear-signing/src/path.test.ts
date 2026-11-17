@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import type { Value } from '@canton-network/core-ledger-proto'
-import { parsePath, PathError, resolvePath } from './path.js'
+import { describe, expect, it } from 'vitest'
+
+import { parsePath, PathError, resolvePath } from './path.ts'
 
 describe('parsePath', () => {
     it('splits a path into steps', () => {

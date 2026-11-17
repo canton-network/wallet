@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-securosys",
-    "version": "0.5.3",
+    "version": "0.5.5",
     "type": "module",
     "description": "Wallet Gateway signing driver for Securosys TSB",
     "license": "Apache-2.0",
@@ -23,6 +23,7 @@
     "dependencies": {
         "@canton-network/core-signing-lib": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
+        "@logtape/logtape": "catalog:",
         "undici": "catalog:"
     },
     "devDependencies": {

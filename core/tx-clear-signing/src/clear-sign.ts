@@ -6,6 +6,7 @@ import type {
     Metadata,
     Value,
 } from '@canton-network/core-ledger-proto'
+
 import {
     DescriptorError,
     parseDescriptor,
@@ -13,15 +14,15 @@ import {
     type Exercise,
     type Field,
     type Operation,
-} from './descriptor.js'
+} from './descriptor.ts'
 import {
     FormatError,
     formatValue,
     sanitize,
     type EnumTables,
-} from './format.js'
-import { hashesTo } from './hash.js'
-import { parseIntent } from './intent.js'
+} from './format.ts'
+import { hashesTo } from './hash.ts'
+import { parseIntent } from './intent.ts'
 import {
     CONTRACT_PREFIX,
     containerFieldName,
@@ -31,7 +32,7 @@ import {
     PathError,
     resolvePath,
     type ContainerFields,
-} from './path.js'
+} from './path.ts'
 import {
     contractArgument,
     contractsOf,
@@ -42,7 +43,7 @@ import {
     type ContractSet,
     type RootNode,
     type TemplateRef,
-} from './roots.js'
+} from './roots.ts'
 
 /** Shown when an interpolated intent cannot be filled from the transaction. */
 export const MISMATCH_INTENT = 'The descriptor does not match this transaction.'

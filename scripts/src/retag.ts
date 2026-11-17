@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { exec as ex } from 'child_process'
-import { promisify } from 'util'
 import readline from 'readline'
-import { elideMiddle, mapObject, success } from './lib/utils.js'
+import { promisify } from 'util'
+
 import { bold, cyan } from 'yoctocolors'
+
+import { elideMiddle, mapObject, success } from './lib/utils.ts'
 
 const exec = promisify(ex)
 

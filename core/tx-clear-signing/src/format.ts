@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Value } from '@canton-network/core-ledger-proto'
-import type { Field } from './descriptor.js'
-import { describeKind } from './path.js'
+
+import type { Field } from './descriptor.ts'
+import { describeKind } from './path.ts'
 
 export class FormatError extends Error {
     constructor(message: string) {

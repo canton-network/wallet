@@ -1,9 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-
 import {
     BaseElement,
     type NetworkCardReviewEvent,
@@ -11,23 +8,25 @@ import {
     handleErrorToast,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-
 import type {
     PublicNetwork,
     Session,
 } from '@canton-network/core-wallet-user-rpc-client'
+import { css, html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
 
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
-import '../index'
-import { stateManager } from '../state-manager'
-import { detectCurrentOrigin } from '../listeners.js'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { setLocationHref } from '../navigation.ts'
+import '../index.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
 
 @customElement('user-ui-networks')
 export class UserUiNetworks extends BaseElement {
     @state() accessor networks: PublicNetwork[] = []
     @state() accessor sessions: Session[] = []
     @state() accessor isAdmin = false
+    @state() accessor configManagedIds: string[] = []
     @state() accessor currentPage = 1
 
     private readonly pageSize = 3
@@ -95,6 +94,7 @@ export class UserUiNetworks extends BaseElement {
                 ])
 
             this.networks = networksResult.networks
+            this.configManagedIds = networksResult.configManagedIds ?? []
             this.sessions = sessionsResult.sessions
             this.isAdmin = userResult.isAdmin
 
@@ -145,6 +145,14 @@ export class UserUiNetworks extends BaseElement {
             </div>
 
             ${
+                this.configManagedIds.length > 0
+                    ? html`<p class="text-body-secondary">
+                          Entries marked CONFIG FILE are managed by the Wallet
+                          Gateway config file and are read-only.
+                      </p>`
+                    : ''
+            }
+            ${
                 this.networks.length === 0
                     ? html`<p class="mb-0 text-body-secondary">
                           No networks configured.
@@ -162,7 +170,15 @@ export class UserUiNetworks extends BaseElement {
                                               session?.status === 'connected'
                                           }
                                           .accessToken=${session?.accessToken ?? ''}
-                                          .readonly=${!this.isAdmin}
+                                          .readonly=${
+                                              !this.isAdmin ||
+                                              this.configManagedIds.includes(
+                                                  network.id
+                                              )
+                                          }
+                                          .configManaged=${this.configManagedIds.includes(
+                                              network.id
+                                          )}
                                           @network-review=${this._onReview}
                                       ></network-card>
                                   `

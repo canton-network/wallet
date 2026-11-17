@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { StateManager, stateManager } from './state-manager.js'
+
+import { StateManager, stateManager } from './state-manager.ts'
 
 const origin = 'http://localhost'
 
@@ -85,6 +86,27 @@ describe('stateManager', async () => {
         stateManager.intendedPage.clear(origin)
 
         expect(stateManager.intendedPage.get(origin)).toBeUndefined()
+    })
+
+    it('removes legacy gateway keys but keeps foreign keys on construction', () => {
+        localStorage.setItem('com.splice.wallet.accessToken', 'legacy')
+        localStorage.setItem(`com.splice.wallet.v1.${origin}.networkId`, 'n')
+        localStorage.setItem('splice_wallet_kernel_session', 'session')
+        localStorage.setItem('oidc.user:foo', 'user')
+
+        new StateManager()
+
+        expect(localStorage.getItem('com.splice.wallet.accessToken')).toBeNull()
+        expect(
+            localStorage.getItem(`com.splice.wallet.v1.${origin}.networkId`)
+        ).toBe('n')
+        expect(localStorage.getItem('splice_wallet_kernel_session')).toBe(
+            'session'
+        )
+        expect(localStorage.getItem('oidc.user:foo')).toBe('user')
+
+        localStorage.removeItem('splice_wallet_kernel_session')
+        localStorage.removeItem('oidc.user:foo')
     })
 
     it('clearAuthState removes all auth-related values', async () => {

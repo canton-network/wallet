@@ -13,13 +13,14 @@
 // transfer preapproval needs the DSO's AmuletRules and open mining round, which this participant
 // cannot read.
 
-import { describe, expect, it } from 'vitest'
 import type { Identifier } from '@canton-network/core-ledger-proto'
-import type { OperationDescription } from './clear-sign.js'
-import { parseDescriptor } from './descriptor.js'
-import { decode } from './roots.js'
-import { described } from './__tests__/helpers.js'
-import { captured, rebind, spliceDescriptors } from './__tests__/splice.js'
+import { describe, expect, it } from 'vitest'
+
+import { described } from './__tests__/helpers.ts'
+import { captured, rebind, spliceDescriptors } from './__tests__/splice.ts'
+import type { OperationDescription } from './clear-sign.ts'
+import { parseDescriptor } from './descriptor.ts'
+import { decode } from './roots.ts'
 
 interface Capture {
     id: string

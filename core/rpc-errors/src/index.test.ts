@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
+
 import {
     errorCodes,
     getMessageFromCode,
@@ -11,7 +12,7 @@ import {
     rpcErrors,
     toHttpErrorCode,
     toJsonRpcError,
-} from './index'
+} from './index.ts'
 
 describe('core/rpc-errors', () => {
     /** Pins the table in https://github.com/canton-foundation/cips/blob/main/cip-0103/cip-0103.md */

@@ -10,9 +10,10 @@
 
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
-import { clearSign } from '../src/index.js'
+
 import allocation from '../src/__tests__/fixtures/splice/allocation-factory-allocate-multileg.json'
+import { clearSign } from '../src/index.ts'
+import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
 
 /** Base64 prepared transaction, as `/v2/interactive-submission/prepare` returns it. */
 export const preparedTransaction = allocation.preparedTransaction

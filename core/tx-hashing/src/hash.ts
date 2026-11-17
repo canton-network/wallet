@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { HashingSchemeVersion } from '@canton-network/core-ledger-proto'
-import { readPreparedTransaction } from './decode.js'
-import { TxHashingError } from './errors.js'
-import { checkForest } from './forest.js'
-import { DEFAULT_LIMITS, type TraversalLimits } from './limits.js'
-import { hashPrepared, type Scheme } from './scheme.js'
-import { schemeV2 } from './v2.js'
-import { schemeV3 } from './v3.js'
+
+import { readPreparedTransaction } from './decode.ts'
+import { TxHashingError } from './errors.ts'
+import { checkForest } from './forest.ts'
+import { DEFAULT_LIMITS, type TraversalLimits } from './limits.ts'
+import { hashPrepared, type Scheme } from './scheme.ts'
+import { schemeV2 } from './v2.ts'
+import { schemeV3 } from './v3.ts'
 
 /** A `HashingSchemeVersion` or its JSON API name */
 export type HashingScheme =

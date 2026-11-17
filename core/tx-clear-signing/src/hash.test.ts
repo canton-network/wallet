@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import { HashingSchemeVersion } from '@canton-network/core-ledger-proto'
 import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
-import { fromBase64, toBase64 } from './bytes.js'
-import { hashesTo } from './hash.js'
-import createAndExercise from './__tests__/fixtures/v2-create-and-exercise.json'
+import { describe, expect, it } from 'vitest'
+
 import glLockCreate from './__tests__/fixtures/splice/gl-lock-create.json'
+import createAndExercise from './__tests__/fixtures/v2-create-and-exercise.json'
+import { fromBase64, toBase64 } from './bytes.ts'
+import { hashesTo } from './hash.ts'
 
 function hexToBase64(hex: string): string {
     const bytes = new Uint8Array(hex.length / 2)

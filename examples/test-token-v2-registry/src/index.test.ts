@@ -2,14 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from 'vitest'
-import { mock } from './__tests__/mocks'
-import { stopRegistry } from '.'
+
+import { mock } from './__tests__/mocks.ts'
+import { stopRegistry } from './index.ts'
 
 const mocks = vi.hoisted(() => {
     const use = vi.fn().mockReturnThis()
     const close = vi.fn()
-    const listen = vi.fn().mockReturnValue({
-        close,
+    const address = vi.fn(() => ({
+        address: '::',
+        family: 'IPv6',
+        port: 5634,
+    }))
+    const listen = vi.fn((_port: number, callback: () => void) => {
+        queueMicrotask(callback)
+        return { close, address }
     })
     const json = vi.fn()
 
@@ -23,6 +30,7 @@ const mocks = vi.hoisted(() => {
     return {
         use,
         close,
+        address,
         listen,
         json,
         expressFactory,
@@ -30,8 +38,8 @@ const mocks = vi.hoisted(() => {
     }
 })
 
-vi.mock('./common/state', async () => {
-    const { mock: importedMock } = await import('./__tests__/mocks')
+vi.mock('./common/state.ts', async () => {
+    const { mock: importedMock } = await import('./__tests__/mocks.ts')
 
     return importedMock.state
 })
@@ -44,23 +52,23 @@ vi.mock('express', () => {
     }
 })
 
-vi.mock('./api/metadata/index.js', () => ({
+vi.mock('./api/metadata/index.ts', () => ({
     default: 'metadataRouter',
 }))
 
-vi.mock('./api/transfer-instruction/index.js', () => ({
+vi.mock('./api/transfer-instruction/index.ts', () => ({
     default: 'transferInstructionRouter',
 }))
 
-vi.mock('./api/allocation/index.js', () => ({
+vi.mock('./api/allocation/index.ts', () => ({
     default: 'allocationRouter',
 }))
 
-vi.mock('./api/allocation-instruction/index.js', () => ({
+vi.mock('./api/allocation-instruction/index.ts', () => ({
     default: 'allocationInstructionRouter',
 }))
 
-vi.mock('./api/utilities/index.js', () => ({
+vi.mock('./api/utilities/index.ts', () => ({
     default: 'utilitiesRouter',
 }))
 
@@ -72,7 +80,7 @@ vi.mock('@canton-network/core-splice-codegen', () => ({
     },
 }))
 
-vi.mock('./common/defaultSdk', () => ({
+vi.mock('./common/defaultSdk.ts', () => ({
     default: {},
 }))
 
@@ -84,12 +92,13 @@ describe('entry file', () => {
     })
 
     it('should initialize the app and start listening', async () => {
-        const { startRegistry } = await import('.')
+        const { startRegistry } = await import('./index.ts')
 
-        await startRegistry({
+        const port = await startRegistry({
             port: 1111,
         })
 
+        expect(port).toBe(5634)
         expect(mock.state.RegistryState.instantiate).toHaveBeenCalledOnce()
         expect(mock.state.RegistryState.instantiate).toHaveBeenCalledWith({
             port: 1111,
@@ -102,8 +111,22 @@ describe('entry file', () => {
         expect(mocks.vetDar).not.toHaveBeenCalled()
     })
 
+    it('should return and store the port assigned by the server', async () => {
+        const { startRegistry } = await import('./index.ts')
+        mocks.address.mockReturnValueOnce({
+            address: '::',
+            family: 'IPv6',
+            port: 49152,
+        })
+
+        const port = await startRegistry({ port: 0 })
+
+        expect(port).toBe(49152)
+        expect(mock.state.RegistryState.instance.port).toBe(port)
+    })
+
     it('should properly close the server', async () => {
-        const { startRegistry, stopRegistry } = await import('.')
+        const { startRegistry, stopRegistry } = await import('./index.ts')
 
         await startRegistry()
 
@@ -116,7 +139,7 @@ describe('entry file', () => {
     })
 
     it('should pass empty config when no config is provided', async () => {
-        const { startRegistry } = await import('.')
+        const { startRegistry } = await import('./index.ts')
 
         await startRegistry()
 
@@ -124,7 +147,7 @@ describe('entry file', () => {
     })
 
     it('should setup middleware in correct order', async () => {
-        const { startRegistry } = await import('.')
+        const { startRegistry } = await import('./index.ts')
 
         await startRegistry()
 

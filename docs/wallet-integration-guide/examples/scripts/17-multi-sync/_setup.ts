@@ -1,36 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
+import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { Provider as Ops } from '@canton-network/core-ledger-client-types'
+import type { KeyPair } from '@canton-network/core-signing-lib'
+import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
 import {
     localNetStaticConfig,
     SDK,
     type SDKInterface,
 } from '@canton-network/wallet-sdk'
-import type { KeyPair } from '@canton-network/core-signing-lib'
-import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
-import type { Provider as Ops } from '@canton-network/core-ledger-client-types'
+import type { Logger } from 'pino'
+
 import {
     AMULET_NAMESPACE_CONFIG,
     ASSET_CONFIG,
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
-} from '../utils/index.js'
-import type { KnownSynchronizers } from '../utils/index.js'
-import { TEST_TOKEN_REGISTRY_URL } from './_constants.js'
-import { OTCTrade, TestToken } from '@canton-network/core-splice-codegen'
-
-// Token namespace config that also points the SDK at the local TestToken
-// registry (in addition to the Amulet scan-proxy registry). This lets the
-// wallet SDK resolve TestToken via the CIP-56 metadata API and fetch its
-// transfer/allocation choice contexts over HTTP.
-const TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES = {
-    ...TOKEN_NAMESPACE_CONFIG,
-    registries: [
-        ...(TOKEN_NAMESPACE_CONFIG.registries as URL[]),
-        TEST_TOKEN_REGISTRY_URL,
-    ],
-}
+} from '../utils/index.ts'
+import type { KnownSynchronizers } from '../utils/index.ts'
 
 export type PartyInfo = Omit<
     GenerateTransactionResponse,
@@ -103,32 +91,32 @@ export async function setupMultiSyncTrade(
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
                 amulet: AMULET_NAMESPACE_CONFIG,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
                 asset: ASSET_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
                 ledgerClientUrl:
                     localNetStaticConfig.LOCALNET_APP_PROVIDER_LEDGER_URL,
-                token: TOKEN_NAMESPACE_CONFIG_WITH_REGISTRIES,
+                token: TOKEN_NAMESPACE_CONFIG,
             }),
             SDK.create({
                 auth: TOKEN_PROVIDER_CONFIG_DEFAULT,

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { nestedRedact } from './utils.js'
+
+import { nestedRedact } from './utils.ts'
 
 describe('utils', () => {
     it('tests nestedRedact', async () => {

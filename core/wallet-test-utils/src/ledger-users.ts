@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { HttpTransport } from '@canton-network/core-rpc-transport'
+import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 
 /**

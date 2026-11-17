@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ReactNode } from 'react'
+import { CopyableIdentifier } from '@components/copyable-identifier'
+import { DateTimeText } from '@components/date-time-text'
+import { DescriptionMeta } from '@components/description-text'
+import { normalizeSx } from '@components/ui/utils'
 import {
     Box,
     Typography,
@@ -9,11 +12,8 @@ import {
     type SxProps,
     type Theme,
 } from '@mui/material'
-import { CopyableIdentifier } from '@components/copyable-identifier'
-import { DescriptionMeta } from '@components/description-text'
-import { normalizeSx } from '@components/ui/utils'
 import { formatDistanceToNow } from '@utils/date-format'
-import { DateTimeText } from '@components/date-time-text'
+import type { ReactNode } from 'react'
 
 interface OfferRowShellProps extends Omit<BoxProps, 'sx'> {
     children: ReactNode

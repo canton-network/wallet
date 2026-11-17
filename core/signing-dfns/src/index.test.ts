@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import {
     isRpcError,
     SigningProvider,
@@ -10,9 +8,10 @@ import {
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import DfnsSigningDriver, { type DfnsCredentials } from './index.js'
-import type { DfnsKey, DfnsSignature } from './dfns.js'
+import type { DfnsKey, DfnsSignature } from './dfns.ts'
+import DfnsSigningDriver, { type DfnsCredentials } from './index.ts'
 
 const TEST_USER_ID = 'test-user-id'
 const TEST_KEY_ID = 'key-test-1'
@@ -53,8 +52,8 @@ const dfnsHandlerMock = vi.hoisted(() => ({
     createKey: vi.fn(),
 }))
 
-vi.mock('./dfns.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./dfns.js')>()
+vi.mock('./dfns.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./dfns.ts')>()
     return {
         ...actual,
         DfnsHandler: vi.fn(function DfnsHandler() {
@@ -330,6 +329,47 @@ describe('DfnsSigningDriver', () => {
         expect(result).toEqual({
             txId: PENDING_SIG.id,
             status: 'rejected',
+        })
+    })
+
+    test('signMessage passes on the failure reason', async () => {
+        dfnsHandlerMock.signMessage.mockResolvedValue({
+            ...PENDING_SIG,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+        const controller = createTestDriver().controller(TEST_USER_ID)
+        const result = await controller.signMessage({
+            message: 'hello',
+            keyIdentifier: { id: TEST_KEY_ID },
+        })
+
+        assertNotRpcError(result)
+        expect(result).toEqual({
+            txId: PENDING_SIG.id,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+    })
+
+    test('getTransaction passes on the failure reason', async () => {
+        dfnsHandlerMock.findSignature.mockResolvedValueOnce({
+            id: TEST_SIG_ID,
+            keyId: TEST_KEY_ID,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+        const controller = createTestDriver().controller(TEST_USER_ID)
+        const result = await controller.getTransaction({ txId: TEST_SIG_ID })
+
+        assertNotRpcError(result)
+        expect(result).toMatchObject({
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
         })
     })
 

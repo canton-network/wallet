@@ -2,15 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { describePing, intent as pingIntent } from '../examples/ping.js'
+
 import {
     describeAllocation,
     intent as allocationIntent,
-} from '../examples/allocation.js'
+} from '../examples/allocation.ts'
+import { describePing, intent as pingIntent } from '../examples/ping.ts'
 import {
     describeShowcase,
     intents as showcaseIntents,
-} from '../examples/showcase.js'
+} from '../examples/showcase.ts'
 
 describe('standalone examples', () => {
     it('describes the builtin ping create', async () => {

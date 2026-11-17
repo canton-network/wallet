@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { clearSign, type Descriptor } from '../index.js'
-import { hashEither, intentText, shown } from './helpers.js'
-import { builtinPingCreate } from './fixtures/ping.js'
+
+import { clearSign, type Descriptor } from '../index.ts'
+import { builtinPingCreate } from './fixtures/ping.ts'
 import allocateOnLocalNet from './fixtures/token-standard/amulet-v2-allocation-factory-allocate.json'
+import { hashEither, intentText, shown } from './helpers.ts'
 
 /** splice-amulet 0.1.25, which the example ExternalPartyAmuletRules descriptor is bound to. */
 const AMULET_0_1_25 =

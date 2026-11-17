@@ -6,6 +6,10 @@
  * and place it in the splice/ directory.
  */
 
+import crypto from 'crypto'
+import fs from 'fs'
+import path from 'path'
+
 import {
     error,
     SPLICE_PATH,
@@ -15,10 +19,7 @@ import {
     SUPPORTED_VERSIONS,
     setSpliceHash,
     hasFlag,
-} from './lib/utils.js'
-import path from 'path'
-import fs from 'fs'
-import crypto from 'crypto'
+} from './lib/utils.ts'
 
 async function main(network: Network = 'devnet') {
     const spliceVersion = SUPPORTED_VERSIONS[network].splice.version

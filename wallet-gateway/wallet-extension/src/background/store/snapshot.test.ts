@@ -11,14 +11,16 @@ import {
     StoreInternal,
 } from '@canton-network/core-wallet-store-inmemory'
 import { describe, expect, it } from 'vitest'
-import { logger } from '@/shared/logger'
-import { defaultConfig } from './default-config'
+
+import { logger } from '@/shared/logger.ts'
+
+import { defaultConfig } from './default-config.ts'
 import {
     CorruptSnapshotError,
     decodeSnapshot,
     encodeSnapshot,
     type SnapshotV1,
-} from './snapshot'
+} from './snapshot.ts'
 
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 const NETWORK_ID = 'canton:local-oauth'

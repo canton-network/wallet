@@ -97,11 +97,27 @@
                 "{workspaceRoot}/scripts/src/check-migration-lock.ts"
             ]
         },
-        "typecheck": {
-            "dependsOn": ["^build"],
-            "inputs": ["default", "^production"],
-            "cache": true
-        },
+        "typecheck": [
+            {
+                "dependsOn": ["^build"],
+                "inputs": ["default", "^production"],
+                "cache": true
+            },
+            {
+                "filter": {
+                    "plugin": "@nx/js/typescript",
+                    "projects": [
+                        "*",
+                        "!@canton-network/example-ping",
+                        "!@canton-network/example-portfolio",
+                        "!@canton-network/example-walletconnect"
+                    ]
+                },
+                "options": {
+                    "command": "tsc --noEmit"
+                }
+            }
+        ],
         "lint": {
             "cache": true,
             "options": {

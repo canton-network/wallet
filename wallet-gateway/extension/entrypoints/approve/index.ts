@@ -1,30 +1,31 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-import {
-    BaseElement,
-    handleErrorToast,
-} from '@canton-network/core-wallet-ui-components'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     hashForReview,
     type ParsedTransactionInfo,
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
-import { SigningProvider } from '@canton-network/core-signing-lib'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
+import {
+    BaseElement,
+    handleErrorToast,
+} from '@canton-network/core-wallet-ui-components'
 import type {
     SignResult,
     Wallet,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
-import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
-import { stateManager } from '@/utils/legacy-frontend/state-manager'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
-import { toRelHref } from '@/utils/legacy-frontend/routing'
-import { showToast } from '@/utils/legacy-frontend/utils'
-import '@/utils/legacy-frontend'
+import { css, html, nothing } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.ts'
+import { toRelHref } from '@/utils/legacy-frontend/routing.ts'
+import { createUserClient } from '@/utils/legacy-frontend/rpc-client.ts'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
+import { showToast } from '@/utils/legacy-frontend/utils.ts'
+import '@/utils/legacy-frontend/index.ts'
 
 @customElement('user-ui-approve')
 export class ApproveUi extends BaseElement {

@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import { WalletEvent } from '@canton-network/core-types'
-import { DappSyncProvider } from './DappSyncProvider'
+import { describe, expect, it } from 'vitest'
+
+import { DappSyncProvider } from './DappSyncProvider.ts'
 
 // Regression coverage for https://github.com/canton-network/wallet/issues/1815.
 //

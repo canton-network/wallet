@@ -1,23 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Descriptor } from '@canton-network/core-wallet-services/clear-signing'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { request, createUserClient } = vi.hoisted(() => ({
     request: vi.fn(),
     createUserClient: vi.fn(),
 }))
 
-vi.mock('./listeners.js', () => ({
+vi.mock('./listeners.ts', () => ({
     detectCurrentOrigin: () => Promise.resolve('http://localhost'),
 }))
-vi.mock('./state-manager.js', () => ({
+vi.mock('./state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: () => Promise.resolve('session-token') },
     },
 }))
-vi.mock('./rpc-client.js', () => ({
+vi.mock('./rpc-client.ts', () => ({
     createUserClient: (token?: string) => {
         createUserClient(token)
         return Promise.resolve({ request })
@@ -28,7 +28,7 @@ import {
     addDescriptor,
     listDescriptors,
     removeDescriptor,
-} from './descriptors-store.js'
+} from './descriptors-store.ts'
 
 function template(
     packageId: string,

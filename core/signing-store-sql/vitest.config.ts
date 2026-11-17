@@ -2,18 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vitest/config'
+
 import { coverage, nodeProject } from '../../vitest.base.ts'
 
 export default defineConfig({
     test: {
         coverage: coverage({
-            exclude: [
-                'src/migrations/**',
-                'src/cli.ts',
-                'src/bootstrap.ts',
-                'src/index.ts',
-                'src/migrator.ts',
-            ],
+            exclude: ['src/migrations/**', 'src/cli.ts', 'src/bootstrap.ts'],
         }),
         projects: [
             nodeProject({ exclude: ['src/__tests__/migrations/**'] }),

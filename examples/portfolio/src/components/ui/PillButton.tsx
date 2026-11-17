@@ -1,5 +1,6 @@
 import { Button, type ButtonProps } from '@mui/material'
-import { normalizeSx } from './utils'
+
+import { normalizeSx } from './utils.ts'
 
 const DEFAULT_VARIANT_BY_TONE = {
     primary: 'contained',

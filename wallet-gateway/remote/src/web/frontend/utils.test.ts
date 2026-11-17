@@ -3,7 +3,8 @@
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@canton-network/core-wallet-ui-components'
-import { fetchDappApiUrl, showToast } from './utils.js'
+
+import { fetchDappApiUrl, showToast } from './utils.ts'
 
 describe('showToast', () => {
     afterEach(() => {

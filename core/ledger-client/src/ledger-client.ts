@@ -9,16 +9,17 @@ import {
     LedgerGetRoutes,
     LedgerPostRoutes,
 } from '@canton-network/core-ledger-client-types'
-import createClient, { type Client, type FetchOptions } from 'openapi-fetch'
 import type { PartyId } from '@canton-network/core-types'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { getLogger } from '@logtape/logtape'
+import createClient, { type Client, type FetchOptions } from 'openapi-fetch'
+
 import {
     asJsCantonError,
     defaultRetryableOptions,
     retryable,
     type RetryableOptions,
-} from './ledger-api-utils.js'
-import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import { getLogger } from '@logtape/logtape'
+} from './ledger-api-utils.ts'
 
 export const supportedVersions = supportedLedgerApiVersions
 
@@ -134,7 +135,7 @@ type ExtraPostOpts = Omit<FetchOptions<paths>, 'body' | 'params'>
 export class LedgerClient {
     // privately manage the active connected version and associated client codegen
     private readonly clients: ClientsByVersion
-    private clientVersion: SupportedVersions = '3.5'
+    private clientVersion: SupportedVersions = '3.6'
     private initialized: boolean = false
     private accessTokenProvider: AccessTokenProvider
     private readonly logger = getLogger([

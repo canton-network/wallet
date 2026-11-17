@@ -8,9 +8,10 @@
 
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+import { builtinPingCreate } from '../src/__tests__/fixtures/ping.ts'
+import { clearSign } from '../src/index.ts'
 import ping from './descriptors/ping.json'
-import { clearSign } from '../src/index.js'
-import { builtinPingCreate } from '../src/__tests__/fixtures/ping.js'
 
 /** Base64 prepared transaction, as `/v2/interactive-submission/prepare` returns it. */
 export const preparedTransaction = builtinPingCreate

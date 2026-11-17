@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Box, Skeleton } from '@mui/material'
 import {
     OfferRowGrid,
     OfferRowShell,
 } from '@components/offers/offer-row-layout'
+import { Box, Skeleton } from '@mui/material'
 
 export function ActionRequiredRowSkeleton() {
     return (

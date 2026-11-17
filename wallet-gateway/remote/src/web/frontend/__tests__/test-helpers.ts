@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi, type Mock } from 'vitest'
+import type { Wallet } from '@canton-network/core-wallet-store'
 import {
     NetworkDeleteEvent,
     NetworkEditSaveEvent,
@@ -13,8 +13,9 @@ import type {
     Transaction,
     ApiKey,
 } from '@canton-network/core-wallet-user-rpc-client'
-import type { Wallet } from '@canton-network/core-wallet-store'
-import { pingCreate, pingCreateHash } from './ping-transaction.js'
+import { vi, type Mock } from 'vitest'
+
+import { pingCreate, pingCreateHash } from './ping-transaction.ts'
 
 export const mockRequest: Mock = vi.fn()
 
@@ -160,11 +161,11 @@ export function mockListWalletsFlow(
 
 export function mockNetworksPageFlow(
     networks: PublicNetwork[],
-    options: { isAdmin?: boolean } = {}
+    options: { isAdmin?: boolean; configManagedIds?: string[] } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listNetworks') {
-            return { networks }
+            return { networks, configManagedIds: options.configManagedIds }
         }
         if (method === 'listSessions') {
             return { sessions: [] }
@@ -233,11 +234,11 @@ export function mockReviewNetworkFlow(
 
 export function mockIdpsPageFlow(
     idps: Idp[],
-    options: { isAdmin?: boolean } = {}
+    options: { isAdmin?: boolean; configManagedIds?: string[] } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listIdps') {
-            return { idps }
+            return { idps, configManagedIds: options.configManagedIds }
         }
         if (method === 'getUser') {
             return {

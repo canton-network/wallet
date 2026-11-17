@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SigningProviderMockRoute } from '../server.js'
-import { createMockTxStore } from '../tx-store.js'
 import {
     createMockEd25519KeyPair,
     type MockEd25519KeyPair,
     signMultiHashBase64,
-} from '../crypto.js'
+} from '../crypto.ts'
+import type { SigningProviderMockRoute } from '../server.ts'
+import { createMockTxStore } from '../tx-store.ts'
 
 type SigningStatus = 'pending' | 'signed' | 'rejected' | 'failed'
 
@@ -26,6 +26,7 @@ interface BlockdaemonMockTransaction {
     signature: string
     publicKey: string
     userIdentifier?: string
+    metadata?: Record<string, unknown>
 }
 
 interface SignTransactionBody {
@@ -55,6 +56,7 @@ interface SetTransactionStateBody {
     status?: SigningStatus
     signature?: string
     publicKey?: string
+    metadata?: Record<string, unknown>
 }
 
 function toTransactionResponse(tx: BlockdaemonMockTransaction): {
@@ -62,6 +64,7 @@ function toTransactionResponse(tx: BlockdaemonMockTransaction): {
     status: SigningStatus
     signature?: string
     publicKey?: string
+    metadata?: Record<string, unknown>
 } {
     return {
         txId: tx.txId,
@@ -70,6 +73,7 @@ function toTransactionResponse(tx: BlockdaemonMockTransaction): {
             signature: tx.signature,
             publicKey: tx.publicKey,
         }),
+        ...(tx.metadata !== undefined && { metadata: tx.metadata }),
     }
 }
 
@@ -199,7 +203,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
             method: 'POST',
             path: '/_admin/setTransactionState',
             handler: ({ body }) => {
-                const { txId, status, signature, publicKey } =
+                const { txId, status, signature, publicKey, metadata } =
                     body as SetTransactionStateBody
                 if (!txId) {
                     return {
@@ -215,6 +219,7 @@ export function createBlockdaemonMockProvider(): SigningProviderMockRoute[] {
                     status: status ?? 'pending',
                     ...(publicKey !== undefined && { publicKey }),
                     ...(signature !== undefined && { signature }),
+                    ...(metadata !== undefined && { metadata }),
                 }))
                 if (!nextTx) {
                     return {

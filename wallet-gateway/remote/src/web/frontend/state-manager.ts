@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AllowedRoute } from '@canton-network/core-wallet-ui-components'
+
 import {
     encryptString,
     destroyTokenKey,
     decryptString,
-} from './access-token-utils.js'
+} from './access-token-utils.ts'
 
-/** Every localStorage key of this app starts with this prefix; other keys are deleted on load. */
-export const VERSION_PREFIX = 'com.splice.wallet.v1'
+const NAMESPACE = 'com.splice.wallet'
+const VERSION_PREFIX = `${NAMESPACE}.v1`
 
 export class StateManager {
     static localStorageKey(item: string, origin: string): string {
@@ -17,9 +18,13 @@ export class StateManager {
     }
 
     constructor() {
-        // delete any old storage entries not corresponding to the current version
-        for (const key in localStorage) {
-            if (!key.startsWith(VERSION_PREFIX)) {
+        // delete old gateway storage entries not corresponding to the current version.
+        // Only touch our own namespace: the gateway may share an origin with a dApp.
+        for (const key of Object.keys(localStorage)) {
+            if (
+                key.startsWith(`${NAMESPACE}.`) &&
+                !key.startsWith(`${VERSION_PREFIX}.`)
+            ) {
                 localStorage.removeItem(key)
             }
         }

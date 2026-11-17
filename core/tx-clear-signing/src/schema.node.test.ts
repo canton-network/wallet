@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import Ajv2020 from 'ajv/dist/2020.js'
 import addFormats from 'ajv-formats'
+import Ajv2020 from 'ajv/dist/2020.js'
 import { describe, expect, it } from 'vitest'
+
 import schema from '../canton-clear-signing-v1.schema.json'
 import ping from '../examples/descriptors/ping.json'
-import { parseDescriptor } from './descriptor.js'
+import { parseDescriptor } from './descriptor.ts'
 import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
     SHARED_CONTAINER_FIELDS,
-} from './path.js'
+} from './path.ts'
 
 const valid = {
     ...import.meta.glob('../examples/descriptors/*.json', {

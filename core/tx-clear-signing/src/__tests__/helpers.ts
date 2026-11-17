@@ -11,14 +11,15 @@ import {
     type Rollback,
 } from '@canton-network/core-ledger-proto'
 import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
-import { toBase64 } from '../bytes.js'
+
+import { toBase64 } from '../bytes.ts'
 import {
     clearSign,
     type ClearSigningResult,
     type DescribedField,
     type OperationDescription,
-} from '../clear-sign.js'
-import { type Descriptor, parseDescriptor } from '../descriptor.js'
+} from '../clear-sign.ts'
+import { type Descriptor, parseDescriptor } from '../descriptor.ts'
 
 /** Package of the templates in the core-tx-hashing vectors copied to fixtures/. */
 export const VECTOR_PACKAGE =

@@ -3,7 +3,8 @@
 
 import { HashingSchemeVersion } from '@canton-network/core-ledger-proto'
 import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
-import { toBase64 } from './bytes.js'
+
+import { toBase64 } from './bytes.ts'
 
 // V3 first: a V2 hash of a V3 transaction is a different value, so the claimed hash selects the scheme.
 const SCHEMES = [HashingSchemeVersion.V3, HashingSchemeVersion.V2] as const

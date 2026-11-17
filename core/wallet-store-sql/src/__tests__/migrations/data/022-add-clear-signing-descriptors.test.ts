@@ -12,7 +12,7 @@ import {
     migrateUpToBefore,
     primaryKeyColumns,
     tableExists,
-} from '../helpers.js'
+} from '../helpers.ts'
 
 const TARGET = 22
 const TABLE = 'clear_signing_descriptors'

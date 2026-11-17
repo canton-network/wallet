@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { DescriptorError, parseDescriptor } from './descriptor.js'
+
 import ping from '../examples/descriptors/ping.json'
+import { DescriptorError, parseDescriptor } from './descriptor.ts'
 
 // The examples of canton-clear-signing-v1.schema.json. The parser must agree with the schema on every one.
 // No type argument: see core/tx-hashing/src/__tests__/helpers/load-vectors.ts.

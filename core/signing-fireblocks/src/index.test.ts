@@ -1,10 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-
-import FireblocksSigningDriver from './index.js'
-
 import {
     isRpcError,
     type Transaction,
@@ -12,12 +8,15 @@ import {
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
-import { PublicKeyInformationAlgorithmEnum } from '@fireblocks/ts-sdk'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { PublicKeyInformationAlgorithmEnum } from '@fireblocks/ts-sdk'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import type {
     FireblocksApiKeyInfo,
     FireblocksTransaction,
-} from './fireblocks.js'
+} from './fireblocks.ts'
+import FireblocksSigningDriver from './index.ts'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'
@@ -60,8 +59,8 @@ const fireblocksHandlerMock = vi.hoisted(() => ({
     signTransaction: vi.fn(),
 }))
 
-vi.mock('./fireblocks.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./fireblocks.js')>()
+vi.mock('./fireblocks.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./fireblocks.ts')>()
     return {
         ...actual,
         FireblocksHandler: vi.fn(function FireblocksHandler() {
@@ -292,6 +291,27 @@ describe('FireblocksSigningDriver', () => {
         expect(result).toEqual({
             txId: 'tx-1',
             status: 'pending',
+        })
+        expect(result).not.toHaveProperty('failureReason')
+    })
+
+    it('getTransaction passes on the failure reason', async () => {
+        const { controller } = await setupTest()
+        fireblocksHandlerMock.getTransaction.mockResolvedValueOnce({
+            txId: 'tx-1',
+            status: 'rejected',
+            derivationPath: TEST_FIREBLOCKS_DERIVATION_PATH,
+            failureReason:
+                'Fireblocks rejected the signing request (BLOCKED_BY_POLICY)',
+        })
+
+        const result = await controller.getTransaction({ txId: 'tx-1' })
+        throwWhenRpcError(result)
+
+        expect(result).toMatchObject({
+            status: 'rejected',
+            failureReason:
+                'Fireblocks rejected the signing request (BLOCKED_BY_POLICY)',
         })
     })
 

@@ -1,23 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type {
+    Interaction,
+    InteractionHandler,
+} from '@canton-network/core-provider-conformance'
 import { useEffect, useRef, useState } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
+
 import { ConfigSchema, type Config } from '../../config.ts'
-import { createSession } from '../../session.ts'
-import { runSuite } from '../../suite.ts'
-import { cases } from '../../tests/index.ts'
-import { describeError } from '../../tests/helpers.ts'
 import type {
     Report,
     Signature,
     TestResult,
     Observation,
 } from '../../report.ts'
-import type {
-    Interaction,
-    InteractionHandler,
-} from '@canton-network/core-provider-conformance'
+import { createSession } from '../../session.ts'
+import { runSuite } from '../../suite.ts'
+import { describeError } from '../../tests/helpers.ts'
+import { cases } from '../../tests/index.ts'
 
 type Prompt = {
     interaction: Interaction

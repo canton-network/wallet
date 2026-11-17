@@ -6,9 +6,10 @@ import {
     templateKeyOf,
     type Descriptor,
 } from '@canton-network/core-wallet-services/clear-signing'
-import { detectCurrentOrigin } from './listeners.js'
-import { createUserClient } from './rpc-client.js'
-import { stateManager } from './state-manager.js'
+
+import { detectCurrentOrigin } from './listeners.ts'
+import { createUserClient } from './rpc-client.ts'
+import { stateManager } from './state-manager.ts'
 
 export type { Descriptor }
 

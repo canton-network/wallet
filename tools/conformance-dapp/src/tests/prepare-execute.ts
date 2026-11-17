@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { PrepareExecuteParams } from '@canton-network/dapp-sdk'
+import type { z } from 'zod'
+
 import {
     expectRejection,
     INVALID_PARAMS_CODES,
@@ -9,8 +12,6 @@ import {
     txChangedEventSchema,
 } from './helpers.ts'
 import type { Case, RequestArgs, TestRuntime } from './types.ts'
-import type { PrepareExecuteParams } from '@canton-network/dapp-sdk'
-import type { z } from 'zod'
 
 type TxEvent = z.infer<typeof txChangedEventSchema>
 type SignedTxEvent = Extract<TxEvent, { status: 'signed' }>

@@ -2,11 +2,34 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    LedgerClient,
+    type GetEndpoint,
+    type PostEndpoint,
+    type PrepareSubmissionResponse,
+    isValidGetEndpoint,
+    isValidPostEndpoint,
+} from '@canton-network/core-ledger-client'
+import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
+import {
     assertIsConnected,
     type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
-import buildController from './rpc-gen/index.js'
+import {
+    networkStatus,
+    TransactionService,
+    ledgerPrepareParams,
+    logDynamically,
+    type HASHING_SCHEME_VERSION,
+    type NotificationService,
+    type SigningDrivers,
+} from '@canton-network/core-wallet-services'
+import type { Store, Transaction } from '@canton-network/core-wallet-store'
+import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+
+import type { KernelInfo as KernelInfoConfig } from '../config/Config.ts'
+import buildController from './rpc-gen/index.ts'
 import type {
     ConnectResult,
     LedgerApiParams,
@@ -18,47 +41,37 @@ import type {
     SignMessageResult,
     StatusEvent,
     Wallet,
-} from './rpc-gen/typings.js'
-import type { Store, Transaction } from '@canton-network/core-wallet-store'
-import {
-    LedgerClient,
-    type GetEndpoint,
-    type PostEndpoint,
-    type PrepareSubmissionResponse,
-    isValidGetEndpoint,
-    isValidPostEndpoint,
-} from '@canton-network/core-ledger-client'
-import type { KernelInfo as KernelInfoConfig } from '../config/Config.js'
-import type { Logger } from 'pino'
-import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
-
-import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
-import {
-    networkStatus,
-    TransactionService,
-    ledgerPrepareParams,
-    logDynamically,
-    type HASHING_SCHEME_VERSION,
-    type NotificationService,
-    type SigningDrivers,
-} from '@canton-network/core-wallet-services'
+} from './rpc-gen/typings.ts'
 
 export interface DappControllerDeps {
     signingDrivers: SigningDrivers
 }
 
-export const dappController = (
-    kernelInfo: KernelInfoConfig,
-    dappUrl: string,
-    userUrl: string,
-    store: Store,
-    notificationService: NotificationService,
-    _logger: Logger,
-    origin: string | null,
-    deps: DappControllerDeps,
-    hashingSchemeVersion: HASHING_SCHEME_VERSION,
+export interface DappControllerOptions {
+    kernelInfo: KernelInfoConfig
+    dappUrl: string
+    userUrl: string
+    store: Store
+    notificationService: NotificationService
+    logger: Logger
+    origin: string | null
+    deps: DappControllerDeps
+    hashingSchemeVersion: HASHING_SCHEME_VERSION
     context?: AuthContext
-) => {
+}
+
+export const dappController = ({
+    kernelInfo,
+    dappUrl,
+    userUrl,
+    store,
+    notificationService,
+    logger: _logger,
+    origin,
+    deps,
+    hashingSchemeVersion,
+    context,
+}: DappControllerOptions) => {
     const logger = _logger.child({ component: 'dapp-controller' })
 
     function assertActAsPartiesBelongToUser(

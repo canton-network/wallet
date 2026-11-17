@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { rpcErrors } from '@canton-network/core-rpc-errors'
-import type { Methods } from './rpc-gen'
+
+import type { Methods } from './rpc-gen/index.ts'
 
 /**
  * Methods the extension doesn't implement: self-issued login and

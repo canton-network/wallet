@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
 import { sql } from 'kysely'
+import { expect, test } from 'vitest'
 
 import {
     columnNames,
@@ -12,12 +12,12 @@ import {
     migrateDownThrough,
     migrateUpThrough,
     migrateUpToBefore,
-} from '../helpers.js'
+} from '../helpers.ts'
 import {
     insertSigningKey,
     insertSigningTransaction,
-} from '../seeds/001-init.js'
-import { insertSigningTransaction002 } from '../seeds/002-add-signed-at.js'
+} from '../seeds/001-init.ts'
+import { insertSigningTransaction002 } from '../seeds/002-add-signed-at.ts'
 
 const TARGET = 3
 

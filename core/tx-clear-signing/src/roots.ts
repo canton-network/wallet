@@ -8,7 +8,8 @@ import {
     type Identifier,
     type Value,
 } from '@canton-network/core-ledger-proto'
-import { fromBase64 } from './bytes.js'
+
+import { fromBase64 } from './bytes.ts'
 
 /** The identity of a Daml template, which a descriptor binds to exactly. */
 export interface TemplateRef {
