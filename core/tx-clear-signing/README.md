@@ -8,9 +8,11 @@ The descriptor format is the v1 _Canton Clear Signing Descriptor_ schema, modell
 - [examples/descriptors/splice](examples/descriptors/splice);
 - the descriptors the schema rejects, in [examples/descriptors/invalid](examples/descriptors/invalid).
 
-These JSON files are kept unformatted. The tests run them through the schema and through the parser `clearSign` uses, so the two cannot drift apart.
+The tests run every descriptor through the schema and through the parser `clearSign` uses, so the two cannot drift apart.
 
-`examples/descriptors/splice/amulet-*.json` and `utility-*.json` are reference descriptors for the token-standard roots a Canton Coin or Canton Network Utility holder submits. They cover V1 (CIP-56) and V2 (CIP-112). `src/token-standard.test.ts` describes each entry that has a captured prepared transaction.
+`examples/descriptors/splice/amulet-*.json` and `utility-*.json` are the token-standard roots a Canton Coin or Canton Network Utility holder submits. They cover V1 (CIP-56) and V2 (CIP-112). `src/token-standard.test.ts` describes each of those entries that has a captured prepared transaction.
+
+The other files in [examples/descriptors/splice](examples/descriptors/splice) word the Splice roots captured next to them: governance locks and their transfer and substitution proposals, a DSO vote request, a Splitwell balance update, a wallet transfer offer, a featured app right, DSO rules, and the wallet and trading contracts. `src/splice-contracts.test.ts` describes every one of those captures. A descriptor has a `create` entry when that create can itself be a root, including when the usual network path creates the same contract inside a choice.
 
 ## Usage
 
@@ -86,7 +88,7 @@ interface ClearSigningResult {
     - `invalid`: the bound descriptor fails validation, or two descriptors bind the template.
     - `undescribable`: the node is not a create or an exercise, or the contract it exercises is missing, repeated or of another template.
 
-A Daml `Text` value is shown as a JSON string literal, in the intent and in its field, so a value such as `x" and send 1000 to "Mallory` cannot pass as the descriptor's wording. Control, format and line-separator characters in values are escaped.
+A Daml `Text` value is shown as a JSON string literal, in the intent and in its field, so a value such as `x" and send 1000 to "Mallory` cannot pass as the descriptor's wording. A `party` is shown only when it is 1 to 255 letters, digits, colons, minuses and underscores: a space is legal in a ledger party and fails the field. A `number` is a canonical int64, or a Daml numeric with a decimal point, at most 38 digits and at most 37 of them after the point. Anything else fails the field. Control, format and line-separator characters in values, labels and errors are escaped.
 
 `kind`, `template`, `choiceId` and `interface` are read from the transaction, so a descriptor cannot change which action the user is told about. `descriptor` is unauthenticated in v1: descriptors carry no verified signature yet.
 
@@ -107,9 +109,44 @@ Only root nodes are described. A child node is a consequence of its root's choic
 A descriptor must therefore be bound to the template a root carries.
 
 - **Interface choices.** A token-standard command names an interface, but its root node carries the template of the contract it is exercised on, such as the factory `ExternalPartyAmuletRules`, and the interface in `interface_id`. The descriptor's interface names that module and entity. `packageId` is optional: leave it out and the entry follows the interface package the template package was compiled against. Set it to require that exact interface package.
-- **Child contracts.** The transfer instruction or allocation that a factory choice creates is a child. A `create` on its template is never used. Only the choices a party later exercises on that contract are roots.
+- **Child contracts.** The transfer instruction or allocation that a factory choice creates is a child of that root. The factory's descriptor words the choice. A `create` entry on the child's template is used only when that create is itself a root, which a submitter who acts as every signatory can prepare. `src/splice-contracts.test.ts` includes those roots: a governance lock, its transfer and substitution proposals, a vote request, a balance update, a transfer offer, a featured app right, a transfer preapproval, and the external-party amulet rules.
 
 The exercised contract must have the exercise's package name, module and entity. Its package ID may differ, because an upgrade keeps the package name. This is the one place where the package ID is not matched exactly.
+
+## The descriptor document
+
+[canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the field-by-field specification. A descriptor's `$schema` must be that file's `$id`. The document has four sections:
+
+- **`context.template`**. The package ID, module and entity the descriptor binds to. All three must equal the root's template.
+- **`metadata`**. `version` (semver of the descriptor, not of the schema), `publisher`, `name`, an optional `url`, and `enums`. An enum table maps a constructor, or `true` and `false`, to the words shown for `format: enum`.
+- **`display`**. `create`, `exercises`, or both. Each operation has a stable `intent`, an optional `interpolatedIntent`, and `fields`. An exercise entry names its `choice` and, when the choice is exercised through an interface, that `interface`.
+- **`signatures`**. Reserved. The array must be empty. Descriptors are unsigned in v1, so `publisher` is a claim.
+
+A field has a `path`, an optional `label` (the path is used when the label is omitted), a `format`, and `optional`. `params` is allowed only for `enum`, and its `$ref` is `$.metadata.enums.<name>`. The formats are `string`, `number`, `boolean`, `party`, `contractId`, `dateTime`, `duration`, `enum` and `raw`.
+
+A path with no prefix reads the create or choice argument. `@.contract.<path>` reads the exercised contract. `@.contractId`, `@.signatories`, `@.stakeholders`, `@.synchronizerId` and `@.actAs` read the prepared transaction. `@.actingParties`, `@.choiceObservers` and `@.consuming` do so on an exercise only. A name selects a record field or a variant constructor. `["key"]` selects a text-map entry. A final `length` on a list or text map is its number of elements. `Some` is unwrapped at every step. A list or map of variable size is shown whole, with `raw`.
+
+`{{` and `}}` in an interpolated intent are literal braces. A `{path}` placeholder must be the path of a field of the same operation.
+
+[src/descriptor.ts](src/descriptor.ts) accepts a document only when the schema does, and then checks the rules a JSON Schema does not express: each path is declared once, every placeholder names such a path, every enum reference names a table, and no two exercise entries share a choice and interface. An interface `packageId`, when set, is part of that identity.
+
+## Where the pieces are
+
+| Piece                                             | Where                                                                                                      |
+| ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Schema                                            | [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json)                                 |
+| Parser, including the rules above                 | [src/descriptor.ts](src/descriptor.ts)                                                                     |
+| Hash, decode, bind, select, interpolate           | [src/clear-sign.ts](src/clear-sign.ts)                                                                     |
+| Root nodes and the contracts an exercise can read | [src/roots.ts](src/roots.ts)                                                                               |
+| Paths                                             | [src/path.ts](src/path.ts)                                                                                 |
+| Formats                                           | [src/format.ts](src/format.ts)                                                                             |
+| `{path}` placeholders                             | [src/intent.ts](src/intent.ts)                                                                             |
+| V2 and V3 hashing                                 | [src/hash.ts](src/hash.ts)                                                                                 |
+| Public exports                                    | [src/index.ts](src/index.ts)                                                                               |
+| Descriptors, and the documents the schema rejects | [examples/descriptors](examples/descriptors), [examples/descriptors/invalid](examples/descriptors/invalid) |
+| Schema and parser checked against the same files  | [src/schema.node.test.ts](src/schema.node.test.ts)                                                         |
+| Captured Amulet and Utility roots                 | [src/token-standard.test.ts](src/token-standard.test.ts)                                                   |
+| Captured Splice roots                             | [src/splice-contracts.test.ts](src/splice-contracts.test.ts)                                               |
 
 ## Optional values
 
@@ -119,4 +156,13 @@ Set `optional: true` when the path may pass through an `Optional`. `None` is the
 
 Example descriptors live in [examples/descriptors](examples/descriptors). A wallet stores the descriptors a user uploads and passes that list to `clearSign`.
 
-A descriptor binds one exact package ID. [examples/descriptors/splice/amulet-external-party-amulet-rules.json](examples/descriptors/splice/amulet-external-party-amulet-rules.json) is bound to splice-amulet 0.1.25. The reference Utility descriptors are bound to utility-registry-app-v0 0.10.0 (`15cf1eaaf35b3736d95bc5c260d3da5507cbd1edc5680f2d55d98de04e34d545`) and utility-registry-v0 0.9.0 (`106145fd9ef9cb0545dcf0c04e983ed41f5fe5056dcc4c84b6cdf0d14a634408`). A network running another version of a package needs a copy bound to that version's ID.
+A descriptor binds one exact package ID. A network running another version of a package needs a copy bound to that version's ID.
+
+| Package                 | Version              | Package ID                                                         | Descriptors                                                                                     |
+| ----------------------- | -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| splice-amulet           | 0.1.25               | `c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66` | Amulet, governance locks, featured app right, transfer preapproval, external-party amulet rules |
+| splice-wallet           | 0.1.26               | `5838793a7f11fbc16159065094823fb662120184ede48922dff092958dae6857` | Wallet transfer offer                                                                           |
+| splice-dso-governance   | the captured package | `0ff9141699e5eb734de1e1a8d11f97233ffd3892d1108872600cb3019fd4a86e` | DSO rules and vote requests                                                                     |
+| splitwell               | the captured package | `4c380e09c99b2c5cb938f6cce2a92c03f8941ca6f7af7df7c7370b2d421346da` | Balance updates                                                                                 |
+| utility-registry-app-v0 | 0.10.0               | `15cf1eaaf35b3736d95bc5c260d3da5507cbd1edc5680f2d55d98de04e34d545` | Utility app templates                                                                           |
+| utility-registry-v0     | 0.9.0                | `106145fd9ef9cb0545dcf0c04e983ed41f5fe5056dcc4c84b6cdf0d14a634408` | Utility registry templates                                                                      |
