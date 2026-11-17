@@ -1,0 +1,234 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "15cf1eaaf35b3736d95bc5c260d3da5507cbd1edc5680f2d55d98de04e34d545",
+            "moduleName": "Utility.Registry.App.V0.Model.TransferPreapproval",
+            "entityName": "TransferPreapproval"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Utility registry transfer preapproval"
+    },
+    "display": {
+        "create": {
+            "intent": "Preapprove incoming transfers",
+            "interpolatedIntent": "Preapprove incoming transfers to {receiver} of instruments administered by {instrumentAdmin}",
+            "fields": [
+                {
+                    "path": "receiver",
+                    "label": "Receiver",
+                    "format": "party"
+                },
+                {
+                    "path": "instrumentAdmin",
+                    "label": "Instrument admin",
+                    "format": "party"
+                },
+                {
+                    "path": "instrumentAllowances",
+                    "label": "Instruments, all of the admin's when empty",
+                    "format": "raw"
+                },
+                {
+                    "path": "operator",
+                    "label": "Operator",
+                    "format": "party"
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "TransferFactory_Transfer",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferFactory"
+                },
+                "intent": "Transfer to a preapproved receiver",
+                "interpolatedIntent": "Transfer {transfer.amount} {transfer.instrumentId.id} from {transfer.sender} to {transfer.receiver}, under the preapproval of {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "transfer.amount",
+                        "label": "Requested amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.meta.values",
+                        "label": "Metadata, which the receiver may act on",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "expectedAdmin",
+                        "label": "Expected admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "Preapproved by",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.inputHoldingCids",
+                        "label": "Input holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferFactory_Transfer",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferFactory"
+                },
+                "intent": "Transfer to a preapproved receiver",
+                "interpolatedIntent": "Transfer {transfer.amount} {transfer.instrumentId.id} from {transfer.sender.owner} to {transfer.receiver.owner}, under the preapproval of {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "transfer.amount",
+                        "label": "Requested amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "transfer.sender.owner",
+                        "label": "From",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "transfer.receiver.owner",
+                        "label": "To",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "transfer.sender",
+                        "label": "From account",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.receiver",
+                        "label": "To account",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.meta.values",
+                        "label": "Metadata, which the receiver may act on",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "transfer.instrumentId.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "Preapproved by",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.inputHoldingCids",
+                        "label": "Input holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferPreapproval_Modify",
+                "intent": "Change a transfer preapproval",
+                "interpolatedIntent": "Change the instruments of {@.contract.instrumentAdmin} that {@.contract.receiver} preapproves incoming transfers of",
+                "fields": [
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "Receiver",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.instrumentAdmin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "newInstrumentAllowances",
+                        "label": "New instruments, all of the admin's when empty",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.instrumentAllowances",
+                        "label": "Current instruments, all of the admin's when empty",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferPreapproval_Withdraw",
+                "intent": "Withdraw a transfer preapproval",
+                "interpolatedIntent": "Withdraw, as {actor}, the preapproval of {@.contract.receiver} for instruments administered by {@.contract.instrumentAdmin}",
+                "fields": [
+                    {
+                        "path": "actor",
+                        "label": "Withdrawn by",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "Receiver",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.instrumentAdmin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

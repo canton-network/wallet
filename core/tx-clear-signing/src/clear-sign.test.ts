@@ -25,7 +25,7 @@ import {
     VECTOR_PACKAGE,
     vectorDescriptor,
 } from './__tests__/helpers.js'
-import pingJson from './__tests__/schema-examples/ping.json'
+import pingJson from '../examples/descriptors/ping.json'
 import {
     adminWorkflowsPingCreate,
     builtinPingCreate,
@@ -43,8 +43,8 @@ const ALICE =
 const PING_ID = '04d887dd-15b8-4954-8b79-a853811ce7cf'
 const PING_DESCRIPTOR = {
     name: 'Canton ping',
-    publisher: '<canton publisher>',
-    version: '1.2.0',
+    publisher: 'Blockdaemon',
+    version: '1.0.0',
 }
 
 const NO_ARGUMENT: Value = {
@@ -240,14 +240,68 @@ describe('clearSign', () => {
             )
         })
 
-        it('does not match an entry that names no interface', async () => {
+        it('uses an entry that names no interface when none names this one', async () => {
             const plain = vectorDescriptor('Plain', {
                 exercises: [poke('Poke, by the template, the asset of')],
             })
             const [op] = (
                 await described(exerciseInterface.preparedTransaction, [plain])
             ).operations
-            expect(op).toMatchObject({ status: 'undescribed' })
+            expect(op).toMatchObject({
+                choiceId: 'Poke',
+                interface: asset,
+                status: 'described',
+            })
+            expect(intentText(op)).toBe(
+                `Poke, by the template, the asset of ${OWNER}`
+            )
+        })
+
+        it('prefers the entry for that interface over one that names none', async () => {
+            const both = vectorDescriptor('Plain', {
+                exercises: [
+                    poke('Poke, by the template, the asset of'),
+                    poke('Poke, through Asset, the asset of', named),
+                ],
+            })
+            const [op] = (
+                await described(exerciseInterface.preparedTransaction, [both])
+            ).operations
+            expect(op).toMatchObject({
+                choiceId: 'Poke',
+                interface: asset,
+                status: 'described',
+            })
+            expect(intentText(op)).toBe(
+                `Poke, through Asset, the asset of ${OWNER}`
+            )
+        })
+
+        it('uses a no-interface entry when another choice names this interface', async () => {
+            const mixed = vectorDescriptor('Plain', {
+                exercises: [
+                    {
+                        choice: 'Nudge',
+                        interface: named,
+                        intent: 'Nudge',
+                        interpolatedIntent:
+                            'Nudge, through Asset, the asset of {@.contract.owner}',
+                        fields: [{ path: '@.contract.owner', format: 'party' }],
+                    },
+                    poke('Poke, by the template, the asset of'),
+                ],
+            })
+            const [op] = (
+                await described(exerciseInterface.preparedTransaction, [mixed])
+            ).operations
+            expect(op).toMatchObject({
+                choiceId: 'Poke',
+                interface: asset,
+                status: 'described',
+            })
+            expect(intentText(op)).toBe(
+                `Poke, by the template, the asset of ${OWNER}`
+            )
         })
 
         it('does not match an entry for another interface', async () => {

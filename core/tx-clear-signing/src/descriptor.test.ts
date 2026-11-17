@@ -3,16 +3,17 @@
 
 import { describe, expect, it } from 'vitest'
 import { DescriptorError, parseDescriptor } from './descriptor.js'
-import ping from './__tests__/schema-examples/ping.json'
+import ping from '../examples/descriptors/ping.json'
 
-// The examples of canton-clear-signing-v1.schema.json, copied unchanged from
-// mpa/documentation/clearsigning/examples. The parser must agree with the schema on every one.
+// The examples of canton-clear-signing-v1.schema.json. The parser must agree with the schema on every one.
 // No type argument: see core/tx-hashing/src/__tests__/helpers/load-vectors.ts.
-const valid = import.meta.glob('./__tests__/schema-examples/*.json', {
-    eager: true,
-    import: 'default',
-}) as Record<string, unknown>
-const invalid = import.meta.glob('./__tests__/schema-examples/invalid/*.json', {
+const valid = {
+    ...import.meta.glob('../examples/descriptors/ping.json', {
+        eager: true,
+        import: 'default',
+    }),
+} as Record<string, unknown>
+const invalid = import.meta.glob('../examples/descriptors/invalid/*.json', {
     eager: true,
     import: 'default',
 }) as Record<string, unknown>

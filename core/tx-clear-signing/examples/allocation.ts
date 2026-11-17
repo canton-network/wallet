@@ -2,33 +2,31 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // A fixed two-leg AllocationFactory_Allocate, exercised through the V2 token-standard interface
-// and clear-signed with the example ExternalPartyAmuletRules descriptor.
+// and clear-signed with the ExternalPartyAmuletRules descriptor. The capture and the descriptor
+// are both splice-amulet 0.1.25.
 //
 // From the wallet repository:
 //   pnpm exec tsx core/tx-clear-signing/examples/allocation.ts
 
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import externalPartyAmuletRules from './descriptors/external-party-amulet-rules.json'
+import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
 import { clearSign, type Descriptor } from '../src/index.js'
-import { allocationV2Multileg } from '../src/__tests__/fixtures/allocation-v2-multileg.js'
+import allocation from '../src/__tests__/fixtures/splice/allocation-factory-allocate-multileg.json'
+
+const descriptor = externalPartyAmuletRules as Descriptor
 
 /** Base64 prepared transaction, as `/v2/interactive-submission/prepare` returns it. */
-export const preparedTransaction = allocationV2Multileg
+export const preparedTransaction = allocation.preparedTransaction
 
 /** The hash of `preparedTransaction`. `clearSign` describes it only when it hashes to this. */
-export const preparedTransactionHash =
-    'Ajytt4Ri6HMIauOQ5IuvaWR65kOPPxN2GrCfrnXPmVE='
+export const preparedTransactionHash = allocation.preparedTransactionHash
 
 export const intent =
-    'Allocate funds at DSO::1220d8a721d292c5bd3bbfe1653ab6eeba8d8cfc88e322bc52c2702194bd2347a813 for settlement "capture-multileg-1788338015304997000" of 2 transfer legs, authorized by bd::1220fd4f42cf33a603bd45714c9b0181eb661b4570d22df79a352080aa7d121cdee7. Committed: cannot be withdrawn before the settlement deadline'
+    'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "capture-multileg" of 2 transfer legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Committed: cannot be withdrawn before the settlement deadline'
 
 export function describeAllocation() {
-    return clearSign(
-        preparedTransaction,
-        [externalPartyAmuletRules as Descriptor],
-        preparedTransactionHash
-    )
+    return clearSign(preparedTransaction, [descriptor], preparedTransactionHash)
 }
 
 async function run(): Promise<void> {

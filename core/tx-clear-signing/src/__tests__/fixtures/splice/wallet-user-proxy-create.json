@@ -1,32 +1,7 @@
 {
     "id": "wallet-user-proxy-create",
     "source": "captured",
-    "about": "WalletUserProxy, the input contract of the simulated proxied transfer",
-    "commands": [
-        {
-            "CreateCommand": {
-                "templateId": "#splice-util-featured-app-proxies:Splice.Util.FeaturedApp.WalletUserProxy:WalletUserProxy",
-                "createArguments": {
-                    "provider": "csprovider::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                    "providerWeight": "0.8",
-                    "userWeight": "0.2",
-                    "extraBeneficiaries": [],
-                    "optAllowList": [
-                        "csalice::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "csbob::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"
-                    ]
-                }
-            }
-        }
-    ],
     "preparedTransaction": "CsEHCgMyLjESATAakgcKATDCPosHCogHCgMyLjESQjAwZTY2NmY5ZmU4OGVmNWQ4MGM2ZjI5ZGU3MmM0N2Q4ZTVhYjJhZDYyNjE1YzkyMjY2MTZmNzEzYWY1N2IyMzAxMhogc3BsaWNlLXV0aWwtZmVhdHVyZWQtYXBwLXByb3hpZXMifApAOWYxZjNhNGE0NGQyOGZlNWM3Njc5Yzc2YjAxZGI2Mzk3MzNkYzFhNDY4OGQxZTc4NWQ4MWY1ZjM5MmM0YzM5ZhInU3BsaWNlLlV0aWwuRmVhdHVyZWRBcHAuV2FsbGV0VXNlclByb3h5Gg9XYWxsZXRVc2VyUHJveHkq+ANy9QMKfApAOWYxZjNhNGE0NGQyOGZlNWM3Njc5Yzc2YjAxZGI2Mzk3MzNkYzFhNDY4OGQxZTc4NWQ4MWY1ZjM5MmM0YzM5ZhInU3BsaWNlLlV0aWwuRmVhdHVyZWRBcHAuV2FsbGV0VXNlclByb3h5Gg9XYWxsZXRVc2VyUHJveHkSXgoIcHJvdmlkZXISUjpQY3Nwcm92aWRlcjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQSIAoOcHJvdmlkZXJXZWlnaHQSDjIMMC44MDAwMDAwMDAwEhwKCnVzZXJXZWlnaHQSDjIMMC4yMDAwMDAwMDAwEhgKEmV4dHJhQmVuZWZpY2lhcmllcxICWgASugEKDG9wdEFsbG93TGlzdBKpAVKmAQqjAVqgAQpPOk1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNApNOktjc2JvYjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQyUGNzcHJvdmlkZXI6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0OlBjc3Byb3ZpZGVyOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNCIiEiD1nBdk/M0SaXUDCMOhz4G+ueZ5BktaQWGHV3XK7b6JLRL9ARJ4ClBjc3Byb3ZpZGVyOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBIkNjkxNzNlZGMtODgzZC00MzgzLWJkMjMtODllOGZjYTdkNjFjGlJ3YWxsZXQ6OjEyMjBlN2IyM2VhNTJlYjVjNjcyZmIwYjFjZGJjOTE2OTIyZmZlZDNkZDc2NzZjMjIzYTYwNTY2NDMxNWUyZDQzZWRkOjozNi0wKiQ4M2NhMmM4NC0wYTFiLTQ4ZjYtYWJjNi1hZjJmNGNiMGQ0YzEwreqqyKf7lwM=",
     "preparedTransactionHash": "T6neDv2tbLs6v+EC4cuu/Q5N9Ht/DEXNRsxUJtL+4zc=",
-    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2",
-    "hashingDetails": null,
-    "costEstimation": {
-        "estimationTimestamp": "2026-11-09T16:29:58.511188Z",
-        "confirmationRequestTrafficCostEstimation": 0,
-        "confirmationResponseTrafficCostEstimation": 0,
-        "totalTrafficCostEstimation": 0
-    }
+    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2"
 }

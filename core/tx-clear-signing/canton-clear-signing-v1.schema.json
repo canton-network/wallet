@@ -1,0 +1,438 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://example.org/canton-clear-signing/v1/schema.json",
+    "version": "1.10.0",
+    "type": "object",
+    "description": "Canton Clear Signing Descriptor Schema. A descriptor binds human-readable intent and typed fields to one exact Daml template, so that a wallet can describe the create and exercise nodes of a prepared transaction.",
+
+    "properties": {
+        "$schema": {
+            "title": "Schema",
+            "type": "string",
+            "const": "https://example.org/canton-clear-signing/v1/schema.json",
+            "description": "The schema that the descriptor conforms to: the $id of this schema. A wallet rejects a descriptor whose schema it does not support."
+        },
+
+        "$comment": {
+            "title": "Comment",
+            "type": "string",
+            "description": "An optional comment documenting the purpose of the file. It has no effect on interpretation."
+        },
+
+        "context": {
+            "$ref": "#/$context/main"
+        },
+
+        "metadata": {
+            "$ref": "#/$metadata/main"
+        },
+
+        "display": {
+            "$ref": "#/$display/main"
+        },
+
+        "signatures": {
+            "$ref": "#/$signatures/main"
+        }
+    },
+    "required": ["$schema", "context", "metadata", "display"],
+    "additionalProperties": false,
+
+    "$context": {
+        "main": {
+            "title": "Binding Context Section",
+            "type": "object",
+            "description": "Binds the descriptor to one exact Canton template to allow specific structured data being displayed. It identifies the template being described, not a contract instance.",
+
+            "properties": {
+                "template": {
+                    "$ref": "#/$context/template"
+                }
+            },
+            "required": ["template"],
+            "additionalProperties": false
+        },
+
+        "template": {
+            "title": "Template Binding",
+            "type": "object",
+            "description": "The template identity. All three values MUST equal the template_id of a node for the descriptor to apply to it. Module and entity name alone are not enough, because different packages may define templates with identical names.",
+
+            "properties": {
+                "packageId": {
+                    "title": "Package ID",
+                    "type": "string",
+                    "description": "The package ID, as a lowercase hex SHA-256 hash.",
+                    "pattern": "^[0-9a-f]{64}$"
+                },
+                "moduleName": {
+                    "title": "Module Name",
+                    "type": "string",
+                    "description": "The dotted Daml module name, e.g. Splice.ExternalPartyAmuletRules.",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+                },
+                "entityName": {
+                    "title": "Entity Name",
+                    "type": "string",
+                    "description": "The template name within the module.",
+                    "$ref": "#/$definitions/identifier"
+                }
+            },
+            "required": ["packageId", "moduleName", "entityName"],
+            "additionalProperties": false
+        }
+    },
+
+    "$metadata": {
+        "main": {
+            "title": "Metadata Section",
+            "type": "object",
+            "description": "Information about the descriptor itself, and the enum tables used by display formatting. Metadata is descriptive: it MUST NOT be trusted only because it appears in the descriptor. Publisher authenticity depends on signature verification and the wallet's trust policy.",
+
+            "properties": {
+                "version": {
+                    "title": "Descriptor Version",
+                    "type": "string",
+                    "description": "The version of the descriptor content, as semver. It is independent of the schema version.",
+                    "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+                },
+                "publisher": {
+                    "title": "Publisher",
+                    "description": "The claimed publisher or author of the descriptor.",
+                    "$ref": "#/$definitions/trimmedLine"
+                },
+                "name": {
+                    "title": "Descriptor Name",
+                    "description": "A human-readable name for the descriptor.",
+                    "$ref": "#/$definitions/trimmedLine"
+                },
+                "url": {
+                    "title": "Provenance URL",
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URL with more information on the publisher or the described application."
+                },
+                "enums": {
+                    "$ref": "#/$metadata/enums"
+                }
+            },
+            "required": ["version", "publisher", "name"],
+            "additionalProperties": false
+        },
+
+        "enums": {
+            "title": "Enums",
+            "type": "object",
+            "description": "Named tables that the enum format uses to replace a value with a human-readable string. Each table is referenced as $.metadata.enums.ENUM_NAME.",
+            "propertyNames": {
+                "$ref": "#/$definitions/identifier"
+            },
+            "additionalProperties": {
+                "title": "Enumeration",
+                "type": "object",
+                "description": "Keys are Daml enum constructor names, or true and false for a Bool. Values are the displayed strings. A value missing from the table fails formatting; it is never shown raw.",
+                "minProperties": 1,
+                "propertyNames": {
+                    "anyOf": [
+                        { "$ref": "#/$definitions/identifier" },
+                        { "const": "true" },
+                        { "const": "false" }
+                    ]
+                },
+                "additionalProperties": {
+                    "$ref": "#/$definitions/displayText"
+                }
+            }
+        }
+    },
+
+    "$display": {
+        "main": {
+            "title": "Display Section",
+            "type": "object",
+            "description": "How the operations on the bound template are presented. A wallet selects create for a create node. For an exercise node it selects the entry whose choice and interface both equal the node's. When the node carries an interface and no entry names that choice and interface, it selects the entry for the same choice with no interface. A missing definition MUST NOT be read as permission to omit the operation; the wallet should use a fallback display or otherwise fail.",
+
+            "properties": {
+                "create": {
+                    "title": "Create Operation",
+                    "description": "The definition for create nodes of the template. Its fields are paths into the create argument, or a container field shared with exercises. There is no contract to read with '@.contract.', and an exercise-only container field is not valid here.",
+                    "unevaluatedProperties": false,
+                    "allOf": [
+                        { "$ref": "#/$display/operation" },
+                        {
+                            "properties": {
+                                "fields": {
+                                    "items": {
+                                        "properties": {
+                                            "path": {
+                                                "$ref": "#/$format/createPath"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                "exercises": {
+                    "title": "Exercise Operations",
+                    "type": "array",
+                    "description": "Definitions for exercise nodes. Each entry names a choice and, when the choice is exercised through an interface, that interface. An entry matches a node when its choice and its interface both equal the node's. An entry without an interface also matches an exercise of that choice through an interface when no entry names that choice and that interface. An entry that names an interface matches only a node exercised through that interface.",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$display/exercise"
+                    }
+                }
+            },
+            "anyOf": [
+                { "required": ["create"] },
+                { "required": ["exercises"] }
+            ],
+            "additionalProperties": false
+        },
+
+        "choice": {
+            "title": "Choice",
+            "type": "string",
+            "description": "The exact choice name. The template comes from context.template, and the interface, when the choice is exercised through one, from the entry's interface.",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+
+        "exercise": {
+            "title": "Exercise Entry",
+            "description": "The presentation of one choice. It matches a node when the choice and the interface both equal the node's. An entry without an interface is also the fallback for that choice when the node carries an interface and no entry names that interface.",
+            "unevaluatedProperties": false,
+            "allOf": [
+                { "$ref": "#/$display/operation" },
+                {
+                    "properties": {
+                        "choice": {
+                            "$ref": "#/$display/choice"
+                        },
+                        "interface": {
+                            "$ref": "#/$display/interface"
+                        }
+                    },
+                    "required": ["choice"]
+                }
+            ]
+        },
+
+        "interface": {
+            "title": "Interface",
+            "type": "object",
+            "description": "The interface the choice is exercised through, by module and entity. The template's package ID already fixes which interface package that names, so the package ID is not repeated. Both values MUST equal the node's interface_id. An entry with an interface matches only a node exercised through that interface. An entry without one matches the template's own choice, and is the fallback for that choice when no entry names the node's interface.",
+            "properties": {
+                "moduleName": {
+                    "title": "Module Name",
+                    "type": "string",
+                    "description": "The dotted Daml module name of the interface.",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+                },
+                "entityName": {
+                    "$ref": "#/$definitions/identifier",
+                    "title": "Entity Name",
+                    "description": "The interface name within the module."
+                }
+            },
+            "required": ["moduleName", "entityName"],
+            "additionalProperties": false
+        },
+
+        "operation": {
+            "title": "Operation Definition",
+            "type": "object",
+            "description": "The presentation of one kind of node: a stable intent, an optional interpolated intent, and the ordered fields it displays.",
+
+            "properties": {
+                "intent": {
+                    "title": "Intent",
+                    "description": "A stable description of the operation, shown when there is no interpolatedIntent. It must not contain a placeholder. It is not shown when a placeholder cannot be filled.",
+                    "$ref": "#/$definitions/stableIntent"
+                },
+                "interpolatedIntent": {
+                    "title": "Interpolated Intent",
+                    "description": "The intent with {path} placeholders. Each placeholder names a field of the same operation and shows that field's value. {{ and }} are literal braces.",
+                    "$ref": "#/$definitions/displayText"
+                },
+                "fields": {
+                    "title": "Fields",
+                    "type": "array",
+                    "description": "The ordered fields the operation displays.",
+                    "items": {
+                        "$ref": "#/$format/field"
+                    }
+                }
+            },
+            "required": ["intent"]
+        }
+    },
+
+    "$format": {
+        "path": {
+            "title": "Path",
+            "type": "string",
+            "description": "A path to a value. No prefix starts at the create or choice argument. '@.contract.' starts at the exercised contract's create argument and continues with at least one step. '@.contractId', '@.signatories', '@.stakeholders', '@.synchronizerId' and '@.actAs' read the prepared transaction, on a create and an exercise. '@.actingParties', '@.choiceObservers' and '@.consuming' do so on an exercise only. A name selects a record field, or the payload of the variant constructor of that name; a different constructor fails. [\"key\"] selects a text-map entry. Some is unwrapped at every step. None at any step, or a record field the ledger left out, makes the value None. A final length on a list or text map is its number of elements. A list or map is shown whole, with raw.",
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*|@\\.contract\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs|actingParties|choiceObservers|consuming))$"
+        },
+
+        "field": {
+            "title": "Field",
+            "type": "object",
+            "description": "A value to display. The label defaults to the path and the format defaults to raw. None fails the field unless optional is true.",
+
+            "properties": {
+                "path": {
+                    "$ref": "#/$format/path"
+                },
+                "label": {
+                    "title": "Field Label",
+                    "description": "The label displayed in front of the formatted value. It may be several words.",
+                    "$ref": "#/$definitions/displayText"
+                },
+                "format": {
+                    "$ref": "#/$format/names"
+                },
+                "params": {
+                    "title": "Format Parameters",
+                    "type": "object",
+                    "description": "Formatter-specific parameters. Only formatters that define parameters accept them."
+                },
+                "optional": {
+                    "title": "Optional",
+                    "type": "boolean",
+                    "description": "Set when the path may be None. None is shown as None, and a Some is shown with format."
+                }
+            },
+            "required": ["path"],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": { "format": { "const": "enum" } },
+                        "required": ["format"]
+                    },
+                    "then": {
+                        "properties": {
+                            "params": { "$ref": "#/$format/enumParameters" }
+                        },
+                        "required": ["params"]
+                    },
+                    "else": {
+                        "not": { "required": ["params"] }
+                    }
+                }
+            ],
+            "additionalProperties": false
+        },
+
+        "argumentPath": {
+            "title": "Argument Path",
+            "type": "string",
+            "description": "A path into a create argument, where there is no contract to read. It has the steps of a path, without the '@.contract.' prefix.",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*$"
+        },
+
+        "createPath": {
+            "title": "Create Path",
+            "type": "string",
+            "description": "A path on a create: an argument path, or a container field shared with exercises. '@.contract.' and the exercise-only container fields are not valid here.",
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs))$"
+        },
+
+        "names": {
+            "title": "Field Format",
+            "type": "string",
+            "description": "The formatter used to interpret and display the value.",
+            "anyOf": [
+                {
+                    "const": "string",
+                    "description": "Display a Text value as a JSON string literal, in double quotes, so that it cannot pass as the descriptor's wording."
+                },
+                {
+                    "const": "number",
+                    "description": "Display a numeric value without changing its meaning or precision."
+                },
+                {
+                    "const": "boolean",
+                    "description": "Display a Bool as true or false."
+                },
+                {
+                    "const": "party",
+                    "description": "Display a Canton party identifier."
+                },
+                {
+                    "const": "contractId",
+                    "description": "Display a contract identifier in full."
+                },
+                {
+                    "const": "dateTime",
+                    "description": "Display a Time as an ISO 8601 UTC timestamp with microseconds, or a Date as YYYY-MM-DD."
+                },
+                {
+                    "const": "duration",
+                    "description": "Display a DA.Time RelTime in days, hours, minutes and seconds, e.g. 1d 2h 0.5s."
+                },
+                {
+                    "const": "enum",
+                    "description": "Display the label that params.$ref maps the value to: an enum constructor, a variant constructor without payload, or a Bool (true or false). A value missing from the table fails the field."
+                },
+                {
+                    "const": "raw",
+                    "description": "Display any value: a record, list or map as JSON, a variant as an object keyed by its constructor, Text as a JSON string literal, and other scalars as they are."
+                }
+            ]
+        },
+
+        "enumParameters": {
+            "title": "Enum Formatting Parameters",
+            "type": "object",
+            "properties": {
+                "$ref": {
+                    "title": "Enum Reference",
+                    "type": "string",
+                    "description": "The path to the table in metadata.enums used to convert the value.",
+                    "pattern": "^\\$\\.metadata\\.enums\\.[A-Za-z_][A-Za-z0-9_]*$"
+                }
+            },
+            "required": ["$ref"],
+            "additionalProperties": false
+        }
+    },
+
+    "$signatures": {
+        "main": {
+            "title": "Signature Section",
+            "type": "array",
+            "description": "Reserved for signatures over the canonical descriptor content, excluding this section. The array must be empty until the trust model specifies the item structure. A signature would establish integrity and control of the signing key; it would not establish that the publisher is trusted.",
+            "$comment": "The item structure, canonicalization, hashing and algorithms are to be specified by the trust model.",
+            "maxItems": 0
+        }
+    },
+
+    "$definitions": {
+        "identifier": {
+            "title": "Identifier",
+            "type": "string",
+            "description": "A Daml name: a letter or underscore, followed by letters, digits or underscores.",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "displayText": {
+            "title": "Display Text",
+            "type": "string",
+            "description": "Text shown to the user. It contains a non-whitespace character, and no control, format, line separator or paragraph separator character.",
+            "pattern": "^[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}][^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*$"
+        },
+        "trimmedLine": {
+            "title": "Trimmed Line",
+            "type": "string",
+            "description": "Display text with no leading or trailing whitespace.",
+            "pattern": "^[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}](?:[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}])?$"
+        },
+        "stableIntent": {
+            "title": "Stable Intent",
+            "type": "string",
+            "description": "Display text with no leading or trailing whitespace and no braces, so it cannot contain a placeholder.",
+            "pattern": "^[^\\s{}\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}](?:[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]*[^\\s{}\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}])?$"
+        }
+    }
+}

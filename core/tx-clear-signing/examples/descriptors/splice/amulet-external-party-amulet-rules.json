@@ -1,0 +1,394 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.ExternalPartyAmuletRules",
+            "entityName": "ExternalPartyAmuletRules"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Amulet rules for external parties",
+        "enums": {
+            "commitment": {
+                "true": "Committed: cannot be withdrawn before the settlement deadline",
+                "false": "Not committed: can be withdrawn at any time"
+            }
+        }
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "TransferFactory_Transfer",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferFactory"
+                },
+                "intent": "Request a transfer",
+                "interpolatedIntent": "Request a transfer of {transfer.amount} {transfer.instrumentId.id} from {transfer.sender} to {transfer.receiver}. What the receiver does with it depends on the transfer's metadata",
+                "fields": [
+                    {
+                        "path": "transfer.amount",
+                        "label": "Requested amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.meta.values",
+                        "label": "Metadata, which the receiver may act on",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "expectedAdmin",
+                        "label": "Expected admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "Amulet administrator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.inputHoldingCids",
+                        "label": "Input holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferFactory_Transfer",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferFactory"
+                },
+                "intent": "Request a transfer",
+                "interpolatedIntent": "Request a transfer of {transfer.amount} {transfer.instrumentId.id} from {transfer.sender.owner} to {transfer.receiver.owner}. What the receiver does with it depends on the transfer's metadata",
+                "fields": [
+                    {
+                        "path": "transfer.amount",
+                        "label": "Requested amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "transfer.sender.owner",
+                        "label": "From",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "transfer.receiver.owner",
+                        "label": "To",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "transfer.sender",
+                        "label": "From account",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.receiver",
+                        "label": "To account",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.meta.values",
+                        "label": "Metadata, which the receiver may act on",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "transfer.instrumentId.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "Amulet administrator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.inputHoldingCids",
+                        "label": "Input holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "AllocationFactory_Allocate",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationInstructionV1",
+                    "entityName": "AllocationFactory"
+                },
+                "intent": "Allocate funds for a settlement",
+                "interpolatedIntent": "Allocate {allocation.transferLeg.amount} {allocation.transferLeg.instrumentId.id} from {allocation.transferLeg.sender} to {allocation.transferLeg.receiver} for settlement {allocation.settlement.settlementRef.id}, executed by {allocation.settlement.executor}",
+                "fields": [
+                    {
+                        "path": "allocation.transferLeg.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "allocation.transferLeg.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "allocation.transferLeg.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "allocation.transferLeg.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "allocation.settlement.settlementRef.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "allocation.settlement.executor",
+                        "label": "Executor",
+                        "format": "party"
+                    },
+                    {
+                        "path": "allocation.transferLegId",
+                        "label": "Leg",
+                        "format": "string"
+                    },
+                    {
+                        "path": "allocation.transferLeg.meta.values",
+                        "label": "Leg metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "allocation.settlement.allocateBefore",
+                        "label": "Allocate before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "allocation.settlement.settleBefore",
+                        "label": "Settle before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "expectedAdmin",
+                        "label": "Expected admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "Amulet administrator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "inputHoldingCids",
+                        "label": "Input holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "AllocationFactory_Allocate",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationInstructionV2",
+                    "entityName": "AllocationFactory"
+                },
+                "intent": "Allocate funds for a settlement",
+                "interpolatedIntent": "Allocate funds at {@.contract.dso} for settlement {settlement.id} of {allocation.transferLegSides.length} transfer legs, authorized by {allocation.authorizer.owner}. {allocation.committed}",
+                "fields": [
+                    {
+                        "path": "@.contract.dso",
+                        "label": "Amulet administrator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "settlement.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "allocation.transferLegSides.length",
+                        "label": "Number of legs",
+                        "format": "number"
+                    },
+                    {
+                        "path": "allocation.authorizer.owner",
+                        "label": "Authorizer",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "allocation.authorizer",
+                        "label": "Authorizer account",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "allocation.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "settlement.executors",
+                        "label": "Executors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "allocation.transferLegSides",
+                        "label": "Legs",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "allocation.committed",
+                        "label": "Commitment",
+                        "format": "enum",
+                        "params": {
+                            "$ref": "$.metadata.enums.commitment"
+                        }
+                    },
+                    {
+                        "path": "allocation.settlementDeadline",
+                        "label": "Settlement deadline",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "allocation.nextIterationFunding",
+                        "label": "Next iteration funding",
+                        "format": "raw",
+                        "optional": true
+                    },
+                    {
+                        "path": "inputHoldingCids",
+                        "label": "Input holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "requestedAt",
+                        "label": "Requested at",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "SettlementFactory_SettleBatch",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV2",
+                    "entityName": "SettlementFactory"
+                },
+                "intent": "Settle a batch of allocations",
+                "interpolatedIntent": "Settle {transferLegs.length} transfer legs for settlement {settlement.id} at {@.contract.dso}",
+                "fields": [
+                    {
+                        "path": "@.contract.dso",
+                        "label": "Amulet administrator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "settlement.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "settlement.executors",
+                        "label": "Executors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transferLegs.length",
+                        "label": "Number of legs",
+                        "format": "number"
+                    },
+                    {
+                        "path": "transferLegs",
+                        "label": "Legs",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "allocations.length",
+                        "label": "Number of allocations",
+                        "format": "number"
+                    },
+                    {
+                        "path": "allocations",
+                        "label": "Allocations",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

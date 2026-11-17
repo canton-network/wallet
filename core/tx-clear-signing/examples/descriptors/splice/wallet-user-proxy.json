@@ -1,0 +1,317 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "9f1f3a4a44d28fe5c7679c76b01db639733dc1a4688d1e785d81f5f392c4c39f",
+            "moduleName": "Splice.Util.FeaturedApp.WalletUserProxy",
+            "entityName": "WalletUserProxy"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Featured app wallet user proxy"
+    },
+    "display": {
+        "create": {
+            "intent": "Create a wallet user proxy",
+            "interpolatedIntent": "Wallet user proxy of {provider}",
+            "fields": [
+                {
+                    "path": "provider",
+                    "label": "Provider",
+                    "format": "party"
+                },
+                {
+                    "path": "providerWeight",
+                    "label": "Provider weight",
+                    "format": "number"
+                },
+                {
+                    "path": "userWeight",
+                    "label": "User weight",
+                    "format": "number"
+                },
+                {
+                    "path": "optAllowList",
+                    "label": "Allowed users",
+                    "format": "raw",
+                    "optional": true
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "WalletUserProxy_TransferFactory_Transfer",
+                "intent": "Transfer through a featured app proxy",
+                "interpolatedIntent": "Transfer {proxyArg.choiceArg.transfer.amount} {proxyArg.choiceArg.transfer.instrumentId.id} from {proxyArg.choiceArg.transfer.sender} to {proxyArg.choiceArg.transfer.receiver} via {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "proxyArg.choiceArg.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "cid",
+                        "label": "Transfer factory",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "proxyArg.featuredAppRightCid",
+                        "label": "Featured app right",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "WalletUserProxy_TransferInstruction_Accept",
+                "intent": "Accept a transfer instruction through a featured app proxy",
+                "interpolatedIntent": "Accept transfer instruction {cid} as {proxyArg.user} via {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "cid",
+                        "label": "Transfer instruction",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "proxyArg.user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "proxyArg.featuredAppRightCid",
+                        "label": "Featured app right",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "WalletUserProxy_TransferInstruction_Reject",
+                "intent": "Reject a transfer instruction through a featured app proxy",
+                "interpolatedIntent": "Reject transfer instruction {cid} as {proxyArg.user} via {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "cid",
+                        "label": "Transfer instruction",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "proxyArg.user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "proxyArg.featuredAppRightCid",
+                        "label": "Featured app right",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "WalletUserProxy_TransferInstruction_Withdraw",
+                "intent": "Withdraw a transfer instruction through a featured app proxy",
+                "interpolatedIntent": "Withdraw transfer instruction {cid} as {proxyArg.user} via {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "cid",
+                        "label": "Transfer instruction",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "proxyArg.user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "proxyArg.featuredAppRightCid",
+                        "label": "Featured app right",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "WalletUserProxy_AllocationFactory_Allocate",
+                "intent": "Allocate through a featured app proxy",
+                "interpolatedIntent": "Allocate {proxyArg.choiceArg.allocation.transferLeg.amount} {proxyArg.choiceArg.allocation.transferLeg.instrumentId.id} from {proxyArg.choiceArg.allocation.transferLeg.sender} to {proxyArg.choiceArg.allocation.transferLeg.receiver} for settlement {proxyArg.choiceArg.allocation.settlement.settlementRef.id}, executed by {proxyArg.choiceArg.allocation.settlement.executor}, via {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "proxyArg.choiceArg.allocation.transferLeg.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.allocation.transferLeg.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.allocation.transferLeg.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.allocation.transferLeg.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.allocation.settlement.settlementRef.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.allocation.settlement.executor",
+                        "label": "Executor",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.allocation.settlement.settleBefore",
+                        "label": "Settle before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.expectedAdmin",
+                        "label": "Expected admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "cid",
+                        "label": "Allocation factory",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "proxyArg.featuredAppRightCid",
+                        "label": "Featured app right",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "WalletUserProxy_Allocation_Withdraw",
+                "intent": "Withdraw an allocation through a featured app proxy",
+                "interpolatedIntent": "Withdraw allocation {cid} as {proxyArg.user} via {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "cid",
+                        "label": "Allocation",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "proxyArg.user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "proxyArg.choiceArg.extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "proxyArg.featuredAppRightCid",
+                        "label": "Featured app right",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "WalletUserProxy_BatchTransfer",
+                "intent": "Send several transfers through a featured app proxy",
+                "interpolatedIntent": "Send {transferCalls.length} transfers in one transaction via {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "transferCalls.length",
+                        "label": "Number of transfers",
+                        "format": "number"
+                    },
+                    {
+                        "path": "transferCalls",
+                        "label": "Transfers",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "optFeaturedAppRightCid",
+                        "label": "Featured app right",
+                        "format": "contractId",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

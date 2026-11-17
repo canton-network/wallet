@@ -1,0 +1,128 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.AmuletRules",
+            "entityName": "TransferPreapproval"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Transfer preapproval"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "TransferPreapproval_SendV2",
+                "intent": "Send Amulet to a preapproved receiver",
+                "interpolatedIntent": "Send {amount} Amulet from {sender} to {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "description",
+                        "label": "Description",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "meta",
+                        "label": "Metadata",
+                        "format": "raw",
+                        "optional": true
+                    },
+                    {
+                        "path": "inputs.length",
+                        "label": "Number of inputs",
+                        "format": "number"
+                    },
+                    {
+                        "path": "inputs",
+                        "label": "Inputs",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferPreapproval_Cancel",
+                "intent": "Cancel a transfer preapproval",
+                "interpolatedIntent": "Cancel, as {p}, the preapproval of transfers to {@.contract.receiver} managed by {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "p",
+                        "label": "Cancelled by",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "Receiver",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires at",
+                        "format": "dateTime"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferPreapproval_Renew",
+                "intent": "Renew a transfer preapproval",
+                "interpolatedIntent": "Renew the preapproval of transfers to {@.contract.receiver} until {newExpiresAt}, paid by {@.contract.provider}",
+                "fields": [
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "Receiver",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider, who pays",
+                        "format": "party"
+                    },
+                    {
+                        "path": "newExpiresAt",
+                        "label": "New expiry",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Current expiry",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "inputs.length",
+                        "label": "Number of inputs",
+                        "format": "number"
+                    },
+                    {
+                        "path": "inputs",
+                        "label": "Inputs",
+                        "format": "raw"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

@@ -1,0 +1,120 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "15cf1eaaf35b3736d95bc5c260d3da5507cbd1edc5680f2d55d98de04e34d545",
+            "moduleName": "Utility.Registry.App.V0.Model.Mint",
+            "entityName": "MintOffer"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Utility registry mint offer"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "MintOffer_Accept",
+                "intent": "Accept a mint offer",
+                "interpolatedIntent": "Accept a mint of {@.contract.mint.amount} {@.contract.mint.instrumentId.id} to {@.contract.mint.holder}, reference {@.contract.mint.reference}",
+                "fields": [
+                    {
+                        "path": "@.contract.mint.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.mint.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.mint.instrumentId.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.mint.holder",
+                        "label": "Holder",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.mint.reference",
+                        "label": "Reference",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.mint.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.mint.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "MintOffer_Reject",
+                "intent": "Reject a mint offer",
+                "interpolatedIntent": "Reject a mint of {@.contract.mint.amount} {@.contract.mint.instrumentId.id} to {@.contract.mint.holder}, reference {@.contract.mint.reference}: {reason}",
+                "fields": [
+                    {
+                        "path": "@.contract.mint.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.mint.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.mint.instrumentId.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.mint.holder",
+                        "label": "Holder",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.mint.reference",
+                        "label": "Reference",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.mint.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.mint.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "reason",
+                        "label": "Reason",
+                        "format": "string"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw",
+                        "optional": true
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

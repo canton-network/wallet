@@ -1,49 +1,7 @@
 {
     "id": "gl-substitution-create-fa-vesting",
     "source": "captured",
-    "about": "GovernanceLockSubstitution proposed by bob for an FA vesting lock of alice",
-    "commands": [
-        {
-            "CreateCommand": {
-                "templateId": "#splice-amulet:Splice.GovernanceLock.Substitution:GovernanceLockSubstitution",
-                "createArguments": {
-                    "target": {
-                        "dso": "csdso::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "owner": "csalice::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "specification": {
-                            "tag": "GLS_VestingLock",
-                            "value": {
-                                "kind": {
-                                    "tag": "GLK_FeaturedApp",
-                                    "value": {
-                                        "provider": "csprovider::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"
-                                    }
-                                },
-                                "vestingPeriod": {
-                                    "microseconds": "5184000000000"
-                                },
-                                "endTime": "2027-01-08T16:29:55.000Z"
-                            }
-                        }
-                    },
-                    "owner": "csbob::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                    "amount": "250.0",
-                    "lockedAmulet": "003dc46d4da411c871becde75beb6922ac9ff0db136a5f3840503cb7013c0d83b4ca12122045bd1fbd7f2cc996bf457e0476302d126e8cf70b300a22c0a8ee7a9800838707",
-                    "requestedAt": "2026-11-09T16:28:58.000Z",
-                    "expiresAt": "2026-11-16T16:29:58.000Z",
-                    "originalSubstitutionCid": null
-                }
-            }
-        }
-    ],
     "preparedTransaction": "CqQSCgMyLjESATAa9REKATDCPu4RCusRCgMyLjESQjAwYmYxMzg3MmEzNmVhNThjM2IyMDNlOWM1Mjg1MzRlYmJiNDljNWMzNzlmZDY3NTFiY2NkZjQ0Y2NmNmY1MzdhNxoNc3BsaWNlLWFtdWxldCKCAQpAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIiU3BsaWNlLkdvdmVybmFuY2VMb2NrLlN1YnN0aXR1dGlvbhoaR292ZXJuYW5jZUxvY2tTdWJzdGl0dXRpb24qtgxyswwKggEKQGM1MjAzZGVlOTE4MzUwMzczYTk5MzMyOGUzNDU4NzIxMTNiZDVmOGM4ZjBmNTE5NjcwMTRkODEzZTU4M2FlNjYSIlNwbGljZS5Hb3Zlcm5hbmNlTG9jay5TdWJzdGl0dXRpb24aGkdvdmVybmFuY2VMb2NrU3Vic3RpdHV0aW9uEt4ICgZ0YXJnZXQS0why0AgKbApAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIVU3BsaWNlLkdvdmVybmFuY2VMb2NrGhFHb3Zlcm5hbmNlTG9ja0tleRJUCgNkc28STTpLY3Nkc286OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0ElgKBW93bmVyEk86TWNzYWxpY2U6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Eq8GCg1zcGVjaWZpY2F0aW9uEp0GepoGCnYKQGM1MjAzZGVlOTE4MzUwMzczYTk5MzMyOGUzNDU4NzIxMTNiZDVmOGM4ZjBmNTE5NjcwMTRkODEzZTU4M2FlNjYSFVNwbGljZS5Hb3Zlcm5hbmNlTG9jaxobR292ZXJuYW5jZUxvY2tTcGVjaWZpY2F0aW9uEg9HTFNfVmVzdGluZ0xvY2sajgVyiwUKcwpAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIVU3BsaWNlLkdvdmVybmFuY2VMb2NrGhhWZXN0aW5nTG9ja1NwZWNpZmljYXRpb24S8QIKBGtpbmQS6AJ65QIKbQpAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIVU3BsaWNlLkdvdmVybmFuY2VMb2NrGhJHb3Zlcm5hbmNlTG9ja0tpbmQSD0dMS19GZWF0dXJlZEFwcBriAXLfAQp9CkBjNTIwM2RlZTkxODM1MDM3M2E5OTMzMjhlMzQ1ODcyMTEzYmQ1ZjhjOGYwZjUxOTY3MDE0ZDgxM2U1ODNhZTY2EhVTcGxpY2UuR292ZXJuYW5jZUxvY2saIkdvdmVybmFuY2VMb2NrS2luZC5HTEtfRmVhdHVyZWRBcHASXgoIcHJvdmlkZXISUjpQY3Nwcm92aWRlcjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQSiQEKDXZlc3RpbmdQZXJpb2QSeHJ2CloKQGI3MGRiODM2OWUxYzQ2MWQ1YzcwZjFjODZmNTI2YTI5ZTk3NzZjNjU1ZTZmZmMyNTYwZjk1YjA1Y2NiOGI5NDYSDURBLlRpbWUuVHlwZXMaB1JlbFRpbWUSGAoMbWljcm9zZWNvbmRzEggYgIDU59+tAhIUCgdlbmRUaW1lEgkpwIZPd5FkBgASVgoFb3duZXISTTpLY3Nib2I6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0EhoKBmFtb3VudBIQMg4yNTAuMDAwMDAwMDAwMBKkAQoMbG9ja2VkQW11bGV0EpMBUpABCo0BSooBMDAzZGM0NmQ0ZGE0MTFjODcxYmVjZGU3NWJlYjY5MjJhYzlmZjBkYjEzNmE1ZjM4NDA1MDNjYjcwMTNjMGQ4M2I0Y2ExMjEyMjA0NWJkMWZiZDdmMmNjOTk2YmY0NTdlMDQ3NjMwMmQxMjZlOGNmNzBiMzAwYTIyYzBhOGVlN2E5ODAwODM4NzA3EhgKC3JlcXVlc3RlZEF0EgkpgEZvddpfBgASFgoJZXhwaXJlc0F0EgkpgG3mSWdgBgAyS2NzYm9iOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNDJLY3Nkc286OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Ok1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNDpLY3Nib2I6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Oktjc2Rzbzo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQ6UGNzcHJvdmlkZXI6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0IiISIFBaGYuzU/b1tzzcHlDubbblf8hHIsKJW5wehbLENnQqEsYCEsABCktjc2JvYjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQKS2NzZHNvOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBIkZjYyZmZlMjYtNDU0NC00YzkzLTk2YzAtYmNkM2YxYmY4ZTQxGlJ3YWxsZXQ6OjEyMjBlN2IyM2VhNTJlYjVjNjcyZmIwYjFjZGJjOTE2OTIyZmZlZDNkZDc2NzZjMjIzYTYwNTY2NDMxNWUyZDQzZWRkOjozNi0wKiQ0NmE3NTVhNy00MTM4LTQ4MzctYjNmYS1hMmQzNTgyMDljNDkw9sKjyKf7lwM=",
     "preparedTransactionHash": "XazAVG4ruD9g8j32cXk6eEs67oe9ZWBIdOXuXFFjk6E=",
-    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2",
-    "hashingDetails": null,
-    "costEstimation": {
-        "estimationTimestamp": "2026-11-09T16:29:58.511188Z",
-        "confirmationRequestTrafficCostEstimation": 0,
-        "confirmationResponseTrafficCostEstimation": 0,
-        "totalTrafficCostEstimation": 0
-    }
+    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2"
 }

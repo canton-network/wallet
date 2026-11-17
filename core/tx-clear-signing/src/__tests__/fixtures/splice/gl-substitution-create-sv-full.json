@@ -1,45 +1,7 @@
 {
     "id": "gl-substitution-create-sv-full",
     "source": "captured",
-    "about": "GovernanceLockSubstitution proposed by the owner of an SV full lock",
-    "commands": [
-        {
-            "CreateCommand": {
-                "templateId": "#splice-amulet:Splice.GovernanceLock.Substitution:GovernanceLockSubstitution",
-                "createArguments": {
-                    "target": {
-                        "dso": "csdso::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "owner": "csalice::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "specification": {
-                            "tag": "GLS_FullLock",
-                            "value": {
-                                "kind": {
-                                    "tag": "GLK_SuperValidatorRightsOwner",
-                                    "value": {
-                                        "svName": "sv-1"
-                                    }
-                                }
-                            }
-                        }
-                    },
-                    "owner": "csalice::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                    "amount": "250.0",
-                    "lockedAmulet": null,
-                    "requestedAt": "2026-11-09T16:28:58.000Z",
-                    "expiresAt": "2026-11-16T16:29:58.000Z",
-                    "originalSubstitutionCid": null
-                }
-            }
-        }
-    ],
     "preparedTransaction": "Cp0OCgMyLjESATAa7g0KATDCPucNCuQNCgMyLjESQjAwNWFkNmVkNThlNzhjMjNiNTlkOWM1NjJjNTg5MDIwMGM5OWUwNWQzMTYzMjM0MmIzNTYwMDVhZDdhMTBhZDBhYhoNc3BsaWNlLWFtdWxldCKCAQpAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIiU3BsaWNlLkdvdmVybmFuY2VMb2NrLlN1YnN0aXR1dGlvbhoaR292ZXJuYW5jZUxvY2tTdWJzdGl0dXRpb24qzAlyyQkKggEKQGM1MjAzZGVlOTE4MzUwMzczYTk5MzMyOGUzNDU4NzIxMTNiZDVmOGM4ZjBmNTE5NjcwMTRkODEzZTU4M2FlNjYSIlNwbGljZS5Hb3Zlcm5hbmNlTG9jay5TdWJzdGl0dXRpb24aGkdvdmVybmFuY2VMb2NrU3Vic3RpdHV0aW9uEoUHCgZ0YXJnZXQS+gZy9wYKbApAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIVU3BsaWNlLkdvdmVybmFuY2VMb2NrGhFHb3Zlcm5hbmNlTG9ja0tleRJUCgNkc28STTpLY3Nkc286OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0ElgKBW93bmVyEk86TWNzYWxpY2U6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0EtYECg1zcGVjaWZpY2F0aW9uEsQEesEECnYKQGM1MjAzZGVlOTE4MzUwMzczYTk5MzMyOGUzNDU4NzIxMTNiZDVmOGM4ZjBmNTE5NjcwMTRkODEzZTU4M2FlNjYSFVNwbGljZS5Hb3Zlcm5hbmNlTG9jaxobR292ZXJuYW5jZUxvY2tTcGVjaWZpY2F0aW9uEgxHTFNfRnVsbExvY2sauANytQMKcApAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIVU3BsaWNlLkdvdmVybmFuY2VMb2NrGhVGdWxsTG9ja1NwZWNpZmljYXRpb24SwAIKBGtpbmQStwJ6tAIKbQpAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhIVU3BsaWNlLkdvdmVybmFuY2VMb2NrGhJHb3Zlcm5hbmNlTG9ja0tpbmQSHUdMS19TdXBlclZhbGlkYXRvclJpZ2h0c093bmVyGqMBcqABCosBCkBjNTIwM2RlZTkxODM1MDM3M2E5OTMzMjhlMzQ1ODcyMTEzYmQ1ZjhjOGYwZjUxOTY3MDE0ZDgxM2U1ODNhZTY2EhVTcGxpY2UuR292ZXJuYW5jZUxvY2saMEdvdmVybmFuY2VMb2NrS2luZC5HTEtfU3VwZXJWYWxpZGF0b3JSaWdodHNPd25lchIQCgZzdk5hbWUSBkIEc3YtMRJYCgVvd25lchJPOk1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBIaCgZhbW91bnQSEDIOMjUwLjAwMDAwMDAwMDASEgoMbG9ja2VkQW11bGV0EgJSABIYCgtyZXF1ZXN0ZWRBdBIJKYBGb3XaXwYAEhYKCWV4cGlyZXNBdBIJKYBt5klnYAYAMk1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNDJLY3Nkc286OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Ok1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNDpLY3Nkc286OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0IiISIEx68Cv/1OhMoHn3y1w4Dd5MXwbcW6sRvqEjGGFWZQWLEsgCEsIBCk1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNApLY3Nkc286OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0EiQyMzZhY2ZmMS05Yjk1LTQ1MzAtYTRiYi00MzczOGQ0YmFjMzQaUndhbGxldDo6MTIyMGU3YjIzZWE1MmViNWM2NzJmYjBiMWNkYmM5MTY5MjJmZmVkM2RkNzY3NmMyMjNhNjA1NjY0MzE1ZTJkNDNlZGQ6OjM2LTAqJGU2ZWRiZmRhLWI3MzEtNDdiYS04NDQzLTgzNWMzYjBkZjhjNDDztaTIp/uXAw==",
     "preparedTransactionHash": "Mixp/3+F6MxmVvOsrOSSXW3uDbMOS3ifq/XGoYvJKrg=",
-    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2",
-    "hashingDetails": null,
-    "costEstimation": {
-        "estimationTimestamp": "2026-11-09T16:29:58.511188Z",
-        "confirmationRequestTrafficCostEstimation": 0,
-        "confirmationResponseTrafficCostEstimation": 0,
-        "totalTrafficCostEstimation": 0
-    }
+    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2"
 }

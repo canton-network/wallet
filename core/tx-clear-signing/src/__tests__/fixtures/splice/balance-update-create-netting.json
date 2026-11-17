@@ -1,58 +1,7 @@
 {
     "id": "balance-update-create-netting",
     "source": "captured",
-    "about": "Splitwell BalanceUpdate recording a netting, a nested GenMap",
-    "commands": [
-        {
-            "CreateCommand": {
-                "templateId": "#splitwell:Splice.Splitwell:BalanceUpdate",
-                "createArguments": {
-                    "group": {
-                        "owner": "csalice::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "dso": "csdso::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "members": [
-                            "csbob::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424"
-                        ],
-                        "id": {
-                            "unpack": "flatmates"
-                        },
-                        "provider": "csprovider::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                        "acceptDuration": {
-                            "microseconds": "86400000000"
-                        }
-                    },
-                    "update": {
-                        "tag": "Netting",
-                        "value": {
-                            "balanceChanges": [
-                                [
-                                    "csalice::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                                    [
-                                        [
-                                            "csalice::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                                            "-5.0"
-                                        ],
-                                        [
-                                            "csbob::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                                            "5.0"
-                                        ]
-                                    ]
-                                ]
-                            ]
-                        }
-                    }
-                }
-            }
-        }
-    ],
     "preparedTransaction": "CtIQCgMyLjESATAaoxAKATDCPpwQCpkQCgMyLjESQjAwYjUyMzFhMzgzYjFjZTgyNzdkMDI4NmI5OGIyZDM5MTk0ZDlmYTRlMzU1ZDA3NzQ4MmE5MGZlNWQxNTg1MzE3YRoJc3BsaXR3ZWxsImMKQDRjMzgwZTA5Yzk5YjJjNWNiOTM4ZjZjY2UyYTkyYzAzZjg5NDFjYTZmN2FmN2RmN2M3MzcwYjJkNDIxMzQ2ZGESEFNwbGljZS5TcGxpdHdlbGwaDUJhbGFuY2VVcGRhdGUqgQty/goKYwpANGMzODBlMDljOTliMmM1Y2I5MzhmNmNjZTJhOTJjMDNmODk0MWNhNmY3YWY3ZGY3YzczNzBiMmQ0MjEzNDZkYRIQU3BsaWNlLlNwbGl0d2VsbBoNQmFsYW5jZVVwZGF0ZRLkBQoFZ3JvdXAS2gVy1wUKWwpANGMzODBlMDljOTliMmM1Y2I5MzhmNmNjZTJhOTJjMDNmODk0MWNhNmY3YWY3ZGY3YzczNzBiMmQ0MjEzNDZkYRIQU3BsaWNlLlNwbGl0d2VsbBoFR3JvdXASWAoFb3duZXISTzpNY3NhbGljZTo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQSVAoDZHNvEk06S2NzZHNvOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBJcCgdtZW1iZXJzElFaTwpNOktjc2JvYjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQSfgoCaWQSeHJ2Cl0KQDRjMzgwZTA5Yzk5YjJjNWNiOTM4ZjZjY2UyYTkyYzAzZjg5NDFjYTZmN2FmN2RmN2M3MzcwYjJkNDIxMzQ2ZGESEFNwbGljZS5TcGxpdHdlbGwaB0dyb3VwSWQSFQoGdW5wYWNrEgtCCWZsYXRtYXRlcxJeCghwcm92aWRlchJSOlBjc3Byb3ZpZGVyOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBKJAQoOYWNjZXB0RHVyYXRpb24Sd3J1CloKQGI3MGRiODM2OWUxYzQ2MWQ1YzcwZjFjODZmNTI2YTI5ZTk3NzZjNjU1ZTZmZmMyNTYwZjk1YjA1Y2NiOGI5NDYSDURBLlRpbWUuVHlwZXMaB1JlbFRpbWUSFwoMbWljcm9zZWNvbmRzEgcYgIC73YMFEq8ECgZ1cGRhdGUSpAR6oQQKZwpANGMzODBlMDljOTliMmM1Y2I5MzhmNmNjZTJhOTJjMDNmODk0MWNhNmY3YWY3ZGY3YzczNzBiMmQ0MjEzNDZkYRIQU3BsaWNlLlNwbGl0d2VsbBoRQmFsYW5jZVVwZGF0ZVR5cGUSB05ldHRpbmcarANyqQMKbwpANGMzODBlMDljOTliMmM1Y2I5MzhmNmNjZTJhOTJjMDNmODk0MWNhNmY3YWY3ZGY3YzczNzBiMmQ0MjEzNDZkYRIQU3BsaWNlLlNwbGl0d2VsbBoZQmFsYW5jZVVwZGF0ZVR5cGUuTmV0dGluZxK1AgoOYmFsYW5jZUNoYW5nZXMSogJqnwIKnAIKTzpNY3NhbGljZTo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQSyAFqxQEKYgpPOk1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBIPMg0tNS4wMDAwMDAwMDAwCl8KTTpLY3Nib2I6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Eg4yDDUuMDAwMDAwMDAwMDJNY3NhbGljZTo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQyS2NzYm9iOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNDJQY3Nwcm92aWRlcjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQ6TWNzYWxpY2U6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Oktjc2JvYjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQ6UGNzcHJvdmlkZXI6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0IiISIKtDFvtWETVqOYAeHPb+mjXnOvcC/N9KyHUU39eBqzwxEpoDEpQCCk1jc2FsaWNlOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNApLY3Nib2I6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0ClBjc3Byb3ZpZGVyOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBIkOWE3YjkwMGEtMjlmMy00MjVlLTk0YzItZGZiNjljOTM1NTA4GlJ3YWxsZXQ6OjEyMjBlN2IyM2VhNTJlYjVjNjcyZmIwYjFjZGJjOTE2OTIyZmZlZDNkZDc2NzZjMjIzYTYwNTY2NDMxNWUyZDQzZWRkOjozNi0wKiQwYzZlYTlkMi01NmQxLTQyNzktODNkNS02YzM1ZGVjOTYxMzMwlK2pyKf7lwM=",
     "preparedTransactionHash": "xN1R73LEielglKw10Ab5cTSZndOAxQ+8xJ/TtCigE6k=",
-    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2",
-    "hashingDetails": null,
-    "costEstimation": {
-        "estimationTimestamp": "2026-11-09T16:29:58.511188Z",
-        "confirmationRequestTrafficCostEstimation": 0,
-        "confirmationResponseTrafficCostEstimation": 0,
-        "totalTrafficCostEstimation": 0
-    }
+    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2"
 }

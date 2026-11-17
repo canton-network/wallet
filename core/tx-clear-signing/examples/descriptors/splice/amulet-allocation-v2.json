@@ -1,0 +1,170 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.AmuletAllocationV2",
+            "entityName": "AmuletAllocationV2"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Amulet allocation (token standard V2)",
+        "enums": {
+            "commitment": {
+                "true": "Committed: cannot be withdrawn before the settlement deadline",
+                "false": "Not committed: can be withdrawn at any time"
+            }
+        }
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "Allocation_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV2",
+                    "entityName": "Allocation"
+                },
+                "intent": "Withdraw an allocation",
+                "interpolatedIntent": "Withdraw the allocation for settlement {@.contract.settlement.id} of {@.contract.allocation.transferLegSides.length} transfer legs, authorized by {@.contract.allocation.authorizer.owner}",
+                "fields": [
+                    {
+                        "path": "@.contract.settlement.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.authorizer.owner",
+                        "label": "Authorizer",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.allocation.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.settlement.executors",
+                        "label": "Executors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegSides.length",
+                        "label": "Number of legs",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegSides",
+                        "label": "Legs",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.allocation.committed",
+                        "label": "Commitment",
+                        "format": "enum",
+                        "params": {
+                            "$ref": "$.metadata.enums.commitment"
+                        }
+                    },
+                    {
+                        "path": "@.contract.allocation.settlementDeadline",
+                        "label": "Settlement deadline",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId",
+                        "optional": true
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "Allocation_Cancel",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV2",
+                    "entityName": "Allocation"
+                },
+                "intent": "Cancel an allocation",
+                "interpolatedIntent": "Cancel the allocation for settlement {@.contract.settlement.id} of {@.contract.allocation.transferLegSides.length} transfer legs, authorized by {@.contract.allocation.authorizer.owner}",
+                "fields": [
+                    {
+                        "path": "@.contract.settlement.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.authorizer.owner",
+                        "label": "Authorizer",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.allocation.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.settlement.executors",
+                        "label": "Executors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegSides.length",
+                        "label": "Number of legs",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegSides",
+                        "label": "Legs",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.allocation.committed",
+                        "label": "Commitment",
+                        "format": "enum",
+                        "params": {
+                            "$ref": "$.metadata.enums.commitment"
+                        }
+                    },
+                    {
+                        "path": "@.contract.allocation.settlementDeadline",
+                        "label": "Settlement deadline",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId",
+                        "optional": true
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

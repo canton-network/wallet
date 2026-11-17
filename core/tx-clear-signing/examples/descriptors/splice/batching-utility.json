@@ -1,0 +1,62 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "6b9d2f041a93638ac494c64bf2dbd20851f8199be7f7e442ca98f7f19ce9ea19",
+            "moduleName": "Splice.Util.Token.Wallet.BatchingUtilityV2",
+            "entityName": "BatchingUtility"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Token standard batching utility"
+    },
+    "display": {
+        "create": {
+            "intent": "Create a batching utility",
+            "fields": [
+                {
+                    "path": "user",
+                    "label": "User",
+                    "format": "party"
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "BatchingUtility_ExecuteBatch",
+                "intent": "Execute a batch of token standard actions",
+                "interpolatedIntent": "Execute {actions.length} token standard actions as {@.contract.user}",
+                "fields": [
+                    {
+                        "path": "@.contract.user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "actions.length",
+                        "label": "Number of actions",
+                        "format": "number"
+                    },
+                    {
+                        "path": "actions",
+                        "label": "Actions",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "inputHoldingMap.byAdminAndAccount",
+                        "label": "Input holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "archiveAfterExecution",
+                        "label": "Archive afterwards",
+                        "format": "boolean"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

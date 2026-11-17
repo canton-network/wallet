@@ -11,6 +11,9 @@
         "**/routeTree.gen.ts",
         "core/ledger-client-types/src/generated-clients",
         "docs/**/*.mdx",
-        "core/tx-clear-signing/src/__tests__/schema-examples"
+        "core/tx-clear-signing/examples/descriptors/ping.json",
+        "core/tx-clear-signing/examples/descriptors/schema",
+        "core/tx-clear-signing/examples/descriptors/invalid",
+        "core/tx-clear-signing/examples/descriptors/splice"
     ]
 }

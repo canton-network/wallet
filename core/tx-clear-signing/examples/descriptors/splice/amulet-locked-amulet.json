@@ -1,0 +1,53 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.Amulet",
+            "entityName": "LockedAmulet"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Locked amulet"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "LockedAmulet_OwnerExpireLockV2",
+                "intent": "Unlock an expired amulet lock",
+                "interpolatedIntent": "Unlock an amulet of {@.contract.amulet.owner}, created with {@.contract.amulet.amount.initialAmount}, whose lock expired at {@.contract.lock.expiresAt}",
+                "fields": [
+                    {
+                        "path": "@.contract.amulet.amount.initialAmount",
+                        "label": "Initial amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.amulet.owner",
+                        "label": "Owner",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.lock.expiresAt",
+                        "label": "Lock expired at",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.lock.holders",
+                        "label": "Lock holders",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.lock.optContext",
+                        "label": "Lock context",
+                        "format": "string",
+                        "optional": true
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

@@ -1,30 +1,7 @@
 {
     "id": "transfer-preapproval-create",
     "source": "captured",
-    "about": "TransferPreapproval, the input contract of the simulated SendV2",
-    "commands": [
-        {
-            "CreateCommand": {
-                "templateId": "#splice-amulet:Splice.AmuletRules:TransferPreapproval",
-                "createArguments": {
-                    "dso": "csdso::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                    "receiver": "csbob::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                    "provider": "csprovider::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424",
-                    "validFrom": "2026-11-08T16:29:58.000Z",
-                    "lastRenewedAt": "2026-11-08T16:29:58.000Z",
-                    "expiresAt": "2027-02-07T16:29:58.000Z"
-                }
-            }
-        }
-    ],
     "preparedTransaction": "CqYJCgMyLjESATAa9wgKATDCPvAICu0ICgMyLjESQjAwY2E4MDNmNTFmNDdhM2FmOGUwZDQ0YWFhZTNmZDkwZjE0OGY2YjhmN2Q5ZDY4OGM1NmYwOWI0YzQ1MDQ0OGZjZBoNc3BsaWNlLWFtdWxldCJrCkBjNTIwM2RlZTkxODM1MDM3M2E5OTMzMjhlMzQ1ODcyMTEzYmQ1ZjhjOGYwZjUxOTY3MDE0ZDgxM2U1ODNhZTY2EhJTcGxpY2UuQW11bGV0UnVsZXMaE1RyYW5zZmVyUHJlYXBwcm92YWwqzQNyygMKawpAYzUyMDNkZWU5MTgzNTAzNzNhOTkzMzI4ZTM0NTg3MjExM2JkNWY4YzhmMGY1MTk2NzAxNGQ4MTNlNTgzYWU2NhISU3BsaWNlLkFtdWxldFJ1bGVzGhNUcmFuc2ZlclByZWFwcHJvdmFsElQKA2RzbxJNOktjc2Rzbzo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQSWQoIcmVjZWl2ZXISTTpLY3Nib2I6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0El4KCHByb3ZpZGVyElI6UGNzcHJvdmlkZXI6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0EhYKCXZhbGlkRnJvbRIJKYBtK1vGXwYAEhoKDWxhc3RSZW5ld2VkQXQSCSmAbStbxl8GABIWCglleHBpcmVzQXQSCSmAjbr27GYGADJLY3Nib2I6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Mktjc2Rzbzo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQyUGNzcHJvdmlkZXI6OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0Oktjc2JvYjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQ6S2NzZHNvOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNDpQY3Nwcm92aWRlcjo6MTIyMGQ0NGZjMWMzYmEwYjViZGY3Yjk1NmVlNzFiYzk0ZWJlMmQyMzI1OGRjMjY4ZmRmMDgyNGZiYWVmZjJjNjE0MjQiIhIg2B7Ampi2vaY1Dy45UwVPE82mpGjMR4m/NYypkeFdKDASmAMSkgIKS2NzYm9iOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNApLY3Nkc286OjEyMjBkNDRmYzFjM2JhMGI1YmRmN2I5NTZlZTcxYmM5NGViZTJkMjMyNThkYzI2OGZkZjA4MjRmYmFlZmYyYzYxNDI0ClBjc3Byb3ZpZGVyOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBIkNGZlZDFjYzUtZDU1ZS00MjAxLThlNTEtZTc4ZmY5Yzg2MWY3GlJ3YWxsZXQ6OjEyMjBlN2IyM2VhNTJlYjVjNjcyZmIwYjFjZGJjOTE2OTIyZmZlZDNkZDc2NzZjMjIzYTYwNTY2NDMxNWUyZDQzZWRkOjozNi0wKiQxMjczYTE2MS1kOWRhLTQxNGUtODVhMi00NzAzOTNmMmJiYzgwyquqyKf7lwM=",
     "preparedTransactionHash": "WyrGVq4Z410jq7io8te4tetopioVprPZku1vXzhU7QI=",
-    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2",
-    "hashingDetails": null,
-    "costEstimation": {
-        "estimationTimestamp": "2026-11-09T16:29:58.511188Z",
-        "confirmationRequestTrafficCostEstimation": 0,
-        "confirmationResponseTrafficCostEstimation": 0,
-        "totalTrafficCostEstimation": 0
-    }
+    "hashingSchemeVersion": "HASHING_SCHEME_VERSION_V2"
 }

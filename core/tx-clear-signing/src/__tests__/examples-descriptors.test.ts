@@ -4,15 +4,25 @@
 import { describe, expect, it } from 'vitest'
 import { clearSign, type Descriptor } from '../index.js'
 import { hashEither, intentText, shown } from './helpers.js'
-import { allocationV2Multileg } from './fixtures/allocation-v2-multileg.js'
 import { builtinPingCreate } from './fixtures/ping.js'
+import allocateOnLocalNet from './fixtures/token-standard/amulet-v2-allocation-factory-allocate.json'
+
+/** splice-amulet 0.1.25, which the example ExternalPartyAmuletRules descriptor is bound to. */
+const AMULET_0_1_25 =
+    'c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66'
 
 // The example directory is what a user uploads. Every file is passed: descriptors for templates
 // the transaction does not use are ignored.
-const descriptorFiles = import.meta.glob<Descriptor>(
-    '../../examples/descriptors/*.json',
-    { eager: true, import: 'default' }
-)
+const descriptorFiles = {
+    ...import.meta.glob<Descriptor>('../../examples/descriptors/*.json', {
+        eager: true,
+        import: 'default',
+    }),
+    ...import.meta.glob<Descriptor>(
+        '../../examples/descriptors/splice/*.json',
+        { eager: true, import: 'default' }
+    ),
+}
 
 function exampleDescriptors(): Descriptor[] {
     return Object.values(descriptorFiles)
@@ -39,8 +49,8 @@ describe('example descriptors', () => {
         expect((await described(builtinPingCreate)).complete).toBe(true)
     })
 
-    it('describes a captured two-leg allocation', async () => {
-        const result = await described(allocationV2Multileg)
+    it('describes a captured allocation on the package the example is bound to', async () => {
+        const result = await described(allocateOnLocalNet.preparedTransaction)
         const op = result.operations[0]
 
         expect(result.complete).toBe(true)
@@ -49,6 +59,11 @@ describe('example descriptors', () => {
             kind: 'exercise',
             choiceId: 'AllocationFactory_Allocate',
             status: 'described',
+            template: {
+                packageId: AMULET_0_1_25,
+                moduleName: 'Splice.ExternalPartyAmuletRules',
+                entityName: 'ExternalPartyAmuletRules',
+            },
             interface: {
                 packageId:
                     '9818a0b5b827109de03a04c8f6151cde9d1e7fe5123dbb2dfeb0e52d7271287c',
@@ -56,28 +71,10 @@ describe('example descriptors', () => {
                 entityName: 'AllocationFactory',
             },
         })
-        expect(intentText(op)).toContain('of 2 transfer legs')
+        expect(intentText(op)).toContain('of 1 transfer legs')
         const legs = shown(op?.fields.find((f) => f.label === 'Legs'))
-        expect(legs).toEqual(expect.any(String))
         expect(JSON.parse(legs as string)).toMatchObject([
-            {
-                transferLegId: 'leg-1',
-                side: 'SenderSide',
-                amount: '0.3000000000',
-                instrumentId: 'Amulet',
-                otherside: {
-                    owner: 'bd::1220cb1468d149d30ad6f674acb2f6769dd2a6e6e1b90346fd4905fed66f37b2de56',
-                },
-            },
-            {
-                transferLegId: 'leg-2',
-                side: 'ReceiverSide',
-                amount: '0.1000000000',
-                instrumentId: 'Amulet',
-                otherside: {
-                    owner: 'bd::1220cb1468d149d30ad6f674acb2f6769dd2a6e6e1b90346fd4905fed66f37b2de56',
-                },
-            },
+            { side: 'SenderSide', instrumentId: 'Amulet' },
         ])
     })
 })

@@ -1,0 +1,68 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "15cf1eaaf35b3736d95bc5c260d3da5507cbd1edc5680f2d55d98de04e34d545",
+            "moduleName": "Utility.Registry.App.V0.Model.Burn",
+            "entityName": "BurnRequest"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Utility registry burn request"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "BurnRequest_Cancel",
+                "intent": "Cancel a burn request",
+                "interpolatedIntent": "Cancel the burn request of {@.contract.burn.amount} {@.contract.burn.instrumentId.id} held by {@.contract.burn.holder}, reference {@.contract.burn.reference}",
+                "fields": [
+                    {
+                        "path": "@.contract.burn.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.burn.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.burn.instrumentId.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.burn.holder",
+                        "label": "Holder",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.burn.reference",
+                        "label": "Reference",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.burn.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.burn.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw",
+                        "optional": true
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

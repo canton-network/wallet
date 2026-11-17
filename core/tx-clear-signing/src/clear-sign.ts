@@ -293,19 +293,34 @@ function descriptorInfo({
 }
 
 /**
- * The exercise entry for a node. The choice and the interface must both match: an entry without an
- * interface matches only a node exercised as the template's own choice.
+ * The exercise entry for a node. An entry matches when its choice and its interface both equal the
+ * node's. Interface identity is the module and entity; the node's interface package is not compared.
+ * When the node carries an interface and no entry names that choice and interface, the entry for the
+ * same choice with no interface is used. A node with no interface matches only that entry. An entry
+ * that names one interface never matches a node exercised through another, or through none.
  */
 function exerciseEntry(
     exercises: readonly Exercise[] | undefined,
     choiceId: string,
     iface: TemplateRef | undefined
 ): Exercise | undefined {
-    return exercises?.find(
-        (e) =>
-            e.choice === choiceId &&
-            e.interface?.moduleName === iface?.moduleName &&
-            e.interface?.entityName === iface?.entityName
+    const forChoice = exercises?.filter((entry) => entry.choice === choiceId)
+    const exact = forChoice?.find((entry) =>
+        sameInterface(entry.interface, iface)
+    )
+    if (exact) return exact
+    if (!iface) return undefined
+    return forChoice?.find((entry) => entry.interface === undefined)
+}
+
+/** Module and entity. A missing interface equals a node that carries none. */
+function sameInterface(
+    entry: Exercise['interface'],
+    iface: TemplateRef | undefined
+): boolean {
+    return (
+        entry?.moduleName === iface?.moduleName &&
+        entry?.entityName === iface?.entityName
     )
 }
 

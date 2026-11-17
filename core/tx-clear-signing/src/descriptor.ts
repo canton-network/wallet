@@ -110,7 +110,7 @@ const InterfaceSchema = z.strictObject({
     entityName: z.string().regex(identifier),
 })
 
-/** One choice of the template, optionally only when exercised through one interface. */
+/** One choice of the template. `interface`, when set, names the interface the entry is for. */
 const ExerciseSchema = operationSchema(ExerciseFieldSchema).extend({
     choice: z.string().regex(identifier),
     interface: InterfaceSchema.optional(),

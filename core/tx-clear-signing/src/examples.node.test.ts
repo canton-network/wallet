@@ -30,17 +30,19 @@ describe('standalone examples', () => {
         expect(result.operations[0]?.intent).toBe(allocationIntent)
     })
 
-    it('describes the five-root splice showcase', async () => {
+    it('describes the three-root amulet showcase', async () => {
         const result = await describeShowcase()
         expect(result.complete).toBe(true)
-        expect(result.operations).toHaveLength(5)
-        expect(result.operations[2]?.choiceId).toBe(
-            'FeaturedAppRight_CreateActivityMarker'
-        )
-        expect(result.operations[2]?.interface?.moduleName).toBe(
-            'Splice.Api.FeaturedAppRightV2'
-        )
-        expect(result.operations[4]?.choiceId).toBe('DsoRules_RequestVote')
+        expect(result.operations.map((op) => op.choiceId)).toEqual([
+            'TransferFactory_Transfer',
+            'AllocationFactory_Allocate',
+            'Allocation_Withdraw',
+        ])
+        expect(result.operations.map((op) => op.template?.entityName)).toEqual([
+            'ExternalPartyAmuletRules',
+            'ExternalPartyAmuletRules',
+            'AmuletAllocationV2',
+        ])
         expect(result.operations.map((op) => op.intent)).toEqual([
             ...showcaseIntents,
         ])
