@@ -20,7 +20,7 @@ import type {
     AllocationInstructionV2ActionItem,
     ActionItem,
 } from '@components/types'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 
 export const ownsAuthorizer = (
     spec: AllocationSpecification,

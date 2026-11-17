@@ -10,7 +10,7 @@ import {
 } from './utils/index.js'
 import type { PartyInfo } from './04-token-standard-allocation.js'
 import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import {
     startRegistry,
     stopRegistry,

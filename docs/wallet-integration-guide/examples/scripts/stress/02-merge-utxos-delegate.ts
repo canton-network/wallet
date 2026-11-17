@@ -10,7 +10,7 @@ import {
     localNetGlobalSynchronizer,
 } from '../utils/index.js'
 import { batchTap } from './utils.js'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import { configureLogging } from '../utils/configure-logging.js'
 const logger = await configureLogging()
 

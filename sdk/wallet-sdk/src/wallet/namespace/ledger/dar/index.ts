@@ -9,7 +9,7 @@ export class DarNamespace {
     constructor(private readonly sdkContext: SDKContext) {}
 
     async upload(
-        darBytes: Uint8Array | Buffer,
+        darBytes: Uint8Array,
         packageId: string,
         synchronizerId?: string,
         vetAllPackages?: boolean

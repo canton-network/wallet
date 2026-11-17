@@ -14,7 +14,7 @@ import { useAccounts } from './useAccounts'
 import { holdingsQueryOptions } from './query-options'
 import { useWalletSdk } from './useWalletSdk'
 import type { PortfolioHolding } from '@utils/holdings'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 
 export interface PortfolioAssetWalletBalanceView {
     id: string //wallet partyId

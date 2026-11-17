@@ -4,7 +4,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import type { PartyId } from '@canton-network/core-types'
 import {
     SDK,
