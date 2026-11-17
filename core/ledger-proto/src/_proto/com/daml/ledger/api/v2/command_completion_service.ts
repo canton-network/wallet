@@ -15,8 +15,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { OffsetCheckpoint } from './offset_checkpoint.js'
-import { Completion } from './completion.js'
+import { OffsetCheckpoint } from './offset_checkpoint.ts'
+import { Completion } from './completion.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.CompletionStreamRequest
  */

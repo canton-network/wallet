@@ -14,10 +14,10 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { SynchronizerTime } from './offset_checkpoint.js'
-import { TraceContext } from './trace_context.js'
-import { Duration } from '../../../../../google/protobuf/duration.js'
-import { Status } from '../../../../../google/rpc/status.js'
+import { SynchronizerTime } from './offset_checkpoint.ts'
+import { TraceContext } from './trace_context.ts'
+import { Duration } from '../../../../../google/protobuf/duration.ts'
+import { Status } from '../../../../../google/rpc/status.ts'
 /**
  * A completion represents the status of a submitted command on the ledger: it can be successful or failed.
  *

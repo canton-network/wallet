@@ -15,9 +15,9 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { VettedPackages } from '../package_reference.js'
-import { PriorTopologySerial } from '../package_reference.js'
-import { Timestamp } from '../../../../../../google/protobuf/timestamp.js'
+import { VettedPackages } from '../package_reference.ts'
+import { PriorTopologySerial } from '../package_reference.ts'
+import { Timestamp } from '../../../../../../google/protobuf/timestamp.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.admin.ListKnownPackagesRequest
  */

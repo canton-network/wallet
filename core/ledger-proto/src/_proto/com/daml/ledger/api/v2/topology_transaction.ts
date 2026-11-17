@@ -14,9 +14,9 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { ParticipantPermission } from './state_service.js'
-import { TraceContext } from './trace_context.js'
-import { Timestamp } from '../../../../../google/protobuf/timestamp.js'
+import { ParticipantPermission } from './state_service.ts'
+import { TraceContext } from './trace_context.ts'
+import { Timestamp } from '../../../../../google/protobuf/timestamp.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.TopologyTransaction
  */

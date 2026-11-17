@@ -15,7 +15,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { FieldMask } from '../../../../../../google/protobuf/field_mask.js'
+import { FieldMask } from '../../../../../../google/protobuf/field_mask.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.admin.IdentityProviderConfig
  */

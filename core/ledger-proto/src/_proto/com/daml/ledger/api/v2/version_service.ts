@@ -15,8 +15,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Duration } from '../../../../../google/protobuf/duration.js'
-import { ExperimentalFeatures } from './experimental_features.js'
+import { Duration } from '../../../../../google/protobuf/duration.ts'
+import { ExperimentalFeatures } from './experimental_features.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.GetLedgerApiVersionRequest
  */

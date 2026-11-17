@@ -14,11 +14,11 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Status } from '../../../../../google/rpc/status.js'
-import { Timestamp } from '../../../../../google/protobuf/timestamp.js'
-import { Record } from './value.js'
-import { Value } from './value.js'
-import { Identifier } from './value.js'
+import { Status } from '../../../../../google/rpc/status.ts'
+import { Timestamp } from '../../../../../google/protobuf/timestamp.ts'
+import { Record } from './value.ts'
+import { Value } from './value.ts'
+import { Identifier } from './value.ts'
 /**
  * Events in transactions can have two primary shapes:
  *

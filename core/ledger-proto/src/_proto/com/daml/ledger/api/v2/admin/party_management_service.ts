@@ -15,10 +15,10 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { SigningPublicKey } from '../crypto.js'
-import { FieldMask } from '../../../../../../google/protobuf/field_mask.js'
-import { Signature } from '../crypto.js'
-import { ObjectMeta } from './object_meta.js'
+import { SigningPublicKey } from '../crypto.ts'
+import { FieldMask } from '../../../../../../google/protobuf/field_mask.ts'
+import { Signature } from '../crypto.ts'
+import { ObjectMeta } from './object_meta.ts'
 /**
  * Required authorization: ``HasRight(ParticipantAdmin)``
  *

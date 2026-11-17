@@ -11,12 +11,6 @@ import { APIError } from '../common'
 
 const { req, res, next } = expressContext
 
-vi.mock('../../common/operator', () => ({
-    operator: {
-        party: 'admin',
-    },
-}))
-
 vi.mock('../../common/state', () => ({
     RegistryState: {
         instance: {

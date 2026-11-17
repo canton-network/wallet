@@ -5,7 +5,7 @@
 // Copyright (c) 2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 //
-import { Empty } from '../../../../../../google/protobuf/empty.js'
+import { Empty } from '../../../../../../google/protobuf/empty.ts'
 import { ServiceType } from '@protobuf-ts/runtime-rpc'
 import { WireType } from '@protobuf-ts/runtime'
 import type { BinaryWriteOptions } from '@protobuf-ts/runtime'
@@ -16,7 +16,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Timestamp } from '../../../../../../google/protobuf/timestamp.js'
+import { Timestamp } from '../../../../../../google/protobuf/timestamp.ts'
 /**
  * @generated from protobuf message com.daml.ledger.api.v2.testing.GetTimeRequest
  */

@@ -15,10 +15,10 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { AssignedEvent } from './reassignment.js'
-import { UnassignedEvent } from './reassignment.js'
-import { CreatedEvent } from './event.js'
-import { EventFormat } from './transaction_filter.js'
+import { AssignedEvent } from './reassignment.ts'
+import { UnassignedEvent } from './reassignment.ts'
+import { CreatedEvent } from './event.ts'
+import { EventFormat } from './transaction_filter.ts'
 /**
  * If the given offset is different than the ledger end, and there are (un)assignments in-flight at the given offset,
  * the snapshot may fail with "FAILED_PRECONDITION/PARTICIPANT_PRUNED_DATA_ACCESSED".

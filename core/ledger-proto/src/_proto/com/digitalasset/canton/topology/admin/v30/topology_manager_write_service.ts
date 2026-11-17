@@ -15,12 +15,12 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { StoreId_Temporary } from './common.js'
-import { SignedTopologyTransaction } from '../../../protocol/v30/topology.js'
-import { Duration } from '../../../../../../google/protobuf/duration.js'
-import { StoreId } from './common.js'
-import { TopologyMapping } from '../../../protocol/v30/topology.js'
-import { Enums_TopologyChangeOp } from '../../../protocol/v30/topology.js'
+import { StoreId_Temporary } from './common.ts'
+import { SignedTopologyTransaction } from '../../../protocol/v30/topology.ts'
+import { Duration } from '../../../../../../google/protobuf/duration.ts'
+import { StoreId } from './common.ts'
+import { TopologyMapping } from '../../../protocol/v30/topology.ts'
+import { Enums_TopologyChangeOp } from '../../../protocol/v30/topology.ts'
 /**
  * @generated from protobuf message com.digitalasset.canton.topology.admin.v30.GenerateTransactionsRequest
  */

@@ -7,12 +7,12 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { TimeService } from './time_service.js'
-import type { Empty } from '../../../../../../google/protobuf/empty.js'
-import type { SetTimeRequest } from './time_service.js'
+import { TimeService } from './time_service.ts'
+import type { Empty } from '../../../../../../google/protobuf/empty.ts'
+import type { SetTimeRequest } from './time_service.ts'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetTimeResponse } from './time_service.js'
-import type { GetTimeRequest } from './time_service.js'
+import type { GetTimeResponse } from './time_service.ts'
+import type { GetTimeRequest } from './time_service.ts'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**

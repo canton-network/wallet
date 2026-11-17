@@ -18,7 +18,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Empty } from '../../../../../google/protobuf/empty.js'
+import { Empty } from '../../../../../google/protobuf/empty.ts'
 /**
  * Encodes values that the ledger accepts as command arguments and emits as contract arguments.
  *
