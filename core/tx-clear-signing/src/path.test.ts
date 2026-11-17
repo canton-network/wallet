@@ -33,6 +33,7 @@ describe('parsePath', () => {
         '1amount',
         '@.contract.id',
         'executors.[]',
+        'values["\\q"]',
     ])('rejects %j', (path) => {
         expect(() => parsePath(path)).toThrow(PathError)
     })

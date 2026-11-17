@@ -247,25 +247,56 @@ describe('wallet and apps', () => {
         ])
     })
 
-    it('does not word creates that the ledger makes only inside a choice', async () => {
-        // Each of these was prepared as a root on a local ledger, which a submitter holding every
-        // signatory can do. On a network the contract is created by a choice: a governance lock
-        // by a transfer to the lock manager, a vote request by DsoRules_RequestVote, a balance
-        // update by a Splitwell group choice, and so on. The reference descriptors therefore have
-        // no create for them, and a wallet shows such a root as undescribed.
-        for (const id of [
-            'external-party-amulet-rules-create',
-            'featured-app-right-create',
-            'gl-lock-create',
-            'gl-substitution-create-fa-vesting',
-            'gl-transfer-create',
-            'transfer-offer-create',
-            'transfer-preapproval-create',
-            'vote-request-create',
-            'balance-update-create-transfer',
-        ]) {
-            expect((await describeCaptured(id)).status).toBe('undescribed')
+    it('describes every fixture that is not marked undescribable', async () => {
+        const intents: Record<string, string> = {}
+        const marked: string[] = []
+        for (const id of capturedIds) {
+            const fixture = captured(id)
+            const { operations, complete } = await describedSplice(
+                fixture.preparedTransaction
+            )
+            expect(operations, id).toHaveLength(1)
+            const op = operations[0]!
+            if (fixture.undescribable !== undefined) {
+                expect(fixture.undescribable, id).not.toBe('')
+                expect(op.status, id).toBe('undescribed')
+                marked.push(id)
+                continue
+            }
+            expect(op.status, `${id}: ${op.reason ?? op.intent}`).toBe(
+                'described'
+            )
+            expect(complete, id).toBe(true)
+            intents[id] = op.intent
         }
+        expect(marked).toEqual([])
+        const dso = `csdso::1220d44fc1c3ba0b5bdf7b956ee71bc94ebe2d23258dc268fdf0824fbaeff2c61424`
+        expect(intents).toEqual({
+            'activity-marker-v1': `Record activity of ${PROVIDER} for 2 beneficiaries`,
+            'activity-marker-v2': `Record activity of ${PROVIDER} for 1 beneficiaries`,
+            'allocation-factory-allocate-multileg':
+                'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "capture-multileg" of 2 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Committed: cannot be withdrawn before the settlement deadline',
+            'balance-update-create-netting': `Record a balance update in the group of ${ALICE}, managed by ${PROVIDER}`,
+            'balance-update-create-transfer': `Record a balance update in the group of ${ALICE}, managed by ${PROVIDER}`,
+            'batching-utility-execute': `Execute 2 token standard actions as ${ALICE}`,
+            'dso-request-vote-amulet-schedule': `Request a vote by ${ALICE}: "New traffic price"`,
+            'dso-request-vote-set-config': `Request a vote by ${ALICE}: "Raise maxTextLength"`,
+            'dso-set-synchronizer-node-config': `Set the node configuration of ${ALICE} on "global-domain::1220c0ffee"`,
+            'external-party-amulet-rules-create': `Create the external-party amulet rules of ${dso}`,
+            'featured-app-right-create': `Grant ${PROVIDER} a featured app right from ${dso}`,
+            'gl-lock-create': `Lock 10000.0000000000 for ${ALICE} under ${dso}`,
+            'gl-substitution-create-fa-vesting': `Propose substituting 250.0000000000 of the governance lock of ${ALICE}, as ${BOB}`,
+            'gl-substitution-create-sv-full': `Propose substituting 250.0000000000 of the governance lock of ${ALICE}, as ${ALICE}`,
+            'gl-transfer-create': `Propose transferring 100.0000000000 of the governance lock of ${ALICE} to ${BOB}`,
+            'gl-transfer-reject-v1': `Reject 100.0000000000 of governance locks from ${BOB}`,
+            'otc-trade-proposal-accept': `Approve, as ${BOB}, a trade of 2 legs at ${PROVIDER}`,
+            'otc-trade-proposal-create': `Trade 100.0000000000 "Amulet" from ${ALICE} to ${BOB}, one of 2 legs`,
+            'transfer-offer-accept': `Accept 12.5000000000 USD from ${ALICE}`,
+            'transfer-offer-create': `Offer 12.5000000000 USD from ${ALICE} to ${BOB}: "Lunch"`,
+            'transfer-preapproval-create': `Preapprove transfers to ${BOB} managed by ${PROVIDER} until 2027-02-07T16:29:58Z, under ${dso}`,
+            'vote-request-create': `Open a vote requested by "sv-1", under ${dso}: "Raise maxTextLength"`,
+            'wallet-user-proxy-create': `Wallet user proxy of ${PROVIDER}`,
+        })
     })
 
     it('words the creates a party submits itself', async () => {

@@ -23,7 +23,10 @@ export type RootNode =
     | {
           nodeId: string
           kind: 'other'
-          /** `fetch`, `rollback`, or `missing` when the root has no node. */
+          /**
+           * `fetch`, `rollback`, `queryByKey`, `missing` when the root has no node, or `empty`
+           * when the node type is unset.
+           */
           nodeType: string
           template?: TemplateRef
       }

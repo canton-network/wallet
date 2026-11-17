@@ -7,33 +7,41 @@ import type { Value } from '@canton-network/core-ledger-proto'
 export const CONTRACT_PREFIX = '@.contract.'
 
 /** Container fields of the prepared transaction, shared by create and exercise. */
-const SHARED_CONTAINER = new Set([
+export const SHARED_CONTAINER_FIELDS = [
     'contractId',
     'signatories',
     'stakeholders',
     'synchronizerId',
     'actAs',
-])
+] as const
 
 /** Container fields that exist only on an exercise node. */
-const EXERCISE_CONTAINER = new Set([
+export const EXERCISE_ONLY_CONTAINER_FIELDS = [
     'actingParties',
     'choiceObservers',
     'consuming',
-])
+] as const
 
-/** The prepared-transaction values a container path reads. */
-export interface ContainerFields {
-    kind: 'create' | 'exercise'
+const SHARED_CONTAINER = new Set<string>(SHARED_CONTAINER_FIELDS)
+const EXERCISE_CONTAINER = new Set<string>(EXERCISE_ONLY_CONTAINER_FIELDS)
+
+interface SharedContainer {
     contractId: string
     signatories: readonly string[]
     stakeholders: readonly string[]
-    actingParties: readonly string[]
-    choiceObservers: readonly string[]
-    consuming: boolean
     synchronizerId: string
     actAs: readonly string[]
 }
+
+/** The prepared-transaction values a container path reads. */
+export type ContainerFields =
+    | (SharedContainer & { kind: 'create' })
+    | (SharedContainer & {
+          kind: 'exercise'
+          actingParties: readonly string[]
+          choiceObservers: readonly string[]
+          consuming: boolean
+      })
 
 /**
  * The name of a container path such as `@.contractId`. `@.contract.<path>` is not one: that prefix
@@ -53,10 +61,22 @@ export function containerFieldName(path: string): string | undefined {
  * @throws PathError when the path does not name a container field of this node
  */
 export function containerValue(name: string, source: ContainerFields): Value {
-    if (EXERCISE_CONTAINER.has(name) && source.kind !== 'exercise') {
-        throw new PathError(`'@.${name}' is only valid on an exercise`)
+    if (EXERCISE_CONTAINER.has(name)) {
+        if (source.kind !== 'exercise') {
+            throw new PathError(`'@.${name}' is only valid on an exercise`)
+        }
+        switch (name) {
+            case 'actingParties':
+                return parties(source.actingParties)
+            case 'choiceObservers':
+                return parties(source.choiceObservers)
+            case 'consuming':
+                return { sum: { oneofKind: 'bool', bool: source.consuming } }
+            default:
+                throw new PathError(`unknown container field '@.${name}'`)
+        }
     }
-    if (!SHARED_CONTAINER.has(name) && !EXERCISE_CONTAINER.has(name)) {
+    if (!SHARED_CONTAINER.has(name)) {
         throw new PathError(`unknown container field '@.${name}'`)
     }
     switch (name) {
@@ -66,12 +86,6 @@ export function containerValue(name: string, source: ContainerFields): Value {
             return parties(source.signatories)
         case 'stakeholders':
             return parties(source.stakeholders)
-        case 'actingParties':
-            return parties(source.actingParties)
-        case 'choiceObservers':
-            return parties(source.choiceObservers)
-        case 'consuming':
-            return { sum: { oneofKind: 'bool', bool: source.consuming } }
         case 'synchronizerId':
             return { sum: { oneofKind: 'text', text: source.synchronizerId } }
         case 'actAs':
@@ -125,8 +139,7 @@ export function parsePath(path: string): Step[] {
         pos += name.length
         while (path.startsWith('["', pos)) {
             const end = quotedKeyEnd(path, pos + 1)
-            const key: unknown = JSON.parse(path.slice(pos + 1, end + 1))
-            steps.push({ kind: 'key', key: String(key) })
+            steps.push({ kind: 'key', key: mapKey(path, pos + 1, end) })
             pos = end + 2
         }
         if (pos === path.length) {
@@ -151,6 +164,19 @@ function quotedKeyEnd(s: string, start: number): number {
         }
     }
     throw new PathError(`unterminated map key in '${s}'`)
+}
+
+// `start` is the opening quote. `end` is the closing quote. The slice is a JSON string.
+// JSON.parse throws SyntaxError on a bad escape; a field failure is a PathError.
+function mapKey(path: string, start: number, end: number): string {
+    const raw = path.slice(start, end + 1)
+    try {
+        const key: unknown = JSON.parse(raw)
+        if (typeof key === 'string') return key
+    } catch (err) {
+        if (!(err instanceof SyntaxError)) throw err
+    }
+    throw new PathError(`invalid map key in '${path}'`)
 }
 
 export interface Resolved {

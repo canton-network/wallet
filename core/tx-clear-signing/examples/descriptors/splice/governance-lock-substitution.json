@@ -13,6 +13,54 @@
         "name": "Governance lock substitution"
     },
     "display": {
+        "create": {
+            "intent": "Propose a governance lock substitution",
+            "interpolatedIntent": "Propose substituting {amount} of the governance lock of {target.owner}, as {owner}",
+            "fields": [
+                {
+                    "path": "amount",
+                    "label": "Amount",
+                    "format": "number"
+                },
+                {
+                    "path": "target.owner",
+                    "label": "Lock owner",
+                    "format": "party"
+                },
+                {
+                    "path": "owner",
+                    "label": "Proposed by",
+                    "format": "party"
+                },
+                {
+                    "path": "target.dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "target.specification",
+                    "label": "Lock type",
+                    "format": "raw"
+                },
+                {
+                    "path": "lockedAmulet",
+                    "label": "Funding",
+                    "format": "contractId",
+                    "optional": true
+                },
+                {
+                    "path": "expiresAt",
+                    "label": "Expires",
+                    "format": "dateTime"
+                },
+                {
+                    "path": "originalSubstitutionCid",
+                    "label": "First proposal",
+                    "format": "contractId",
+                    "optional": true
+                }
+            ]
+        },
         "exercises": [
             {
                 "choice": "TransferInstruction_Accept",

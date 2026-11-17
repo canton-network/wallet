@@ -55,12 +55,7 @@ export function vectorDescriptor(
 
 /** A prepared transaction as the base64 the parser takes. */
 export function encode(tx: PreparedTransaction): string {
-    const bytes = PreparedTransaction.toBinary(tx)
-    let binary = ''
-    for (let i = 0; i < bytes.length; i++) {
-        binary += String.fromCharCode(bytes[i]!)
-    }
-    return btoa(binary)
+    return toBase64(PreparedTransaction.toBinary(tx))
 }
 
 // Named here because the ledger proto does not export `Node`, and its node-type union names

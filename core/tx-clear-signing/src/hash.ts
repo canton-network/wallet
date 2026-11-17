@@ -6,7 +6,6 @@ import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
 import { toBase64 } from './bytes.js'
 
 // V3 first: a V2 hash of a V3 transaction is a different value, so the claimed hash selects the scheme.
-// the core-tx-hashing module does not yet support V4, so this is left out here as well.
 const SCHEMES = [HashingSchemeVersion.V3, HashingSchemeVersion.V2] as const
 
 /**

@@ -13,6 +13,42 @@
         "name": "Governance lock transfer"
     },
     "display": {
+        "create": {
+            "intent": "Propose a governance lock transfer",
+            "interpolatedIntent": "Propose transferring {amount} of the governance lock of {source.owner} to {receiver}",
+            "fields": [
+                {
+                    "path": "amount",
+                    "label": "Amount",
+                    "format": "number"
+                },
+                {
+                    "path": "source.owner",
+                    "label": "From",
+                    "format": "party"
+                },
+                {
+                    "path": "receiver",
+                    "label": "To",
+                    "format": "party"
+                },
+                {
+                    "path": "source.dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "source.specification",
+                    "label": "Lock type",
+                    "format": "raw"
+                },
+                {
+                    "path": "expiresAt",
+                    "label": "Expires",
+                    "format": "dateTime"
+                }
+            ]
+        },
         "exercises": [
             {
                 "choice": "TransferInstruction_Accept",

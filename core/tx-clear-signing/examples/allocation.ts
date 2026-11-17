@@ -11,10 +11,8 @@
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
-import { clearSign, type Descriptor } from '../src/index.js'
+import { clearSign } from '../src/index.js'
 import allocation from '../src/__tests__/fixtures/splice/allocation-factory-allocate-multileg.json'
-
-const descriptor = externalPartyAmuletRules as Descriptor
 
 /** Base64 prepared transaction, as `/v2/interactive-submission/prepare` returns it. */
 export const preparedTransaction = allocation.preparedTransaction
@@ -23,10 +21,14 @@ export const preparedTransaction = allocation.preparedTransaction
 export const preparedTransactionHash = allocation.preparedTransactionHash
 
 export const intent =
-    'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "capture-multileg" of 2 transfer legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Committed: cannot be withdrawn before the settlement deadline'
+    'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "capture-multileg" of 2 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Committed: cannot be withdrawn before the settlement deadline'
 
 export function describeAllocation() {
-    return clearSign(preparedTransaction, [descriptor], preparedTransactionHash)
+    return clearSign(
+        preparedTransaction,
+        [externalPartyAmuletRules],
+        preparedTransactionHash
+    )
 }
 
 async function run(): Promise<void> {

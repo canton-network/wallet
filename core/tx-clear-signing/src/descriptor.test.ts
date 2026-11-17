@@ -8,7 +8,11 @@ import ping from '../examples/descriptors/ping.json'
 // The examples of canton-clear-signing-v1.schema.json. The parser must agree with the schema on every one.
 // No type argument: see core/tx-hashing/src/__tests__/helpers/load-vectors.ts.
 const valid = {
-    ...import.meta.glob('../examples/descriptors/ping.json', {
+    ...import.meta.glob('../examples/descriptors/*.json', {
+        eager: true,
+        import: 'default',
+    }),
+    ...import.meta.glob('../examples/descriptors/splice/*.json', {
         eager: true,
         import: 'default',
     }),
@@ -222,7 +226,12 @@ describe('parseDescriptor', () => {
         ).toThrow('optional')
     })
 
-    it('rejects a package ID on an exercise interface', () => {
+    it('accepts an interface package ID, and rejects one that is not a package ID', () => {
+        const iface = {
+            packageId: ping.context.template.packageId,
+            moduleName: 'Canton.Internal.Ping',
+            entityName: 'Asset',
+        }
         expect(() =>
             parseDescriptor({
                 ...ping,
@@ -231,15 +240,26 @@ describe('parseDescriptor', () => {
                         {
                             choice: 'Respond',
                             intent: 'Respond',
-                            interface: {
-                                ...ping.context.template,
-                                entityName: 'Asset',
-                            },
+                            interface: iface,
                         },
                     ],
                 },
             })
-        ).toThrow('interface')
+        ).not.toThrow()
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                display: {
+                    exercises: [
+                        {
+                            choice: 'Respond',
+                            intent: 'Respond',
+                            interface: { ...iface, packageId: '55ba4deb' },
+                        },
+                    ],
+                },
+            })
+        ).toThrow('packageId')
     })
 
     it('needs create or exercises', () => {
@@ -282,6 +302,45 @@ describe('parseDescriptor', () => {
                             choice: 'Respond',
                             intent: 'Respond through Asset',
                             interface: iface,
+                        },
+                    ],
+                },
+            })
+        ).not.toThrow()
+        const packageId = ping.context.template.packageId
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                display: {
+                    exercises: [
+                        {
+                            choice: 'Respond',
+                            intent: 'Respond',
+                            interface: { ...iface, packageId },
+                        },
+                        {
+                            choice: 'Respond',
+                            intent: 'Respond again',
+                            interface: { ...iface, packageId },
+                        },
+                    ],
+                },
+            })
+        ).toThrow('the same choice and interface is already described')
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                display: {
+                    exercises: [
+                        {
+                            choice: 'Respond',
+                            intent: 'Respond',
+                            interface: iface,
+                        },
+                        {
+                            choice: 'Respond',
+                            intent: 'Respond for this package',
+                            interface: { ...iface, packageId },
                         },
                     ],
                 },

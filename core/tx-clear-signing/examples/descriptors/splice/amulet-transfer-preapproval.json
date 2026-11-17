@@ -13,6 +13,42 @@
         "name": "Transfer preapproval"
     },
     "display": {
+        "create": {
+            "intent": "Preapprove incoming transfers",
+            "interpolatedIntent": "Preapprove transfers to {receiver} managed by {provider} until {expiresAt}, under {dso}",
+            "fields": [
+                {
+                    "path": "receiver",
+                    "label": "Receiver",
+                    "format": "party"
+                },
+                {
+                    "path": "provider",
+                    "label": "Provider",
+                    "format": "party"
+                },
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "validFrom",
+                    "label": "Valid from",
+                    "format": "dateTime"
+                },
+                {
+                    "path": "lastRenewedAt",
+                    "label": "Last renewed at",
+                    "format": "dateTime"
+                },
+                {
+                    "path": "expiresAt",
+                    "label": "Expires at",
+                    "format": "dateTime"
+                }
+            ]
+        },
         "exercises": [
             {
                 "choice": "TransferPreapproval_SendV2",

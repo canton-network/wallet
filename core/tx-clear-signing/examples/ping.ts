@@ -9,7 +9,7 @@
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import ping from './descriptors/ping.json'
-import { clearSign, type Descriptor } from '../src/index.js'
+import { clearSign } from '../src/index.js'
 import { builtinPingCreate } from '../src/__tests__/fixtures/ping.js'
 
 /** Base64 prepared transaction, as `/v2/interactive-submission/prepare` returns it. */
@@ -23,11 +23,7 @@ export const intent =
     'Ping "04d887dd-15b8-4954-8b79-a853811ce7cf" from v1-01-alice::1220ee2624190834dddf28f194685acee8f00cbde9ee0d211dae277f4d799884f289 to v1-01-alice::1220ee2624190834dddf28f194685acee8f00cbde9ee0d211dae277f4d799884f289'
 
 export function describePing() {
-    return clearSign(
-        preparedTransaction,
-        [ping as Descriptor],
-        preparedTransactionHash
-    )
+    return clearSign(preparedTransaction, [ping], preparedTransactionHash)
 }
 
 async function run(): Promise<void> {

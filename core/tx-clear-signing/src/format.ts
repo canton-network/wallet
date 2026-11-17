@@ -16,6 +16,17 @@ export type EnumTables = Partial<Record<string, Record<string, string>>>
 
 const MICROS_PER_SECOND = 1_000_000n
 const MS_PER_DAY = 86_400_000
+const INT64_MIN = -(2n ** 63n)
+const INT64_MAX = 2n ** 63n - 1n
+// Canonical decimal: 0, or no leading zero. `-0` is not canonical.
+const CANONICAL_INT64 = /^(?:0|-?[1-9]\d*)$/
+// Daml LF Numeric.fromString: a decimal point, no leading zeros, precision <= 38, scale <= 37.
+const NUMERIC = /^-?(0|[1-9]\d*)\.(\d*)$/
+const MAX_NUMERIC_PRECISION = 38
+const MAX_NUMERIC_SCALE = 37
+// LF party identifiers also allow a space. A space would extend the sentence, so a party shown
+// here is letters, digits, colon, minus and underscore, at most 255 characters.
+const PARTY = /^[A-Za-z0-9:_-]{1,255}$/
 
 /** How a field names its enum table: `$.metadata.enums.<name>`. */
 export const ENUM_REF_PREFIX = '$.metadata.enums.'
@@ -25,7 +36,8 @@ export const ENUM_REF_PREFIX = '$.metadata.enums.'
  * other; it never coerces. Text is shown as a JSON string literal, so a value read from the
  * transaction cannot pass as the descriptor's wording.
  *
- * @throws FormatError on a kind the formatter does not accept, or an enum value missing from its table
+ * @throws FormatError on a kind the formatter does not accept, a number or party outside its
+ * grammar, or an enum value missing from its table
  */
 export function formatValue(v: Value, field: Field, enums: EnumTables): string {
     return sanitize(formatUnsanitized(v, field, enums))
@@ -39,14 +51,14 @@ function formatUnsanitized(v: Value, field: Field, enums: EnumTables): string {
             if (sum.oneofKind === 'text') return JSON.stringify(sum.text)
             break
         case 'number':
-            if (sum.oneofKind === 'int64') return sum.int64
-            if (sum.oneofKind === 'numeric') return sum.numeric
+            if (sum.oneofKind === 'int64') return formatInt64(sum.int64)
+            if (sum.oneofKind === 'numeric') return formatNumeric(sum.numeric)
             break
         case 'boolean':
             if (sum.oneofKind === 'bool') return String(sum.bool)
             break
         case 'party':
-            if (sum.oneofKind === 'party') return sum.party
+            if (sum.oneofKind === 'party') return formatParty(sum.party)
             break
         case 'contractId':
             if (sum.oneofKind === 'contractId') return sum.contractId
@@ -69,6 +81,39 @@ function formatUnsanitized(v: Value, field: Field, enums: EnumTables): string {
     throw new FormatError(
         `format '${format}' does not accept ${describeKind(v)}`
     )
+}
+
+function formatInt64(raw: string): string {
+    if (!CANONICAL_INT64.test(raw)) {
+        throw new FormatError(`'${raw}' is not a decimal int64`)
+    }
+    const n = BigInt(raw)
+    if (n < INT64_MIN || n > INT64_MAX) {
+        throw new FormatError(`'${raw}' is not a decimal int64`)
+    }
+    return raw
+}
+
+function formatNumeric(raw: string): string {
+    const match = NUMERIC.exec(raw)
+    const intPart = match?.[1]
+    const decPart = match?.[2]
+    if (!match || intPart === undefined || decPart === undefined) {
+        throw new FormatError(`'${raw}' is not a decimal numeric`)
+    }
+    const scale = decPart.length
+    const precision = intPart === '0' ? scale : intPart.length + scale
+    if (precision > MAX_NUMERIC_PRECISION || scale > MAX_NUMERIC_SCALE) {
+        throw new FormatError(`'${raw}' is not a decimal numeric`)
+    }
+    return raw
+}
+
+function formatParty(party: string): string {
+    if (!PARTY.test(party)) {
+        throw new FormatError(`'${party}' is not a party identifier`)
+    }
+    return party
 }
 
 function formatEnum(v: Value, field: Field, enums: EnumTables): string {
@@ -219,7 +264,9 @@ function toPlain(v: Value | undefined): Plain {
         case 'enum':
             return sum.enum.constructor
         default:
-            return null
+            throw new FormatError(
+                `format 'raw' does not accept ${sum?.oneofKind ?? 'an empty value'}`
+            )
     }
 }
 
@@ -229,7 +276,7 @@ function toPlain(v: Value | undefined): Plain {
 export const UNSAFE_CLASS = String.raw`\p{Cc}\p{Cf}\p{Zl}\p{Zp}`
 const UNSAFE = new RegExp(`[${UNSAFE_CLASS}]`, 'gu')
 
-function sanitize(s: string): string {
+export function sanitize(s: string): string {
     return s.replace(
         UNSAFE,
         (c) => `\\u{${c.codePointAt(0)?.toString(16).padStart(4, '0')}}`

@@ -221,8 +221,14 @@
         "interface": {
             "title": "Interface",
             "type": "object",
-            "description": "The interface the choice is exercised through, by module and entity. The template's package ID already fixes which interface package that names, so the package ID is not repeated. Both values MUST equal the node's interface_id. An entry with an interface matches only a node exercised through that interface. An entry without one matches the template's own choice, and is the fallback for that choice when no entry names the node's interface.",
+            "description": "The interface the choice is exercised through. moduleName and entityName must equal the node's interface_id. packageId is optional. Omit it when the template's package ID already selects the interface package the template was compiled against; the entry then matches that module and entity on any package. Set it to match only that interface package. An entry with an interface matches only a node exercised through that interface. An entry without one matches the template's own choice, and is the fallback for that choice when no entry names the node's interface.",
             "properties": {
+                "packageId": {
+                    "title": "Package ID",
+                    "type": "string",
+                    "description": "The interface package ID. Omit it when the template's package ID already selects the interface package the template was compiled against. When set, it must equal the package ID of the node's interface_id.",
+                    "pattern": "^[0-9a-f]{64}$"
+                },
                 "moduleName": {
                     "title": "Module Name",
                     "type": "string",
@@ -273,7 +279,7 @@
             "title": "Path",
             "type": "string",
             "description": "A path to a value. No prefix starts at the create or choice argument. '@.contract.' starts at the exercised contract's create argument and continues with at least one step. '@.contractId', '@.signatories', '@.stakeholders', '@.synchronizerId' and '@.actAs' read the prepared transaction, on a create and an exercise. '@.actingParties', '@.choiceObservers' and '@.consuming' do so on an exercise only. A name selects a record field, or the payload of the variant constructor of that name; a different constructor fails. [\"key\"] selects a text-map entry. Some is unwrapped at every step. None at any step, or a record field the ledger left out, makes the value None. A final length on a list or text map is its number of elements. A list or map is shown whole, with raw.",
-            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*|@\\.contract\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs|actingParties|choiceObservers|consuming))$"
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.contract\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs|actingParties|choiceObservers|consuming))$"
         },
 
         "field": {
@@ -325,18 +331,11 @@
             "additionalProperties": false
         },
 
-        "argumentPath": {
-            "title": "Argument Path",
-            "type": "string",
-            "description": "A path into a create argument, where there is no contract to read. It has the steps of a path, without the '@.contract.' prefix.",
-            "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*$"
-        },
-
         "createPath": {
             "title": "Create Path",
             "type": "string",
             "description": "A path on a create: an argument path, or a container field shared with exercises. '@.contract.' and the exercise-only container fields are not valid here.",
-            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\]|\\\\.)*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs))$"
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs))$"
         },
 
         "names": {
@@ -350,7 +349,7 @@
                 },
                 {
                     "const": "number",
-                    "description": "Display a numeric value without changing its meaning or precision."
+                    "description": "Display an int64 as a canonical decimal, or a Numeric as its ledger decimal: an optional minus, digits with no leading zero, a decimal point and digits, with at most 38 digits and at most 37 of them after the point. Any other text fails the field."
                 },
                 {
                     "const": "boolean",
@@ -358,7 +357,7 @@
                 },
                 {
                     "const": "party",
-                    "description": "Display a Canton party identifier."
+                    "description": "Display a Canton party identifier of 1 to 255 letters, digits, colons, minuses and underscores. A space is a legal ledger party character and fails the field, so a party cannot extend the sentence."
                 },
                 {
                     "const": "contractId",

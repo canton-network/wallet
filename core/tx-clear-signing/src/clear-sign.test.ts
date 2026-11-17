@@ -212,7 +212,11 @@ describe('clearSign', () => {
         const named = { moduleName: 'HashVectors', entityName: 'Asset' }
         const poke = (
             wording: string,
-            iface?: { moduleName: string; entityName: string }
+            iface?: {
+                moduleName: string
+                entityName: string
+                packageId?: string
+            }
         ) => ({
             choice: 'Poke',
             ...(iface && { interface: iface }),
@@ -301,6 +305,81 @@ describe('clearSign', () => {
             })
             expect(intentText(op)).toBe(
                 `Poke, by the template, the asset of ${OWNER}`
+            )
+        })
+
+        it('uses an entry that names the interface package', async () => {
+            const pinned = vectorDescriptor('Plain', {
+                exercises: [
+                    poke('Poke, through this package, the asset of', {
+                        ...named,
+                        packageId: VECTOR_PACKAGE,
+                    }),
+                ],
+            })
+            const [op] = (
+                await described(exerciseInterface.preparedTransaction, [pinned])
+            ).operations
+            expect(op).toMatchObject({
+                choiceId: 'Poke',
+                interface: asset,
+                status: 'described',
+            })
+            expect(intentText(op)).toBe(
+                `Poke, through this package, the asset of ${OWNER}`
+            )
+        })
+
+        it('does not use an entry for another interface package', async () => {
+            const otherPackage = vectorDescriptor('Plain', {
+                exercises: [
+                    poke('Poke, through another package, the asset of', {
+                        ...named,
+                        packageId: '0'.repeat(64),
+                    }),
+                ],
+            })
+            const [op] = (
+                await described(exerciseInterface.preparedTransaction, [
+                    otherPackage,
+                ])
+            ).operations
+            expect(op).toMatchObject({ status: 'undescribed' })
+        })
+
+        it('prefers the entry that names the interface package', async () => {
+            const both = vectorDescriptor('Plain', {
+                exercises: [
+                    poke('Poke, by module and entity, the asset of', named),
+                    poke('Poke, through this package, the asset of', {
+                        ...named,
+                        packageId: VECTOR_PACKAGE,
+                    }),
+                ],
+            })
+            const [op] = (
+                await described(exerciseInterface.preparedTransaction, [both])
+            ).operations
+            expect(intentText(op)).toBe(
+                `Poke, through this package, the asset of ${OWNER}`
+            )
+        })
+
+        it('uses the unpinned entry when the package does not match', async () => {
+            const both = vectorDescriptor('Plain', {
+                exercises: [
+                    poke('Poke, through another package, the asset of', {
+                        ...named,
+                        packageId: '0'.repeat(64),
+                    }),
+                    poke('Poke, by module and entity, the asset of', named),
+                ],
+            })
+            const [op] = (
+                await described(exerciseInterface.preparedTransaction, [both])
+            ).operations
+            expect(intentText(op)).toBe(
+                `Poke, by module and entity, the asset of ${OWNER}`
             )
         })
 
@@ -699,6 +778,39 @@ describe('clearSign', () => {
         expect(op?.intent).toBe(
             `Ping "x\\" and send 1000 to \\"Mallory" from ${ALICE} to ${ALICE}`
         )
+    })
+
+    it('escapes a bidirectional character in a field error', async () => {
+        const RLO = String.fromCodePoint(0x202e)
+        const create = decode(builtinPingCreate)
+        const nodeType = rootNodeType(create)
+        if (nodeType.oneofKind !== 'create') {
+            throw new Error('fixture is not a create')
+        }
+        const argument = nodeType.create.argument?.sum
+        if (argument?.oneofKind !== 'record') {
+            throw new Error('fixture has no record argument')
+        }
+        const initiator = argument.record.fields.find(
+            (f) => f.label === 'initiator'
+        )
+        if (!initiator) throw new Error('fixture has no initiator')
+        initiator.value = {
+            sum: { oneofKind: 'party', party: `alice${RLO}::1` },
+        }
+        const descriptor = parseDescriptor({
+            ...pingJson,
+            display: {
+                create: {
+                    intent: 'Ping',
+                    fields: [{ path: 'initiator', format: 'party' }],
+                },
+            },
+        })
+        const [op] = (await described(encode(create), [descriptor])).operations
+        const error = shown(op?.fields[0])
+        expect(error).toContain('\\u{202e}')
+        expect(error).not.toContain(RLO)
     })
 
     it('reports an invalid descriptor on the root it binds to', async () => {

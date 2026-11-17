@@ -126,6 +126,40 @@ describe('formatValue', () => {
         expect(formatValue(int64('5'), field(undefined), {})).toBe('5')
     })
 
+    it('rejects a number or party that could extend the sentence', () => {
+        const numeric = (n: string): Value => ({
+            sum: { oneofKind: 'numeric', numeric: n },
+        })
+        const party = (p: string): Value => ({
+            sum: { oneofKind: 'party', party: p },
+        })
+        expect(() =>
+            formatValue(numeric('1 and send 1000'), field('number'), {})
+        ).toThrow(FormatError)
+        expect(() => formatValue(int64('0x10'), field('number'), {})).toThrow(
+            FormatError
+        )
+        expect(() =>
+            formatValue(int64('9223372036854775808'), field('number'), {})
+        ).toThrow(FormatError)
+        expect(formatValue(numeric('1.0000000000'), field('number'), {})).toBe(
+            '1.0000000000'
+        )
+        expect(formatValue(int64('-42'), field('number'), {})).toBe('-42')
+        expect(() =>
+            formatValue(party('alice and bob'), field('party'), {})
+        ).toThrow(FormatError)
+        expect(formatValue(party('alice::1220abcd'), field('party'), {})).toBe(
+            'alice::1220abcd'
+        )
+    })
+
+    it('fails a raw value it does not recognise', () => {
+        expect(() =>
+            formatValue({ sum: {} } as Value, field('raw'), {})
+        ).toThrow("format 'raw' does not accept an empty value")
+    })
+
     it('shows a list of records as key-value JSON', () => {
         const party = (p: string): Value => ({
             sum: { oneofKind: 'party', party: p },

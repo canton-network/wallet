@@ -19,7 +19,7 @@ import type { OperationDescription } from './clear-sign.js'
 import { parseDescriptor } from './descriptor.js'
 import { decode } from './roots.js'
 import { described } from './__tests__/helpers.js'
-import { rebind, spliceDescriptors } from './__tests__/splice.js'
+import { captured, rebind, spliceDescriptors } from './__tests__/splice.js'
 
 interface Capture {
     id: string
@@ -115,13 +115,13 @@ const capturedIntents: Record<string, string> = {
     'amulet-v1-transfer-instruction-withdraw':
         'Withdraw 0.5000000000 "Amulet" sent to bd::1220acd26e930ff71796387a4706db7f348faa085c3e0a58a6df050a4395b3323e49',
     'amulet-v2-allocation-cancel':
-        'Cancel the allocation for settlement "alloc-live" of 1 transfer legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd',
+        'Cancel the allocation for settlement "alloc-live" of 1 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd',
     'amulet-v2-allocation-factory-allocate':
-        'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "alloc-factory" of 1 transfer legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Not committed: can be withdrawn at any time',
+        'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "alloc-factory" of 1 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Not committed: can be withdrawn at any time',
     'amulet-v2-allocation-withdraw':
-        'Withdraw the allocation for settlement "alloc-live" of 1 transfer legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd',
+        'Withdraw the allocation for settlement "alloc-live" of 1 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd',
     'amulet-v2-settlement-factory-settle-batch':
-        'Settle 1 transfer legs for settlement "settle-batch-1794860752700158000" at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f',
+        'Settle 1 legs for settlement "settle-batch-1794860752700158000" at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f',
     'amulet-v2-transfer-factory-transfer':
         'Request a transfer of 1.0000000000 "Amulet" from bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd to bd::12208f8e5e9c41f03d771d81daba7b0b1346557f068a1cebff620c93ed43cac11356. What the receiver does with it depends on the transfer\'s metadata',
     'amulet-v2-transfer-instruction-accept':
@@ -133,7 +133,7 @@ const capturedIntents: Record<string, string> = {
     'utility-request-burn':
         'Request a burn of 1.0000000000 "CLEAR-SIGN" held by util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b, reference "capture-burn"',
     'utility-settlement-factory-settle-batch':
-        'Settle 1 transfer legs for settlement "capture-settle" at util-reg-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
+        'Settle 1 legs for settlement "capture-settle" at util-reg-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
     'utility-v1-allocation-factory-allocate':
         'Allocate 1.0000000000 "CLEAR-SIGN" from util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b to util-recv-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b for settlement "capture-v1-alloc", executed by util-recv-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
     'utility-v1-dvp-leg-cancel':
@@ -149,11 +149,11 @@ const capturedIntents: Record<string, string> = {
     'utility-v1-transfer-offer-withdraw':
         'Withdraw 1.0000000000 "CLEAR-SIGN" sent to util-recv-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
     'utility-v2-allocation-cancel':
-        'Cancel the allocation for settlement "capture-v2-alloc" of 1 transfer legs, authorized by util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
+        'Cancel the allocation for settlement "capture-v2-alloc" of 1 legs, authorized by util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
     'utility-v2-allocation-factory-allocate':
-        'Allocate funds at util-reg-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b for settlement "capture-v2-alloc" of 1 transfer legs, authorized by util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b. Not committed: can be withdrawn at any time',
+        'Allocate funds at util-reg-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b for settlement "capture-v2-alloc" of 1 legs, authorized by util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b. Not committed: can be withdrawn at any time',
     'utility-v2-allocation-withdraw':
-        'Withdraw the allocation for settlement "capture-v2-alloc" of 1 transfer legs, authorized by util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
+        'Withdraw the allocation for settlement "capture-v2-alloc" of 1 legs, authorized by util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b',
     'utility-v2-transfer-factory-transfer':
         'Request a transfer of 1.0000000000 "CLEAR-SIGN" from util-hold-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b to util-recv-144300::1220d38b576c69e52b351c6bc7acf79343440267c6a94b42c002ba28d42a7fa94c1b. What the receiver does with it depends on the transfer\'s metadata',
     'utility-v2-transfer-offer-accept':
@@ -214,7 +214,18 @@ describe('captured token standard roots', () => {
 })
 
 describe('reference descriptors', () => {
-    it('words every entry of the Amulet and Utility descriptors on some root', () => {
+    it('words every entry of the Amulet and Utility descriptors on some root', async () => {
+        for (const id of [
+            'external-party-amulet-rules-create',
+            'transfer-preapproval-create',
+        ]) {
+            const result = await described(
+                captured(id).preparedTransaction,
+                spliceDescriptors
+            )
+            const op = result.operations[0]
+            if (op) seen.push(op)
+        }
         const key = (
             template: { moduleName: string; entityName: string },
             choice: string,
@@ -250,8 +261,6 @@ describe('reference descriptors', () => {
             'Splice.AmuletTransferInstruction:AmuletTransferInstruction',
             'Splice.AmuletAllocation:AmuletAllocation',
             'Splice.AmuletAllocationV2:AmuletAllocationV2',
-            'Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules',
-            'Splice.AmuletRules:TransferPreapproval',
             'Splice.Amulet:LockedAmulet',
             'Utility.Registry.App.V0.Model.Transfer:TransferOffer',
             'Utility.Registry.V0.Holding.Allocation:DvpLegAllocation',

@@ -27,7 +27,7 @@
                     "entityName": "Allocation"
                 },
                 "intent": "Withdraw an allocation",
-                "interpolatedIntent": "Withdraw the allocation for settlement {@.contract.settlement.id} of {@.contract.allocation.transferLegSides.length} transfer legs, authorized by {@.contract.allocation.authorizer.owner}",
+                "interpolatedIntent": "Withdraw the allocation for settlement {@.contract.settlement.id} of {@.contract.allocation.transferLegSides.length} legs, authorized by {@.contract.allocation.authorizer.owner}",
                 "fields": [
                     {
                         "path": "@.contract.settlement.id",
@@ -99,7 +99,7 @@
                     "entityName": "Allocation"
                 },
                 "intent": "Cancel an allocation",
-                "interpolatedIntent": "Cancel the allocation for settlement {@.contract.settlement.id} of {@.contract.allocation.transferLegSides.length} transfer legs, authorized by {@.contract.allocation.authorizer.owner}",
+                "interpolatedIntent": "Cancel the allocation for settlement {@.contract.settlement.id} of {@.contract.allocation.transferLegSides.length} legs, authorized by {@.contract.allocation.authorizer.owner}",
                 "fields": [
                     {
                         "path": "@.contract.settlement.id",

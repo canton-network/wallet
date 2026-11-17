@@ -20,6 +20,55 @@
         }
     },
     "display": {
+        "create": {
+            "intent": "Offer a transfer",
+            "interpolatedIntent": "Offer {amount.amount} {amount.unit} from {sender} to {receiver}: {description}",
+            "fields": [
+                {
+                    "path": "amount.amount",
+                    "label": "Amount",
+                    "format": "number"
+                },
+                {
+                    "path": "amount.unit",
+                    "label": "Unit",
+                    "format": "enum",
+                    "params": {
+                        "$ref": "$.metadata.enums.unit"
+                    }
+                },
+                {
+                    "path": "sender",
+                    "label": "From",
+                    "format": "party"
+                },
+                {
+                    "path": "receiver",
+                    "label": "To",
+                    "format": "party"
+                },
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "description",
+                    "label": "Description",
+                    "format": "string"
+                },
+                {
+                    "path": "expiresAt",
+                    "label": "Expires",
+                    "format": "dateTime"
+                },
+                {
+                    "path": "trackingId",
+                    "label": "Tracking ID",
+                    "format": "string"
+                }
+            ]
+        },
         "exercises": [
             {
                 "choice": "TransferOffer_Accept",

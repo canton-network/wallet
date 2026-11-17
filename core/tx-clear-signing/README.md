@@ -8,7 +8,7 @@ The descriptor format is the v1 _Canton Clear Signing Descriptor_ schema, modell
 - [examples/descriptors/splice](examples/descriptors/splice);
 - the descriptors the schema rejects, in [examples/descriptors/invalid](examples/descriptors/invalid).
 
-These JSON files are kept unformatted. The tests run them through the parser `clearSign` uses, so the parser and the schema cannot drift apart.
+These JSON files are kept unformatted. The tests run them through the schema and through the parser `clearSign` uses, so the two cannot drift apart.
 
 `examples/descriptors/splice/amulet-*.json` and `utility-*.json` are reference descriptors for the token-standard roots a Canton Coin or Canton Network Utility holder submits. They cover V1 (CIP-56) and V2 (CIP-112). `src/token-standard.test.ts` describes each entry that has a captured prepared transaction.
 
@@ -98,7 +98,7 @@ A Daml `Text` value is shown as a JSON string literal, in the intent and in its 
 
 1. **Decodes** the transaction ([src/roots.ts](src/roots.ts)), and indexes the contracts an exercise can act on: the input contracts, and the contracts the transaction creates.
 2. **Binds** each root template to its descriptor, and validates that descriptor ([src/descriptor.ts](src/descriptor.ts)).
-3. **Selects** the entry: `create` for a create node. For an exercise, the `exercises` entry whose choice and interface both equal the node's. When the node carries an interface and no entry names that choice and interface, the entry for the same choice with no interface is used. A node with no interface matches only that entry. An entry for one interface never matches a node exercised through another, or through none.
+3. **Selects** the entry: `create` for a create node. For an exercise, the `exercises` entry whose choice and interface both equal the node's. An interface is its module and entity. When the entry also sets `packageId`, that must equal the node's interface package ID. When it omits `packageId`, the module and entity match on any package: the template's package ID already selects the interface package the template was compiled against, so the package ID is only needed to tell two such interfaces apart. An entry that sets the package is preferred over one that omits it. When the node carries an interface and no entry names that choice and interface, the entry for the same choice with no interface is used. A node with no interface matches only that entry. An entry for one interface never matches a node exercised through another, or through none.
 4. **Resolves fields** ([src/path.ts](src/path.ts)) and **formats** them ([src/format.ts](src/format.ts)). A path starts at the create or choice argument. In an exercise, a `@.contract.` path starts at the create argument of the exercised contract. `@.contractId`, `@.signatories`, `@.stakeholders`, `@.synchronizerId` and `@.actAs` read the prepared transaction, on a create and an exercise. `@.actingParties`, `@.choiceObservers` and `@.consuming` do so on an exercise only. A party list is shown with `raw`.
 5. **Interpolates** the intent ([src/intent.ts](src/intent.ts)).
 
@@ -106,7 +106,7 @@ Only root nodes are described. A child node is a consequence of its root's choic
 
 A descriptor must therefore be bound to the template a root carries.
 
-- **Interface choices.** A token-standard command names an interface, but its root node carries the template of the contract it is exercised on, such as the factory `ExternalPartyAmuletRules`, and the interface in `interface_id`.
+- **Interface choices.** A token-standard command names an interface, but its root node carries the template of the contract it is exercised on, such as the factory `ExternalPartyAmuletRules`, and the interface in `interface_id`. The descriptor's interface names that module and entity. `packageId` is optional: leave it out and the entry follows the interface package the template package was compiled against. Set it to require that exact interface package.
 - **Child contracts.** The transfer instruction or allocation that a factory choice creates is a child. A `create` on its template is never used. Only the choices a party later exercises on that contract are roots.
 
 The exercised contract must have the exercise's package name, module and entity. Its package ID may differ, because an upgrade keeps the package name. This is the one place where the package ID is not matched exactly.

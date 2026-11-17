@@ -12,7 +12,7 @@
 
 import { resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { clearSign, type Descriptor } from '../src/index.js'
+import { clearSign } from '../src/index.js'
 import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
 import amuletAllocationV2 from './descriptors/splice/amulet-allocation-v2.json'
 import showcaseTransaction from '../src/__tests__/fixtures/showcase-transaction.json'
@@ -27,14 +27,11 @@ export const preparedTransactionHash =
 /** One sentence per root, in root order. */
 export const intents = [
     `Request a transfer of 1.0000000000 "Amulet" from bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd to bd::12208f8e5e9c41f03d771d81daba7b0b1346557f068a1cebff620c93ed43cac11356. What the receiver does with it depends on the transfer's metadata`,
-    'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "alloc-factory" of 1 transfer legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Not committed: can be withdrawn at any time',
-    'Withdraw the allocation for settlement "alloc-live" of 1 transfer legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd',
+    'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "alloc-factory" of 1 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Not committed: can be withdrawn at any time',
+    'Withdraw the allocation for settlement "alloc-live" of 1 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd',
 ] as const
 
-const descriptors = [
-    externalPartyAmuletRules,
-    amuletAllocationV2,
-] as unknown as Descriptor[]
+const descriptors = [externalPartyAmuletRules, amuletAllocationV2]
 
 export function describeShowcase() {
     return clearSign(preparedTransaction, descriptors, preparedTransactionHash)

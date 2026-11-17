@@ -4,13 +4,19 @@
 import { z } from 'zod'
 import { ENUM_REF_PREFIX, UNSAFE_CLASS } from './format.js'
 import { parseIntent } from './intent.js'
+import {
+    EXERCISE_ONLY_CONTAINER_FIELDS,
+    SHARED_CONTAINER_FIELDS,
+} from './path.js'
 
 // The patterns are those of canton-clear-signing-v1.schema.json. The conformance test runs the
-// schema's own valid and invalid examples through this parser.
+// schema and this parser on the same examples.
 const SCHEMA_ID = 'https://example.org/canton-clear-signing/v1/schema.json'
 
 const NAME = '[A-Za-z_][A-Za-z0-9_]*'
-const MAP_KEY = '\\["(?:[^"\\\\]|\\\\.)*"\\]'
+// A map key is a JSON string. Escapes are the JSON ones, and the key text has no control, format,
+// or line-separator character, the same set display text rejects.
+const MAP_KEY = String.raw`\["(?:[^"\\\p{Cc}\p{Cf}\p{Zl}\p{Zp}]|\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))*"\]`
 // Every step is a name, with optional map-key steps. There is no step for every element of a list or
 // map: a field shows a list or map of variable size as a whole, with the raw format.
 const NAME_STEP = `${NAME}(?:${MAP_KEY})*`
@@ -18,16 +24,21 @@ const STEPS = `${NAME_STEP}(?:\\.${NAME_STEP})*`
 
 const identifier = new RegExp(`^${NAME}$`)
 const dottedName = new RegExp(`^${NAME}(?:\\.${NAME})*$`)
-const SHARED_CONTAINER =
-    'contractId|signatories|stakeholders|synchronizerId|actAs'
-const EXERCISE_CONTAINER = `${SHARED_CONTAINER}|actingParties|choiceObservers|consuming`
+const packageId = /^[0-9a-f]{64}$/
+const SHARED_CONTAINER = SHARED_CONTAINER_FIELDS.join('|')
+const EXERCISE_CONTAINER = [
+    ...SHARED_CONTAINER_FIELDS,
+    ...EXERCISE_ONLY_CONTAINER_FIELDS,
+].join('|')
 /** A path of an exercise field: the choice argument, the exercised contract, or a container field. */
 const pathPattern = new RegExp(
-    `^(?:${STEPS}|@\\.contract\\.${STEPS}|@\\.(?:${EXERCISE_CONTAINER}))$`
+    `^(?:${STEPS}|@\\.contract\\.${STEPS}|@\\.(?:${EXERCISE_CONTAINER}))$`,
+    'u'
 )
 /** A path of a create field: the create argument, or a container field shared with exercises. */
 const argumentPathPattern = new RegExp(
-    `^(?:${STEPS}|@\\.(?:${SHARED_CONTAINER}))$`
+    `^(?:${STEPS}|@\\.(?:${SHARED_CONTAINER}))$`,
+    'u'
 )
 const enumRef = new RegExp(`^\\$\\.metadata\\.enums\\.${NAME}$`)
 const semver =
@@ -99,13 +110,18 @@ function operationSchema(field: z.ZodType<Field>) {
 const CreateSchema = operationSchema(ArgumentFieldSchema)
 
 const TemplateIdSchema = z.strictObject({
-    packageId: z.string().regex(/^[0-9a-f]{64}$/),
+    packageId: z.string().regex(packageId),
     moduleName: z.string().regex(dottedName),
     entityName: z.string().regex(identifier),
 })
 
-/** An interface the template implements. Its package is fixed by the template's package. */
+/**
+ * An interface the template implements. `packageId` is optional. Omit it when the template's
+ * package ID already selects the interface package the template was compiled against. Set it to
+ * match only that package.
+ */
 const InterfaceSchema = z.strictObject({
+    packageId: z.string().regex(packageId).optional(),
     moduleName: z.string().regex(dottedName),
     entityName: z.string().regex(identifier),
 })
@@ -218,11 +234,14 @@ function crossReferenceProblems(d: Descriptor): string[] {
 }
 
 // An entry without an interface is keyed by its choice alone, so it cannot be repeated either.
+// A package ID, when set, is part of the key, so one entry can name the package and another can omit it.
 function exerciseKey(exercise: Exercise): string {
     const iface = exercise.interface
-    return iface
-        ? `${exercise.choice} via ${iface.moduleName}:${iface.entityName}`
-        : exercise.choice
+    if (!iface) return exercise.choice
+    const name = `${iface.moduleName}:${iface.entityName}`
+    return iface.packageId
+        ? `${exercise.choice} via ${iface.packageId}:${name}`
+        : `${exercise.choice} via ${name}`
 }
 
 function operationProblems(

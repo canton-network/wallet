@@ -19,6 +19,17 @@
         }
     },
     "display": {
+        "create": {
+            "intent": "Create external-party amulet rules",
+            "interpolatedIntent": "Create the external-party amulet rules of {dso}",
+            "fields": [
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                }
+            ]
+        },
         "exercises": [
             {
                 "choice": "TransferFactory_Transfer",
@@ -247,7 +258,7 @@
                     "entityName": "AllocationFactory"
                 },
                 "intent": "Allocate funds for a settlement",
-                "interpolatedIntent": "Allocate funds at {@.contract.dso} for settlement {settlement.id} of {allocation.transferLegSides.length} transfer legs, authorized by {allocation.authorizer.owner}. {allocation.committed}",
+                "interpolatedIntent": "Allocate funds at {@.contract.dso} for settlement {settlement.id} of {allocation.transferLegSides.length} legs, authorized by {allocation.authorizer.owner}. {allocation.committed}",
                 "fields": [
                     {
                         "path": "@.contract.dso",
@@ -339,7 +350,7 @@
                     "entityName": "SettlementFactory"
                 },
                 "intent": "Settle a batch of allocations",
-                "interpolatedIntent": "Settle {transferLegs.length} transfer legs for settlement {settlement.id} at {@.contract.dso}",
+                "interpolatedIntent": "Settle {transferLegs.length} legs for settlement {settlement.id} at {@.contract.dso}",
                 "fields": [
                     {
                         "path": "@.contract.dso",

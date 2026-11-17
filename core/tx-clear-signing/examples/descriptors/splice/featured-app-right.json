@@ -13,6 +13,40 @@
         "name": "Featured app right"
     },
     "display": {
+        "create": {
+            "intent": "Grant a featured app right",
+            "interpolatedIntent": "Grant {provider} a featured app right from {dso}",
+            "fields": [
+                {
+                    "path": "provider",
+                    "label": "Provider",
+                    "format": "party"
+                },
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "appKind",
+                    "label": "App kind",
+                    "format": "raw",
+                    "optional": true
+                },
+                {
+                    "path": "activityWeight",
+                    "label": "Activity weight",
+                    "format": "number",
+                    "optional": true
+                },
+                {
+                    "path": "opsParties",
+                    "label": "Operational parties",
+                    "format": "raw",
+                    "optional": true
+                }
+            ]
+        },
         "exercises": [
             {
                 "choice": "FeaturedAppRight_CreateActivityMarker",

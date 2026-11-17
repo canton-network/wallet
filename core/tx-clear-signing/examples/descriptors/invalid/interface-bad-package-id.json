@@ -2,5 +2,5 @@
     "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
     "context": { "template": { "packageId": "de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54", "moduleName": "Canton.Internal.Ping", "entityName": "Ping" } },
     "metadata": { "version": "1.0.0", "publisher": "<publisher>", "name": "Invalid example" },
-    "display": { "exercises": [ { "choice": "Respond", "intent": "Respond to ping", "interface": { "packageId": "55ba4deb0ad4662c4168b39859738a0e91388d252286480c7331b3f71a517281", "moduleName": "Splice.Api.Token.TransferInstructionV1", "entityName": "TransferFactory" } } ] }
+    "display": { "exercises": [ { "choice": "Respond", "intent": "Respond to ping", "interface": { "packageId": "55ba4deb", "moduleName": "Splice.Api.Token.TransferInstructionV1", "entityName": "TransferFactory" } } ] }
 }

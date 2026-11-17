@@ -1,0 +1,71 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "0ff9141699e5eb734de1e1a8d11f97233ffd3892d1108872600cb3019fd4a86e",
+            "moduleName": "Splice.DsoRules",
+            "entityName": "VoteRequest"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "DSO vote request"
+    },
+    "display": {
+        "create": {
+            "intent": "Open a DSO vote",
+            "interpolatedIntent": "Open a vote requested by {requester}, under {dso}: {reason.body}",
+            "fields": [
+                {
+                    "path": "requester",
+                    "label": "Requester",
+                    "format": "string"
+                },
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "reason.url",
+                    "label": "Reason URL",
+                    "format": "string"
+                },
+                {
+                    "path": "reason.body",
+                    "label": "Reason",
+                    "format": "string"
+                },
+                {
+                    "path": "action",
+                    "label": "Votes on",
+                    "format": "raw"
+                },
+                {
+                    "path": "voteBefore",
+                    "label": "Vote before",
+                    "format": "dateTime"
+                },
+                {
+                    "path": "votes",
+                    "label": "Votes",
+                    "format": "raw"
+                },
+                {
+                    "path": "trackingCid",
+                    "label": "Tracking contract",
+                    "format": "contractId",
+                    "optional": true
+                },
+                {
+                    "path": "targetEffectiveAt",
+                    "label": "Effective at",
+                    "format": "dateTime",
+                    "optional": true
+                }
+            ]
+        }
+    },
+    "signatures": []
+}

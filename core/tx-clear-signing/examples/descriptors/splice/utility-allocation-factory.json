@@ -247,7 +247,7 @@
                     "entityName": "AllocationFactory"
                 },
                 "intent": "Allocate funds for a settlement",
-                "interpolatedIntent": "Allocate funds at {@.contract.registrar} for settlement {settlement.id} of {allocation.transferLegSides.length} transfer legs, authorized by {allocation.authorizer.owner}. {allocation.committed}",
+                "interpolatedIntent": "Allocate funds at {@.contract.registrar} for settlement {settlement.id} of {allocation.transferLegSides.length} legs, authorized by {allocation.authorizer.owner}. {allocation.committed}",
                 "fields": [
                     {
                         "path": "@.contract.registrar",
@@ -339,7 +339,7 @@
                     "entityName": "SettlementFactory"
                 },
                 "intent": "Settle a batch of allocations",
-                "interpolatedIntent": "Settle {transferLegs.length} transfer legs for settlement {settlement.id} at {@.contract.registrar}",
+                "interpolatedIntent": "Settle {transferLegs.length} legs for settlement {settlement.id} at {@.contract.registrar}",
                 "fields": [
                     {
                         "path": "@.contract.registrar",

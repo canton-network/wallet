@@ -71,7 +71,7 @@ describe('example descriptors', () => {
                 entityName: 'AllocationFactory',
             },
         })
-        expect(intentText(op)).toContain('of 1 transfer legs')
+        expect(intentText(op)).toContain('of 1 legs')
         const legs = shown(op?.fields.find((f) => f.label === 'Legs'))
         expect(JSON.parse(legs as string)).toMatchObject([
             { side: 'SenderSide', instrumentId: 'Amulet' },

@@ -14,7 +14,12 @@ import {
     type Field,
     type Operation,
 } from './descriptor.js'
-import { FormatError, formatValue, type EnumTables } from './format.js'
+import {
+    FormatError,
+    formatValue,
+    sanitize,
+    type EnumTables,
+} from './format.js'
 import { hashesTo } from './hash.js'
 import { parseIntent } from './intent.js'
 import {
@@ -122,7 +127,7 @@ export class HashMismatchError extends Error {
  */
 export async function clearSign(
     tx: string,
-    descriptors: readonly Descriptor[],
+    descriptors: readonly unknown[],
     expectedHash: string
 ): Promise<ClearSigningResult> {
     const matches = await hashesTo(tx, expectedHash)
@@ -294,33 +299,49 @@ function descriptorInfo({
 
 /**
  * The exercise entry for a node. An entry matches when its choice and its interface both equal the
- * node's. Interface identity is the module and entity; the node's interface package is not compared.
- * When the node carries an interface and no entry names that choice and interface, the entry for the
- * same choice with no interface is used. A node with no interface matches only that entry. An entry
- * that names one interface never matches a node exercised through another, or through none.
+ * node's. Interface identity is the module and entity. When the entry sets `packageId`, that must
+ * equal the node's interface package too. When it omits `packageId`, the module and entity match on
+ * any package: the template's package ID already selects the interface package the template was
+ * compiled against. An entry that sets the package is preferred over one that omits it. When the
+ * node carries an interface and no entry names that choice and interface, the entry for the same
+ * choice with no interface is used. A node with no interface matches only that entry. An entry that
+ * names one interface never matches a node exercised through another, or through none.
  */
 function exerciseEntry(
     exercises: readonly Exercise[] | undefined,
     choiceId: string,
     iface: TemplateRef | undefined
 ): Exercise | undefined {
-    const forChoice = exercises?.filter((entry) => entry.choice === choiceId)
-    const exact = forChoice?.find((entry) =>
-        sameInterface(entry.interface, iface)
-    )
-    if (exact) return exact
-    if (!iface) return undefined
-    return forChoice?.find((entry) => entry.interface === undefined)
+    const forChoice =
+        exercises?.filter((entry) => entry.choice === choiceId) ?? []
+    if (iface) {
+        const pinned = forChoice.find((entry) =>
+            sameInterface(entry.interface, iface, true)
+        )
+        if (pinned) return pinned
+        const unpinned = forChoice.find((entry) =>
+            sameInterface(entry.interface, iface, false)
+        )
+        if (unpinned) return unpinned
+    }
+    return forChoice.find((entry) => entry.interface === undefined)
 }
 
-/** Module and entity. A missing interface equals a node that carries none. */
+/**
+ * Module and entity. `pinned` selects entries that also name `iface`'s package ID. Otherwise the
+ * entry must omit `packageId`. An entry with no interface does not match.
+ */
 function sameInterface(
     entry: Exercise['interface'],
-    iface: TemplateRef | undefined
+    iface: TemplateRef,
+    pinned: boolean
 ): boolean {
+    if (!entry) return false
+    if ((entry.packageId !== undefined) !== pinned) return false
+    if (pinned && entry.packageId !== iface.packageId) return false
     return (
-        entry?.moduleName === iface?.moduleName &&
-        entry?.entityName === iface?.entityName
+        entry.moduleName === iface.moduleName &&
+        entry.entityName === iface.entityName
     )
 }
 
@@ -371,9 +392,6 @@ function containerOf(
             contractId,
             signatories,
             stakeholders,
-            actingParties: [],
-            choiceObservers: [],
-            consuming: false,
             ...shared,
         }
     }
@@ -413,7 +431,7 @@ function describeOperation(
         return {
             status: 'fallback',
             intent: MISMATCH_INTENT,
-            reason: mismatchReason(op.interpolatedIntent, byPath),
+            reason: sanitize(mismatchReason(op.interpolatedIntent, byPath)),
             fields,
         }
     }
@@ -459,12 +477,12 @@ function describeField(
     args: Arguments,
     enums: EnumTables
 ): DescribedField {
-    const label = field.label ?? field.path
+    const label = sanitize(field.label ?? field.path)
     try {
         return { label, value: fieldValue(field, args, enums) }
     } catch (err) {
         if (!(err instanceof PathError || err instanceof FormatError)) throw err
-        return { label, error: err.message }
+        return { label, error: sanitize(err.message) }
     }
 }
 
