@@ -1,12 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import * as path from 'path'
-import type * as openrpcgen from '@open-rpc/generator'
-import * as fs from 'fs'
-import lodash from 'lodash'
 import { execSync } from 'child_process'
-import { validateOpenRpc } from './validate-openrpc.js'
+import * as fs from 'fs'
+import * as path from 'path'
+
+import type * as openrpcgen from '@open-rpc/generator'
+import lodash from 'lodash'
+
+import { validateOpenRpc } from './validate-openrpc.ts'
 const { template } = lodash
 
 const onlyHandleTS = ({ language }: openrpcgen.components.IComponent) => {

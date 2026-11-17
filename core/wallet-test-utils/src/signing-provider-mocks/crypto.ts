@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { generateKeyPairSync } from 'node:crypto'
+
 import nacl from 'tweetnacl'
 import naclUtil from 'tweetnacl-util'
 

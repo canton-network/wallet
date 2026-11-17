@@ -1,18 +1,19 @@
-import { StrictMode } from 'react'
+import { loadPortfolioConfig } from '@config/portfolio-config'
+
 import '@fontsource/inter/index.css'
 import './index.css'
-import { createRouter, RouterProvider } from '@tanstack/react-router'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { LocalizationProvider } from '@mui/x-date-pickers'
-import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
-import { routeTree } from './routeTree.gen'
-import ReactDOM from 'react-dom/client'
-
-import { loadPortfolioConfig } from '@config/portfolio-config'
 import { ConnectionProvider } from '@contexts/ConnectionProvider'
 import { PortfolioConfigProvider } from '@contexts/PortfolioConfigProvider'
 import { AppThemeProvider } from '@contexts/theme-provider'
+import { LocalizationProvider } from '@mui/x-date-pickers'
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { createRouter, RouterProvider } from '@tanstack/react-router'
+import { StrictMode } from 'react'
+import ReactDOM from 'react-dom/client'
 import { Toaster } from 'sonner'
+
+import { routeTree } from './routeTree.gen.ts'
 
 const queryClient = new QueryClient({
     defaultOptions: {

@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, type Page } from '@playwright/test'
 import type { PartyId } from '@canton-network/core-types'
-import { toPortfolioInstrument } from '../src/types/instruments'
-import { normalizeRegistryUrl } from '../src/utils/registry'
+import { test, expect, type Page } from '@playwright/test'
+
+import { toPortfolioInstrument } from '../src/types/instruments.ts'
+import { normalizeRegistryUrl } from '../src/utils/registry.ts'
 import {
     createGatewayApi,
     connectGateway,
@@ -13,7 +14,7 @@ import {
     gotoConnect,
     setupRegistry,
     tap,
-} from './utils'
+} from './utils.ts'
 
 const REGISTRY_INFO_PATH = '/registry/metadata/v1/info'
 const LOCAL_REGISTRY_URL = 'http://scan.localhost:4000'

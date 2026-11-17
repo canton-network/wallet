@@ -11,12 +11,13 @@ import {
     type HashOptions,
     TxHashingError,
 } from '@canton-network/core-tx-hashing'
-import type { OfflineSDKContext } from '../../../sdk.js'
-import { Converter } from './converter.js'
 import {
     computeMultiHashForTopology,
     computeSha256CantonHash,
 } from '@canton-network/core-tx-visualizer'
+
+import type { OfflineSDKContext } from '../../../sdk.ts'
+import { Converter } from './converter.ts'
 
 export class HashNamespace {
     constructor(private readonly ctx: OfflineSDKContext) {}

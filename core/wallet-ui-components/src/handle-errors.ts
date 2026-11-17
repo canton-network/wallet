@@ -4,7 +4,7 @@
 import {
     getErrorToastContent,
     type ErrorToastFallback,
-} from './internal/error-toast.js'
+} from './internal/error-toast.ts'
 
 type ToastElement = HTMLElement & {
     title: string

@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { supportedApis } from './common'
 import type { OffLedger } from '@canton-network/core-token-standard'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { RegistryState } from '../../common/state'
+
+import { RegistryState } from '../../common/state.ts'
+import { supportedApis } from './common.ts'
 
 /**
  * @returns API payload with registry info for token metadata clients.

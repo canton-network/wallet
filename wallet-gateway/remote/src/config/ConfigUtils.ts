@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync, existsSync } from 'fs'
-import { type Config, type RawConfig, rawConfigSchema } from './Config.js'
-import type { ServerNoticeReport } from '../notices/server-notices.js'
-import { Env } from '../env.js'
+
 import { resolveAuthIdentityProviderId } from '@canton-network/core-wallet-auth'
 import type {
     BootstrapConfig,
     Network,
 } from '@canton-network/core-wallet-store'
+
+import { Env } from '../env.ts'
+import type { ServerNoticeReport } from '../notices/server-notices.ts'
+import { type Config, type RawConfig, rawConfigSchema } from './Config.ts'
 
 export interface LoadedConfig {
     config: Config

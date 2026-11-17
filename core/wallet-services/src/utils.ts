@@ -8,7 +8,8 @@ import type {
     PackageIdSelectionPreference,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import type { Logger } from 'pino'
-import type { HASHING_SCHEME_VERSION } from './types.js'
+
+import type { HASHING_SCHEME_VERSION } from './types.ts'
 
 export interface PrepareParams {
     commandId?: string

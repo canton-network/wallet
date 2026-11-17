@@ -1,20 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useMemo } from 'react'
-import { useQueries } from '@tanstack/react-query'
 import { useInstruments } from '@hooks/useInstruments'
+import { useQueries } from '@tanstack/react-query'
+import type { PortfolioHolding } from '@utils/holdings'
+import { Decimal } from 'decimal.js'
+import { useCallback, useMemo } from 'react'
+
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedAccountBalance,
     type AggregatedHolding,
-} from '../utils/aggregate-holdings'
-import { useAccounts } from './useAccounts'
-import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
-import type { PortfolioHolding } from '@utils/holdings'
-import { Decimal } from 'decimal.js'
+} from '../utils/aggregate-holdings.ts'
+import { holdingsQueryOptions } from './query-options.ts'
+import { useAccounts } from './useAccounts.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export interface PortfolioAssetWalletBalanceView {
     id: string //wallet partyId

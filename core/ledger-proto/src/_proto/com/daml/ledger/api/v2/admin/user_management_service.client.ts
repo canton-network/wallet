@@ -7,6 +7,10 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
+import { stackIntercept } from '@protobuf-ts/runtime-rpc'
+import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
+import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
 import { UserManagementService } from './user_management_service.ts'
 import type { UpdateUserIdentityProviderIdResponse } from './user_management_service.ts'
 import type { UpdateUserIdentityProviderIdRequest } from './user_management_service.ts'
@@ -24,11 +28,8 @@ import type { UpdateUserResponse } from './user_management_service.ts'
 import type { UpdateUserRequest } from './user_management_service.ts'
 import type { GetUserResponse } from './user_management_service.ts'
 import type { GetUserRequest } from './user_management_service.ts'
-import { stackIntercept } from '@protobuf-ts/runtime-rpc'
 import type { CreateUserResponse } from './user_management_service.ts'
 import type { CreateUserRequest } from './user_management_service.ts'
-import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
-import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**
  * Service to manage users and their rights for interacting with the Ledger API
  * served by a participant node.

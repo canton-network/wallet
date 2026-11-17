@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorCodes, JsonRpcError } from '@canton-network/core-rpc-errors'
-import { HttpTransport, jsonRpcRequest, jsonRpcResponse } from './index.js'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { HttpTransport, jsonRpcRequest, jsonRpcResponse } from './index.ts'
 
 describe('jsonRpc helpers', () => {
     it('builds request and response envelopes', () => {

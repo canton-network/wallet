@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { CoreService } from '../core-service'
 import {
     type AllocationFactory_Allocate,
     type AllocationSpecification,
@@ -16,14 +15,16 @@ import {
     type OffLedger,
     AllocationInstruction,
 } from '@canton-network/core-token-standard-v2'
+import type { ContractId, PartyId } from '@canton-network/core-types'
+import { getLogger } from '@logtape/logtape'
+import { Decimal } from 'decimal.js'
+
+import type { CoreService } from '../core-service.ts'
 import {
     REQUESTED_AT_SKEW_MS,
     type DisclosedContract,
     type ExerciseCommand,
-} from '../types'
-import { Decimal } from 'decimal.js'
-import type { ContractId, PartyId } from '@canton-network/core-types'
-import { getLogger } from '@logtape/logtape'
+} from '../types.ts'
 
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']

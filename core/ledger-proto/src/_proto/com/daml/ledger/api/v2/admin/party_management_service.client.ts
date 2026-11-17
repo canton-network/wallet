@@ -7,6 +7,10 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
+import { stackIntercept } from '@protobuf-ts/runtime-rpc'
+import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
+import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
 import { PartyManagementService } from './party_management_service.ts'
 import type { GenerateExternalPartyTopologyResponse } from './party_management_service.ts'
 import type { GenerateExternalPartyTopologyRequest } from './party_management_service.ts'
@@ -22,11 +26,8 @@ import type { ListKnownPartiesResponse } from './party_management_service.ts'
 import type { ListKnownPartiesRequest } from './party_management_service.ts'
 import type { GetPartiesResponse } from './party_management_service.ts'
 import type { GetPartiesRequest } from './party_management_service.ts'
-import { stackIntercept } from '@protobuf-ts/runtime-rpc'
 import type { GetParticipantIdResponse } from './party_management_service.ts'
 import type { GetParticipantIdRequest } from './party_management_service.ts'
-import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
-import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**
  * This service allows inspecting the party management state of the ledger known to the participant
  * and managing the participant-local party metadata.

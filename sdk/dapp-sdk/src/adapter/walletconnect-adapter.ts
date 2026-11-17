@@ -1,33 +1,34 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type SignClient from '@walletconnect/sign-client'
-import type { SessionTypes } from '@walletconnect/types'
-import type {
-    Provider,
-    EventListener,
-} from '@canton-network/core-splice-provider'
-import type { RequestArgs } from '@canton-network/core-types'
 import {
     errorCodes,
     providerErrors,
     toJsonRpcError,
 } from '@canton-network/core-rpc-errors'
 import type {
+    Provider,
+    EventListener,
+} from '@canton-network/core-splice-provider'
+import type { RequestArgs } from '@canton-network/core-types'
+import type {
     RpcTypes as DappRpcTypes,
     Provider as ProviderInfo,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import type {
-    ProviderAdapter,
-    WalletInfo,
-} from '@canton-network/core-wallet-discovery'
 import type {
     ProviderId,
     ProviderType,
     StatusEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { WALLETCONNECT_ICON } from '../assets'
-import { composeSIWXMessage } from '../util'
+import type {
+    ProviderAdapter,
+    WalletInfo,
+} from '@canton-network/core-wallet-discovery'
+import type SignClient from '@walletconnect/sign-client'
+import type { SessionTypes } from '@walletconnect/types'
+
+import { WALLETCONNECT_ICON } from '../assets.ts'
+import { composeSIWXMessage } from '../util.ts'
 
 const CANTON_WC_METHODS = [
     'canton_prepareSignExecute',

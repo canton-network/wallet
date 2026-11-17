@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from 'react'
-import { Box, Paper, Typography } from '@mui/material'
 import { PillButton } from '@components/ui/PillButton'
 import { useIsDevNet } from '@hooks/useIsDevNet'
-import { DevNetTapDialog } from './devnet-tap-dialog'
+import { Box, Paper, Typography } from '@mui/material'
+import { useState } from 'react'
+
+import { DevNetTapDialog } from './devnet-tap-dialog.tsx'
 
 export function DevNetTapSection() {
     const { data: isDevNet } = useIsDevNet()

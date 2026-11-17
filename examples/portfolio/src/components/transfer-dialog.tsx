@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useState } from 'react'
-import { Dialog } from '@mui/material'
 import { useCreateTransfer } from '@hooks/useCreateTransfer'
-import { TransferForm } from './transfer-form'
-import { TransferSummary } from './transfer-summary'
-import type { SubmittedTransfer, TransferFormData } from './transfer-types'
+import { Dialog } from '@mui/material'
+import { useCallback, useState } from 'react'
+
+import { TransferForm } from './transfer-form.tsx'
+import { TransferSummary } from './transfer-summary.tsx'
+import type { SubmittedTransfer, TransferFormData } from './transfer-types.ts'
 
 interface TransferDialogProps {
     open: boolean

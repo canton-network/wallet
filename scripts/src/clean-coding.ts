@@ -5,7 +5,8 @@ import { execFileSync } from 'child_process'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as process from 'process'
-import { getRepoRoot, markFile, traverseDirectory } from './lib/utils.js'
+
+import { getRepoRoot, markFile, traverseDirectory } from './lib/utils.ts'
 
 function checkPackageJson(packageJsonPath: string): number {
     const rootPath = getRepoRoot()

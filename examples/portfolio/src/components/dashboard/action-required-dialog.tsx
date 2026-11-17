@@ -1,17 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from 'react'
-import { Dialog, DialogContent, Typography } from '@mui/material'
 import type { PartyId } from '@canton-network/core-types'
-import { toast } from 'sonner'
-import type {
-    ActionItem,
-    AllocationActionItem,
-    AllocationRequestV2ActionItem,
-    TransferActionItem,
-    TransferLegWithAllocation,
-} from '@components/types'
 import {
     AllocationActionDialogContent,
     AllocationRequestV2DialogContent,
@@ -20,15 +10,26 @@ import {
     TransferOfferActionDialogContent,
     type AvailableTransferAction,
 } from '@components/dashboard/transfer-offer-action-dialog-content'
+import type {
+    ActionItem,
+    AllocationActionItem,
+    AllocationRequestV2ActionItem,
+    TransferActionItem,
+    TransferLegWithAllocation,
+} from '@components/types'
+import { useAllocationRequestV2Actions } from '@hooks/useAllocationRequestV2Actions'
 import { useCreateAllocation } from '@hooks/useCreateAllocation'
 import {
     transferActionVersion,
     useExerciseTransfer,
 } from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
-import { useAllocationRequestV2Actions } from '@hooks/useAllocationRequestV2Actions'
-import { AllocationV2DialogContent } from './allocation-v2-dialog-content'
 import { useWithdrawAllocationV2 } from '@hooks/useWithdrawAllocationV2'
+import { Dialog, DialogContent, Typography } from '@mui/material'
+import { useState } from 'react'
+import { toast } from 'sonner'
+
+import { AllocationV2DialogContent } from './allocation-v2-dialog-content.tsx'
 
 interface ActionRequiredDialogProps {
     item: ActionItem | null

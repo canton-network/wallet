@@ -5,6 +5,7 @@
 
 import { execFileSync } from 'child_process'
 import fs from 'fs'
+
 import {
     ensureDir,
     getRepoRoot,
@@ -12,7 +13,7 @@ import {
     getAllFilesWithExtension,
     SUPPORTED_VERSIONS,
     CANTON_PATH,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 const repoRoot = getRepoRoot()
 

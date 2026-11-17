@@ -1,12 +1,13 @@
 // Copyright (c) 2025 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
-import { queryKeys } from '../hooks/query-keys'
-import { ConnectionContext } from './ConnectionContext'
+import { type QueryClient, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+
+import { queryKeys } from '../hooks/query-keys.ts'
+import { ConnectionContext } from './ConnectionContext.tsx'
 
 const wcProjectId = import.meta.env.VITE_WC_PROJECT_ID as string
 const wcAdapter = wcProjectId

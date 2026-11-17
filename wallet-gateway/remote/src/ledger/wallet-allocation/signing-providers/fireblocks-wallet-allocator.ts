@@ -1,28 +1,29 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    type SigningDriverInterface,
+    SigningProvider,
+} from '@canton-network/core-signing-lib'
+import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import type { UserId } from '@canton-network/core-wallet-auth'
 import type {
     Store,
     UpdateWallet,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import {
-    type SigningDriverInterface,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import type { PartyAllocationService } from '../../party-allocation-service.js'
+
 import type {
     KeyName,
     PartyHint,
     Primary,
-} from '../../../user-api/rpc-gen/typings.js'
-import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+} from '../../../user-api/rpc-gen/typings.ts'
+import type { PartyAllocationService } from '../../party-allocation-service.ts'
 import {
     handleSigningProviderError,
     type WalletAllocator,
-} from '../wallet-allocation-service.js'
+} from '../wallet-allocation-service.ts'
 
 export class FireblocksWalletAllocator implements WalletAllocator {
     constructor(

@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useWalletSdk } from './useWalletSdk'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
 import type { PartyId } from '@canton-network/core-types'
-import { useState } from 'react'
-import { invalidateAllocationQueries } from './query-keys'
 import type { AllocationRequestV2ActionItem } from '@components/types'
 import { submitViaProvider } from '@lib/submit'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { isSpecCovered } from '@utils/v2-allocation-items'
+import { useState } from 'react'
+
+import { invalidateAllocationQueries } from './query-keys.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export type AcceptProgress =
     | { phase: 'idle' }

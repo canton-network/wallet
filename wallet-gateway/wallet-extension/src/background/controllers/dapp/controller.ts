@@ -20,16 +20,18 @@ import type {
     Network as StoreNetwork,
     Transaction,
 } from '@canton-network/core-wallet-store'
-import { enqueueApprovalRequest } from '@/shared/approval-requests'
-import { logger } from '@/shared/logger'
-import { openWalletUi } from '../../open-ui'
+
+import { enqueueApprovalRequest } from '@/shared/approval-requests.ts'
+import { logger } from '@/shared/logger.ts'
+
+import { openWalletUi } from '../../open-ui.ts'
 import {
     disconnectedStatusEvent,
     extensionProvider,
     notifySessionTerminated,
-} from '../../status'
-import type { WalletStore } from '../../store'
-import buildController from './rpc-gen'
+} from '../../status.ts'
+import type { WalletStore } from '../../store/index.ts'
+import buildController from './rpc-gen/index.ts'
 import type {
     ConnectResult,
     Network,
@@ -37,7 +39,7 @@ import type {
     StatusEvent,
     TxChangedPendingEvent,
     Wallet,
-} from './rpc-gen/typings'
+} from './rpc-gen/typings.ts'
 
 export interface DappControllerDeps {
     /** The wallet store, not yet scoped to a user. */

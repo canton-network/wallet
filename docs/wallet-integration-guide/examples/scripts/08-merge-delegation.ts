@@ -1,16 +1,17 @@
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
-import path from 'path'
-import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import { readFile } from 'fs/promises'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 const PATH_TO_LOCALNET = '../../../../.localnet'

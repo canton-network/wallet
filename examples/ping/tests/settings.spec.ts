@@ -3,11 +3,12 @@
 
 import { test, expect } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
 import {
     connectPingDapp,
     createPingDappWalletGateway,
     DEFAULT_NETWORK,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 // Network whose user `operator` is the configured gateway admin.
 const adminNetwork = DEFAULT_NETWORK

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { isTrustedSender } from './vault-service'
+
+import { isTrustedSender } from './vault-service.ts'
 
 describe('isTrustedSender', () => {
     const id = 'test-extension-id'

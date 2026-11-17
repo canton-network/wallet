@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Provider } from './test-provider.js'
+import type { Provider } from './test-provider.ts'
 
 export function createProvider(request: Provider['request']): Provider {
     const listeners = new Map<string, Set<(...args: unknown[]) => void>>()

@@ -10,7 +10,8 @@ import {
     afterEach,
     type Mock,
 } from 'vitest'
-import { WebSocketClient } from './websocket-client.js'
+
+import { WebSocketClient } from './websocket-client.ts'
 /* oxlint-disable typescript/no-explicit-any */
 
 const MOCK_CHANNELS = vi.hoisted(() => ({

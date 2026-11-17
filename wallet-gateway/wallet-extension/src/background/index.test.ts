@@ -5,11 +5,13 @@ import { errorCodes } from '@canton-network/core-rpc-errors'
 import { createProxyService } from '@webext-core/proxy-service'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { authMessenger } from '@/shared/auth-protocol'
-import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
-import { VaultErrorName, vaultMessenger } from '@/shared/vault-protocol'
-import { startBackground } from '.'
-import { createVault } from './vault'
+
+import { authMessenger } from '@/shared/auth-protocol.ts'
+import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys.ts'
+import { VaultErrorName, vaultMessenger } from '@/shared/vault-protocol.ts'
+
+import { startBackground } from './index.ts'
+import { createVault } from './vault/index.ts'
 
 describe('startBackground', () => {
     beforeEach(() => {

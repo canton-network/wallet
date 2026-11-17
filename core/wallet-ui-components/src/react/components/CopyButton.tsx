@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import { IconButton, Tooltip } from '@mui/material'
 import { useEffect, useRef, useState } from 'react'
 
-import ContentCopyIcon from '@mui/icons-material/ContentCopy'
-import { logger } from '../logger'
+import { logger } from '../logger.ts'
 
 interface CopyButtonProps {
     onCopy?: (value: string) => void

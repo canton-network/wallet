@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     Exercise,
     HashingSchemeVersion,
     PreparedTransaction,
 } from '@canton-network/core-ledger-proto'
-import { concat, fromBase64 } from '../bytes.js'
-import { TxHashingError, type TxHashingErrorCode } from '../errors.js'
+import { describe, expect, it } from 'vitest'
+
+import { concat, fromBase64 } from '../bytes.ts'
+import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
 import {
     computePreparedTransactionHash,
     type HashingScheme,
     type HashOptions,
-} from '../hash.js'
+} from '../hash.ts'
 import {
     createNode,
     exercise,
@@ -23,10 +24,10 @@ import {
     seed,
     single,
     tx,
-} from './helpers/builders.js'
-import { toHex } from './helpers/hex.js'
-import { liveFixtures } from './helpers/live-fixtures.js'
-import { V2, V3 } from './helpers/load-vectors.js'
+} from './helpers/builders.ts'
+import { toHex } from './helpers/hex.ts'
+import { liveFixtures } from './helpers/live-fixtures.ts'
+import { V2, V3 } from './helpers/load-vectors.ts'
 
 const run = (input: unknown, scheme: unknown, options?: unknown) =>
     computePreparedTransactionHash(
@@ -295,7 +296,7 @@ describe('computePreparedTransactionHash', () => {
 })
 
 it('exports only the public API', async () =>
-    expect(Object.keys(await import('../index.js')).sort()).toEqual([
+    expect(Object.keys(await import('../index.ts')).sort()).toEqual([
         'DEFAULT_LIMITS',
         'TxHashingError',
         'computePreparedTransactionHash',

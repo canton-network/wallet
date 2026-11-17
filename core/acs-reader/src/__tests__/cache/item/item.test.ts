@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ACSCache } from '../../../cache/item'
+
+import { ACSCache } from '../../../cache/item/index.ts'
 
 const { getActiveContracts, MockACSService, mockBuildActiveContractFilter } =
     vi.hoisted(() => {

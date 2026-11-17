@@ -4,8 +4,10 @@
 import { WalletEvent } from '@canton-network/core-types'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import type { Browser } from 'wxt/browser'
-import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port'
-import { isConnectedResponse, NotificationRelay } from './notification-relay'
+
+import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
+
+import { isConnectedResponse, NotificationRelay } from './notification-relay.ts'
 
 const connectedStatus = {
     provider: { id: 'browser:ext:canton-wallet', providerType: 'browser' },

@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi, expect, describe, test, beforeEach, type Mocked } from 'vitest'
-import BlockdaemonSigningDriver from './index.js'
-import type { SigningAPIClient } from './signing-api-sdk.js'
 import type { Transaction, Key } from '@canton-network/core-signing-lib'
+import { vi, expect, describe, test, beforeEach, type Mocked } from 'vitest'
+
+import BlockdaemonSigningDriver from './index.ts'
+import type { SigningAPIClient } from './signing-api-sdk.ts'
 
 describe('BlockdaemonSigningDriver constructor', () => {
     test('passes caip2 from config to the client', () => {

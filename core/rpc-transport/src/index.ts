@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    providerErrors,
+    rpcErrors,
+    toJsonRpcError,
+} from '@canton-network/core-rpc-errors'
+import {
     type RequestPayload,
     type ResponsePayload,
     type JsonRpcRequest,
@@ -12,11 +17,6 @@ import {
     ErrorResponse,
     type JsonRpcResponse,
 } from '@canton-network/core-types'
-import {
-    providerErrors,
-    rpcErrors,
-    toJsonRpcError,
-} from '@canton-network/core-rpc-errors'
 
 export const jsonRpcRequest = (
     id: string | number | null,

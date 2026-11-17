@@ -9,11 +9,12 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
 import {
     DAPP_API_PORT,
     DEFAULT_NETWORK,
     SECOND_OAUTH_NETWORK,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 const GATEWAY_URL = `http://localhost:${DAPP_API_PORT}`
 

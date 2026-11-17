@@ -7,6 +7,11 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
+import type { ServerStreamingCall } from '@protobuf-ts/runtime-rpc'
+import { stackIntercept } from '@protobuf-ts/runtime-rpc'
+import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
+import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
 import { TopologyManagerReadService } from './topology_manager_read_service.ts'
 import type { SequencerLsuStateResponse } from './topology_manager_read_service.ts'
 import type { SequencerLsuStateRequest } from './topology_manager_read_service.ts'
@@ -18,7 +23,6 @@ import type { ExportTopologySnapshotV2Response } from './topology_manager_read_s
 import type { ExportTopologySnapshotV2Request } from './topology_manager_read_service.ts'
 import type { ExportTopologySnapshotResponse } from './topology_manager_read_service.ts'
 import type { ExportTopologySnapshotRequest } from './topology_manager_read_service.ts'
-import type { ServerStreamingCall } from '@protobuf-ts/runtime-rpc'
 import type { ListAllV2Response } from './topology_manager_read_service.ts'
 import type { ListAllV2Request } from './topology_manager_read_service.ts'
 import type { ListAllResponse } from './topology_manager_read_service.ts'
@@ -53,11 +57,8 @@ import type { ListOwnerToKeyMappingResponse } from './topology_manager_read_serv
 import type { ListOwnerToKeyMappingRequest } from './topology_manager_read_service.ts'
 import type { ListDecentralizedNamespaceDefinitionResponse } from './topology_manager_read_service.ts'
 import type { ListDecentralizedNamespaceDefinitionRequest } from './topology_manager_read_service.ts'
-import { stackIntercept } from '@protobuf-ts/runtime-rpc'
 import type { ListNamespaceDelegationResponse } from './topology_manager_read_service.ts'
 import type { ListNamespaceDelegationRequest } from './topology_manager_read_service.ts'
-import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
-import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**
  * @generated from protobuf service com.digitalasset.canton.topology.admin.v30.TopologyManagerReadService
  */

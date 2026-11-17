@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { ProxyServiceKey } from '@webext-core/proxy-service'
-import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
-import type { Methods as DappRpcMethods } from '@/entrypoints/background/dapp/rpc-gen/index'
-import type { AuthService } from '@/entrypoints/background/auth-service'
+
+import type { AuthService } from '@/entrypoints/background/auth-service.ts'
+import type { Methods as DappRpcMethods } from '@/entrypoints/background/dapp/rpc-gen/index.ts'
+import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index.ts'
 
 export const USER_RPC_KEY =
     'user-rpc-service' as ProxyServiceKey<UserRpcMethods>

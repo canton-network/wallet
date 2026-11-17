@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
 import { sql } from 'kysely'
+import { expect, test } from 'vitest'
 
 import {
     forEachDialect,
@@ -11,8 +11,8 @@ import {
     migrateDownThrough,
     migrateUpThrough,
     migrateUpToBefore,
-} from '../helpers'
-import { insertSession } from '../seeds/019-make-session-access-token-nullable'
+} from '../helpers.ts'
+import { insertSession } from '../seeds/019-make-session-access-token-nullable.ts'
 
 const TARGET = 19
 

@@ -3,14 +3,15 @@
 
 import type { WalletPickerEntry } from '@canton-network/core-types'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { makeWalletPickerEntry } from '../components/__tests__/fixtures.js'
-import { popup } from './popup.js'
+
+import { makeWalletPickerEntry } from '../components/__tests__/fixtures.ts'
+import { popup } from './popup.ts'
 import {
     notifyWalletPickerConnected,
     notifyWalletPickerError,
     pickWallet,
     waitForWalletPickerRetrySelection,
-} from './wallet-picker.js'
+} from './wallet-picker.ts'
 
 const ENTRIES_KEY = 'splice_wallet_picker_entries'
 

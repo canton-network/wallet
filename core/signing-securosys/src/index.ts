@@ -26,13 +26,14 @@ import {
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { getLogger } from '@logtape/logtape'
+
 import {
     keyLabelFromPublicKey,
     SigningAPIClient,
     TsbApiError,
     type SecurosysTSBClientConfig,
     type TsbSignatureAlgorithm,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
 
 export {
     keyLabelFromPublicKey,
@@ -43,7 +44,7 @@ export {
     type SecurosysTSBClientConfig,
     type TsbCreateKeyRequest,
     type TsbSignatureAlgorithm,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
 
 const logger = getLogger([
     'core',

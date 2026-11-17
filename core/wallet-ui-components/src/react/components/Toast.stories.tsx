@@ -3,7 +3,8 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, fn, waitFor, within } from 'storybook/test'
-import { Toast } from './Toast'
+
+import { Toast } from './Toast.tsx'
 
 const meta: Meta = {
     title: 'Toast',

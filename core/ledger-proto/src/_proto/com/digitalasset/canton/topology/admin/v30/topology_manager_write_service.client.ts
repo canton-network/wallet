@@ -7,6 +7,11 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
+import type { ClientStreamingCall } from '@protobuf-ts/runtime-rpc'
+import { stackIntercept } from '@protobuf-ts/runtime-rpc'
+import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
+import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
 import { TopologyManagerWriteService } from './topology_manager_write_service.ts'
 import type { DropTemporaryTopologyStoreResponse } from './topology_manager_write_service.ts'
 import type { DropTemporaryTopologyStoreRequest } from './topology_manager_write_service.ts'
@@ -20,14 +25,10 @@ import type { ImportTopologySnapshotV2Response } from './topology_manager_write_
 import type { ImportTopologySnapshotV2Request } from './topology_manager_write_service.ts'
 import type { ImportTopologySnapshotResponse } from './topology_manager_write_service.ts'
 import type { ImportTopologySnapshotRequest } from './topology_manager_write_service.ts'
-import type { ClientStreamingCall } from '@protobuf-ts/runtime-rpc'
 import type { AddTransactionsResponse } from './topology_manager_write_service.ts'
 import type { AddTransactionsRequest } from './topology_manager_write_service.ts'
-import { stackIntercept } from '@protobuf-ts/runtime-rpc'
 import type { AuthorizeResponse } from './topology_manager_write_service.ts'
 import type { AuthorizeRequest } from './topology_manager_write_service.ts'
-import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
-import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 /**
  * *
  * Write operations on the local topology manager.

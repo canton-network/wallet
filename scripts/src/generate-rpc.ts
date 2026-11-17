@@ -3,6 +3,7 @@
 
 import { execFileSync } from 'child_process'
 import * as fs from 'fs'
+
 import { Command } from '@commander-js/extra-typings'
 
 interface RpcGeneratorConfig {

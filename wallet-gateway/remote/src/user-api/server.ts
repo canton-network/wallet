@@ -4,10 +4,11 @@
 import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import type express from 'express'
-import { jsonRpcHandler } from '../middleware/jsonRpcHandler.js'
-import { userController, type UserControllerOptions } from './controller.js'
-import type { Methods } from './rpc-gen/index.js'
-import { paramSchemas } from './rpc-gen/schemas.js'
+
+import { jsonRpcHandler } from '../middleware/jsonRpcHandler.ts'
+import { userController, type UserControllerOptions } from './controller.ts'
+import type { Methods } from './rpc-gen/index.ts'
+import { paramSchemas } from './rpc-gen/schemas.ts'
 
 export interface UserApiOptions extends Omit<
     UserControllerOptions,

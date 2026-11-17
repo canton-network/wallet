@@ -2,14 +2,19 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
-import { expressContext, mock, type RequestType } from '../../__tests__/mocks'
-import { APIError } from '../common'
-import { getAllocationFactory } from './getAllocationFactory'
+
+import {
+    expressContext,
+    mock,
+    type RequestType,
+} from '../../__tests__/mocks.ts'
+import { APIError } from '../common.ts'
+import { getAllocationFactory } from './getAllocationFactory.ts'
 
 const { res, next } = expressContext
 
-vi.mock('../../common/state', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
+vi.mock('../../common/state.ts', async () => {
+    const { mock: importedMock } = await import('../../__tests__/mocks.ts')
 
     return importedMock.state
 })

@@ -5,12 +5,14 @@ import {
     type Memory,
     StoreInternal,
 } from '@canton-network/core-wallet-store-inmemory'
-import { logger } from '@/shared/logger'
-import { type Vault, VaultLockedError } from '../vault'
-import { defaultConfig } from './default-config'
-import type { WalletStore } from './index'
-import { persistent } from './persistent-store'
-import { decodeSnapshot, encodeSnapshot, type SnapshotV1 } from './snapshot'
+
+import { logger } from '@/shared/logger.ts'
+
+import { type Vault, VaultLockedError } from '../vault/index.ts'
+import { defaultConfig } from './default-config.ts'
+import type { WalletStore } from './index.ts'
+import { persistent } from './persistent-store.ts'
+import { decodeSnapshot, encodeSnapshot, type SnapshotV1 } from './snapshot.ts'
 
 export interface WalletStoreHolder {
     /**

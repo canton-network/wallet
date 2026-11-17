@@ -14,14 +14,15 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Signature } from '../../crypto/v30/crypto.ts'
-import { DynamicSequencingParameters } from './sequencing_parameters.ts'
-import { DynamicSynchronizerParameters } from './synchronizer_parameters.ts'
-import { SigningKeysWithThreshold } from '../../crypto/v30/crypto.ts'
+
 import { Timestamp } from '../../../../../google/protobuf/timestamp.ts'
-import { ParticipantSynchronizerLimits } from './synchronizer_parameters.ts'
+import { Signature } from '../../crypto/v30/crypto.ts'
+import { SigningKeysWithThreshold } from '../../crypto/v30/crypto.ts'
 import { PublicKey } from '../../crypto/v30/crypto.ts'
 import { SigningPublicKey } from '../../crypto/v30/crypto.ts'
+import { DynamicSequencingParameters } from './sequencing_parameters.ts'
+import { DynamicSynchronizerParameters } from './synchronizer_parameters.ts'
+import { ParticipantSynchronizerLimits } from './synchronizer_parameters.ts'
 /**
  * @generated from protobuf message com.digitalasset.canton.protocol.v30.Enums
  */

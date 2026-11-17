@@ -4,13 +4,15 @@
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import path from 'node:path'
-import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+
 import type {
     BootstrapConfig,
     StoreConfig,
 } from '@canton-network/core-wallet-store'
-import { createCLI } from './cli.js'
-import { connection } from './store-sql.js'
+import { afterEach, beforeEach, describe, expect, test } from 'vitest'
+
+import { createCLI } from './cli.ts'
+import { connection } from './store-sql.ts'
 
 const idp = {
     id: 'idp-1',

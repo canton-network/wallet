@@ -25,6 +25,7 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
+
 import { Duration } from '../protobuf/duration.ts'
 /**
  * Describes the cause of the error with structured details.

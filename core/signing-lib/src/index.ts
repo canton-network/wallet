@@ -2,19 +2,20 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AuthContext } from '@canton-network/core-wallet-auth'
-import type { Methods } from './rpc-gen/index.js'
-import type { Error as RpcError } from './rpc-gen/typings.js'
 import nacl from 'tweetnacl'
 import naclUtil from 'tweetnacl-util'
-import { SigningProvider } from './config/schema.js'
+
+import { SigningProvider } from './config/schema.ts'
+import type { Methods } from './rpc-gen/index.ts'
+import type { Error as RpcError } from './rpc-gen/typings.ts'
 
 // Re-export SigningProvider from config schema
 export { SigningProvider }
 
-export { default as buildController, type Methods } from './rpc-gen/index.js'
-export * from './rpc-gen/typings.js'
-export * from './SigningDriverStore.js'
-export * from './config/schema.js'
+export { default as buildController, type Methods } from './rpc-gen/index.ts'
+export * from './rpc-gen/typings.ts'
+export * from './SigningDriverStore.ts'
+export * from './config/schema.ts'
 
 export const CC_COIN_TYPE = 6767
 

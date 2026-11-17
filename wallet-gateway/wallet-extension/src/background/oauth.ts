@@ -7,7 +7,8 @@ import {
     parseIdpResponse,
 } from '@canton-network/core-wallet-auth'
 import { browser } from 'wxt/browser'
-import { AuthErrorName } from '@/shared/auth-protocol'
+
+import { AuthErrorName } from '@/shared/auth-protocol.ts'
 
 export class SignInFailedError extends Error {
     constructor(message: string, options?: ErrorOptions) {
