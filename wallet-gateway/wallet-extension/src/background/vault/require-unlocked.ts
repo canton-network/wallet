@@ -12,8 +12,9 @@ export type LockableService = {
 /**
  * Puts a service behind the vault lock: each of its methods, at any depth,
  * waits for the vault's restore, then rejects with `VaultLockedError` unless
- * the vault is unlocked. proxy-service has no sender check, so the services
- * the pages call need this on top of the pages' guard.
+ * the vault is unlocked. The services the pages call need this on top of the
+ * pages' guard: `registerTrustedService` checks who calls, this checks that
+ * the vault is open.
  */
 export function requireUnlocked<T extends LockableService>(
     vault: VaultLockState,
