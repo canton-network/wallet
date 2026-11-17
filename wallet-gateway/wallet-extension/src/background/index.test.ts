@@ -6,7 +6,11 @@ import { createProxyService } from '@webext-core/proxy-service'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { authMessenger } from '@/shared/auth-protocol'
-import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
+import {
+    DAPP_RPC_KEY,
+    TOKEN_RPC_KEY,
+    USER_RPC_KEY,
+} from '@/shared/service-keys'
 import { VaultErrorName, vaultMessenger } from '@/shared/vault-protocol'
 import { startBackground } from '.'
 import { createVault } from './vault'
@@ -43,8 +47,8 @@ describe('startBackground', () => {
             1
         )
         // The vault service, the auth service, the dApp dispatcher, the user
-        // controller and the open-UI handler
-        expect(onMessage).toHaveBeenCalledTimes(5)
+        // controller, the token service and the open-UI handler
+        expect(onMessage).toHaveBeenCalledTimes(6)
         expect(onInstalled).toHaveBeenCalledTimes(1)
     })
 
@@ -99,5 +103,19 @@ describe('startBackground', () => {
                 }),
             ],
         })
+    })
+
+    it('answers token requests only while unlocked and signed in', async () => {
+        const vault = createVault({ iterations: 1000 })
+        startBackground({ vault })
+        const token = createProxyService(TOKEN_RPC_KEY)
+
+        await expect(token.token.assets()).rejects.toMatchObject({
+            name: VaultErrorName.Locked,
+        })
+        await vault.create('abcde1')
+        await expect(
+            token.token.v1.utxos.list({ partyId: 'alice::1220' })
+        ).rejects.toThrow('Not signed in')
     })
 })
