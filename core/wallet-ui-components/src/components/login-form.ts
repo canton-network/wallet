@@ -4,6 +4,7 @@
 import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
 import './back-link.js'
+import './scope-list.js'
 import { BaseElement } from '../internal/base-element.js'
 import type {
     PublicNetwork,
@@ -50,6 +51,7 @@ class WgLoginForm extends BaseElement {
 
     @property({ type: Boolean }) accessor connecting = false
     @property({ type: String }) accessor backHref = '/'
+    @property({ type: Array }) accessor scopes: string[] | undefined = undefined
 
     @state() accessor selectedNetwork: PublicNetwork | null = null
     @state() accessor message: string | null = null
@@ -344,6 +346,34 @@ class WgLoginForm extends BaseElement {
                     <div class="title-row">
                         <h3 class="h3 mb-0 fw-bold">Wallet Gateway</h3>
                     </div>
+
+                    ${
+                        this.scopes?.length
+                            ? html`<div class="alert alert-warning">
+                                  <p class="mb-2">
+                                      This dApp requested ledger permissions:
+                                  </p>
+                                  <wg-scope-list
+                                      .scopes=${this.scopes}
+                                  ></wg-scope-list>
+                                  <div class="form-check mt-2 mb-0">
+                                      <input
+                                          id="scopes-consent"
+                                          class="form-check-input"
+                                          type="checkbox"
+                                          required
+                                          ?disabled=${this.connecting}
+                                      />
+                                      <label
+                                          class="form-check-label"
+                                          for="scopes-consent"
+                                          >I allow this dApp to use these
+                                          permissions</label
+                                      >
+                                  </div>
+                              </div>`
+                            : nothing
+                    }
 
                     <label
                         class="form-label fw-semibold text-body mt-3 mb-2"

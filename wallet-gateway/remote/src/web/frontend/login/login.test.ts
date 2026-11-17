@@ -198,6 +198,32 @@ describe('LoginUI', () => {
         expect(el.idps).toHaveLength(1)
     })
 
+    it('passes scopes from the URL query to the login form', async () => {
+        const originalUrl = window.location.href
+        window.history.replaceState(
+            null,
+            '',
+            '?scopes=ledger%3Aread&scopes=l%3Apkg%3A%23pkg-one'
+        )
+        try {
+            const scopedEl = await fixture<LoginUI>(componentFixture)
+            await waitUntil(() => scopedEl.networks.length === 1)
+
+            expect(getLoginForm(scopedEl)?.scopes).toEqual([
+                'ledger:read',
+                'l:pkg:#pkg-one',
+            ])
+        } finally {
+            window.history.replaceState(null, '', originalUrl)
+        }
+    })
+
+    it('does not pass scopes when the URL has no scopes query', async () => {
+        await waitUntil(() => el.networks.length === 1)
+
+        expect(getLoginForm(el)?.scopes).toBeUndefined()
+    })
+
     it('redirects after self-signed connect succeeds', async () => {
         await waitUntil(() => el.networks.length === 1)
 

@@ -57,6 +57,11 @@ const createPkcePair = async (): Promise<{
     }
 }
 
+const getScopesFromUrl = (): string[] | undefined => {
+    const params = new URLSearchParams(window.location.search)
+    return params.has('scopes') ? params.getAll('scopes') : undefined
+}
+
 @customElement('user-ui-login')
 export class LoginUI extends BaseElement {
     @state()
@@ -73,6 +78,8 @@ export class LoginUI extends BaseElement {
 
     @state()
     accessor connectingMessage = 'Connecting...'
+
+    private readonly scopes = getScopesFromUrl()
 
     private async loadNetworks() {
         const currentOrigin = await detectCurrentOrigin()
@@ -282,6 +289,7 @@ export class LoginUI extends BaseElement {
                 .idps=${this.idps}
                 .loading=${this.loading}
                 .connecting=${this.connecting}
+                .scopes=${this.scopes}
                 @login-connect=${this.handleConnect}
             ></wg-login-form>
         `
