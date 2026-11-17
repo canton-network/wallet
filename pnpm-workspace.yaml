@@ -40,7 +40,7 @@ catalog:
     '@dfns/sdk-keysigner': ^0.8.31
     '@emotion/react': ^11.14.0
     '@emotion/styled': ^11.14.1
-    '@fireblocks/ts-sdk': ^35.2.0
+    '@fireblocks/ts-sdk': ^36.0.0
     '@fontsource/inter': ^5.3.0
     '@inquirer/prompts': ^8.7.3
     '@lit/react': ^1.0.8
