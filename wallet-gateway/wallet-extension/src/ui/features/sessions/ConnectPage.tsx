@@ -15,7 +15,7 @@ import Stack from '@mui/material/Stack'
 import Alert from '@mui/material/Alert'
 
 /** The auth methods `auth.connect` supports so far. */
-const SUPPORTED_AUTH_METHODS = new Set(['authorization_code'])
+const SUPPORTED_AUTH_METHODS = new Set(['authorization_code', 'self_signed'])
 
 export function ConnectPage() {
     const navigate = useNavigate()
@@ -26,9 +26,16 @@ export function ConnectPage() {
     function handleSubmit(event: LoginConnectEvent) {
         event.preventDefault()
         if (event.selectedNetwork.id === '' || connect.isPending) return
-        connect.mutate(event.selectedNetwork.id, {
-            onSuccess: () => void navigate({ to: '/' }),
-        })
+        connect.mutate(
+            {
+                networkId: event.selectedNetwork.id,
+                clientId: event.clientId,
+                clientSecret: event.clientSecret,
+            },
+            {
+                onSuccess: () => void navigate({ to: '/' }),
+            }
+        )
     }
 
     const loginNetworks = networks.data?.filter((network: PublicNetwork) =>
@@ -59,6 +66,8 @@ function connectErrorMessage(error: Error): string {
     switch (error.name) {
         case AuthErrorName.SignInFailed:
             return 'Sign-in was cancelled or failed. Try again.'
+        case AuthErrorName.InvalidCredentials:
+            return 'The client secret is wrong.'
         case AuthErrorName.UnsupportedAuthMethod:
             return "This network's sign-in method isn't supported yet."
         default:
