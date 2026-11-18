@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { InstrumentId } from '@canton-network/core-token-standard'
-import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
+import { useAggregatedHoldings } from '@canton-network/core-wallet-ui-components/react/token'
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown'
 import {
     Box,
@@ -12,7 +12,7 @@ import {
     Select,
     Typography,
 } from '@mui/material'
-import { Decimal } from 'decimal.js'
+import Decimal from 'decimal.js'
 import { useMemo } from 'react'
 
 import type { SelectableInstrument } from './transfer-types.ts'

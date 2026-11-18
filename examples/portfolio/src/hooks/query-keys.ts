@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { QueryClient } from '@tanstack/react-query'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 
 const walletConnection = ['walletConnection'] as const
 
@@ -24,12 +25,6 @@ export const queryKeys = {
                     tokenVersion,
                     registryUrls,
                 ] as const,
-        },
-
-        holdings: {
-            all: [...walletConnection, 'holdings'] as const,
-            forParty: (party: string | undefined) =>
-                [...walletConnection, 'holdings', party] as const,
         },
 
         pendingTransfers: {
@@ -161,7 +156,7 @@ export function invalidateAllocationQueries(
             keys.allocationsV2.forParty(party),
             keys.allocationInstructionsV2.forParty(party),
             // Effects of any allocation action
-            keys.holdings.all,
+            tokenQueryKeys.holdings.all,
             keys.transactionHistory.all,
         ].map((queryKey) => queryClient.invalidateQueries({ queryKey }))
     )

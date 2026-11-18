@@ -3,10 +3,18 @@
 
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type { Account } from '@canton-network/core-token-standard-v2'
-import { Decimal } from 'decimal.js'
+import Decimal from 'decimal.js'
 
-import type { Instruments } from '../types/instruments.ts'
 import { isBasicAccount, type PortfolioHolding } from './holdings.ts'
+
+export interface TokenInstrument {
+    id: string
+    name: string
+    symbol: string
+    decimals?: number | undefined
+}
+
+export type TokenInstruments = ReadonlyMap<string, readonly TokenInstrument[]>
 
 export interface AggregatedAccountBalance {
     account: Account
@@ -23,11 +31,13 @@ export interface AggregatedHolding {
     availableAmount: string
     numOfHoldings: number
     accountBalances: AggregatedAccountBalance[]
-    instrument?: {
-        name: string
-        symbol: string
-        decimals: number
-    }
+    instrument?:
+        | {
+              name: string
+              symbol: string
+              decimals?: number | undefined
+          }
+        | undefined
 }
 
 export function getInstrumentKey(instrumentId: { admin: string; id: string }) {
@@ -127,7 +137,7 @@ function compareAccountBalances(
 
 export function enrichWithInstrumentInfo(
     aggregated: Map<string, AggregatedHolding>,
-    instruments: Instruments
+    instruments: TokenInstruments
 ): AggregatedHolding[] {
     return Array.from(aggregated.values(), (item) => {
         const instrumentInfo = instruments

@@ -64,20 +64,6 @@ export function mergeHoldings(
     return [...byCid.values()]
 }
 
-export const toUniquePortfolioHoldings = (
-    contracts: PrettyContract<HoldingView>[]
-): PrettyContract<HoldingView>[] => {
-    const holdingsByContractId = new Map<string, PrettyContract<HoldingView>>()
-
-    for (const contract of contracts) {
-        if (!holdingsByContractId.has(contract.contractId)) {
-            holdingsByContractId.set(contract.contractId, contract)
-        }
-    }
-
-    return [...holdingsByContractId.values()]
-}
-
 export const toOwnedHoldings = (
     holdings: PortfolioHolding[],
     partyId: PartyId

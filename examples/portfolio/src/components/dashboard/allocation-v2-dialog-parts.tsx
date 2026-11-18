@@ -11,7 +11,7 @@ import CloseIcon from '@mui/icons-material/Close'
 import { Box, IconButton, Typography } from '@mui/material'
 import { formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
-import { isBasicAccount } from '@utils/holdings'
+import { isBasicAccount } from '@canton-network/core-wallet-ui-components/react/token'
 import {
     amountsToLock,
     type InstrumentAmount,

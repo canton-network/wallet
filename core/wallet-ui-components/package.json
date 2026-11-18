@@ -41,6 +41,12 @@
             "import": "./dist/react/index.js",
             "require": "./dist/react/index.cjs",
             "default": "./dist/react/index.js"
+        },
+        "./react/token": {
+            "types": "./dist/react/token/index.d.ts",
+            "import": "./dist/react/token/index.js",
+            "require": "./dist/react/token/index.cjs",
+            "default": "./dist/react/token/index.js"
         }
     },
     "publishConfig": {
@@ -65,17 +71,23 @@
         "lit": "catalog:"
     },
     "devDependencies": {
+        "@canton-network/core-token-standard": "workspace:",
+        "@canton-network/core-token-standard-service": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "@canton-network/core-tx-parser": "workspace:",
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
         "@open-wc/testing-helpers": "catalog:",
         "@storybook/addon-a11y": "catalog:",
         "@storybook/addon-vitest": "catalog:",
         "@storybook/react-vite": "catalog:",
+        "@tanstack/react-query": "catalog:",
         "@testing-library/dom": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
+        "decimal.js": "catalog:",
         "playwright": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
@@ -88,16 +100,40 @@
         "vitest": "catalog:"
     },
     "peerDependencies": {
+        "@canton-network/core-token-standard": "workspace:",
+        "@canton-network/core-token-standard-service": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "@canton-network/core-tx-parser": "workspace:",
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
+        "@tanstack/react-query": "catalog:",
+        "decimal.js": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:"
     },
     "peerDependenciesMeta": {
+        "@canton-network/core-token-standard": {
+            "optional": true
+        },
+        "@canton-network/core-token-standard-service": {
+            "optional": true
+        },
+        "@canton-network/core-token-standard-v2": {
+            "optional": true
+        },
+        "@canton-network/core-tx-parser": {
+            "optional": true
+        },
         "@mui/icons-material": {
             "optional": true
         },
         "@mui/material": {
+            "optional": true
+        },
+        "@tanstack/react-query": {
+            "optional": true
+        },
+        "decimal.js": {
             "optional": true
         },
         "react": {

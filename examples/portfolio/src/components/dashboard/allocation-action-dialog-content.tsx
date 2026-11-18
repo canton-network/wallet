@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import {
+    getInstrumentKey,
+    useAggregatedHoldings,
+    type AggregatedHolding,
+} from '@canton-network/core-wallet-ui-components/react/token'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DateTimeText } from '@components/date-time-text'
 import type {
@@ -11,7 +16,6 @@ import type {
 } from '@components/types'
 import { PillButton } from '@components/ui/PillButton'
 import { isReceiverOfLeg, isSenderOfLeg } from '@components/utils'
-import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
 import type { AcceptProgress } from '@hooks/useAllocationRequestV2Actions'
 import CloseIcon from '@mui/icons-material/Close'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
@@ -26,10 +30,6 @@ import {
     IconButton,
     Typography,
 } from '@mui/material'
-import {
-    getInstrumentKey,
-    type AggregatedHolding,
-} from '@utils/aggregate-holdings'
 import { formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
 import {
@@ -38,7 +38,7 @@ import {
     netAmounts,
     type InstrumentAmount,
 } from '@utils/v2-allocation-items'
-import { Decimal } from 'decimal.js'
+import Decimal from 'decimal.js'
 import { useMemo, useState, type ReactNode } from 'react'
 
 import { LegList, LockedAmounts } from './allocation-v2-dialog-parts.tsx'

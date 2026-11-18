@@ -1,18 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useInstruments } from '@hooks/useInstruments'
 import { useQuery } from '@tanstack/react-query'
-import type { PortfolioHolding } from '@utils/holdings'
 import { useMemo } from 'react'
 
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedHolding,
-} from '../utils/aggregate-holdings.ts'
+} from './aggregate-holdings.ts'
+import type { PortfolioHolding } from './holdings.ts'
 import { holdingsQueryOptions } from './query-options.ts'
-import { useWalletSdk } from './useWalletSdk.ts'
+import { useTokenContext } from './TokenProvider.tsx'
 
 export interface WalletHoldingsResult {
     instruments: AggregatedHolding[]
@@ -26,13 +25,13 @@ export interface WalletHoldingsResult {
 export const useWalletHoldings = (
     partyId: string | undefined
 ): WalletHoldingsResult => {
-    const registryInstruments = useInstruments()
     const {
-        sdk,
-        isLoading: isWalletSdkLoading,
-        error: walletSdkError,
-    } = useWalletSdk()
-    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, sdk }))
+        client,
+        instruments: registryInstruments,
+        isLoading: isClientLoading,
+        error: clientError,
+    } = useTokenContext()
+    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, client }))
 
     const aggregatedInstruments = useMemo(() => {
         if (!holdingsQuery.data) return []
@@ -42,16 +41,12 @@ export const useWalletHoldings = (
         )
     }, [holdingsQuery.data, registryInstruments])
 
-    const error = walletSdkError
-        ? new Error(walletSdkError)
-        : holdingsQuery.error
-
     return {
         instruments: aggregatedInstruments,
         holdings: holdingsQuery.data ?? [],
-        isLoading: isWalletSdkLoading || holdingsQuery.isLoading,
-        isError: !!walletSdkError || holdingsQuery.isError,
-        error,
+        isLoading: isClientLoading || holdingsQuery.isLoading,
+        isError: !!clientError || holdingsQuery.isError,
+        error: clientError ?? holdingsQuery.error,
         refetch: holdingsQuery.refetch,
     }
 }

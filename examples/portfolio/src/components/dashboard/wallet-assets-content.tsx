@@ -2,16 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    getInstrumentKey,
+    type AggregatedHolding,
+    type WalletHoldingsResult,
+} from '@canton-network/core-wallet-ui-components/react/token'
+import {
     AssetBalanceCard,
     AssetBalanceCardSkeleton,
     AssetsPanel,
 } from '@components/dashboard/asset-balance-card'
-import type { WalletHoldingsResult } from '@hooks/useWalletHoldings'
 import { Alert } from '@mui/material'
-import {
-    getInstrumentKey,
-    type AggregatedHolding,
-} from '@utils/aggregate-holdings'
 import { getInstrumentInitials } from '@utils/instrument-display'
 
 import { DashboardEmptyState } from './dashboard-empty-state.tsx'
