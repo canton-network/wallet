@@ -80,4 +80,10 @@ export type AssetBody = {
     registryUrl: URL
     admin: PartyId
     capabilities: AssetCapabilities
+    decimals: number
+    paused: boolean
+    pauseInfo?: {
+        reason?: string
+        until?: string
+    }
 }
