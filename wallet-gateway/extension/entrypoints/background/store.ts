@@ -3,13 +3,14 @@
 
 import type { SigningDriverStore } from '@canton-network/core-signing-lib'
 import { WxtStore } from '@canton-network/core-signing-store-wxt'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import {
     StoreInternal,
     type StoreInternalConfig,
 } from '@canton-network/core-wallet-store-inmemory'
-import { AuthService } from './auth-service'
-import type { AuthAware } from '@canton-network/core-wallet-auth'
+
+import { AuthService } from './auth-service.ts'
 
 export async function loadAuthedStore(
     store: Store & AuthAware<Store>

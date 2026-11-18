@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // Mirrors the layout of the former merged `token-standard-models` codegen package.
-import * as Splice from './Splice/index.js'
+import * as Splice from './Splice/index.ts'
 
 export { Splice }
 

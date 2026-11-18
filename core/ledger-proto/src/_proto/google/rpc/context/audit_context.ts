@@ -25,7 +25,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Struct } from '../../protobuf/struct.js'
+
+import { Struct } from '../../protobuf/struct.ts'
 /**
  * `AuditContext` provides information that is needed for audit logging.
  *

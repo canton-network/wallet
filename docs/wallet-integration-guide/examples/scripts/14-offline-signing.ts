@@ -3,14 +3,14 @@ import {
     SDK,
     signTransactionHash,
 } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 const onlineLogger = logger.child({ name: 'online' })

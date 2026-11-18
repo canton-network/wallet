@@ -9,7 +9,8 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { MessageDetail } from './MessageDetail'
+
+import { MessageDetail } from './MessageDetail.tsx'
 
 const message = 'Sign in to Example dApp\nNonce: 12345'
 

@@ -7,20 +7,21 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { IdentityProviderConfigService } from './identity_provider_config_service.js'
-import type { DeleteIdentityProviderConfigResponse } from './identity_provider_config_service.js'
-import type { DeleteIdentityProviderConfigRequest } from './identity_provider_config_service.js'
-import type { ListIdentityProviderConfigsResponse } from './identity_provider_config_service.js'
-import type { ListIdentityProviderConfigsRequest } from './identity_provider_config_service.js'
-import type { UpdateIdentityProviderConfigResponse } from './identity_provider_config_service.js'
-import type { UpdateIdentityProviderConfigRequest } from './identity_provider_config_service.js'
-import type { GetIdentityProviderConfigResponse } from './identity_provider_config_service.js'
-import type { GetIdentityProviderConfigRequest } from './identity_provider_config_service.js'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { CreateIdentityProviderConfigResponse } from './identity_provider_config_service.js'
-import type { CreateIdentityProviderConfigRequest } from './identity_provider_config_service.js'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { IdentityProviderConfigService } from './identity_provider_config_service.ts'
+import type { DeleteIdentityProviderConfigResponse } from './identity_provider_config_service.ts'
+import type { DeleteIdentityProviderConfigRequest } from './identity_provider_config_service.ts'
+import type { ListIdentityProviderConfigsResponse } from './identity_provider_config_service.ts'
+import type { ListIdentityProviderConfigsRequest } from './identity_provider_config_service.ts'
+import type { UpdateIdentityProviderConfigResponse } from './identity_provider_config_service.ts'
+import type { UpdateIdentityProviderConfigRequest } from './identity_provider_config_service.ts'
+import type { GetIdentityProviderConfigResponse } from './identity_provider_config_service.ts'
+import type { GetIdentityProviderConfigRequest } from './identity_provider_config_service.ts'
+import type { CreateIdentityProviderConfigResponse } from './identity_provider_config_service.ts'
+import type { CreateIdentityProviderConfigRequest } from './identity_provider_config_service.ts'
 /**
  * Identity Provider Config Service makes it possible for participant node administrators
  * to setup and manage additional identity providers at runtime.

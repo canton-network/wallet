@@ -1,7 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ReactNode } from 'react'
+import { normalizeSx } from '@components/ui/utils'
+import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import {
     Avatar,
     Box,
@@ -10,11 +12,9 @@ import {
     Skeleton,
     Typography,
 } from '@mui/material'
-import LockOpenOutlinedIcon from '@mui/icons-material/LockOpenOutlined'
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { normalizeSx } from '@components/ui/utils'
 import { formatAmount } from '@utils/decimal'
+import type { ReactNode } from 'react'
 
 type AssetsPanelProps = {
     children: ReactNode

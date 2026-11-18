@@ -1,20 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { ACSReader } from '@canton-network/core-acs-reader'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { SDKContext } from '../../init/types/context.js'
+import type { Ops } from '@canton-network/core-provider-ledger'
+
+import { SynchronizerResolver } from '../../init/synchronizer.ts'
+import type { SDKContext } from '../../init/types/context.ts'
+import { PreparedTransaction } from '../transactions/prepared.ts'
+import { SignedTransaction } from '../transactions/signed.ts'
+import { DarNamespace } from './dar/index.ts'
+import { InternalLedgerNamespace } from './internal/index.ts'
 import type {
     PrepareOptions,
     ExecuteOptions,
     AcsRequestOptions,
-} from './types.js'
-import { PreparedTransaction } from '../transactions/prepared.js'
-import { SignedTransaction } from '../transactions/signed.js'
-import type { Ops } from '@canton-network/core-provider-ledger'
-import { InternalLedgerNamespace } from './internal/index.js'
-import { ACSReader } from '@canton-network/core-acs-reader'
-import { DarNamespace } from './dar/index.js'
-import { SynchronizerResolver } from '../../init/synchronizer.js'
+} from './types.ts'
 
 export class LedgerNamespace {
     public readonly dar: DarNamespace

@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import * as fs from 'fs'
+import * as path from 'path'
+
 import {
     test as base,
     type Page,
@@ -9,8 +12,6 @@ import {
     type Response,
     type TestInfo,
 } from '@playwright/test'
-import * as fs from 'fs'
-import * as path from 'path'
 
 interface LogEntry {
     timestamp: string

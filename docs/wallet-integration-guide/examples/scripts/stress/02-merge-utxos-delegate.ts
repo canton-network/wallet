@@ -1,17 +1,19 @@
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
-import path from 'path'
-import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import { readFile } from 'fs/promises'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import { Decimal } from 'decimal.js'
+
+import { configureLogging } from '../utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from '../utils/index.js'
-import { batchTap } from './utils.js'
-import Decimal from 'decimal.js'
-import { configureLogging } from '../utils/configure-logging.js'
+} from '../utils/index.ts'
+import { batchTap } from './utils.ts'
 const logger = await configureLogging()
 
 const PATH_TO_LOCALNET = '../../../../../.localnet'

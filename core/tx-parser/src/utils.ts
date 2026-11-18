@@ -1,9 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AllKnownMetaKeys, matchInterfaceIds } from './constants.js'
-
-import type { TransferInstructionView } from './types.js'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import {
     type HoldingView,
     HOLDING_INTERFACE_ID,
@@ -11,7 +9,8 @@ import {
     type Metadata,
 } from '@canton-network/core-token-standard'
 
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { AllKnownMetaKeys, matchInterfaceIds } from './constants.ts'
+import type { TransferInstructionView } from './types.ts'
 
 type ArchivedEvent = LedgerCommonSchemas['ArchivedEvent']
 type CreatedEvent = LedgerCommonSchemas['CreatedEvent']

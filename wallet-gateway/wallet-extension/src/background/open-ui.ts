@@ -3,7 +3,8 @@
 
 import { SpliceMessage, WalletEvent } from '@canton-network/core-types'
 import { browser } from 'wxt/browser'
-import { logger } from '@/shared/logger'
+
+import { logger } from '@/shared/logger.ts'
 
 /**
  * Opens the wallet UI at a hash route. Tries the toolbar popup first, which

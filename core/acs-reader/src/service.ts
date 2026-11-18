@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 
-import { PaginatedACSCache } from './cache/item'
+import { PaginatedACSCache } from './cache/item/index.ts'
 
 type Types = LedgerCommonSchemas
 

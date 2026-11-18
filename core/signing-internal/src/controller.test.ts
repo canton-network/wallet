@@ -1,10 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test, vi } from 'vitest'
-
-// import request from 'supertest'
-import { InternalSigningDriver } from './controller.js'
 import {
     createKeyPair,
     type Error as RpcError,
@@ -13,14 +9,18 @@ import {
     type Methods,
     type Transaction,
 } from '@canton-network/core-signing-lib'
-import nacl from 'tweetnacl'
-import naclUtil from 'tweetnacl-util'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
     StoreSql,
     connection,
     migrator,
 } from '@canton-network/core-signing-store-sql'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import nacl from 'tweetnacl'
+import naclUtil from 'tweetnacl-util'
+import { expect, test, vi } from 'vitest'
+
+// import request from 'supertest'
+import { InternalSigningDriver } from './controller.ts'
 
 const TEST_KEY_NAME = 'test-key-name'
 const TEST_TRANSACTION = 'test-tx'

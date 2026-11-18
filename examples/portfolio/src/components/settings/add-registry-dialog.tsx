@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { PillButton } from '@components/ui/PillButton'
+import { useRegistryMutations } from '@hooks/useRegistryUrls'
+import { registryFormSchema, type RegistryFormData } from '@lib/schemas'
 import CloseIcon from '@mui/icons-material/Close'
 import {
     Alert,
@@ -14,11 +17,8 @@ import {
     type Theme,
 } from '@mui/material'
 import { useForm, type AnyFieldApi } from '@tanstack/react-form'
-import { toast } from 'sonner'
-import { PillButton } from '@components/ui/PillButton'
-import { registryFormSchema, type RegistryFormData } from '@lib/schemas'
-import { useRegistryMutations } from '@hooks/useRegistryUrls'
 import { isInsecureRegistryUrl } from '@utils/registry'
+import { toast } from 'sonner'
 
 interface AddRegistryDialogProps {
     open: boolean

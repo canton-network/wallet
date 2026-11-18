@@ -1,9 +1,10 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
 import { pino } from 'pino'
+
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
+} from './utils/index.ts'
 const logger = pino({ name: 'v1-multi-user-setup', level: 'info' })
 
 logger.info('Operator sets up users and primary parties')

@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { SignMessageParams } from '@canton-network/dapp-sdk'
+
+import { verifyMessageSignature } from '../validation.ts'
 import {
     expectRejection,
     INVALID_PARAMS_CODES,
@@ -8,9 +11,7 @@ import {
     requireCondition,
     signMessageResultSchema,
 } from './helpers.ts'
-import { verifyMessageSignature } from '../validation.ts'
 import type { Case, RequestArgs, TestRuntime } from './types.ts'
-import type { SignMessageParams } from '@canton-network/dapp-sdk'
 
 const category = 'Sign message'
 

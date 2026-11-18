@@ -1,6 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { SigningProvider } from '@canton-network/core-signing-lib'
+import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
+import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import { pino } from 'pino'
+import type { Logger } from 'pino'
+import { sink } from 'pino-test'
 import {
     vi,
     describe,
@@ -10,16 +17,10 @@ import {
     afterEach,
     type Mock,
 } from 'vitest'
-import { pino } from 'pino'
-import { sink } from 'pino-test'
-import type { Logger } from 'pino'
-import { WalletAllocationService } from './wallet-allocation-service.js'
-import type { PartyAllocationService } from '../party-allocation-service.js'
-import type { Store, Wallet } from '@canton-network/core-wallet-store'
-import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
-import type { AllocatedParty } from '../party-allocation-service.js'
-import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+
+import type { PartyAllocationService } from '../party-allocation-service.ts'
+import type { AllocatedParty } from '../party-allocation-service.ts'
+import { WalletAllocationService } from './wallet-allocation-service.ts'
 
 const createWallet = (
     partyId: string,

@@ -1,9 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fixture, waitUntil } from '@open-wc/testing-helpers'
-import { html } from 'lit'
 import {
     SigningProviderChangeEvent,
     WalletCardSelectEvent,
@@ -14,11 +11,15 @@ import type {
     AllocateSelfIssuedWalletResult,
     SignSelfIssuedAccessTokenResult,
 } from '@canton-network/core-wallet-user-rpc-client'
+import { fixture, waitUntil } from '@open-wc/testing-helpers'
+import { html } from 'lit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createMockUserClient,
     makeWallet,
     mockRequest,
-} from '../__tests__/test-helpers.js'
+} from '../__tests__/test-helpers.ts'
 
 const {
     mockCreateUserClient,
@@ -48,15 +49,15 @@ const {
     setLocationHref: vi.fn(),
 }))
 
-vi.mock('../rpc-client.js', () => ({
+vi.mock('../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../utils.js', () => ({ showToast }))
-vi.mock('../index.js', () => ({
+vi.mock('../utils.ts', () => ({ showToast }))
+vi.mock('../index.ts', () => ({
     shareUserSession,
     redirectToIntendedOrDefault,
 }))
-vi.mock('../state-manager.js', () => ({
+vi.mock('../state-manager.ts', () => ({
     stateManager: {
         accessToken: { set: accessTokenSet },
         expirationDate: { set: vi.fn() },
@@ -71,8 +72,8 @@ vi.mock('../state-manager.js', () => ({
         },
     },
 }))
-vi.mock('../navigation.js', () => ({ setLocationHref }))
-vi.mock('../listeners.js', () => ({
+vi.mock('../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../listeners.ts', () => ({
     detectCurrentOrigin: vi.fn().mockResolvedValue('https://app.example'),
 }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
@@ -86,8 +87,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     }
 })
 
-import './index.js'
-import type { UserUiSelfIssuedLogin } from './index.js'
+import './index.ts'
+import type { UserUiSelfIssuedLogin } from './index.ts'
 
 const accessToken = `header.${btoa(JSON.stringify({ exp: 2_000_000_000 }))}.sig`
 const POLL_INTERVAL_MS = 3000

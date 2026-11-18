@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { paths } from './generated-clients/validator-internal'
-import createClient, { type Client } from 'openapi-fetch'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import { getLogger } from '@logtape/logtape'
+import createClient, { type Client } from 'openapi-fetch'
+
+import type { paths } from './generated-clients/validator-internal.ts'
 
 // A conditional type that filters the set of OpenAPI path names to those that actually have a defined POST operation.
 // Any path without a POST is excluded via the `never` branch of the conditional

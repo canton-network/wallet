@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type React from 'react'
 import Button from '@mui/material/Button'
 import type { SxProps, Theme } from '@mui/material/styles'
+import type React from 'react'
 
 function triggerDownload(filename: string, data: unknown) {
     const text = typeof data === 'string' ? data : JSON.stringify(data, null, 2)

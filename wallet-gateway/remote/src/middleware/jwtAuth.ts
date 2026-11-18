@@ -1,18 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Request, Response, NextFunction } from 'express'
-import {
-    IdpUnavailableError,
-    type AuthService,
-} from '@canton-network/core-wallet-auth'
 import {
     providerErrors,
     rpcErrors,
     toHttpErrorCode,
 } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
+import {
+    IdpUnavailableError,
+    type AuthService,
+} from '@canton-network/core-wallet-auth'
+import type { Request, Response, NextFunction } from 'express'
 import type { Logger } from 'pino'
+
 import { resolveSseTicket } from './sseTicket.js'
 
 // Tickets are only for the dapp event stream. A copied ticket must not

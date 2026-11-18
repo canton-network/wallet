@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createFileRoute } from '@tanstack/react-router'
-import { AddPartyPage } from '@/ui/features/parties'
+
+import { AddPartyPage } from '@/ui/features/parties/index.ts'
 
 export const Route = createFileRoute('/_unlocked/_connected/parties/add')({
     component: AddPartyPage,

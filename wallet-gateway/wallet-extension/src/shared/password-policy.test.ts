@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { passwordProblems } from './password-policy'
+
+import { passwordProblems } from './password-policy.ts'
 
 describe('passwordProblems', () => {
     it.each([

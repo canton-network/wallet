@@ -16,10 +16,11 @@
   excluding background-stress-load.ts and utils.ts.
 */
 
+import child_process from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { error, getRepoRoot, success } from './lib/utils.js'
-import child_process from 'child_process'
+
+import { error, getRepoRoot, success } from './lib/utils.ts'
 
 const dir = path.join(
     getRepoRoot(),

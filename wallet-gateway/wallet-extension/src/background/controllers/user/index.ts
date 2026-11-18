@@ -1,17 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { type VaultLockState, VaultLockedError } from '../../vault'
-import type { UserControllerDeps } from './deps'
-import { messages } from './messages'
-import { networks } from './networks'
-import buildController from './rpc-gen'
-import { sessions } from './sessions'
-import { transactions } from './transactions'
-import { unsupported } from './unsupported'
-import { wallets } from './wallets'
+import { type VaultLockState, VaultLockedError } from '../../vault/index.ts'
+import type { UserControllerDeps } from './deps.ts'
+import { messages } from './messages.ts'
+import { networks } from './networks.ts'
+import buildController from './rpc-gen/index.ts'
+import { sessions } from './sessions.ts'
+import { transactions } from './transactions.ts'
+import { unsupported } from './unsupported.ts'
+import { wallets } from './wallets.ts'
 
-export type { UserControllerDeps } from './deps'
+export type { UserControllerDeps } from './deps.ts'
 
 /**
  * The user API, called by the extension pages. Each area module returns its

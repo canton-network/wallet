@@ -4,10 +4,11 @@
 import { fixture, html } from '@open-wc/testing-helpers'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { userEvent } from 'vitest/browser'
-import { makeWalletPickerEntry } from './__tests__/fixtures.js'
-import './wallet-picker.js'
-import { WalletPicker } from './wallet-picker.js'
-import { popup } from '../windows/popup.js'
+
+import { popup } from '../windows/popup.ts'
+import './wallet-picker.ts'
+import { makeWalletPickerEntry } from './__tests__/fixtures.ts'
+import { WalletPicker } from './wallet-picker.ts'
 
 const ENTRIES_KEY = 'splice_wallet_picker_entries'
 const RECENT_KEY = 'splice_wallet_picker_recent'

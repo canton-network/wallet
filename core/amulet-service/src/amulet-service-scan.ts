@@ -8,7 +8,8 @@ import type {
 } from '@canton-network/core-splice-client'
 import type { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type { PartyId } from '@canton-network/core-types'
-import { AmuletServiceBase } from './amulet-service-base'
+
+import { AmuletServiceBase } from './amulet-service-base.ts'
 
 export class AmuletServiceScanOnly extends AmuletServiceBase {
     constructor(

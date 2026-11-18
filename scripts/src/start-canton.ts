@@ -5,6 +5,11 @@
  * Start a local Canton participant using the config file in the canton/ directory.
  */
 
+import { existsSync } from 'fs'
+import path from 'path'
+
+import pm2 from 'pm2'
+
 import {
     SUPPORTED_VERSIONS,
     error,
@@ -13,10 +18,7 @@ import {
     getNetworkArg,
     type Network,
     getArgValue,
-} from './lib/utils.js'
-import { existsSync } from 'fs'
-import pm2 from 'pm2'
-import path from 'path'
+} from './lib/utils.ts'
 
 const processName = 'canton'
 

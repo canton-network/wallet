@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { WalletEvent, isSpliceMessage, isSpliceMessageEvent } from './index'
+
+import { WalletEvent, isSpliceMessage, isSpliceMessageEvent } from './index.ts'
 
 describe('isSpliceMessage', () => {
     it('accepts each splice message variant', () => {

@@ -1,15 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ReactNode } from 'react'
-import { Box, IconButton, Typography } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
 import type {
     Account,
     AllocationSpecification,
 } from '@canton-network/core-token-standard-v2'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DateTimeText } from '@components/date-time-text'
+import CloseIcon from '@mui/icons-material/Close'
+import { Box, IconButton, Typography } from '@mui/material'
 import { formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
 import { isBasicAccount } from '@utils/holdings'
@@ -17,6 +16,7 @@ import {
     amountsToLock,
     type InstrumentAmount,
 } from '@utils/v2-allocation-items'
+import type { ReactNode } from 'react'
 
 export function DialogHeader({
     title,

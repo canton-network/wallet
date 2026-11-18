@@ -1,11 +1,11 @@
-import { useMemo, useState } from 'react'
-import { Box, Typography } from '@mui/material'
-import { createFileRoute } from '@tanstack/react-router'
 import { ActionRequiredDialog } from '@components/dashboard/action-required-dialog'
-import { OffersContent } from '@components/offers/offers-content'
 import { OfferTabs } from '@components/offers/offer-tabs'
 import { OfferToolbar } from '@components/offers/offer-toolbar'
+import { OffersContent } from '@components/offers/offers-content'
 import { useOffers, type OfferCategory } from '@hooks/useOffers'
+import { Box, Typography } from '@mui/material'
+import { createFileRoute } from '@tanstack/react-router'
+import { useMemo, useState } from 'react'
 
 export const Route = createFileRoute('/dashboard/offers')({
     component: RouteComponent,

@@ -4,7 +4,7 @@
 import { createPrivateKey, sign } from 'node:crypto'
 import { readFile, writeFile, mkdir, rename } from 'node:fs/promises'
 import { dirname, resolve } from 'node:path'
-import { validateStrict } from 'ctrf'
+
 import {
     reportHash,
     serializeReport,
@@ -14,6 +14,7 @@ import {
     type Report,
     type Signature,
 } from '@canton-network/tool-conformance-dapp'
+import { validateStrict } from 'ctrf'
 
 export function validateReport(value: unknown): asserts value is Report {
     validateStrict(value)

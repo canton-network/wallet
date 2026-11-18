@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Splice } from './models/index.js'
 import type { PartyId } from '@canton-network/core-types'
 
-export * from './interface-ids.const.js'
+import { Splice } from './models/index.ts'
+
+export * from './interface-ids.const.ts'
 
 export const TransferInstructionV1 = Splice.Api.Token.TransferInstructionV1
 export const AllocationInstructionV1 = Splice.Api.Token.AllocationInstructionV1

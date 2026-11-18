@@ -2,21 +2,23 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { jwtExpired } from '@canton-network/core-wallet-auth'
-import { logger } from '@/shared/logger'
+
 import {
     AuthErrorName,
     authMessenger,
     type ConnectionStatus,
     EXTENSION_ORIGIN,
-} from '@/shared/auth-protocol'
-import type { UserControllerDeps } from './controllers/user'
-import { sessions } from './controllers/user/sessions'
+} from '@/shared/auth-protocol.ts'
+import { logger } from '@/shared/logger.ts'
+
+import type { UserControllerDeps } from './controllers/user/index.ts'
+import { sessions } from './controllers/user/sessions.ts'
 import {
     signInWithAuthorizationCode,
     type AuthorizationCodeParams,
-} from './oauth'
-import { type Vault, VaultLockedError } from './vault'
-import { isTrustedSender } from './vault-service'
+} from './oauth.ts'
+import { isTrustedSender } from './vault-service.ts'
+import { type Vault, VaultLockedError } from './vault/index.ts'
 
 const log = logger.getChild('auth')
 

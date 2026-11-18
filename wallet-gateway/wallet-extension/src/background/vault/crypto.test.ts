@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
+
 import {
     deriveVaultKey,
     newHeader,
@@ -9,8 +10,8 @@ import {
     parseEnvelope,
     sealDocument,
     type VaultEnvelopeV1,
-} from './envelope'
-import { InvalidPasswordError } from './errors'
+} from './envelope.ts'
+import { InvalidPasswordError } from './errors.ts'
 
 const ITERATIONS = 1000
 const PASSWORD = 'correct horse 1'

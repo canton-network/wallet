@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+
 import { ConfigSchema, defaultConfig } from './config.ts'
 import type { Config } from './config.ts'
 

@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     base64url,
     calculateJwkThumbprint,
     decodeProtectedHeader,
     decodeJwt,
 } from 'jose'
-import { SelfIssuedTokenService } from './self-issued-token-service.js'
+import { describe, expect, it } from 'vitest'
+
+import { SelfIssuedTokenService } from './self-issued-token-service.ts'
 
 function bytesToBase64(bytes: Uint8Array): string {
     let binary = ''

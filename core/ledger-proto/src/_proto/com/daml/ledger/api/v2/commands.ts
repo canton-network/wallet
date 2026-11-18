@@ -14,11 +14,12 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Timestamp } from '../../../../../google/protobuf/timestamp.js'
-import { Duration } from '../../../../../google/protobuf/duration.js'
-import { Value } from './value.js'
-import { Record } from './value.js'
-import { Identifier } from './value.js'
+
+import { Duration } from '../../../../../google/protobuf/duration.ts'
+import { Timestamp } from '../../../../../google/protobuf/timestamp.ts'
+import { Value } from './value.ts'
+import { Record } from './value.ts'
+import { Identifier } from './value.ts'
 /**
  * A command can either create a new contract or exercise a choice on an existing contract.
  *

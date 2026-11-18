@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readdirSync } from 'node:fs'
-import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { describe, expect, test } from 'vitest'
 
 const here = dirname(fileURLToPath(import.meta.url))

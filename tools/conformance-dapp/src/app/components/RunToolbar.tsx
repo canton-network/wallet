@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import Box from '@mui/material/Box'
 import DownloadIcon from '@mui/icons-material/Download'
 import UploadFileIcon from '@mui/icons-material/UploadFile'
+import Box from '@mui/material/Box'
 import type React from 'react'
+
 import { serializeReport, type Report } from '../../report.ts'
 import { DownloadJsonButton } from './DownloadJsonButton.tsx'
 import { FileUploadButton } from './FileUploadButton.tsx'
