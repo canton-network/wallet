@@ -92,7 +92,17 @@ A Daml `Text` value is shown as a JSON string literal, in the intent and in its 
 
 `kind`, `template`, `choiceId` and `interface` are read from the transaction, so a descriptor cannot change which action the user is told about. `descriptor` is unauthenticated in v1: descriptors carry no verified signature yet.
 
-`complete` is false when any root is not `described` or any field has an error. A wallet should warn the user then. `clearSign` throws only on a hash mismatch and on a transaction it cannot read or hash.
+`complete` is false when any root is not `described` or any field has an error. The remote gateway warns and still offers approval. `clearSign` throws only on a hash mismatch and on a transaction it cannot read or hash.
+
+## From the screen to the signature
+
+The signing provider signs the hash of the prepared-transaction bytes. The sentences are computed from those bytes, after `clearSign` has checked that the bytes hash to the hash the screen will submit.
+
+On the remote gateway, the approval page (`/approve`) loads the stored prepared transaction and its hash, and calls `clearSign` with the descriptors stored for that user. Those sentences are the "What you are signing" section. The page submits that hash with the approval. Approval is disabled when the bytes do not hash to it.
+
+`TransactionService.sign` in `@canton-network/core-wallet-services` recomputes the hash of the stored bytes under the gateway's configured scheme (V3 unless `hashingScheme.version` sets another). It refuses to sign unless that equals the stored hash and the hash the page submitted. It logs the transaction id, the hash, the user, the party, the signing provider, and the time, and only then asks the signing provider to sign.
+
+The page warns and still offers approval when the hash matches and the description is incomplete or could not be produced. It also shows the decoded transaction. If the descriptors cannot be loaded, the page calls `clearSign` with an empty list. An API-key session has no page: the gateway checks the stored hash, logs the approval as a service account, and signs. The browser extension's approval page checks the hash of the bytes it displays and submits that hash. It does not call `clearSign`. The same `sign` check and log apply.
 
 ## How it works
 
@@ -101,7 +111,7 @@ A Daml `Text` value is shown as a JSON string literal, in the intent and in its 
 1. **Decodes** the transaction ([src/roots.ts](src/roots.ts)), and indexes the contracts an exercise can act on: the input contracts, and the contracts the transaction creates.
 2. **Binds** each root template to its descriptor, and validates that descriptor ([src/descriptor.ts](src/descriptor.ts)).
 3. **Selects** the entry: `create` for a create node. For an exercise, the `exercises` entry whose choice and interface both equal the node's. An interface is its module and entity. When the entry also sets `packageId`, that must equal the node's interface package ID. When it omits `packageId`, the module and entity match on any package: the template's package ID already selects the interface package the template was compiled against, so the package ID is only needed to tell two such interfaces apart. An entry that sets the package is preferred over one that omits it. When the node carries an interface and no entry names that choice and interface, the entry for the same choice with no interface is used. A node with no interface matches only that entry. An entry for one interface never matches a node exercised through another, or through none.
-4. **Resolves fields** ([src/path.ts](src/path.ts)) and **formats** them ([src/format.ts](src/format.ts)). A path starts at the create or choice argument. In an exercise, a `@.contract.` path starts at the create argument of the exercised contract. `@.contractId`, `@.signatories`, `@.stakeholders`, `@.synchronizerId` and `@.actAs` read the prepared transaction, on a create and an exercise. `@.actingParties`, `@.choiceObservers` and `@.consuming` do so on an exercise only. A party list is shown with `raw`.
+4. **Resolves fields** ([src/path.ts](src/path.ts)) and **formats** them ([src/format.ts](src/format.ts)), using the paths and formats below. A party list is shown with `raw`.
 5. **Interpolates** the intent ([src/intent.ts](src/intent.ts)).
 
 Only root nodes are described. A child node is a consequence of its root's choice, which the root's descriptor words. Every root is shown, described or not.
