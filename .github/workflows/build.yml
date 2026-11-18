@@ -1,23 +1,31 @@
-name: CI on PRs
-run-name: ${{ github.actor }} is perfoming a Pull Request
+name: CI
+run-name: ${{ github.actor }} is running CI on ${{ github.event.pull_request.title || github.ref_name }}
 
+# Pull requests only run the tasks and e2e suites their changes affect. main
+# runs everything, so whatever a pull request wrongly skipped fails on the
+# merge that broke it.
 on:
     pull_request:
         types: [opened, reopened, synchronize, edited]
+    push:
+        branches: [main]
 
 # Repository vars (e.g. BLOCKDAEMON_*) are not available to workflows from fork PRs.
 env:
-    CI_SECRET_DEPENDENCY: ${{ github.event.pull_request.head.repo.fork == false }}
+    CI_SECRET_DEPENDENCY: ${{ github.event_name == 'push' || github.event.pull_request.head.repo.fork == false }}
     NX_PARALLEL: 100%
     NX_CACHE_DIRECTORY: .nx/cache
-    NX_BASE: origin/${{ github.base_ref }}
-    NX_HEAD: HEAD
+    NX_SELECT: ${{ github.event_name == 'pull_request' && 'affected' || 'run-many' }}
+    NX_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+    NX_HEAD: ${{ github.event_name == 'pull_request' && 'HEAD' || '' }}
 permissions:
     contents: read
 
+# A new push to a pull request cancels its previous run. Every commit on main
+# gets its own run, so each merge is tested.
 concurrency:
-    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-    cancel-in-progress: true
+    group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.sha }}
+    cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
     build:
@@ -70,7 +78,7 @@ jobs:
             - uses: ./.github/actions/setup_versions
               id: affected
               with:
-                  affected: 'true'
+                  affected: ${{ github.event_name == 'pull_request' }}
 
             - name: Upload build artifacts
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -127,6 +135,7 @@ jobs:
             - uses: ./.github/actions/setup_pnpm/artifacts
 
             - name: Validate current PR title with commitlint
+              if: github.event_name == 'pull_request'
               run: echo "$TITLE" | pnpm commitlint --verbose
               env:
                   TITLE: ${{ github.event.pull_request.title }}
@@ -141,13 +150,13 @@ jobs:
               run: pnpm knip --reporter github-actions
 
             - name: run typechecking
-              run: pnpm nx affected -t typecheck --parallel
+              run: pnpm nx "$NX_SELECT" -t typecheck --parallel
 
             - name: format code
               run: pnpm oxfmt --check
 
             - name: lint code
-              run: pnpm nx affected -t lint --parallel --format github
+              run: pnpm nx "$NX_SELECT" -t lint --parallel --format github
 
             - name: check wg schema docs
               run: pnpm docs:update-wg-config
@@ -171,7 +180,7 @@ jobs:
 
             - name: Run affected unit tests
               run: |
-                  pnpm nx affected -t test \
+                  pnpm nx "$NX_SELECT" -t test \
                     --parallel \
                     -c coverage
 
@@ -198,7 +207,7 @@ jobs:
             - uses: ./.github/actions/setup_pnpm/artifacts
 
             - name: Check migration lock files
-              run: pnpm nx affected -t migrations:check-lock --parallel
+              run: pnpm nx "$NX_SELECT" -t migrations:check-lock --parallel
 
     test-migrations:
         # Runs SQL migration tests for any affected package that defines a
@@ -215,7 +224,7 @@ jobs:
             - uses: ./.github/actions/setup_pnpm/artifacts
 
             - name: Run affected migration tests
-              run: pnpm nx affected -t test:migrations --parallel
+              run: pnpm nx "$NX_SELECT" -t test:migrations --parallel
 
     ping-e2e:
         name: ping-e2e (${{ matrix.network }}, ${{ matrix.db }}, ${{ matrix.browser }})

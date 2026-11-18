@@ -2,14 +2,11 @@
 
 This document summarizes when each test job in `.github/workflows/build.yml` runs.
 
-## Pull Request Trigger
+## Triggers
 
-The CI workflow runs on pull request events:
+The CI workflow runs on pull request events (`opened`, `reopened`, `synchronize`, `edited`) and on every push to `main`.
 
-- `opened`
-- `reopened`
-- `synchronize`
-- `edited`
+Pull requests only run the tasks and e2e suites affected by their changes. Pushes to `main` run everything, so a test that a pull request skipped by mistake fails on the merge that broke it. They also save the build, DPM and Canton/Localnet caches that pull requests restore.
 
 ## Test Run Matrix
 
@@ -37,7 +34,7 @@ Edit the suite table in [e2e-setup.ts](../scripts/src/ci/e2e-setup.ts) to change
 
 ## Selection
 
-[`setup_versions`](./actions/setup_versions/action.yml) uses `affected: 'true'` for PR e2e selection and `'false'` for full setup. Nx tracks package dependencies, runtime dependencies and shared configuration through [nx.json](../nx.json).
+[`setup_versions`](./actions/setup_versions/action.yml) uses `affected: 'true'` for PR e2e selection and `'false'` for full setup, as on `main`. Nx tasks run with `nx affected` on pull requests and `nx run-many` on `main`, see `NX_SELECT` in the workflow. Nx tracks package dependencies, runtime dependencies and shared configuration through [nx.json](../nx.json).
 
 Preview affected selection locally:
 
