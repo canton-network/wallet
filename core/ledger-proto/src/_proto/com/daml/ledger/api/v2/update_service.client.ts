@@ -7,18 +7,19 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { UpdateService } from './update_service.js'
-import type { GetUpdatesPageResponse } from './update_service.js'
-import type { GetUpdatesPageRequest } from './update_service.js'
-import type { GetUpdateByIdRequest } from './update_service.js'
-import type { GetUpdateResponse } from './update_service.js'
-import type { GetUpdateByOffsetRequest } from './update_service.js'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetUpdatesResponse } from './update_service.js'
-import type { GetUpdatesRequest } from './update_service.js'
 import type { ServerStreamingCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { UpdateService } from './update_service.ts'
+import type { GetUpdatesPageResponse } from './update_service.ts'
+import type { GetUpdatesPageRequest } from './update_service.ts'
+import type { GetUpdateByIdRequest } from './update_service.ts'
+import type { GetUpdateResponse } from './update_service.ts'
+import type { GetUpdateByOffsetRequest } from './update_service.ts'
+import type { GetUpdatesResponse } from './update_service.ts'
+import type { GetUpdatesRequest } from './update_service.ts'
 /**
  * Allows clients to read updates (transactions, (un)assignments, topology events) from the ledger.
  *

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { mkByteArray, sha256, toHex } from './utils.js'
+import { mkByteArray, sha256, toHex } from './utils.ts'
 
 async function encodeInt32(value: number): Promise<Uint8Array> {
     const buffer = new ArrayBuffer(4)

@@ -5,6 +5,7 @@
 
 import { execFileSync } from 'child_process'
 import fs from 'fs'
+
 import {
     ensureDir,
     getRepoRoot,
@@ -12,7 +13,7 @@ import {
     getAllFilesWithExtension,
     SUPPORTED_VERSIONS,
     CANTON_PATH,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 const repoRoot = getRepoRoot()
 
@@ -92,14 +93,14 @@ function generateProtosWithPlugin() {
 // The protobuf plugin we're using, @protobuf-ts/plugin, generates files with relative imports that do not include the .js extension.
 // This is required in ESModule projects using NodeJS (non-bundler mode).
 // See: https://github.com/timostamm/protobuf-ts/issues/182
-// This function rewrites those imports to include the .js extension.
+// This function rewrites those imports to include the .ts extension, like all relative imports in this repo.
 function rewriteImports() {
     traverseDirectory(outdir, (file) => {
         const content = fs.readFileSync(file, 'utf8')
         const updated = content
             .split('\n')
             .map((s) =>
-                s.replace(/(} from ["']\..+(?<!\.js))(["'];)$/, '$1.js$2')
+                s.replace(/(} from ["']\..+(?<!\.ts))(["'];)$/, '$1.ts$2')
             )
             .join('\n')
         fs.writeFileSync(`${file}`, updated, 'utf-8')

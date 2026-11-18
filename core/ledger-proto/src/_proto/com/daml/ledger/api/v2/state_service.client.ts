@@ -7,21 +7,22 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { StateService } from './state_service.js'
-import type { GetLatestPrunedOffsetsResponse } from './state_service.js'
-import type { GetLatestPrunedOffsetsRequest } from './state_service.js'
-import type { GetLedgerEndResponse } from './state_service.js'
-import type { GetLedgerEndRequest } from './state_service.js'
-import type { GetConnectedSynchronizersResponse } from './state_service.js'
-import type { GetConnectedSynchronizersRequest } from './state_service.js'
-import type { GetActiveContractsPageResponse } from './state_service.js'
-import type { GetActiveContractsPageRequest } from './state_service.js'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetActiveContractsResponse } from './state_service.js'
-import type { GetActiveContractsRequest } from './state_service.js'
 import type { ServerStreamingCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { StateService } from './state_service.ts'
+import type { GetLatestPrunedOffsetsResponse } from './state_service.ts'
+import type { GetLatestPrunedOffsetsRequest } from './state_service.ts'
+import type { GetLedgerEndResponse } from './state_service.ts'
+import type { GetLedgerEndRequest } from './state_service.ts'
+import type { GetConnectedSynchronizersResponse } from './state_service.ts'
+import type { GetConnectedSynchronizersRequest } from './state_service.ts'
+import type { GetActiveContractsPageResponse } from './state_service.ts'
+import type { GetActiveContractsPageRequest } from './state_service.ts'
+import type { GetActiveContractsResponse } from './state_service.ts'
+import type { GetActiveContractsRequest } from './state_service.ts'
 /**
  * Allows clients to get state from the ledger.
  *

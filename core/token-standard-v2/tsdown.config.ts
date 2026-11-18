@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { resolve } from 'node:path'
+
 import { esmExternalRequirePlugin } from 'rolldown/plugins'
 import { defineConfig } from 'tsdown'
+
 import { base } from '../../tsdown.base.ts'
 
 export default defineConfig({

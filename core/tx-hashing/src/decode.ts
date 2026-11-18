@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
-import { fromBase64 } from './bytes.js'
-import { TxHashingError } from './errors.js'
+
+import { fromBase64 } from './bytes.ts'
+import { TxHashingError } from './errors.ts'
 
 /** Decodes the input, refusing unknown fields: the hash would not cover them */
 export function readPreparedTransaction(

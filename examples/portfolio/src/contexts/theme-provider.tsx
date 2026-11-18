@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import { CssBaseline, ThemeProvider } from '@mui/material'
-import { ThemeContext } from '../contexts/theme-context'
-import { darkTheme, lightTheme } from '../lib/theme'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+
+import { ThemeContext } from '../contexts/theme-context.tsx'
+import { darkTheme, lightTheme } from '../lib/theme.ts'
 
 export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({
     children,

@@ -14,10 +14,11 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { CreatedEvent } from './event.js'
-import { Identifier } from './value.js'
-import { Timestamp } from '../../../../../google/protobuf/timestamp.js'
-import { TraceContext } from './trace_context.js'
+
+import { Timestamp } from '../../../../../google/protobuf/timestamp.ts'
+import { CreatedEvent } from './event.ts'
+import { TraceContext } from './trace_context.ts'
+import { Identifier } from './value.ts'
 /**
  * Complete view of an on-ledger reassignment.
  *

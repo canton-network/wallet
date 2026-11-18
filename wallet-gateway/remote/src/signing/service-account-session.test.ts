@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, vi } from 'vitest'
+import type { Idp } from '@canton-network/core-wallet-auth'
+import type { Network } from '@canton-network/core-wallet-store'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import type { Network } from '@canton-network/core-wallet-store'
-import type { Idp } from '@canton-network/core-wallet-auth'
+import { describe, expect, it, vi } from 'vitest'
+
 import {
     createServiceAccountRunContextResolver,
     resolveAutomationRunContext,
-} from './service-account-session.js'
+} from './service-account-session.ts'
 
 vi.mock('@canton-network/core-wallet-auth', async () => {
     const actual = await vi.importActual<

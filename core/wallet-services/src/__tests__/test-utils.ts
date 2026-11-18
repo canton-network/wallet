@@ -1,12 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi } from 'vitest'
+import { configure } from '@logtape/logtape'
 import { createLogRecorder } from '@logtape/testing/recorder'
 import { base64url } from 'jose'
-
-import { configure } from '@logtape/logtape'
 import type { Logger } from 'pino'
+import { vi } from 'vitest'
 
 function bytesToBinary(bytes: Uint8Array): string {
     let binary = ''

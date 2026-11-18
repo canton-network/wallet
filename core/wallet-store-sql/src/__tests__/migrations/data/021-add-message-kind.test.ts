@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
 import { sql } from 'kysely'
+import { expect, test } from 'vitest'
 
 import {
     forEachDialect,
@@ -11,9 +11,9 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
-import { insertMessageRaw as insertMessageRaw020 } from '../seeds/020-add-message-external-tx-id-and-failure-reason'
-import { insertMessageRaw as insertMessageRaw021 } from '../seeds/021-add-message-kind'
+} from '../helpers.ts'
+import { insertMessageRaw as insertMessageRaw020 } from '../seeds/020-add-message-external-tx-id-and-failure-reason.ts'
+import { insertMessageRaw as insertMessageRaw021 } from '../seeds/021-add-message-kind.ts'
 
 const TARGET = 21
 const TABLE = 'messages_raw'

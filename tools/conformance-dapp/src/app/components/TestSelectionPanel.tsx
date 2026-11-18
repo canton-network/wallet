@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import FastForwardIcon from '@mui/icons-material/FastForward'
+import PlayArrowIcon from '@mui/icons-material/PlayArrow'
+import StopIcon from '@mui/icons-material/Stop'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Checkbox from '@mui/material/Checkbox'
 import FormControlLabel from '@mui/material/FormControlLabel'
 import IconButton from '@mui/material/IconButton'
 import Typography from '@mui/material/Typography'
-import FastForwardIcon from '@mui/icons-material/FastForward'
-import PlayArrowIcon from '@mui/icons-material/PlayArrow'
-import StopIcon from '@mui/icons-material/Stop'
 import type React from 'react'
+
 import type { Config } from '../../config.ts'
 import { groups } from '../../tests/index.ts'
 

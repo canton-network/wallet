@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect } from 'vitest'
-import { KeysNamespace } from './index.js'
 import {
     signTransactionHash,
     verifySignedTxHash,
 } from '@canton-network/core-signing-lib'
+import { describe, it, expect } from 'vitest'
+
+import { KeysNamespace } from './index.ts'
 
 describe('Keys namespace', () => {
     it('should generate a valid keypair to sign transactions with', () => {

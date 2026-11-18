@@ -9,8 +9,8 @@ import type {
     Transfer,
     ExtraArgs,
 } from '@canton-network/core-token-standard'
-import type { PartyId } from '@canton-network/core-types'
 import type { TokenStandardClient as TokenStandardClientV2 } from '@canton-network/core-token-standard-v2'
+import type { PartyId } from '@canton-network/core-types'
 
 export const REQUESTED_AT_SKEW_MS = 60_000
 

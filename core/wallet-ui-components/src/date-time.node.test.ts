@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { formatDateTime, formatUtcDateTime } from './date-time.js'
+
+import { formatDateTime, formatUtcDateTime } from './date-time.ts'
 
 const SUMMER = '2025-06-01T12:34:56Z'
 const WINTER = '2025-01-15T12:34:56Z'

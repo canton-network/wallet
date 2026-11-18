@@ -5,7 +5,8 @@ import { rpcErrors } from '@canton-network/core-rpc-errors'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import type { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import type { WalletStore } from './index'
+
+import type { WalletStore } from './index.ts'
 
 /**
  * The proxy saves a snapshot after each write and never after a read,

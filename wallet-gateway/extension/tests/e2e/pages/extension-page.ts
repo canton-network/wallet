@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Page } from '@playwright/test'
-import { expect } from '../fixtures.js'
+
+import { expect } from '../fixtures.ts'
 
 const PING_TEMPLATE = 'canton-builtin-admin-workflow-ping'
 

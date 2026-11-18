@@ -8,8 +8,10 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
-import { VaultErrorName } from '@/shared/vault-protocol'
-import { useUnlockVault } from './api'
+
+import { VaultErrorName } from '@/shared/vault-protocol.ts'
+
+import { useUnlockVault } from './api.ts'
 
 export function UnlockPage() {
     const navigate = useNavigate()

@@ -7,13 +7,14 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { CommandCompletionService } from './command_completion_service.js'
-import type { GetCompletionsRequest } from './command_completion_service.js'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { CompletionStreamResponse } from './command_completion_service.js'
-import type { CompletionStreamRequest } from './command_completion_service.js'
 import type { ServerStreamingCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { CommandCompletionService } from './command_completion_service.ts'
+import type { GetCompletionsRequest } from './command_completion_service.ts'
+import type { CompletionStreamResponse } from './command_completion_service.ts'
+import type { CompletionStreamRequest } from './command_completion_service.ts'
 /**
  * Allows clients to observe the status of their submissions.
  * Commands may be submitted via the Command Submission Service.

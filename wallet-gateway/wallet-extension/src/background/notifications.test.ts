@@ -5,16 +5,18 @@ import { NotificationService } from '@canton-network/core-wallet-services'
 import type { Store } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port'
-import { logger } from '@/shared/logger'
+
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
+import { logger } from '@/shared/logger.ts'
+
 import {
     currentSessionSubscriber,
     handleNotificationPort,
     PortNotificationSink,
-} from './notifications'
-import { createTestWalletStore } from './store/test-store'
-import { VaultLockedError } from './vault'
+} from './notifications.ts'
+import { createTestWalletStore } from './store/test-store.ts'
+import { VaultLockedError } from './vault/index.ts'
 
 const subscriber = { sessionId: 'session-1', userId: 'user-1' }
 

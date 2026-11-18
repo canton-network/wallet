@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PartyId } from '@canton-network/core-types'
-import { ExternalPartyNamespace } from './external/index.js'
 import type { Ops } from '@canton-network/core-provider-ledger'
-import type { SDKContext } from '../../init/types/context.js'
-import { InternalPartyNamespace } from './index.js'
-import { SDKUtilsNamespace } from '../utils/index.js'
+import type { PartyId } from '@canton-network/core-types'
+
+import type { SDKContext } from '../../init/types/context.ts'
+import { SDKUtilsNamespace } from '../utils/index.ts'
+import { ExternalPartyNamespace } from './external/index.ts'
+import { InternalPartyNamespace } from './index.ts'
 
 export class PartyNamespace {
     public readonly internal: InternalPartyNamespace

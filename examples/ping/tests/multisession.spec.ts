@@ -9,13 +9,14 @@ import {
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { BrowserContext, Page } from '@playwright/test'
+
 import {
     connectWalletGateway,
     createPingDappWalletGateway,
     DAPP_API_PORT,
     DAPP_URL,
     DEFAULT_NETWORK,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 // A popup session opened through a dApp and a direct WG tab should be
 // independent: logging out of the direct tab must not close the popup.

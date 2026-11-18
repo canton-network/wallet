@@ -2,17 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    type SigningStatus,
+    CC_COIN_TYPE,
+    type KeyIdentifier,
+} from '@canton-network/core-signing-lib'
+import {
     Fireblocks,
     PublicKeyInformationAlgorithmEnum,
     type TransactionResponse,
     type VaultAccount,
 } from '@fireblocks/ts-sdk'
 import { getLogger } from '@logtape/logtape'
-import {
-    type SigningStatus,
-    CC_COIN_TYPE,
-    type KeyIdentifier,
-} from '@canton-network/core-signing-lib'
 import { z } from 'zod'
 
 const RawMessageSchema = z.object({

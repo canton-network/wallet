@@ -1,22 +1,27 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import type { PrettyContract } from '@canton-network/core-tx-parser'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type {
     AllocationView,
     SettlementInfo,
     TransferLeg,
 } from '@canton-network/core-token-standard'
+import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type {
     ActionItem,
     AllocationActionItem,
     TransferActionItem,
 } from '@components/types'
+import { useQuery } from '@tanstack/react-query'
 import { getExpiryTime } from '@utils/date-format'
-import { usePrimaryAccount } from './useAccounts'
+import {
+    toAllocationInstructionV2Items,
+    toAllocationRequestV2Items,
+    toAllocationV2Items,
+} from '@utils/v2-allocation-items'
+import { useMemo } from 'react'
+
 import {
     useAllocationInstructionsV2QueryOptions,
     useAllocationRequestsQueryOptions,
@@ -25,12 +30,8 @@ import {
     useAllocationsV2QueryOptions,
     usePendingTransfersQueryOptions,
     usePendingTransfersV2QueryOptions,
-} from './query-options'
-import {
-    toAllocationInstructionV2Items,
-    toAllocationRequestV2Items,
-    toAllocationV2Items,
-} from '@utils/v2-allocation-items'
+} from './query-options.ts'
+import { usePrimaryAccount } from './useAccounts.ts'
 
 export interface OfferItemsResult {
     items: ActionItem[]

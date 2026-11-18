@@ -3,6 +3,7 @@
 
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { describe, expect, it, vi } from 'vitest'
+
 import {
     allocationResultToast,
     buildCreateWalletParams,
@@ -18,7 +19,7 @@ import {
     walletStatusToCode,
     walletSyncResultToast,
     WALLET_STATUS_CODE,
-} from './parties.js'
+} from './parties.ts'
 
 const wallet = (overrides: Partial<Wallet>): Wallet =>
     ({

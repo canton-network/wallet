@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { isAbsolute, resolve } from 'path'
+
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
-import { standardDecorators } from '../../vite.decorators.js'
+
+import { standardDecorators } from '../../vite.decorators.ts'
 
 export default defineConfig({
     build: {

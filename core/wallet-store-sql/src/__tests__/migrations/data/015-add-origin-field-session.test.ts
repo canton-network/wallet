@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
 import { sql } from 'kysely'
+import { expect, test } from 'vitest'
 
 import {
     forEachDialect,
@@ -13,8 +13,8 @@ import {
     indexExists,
     listColumns,
     primaryKeyColumns,
-} from '../helpers'
-import { insertSession } from '../seeds/004-add-session-id'
+} from '../helpers.ts'
+import { insertSession } from '../seeds/004-add-session-id.ts'
 
 const TARGET = 15
 

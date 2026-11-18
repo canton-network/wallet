@@ -10,7 +10,7 @@ import {
 export {
     logAllContracts,
     type ContractReadSpec as ContractSpec,
-} from './acs-logger.js'
+} from './acs-logger.ts'
 
 // Shared, LocalNet-only helpers. They live in the private `core-wallet-test-utils`
 // package so they never leak into the published SDK.

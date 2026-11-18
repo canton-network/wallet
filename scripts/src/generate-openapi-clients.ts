@@ -1,6 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import crypto from 'crypto'
+import * as fs from 'fs'
+import * as path from 'path'
+
+import { load as loadYaml } from 'js-yaml'
+import generateSchema, { astToString } from 'openapi-typescript'
+
+import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.ts'
 import {
     cleanupStaleVersionedFiles,
     downloadAndUnpackTarball,
@@ -20,13 +28,7 @@ import {
     hasFlag,
     warn,
     success,
-} from './lib/utils.js'
-import * as fs from 'fs'
-import generateSchema, { astToString } from 'openapi-typescript'
-import * as path from 'path'
-import crypto from 'crypto'
-import { generateLedgerProviderTypes } from './lib/ledger-provider-type-generator.js'
-import { load as loadYaml } from 'js-yaml'
+} from './lib/utils.ts'
 
 /**
  * OpenAPI specification details.

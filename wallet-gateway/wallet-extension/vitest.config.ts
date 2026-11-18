@@ -3,6 +3,7 @@
 
 import { defineConfig, defineProject } from 'vitest/config'
 import { WxtVitest } from 'wxt/testing/vitest-plugin'
+
 import { coverage, nodeProject } from '../../vitest.base.ts'
 
 export default defineConfig({

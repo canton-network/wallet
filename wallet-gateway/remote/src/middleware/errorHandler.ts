@@ -1,8 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { NextFunction, Request, Response } from 'express'
-import type { Logger } from 'pino'
+import { isJsCantonError } from '@canton-network/core-ledger-client'
 import {
     JsonRpcError,
     rpcErrors,
@@ -10,7 +9,8 @@ import {
     toHttpErrorCode,
 } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
-import { isJsCantonError } from '@canton-network/core-ledger-client'
+import type { NextFunction, Request, Response } from 'express'
+import type { Logger } from 'pino'
 
 // Mirrors ErrorCategory.asInt from com.digitalasset.base.error (Canton's
 // error category taxonomy). Kept in sync with that source rather than

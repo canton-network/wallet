@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync } from 'node:fs'
+
 import { defineConfig } from 'vitest/config'
+
 import { browserProject, coverage } from '../../vitest.base.ts'
 
 const sdkVersion = JSON.parse(

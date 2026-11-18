@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Request, Response, NextFunction } from 'express'
-import type { AuthAware } from '@canton-network/core-wallet-auth'
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import { jsonRpcResponse } from '@canton-network/core-rpc-transport'
-import type { Logger } from 'pino'
+import type { AuthAware } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
+import type { Request, Response, NextFunction } from 'express'
+import type { Logger } from 'pino'
 
 /**
  * Middleware to handle session validation based on user sessions.

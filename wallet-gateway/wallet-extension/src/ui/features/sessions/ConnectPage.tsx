@@ -1,18 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useQuery } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
-import { AuthErrorName } from '@/shared/auth-protocol'
-import { networksQuery, idpsQuery } from '@/ui/features/networks'
-import { useConnect } from './api'
 import {
     LoginForm,
     type LoginConnectEvent,
 } from '@canton-network/core-wallet-ui-components/react'
 import type { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
-import Stack from '@mui/material/Stack'
 import Alert from '@mui/material/Alert'
+import Stack from '@mui/material/Stack'
+import { useQuery } from '@tanstack/react-query'
+import { useNavigate } from '@tanstack/react-router'
+
+import { AuthErrorName } from '@/shared/auth-protocol.ts'
+import { networksQuery, idpsQuery } from '@/ui/features/networks/index.ts'
+
+import { useConnect } from './api.ts'
 
 /** The auth methods `auth.connect` supports so far. */
 const SUPPORTED_AUTH_METHODS = new Set(['authorization_code'])

@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { createProvider } from './create-provider.js'
-import type { Provider } from './test-provider.js'
+
+import { createProvider } from './create-provider.ts'
+import type { Provider } from './test-provider.ts'
 import {
     WebhookWrapper,
     WindowEventWrapper,
@@ -11,7 +12,7 @@ import {
     performInteraction,
     testMethodNames,
     type TestMethods,
-} from './test-provider.js'
+} from './test-provider.ts'
 
 // Macrotask boundary: all pending microtasks drain before this resolves.
 const nextTask = () => new Promise<void>((resolve) => setTimeout(resolve))

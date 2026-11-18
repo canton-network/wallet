@@ -3,7 +3,8 @@
 
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import { expect, fn } from 'storybook/test'
-import { BackLink } from './BackLink'
+
+import { BackLink } from './BackLink.tsx'
 
 const meta: Meta = {
     title: 'BackLink',

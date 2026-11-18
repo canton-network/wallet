@@ -1,9 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-
 import {
     type ApiKeyCardRevokeEvent,
     BaseElement,
@@ -11,15 +8,16 @@ import {
     type PageChangeEvent,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-
 import type { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
+import { css, html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
 
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
-import '../index'
-import { stateManager } from '../state-manager'
-import { showToast } from '../utils.js'
-import { detectCurrentOrigin } from '../listeners.js'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { setLocationHref } from '../navigation.ts'
+import '../index.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
 
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {

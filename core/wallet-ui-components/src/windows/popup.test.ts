@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { popup } from './popup.js'
+
+import { popup } from './popup.ts'
 
 function createMockPopupWindow() {
     const win = {

@@ -2,17 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { InstrumentId } from '@canton-network/core-token-standard'
+import type { Account } from '@canton-network/core-token-standard-v2'
+import { useQuery } from '@tanstack/react-query'
+import { basicAccount } from '@utils/holdings'
+import { useMemo } from 'react'
+
 import {
     aggregateHoldings,
     getInstrumentKey,
     type AggregatedAccountBalance,
-} from '../utils/aggregate-holdings'
-import { useMemo } from 'react'
-import type { Account } from '@canton-network/core-token-standard-v2'
-import { useWalletSdk } from './useWalletSdk'
-import { holdingsQueryOptions } from './query-options'
-import { useQuery } from '@tanstack/react-query'
-import { basicAccount } from '@utils/holdings'
+} from '../utils/aggregate-holdings.ts'
+import { holdingsQueryOptions } from './query-options.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export const useInstrumentAvailableBalance = (
     partyId: string | undefined,

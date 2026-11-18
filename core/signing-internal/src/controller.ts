@@ -15,7 +15,6 @@ import {
     type SigningTransaction,
     type SigningKey,
 } from '@canton-network/core-signing-lib'
-
 import type {
     SignTransactionParams,
     SignTransactionResult,

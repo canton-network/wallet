@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { AbstractProvider } from '@canton-network/core-splice-provider'
-import type { RequestArgs } from '@canton-network/core-types'
-import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
 import {
     type GetEndpoint,
     LedgerClient,
     type PatchEndpoint,
     type PostEndpoint,
 } from '@canton-network/core-ledger-client'
+import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
+import { AbstractProvider } from '@canton-network/core-splice-provider'
+import type { RequestArgs } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export interface AbstractLedgerProvider {

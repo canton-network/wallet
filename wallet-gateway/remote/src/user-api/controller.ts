@@ -1,10 +1,54 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { randomBytes, createHash, timingSafeEqual } from 'crypto'
+
 // Disabled unused vars rule to allow for future implementations
 /* oxlint-disable no-unused-vars */
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import buildController from './rpc-gen/index.js'
+import {
+    errorCodes,
+    providerErrors,
+    rpcErrors,
+} from '@canton-network/core-rpc-errors'
+import type { SigningProvider } from '@canton-network/core-signing-lib'
+import {
+    assertConnected,
+    type AuthContext,
+    type AuthAware,
+    authSchema,
+    type Auth,
+    AuthTokenProvider,
+    idpSchema,
+    resolveAuthIdentityProviderId,
+    assertIsConnected,
+} from '@canton-network/core-wallet-auth'
+import {
+    assertLoginAllowed,
+    SelfIssuedAuthService,
+    SignMessageService,
+    TransactionService,
+    logDynamically,
+    networkStatus,
+    toSelfIssuedLoginAuthContext,
+    type AccessTokenSignature,
+    type HASHING_SCHEME_VERSION,
+    type NotificationService,
+    type SelfIssuedLoginSession,
+    type SigningDrivers,
+} from '@canton-network/core-wallet-services'
+import type { Store, Network } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+
+import type { KernelInfo } from '../config/Config.ts'
+import type { ConfigManagedIds } from '../config/ConfigUtils.ts'
+import type { StatusEvent } from '../dapp-api/rpc-gen/typings.ts'
+import type { TxChangedFailedEvent } from '../dapp-api/rpc-gen/typings.ts'
+import { PartyAllocationService } from '../ledger/party-allocation-service.ts'
+import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.ts'
+import { WalletSyncService } from '../ledger/wallet-sync-service.ts'
+import type { ServerStatusService } from '../notices/server-status-service.ts'
+import buildController from './rpc-gen/index.ts'
 import type {
     AddNetworkParams,
     RemoveNetworkParams,
@@ -63,50 +107,8 @@ import type {
     GetTransactionStatusResult,
     GetSignMessageStatusParams,
     GetSignMessageStatusResult,
-} from './rpc-gen/typings.js'
-import type { Store, Network } from '@canton-network/core-wallet-store'
-import type { Logger } from 'pino'
-import {
-    assertConnected,
-    type AuthContext,
-    type AuthAware,
-    authSchema,
-    type Auth,
-    AuthTokenProvider,
-    idpSchema,
-    resolveAuthIdentityProviderId,
-    assertIsConnected,
-} from '@canton-network/core-wallet-auth'
-import type { KernelInfo } from '../config/Config.js'
-import type { ConfigManagedIds } from '../config/ConfigUtils.js'
-import type { SigningProvider } from '@canton-network/core-signing-lib'
-import { PartyAllocationService } from '../ledger/party-allocation-service.js'
-import { WalletAllocationService } from '../ledger/wallet-allocation/wallet-allocation-service.js'
-import { WalletSyncService } from '../ledger/wallet-sync-service.js'
-import type { StatusEvent } from '../dapp-api/rpc-gen/typings.js'
-import type { TxChangedFailedEvent } from '../dapp-api/rpc-gen/typings.js'
-import {
-    errorCodes,
-    providerErrors,
-    rpcErrors,
-} from '@canton-network/core-rpc-errors'
-import { randomBytes, createHash, timingSafeEqual } from 'crypto'
-import { assertTokenClaimsMatchNetwork } from './token-network-matching.js'
-import type { ServerStatusService } from '../notices/server-status-service.js'
-import {
-    assertLoginAllowed,
-    SelfIssuedAuthService,
-    SignMessageService,
-    TransactionService,
-    logDynamically,
-    networkStatus,
-    toSelfIssuedLoginAuthContext,
-    type AccessTokenSignature,
-    type HASHING_SCHEME_VERSION,
-    type NotificationService,
-    type SelfIssuedLoginSession,
-    type SigningDrivers,
-} from '@canton-network/core-wallet-services'
+} from './rpc-gen/typings.ts'
+import { assertTokenClaimsMatchNetwork } from './token-network-matching.ts'
 
 export interface UserControllerOptions {
     kernelInfo: KernelInfo

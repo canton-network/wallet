@@ -1,18 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
 import {
     type AuthAware,
     type AuthContext,
     AuthTokenProvider,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
-import type { Network, Store } from '@canton-network/core-wallet-store'
 import type {
     INotificationService,
     SigningWorkerRunContextResolver,
 } from '@canton-network/core-wallet-services'
+import type { Network, Store } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
 
 export interface AutomationRunContext {
     authContext: AuthContext

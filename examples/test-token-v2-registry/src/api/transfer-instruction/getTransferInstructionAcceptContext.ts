@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
-import { getTransferFactoryContext } from './getTransferFactoryContext'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+
+import { getTransferFactoryContext } from './getTransferFactoryContext.ts'
 
 /**
  * @returns Token rules context and disclosure for the transfer accept operation.

@@ -9,7 +9,8 @@ import {
     WalletEvent,
 } from '@canton-network/core-types'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
-import { createJsonRpcProxyHandler } from './json-rpc-proxy'
+
+import { createJsonRpcProxyHandler } from './json-rpc-proxy.ts'
 
 const runtimeId = 'runtime-id'
 const origin = 'https://dapp.example'

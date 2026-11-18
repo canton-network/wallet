@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { NotificationService } from './notification-service.js'
-import { SESSION_SCOPED_EVENTS, USER_SCOPED_EVENTS } from './events.js'
-import { type NotificationSink, subscribeNotifications } from './subscribe.js'
+
+import { SESSION_SCOPED_EVENTS, USER_SCOPED_EVENTS } from './events.ts'
+import { NotificationService } from './notification-service.ts'
+import { type NotificationSink, subscribeNotifications } from './subscribe.ts'
 
 const subscriber = { sessionId: 'session-1', userId: 'user-1' }
 
