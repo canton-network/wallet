@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Descriptor } from '@canton-network/core-wallet-services/clear-signing'
+import type { Descriptor } from '@canton-network/core-tx-clear-signing'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { beforeEach, describe, expect, it, vi } from 'vitest'

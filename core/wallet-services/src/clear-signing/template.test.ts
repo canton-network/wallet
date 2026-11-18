@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { templateIdOf, templateKeyOf } from './merge.ts'
+import { templateIdOf } from './template.ts'
 
 const ping = {
     context: {
@@ -15,14 +15,13 @@ const ping = {
     },
 }
 
-describe('templateKeyOf', () => {
+describe('templateIdOf', () => {
     it('reads the template a stored descriptor replaces', () => {
         expect(templateIdOf(ping)).toEqual(ping.context.template)
-        expect(templateKeyOf(ping)).toBe('pkg:Canton.Internal.Ping:Ping')
     })
 
     it('rejects a descriptor that does not name a template', () => {
-        expect(() => templateKeyOf({ context: { template: {} } })).toThrow(
+        expect(() => templateIdOf({ context: { template: {} } })).toThrow(
             /no template/
         )
         expect(() =>

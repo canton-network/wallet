@@ -23,17 +23,6 @@ export function templateIdOf(json: unknown): TemplateId {
     return template
 }
 
-/**
- * `packageId:moduleName:entityName` of a descriptor, the key a stored descriptor
- * replaces and `clearSign` binds by.
- *
- * @throws Error when `context.template` does not name a template
- */
-export function templateKeyOf(json: unknown): string {
-    const template = templateIdOf(json)
-    return `${template.packageId}:${template.moduleName}:${template.entityName}`
-}
-
 function templateOf(json: unknown): TemplateId | undefined {
     if (typeof json !== 'object' || json === null) return undefined
     const context = (json as { context?: unknown }).context
