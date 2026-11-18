@@ -45,6 +45,7 @@ interface Workspace {
 
 interface SpecViolation {
     file: string
+    field: (typeof DEPENDENCY_FIELDS)[number]
     where: string
     name: string
     spec: string
@@ -95,13 +96,20 @@ const findSpecViolations = (): SpecViolation[] => {
                             ? 'workspace:'
                             : 'workspace:^'
                     if (spec !== expected) {
-                        violations.push({ file, where, name, spec, expected })
+                        violations.push({
+                            file,
+                            field,
+                            where,
+                            name,
+                            spec,
+                            expected,
+                        })
                     }
                 } else if (
                     field !== 'peerDependencies' &&
                     !spec.startsWith('catalog:')
                 ) {
-                    violations.push({ file, where, name, spec })
+                    violations.push({ file, field, where, name, spec })
                 }
             }
         }
@@ -148,16 +156,26 @@ const catalogBlocks = (): { header: string; indent: number }[] => [
         .map((name) => ({ header: `    ${name}:`, indent: 8 })),
 ]
 
-// Points the dependencies of the package.json files at the workspace.
+// Points the dependencies of the package.json files at the workspace, editing
+// only the violating field: devDependencies and peerDependencies differ.
 const fixSpecs = (violations: SpecViolation[]) => {
     for (const v of violations.filter((v) => v.expected)) {
         const path = join(root, v.file)
+        const text = readFileSync(path, 'utf8')
+        // Dependency maps are flat, so the field's object ends at the first `}`.
+        const start = text.indexOf(`"${v.field}": {`)
+        if (start === -1) continue
+        const end = text.indexOf('}', start)
         writeFileSync(
             path,
-            readFileSync(path, 'utf8').replaceAll(
-                `"${v.name}": "${v.spec}"`,
-                `"${v.name}": "${v.expected}"`
-            )
+            text.slice(0, start) +
+                text
+                    .slice(start, end)
+                    .replace(
+                        `"${v.name}": "${v.spec}"`,
+                        `"${v.name}": "${v.expected}"`
+                    ) +
+                text.slice(end)
         )
     }
 }
