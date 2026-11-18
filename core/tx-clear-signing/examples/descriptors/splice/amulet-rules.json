@@ -1,0 +1,457 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.AmuletRules",
+            "entityName": "AmuletRules"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Amulet rules"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "AmuletRules_DevNet_Tap",
+                "intent": "Tap Amulet from the DevNet faucet",
+                "interpolatedIntent": "Tap {amount} Amulet for {receiver} from the DevNet faucet of {@.contract.dso}",
+                "fields": [
+                    {
+                        "path": "receiver",
+                        "label": "Receiver",
+                        "format": "party"
+                    },
+                    {
+                        "path": "amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "openRound",
+                        "label": "Open mining round",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.isDevNet",
+                        "label": "DevNet rules",
+                        "format": "boolean"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_Mint",
+                "intent": "Mint Amulet on a DevNet",
+                "interpolatedIntent": "Mint {amount} Amulet for {receiver} under {@.contract.dso}",
+                "fields": [
+                    {
+                        "path": "receiver",
+                        "label": "Receiver",
+                        "format": "party"
+                    },
+                    {
+                        "path": "amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "openRound",
+                        "label": "Open mining round",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "reason",
+                        "label": "Reason",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.isDevNet",
+                        "label": "DevNet rules",
+                        "format": "boolean"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_DevNet_FeatureApp",
+                "intent": "Grant a featured app right on a DevNet",
+                "interpolatedIntent": "Grant {provider} a featured app right from the DevNet of {@.contract.dso}",
+                "fields": [
+                    {
+                        "path": "provider",
+                        "label": "Provider",
+                        "format": "party"
+                    },
+                    {
+                        "path": "activityWeight",
+                        "label": "Activity weight",
+                        "format": "number",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.isDevNet",
+                        "label": "DevNet rules",
+                        "format": "boolean"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_BuyMemberTraffic",
+                "intent": "Buy extra traffic",
+                "interpolatedIntent": "Buy {trafficAmount} bytes of extra traffic for member {memberId} on synchronizer {synchronizerId}, paid by {provider}",
+                "fields": [
+                    {
+                        "path": "provider",
+                        "label": "Payer",
+                        "format": "party"
+                    },
+                    {
+                        "path": "memberId",
+                        "label": "Member",
+                        "format": "string"
+                    },
+                    {
+                        "path": "synchronizerId",
+                        "label": "Synchronizer",
+                        "format": "string"
+                    },
+                    {
+                        "path": "migrationId",
+                        "label": "Migration",
+                        "format": "number"
+                    },
+                    {
+                        "path": "trafficAmount",
+                        "label": "Traffic (bytes)",
+                        "format": "number"
+                    },
+                    {
+                        "path": "inputs",
+                        "label": "Holdings offered as payment",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "context.openMiningRound",
+                        "label": "Open mining round",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "context.featuredAppRight",
+                        "label": "Featured app right",
+                        "format": "contractId",
+                        "optional": true
+                    },
+                    {
+                        "path": "context.issuingMiningRounds",
+                        "label": "Issuing mining rounds",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "context.validatorRights",
+                        "label": "Validator rights",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "expectedDso",
+                        "label": "Expected DSO",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_Transfer",
+                "intent": "Transfer Amulet",
+                "interpolatedIntent": "Transfer Amulet from {transfer.sender} to {transfer.outputs.length} receivers, submitted by {transfer.provider}",
+                "fields": [
+                    {
+                        "path": "transfer.sender",
+                        "label": "Sender",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    },
+                    {
+                        "path": "transfer.outputs.length",
+                        "label": "Number of receivers",
+                        "format": "number"
+                    },
+                    {
+                        "path": "transfer.outputs",
+                        "label": "Outputs",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.inputs",
+                        "label": "Inputs",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "transfer.beneficiaries",
+                        "label": "App-reward beneficiaries",
+                        "format": "raw",
+                        "optional": true
+                    },
+                    {
+                        "path": "context.openMiningRound",
+                        "label": "Open mining round",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "context.featuredAppRight",
+                        "label": "Featured app right",
+                        "format": "contractId",
+                        "optional": true
+                    },
+                    {
+                        "path": "context.issuingMiningRounds",
+                        "label": "Issuing mining rounds",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "context.validatorRights",
+                        "label": "Validator rights",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "expectedDso",
+                        "label": "Expected DSO",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_CreateTransferPreapproval",
+                "intent": "Preapprove incoming Amulet transfers",
+                "interpolatedIntent": "Preapprove incoming Amulet transfers to {receiver}, managed by {provider}, until {expiresAt}",
+                "fields": [
+                    {
+                        "path": "receiver",
+                        "label": "Receiver",
+                        "format": "party"
+                    },
+                    {
+                        "path": "provider",
+                        "label": "Provider",
+                        "format": "party"
+                    },
+                    {
+                        "path": "expiresAt",
+                        "label": "Expires at",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "optCreatedAt",
+                        "label": "Created at",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "inputs",
+                        "label": "Holdings offered as payment",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "context.amuletRules",
+                        "label": "Amulet rules used for payment",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "context.context.openMiningRound",
+                        "label": "Open mining round",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "context.context.featuredAppRight",
+                        "label": "Featured app right",
+                        "format": "contractId",
+                        "optional": true
+                    },
+                    {
+                        "path": "expectedDso",
+                        "label": "Expected DSO",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_CreateExternalPartySetupProposal",
+                "intent": "Propose hosting an external party",
+                "interpolatedIntent": "Propose that {validator} host {user}, with a transfer preapproval until {preapprovalExpiresAt}",
+                "fields": [
+                    {
+                        "path": "user",
+                        "label": "User",
+                        "format": "party"
+                    },
+                    {
+                        "path": "validator",
+                        "label": "Validator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "preapprovalExpiresAt",
+                        "label": "Preapproval expires at",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "optCreatedAt",
+                        "label": "Created at",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "inputs",
+                        "label": "Holdings offered as payment",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "context.amuletRules",
+                        "label": "Amulet rules used for payment",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "context.context.openMiningRound",
+                        "label": "Open mining round",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "expectedDso",
+                        "label": "Expected DSO",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_ComputeFees",
+                "intent": "Compute transfer fees",
+                "interpolatedIntent": "Compute the fees {sender} would pay for {outputs.length} outputs",
+                "fields": [
+                    {
+                        "path": "sender",
+                        "label": "Sender",
+                        "format": "party"
+                    },
+                    {
+                        "path": "outputs.length",
+                        "label": "Number of outputs",
+                        "format": "number"
+                    },
+                    {
+                        "path": "outputs",
+                        "label": "Outputs",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "context.openMiningRound",
+                        "label": "Open mining round",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "expectedDso",
+                        "label": "Expected DSO",
+                        "format": "party",
+                        "optional": true
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "AmuletRules_AllocateDevelopmentFundCoupon",
+                "intent": "Allocate development-fund Amulet",
+                "interpolatedIntent": "Allocate {amount} Amulet from the development fund to {beneficiary}, expiring at {expiresAt}",
+                "fields": [
+                    {
+                        "path": "beneficiary",
+                        "label": "Beneficiary",
+                        "format": "party"
+                    },
+                    {
+                        "path": "amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "expiresAt",
+                        "label": "Expires at",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "reason",
+                        "label": "Reason",
+                        "format": "string"
+                    },
+                    {
+                        "path": "fundManager",
+                        "label": "Fund manager",
+                        "format": "party"
+                    },
+                    {
+                        "path": "mintAfter",
+                        "label": "Mint after",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "unclaimedDevelopmentFundCouponCids",
+                        "label": "Unclaimed coupons",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "DSO",
+                        "format": "party"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": []
+}

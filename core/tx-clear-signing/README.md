@@ -12,7 +12,15 @@ The tests run every descriptor through the schema and through the parser `clearS
 
 `examples/descriptors/splice/amulet-*.json` and `utility-*.json` are the token-standard roots a Canton Coin or Canton Network Utility holder submits. They cover V1 (CIP-56) and V2 (CIP-112). `src/token-standard.test.ts` describes each of those entries that has a captured prepared transaction.
 
-The other files in [examples/descriptors/splice](examples/descriptors/splice) word the Splice roots captured next to them: governance locks and their transfer and substitution proposals, a DSO vote request, a Splitwell balance update, a wallet transfer offer, a featured app right, DSO rules, and the wallet and trading contracts. `src/splice-contracts.test.ts` describes every one of those captures. A descriptor has a `create` entry when that create can itself be a root, including when the usual network path creates the same contract inside a choice.
+The other files in [examples/descriptors/splice](examples/descriptors/
+splice) word the Splice roots captured next to them: governance locks
+and their transfer and substitution proposals, a DSO vote request, a
+Splitwell balance update, a wallet transfer offer, a featured app
+right, DSO rules, and the wallet and trading contracts. `src/
+splice-contracts.test.ts` describes every one of those captures. A
+descriptor has a `create` entry when that create can itself be a
+root, including when the usual network path creates the same contract
+inside a choice.
 
 ## Usage
 
@@ -170,6 +178,7 @@ A descriptor binds one exact package ID. A network running another version of a 
 
 | Package                 | Version              | Package ID                                                         | Descriptors                                                                                     |
 | ----------------------- | -------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| splice-amulet           | 0.1.24               | `17b6f7c18efec9022dde39a19039783c68490a722e8a5088b22ee034678171a2` | Amulet rules (DevNet tap and the other non-DSO choices)                                         |
 | splice-amulet           | 0.1.25               | `c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66` | Amulet, governance locks, featured app right, transfer preapproval, external-party amulet rules |
 | splice-wallet           | 0.1.26               | `5838793a7f11fbc16159065094823fb662120184ede48922dff092958dae6857` | Wallet transfer offer                                                                           |
 | splice-dso-governance   | the captured package | `0ff9141699e5eb734de1e1a8d11f97233ffd3892d1108872600cb3019fd4a86e` | DSO rules and vote requests                                                                     |
