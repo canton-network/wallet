@@ -150,10 +150,12 @@ export class SignedPartyCreationService {
         // a party creation scoped to that synchronizer, so reuse the create flow.
         // Endpoints and additionalSynchronizerIds are cleared to keep the
         // registration single-participant and avoid recursing back here.
+        // The hint is taken from the party id (`hint::fingerprint`), since create()
+        // picks a random one when the caller passed no partyHint.
         await new ExternalPartyNamespace(this.ctx)
             .create(this.publicKey, {
                 ...this.createPartyOptions,
-                partyHint: this.createPartyOptions?.partyHint ?? '',
+                partyHint: partyId.split('::')[0],
                 synchronizerId,
                 confirmingThreshold: 1,
                 localParticipantObservationOnly: false,
