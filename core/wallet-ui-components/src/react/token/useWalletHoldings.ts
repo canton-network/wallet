@@ -3,15 +3,14 @@
 
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedHolding,
-} from '../utils/aggregate-holdings'
+} from './aggregate-holdings'
+import type { PortfolioHolding } from './holdings'
 import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
-import type { PortfolioHolding } from '@utils/holdings'
+import { useTokenContext } from './TokenProvider'
 
 export interface WalletHoldingsResult {
     instruments: AggregatedHolding[]
@@ -25,13 +24,13 @@ export interface WalletHoldingsResult {
 export const useWalletHoldings = (
     partyId: string | undefined
 ): WalletHoldingsResult => {
-    const registryInstruments = useInstruments()
     const {
-        sdk,
-        isLoading: isWalletSdkLoading,
-        error: walletSdkError,
-    } = useWalletSdk()
-    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, sdk }))
+        client,
+        instruments: registryInstruments,
+        isLoading: isClientLoading,
+        error: clientError,
+    } = useTokenContext()
+    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, client }))
 
     const aggregatedInstruments = useMemo(() => {
         if (!holdingsQuery.data) return []
@@ -41,16 +40,12 @@ export const useWalletHoldings = (
         )
     }, [holdingsQuery.data, registryInstruments])
 
-    const error = walletSdkError
-        ? new Error(walletSdkError)
-        : holdingsQuery.error
-
     return {
         instruments: aggregatedInstruments,
         holdings: holdingsQuery.data ?? [],
-        isLoading: isWalletSdkLoading || holdingsQuery.isLoading,
-        isError: !!walletSdkError || holdingsQuery.isError,
-        error,
+        isLoading: isClientLoading || holdingsQuery.isLoading,
+        isError: !!clientError || holdingsQuery.isError,
+        error: clientError ?? holdingsQuery.error,
         refetch: holdingsQuery.refetch,
     }
 }

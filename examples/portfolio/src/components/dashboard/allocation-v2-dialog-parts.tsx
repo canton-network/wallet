@@ -12,7 +12,7 @@ import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DateTimeText } from '@components/date-time-text'
 import { formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
-import { isBasicAccount } from '@utils/holdings'
+import { isBasicAccount } from '@canton-network/core-wallet-ui-components/react/token'
 import {
     amountsToLock,
     type InstrumentAmount,

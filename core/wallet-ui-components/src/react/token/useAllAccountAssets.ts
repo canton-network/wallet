@@ -3,18 +3,22 @@
 
 import { useCallback, useMemo } from 'react'
 import { useQueries } from '@tanstack/react-query'
-import { useInstruments } from '@hooks/useInstruments'
+import Decimal from 'decimal.js'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedAccountBalance,
     type AggregatedHolding,
-} from '../utils/aggregate-holdings'
-import { useAccounts } from './useAccounts'
+} from './aggregate-holdings'
+import type { PortfolioHolding } from './holdings'
 import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
-import type { PortfolioHolding } from '@utils/holdings'
-import Decimal from 'decimal.js'
+import { useTokenContext } from './TokenProvider'
+
+export interface TokenWallet {
+    partyId: string
+    hint: string
+    primary: boolean
+}
 
 export interface PortfolioAssetWalletBalanceView {
     id: string //wallet partyId
@@ -39,18 +43,19 @@ export interface PortfolioAssetsResult {
     refetch: () => void
 }
 
-export const useAllAccountAssets = (): PortfolioAssetsResult => {
-    const wallets = useAccounts()
-    const registryInstruments = useInstruments()
+export const useAllAccountAssets = (
+    wallets: readonly TokenWallet[]
+): PortfolioAssetsResult => {
     const {
-        sdk,
-        isLoading: isWalletSdkLoading,
-        error: walletSdkError,
-    } = useWalletSdk()
+        client,
+        instruments: registryInstruments,
+        isLoading: isClientLoading,
+        error: clientError,
+    } = useTokenContext()
 
     const holdingsQueries = useQueries({
         queries: wallets.map((wallet) =>
-            holdingsQueryOptions({ partyId: wallet.partyId, sdk })
+            holdingsQueryOptions({ partyId: wallet.partyId, client })
         ),
     })
 
@@ -83,27 +88,23 @@ export const useAllAccountAssets = (): PortfolioAssetsResult => {
     }, [holdingsQueries])
 
     const queryError = holdingsQueries.find((query) => query.error)?.error
-    const error = walletSdkError ? new Error(walletSdkError) : queryError
+    const error = clientError ?? queryError
 
     return {
         assets,
         isLoading:
-            isWalletSdkLoading ||
-            holdingsQueries.some((query) => query.isLoading),
+            isClientLoading || holdingsQueries.some((query) => query.isLoading),
         isError:
-            !!walletSdkError || holdingsQueries.some((query) => query.isError),
+            !!clientError || holdingsQueries.some((query) => query.isError),
         error: error instanceof Error ? error : null,
         refetch,
     }
 }
 
-function toWalletBalances(
+export function toWalletBalances(
     accountBalances: AggregatedAccountBalance[],
-    walletByParty: Map<
-        string,
-        { partyId: string; hint: string; primary: boolean }
-    >
-) {
+    walletByParty: ReadonlyMap<string, TokenWallet>
+): PortfolioAssetWalletBalanceView[] {
     const byOwner = new Map<string, AggregatedAccountBalance[]>()
 
     for (const b of accountBalances) {

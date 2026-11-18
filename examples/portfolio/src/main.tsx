@@ -1,3 +1,4 @@
+import '@lib/logger'
 import { StrictMode } from 'react'
 import '@fontsource/inter/index.css'
 import './index.css'

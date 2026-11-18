@@ -3,11 +3,11 @@
 
 import { useState } from 'react'
 import { Alert } from '@mui/material'
-import type {
-    PortfolioAssetView,
-    PortfolioAssetsResult,
-} from '@hooks/useAllAccountAssets'
-import { getInstrumentKey } from '@utils/aggregate-holdings'
+import {
+    getInstrumentKey,
+    type PortfolioAssetView,
+    type PortfolioAssetsResult,
+} from '@canton-network/core-wallet-ui-components/react/token'
 import { getInstrumentInitials } from '@utils/instrument-display'
 import { AssetViewDialog } from '@components/dashboard/asset-view-dialog'
 import {

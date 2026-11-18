@@ -27,6 +27,7 @@ import { PrimaryBadge } from '@components/dashboard/primary-badge'
 import { CountBadge } from '@components/ui/count-badge'
 import { PillButton } from '@components/ui/PillButton'
 import { useConnection } from '@contexts/ConnectionContext'
+import { PortfolioTokenProvider } from '@contexts/PortfolioTokenProvider'
 import { useAccounts } from '@hooks/useAccounts'
 import { useOffers } from '@hooks/useOffers'
 
@@ -223,7 +224,9 @@ function RouteComponent() {
                     bgcolor: 'background.default',
                 }}
             >
-                <Outlet />
+                <PortfolioTokenProvider>
+                    <Outlet />
+                </PortfolioTokenProvider>
             </Box>
         </Box>
     )

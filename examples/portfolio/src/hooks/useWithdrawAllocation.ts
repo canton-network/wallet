@@ -9,6 +9,7 @@ import { resolveAllocationAsset } from '@utils/allocation'
 import { useInstruments } from './useInstruments'
 import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
 import { useWalletSdk } from './useWalletSdk'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import { queryKeys } from './query-keys'
 
 export const useWithdrawAllocation = () => {
@@ -49,9 +50,7 @@ export const useWithdrawAllocation = () => {
                     ),
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: queryKeys.walletConnection.holdings.forParty(
-                        args.party
-                    ),
+                    queryKey: tokenQueryKeys.holdings.forParty(args.party),
                 }),
             ])
         },

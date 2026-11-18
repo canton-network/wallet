@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type QueryClient, useQueryClient } from '@tanstack/react-query'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import { queryKeys } from '../hooks/query-keys'
 import { ConnectionContext } from './ConnectionContext'
 
@@ -126,7 +127,7 @@ const useConnectedProviderSubscriptions = ({
                     queryKey: queryKeys.walletConnection.pendingTransfers.all,
                 })
                 await queryClient.invalidateQueries({
-                    queryKey: queryKeys.walletConnection.holdings.all,
+                    queryKey: tokenQueryKeys.holdings.all,
                 })
                 await queryClient.invalidateQueries({
                     queryKey: queryKeys.walletConnection.transactionHistory.all,
@@ -165,6 +166,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         queryClient.removeQueries({
             queryKey: queryKeys.walletConnection.all,
         })
+        queryClient.removeQueries({ queryKey: tokenQueryKeys.all })
     }, [queryClient])
 
     const updateSessionToken = useCallback(

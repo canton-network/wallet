@@ -1,26 +1,26 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import type { InstrumentId } from '@canton-network/core-token-standard'
+import type { Account } from '@canton-network/core-token-standard-v2'
 import {
     aggregateHoldings,
     getInstrumentKey,
     type AggregatedAccountBalance,
-} from '../utils/aggregate-holdings'
-import { useMemo } from 'react'
-import type { Account } from '@canton-network/core-token-standard-v2'
-import { useWalletSdk } from './useWalletSdk'
+} from './aggregate-holdings'
+import { basicAccount } from './holdings'
 import { holdingsQueryOptions } from './query-options'
-import { useQuery } from '@tanstack/react-query'
-import { basicAccount } from '@utils/holdings'
+import { useTokenContext } from './TokenProvider'
 
 export const useInstrumentAvailableBalance = (
     partyId: string | undefined,
     instrumentId: InstrumentId | null,
     account?: Account
 ): AggregatedAccountBalance | null => {
-    const { sdk } = useWalletSdk()
-    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, sdk }))
+    const { client } = useTokenContext()
+    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, client }))
     const holdings = holdingsQuery.data
 
     return useMemo(() => {

@@ -26,7 +26,7 @@ import { formatCharacterCount } from '@components/utils'
 import { PillButton } from '@components/ui/PillButton'
 import { usePrimaryAccount } from '@hooks/useAccounts'
 import type { useCreateTransfer } from '@hooks/useCreateTransfer'
-import { useInstrumentAvailableBalance } from '@hooks/useInstrumentAvailableBalance'
+import { useInstrumentAvailableBalance } from '@canton-network/core-wallet-ui-components/react/token'
 import { toDecimalOrNull } from '@utils/decimal'
 import { InstrumentSelect } from './instrument-select'
 import type {

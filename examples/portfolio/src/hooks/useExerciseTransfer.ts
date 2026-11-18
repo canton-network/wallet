@@ -6,6 +6,7 @@ import type { PreparedCommand } from '@canton-network/wallet-sdk'
 import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { submitViaProvider } from '@lib/submit'
 import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import { queryKeys } from './query-keys'
 import { useWalletSdk } from './useWalletSdk'
 import type { TokenStandardVersion } from '../types/instruments'
@@ -115,7 +116,7 @@ export const useExerciseTransfer = () => {
                 ),
             })
             void queryClient.invalidateQueries({
-                queryKey: queryKeys.walletConnection.holdings.all,
+                queryKey: tokenQueryKeys.holdings.all,
             })
             void queryClient.invalidateQueries({
                 queryKey: queryKeys.walletConnection.transactionHistory.all,

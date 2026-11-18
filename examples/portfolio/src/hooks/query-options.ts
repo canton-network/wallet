@@ -10,7 +10,6 @@ import { useWalletSdk, type WalletSdk } from './useWalletSdk'
 import type { PreapprovalRow } from '../types/preapprovals'
 import { logger } from '@lib/logger'
 import { TransactionHistoryService } from '@services/transaction-history-service'
-import { mergeHoldings, toOwnedHoldings } from '@utils/holdings'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -74,44 +73,6 @@ export const transactionHistoryServiceQueryOptions = (partyId: string) =>
         },
         staleTime: Infinity,
         gcTime: Infinity,
-    })
-
-export const holdingsQueryOptions = ({
-    partyId,
-    sdk,
-}: {
-    partyId: string | undefined
-    sdk: WalletSdk
-}) =>
-    queryOptions({
-        queryKey: queryKeys.walletConnection.holdings.forParty(partyId),
-        enabled: !!partyId && !!sdk,
-        queryFn: async () => {
-            if (!partyId || !sdk) {
-                throw new Error('Wallet SDK and party are required')
-            }
-
-            const [v1, v2] = await Promise.all([
-                sdk.token.v1.utxos.list({
-                    partyId,
-                    includeLocked: true,
-                }),
-                sdk.token.v2.utxos
-                    .list({
-                        partyId,
-                        includeLocked: true,
-                    })
-                    .catch((err) => {
-                        logger.warn(
-                            { err },
-                            `V2 holdings unavailable, showing V1 only`
-                        )
-                        return []
-                    }),
-            ])
-
-            return toOwnedHoldings(mergeHoldings(v1, v2), partyId)
-        },
     })
 
 export const usePendingTransfersQueryOptions = (party: string | undefined) => {

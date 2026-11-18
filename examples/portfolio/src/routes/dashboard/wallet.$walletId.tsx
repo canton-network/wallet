@@ -8,7 +8,7 @@ import { TransferDialog } from '@components/transfer-dialog'
 import { PillButton } from '@components/ui/PillButton'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { useAccounts } from '@hooks/useAccounts'
-import { useWalletHoldings } from '@hooks/useWalletHoldings'
+import { useWalletHoldings } from '@canton-network/core-wallet-ui-components/react/token'
 
 export const Route = createFileRoute('/dashboard/wallet/$walletId')({
     component: RouteComponent,

@@ -24,11 +24,11 @@ import type {
 } from '@components/types'
 import { PillButton } from '@components/ui/PillButton'
 import { isReceiverOfLeg, isSenderOfLeg } from '@components/utils'
-import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
 import {
     getInstrumentKey,
+    useAggregatedHoldings,
     type AggregatedHolding,
-} from '@utils/aggregate-holdings'
+} from '@canton-network/core-wallet-ui-components/react/token'
 import { formatAmount } from '@utils/decimal'
 import { formatDistanceToNow } from '@utils/date-format'
 import { DateTimeText } from '@components/date-time-text'

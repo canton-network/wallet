@@ -10,7 +10,7 @@ import {
     IconButton,
     Typography,
 } from '@mui/material'
-import type { PortfolioAssetView } from '@hooks/useAllAccountAssets'
+import type { PortfolioAssetView } from '@canton-network/core-wallet-ui-components/react/token'
 import { portfolioColors } from '@lib/theme'
 import { getInstrumentInitials } from '@utils/instrument-display'
 

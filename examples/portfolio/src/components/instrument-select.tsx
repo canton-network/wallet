@@ -12,7 +12,7 @@ import {
     Typography,
 } from '@mui/material'
 import Decimal from 'decimal.js'
-import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
+import { useAggregatedHoldings } from '@canton-network/core-wallet-ui-components/react/token'
 import type { InstrumentId } from '@canton-network/core-token-standard'
 import type { SelectableInstrument } from './transfer-types'
 

@@ -2,37 +2,32 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useQuery } from '@tanstack/react-query'
-import { useInstruments } from '@hooks/useInstruments'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
-} from '../utils/aggregate-holdings'
+} from './aggregate-holdings'
 import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
+import { useTokenContext } from './TokenProvider'
 
 export const useAggregatedHoldings = (partyId: string | undefined) => {
-    const instruments = useInstruments()
     const {
-        sdk,
-        isLoading: isWalletSdkLoading,
-        error: walletSdkError,
-    } = useWalletSdk()
+        client,
+        instruments,
+        isLoading: isClientLoading,
+        error: clientError,
+    } = useTokenContext()
 
     const holdingsQuery = useQuery({
-        ...holdingsQueryOptions({ partyId, sdk }),
+        ...holdingsQueryOptions({ partyId, client }),
         select: (holdings) =>
             enrichWithInstrumentInfo(aggregateHoldings(holdings), instruments),
     })
 
-    const error = walletSdkError
-        ? new Error(walletSdkError)
-        : holdingsQuery.error
-
     return {
         instruments: holdingsQuery.data ?? [],
-        isLoading: isWalletSdkLoading || holdingsQuery.isLoading,
-        isError: !!walletSdkError || holdingsQuery.isError,
-        error,
+        isLoading: isClientLoading || holdingsQuery.isLoading,
+        isError: !!clientError || holdingsQuery.isError,
+        error: clientError ?? holdingsQuery.error,
         refetch: holdingsQuery.refetch,
     }
 }
