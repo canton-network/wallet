@@ -16,7 +16,9 @@
             "{workspaceRoot}/tsdown.base.ts",
             "{workspaceRoot}/tsconfig.*.json",
             "{workspaceRoot}/vite.decorators.ts",
-            "{workspaceRoot}/scripts/src/lib/version-config.json"
+            "{workspaceRoot}/scripts/src/lib/version-config.json",
+            "{workspaceRoot}/.nvmrc",
+            "{workspaceRoot}/pnpm-workspace.yaml"
         ],
         "e2eGlobals": [
             "{workspaceRoot}/canton/**/*",
