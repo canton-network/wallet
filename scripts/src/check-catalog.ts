@@ -19,6 +19,7 @@ import { execSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { load } from 'js-yaml'
+import { applyEdits, modify } from 'jsonc-parser'
 import { getRepoRoot } from './lib/utils.js'
 
 const DEPENDENCY_FIELDS = [
@@ -160,21 +161,8 @@ const fixSpecs = (violations: SpecViolation[]) => {
     for (const v of violations.filter((v) => v.expected)) {
         const path = join(root, v.file)
         const text = readFileSync(path, 'utf8')
-        // Dependency maps are flat, so the field's object ends at the first `}`.
-        const start = text.indexOf(`"${v.field}": {`)
-        if (start === -1) continue
-        const end = text.indexOf('}', start)
-        writeFileSync(
-            path,
-            text.slice(0, start) +
-                text
-                    .slice(start, end)
-                    .replace(
-                        `"${v.name}": "${v.spec}"`,
-                        `"${v.name}": "${v.expected}"`
-                    ) +
-                text.slice(end)
-        )
+        const edits = modify(text, [v.field, v.name], v.expected, {})
+        writeFileSync(path, applyEdits(text, edits))
     }
 }
 
