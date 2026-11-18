@@ -1,26 +1,69 @@
 # @canton-network/core-tx-clear-signing
 
-Describes what a Canton prepared transaction does, in words, before it is signed. Each root node (a create or an exercise) is described by a _clear-signing descriptor_: a JSON document bound to one exact Daml template (package ID, module and entity), with a stable intent, an interpolated intent and typed fields.
+Describes a Canton prepared transaction in words, before it is signed. `clearSign` takes the prepared-transaction bytes, the hash the user is asked to approve, and any number of clear-signing descriptors. It returns one operation per root node, in root order. A descriptor can word a create or an exercise. Every other root is still returned.
 
-The descriptor format is the v1 _Canton Clear Signing Descriptor_ schema, modelled on ERC-7730. The schema is [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) in this package. The descriptors live in [examples/descriptors](examples/descriptors):
+A descriptor is one JSON document bound to one Daml template, by package ID, module and entity. It has a stable sentence, an optional sentence with placeholders, and typed fields. The document format is the v1 Canton Clear Signing Descriptor schema, modelled on ERC-7730. The schema is [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json). The next section is the map of that document. The tests run every example through the schema and through the parser `clearSign` uses.
 
-- [examples/descriptors/ping.json](examples/descriptors/ping.json);
-- [examples/descriptors/bong.json](examples/descriptors/bong.json);
-- [examples/descriptors/bong-proposal.json](examples/descriptors/bong-proposal.json);
-- [examples/descriptors/explode.json](examples/descriptors/explode.json);
-- [examples/descriptors/merge.json](examples/descriptors/merge.json);
-- a subset of descriptors based on Splice [examples/descriptors/splice](examples/descriptors/splice);
-- some descriptors the schema rejects, in [examples/descriptors/invalid](examples/descriptors/invalid).
+## Example descriptors
 
-The tests run every descriptor through the schema and through the parser `clearSign` uses, so the two cannot drift apart.
+The descriptors live in [examples/descriptors](examples/descriptors). Each file binds to the template named here. A `create` entry is present when that create can itself be a root, including when the usual network path creates the same contract inside a choice.
 
-The files in [examples/descriptors/splice](examples/descriptors/splice) describe, among other things, the two token standards CIP56 and CIP112, while the remaining word the Splice roots captured next to them: governance locks and their transfer and substitution proposals, a DSO vote request, a Splitwell balance update, a wallet transfer offer, a featured app right, DSO rules, and the wallet and trading contracts. `src/splice-contracts.test.ts` describes every one of those captures. A descriptor has a `create` entry when that create can itself be a root, including when the usual network path creates the same contract inside a choice.
+The built-in Ping and Bong templates:
+
+- [ping.json](examples/descriptors/ping.json) — `Canton.Internal.Ping:Ping`
+- [bong-proposal.json](examples/descriptors/bong-proposal.json) — `Canton.Internal.Bong:BongProposal`
+- [bong.json](examples/descriptors/bong.json) — `Canton.Internal.Bong:Bong`
+- [explode.json](examples/descriptors/explode.json) — `Canton.Internal.Bong:Explode`
+- [merge.json](examples/descriptors/merge.json) — `Canton.Internal.Bong:Merge`
+- [collapse.json](examples/descriptors/collapse.json) — `Canton.Internal.Bong:Collapse`
+
+[examples/descriptors/splice](examples/descriptors/splice) holds the Splice descriptors. [src/splice-contracts.test.ts](src/splice-contracts.test.ts) describes every captured prepared transaction in `src/__tests__/fixtures/splice` with them.
+
+Amulet:
+
+- [amulet-external-party-amulet-rules.json](examples/descriptors/splice/amulet-external-party-amulet-rules.json) — `Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules`. The create of the rules, and the factory choices through `TransferFactory`, `AllocationFactory` and `SettlementFactory`.
+- [amulet-rules.json](examples/descriptors/splice/amulet-rules.json) — `Splice.AmuletRules:AmuletRules`, including the DevNet tap.
+- [amulet-allocation.json](examples/descriptors/splice/amulet-allocation.json) — `Splice.AmuletAllocation:AmuletAllocation`, the V1 allocation.
+- [amulet-allocation-v2.json](examples/descriptors/splice/amulet-allocation-v2.json) — `Splice.AmuletAllocationV2:AmuletAllocationV2`.
+- [amulet-transfer-instruction.json](examples/descriptors/splice/amulet-transfer-instruction.json) — `Splice.AmuletTransferInstruction:AmuletTransferInstruction`.
+- [amulet-transfer-preapproval.json](examples/descriptors/splice/amulet-transfer-preapproval.json) — `Splice.AmuletRules:TransferPreapproval`.
+- [amulet-transfer-preapproval-proposal.json](examples/descriptors/splice/amulet-transfer-preapproval-proposal.json) — `Splice.Wallet.TransferPreapproval:TransferPreapprovalProposal`.
+- [amulet-external-party-setup-proposal.json](examples/descriptors/splice/amulet-external-party-setup-proposal.json) — `Splice.AmuletRules:ExternalPartySetupProposal`.
+- [amulet-locked-amulet.json](examples/descriptors/splice/amulet-locked-amulet.json) — `Splice.Amulet:LockedAmulet`.
+
+Utility:
+
+- [utility-allocation-factory.json](examples/descriptors/splice/utility-allocation-factory.json) — `Utility.Registry.App.V0.Service.AllocationFactory:AllocationFactory`, and the factory choices exercised on it.
+- [utility-allocation-v2.json](examples/descriptors/splice/utility-allocation-v2.json) — `Utility.Registry.V0.Holding.AllocationV2:AllocationV2`.
+- [utility-dvp-leg-allocation.json](examples/descriptors/splice/utility-dvp-leg-allocation.json) — `Utility.Registry.V0.Holding.Allocation:DvpLegAllocation`.
+- [utility-transfer-offer.json](examples/descriptors/splice/utility-transfer-offer.json) — `Utility.Registry.App.V0.Model.Transfer:TransferOffer`.
+- [utility-transfer-preapproval.json](examples/descriptors/splice/utility-transfer-preapproval.json) — `Utility.Registry.App.V0.Model.TransferPreapproval:TransferPreapproval`.
+- [utility-mint-offer.json](examples/descriptors/splice/utility-mint-offer.json) — `Utility.Registry.App.V0.Model.Mint:MintOffer`.
+- [utility-mint-request.json](examples/descriptors/splice/utility-mint-request.json) — `Utility.Registry.App.V0.Model.Mint:MintRequest`.
+- [utility-burn-offer.json](examples/descriptors/splice/utility-burn-offer.json) — `Utility.Registry.App.V0.Model.Burn:BurnOffer`.
+- [utility-burn-request.json](examples/descriptors/splice/utility-burn-request.json) — `Utility.Registry.App.V0.Model.Burn:BurnRequest`.
+
+Other Splice roots:
+
+- [governance-lock.json](examples/descriptors/splice/governance-lock.json) — `Splice.GovernanceLock:GovernanceLock`.
+- [governance-lock-transfer.json](examples/descriptors/splice/governance-lock-transfer.json) — `Splice.GovernanceLock.Transfer:GovernanceLockTransfer`, and the transfer-instruction choices on it.
+- [governance-lock-substitution.json](examples/descriptors/splice/governance-lock-substitution.json) — `Splice.GovernanceLock.Substitution:GovernanceLockSubstitution`, and the transfer-instruction choices on it.
+- [vote-request.json](examples/descriptors/splice/vote-request.json) — `Splice.DsoRules:VoteRequest`.
+- [dso-rules.json](examples/descriptors/splice/dso-rules.json) — `Splice.DsoRules:DsoRules`.
+- [balance-update.json](examples/descriptors/splice/balance-update.json) — `Splice.Splitwell:BalanceUpdate`. One create entry covers both a transfer update and a netting update. The `update` variant is shown with `raw`.
+- [transfer-offer.json](examples/descriptors/splice/transfer-offer.json) — `Splice.Wallet.TransferOffer:TransferOffer`.
+- [featured-app-right.json](examples/descriptors/splice/featured-app-right.json) — `Splice.Amulet:FeaturedAppRight`.
+- [wallet-user-proxy.json](examples/descriptors/splice/wallet-user-proxy.json) — `Splice.Util.FeaturedApp.WalletUserProxy:WalletUserProxy`.
+- [otc-trade-proposal.json](examples/descriptors/splice/otc-trade-proposal.json) — `Splice.Testing.Apps.TradingApp:OTCTradeProposal`.
+- [batching-utility.json](examples/descriptors/splice/batching-utility.json) — `Splice.Util.Token.Wallet.BatchingUtilityV2:BatchingUtility`.
+
+[examples/descriptors/invalid](examples/descriptors/invalid) holds descriptors the schema rejects. The parser rejects each of them too. The file name is the rejection.
 
 ## The descriptor document
 
 A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example.
 
-The object has two keys that are not sections, and four sections.
+The object has two keys that are not sections, `$schema` and `$comment`, and four sections: `context`, `metadata`, `display` and `signatures`.
 
 `$schema` is required. Its value is the `$id` of the schema file, `https://example.org/canton-clear-signing/v1/schema.json`. A descriptor that names another schema is rejected.
 
@@ -59,7 +102,7 @@ An operation, whether `create` or `exercise`, has:
 
 - `intent`, required. The sentence used when `interpolatedIntent` is absent. It cannot contain `{` or `}`, so it cannot contain a placeholder.
 - `interpolatedIntent`, optional. The same kind of sentence with `{path}` placeholders. Each placeholder is the `path` of a field of this same operation, and is replaced by that field's formatted value. `{{` and `}}` are a literal brace. When this field is absent, `clearSign` shows `intent`. When it is present and a placeholder cannot be filled, the sentence is "The descriptor does not match this transaction." and the status is `fallback`.
-- `fields`, optional. The ordered label/value rows. Omitting it means the operation shows a sentence and no rows. These fields can be formatted based on typing and should be treated as additional information accompanying the `intent`/`interpolatedIntent`. A field being listed means it has to be present in the prepared transaction, otherwise `clearSign` fails to describe the transaction.
+- `fields`, optional. The ordered rows that accompany the sentence. Omitting it means the operation shows a sentence and no rows. Each row is resolved from the prepared transaction and rendered with its `format`. A path that is missing, or a value the format refuses, gives that row an error. When the field is a placeholder in `interpolatedIntent`, the status is `fallback`. When it is not, the status stays `described` and `complete` is false.
 
 An exercise entry has those three, plus:
 
@@ -72,7 +115,7 @@ No two exercise entries may share a choice and the same interface. A set `packag
 
 Each element of `fields` is one value to show.
 
-`path` is required. It names the value, as described under Paths. `label` is the text in front of the value. When `label` is omitted, the path is shown. `format` selects how the value is rendered. When `format` is omitted, the value is shown with `raw`. `optional` is a boolean. Set it when the path may be `None`: `None` is then the word `None`, and a `Some` is shown with `format`. Without it, the parsing fails on `None`.
+`path` is required. It names the value, as described under Paths. `label` is the text in front of the value. When `label` is omitted, the path is shown. `format` selects how the value is rendered. When `format` is omitted, the value is shown with `raw`. `optional` is a boolean. Set it when the path may be `None`: `None` is then the word `None`, and a `Some` is shown with `format`. Without `optional`, `None` fails the field.
 
 `params` is allowed only when `format` is `enum`, and then it is required. It has one field, `$ref`, whose value is `$.metadata.enums.` followed by the table's name.
 
@@ -108,6 +151,10 @@ Text shown to the user, including labels, intents and enum entries, cannot conta
 
 [src/descriptor.ts](src/descriptor.ts) rejects a document the schema rejects. It then rejects a document the schema accepts when one of these is true: a path is declared twice in one operation, a `{path}` placeholder does not equal the path of a field of that operation, an enum reference does not name a table in `metadata`, or two exercise entries share a choice and interface. A descriptor that fails and still names a root's template leaves that root `invalid`. The other roots are still described.
 
+### `signatures`
+
+`signatures` is optional. It is an array reserved for signatures over the canonical descriptor, excluding this array. The array must be empty. A non-empty array is rejected. `clearSign` does not check a signature. Omitting the array and sending an empty array have the same effect.
+
 ### Handling Signatures
 
 The handling of signatures is currently future work. When these are used, they should be verified either by the clear signing module in combination with verifying that the hash is correct, or by a trusted codebase in which the clear signing module also runs. This requires the knowledge of public keys corresponding to private keys held by trusted descriptor authors. How these are to be distributed is likewise left as future work, but a trivial solution would be to fix them in the codebase.
@@ -117,26 +164,22 @@ The handling of signatures is currently future work. When these are used, they s
 ```typescript
 import { clearSign } from '@canton-network/core-tx-clear-signing'
 
-// preparedTransaction and preparedTransactionHash: base64, as returned by
-// /v2/interactive-submission/prepare. descriptors: any number of descriptors.
+// Both strings are base64, as /v2/interactive-submission/prepare returns them.
+// descriptors is any number of descriptor documents.
 const { complete, operations } = await clearSign(
     preparedTransaction,
     descriptors,
     preparedTransactionHash
 )
-// operations[0].intent: 'Ping "04d887dd-…" from alice::1220… to alice::1220…'
-// operations[0].fields: [{ label: 'Ping ID', value: '"04d887dd-…"' }, …]
 ```
 
-The package exports `clearSign`, `HashMismatchError`, and the types `ClearSigningResult` and `Descriptor`.
+`operations` has one entry per root, in root order. `operations[0].intent` is the sentence. `operations[0].fields` is the rows: `{ label, value }` when the row resolved, `{ label, error }` when it did not. `complete` is true when every root is `described` and every row has a value.
 
-Three fixed transactions in [examples/](examples) run `clearSign` on their own:
+The package exports `clearSign`, `HashMismatchError`, and the types `ClearSigningResult` and `Descriptor`. `Descriptor` is the parsed document. `clearSign` accepts the JSON values and parses them. The arguments and the result are described under Input and Output.
 
-- a ping;
-- a two-leg V2 allocation;
-- three token standard roots submitted together: a transfer and an allocation through the Amulet factory, and the withdrawal of an allocation.
+### The examples
 
-Each prints the wording, and exits with an error if that wording changes:
+Three fixed transactions in [examples/](examples) call `clearSign` and print the sentences. Each exits with an error when the wording changes. Run them from the wallet repository:
 
 ```bash
 pnpm exec tsx core/tx-clear-signing/examples/ping.ts
@@ -144,79 +187,196 @@ pnpm exec tsx core/tx-clear-signing/examples/allocation.ts
 pnpm exec tsx core/tx-clear-signing/examples/showcase.ts
 ```
 
+[examples/ping.ts](examples/ping.ts) is one `Ping` create, described with [ping.json](examples/descriptors/ping.json). The sentence it requires is `intent` in that file:
+
+> Ping "04d887dd-15b8-4954-8b79-a853811ce7cf" from v1-01-alice::1220ee2624190834dddf28f194685acee8f00cbde9ee0d211dae277f4d799884f289 to v1-01-alice::1220ee2624190834dddf28f194685acee8f00cbde9ee0d211dae277f4d799884f289
+
+[examples/allocation.ts](examples/allocation.ts) is one `AllocationFactory_Allocate`, exercised through the V2 allocation-factory interface on `ExternalPartyAmuletRules`. The capture and [amulet-external-party-amulet-rules.json](examples/descriptors/splice/amulet-external-party-amulet-rules.json) are both splice-amulet 0.1.25. The sentence is one settlement of two legs, and it is `intent` in that file.
+
+[examples/showcase.ts](examples/showcase.ts) is three roots in one transaction, described with that same factory descriptor and [amulet-allocation-v2.json](examples/descriptors/splice/amulet-allocation-v2.json):
+
+1. A transfer through the factory on `ExternalPartyAmuletRules`.
+2. An allocation through the same factory. The allocation contract that choice creates is a child, so it has no sentence of its own.
+3. The withdrawal of an earlier allocation, exercised on `AmuletAllocationV2`.
+
+The three sentences are `intents` in that file, in root order.
+
 ## Input
 
-- **The transaction**, base64. Unknown protobuf fields are refused.
-- **Descriptors**, any number. A descriptor binds to the roots whose template has its package ID, module and entity. A descriptor that binds to no root is ignored.
-- **The hash** the user is asked to approve, base64. The transaction is described only when its bytes hash to this value, under scheme V3 or V2. Otherwise `clearSign` throws `HashMismatchError`.
+`clearSign(tx, descriptors, expectedHash)`.
+
+### The transaction
+
+`tx` is the prepared transaction, base64, as `/v2/interactive-submission/prepare` returns `preparedTransaction`. The bytes are a protobuf `PreparedTransaction`.
+
+The hasher refuses a message that contains a field number its definition does not have. That error is a `TxHashingError` with code `UNKNOWN_FIELD`, thrown before any sentence is produced. Decoding the bytes after the hash matches refuses the same fields. The codes the hasher can throw are listed in [the tx-hashing README](../tx-hashing/README.md).
+
+A transaction with no `transaction` message, or with no roots, is refused by the hasher. A create, exercise, fetch, or query-by-key root whose template ID is missing throws while the roots are read, and no operation is returned.
+
+### The descriptors
+
+`descriptors` is any number of documents, valid or not. A document is parsed when it names a root.
+
+A document binds to a root when `context.template.packageId`, `moduleName` and `entityName` are non-empty strings and all three equal that root's template ID. The comparison is exact, including the package ID. The key is `packageId:moduleName:entityName`.
+
+A document is ignored when those three strings are missing or empty, or when no root has that template. A descriptor for a template that appears only as a child is ignored.
+
+A document that names a root's template and fails to parse leaves that root `invalid`. `reason` is the parser's problems, joined with `; `.
+
+A second document for the same three strings replaces that binding. The root is `invalid`, and `reason` is `more than one descriptor for template '<packageId:moduleName:entityName>'`. The first document is dropped. Another document for the same three strings leaves that same reason in place.
+
+### The hash
+
+`expectedHash` is the hash the user is asked to approve: base64 of the 32-byte digest.
+
+[src/hash.ts](src/hash.ts) hashes the bytes with `@canton-network/core-tx-hashing` under scheme V3, then under scheme V2. A digest that equals `expectedHash` selects that scheme. V2 runs when the V3 digest differs. When both schemes can hash the transaction, the digests differ, so the hash the caller passes selects one of them.
+
+When both schemes produce a digest and neither equals `expectedHash`, `clearSign` throws `HashMismatchError`. The message is `prepared transaction does not hash to '<expectedHash>'`.
+
+When a scheme refuses the transaction, that error is thrown and the later scheme is not tried. V3 runs first, so a refusal from V3 ends the call. A transaction that V3 can hash and V2 refuses, such as one with a contract key, throws V2's `TxHashingError` with code `FIELD_NOT_COVERED_BY_SCHEME` when the V3 digest differs from `expectedHash`.
 
 ## Output
 
-The output follows ERC-7730: one sentence and a list of label/value fields per operation.
+The result is one sentence and its rows for each root, in root order. Values are rendered as Formats describes, in the sentence and in the row. A `Text` is a JSON string literal, so the value stays distinct from the descriptor's own words.
 
 ```typescript
 interface ClearSigningResult {
-    complete: boolean // every root described, every field has a value
-    operations: {
-        kind: 'create' | 'exercise' | 'other'
-        template?: TemplateRef // from the transaction
-        choiceId?: string // from the transaction
-        interface?: TemplateRef // from the transaction
-        status:
-            | 'described'
-            | 'fallback'
-            | 'undescribed'
-            | 'invalid'
-            | 'undescribable'
-        reason?: string // why invalid or undescribable
-        descriptor?: { name; publisher; version; url? } // the bound descriptor's claim
-        intent: string
-        fields: ({ label; value: string } | { label; error: string })[]
-    }[]
+    /** True when every root is `described` and every field has a value. */
+    complete: boolean
+    /** One entry per root node, in order. */
+    operations: OperationDescription[]
+}
+
+interface OperationDescription {
+    kind: 'create' | 'exercise' | 'other'
+    /** Absent when the root is not a create or an exercise and carries no template. */
+    template?: { packageId: string; moduleName: string; entityName: string }
+    /** The exercised choice. */
+    choiceId?: string
+    /** The interface the choice is exercised through, when the node has one. */
+    interface?: { packageId: string; moduleName: string; entityName: string }
+    status:
+        | 'described'
+        | 'fallback'
+        | 'undescribed'
+        | 'invalid'
+        | 'undescribable'
+    reason?: string
+    /** The bound descriptor's metadata. A claim: v1 descriptors are unsigned. */
+    descriptor?: {
+        name: string
+        publisher: string
+        version: string
+        url?: string
+    }
+    /** The sentence. Text values from the transaction are JSON-quoted. */
+    intent: string
+    fields: (
+        | { label: string; value: string }
+        | { label: string; error: string }
+    )[]
 }
 ```
 
-`intent` is, in order of preference:
+`kind`, `template`, `choiceId` and `interface` are read from the transaction. A descriptor does not change which action is reported.
 
-1. `described`: the descriptor's `interpolatedIntent`, with each `{path}` replaced by its field's value. An operation without one shows its stable `intent`.
-2. `fallback`: a placeholder's field could not be shown. `intent` is "The descriptor does not match this transaction." It is not the descriptor's stable intent. `reason` names each placeholder that failed, and `fields` still lists what resolved and what did not.
-3. `undescribed`, `invalid`, `undescribable`: a generic sentence.
-    - The sentence is `Create Module:Entity` or `Exercise Choice on Module:Entity`. For a root that is neither a create nor an exercise, it is `Cannot describe <nodeType> node`.
-    - `undescribed`: no descriptor words the node.
-    - `invalid`: the bound descriptor fails validation, or two descriptors bind the template.
-    - `undescribable`: the node is not a create or an exercise, or the contract it exercises is missing, repeated or of another template.
+`template` is present on a create, an exercise, a fetch, and a query-by-key. It is absent on a rollback, on a root id that has no node, and on a node whose type is unset.
 
-A Daml `Text` value is shown as a JSON string literal, in the intent and in its field, so a value such as `x" and send 1000 to "Mallory` cannot pass as the descriptor's wording. A `party` is shown only when it is 1 to 255 letters, digits, colons, minuses and underscores: a space is legal in a ledger party and fails the field. A `number` is a canonical int64, or a Daml numeric with a decimal point, at most 38 digits and at most 37 of them after the point. Anything else fails the field. Control, format and line-separator characters in values, labels and errors are escaped.
+`descriptor` is set when a valid descriptor is bound to the template: a `described` root, a `fallback`, an `undescribed` root whose descriptor has no matching entry, and an `undescribable` exercise whose contract cannot be read. It is absent when no descriptor binds, and when the bound document is `invalid`. `name`, `publisher` and `version` are the descriptor's claim about itself. `url` is present when the descriptor has one.
 
-`kind`, `template`, `choiceId` and `interface` are read from the transaction, so a descriptor cannot change which action the user is told about. `descriptor` is unauthenticated in v1: descriptors carry no verified signature yet.
+`fields` is empty for `undescribed`, `invalid`, and `undescribable`. For `described` and `fallback` there is one row per field, in the order the descriptor lists them. A resolved row is `{ label, value }`. A failed row is `{ label, error }`. `label` is the field's label, or its path when the label is omitted.
 
-`complete` is false when any root is not `described` or any field has an error. The remote gateway warns and still offers approval. `clearSign` throws only on a hash mismatch and on a transaction it cannot read or hash.
+`complete` is true when every operation is `described` and every row has a `value`. A field error on a `described` operation makes `complete` false, and `clearSign` still returns the result.
+
+### `described`
+
+`intent` is `interpolatedIntent` with each `{path}` replaced by that field's value. When `interpolatedIntent` is absent, `intent` is the stable sentence, and the fields are still resolved. A field error that is not a placeholder leaves the status `described`.
+
+### `fallback`
+
+A placeholder's field has no value. `intent` is `The descriptor does not match this transaction.` `reason` names each failed placeholder, in order, as `placeholder '{path}' failed: <the field's error>`, joined with `; `. A placeholder whose path has no field is `placeholder '{path}' failed: has no field`. The rows still list what resolved and what failed.
+
+### `undescribed`
+
+No descriptor binds the template, or the bound descriptor has no `create` for a create, or no exercise entry matches the choice and interface. `intent` is `Create <module>:<entity>` or `Exercise <choice> on <module>:<entity>`. The module, entity and choice come from the transaction. `reason` is absent. `fields` is empty.
+
+### `invalid`
+
+The document bound to the template failed to parse, or more than one document names it. `intent` is the same generic create or exercise sentence. `reason` is the parser's problems joined with `; `, or `more than one descriptor for template '<packageId:moduleName:entityName>'`.
+
+### `undescribable`
+
+The root cannot be worded, and the other roots are still described.
+
+A root that is not a create or an exercise has `intent` `Cannot describe <nodeType> node`. `nodeType` is `fetch`, `rollback`, `queryByKey`, `missing` when the root id has no v1 node, or `empty` when the node type is unset. `reason` is `root node '<nodeId>' is a '<nodeType>' node`.
+
+An exercise whose contract cannot be read keeps the generic exercise sentence. `reason` is one of:
+
+- `contract '<contractId>' occurs more than once`
+- `contract '<contractId>' is neither an input contract nor created by the transaction`
+- `contract '<contractId>' is '<packageName:module:entity>', not '<packageName:module:entity>'`
+
+`clearSign` throws while checking the hash, and while reading a transaction whose shape it cannot read. A returned result is the description of every root, whether or not `complete` is true.
 
 ## From the screen to the signature
 
-The signing provider signs the hash of the prepared-transaction bytes. The sentences are computed from those bytes, after `clearSign` has checked that the bytes hash to the hash the screen will submit.
+The signing provider signs the hash of the prepared-transaction bytes. The sentences are computed from those bytes, after the hash of the bytes has been checked against the hash the screen will submit.
 
-On the remote gateway, the approval page (`/approve`) loads the stored prepared transaction and its hash, and calls `clearSign` with the descriptors stored for that user. Those sentences are the "What you are signing" section. The page submits that hash with the approval. Approval is disabled when the bytes do not hash to it.
+### The remote approval page
 
-`TransactionService.sign` in `@canton-network/core-wallet-services` recomputes the hash of the stored bytes under the gateway's configured scheme (V3 unless `hashingScheme.version` sets another). It refuses to sign unless that equals the stored hash and the hash the page submitted. It logs the transaction id, the hash, the user, the party, the signing provider, and the time, and only then asks the signing provider to sign.
+The remote gateway's `/approve` page, [wallet-gateway/remote/src/web/frontend/approve/index.ts](../../wallet-gateway/remote/src/web/frontend/approve/index.ts), loads the stored prepared transaction and its stored hash, and the descriptors stored for the logged-in user. When the descriptor load throws, the list is empty. The page then calls `clearSign` with the stored bytes, that list, and the stored hash. With an empty list, each create and each exercise comes back `undescribed`.
 
-The page warns and still offers approval when the hash matches and the description is incomplete or could not be produced. It also shows the decoded transaction. If the descriptors cannot be loaded, the page calls `clearSign` with an empty list. An API-key session has no page: the gateway checks the stored hash, logs the approval as a service account, and signs. The browser extension's approval page checks the hash of the bytes it displays and submits that hash. It does not call `clearSign`. The same `sign` check and log apply.
+"What you are signing" renders `operations`. Each operation shows its `intent` and its rows. When `complete` is false, the section warns "Parts of this transaction are not described. Review the transaction JSON before approving." Approval stays available. The same page shows the decoded transaction.
+
+When `clearSign` throws `HashMismatchError`, or the hasher throws, approval is disabled. The page says "The transaction shown does not match the hash that would be signed. Approval is disabled."
+
+When the hash matches and a later read of the transaction throws, approval stays available. The section reports that the transaction could not be described, quotes the error, and tells the user to review the transaction JSON.
+
+Approve submits the hash `clearSign` accepted. That is the stored hash.
+
+A preview on the same page is a description of pasted bytes, and approval stays disabled. A preview has no hash from a participant, so the page hashes the bytes under V3 and passes that digest to `clearSign`. The notice is "This is a preview, not a transaction to sign. Nothing is submitted."
+
+### Signing
+
+`TransactionService.sign` in `@canton-network/core-wallet-services` loads the stored transaction and recomputes the hash of the stored bytes under the gateway's `hashingScheme.version`. When that setting is omitted, the scheme is V3. Signing is refused in either of these cases:
+
+- The recomputed digest differs from the stored hash. The error is `Prepared transaction hash of transaction '<id>' does not match its content; refusing to sign`.
+- The recomputed digest differs from the hash the page submitted. The error is `The approved hash of transaction '<id>' does not match the transaction; refusing to sign`.
+
+When both digests match, it logs `Transaction signing approved` with the transaction id, the prepared-transaction hash, `approvedBy` set to `user`, the user id, the party id, the signing provider, and the time. It then asks the signing provider to sign the stored bytes and the stored hash.
+
+### A service account
+
+`TransactionService.signAndExecute` is the path with no approval page. When the transaction is already awaiting an external signature, it refreshes that attempt. Otherwise it checks the stored hash against the stored bytes, logs the same record with `approvedBy` set to `service account`, and signs. It then submits the signed transaction. There is no page-submitted hash, and `clearSign` is not called.
+
+### The browser extension
+
+The extension approval page, [wallet-gateway/extension/entrypoints/approve/index.ts](../../wallet-gateway/extension/entrypoints/approve/index.ts), loads the stored transaction and hashes the bytes on screen with `hashForReview` from `@canton-network/core-tx-visualizer`. That tries V3 and then V2, and the stored hash selects the scheme. When no scheme reproduces the stored hash, or the hasher throws, approval is refused with "The transaction shown does not match the hash that would be signed. It cannot be approved." The page submits the hash it computed from those bytes. It does not call `clearSign`. `TransactionService.sign` then applies the same two checks and writes the same log.
 
 ## How it works
 
-[src/clear-sign.ts](src/clear-sign.ts) checks the hash, then:
+[src/clear-sign.ts](src/clear-sign.ts) does the following, in order.
 
-1. **Decodes** the transaction ([src/roots.ts](src/roots.ts)), and indexes the contracts an exercise can act on: the input contracts, and the contracts the transaction creates.
-2. **Binds** each root template to its descriptor, and validates that descriptor ([src/descriptor.ts](src/descriptor.ts)).
-3. **Selects** the entry: `create` for a create node. For an exercise, the `exercises` entry whose choice and interface both equal the node's. An interface is its module and entity. When the entry also sets `packageId`, that must equal the node's interface package ID. When it omits `packageId`, the module and entity match on any package: the template's package ID already selects the interface package the template was compiled against, so the package ID is only needed to tell two such interfaces apart. An entry that sets the package is preferred over one that omits it. When the node carries an interface and no entry names that choice and interface, the entry for the same choice with no interface is used. A node with no interface matches only that entry. An entry for one interface never matches a node exercised through another, or through none.
-4. **Resolves fields** ([src/path.ts](src/path.ts)) and **formats** them ([src/format.ts](src/format.ts)), using the paths and formats in the descriptor document above. A party list is shown with `raw`.
-5. **Interpolates** the intent ([src/intent.ts](src/intent.ts)).
+1. **Hash** the bytes, as Input describes. The implementation is [src/hash.ts](src/hash.ts).
+2. **Decode** the same bytes to a `PreparedTransaction`, in [src/roots.ts](src/roots.ts). An unknown protobuf field throws here as well.
+3. **Read the roots**, `transaction.roots` in order. A root id with no v1 node is kept, with `nodeType` `missing`. A fetch, a rollback, a query-by-key, and an unset node type are kept as `other`. The remaining roots are still described. A create, exercise, fetch, or query-by-key with no template ID throws, and nothing is returned.
+4. **Index the contracts** an exercise can read. The index holds the v1 input contracts and every v1 create node in the transaction, root or child. A contract ID that occurs more than once is recorded and left out of the index. A later root can exercise a contract an earlier node created.
+5. **Bind** each root template to its descriptor, as Input describes. [src/descriptor.ts](src/descriptor.ts) parses the document.
+6. **Select the entry.** A create uses `display.create`. An exercise uses the `exercises` entry, selected as the descriptor document describes.
+7. **Resolve** each field in [src/path.ts](src/path.ts) and **format** it in [src/format.ts](src/format.ts), using the paths and formats above. **Interpolate** the sentence in [src/intent.ts](src/intent.ts). When `interpolatedIntent` is absent, the sentence is `intent`, and the fields are still resolved.
 
-Only root nodes are described. A child node is a consequence of its root's choice, which the root's descriptor words. Every root is shown, described or not.
+### The exercised contract
 
-A descriptor must therefore be bound to the template a root carries.
+A path that starts with `@.contract.` reads the create argument of the contract the exercise acts on. The contract is looked up by contract ID in the index from step 4.
 
-- **Interface choices.** A token-standard command names an interface, but its root node carries the template of the contract it is exercised on, such as the factory `ExternalPartyAmuletRules`, and the interface in `interface_id`. The descriptor's interface names that module and entity. `packageId` is optional: leave it out and the entry follows the interface package the template package was compiled against. Set it to require that exact interface package.
-- **Child contracts.** The transfer instruction or allocation that a factory choice creates is a child of that root. The factory's descriptor words the choice. A `create` entry on the child's template is used only when that create is itself a root, which a submitter who acts as every signatory can prepare. `src/splice-contracts.test.ts` includes those roots: a governance lock, its transfer and substitution proposals, a vote request, a balance update, a transfer offer, a featured app right, a transfer preapproval, and the external-party amulet rules.
+The contract's package name, module and entity must equal the exercise's. Its package ID may differ, because an upgrade keeps the package name and changes the package ID. The descriptor's own binding is still the package ID of the root's template, together with the module and entity.
 
-The exercised contract must have the exercise's package name, module and entity. Its package ID may differ, because an upgrade keeps the package name. This is the one place where the package ID is not matched exactly.
+A missing contract, a repeated contract ID, or a different package name, module or entity makes that root `undescribable`. `reason` names the contract ID. The other roots are still described.
+
+### Roots and children
+
+A child node is a consequence of its root's choice, and the root's descriptor is what words that consequence. A `create` entry on a child's template applies when that create is submitted as its own root. A submitter who acts as every signatory of that template can prepare such a root.
+
+A token-standard command names an interface. The root node carries the template of the contract it is exercised on, such as `ExternalPartyAmuletRules`, and carries the interface in `interface_id`. The descriptor binds to that template. The exercise entry names the interface, as the descriptor document describes.
+
+The root creates that [src/splice-contracts.test.ts](src/splice-contracts.test.ts) describes include a governance lock, its transfer and substitution proposals, a vote request, a balance update, a wallet transfer offer, a featured app right, a transfer preapproval, and the external-party amulet rules.
