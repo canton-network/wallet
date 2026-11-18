@@ -24,6 +24,7 @@
             "{workspaceRoot}/canton/**/*",
             "{workspaceRoot}/scripts/**/*",
             "{workspaceRoot}/ecosystem.ci.config.js",
+            "{workspaceRoot}/package.json",
             "{workspaceRoot}/wallet-gateway/test/**/*",
             "{workspaceRoot}/.github/workflows/build.yml",
             "{workspaceRoot}/.github/actions/**/*"
