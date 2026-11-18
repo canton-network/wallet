@@ -192,6 +192,12 @@ export class TokenStandardService {
             registryUrl: URL
             admin: PartyId
             capabilities: AssetCapabilities
+            decimals: number
+            paused: boolean
+            pauseInfo?: {
+                reason?: string
+                until?: string
+            }
         }[]
     > {
         let instrumentsResponse = await this.listInstruments(registryUrl)
@@ -215,6 +221,11 @@ export class TokenStandardService {
             admin: instrumentAdmin,
             capabilities: resolveCapabilities({
                 supportedApis: instrument.supportedApis,
+            }),
+            decimals: instrument.decimals,
+            paused: instrument.paused,
+            ...(instrument.pauseInfo !== undefined && {
+                pauseInfo: instrument.pauseInfo,
             }),
         }))
     }
