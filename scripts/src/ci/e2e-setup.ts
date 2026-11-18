@@ -118,6 +118,32 @@ function selectE2e(projects: string[]): Record<string, string> {
     return outputs
 }
 
+function showE2eProjects(extraArgs: string[] = []): string[] {
+    const projects: unknown = JSON.parse(
+        execFileSync(
+            'pnpm',
+            [
+                'nx',
+                'show',
+                'projects',
+                '--with-target=playwright:e2e,snippets',
+                '--json',
+                ...extraArgs,
+            ],
+            { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }
+        )
+    )
+    if (
+        !Array.isArray(projects) ||
+        !projects.every(
+            (project): project is string => typeof project === 'string'
+        )
+    ) {
+        throw new Error('Expected Nx to return an array of project names')
+    }
+    return projects
+}
+
 function main(): void {
     const program = new Command()
         .option('--base <ref>', 'Git base ref for affected selection')
@@ -130,33 +156,10 @@ function main(): void {
     if (base === '' || head === '') {
         program.error('--base and --head must not be empty')
     }
-    const args = [
-        'nx',
-        'show',
-        'projects',
-        '--with-target=playwright:e2e,snippets',
-        '--json',
-    ]
-    if (base && head) {
-        args.push('--affected', `--base=${base}`, `--head=${head}`)
-    }
-    const projects: unknown = JSON.parse(
-        execFileSync('pnpm', args, {
-            encoding: 'utf8',
-            stdio: ['ignore', 'pipe', 'inherit'],
-        })
-    )
-    if (
-        !Array.isArray(projects) ||
-        !projects.every(
-            (project): project is string => typeof project === 'string'
-        )
-    ) {
-        throw new Error('Expected Nx to return an array of project names')
-    }
 
+    const allProjects = showE2eProjects()
     const mappedProjects = new Set(suites.map((suite) => suite.project))
-    const unmappedProjects = projects.filter(
+    const unmappedProjects = allProjects.filter(
         (project) => !mappedProjects.has(project)
     )
     if (unmappedProjects.length > 0) {
@@ -164,7 +167,24 @@ function main(): void {
             `E2E projects missing suite configuration: ${unmappedProjects.join(', ')}`
         )
     }
+    // A suite whose project lost its e2e target would otherwise be skipped as unaffected.
+    const missingProjects = [...mappedProjects].filter(
+        (project) => !allProjects.includes(project)
+    )
+    if (missingProjects.length > 0) {
+        throw new Error(
+            `Configured e2e suites without a playwright:e2e or snippets target: ${missingProjects.join(', ')}`
+        )
+    }
 
+    const projects =
+        base && head
+            ? showE2eProjects([
+                  '--affected',
+                  `--base=${base}`,
+                  `--head=${head}`,
+              ])
+            : allProjects
     console.log('Parsed e2e projects:', projects)
     const outputs = selectE2e(projects)
     const content = Object.entries(outputs)
