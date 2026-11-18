@@ -31,6 +31,8 @@ jobs:
 
             - uses: ./.github/actions/setup_versions
               id: setup
+              with:
+                  affected: 'false'
 
             - uses: ./.github/actions/setup_dpm
               with:

@@ -4,6 +4,8 @@
 import { execFileSync } from 'node:child_process'
 import { appendFileSync } from 'node:fs'
 
+import { Command } from '@commander-js/extra-typings'
+
 import versionConfig from '../lib/version-config.json' with { type: 'json' }
 
 type Environment = {
@@ -96,6 +98,17 @@ function selectE2e(projects: string[]): Record<string, string> {
 }
 
 function main(): void {
+    const program = new Command()
+        .option('--base <ref>', 'Git base ref for affected selection')
+        .option('--head <ref>', 'Git head ref for affected selection')
+        .parse()
+    const { base, head } = program.opts()
+    if ((base === undefined) !== (head === undefined)) {
+        program.error('--base and --head must be supplied together')
+    }
+    if (base === '' || head === '') {
+        program.error('--base and --head must not be empty')
+    }
     const args = [
         'nx',
         'show',
@@ -103,6 +116,9 @@ function main(): void {
         '--with-target=playwright:e2e,snippets',
         '--json',
     ]
+    if (base && head) {
+        args.push('--affected', `--base=${base}`, `--head=${head}`)
+    }
     const projects: unknown = JSON.parse(
         execFileSync('pnpm', args, {
             encoding: 'utf8',
