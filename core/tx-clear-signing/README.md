@@ -148,6 +148,10 @@ A path with no prefix reads the create or choice argument. `@.contract.<path>` r
 
 [src/descriptor.ts](src/descriptor.ts) accepts a document only when the schema does, and then checks the rules a JSON Schema does not express: each path is declared once, every placeholder names such a path, every enum reference names a table, and no two exercise entries share a choice and interface. An interface `packageId`, when set, is part of that identity.
 
+### Handling Signatures
+
+The handling of signatures is currently future work. When these are used, they should be verified either by the clear signing module in combination with verifying that the hash is correct, or by a trusted codebase in which the clear signing module also runs. This requires the knowledge of public keys corresponding to private keys held by trusted descriptor authors. How these are to be distributed is likewise left as future work, but a trivial solution would be to fix them in the codebase.
+
 ## Where the pieces are
 
 | Piece                                             | Where                                                                                                      |
