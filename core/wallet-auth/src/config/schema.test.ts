@@ -2,7 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import { authSchema, idpSchema, resolveAuthIdentityProviderId } from './schema'
+
+import {
+    authSchema,
+    idpSchema,
+    resolveAuthIdentityProviderId,
+} from './schema.ts'
 
 describe('schemas', () => {
     it('should properly parse the idp schema', () => {

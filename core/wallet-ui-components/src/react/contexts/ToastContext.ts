@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createContext } from 'react'
-import type { ToastMessageType } from '../components/Toast'
+
+import type { ToastMessageType } from '../components/Toast.tsx'
 
 export interface ToastOptions {
     title: string

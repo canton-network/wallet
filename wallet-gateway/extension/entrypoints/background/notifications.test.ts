@@ -3,8 +3,13 @@
 
 import { NotificationService } from '@canton-network/core-wallet-services'
 import { beforeEach, describe, expect, it } from 'vitest'
-import { asPort, type FakePort, fakePort } from '@/tests/unit/fake-port'
-import { handleNotificationPort, PortNotificationSink } from './notifications'
+
+import { asPort, type FakePort, fakePort } from '@/tests/unit/fake-port.ts'
+
+import {
+    handleNotificationPort,
+    PortNotificationSink,
+} from './notifications.ts'
 
 const subscriber = { sessionId: 'session-1', userId: 'user-1' }
 

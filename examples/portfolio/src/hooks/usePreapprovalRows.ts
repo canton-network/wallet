@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
 import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
-import { useInstruments } from './useInstruments'
-import { useRegistryUrls } from './useRegistryUrls'
-import type { PreapprovalRow } from '../types/preapprovals'
-import type { PortfolioInstrument } from '../types/instruments'
 import { normalizeRegistryUrl } from '@utils/registry'
+import { useMemo } from 'react'
+
+import type { PortfolioInstrument } from '../types/instruments.ts'
+import type { PreapprovalRow } from '../types/preapprovals.ts'
+import { useInstruments } from './useInstruments.ts'
+import { useRegistryUrls } from './useRegistryUrls.ts'
 
 const AMULET_INSTRUMENT_ID = 'Amulet'
 

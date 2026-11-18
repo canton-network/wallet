@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { base64url, calculateJwkThumbprint, type JWK } from 'jose'
-import { jwtExpiresAt } from './auth-utils.js'
+
+import { jwtExpiresAt } from './auth-utils.ts'
 
 export type SelfIssuedTokenClaimsInputs = {
     audience: string

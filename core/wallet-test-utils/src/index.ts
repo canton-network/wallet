@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-export { OTCTrade } from './otc-trade.js'
-export * from './localnet.js'
-export * from './wallet-gateway.js'
-export * from './gateway-user-api.js'
-export * from './ledger-users.js'
-export * from './wallet-picker.js'
-export { test, expect } from './fixtures.js'
-export * from './signing-provider-mocks/index.js'
-export * from './logging.js'
-export { OTCTradeV2, type OTCTradeV2Setup } from './otc-trade-v2.js'
+export { OTCTrade } from './otc-trade.ts'
+export * from './localnet.ts'
+export * from './wallet-gateway.ts'
+export * from './gateway-user-api.ts'
+export * from './ledger-users.ts'
+export * from './wallet-picker.ts'
+export { test, expect } from './fixtures.ts'
+export * from './signing-provider-mocks/index.ts'
+export * from './logging.ts'
+export { OTCTradeV2, type OTCTradeV2Setup } from './otc-trade-v2.ts'

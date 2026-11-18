@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { Account } from './types'
+
+import type { Account } from './types.ts'
 
 type Tagged = { tag: string }
 

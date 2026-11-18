@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { connectionStatusQuery } from '@/ui/features/sessions'
+
+import { connectionStatusQuery } from '@/ui/features/sessions/index.ts'
 
 /** The pages that need a network. Sends the user to /connect without one. */
 export const Route = createFileRoute('/_unlocked/_connected')({

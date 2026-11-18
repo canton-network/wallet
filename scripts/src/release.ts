@@ -5,6 +5,7 @@
 
 import { spawn } from 'child_process'
 import { readFileSync } from 'fs'
+
 import { program } from '@commander-js/extra-typings'
 import { confirm } from '@inquirer/prompts'
 import { select } from 'inquirer-select-pro'

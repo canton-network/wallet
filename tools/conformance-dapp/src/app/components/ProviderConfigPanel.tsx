@@ -1,6 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import DownloadIcon from '@mui/icons-material/Download'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import UploadFileIcon from '@mui/icons-material/UploadFile'
 import Accordion from '@mui/material/Accordion'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import AccordionSummary from '@mui/material/AccordionSummary'
@@ -10,10 +13,8 @@ import InputLabel from '@mui/material/InputLabel'
 import NativeSelect from '@mui/material/NativeSelect'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import DownloadIcon from '@mui/icons-material/Download'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import UploadFileIcon from '@mui/icons-material/UploadFile'
 import type React from 'react'
+
 import type { Config } from '../../config.ts'
 import { DownloadJsonButton } from './DownloadJsonButton.tsx'
 import { FileUploadButton } from './FileUploadButton.tsx'

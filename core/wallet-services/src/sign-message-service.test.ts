@@ -1,20 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorCodes } from '@canton-network/core-rpc-errors'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type {
     MessageRaw,
     Store,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import {
-    SigningProvider,
-    type SigningDriverInterface,
-} from '@canton-network/core-signing-lib'
-import type { Notifier } from './notification/index.js'
-import { SignMessageService } from './sign-message-service.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { Notifier } from './notification/index.ts'
+import { SignMessageService } from './sign-message-service.ts'
 
 const authContext: AuthContext = {
     userId: 'user-1',

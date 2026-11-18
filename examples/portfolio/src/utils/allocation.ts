@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { Instruments, PortfolioInstrument } from '../types/instruments'
-import { normalizeRegistryUrl } from './registry'
+
+import type { Instruments, PortfolioInstrument } from '../types/instruments.ts'
+import { normalizeRegistryUrl } from './registry.ts'
 
 export const resolveAllocationAsset = ({
     instrumentId,

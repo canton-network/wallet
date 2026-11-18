@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import { instruments } from './common'
 import type { OffLedger } from '@canton-network/core-token-standard'
-import { APIError } from '../common'
+import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+
+import { APIError } from '../common.ts'
+import { instruments } from './common.ts'
 
 /**
  * Returns metadata for a single instrument identified by its instrument ID.

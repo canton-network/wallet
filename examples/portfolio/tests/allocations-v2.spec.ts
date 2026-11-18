@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, type Locator, type Page, test } from '@playwright/test'
 import {
     OTCTradeV2,
     type OTCTradeV2Setup,
     type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
+import { expect, type Locator, type Page, test } from '@playwright/test'
+
 import {
     amuletSupportsApi,
     createGatewayApi,
@@ -21,7 +22,7 @@ import {
     switchWallet,
     tap,
     workerClientId,
-} from './utils'
+} from './utils.ts'
 
 // Amounts (OTCTradeV2 defaults): Alice sends 10 to Bob, Bob sends 2 to Alice,
 // Bob sends 0.5 to Carol. Net per trader: Alice -8, Bob +7.5, Carol +0.5.

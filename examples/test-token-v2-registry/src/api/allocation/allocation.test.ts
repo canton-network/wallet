@@ -2,11 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, beforeEach, vi } from 'vitest'
-import { expressContext, mock, type RequestType } from '../../__tests__/mocks'
-import { emptyChoiceContext } from '../common'
-import { getAllocationCancelContext } from './getAllocationCancelContext'
-import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
-import { getSettlementFactory } from './getSettlementFactory'
+
+import {
+    expressContext,
+    mock,
+    type RequestType,
+} from '../../__tests__/mocks.ts'
+import { emptyChoiceContext } from '../common.ts'
+import { getAllocationCancelContext } from './getAllocationCancelContext.ts'
+import { getAllocationWithdrawContext } from './getAllocationWithdrawContext.ts'
+import { getSettlementFactory } from './getSettlementFactory.ts'
 
 const { res, next } = expressContext
 
@@ -23,8 +28,8 @@ vi.mock('../getTokenRulesFactory.ts', () => {
     }
 })
 
-vi.mock('../../common/state', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
+vi.mock('../../common/state.ts', async () => {
+    const { mock: importedMock } = await import('../../__tests__/mocks.ts')
     return importedMock.state
 })
 

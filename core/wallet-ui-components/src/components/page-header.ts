@@ -3,7 +3,8 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element.js'
+
+import { BaseElement } from '../internal/base-element.ts'
 
 /**
  * The title row at the top of a page.

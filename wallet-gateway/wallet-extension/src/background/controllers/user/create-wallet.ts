@@ -10,13 +10,13 @@ import {
     SigningProvider,
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
+import { fingerprintPublicKey } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
     PartyLevelRight,
     type Store,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import { fingerprintPublicKey } from '@canton-network/core-types'
 
 function signingError(operation: string, description: string): Error {
     return new Error(`Signing driver failed to ${operation}: ${description}`)

@@ -9,7 +9,7 @@ import {
     listColumns,
     migrateDownThrough,
     migrateUpThrough,
-} from '../helpers.js'
+} from '../helpers.ts'
 
 const TARGET = 2
 

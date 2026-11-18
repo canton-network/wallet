@@ -11,7 +11,7 @@ import type {
     TokenStandardService,
 } from '@canton-network/core-token-standard-service'
 import type { PartyId } from '@canton-network/core-types'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 
 // TODO: This appears in a couple of places, either move it somewhere more
 // central, or as part of the Service class hierarchy

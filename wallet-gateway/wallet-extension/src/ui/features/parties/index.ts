@@ -5,5 +5,5 @@
 // isn't supported by the background yet.
 // Ported from extension/entrypoints/parties{,-add} and remote/.../parties.
 
-export { AddPartyPage } from './AddPartyPage'
-export { PartiesPage } from './PartiesPage'
+export { AddPartyPage } from './AddPartyPage.tsx'
+export { PartiesPage } from './PartiesPage.tsx'

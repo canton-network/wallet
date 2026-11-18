@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css } from 'lit'
-import { BaseElement } from '../internal/base-element'
-import { cssToString } from '../utils'
 import type {
     BrowserPlatform,
     WalletPickerEntry,
     WalletPickerSuggestedEntry,
 } from '@canton-network/core-types'
+import { css } from 'lit'
+
+import { BaseElement } from '../internal/base-element.ts'
+import { cssToString } from '../utils.ts'
 
 export type {
     WalletPickerEntry,

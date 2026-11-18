@@ -3,6 +3,7 @@
 
 import { reset } from '@logtape/logtape'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createAccessTokenProvider,
     createLedgerClient,
@@ -11,8 +12,8 @@ import {
     grpcError,
     jsonResponse,
     initializeLogRecorder,
-} from './__tests__/test-utils.js'
-import { isValidGetEndpoint, isValidPostEndpoint } from './ledger-client.js'
+} from './__tests__/test-utils.ts'
+import { isValidGetEndpoint, isValidPostEndpoint } from './ledger-client.ts'
 
 function versionResponse(version = '3.6.0') {
     return jsonResponse({ version })

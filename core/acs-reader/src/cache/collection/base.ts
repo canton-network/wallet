@@ -1,16 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
 import type { LRUCacheOptions } from 'typescript-lru-cache'
 import { LRUCache } from 'typescript-lru-cache'
-import type { ACSKey } from '../../types'
+
 import type {
     PaginatedResolvedAcsOptions,
     ResolvedAcsOptions,
-} from '../../service'
-import type { AbstractLedgerProvider } from '@canton-network/core-provider-ledger'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { ACSCache, BaseACSCache, PaginatedACSCache } from '../item'
+} from '../../service.ts'
+import type { ACSKey } from '../../types.ts'
+import type {
+    ACSCache,
+    BaseACSCache,
+    PaginatedACSCache,
+} from '../item/index.ts'
 
 export type ACSCacheCollectionOptions = Pick<
     LRUCacheOptions<string, BaseACSCache>,

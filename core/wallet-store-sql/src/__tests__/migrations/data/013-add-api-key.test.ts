@@ -12,8 +12,8 @@ import {
     migrateUpToBefore,
     primaryKeyColumns,
     tableExists,
-} from '../helpers.js'
-import { insertApiKey } from '../seeds/013-add-api-key.js'
+} from '../helpers.ts'
+import { insertApiKey } from '../seeds/013-add-api-key.ts'
 
 const TARGET = 13
 const TABLE = 'api_keys'

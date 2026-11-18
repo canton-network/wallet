@@ -14,7 +14,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Timestamp } from '../../../../../google/protobuf/timestamp.js'
+
+import { Timestamp } from '../../../../../google/protobuf/timestamp.ts'
 /**
  * OffsetCheckpoints may be used to:
  *

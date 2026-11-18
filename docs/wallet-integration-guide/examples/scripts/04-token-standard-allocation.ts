@@ -1,18 +1,19 @@
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
-import type { KeyPair } from '@canton-network/core-signing-lib'
-import { ASSET_CONFIG } from './utils/index.js'
+
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { KeyPair } from '@canton-network/core-signing-lib'
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
+import { ASSET_CONFIG } from './utils/index.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 export type PartyInfo = Omit<

@@ -1,17 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { WalletEvent } from '@canton-network/core-types'
-import { popup } from '@canton-network/core-wallet-ui-components'
 import type { EventListener } from '@canton-network/core-splice-provider'
+import { WalletEvent } from '@canton-network/core-types'
 import type {
     PrepareExecuteParams,
     StatusEvent,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import * as storage from '../storage'
-import { clearAllLocalState } from '../util'
-import { RemoteAdapter } from './remote-adapter'
+import { popup } from '@canton-network/core-wallet-ui-components'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import * as storage from '../storage.ts'
+import { clearAllLocalState } from '../util.ts'
+import { RemoteAdapter } from './remote-adapter.ts'
 
 const RPC_URL = 'https://gateway.example.com'
 
@@ -76,11 +77,11 @@ vi.mock('@canton-network/core-provider-dapp', () => ({
     DappAsyncProvider: DappAsyncProviderMock,
 }))
 
-vi.mock('../sdk-controller', () => ({
+vi.mock('../sdk-controller.ts', () => ({
     dappSDKController: dappSDKControllerMock,
 }))
 
-vi.mock('../util', () => ({
+vi.mock('../util.ts', () => ({
     clearAllLocalState: vi.fn(),
 }))
 

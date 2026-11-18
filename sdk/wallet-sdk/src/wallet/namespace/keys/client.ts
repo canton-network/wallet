@@ -6,7 +6,8 @@ import {
     type KeyPair,
     type PublicKey,
 } from '@canton-network/core-signing-lib'
-import { base64ToBytes, bytesToHex } from '../utils/encoding'
+
+import { base64ToBytes, bytesToHex } from '../utils/encoding.ts'
 
 export class KeysNamespace {
     constructor() {}

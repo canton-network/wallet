@@ -3,8 +3,9 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { createAuthContextStore } from './auth-context'
-import { createVault, type Vault, VaultLockedError } from './vault'
+
+import { createAuthContextStore } from './auth-context.ts'
+import { createVault, type Vault, VaultLockedError } from './vault/index.ts'
 
 const PASSWORD = 'first password 1'
 const base64url = (value: object) =>

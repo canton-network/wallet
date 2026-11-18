@@ -7,6 +7,8 @@ import {
     type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
+import { setMockBlockdaemonTransactionState } from './external-signing-test-helpers.ts'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -15,8 +17,7 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-} from './ping-test-helpers.js'
-import { setMockBlockdaemonTransactionState } from './external-signing-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 test.describe('Blockdaemon external signing', () => {
     test.describe.configure({ mode: 'serial' })

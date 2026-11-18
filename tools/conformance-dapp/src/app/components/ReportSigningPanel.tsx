@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import DownloadIcon from '@mui/icons-material/Download'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
 import Typography from '@mui/material/Typography'
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
-import DownloadIcon from '@mui/icons-material/Download'
 import type React from 'react'
+
 import type { Signature } from '../../report.ts'
 import { DownloadJsonButton } from './DownloadJsonButton.tsx'
 

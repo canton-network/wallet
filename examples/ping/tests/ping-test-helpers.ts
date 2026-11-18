@@ -18,6 +18,8 @@ export const GATEWAY_NAME = 'remote-da'
 // Network whose user `operator` is the configured gateway admin.
 export const DEFAULT_NETWORK = 'Local (OAuth IDP)'
 export const SELF_ISSUED_NETWORK = 'Local (Self issued)'
+// A second authorization code network of the same IdP, logging in as `operator2`
+export const SECOND_OAUTH_NETWORK = 'Local (OAuth IDP - 2)'
 
 const EXECUTED_PAYLOAD_PATTERN =
     /"payload": \{[\s\S]*"updateId": "[^"]+"[\s\S]*"completionOffset": \d+/

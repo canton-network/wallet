@@ -1,6 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    LedgerClient,
+    type PrepareSubmissionResponse,
+} from '@canton-network/core-ledger-client'
+import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
+import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 // Disabled unused vars rule to allow for future implementations
 /* oxlint-disable no-unused-vars */
 import {
@@ -8,13 +14,13 @@ import {
     ledgerPrepareParams,
     networkStatus,
 } from '@canton-network/core-wallet-services'
-import {
-    LedgerClient,
-    type PrepareSubmissionResponse,
-} from '@canton-network/core-ledger-client'
-import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
-import { AuthService } from '../auth-service.js'
-import buildController from './rpc-gen'
+import type { Store, Transaction } from '@canton-network/core-wallet-store'
+
+import { enqueueApprovalRequest } from '@/utils/approval-requests.ts'
+
+import { AuthService } from '../auth-service.ts'
+import { extensionProvider, notifySessionTerminated } from '../status.ts'
+import buildController from './rpc-gen/index.ts'
 import type {
     ConnectResult,
     LedgerApiParams,
@@ -25,12 +31,7 @@ import type {
     StatusEvent,
     TxChangedPendingEvent,
     Wallet,
-} from './rpc-gen/typings.js'
-
-import type { Store, Transaction } from '@canton-network/core-wallet-store'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import { enqueueApprovalRequest } from '@/utils/approval-requests.js'
-import { extensionProvider, notifySessionTerminated } from '../status.js'
+} from './rpc-gen/typings.ts'
 
 export const dappController = (
     getStore: () => Promise<Store>,
