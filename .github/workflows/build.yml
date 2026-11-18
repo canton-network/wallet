@@ -218,7 +218,7 @@ jobs:
               run: pnpm nx affected -t test:migrations --parallel
 
     ping-e2e:
-        name: ping-e2e (${{ matrix.network }}, ${{ matrix.db }})
+        name: ping-e2e (${{ matrix.network }}, ${{ matrix.db }}, ${{ matrix.browser }})
         runs-on: ubuntu-26.04
         needs: [build, hydrate-canton-caches]
         if: needs.build.outputs.ping == 'true'
@@ -293,6 +293,8 @@ jobs:
                   pnpm pm2 start ecosystem.ci.config.js
 
             - uses: ./.github/actions/setup_playwright
+              with:
+                  browsers: ${{ matrix.browser }}
 
             - name: Run example e2e
               env:
@@ -303,7 +305,7 @@ jobs:
                     export FIREBLOCKS_API_PATH="${{ vars.FIREBLOCKS_API_PATH }}"
                     export DFNS_BASE_URL="${{ vars.DFNS_BASE_URL }}"
                   fi
-                  pnpm nx playwright:e2e @canton-network/example-ping
+                  pnpm nx playwright:e2e @canton-network/example-ping -- --project=${{ matrix.browser }}
 
             - name: Collect remote PM2 logs
               if: ${{ !cancelled() }}
@@ -319,7 +321,7 @@ jobs:
             - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               if: ${{ !cancelled() }}
               with:
-                  name: example-ping-playwright-report-${{ matrix.network }}-${{ matrix.db }}
+                  name: example-ping-playwright-report-${{ matrix.network }}-${{ matrix.db }}-${{ matrix.browser }}
                   path: examples/ping/playwright-report/
                   retention-days: 5
 
@@ -328,7 +330,7 @@ jobs:
             - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               if: ${{ !cancelled() && steps.scan_ping_gateway_log.outcome == 'success' }}
               with:
-                  name: ping-wallet-gateway-remote-log-${{ matrix.network }}-${{ matrix.db }}
+                  name: ping-wallet-gateway-remote-log-${{ matrix.network }}-${{ matrix.db }}-${{ matrix.browser }}
                   path: wallet-gateway-remote.log
                   retention-days: 5
 
