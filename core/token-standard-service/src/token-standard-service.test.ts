@@ -841,6 +841,7 @@ describe('Token standard service', () => {
                         totalSupply: '201.0',
                         totalSupplyAsOf: null,
                         decimals: 10,
+                        paused: false,
                         supportedApis: {
                             'splice-api-token-metadata-v1': 1,
                             'splice-api-token-transfer-instruction-v1': 1,
@@ -857,6 +858,7 @@ describe('Token standard service', () => {
                         totalSupply: '1300.0',
                         totalSupplyAsOf: null,
                         decimals: 10,
+                        paused: false,
                         supportedApis: {
                             'splice-api-token-metadata-v1': 1,
                             'splice-api-token-transfer-instruction-v1': 1,
@@ -890,6 +892,8 @@ describe('Token standard service', () => {
                 id: 'TestTokenExt',
                 registryUrl: new URL('https://fake/registry'),
                 symbol: 'TestTokenExt',
+                decimals: 10,
+                paused: false,
                 capabilities: {
                     allocation: ['v1'],
                     allocationInstruction: ['v1'],
@@ -904,6 +908,8 @@ describe('Token standard service', () => {
                 id: 'TestToken',
                 registryUrl: new URL('https://fake/registry'),
                 symbol: 'TestToken',
+                decimals: 10,
+                paused: false,
                 capabilities: {
                     allocation: ['v1'],
                     allocationInstruction: ['v1'],
@@ -958,6 +964,8 @@ describe('Token standard service', () => {
                         id: 'first-token',
                         name: 'First Token',
                         symbol: 'FIRST',
+                        decimals: 10,
+                        paused: false,
                         supportedApis: {
                             'splice-api-token-transfer-instruction-v2': 1,
                             'splice-api-token-allocation-v1': 1,
@@ -980,6 +988,8 @@ describe('Token standard service', () => {
                         id: 'second-token',
                         name: 'Second Token',
                         symbol: 'SECOND',
+                        decimals: 10,
+                        paused: false,
                         supportedApis: {
                             'splice-api-token-transfer-instruction-v2': 1,
                             'splice-api-token-allocation-v1': 1,
@@ -1016,6 +1026,8 @@ describe('Token standard service', () => {
                 id: 'first-token',
                 registryUrl,
                 symbol: 'FIRST',
+                decimals: 10,
+                paused: false,
                 capabilities: {
                     allocation: ['v1', 'v2'],
                     allocationInstruction: ['v1', 'v2'],
@@ -1030,6 +1042,8 @@ describe('Token standard service', () => {
                 id: 'second-token',
                 registryUrl,
                 symbol: 'SECOND',
+                decimals: 10,
+                paused: false,
                 capabilities: {
                     allocation: ['v1', 'v2'],
                     allocationInstruction: ['v1', 'v2'],
@@ -1222,6 +1236,7 @@ describe('Token standard service', () => {
                         totalSupply: '3235186.362102',
                         totalSupplyAsOf: null,
                         decimals: 10,
+                        paused: false,
                         supportedApis: {
                             'splice-api-token-metadata-v1': 1,
                             'splice-api-token-transfer-instruction-v1': 1,
@@ -1244,6 +1259,7 @@ describe('Token standard service', () => {
                         totalSupply: '201.0',
                         totalSupplyAsOf: null,
                         decimals: 10,
+                        paused: false,
                         supportedApis: {
                             'splice-api-token-metadata-v1': 1,
                             'splice-api-token-transfer-instruction-v1': 1,
@@ -1260,6 +1276,7 @@ describe('Token standard service', () => {
                         totalSupply: '1300.0',
                         totalSupplyAsOf: null,
                         decimals: 10,
+                        paused: true,
                         supportedApis: {
                             'splice-api-token-metadata-v1': 1,
                             'splice-api-token-transfer-instruction-v1': 1,
@@ -1291,6 +1308,8 @@ describe('Token standard service', () => {
                     holding: ['v1'],
                     transferInstruction: ['v1'],
                 },
+                decimals: 10,
+                paused: false,
             },
             {
                 admin: 'admin-b',
@@ -1298,6 +1317,8 @@ describe('Token standard service', () => {
                 id: 'TestTokenExt',
                 registryUrl: registry2,
                 symbol: 'TestTokenExt',
+                decimals: 10,
+                paused: false,
                 capabilities: {
                     allocation: ['v1'],
                     allocationInstruction: ['v1'],
@@ -1312,6 +1333,8 @@ describe('Token standard service', () => {
                 id: 'TestToken',
                 registryUrl: registry2,
                 symbol: 'TestToken',
+                decimals: 10,
+                paused: true,
                 capabilities: {
                     allocation: ['v1'],
                     allocationInstruction: ['v1'],
