@@ -100,10 +100,10 @@
         "vitest": "catalog:"
     },
     "peerDependencies": {
-        "@canton-network/core-token-standard": "workspace:",
-        "@canton-network/core-token-standard-service": "workspace:",
-        "@canton-network/core-token-standard-v2": "workspace:",
-        "@canton-network/core-tx-parser": "workspace:",
+        "@canton-network/core-token-standard": "workspace:^",
+        "@canton-network/core-token-standard-service": "workspace:^",
+        "@canton-network/core-token-standard-v2": "workspace:^",
+        "@canton-network/core-tx-parser": "workspace:^",
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
         "@tanstack/react-query": "catalog:",

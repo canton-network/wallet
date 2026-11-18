@@ -5,7 +5,10 @@
 //  - every third party dependency is declared as `catalog:` (peer dependencies
 //    may declare the range they support instead)
 //  - every dependency on a workspace project uses `workspace:` (core packages)
-//    or `workspace:^` (everything else) and is never part of a catalog
+//    or `workspace:^` (everything else) and is never part of a catalog. Peer
+//    dependencies on a workspace project use `workspace:^`, which publishes as
+//    a caret range: `workspace:` would publish an exact version, which a
+//    consumer's compatible patch release wouldn't satisfy
 //  - the catalog entries in pnpm-workspace.yaml are sorted alphabetically
 //
 // `pnpm add` under `catalogMode: strict` puts workspace packages into the
@@ -86,9 +89,11 @@ const findSpecViolations = (): SpecViolation[] => {
             for (const [name, spec] of Object.entries(manifest[field] ?? {})) {
                 const where = `${file}: ${field}["${name}"]`
                 if (workspaceNames.has(name)) {
-                    const expected = name.startsWith('@canton-network/core-')
-                        ? 'workspace:'
-                        : 'workspace:^'
+                    const expected =
+                        field !== 'peerDependencies' &&
+                        name.startsWith('@canton-network/core-')
+                            ? 'workspace:'
+                            : 'workspace:^'
                     if (spec !== expected) {
                         violations.push({ file, where, name, spec, expected })
                     }
