@@ -1,0 +1,34 @@
+name: Setup versions and e2e matrices
+description: 'Resolve configured versions and e2e matrices'
+outputs:
+    daml_release_version:
+        value: ${{ steps.all.outputs.daml_release_version }}
+    versions:
+        value: ${{ steps.all.outputs.versions }}
+    ping:
+        value: ${{ steps.all.outputs.ping }}
+    extension:
+        value: ${{ steps.all.outputs.extension }}
+    portfolio:
+        value: ${{ steps.all.outputs.portfolio }}
+    sdk-examples:
+        value: ${{ steps.all.outputs.sdk-examples }}
+    hydrate:
+        value: ${{ steps.all.outputs.hydrate }}
+    hydrate-matrix:
+        value: ${{ steps.all.outputs.hydrate-matrix }}
+    ping-matrix:
+        value: ${{ steps.all.outputs.ping-matrix }}
+    extension-matrix:
+        value: ${{ steps.all.outputs.extension-matrix }}
+    portfolio-matrix:
+        value: ${{ steps.all.outputs.portfolio-matrix }}
+    sdk-examples-matrix:
+        value: ${{ steps.all.outputs.sdk-examples-matrix }}
+runs:
+    using: composite
+    steps:
+        - name: Select all suites
+          id: all
+          shell: bash
+          run: pnpm exec tsx scripts/src/ci/e2e-setup.ts

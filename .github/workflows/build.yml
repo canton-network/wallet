@@ -18,40 +18,39 @@ concurrency:
     cancel-in-progress: true
 
 jobs:
-    version-config:
-        runs-on: ubuntu-26.04
-        outputs:
-            daml_release_version: ${{ steps.version.outputs.daml_release_version }}
-            devnet_canton_version: ${{ steps.version.outputs.devnet_canton_version }}
-            mainnet_canton_version: ${{ steps.version.outputs.mainnet_canton_version }}
-            devnet_splice_version: ${{ steps.version.outputs.devnet_splice_version }}
-            mainnet_splice_version: ${{ steps.version.outputs.mainnet_splice_version }}
-        steps:
-            - name: Checkout
-              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-            - name: Resolve version config outputs
-              id: version
-              shell: bash
-              run: |
-                  CONFIG=$(cat scripts/src/lib/version-config.json)
-                  echo "daml_release_version=$(echo "$CONFIG" | jq -r '.DAML_RELEASE_VERSION' | tr -d '\r\n')" >> "$GITHUB_OUTPUT"
-                  echo "devnet_canton_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.devnet.canton.version')" >> "$GITHUB_OUTPUT"
-                  echo "mainnet_canton_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.canton.version')" >> "$GITHUB_OUTPUT"
-                  echo "devnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.devnet.splice.version')" >> "$GITHUB_OUTPUT"
-                  echo "mainnet_splice_version=$(echo "$CONFIG" | jq -r '.SUPPORTED_VERSIONS.mainnet.splice.version')" >> "$GITHUB_OUTPUT"
-
     build:
         runs-on: ubuntu-26.04
-        needs: version-config
+        outputs:
+            hydrate-matrix: ${{ steps.setup.outputs.hydrate-matrix }}
+            ping-matrix: ${{ steps.setup.outputs.ping-matrix }}
+            extension-matrix: ${{ steps.setup.outputs.extension-matrix }}
+            portfolio-matrix: ${{ steps.setup.outputs.portfolio-matrix }}
+            sdk-examples-matrix: ${{ steps.setup.outputs.sdk-examples-matrix }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/initial
+
+            - uses: ./.github/actions/setup_versions
+              id: setup
+
+            - uses: ./.github/actions/setup_dpm
               with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
+                  daml_release_version: ${{ steps.setup.outputs.daml_release_version }}
                   save_cache: 'true'
+
+            - name: Generate all
+              run: pnpm run generate:all
+
+            - name: Check generated code is up to date
+              run: |
+                  if [ -n "$(git status --porcelain)" ]; then
+                    git status --short
+                    git --no-pager diff --stat
+                    echo "::error::Generated code is out of date. Run 'pnpm generate:all' and commit the result."
+                    exit 1
+                  fi
 
             - name: Build project
               run: pnpm build:all
@@ -75,42 +74,36 @@ jobs:
     hydrate-canton-caches:
         name: hydrate-canton-caches (${{ matrix.network }}, ${{ matrix.instance }})
         runs-on: ubuntu-26.04
-        needs: [version-config, build]
+        needs: build
         strategy:
             fail-fast: false
-            matrix:
-                network: [devnet, mainnet]
-                instance: [canton, localnet]
+            matrix: ${{ fromJSON(needs.build.outputs.hydrate-matrix) }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - uses: ./.github/actions/setup_canton/initial
               if: matrix.instance == 'canton'
               with:
                   network: ${{ matrix.network }}
-                  canton_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_canton_version || needs.version-config.outputs.mainnet_canton_version }}
+                  canton_version: ${{ matrix.canton_version }}
 
             - uses: ./.github/actions/setup_localnet/initial
               if: matrix.instance == 'localnet'
               with:
                   network: ${{ matrix.network }}
-                  splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  splice_version: ${{ matrix.splice_version }}
 
     test-static:
         runs-on: ubuntu-26.04
-        needs: [version-config, build]
+        needs: build
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Validate current PR title with commitlint
               run: echo "$TITLE" | pnpm commitlint --verbose
@@ -143,7 +136,7 @@ jobs:
 
     test-unit:
         runs-on: ubuntu-26.04
-        needs: [version-config, build]
+        needs: build
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -151,8 +144,6 @@ jobs:
                   fetch-depth: 0
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - uses: ./.github/actions/setup_playwright
 
@@ -213,24 +204,20 @@ jobs:
     ping-e2e:
         name: ping-e2e (${{ matrix.network }}, ${{ matrix.db }})
         runs-on: ubuntu-26.04
-        needs: [version-config, hydrate-canton-caches]
+        needs: [build, hydrate-canton-caches]
         strategy:
             fail-fast: false
-            matrix:
-                network: [devnet, mainnet]
-                db: [sqlite, postgres]
+            matrix: ${{ fromJSON(needs.build.outputs.ping-matrix) }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - uses: ./.github/actions/setup_canton/artifacts
               with:
                   network: ${{ matrix.network }}
-                  canton_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_canton_version || needs.version-config.outputs.mainnet_canton_version }}
+                  canton_version: ${{ matrix.canton_version }}
 
             - name: Start Postgres container
               if: matrix.db == 'postgres'
@@ -346,21 +333,22 @@ jobs:
                   echo "test-ping-e2e passed"
 
     extension-e2e:
-        name: extension-e2e (devnet)
+        name: extension-e2e (${{ matrix.network }})
         runs-on: ubuntu-26.04
-        needs: [version-config, build, hydrate-canton-caches]
+        needs: [build, hydrate-canton-caches]
+        strategy:
+            fail-fast: false
+            matrix: ${{ fromJSON(needs.build.outputs.extension-matrix) }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - uses: ./.github/actions/setup_canton/artifacts
               with:
-                  network: devnet
-                  canton_version: ${{ needs.version-config.outputs.devnet_canton_version }}
+                  network: ${{ matrix.network }}
+                  canton_version: ${{ matrix.canton_version }}
 
             - uses: ./.github/actions/setup_playwright
 
@@ -370,7 +358,7 @@ jobs:
             - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
               if: ${{ !cancelled() }}
               with:
-                  name: wallet-gateway-extension-playwright-report
+                  name: wallet-gateway-extension-playwright-report-${{ matrix.network }}
                   path: wallet-gateway/extension/playwright-report/
                   retention-days: 5
 
@@ -390,25 +378,22 @@ jobs:
     portfolio-e2e:
         name: portfolio-e2e (${{ matrix.network }})
         runs-on: ubuntu-26.04
-        needs: [version-config, hydrate-canton-caches]
+        needs: [build, hydrate-canton-caches]
         strategy:
             fail-fast: false
-            matrix:
-                network: [devnet, mainnet]
+            matrix: ${{ fromJSON(needs.build.outputs.portfolio-matrix) }}
         env:
-            SPLICE_VERSION: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+            SPLICE_VERSION: ${{ matrix.splice_version }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - uses: ./.github/actions/setup_localnet/artifacts
               with:
                   network: ${{ matrix.network }}
-                  splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  splice_version: ${{ matrix.splice_version }}
                   multi_sync: 'true'
 
             - name: Start remote WK
@@ -462,24 +447,21 @@ jobs:
     wallet-sdk-snippets-e2e:
         name: wallet-sdk-snippets-e2e (${{ matrix.network }})
         runs-on: ubuntu-26.04
-        needs: [version-config, hydrate-canton-caches]
+        needs: [build, hydrate-canton-caches]
         strategy:
             fail-fast: false
-            matrix:
-                network: [devnet, mainnet]
+            matrix: ${{ fromJSON(needs.build.outputs.sdk-examples-matrix) }}
 
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - uses: ./.github/actions/setup_localnet/artifacts
               with:
                   network: ${{ matrix.network }}
-                  splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  splice_version: ${{ matrix.splice_version }}
                   multi_sync: 'true'
 
             - uses: ./.github/actions/check_resources
@@ -522,36 +504,22 @@ jobs:
     wallet-sdk-scripts-e2e:
         name: wallet-sdk-scripts-e2e (${{ matrix.network }})
         runs-on: ubuntu-26.04
-        needs: [version-config, hydrate-canton-caches]
+        needs: [build, hydrate-canton-caches]
         strategy:
             fail-fast: false
-            matrix:
-                network: [devnet, mainnet]
+            matrix: ${{ fromJSON(needs.build.outputs.sdk-examples-matrix) }}
 
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - uses: ./.github/actions/setup_localnet/artifacts
               with:
                   network: ${{ matrix.network }}
-                  splice_version: ${{ matrix.network == 'devnet' && needs.version-config.outputs.devnet_splice_version || needs.version-config.outputs.mainnet_splice_version }}
+                  splice_version: ${{ matrix.splice_version }}
                   multi_sync: 'true'
-
-            - name: Restore DPM cache
-              uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
-              with:
-                  path: |
-                      ~/.dpm
-                  key: dpm-v2-${{ runner.os }}-${{ needs.version-config.outputs.daml_release_version }}
-
-            - name: Rebuild DAML-dependent packages
-              run: |
-                  pnpm run --filter @canton-network/core-splice-codegen build
 
             - uses: ./.github/actions/check_resources
 
@@ -616,14 +584,12 @@ jobs:
 
     wallet-sdk-pkg:
         runs-on: ubuntu-26.04
-        needs: [version-config, build]
+        needs: build
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
-              with:
-                  daml_release_version: ${{ needs.version-config.outputs.daml_release_version }}
 
             - name: Validate SDK package install
               run: pnpm script:validate:package
