@@ -65,6 +65,7 @@
         "@open-rpc/generator": "catalog:",
         "@playwright/test": "catalog:",
         "@protobuf-ts/plugin": "catalog:",
+        "@protobuf-ts/protoc": "catalog:",
         "@swc/core": "catalog:",
         "@tony.ganchev/eslint-plugin-header": "catalog:",
         "@types/node": "catalog:",
