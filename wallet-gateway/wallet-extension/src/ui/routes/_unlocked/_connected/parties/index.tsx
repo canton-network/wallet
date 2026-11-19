@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createFileRoute } from '@tanstack/react-router'
-import { PartiesPage } from '@/ui/features/parties'
 
-export const Route = createFileRoute('/_unlocked/parties/')({
+import { PartiesPage } from '@/ui/features/parties/index.ts'
+
+export const Route = createFileRoute('/_unlocked/_connected/parties/')({
     validateSearch: (
         search: Record<string, unknown>
     ): { createPartyStatus?: string } =>

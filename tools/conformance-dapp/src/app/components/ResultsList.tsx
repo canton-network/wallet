@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ReplayIcon from '@mui/icons-material/Replay'
 import Accordion from '@mui/material/Accordion'
 import AccordionDetails from '@mui/material/AccordionDetails'
 import AccordionSummary from '@mui/material/AccordionSummary'
@@ -12,12 +14,11 @@ import Collapse from '@mui/material/Collapse'
 import IconButton from '@mui/material/IconButton'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
-import Typography from '@mui/material/Typography'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import ReplayIcon from '@mui/icons-material/Replay'
 import { alpha, type Theme } from '@mui/material/styles'
+import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 import type React from 'react'
+
 import type { Report, TestResult, Observation } from '../../report.ts'
 import { groups } from '../../tests/index.ts'
 import type { Case } from '../../tests/types.ts'

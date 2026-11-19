@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { OAuth2Server } from 'oauth2-mock-server'
-import { parse as parseBasicAuth } from 'basic-auth'
-import pino from 'pino'
 import { createHash, randomUUID } from 'crypto'
+
+import { parse as parseBasicAuth } from 'basic-auth'
+import { OAuth2Server } from 'oauth2-mock-server'
+import pino from 'pino'
 const logger = pino({ name: 'mock-oauth2-server', level: 'debug' })
 
 const toBase64Url = (input: Buffer | string): string =>

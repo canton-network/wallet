@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { AllowedRoute } from '@canton-network/core-wallet-ui-components'
+
 import {
     encryptString,
     destroyTokenKey,
     decryptString,
-} from './access-token-utils.js'
+} from './access-token-utils.ts'
 
 const NAMESPACE = 'com.splice.wallet'
 const VERSION_PREFIX = `${NAMESPACE}.v1`

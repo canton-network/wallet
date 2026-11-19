@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { css, html } from 'lit'
 import type { PublicNetwork } from '@canton-network/core-wallet-user-rpc-client'
-import { cardStyles } from '../styles/card'
-import './copy-button.js'
+import { css, html } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+
+import { BaseElement } from '../internal/base-element.ts'
+import { cardStyles } from '../styles/card.ts'
+import './copy-button.ts'
 
 /** Emitted when the user clicks a network card to review it */
 export class NetworkCardReviewEvent extends Event {
@@ -36,6 +37,7 @@ class NetworkCard extends BaseElement {
     @property({ type: Boolean }) accessor activeSession = false
     @property({ type: String }) accessor accessToken = ''
     @property({ type: Boolean }) accessor readonly = false
+    @property({ type: Boolean }) accessor configManaged = false
 
     static styles = [
         BaseElement.styles,
@@ -86,6 +88,11 @@ class NetworkCard extends BaseElement {
                 letter-spacing: 0.04em;
                 background: rgba(var(--wg-success-rgb), 0.14);
                 color: var(--wg-success);
+            }
+
+            .badge-config {
+                background: var(--wg-badge-bg);
+                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -171,6 +178,15 @@ class NetworkCard extends BaseElement {
                         this.activeSession
                             ? html`<span class="badge-connected"
                                   >CONNECTED</span
+                              >`
+                            : ''
+                    }
+                    ${
+                        this.configManaged
+                            ? html`<span
+                                  class="wg-badge badge-config"
+                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
+                                  >CONFIG FILE</span
                               >`
                             : ''
                     }

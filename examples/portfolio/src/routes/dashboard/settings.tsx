@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Box, Typography } from '@mui/material'
-import { createFileRoute } from '@tanstack/react-router'
 import { DevNetTapSection } from '@components/settings/devnet-tap-section'
 import { PreapprovalsSection } from '@components/settings/preapprovals-section'
 import { RegistriesSection } from '@components/settings/registries-section'
+import { Box, Typography } from '@mui/material'
+import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/dashboard/settings')({
     component: RouteComponent,

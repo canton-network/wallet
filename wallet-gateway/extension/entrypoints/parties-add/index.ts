@@ -1,26 +1,27 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     BaseElement,
     type WalletCreateEvent,
     chevronLeftIcon,
     handleErrorToast,
 } from '@canton-network/core-wallet-ui-components'
-import { SigningProvider } from '@canton-network/core-signing-lib'
-import { createUserClient } from '@/utils/legacy-frontend/rpc-client'
-import { setLocationHref } from '@/utils/legacy-frontend/navigation.js'
-import { toRelHref, toRelPath } from '@/utils/legacy-frontend/routing'
-import { stateManager } from '@/utils/legacy-frontend/state-manager'
-import '@/utils/legacy-frontend'
 import {
     buildCreateWalletParams,
     PARTY_STATUS_PARAM,
     walletStatusToCode,
 } from '@canton-network/core-wallet-ui-components/logic'
-import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.js'
+import { css, html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
+import { detectCurrentOrigin } from '@/utils/legacy-frontend/listeners.ts'
+import { setLocationHref } from '@/utils/legacy-frontend/navigation.ts'
+import { toRelHref, toRelPath } from '@/utils/legacy-frontend/routing.ts'
+import '@/utils/legacy-frontend/index.ts'
+import { createUserClient } from '@/utils/legacy-frontend/rpc-client.ts'
+import { stateManager } from '@/utils/legacy-frontend/state-manager.ts'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends BaseElement {

@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Umzug, type MigrationMeta, type UmzugStorage } from 'umzug'
 import type { Kysely } from 'kysely'
-import type { DB } from './schema'
+import { Umzug, type MigrationMeta, type UmzugStorage } from 'umzug'
+
+import type { DB } from './schema.ts'
 
 class KyselyStorage implements UmzugStorage {
     constructor(private db: Kysely<DB>) {}

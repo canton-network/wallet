@@ -1,22 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { LitElement, html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-import { stateManager } from '../state-manager'
-import { addUserSession, redirectToIntendedOrDefault } from '..'
-import {
-    handleErrorToast,
-    toRelHref,
-} from '@canton-network/core-wallet-ui-components'
-import { detectCurrentOrigin } from '../listeners'
-import { LOGIN_PAGE_REDIRECT } from '../constants'
 import {
     fetchOidcDiscovery,
     jwtExpiresAt,
     oidcTokenResponseSchema,
     parseIdpResponse,
 } from '@canton-network/core-wallet-auth'
+import {
+    handleErrorToast,
+    toRelHref,
+} from '@canton-network/core-wallet-ui-components'
+import { LitElement, html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
+import { LOGIN_PAGE_REDIRECT } from '../constants.ts'
+import { addUserSession, redirectToIntendedOrDefault } from '../index.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { stateManager } from '../state-manager.ts'
 
 @customElement('login-callback')
 export class LoginCallback extends LitElement {
@@ -49,6 +50,14 @@ export class LoginCallback extends LitElement {
             }
 
             sessionStorage.removeItem(`oauth-pkce-${state.stateId}`)
+
+            const networkId = sessionStorage.getItem(
+                `oauth-network-${state.stateId}`
+            )
+            if (!networkId) {
+                throw new Error('Missing network for OAuth callback state')
+            }
+            sessionStorage.removeItem(`oauth-network-${state.stateId}`)
 
             const config = await fetchOidcDiscovery(state.configUrl)
             if (!config.token_endpoint) {
@@ -96,10 +105,10 @@ export class LoginCallback extends LitElement {
                 currentOrigin
             )
 
-            await addUserSession(
-                tokenResponse.access_token,
-                stateManager.networkId.get(currentOrigin) || ''
-            )
+            // Pages behind the login need the network in the localStorage
+            stateManager.networkId.set(networkId, currentOrigin)
+
+            await addUserSession(tokenResponse.access_token, networkId)
             await redirectToIntendedOrDefault()
         } catch (error) {
             this.hasError = true

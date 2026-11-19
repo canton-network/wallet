@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SelfIssuedTokenService } from '@canton-network/core-wallet-auth'
-import type { Network } from './config/schema.js'
+
+import type { Network } from './config/schema.ts'
 
 // Throws if the given network has a self-issued audience that is already used by another network.
 export function assertUniqueSelfIssuedAudience(

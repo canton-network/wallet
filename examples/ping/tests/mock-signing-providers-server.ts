@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { config as loadEnv } from 'dotenv'
 import {
     createBlockdaemonMockProvider,
     createDfnsMockProvider,
@@ -10,6 +9,7 @@ import {
     type SigningProviderMockRoute,
     type SigningProviderMockServer,
 } from '@canton-network/core-wallet-test-utils'
+import { config as loadEnv } from 'dotenv'
 
 loadEnv({ quiet: true, path: ['.env', '.env.local'] })
 

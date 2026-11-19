@@ -1,14 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     PreparedTransaction,
     type Metadata,
 } from '@canton-network/core-ledger-proto'
-import { fromBase64, hexToBytes, sha256 } from '../bytes.js'
-import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.js'
-import { schemeV2 } from '../v2.js'
+import { describe, expect, it } from 'vitest'
+
+import { fromBase64, hexToBytes, sha256 } from '../bytes.ts'
+import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.ts'
+import { schemeV2 } from '../v2.ts'
+import bigInt64V2 from './fixtures/big-int64-v2.json'
 import {
     chain,
     contractId,
@@ -36,12 +38,11 @@ import {
     tx,
     unit,
     withInputContract,
-} from './helpers/builders.js'
-import { toHex } from './helpers/hex.js'
-import { int64sBeyond2To53 } from './helpers/int64.js'
-import { liveFixtures } from './helpers/live-fixtures.js'
-import { hx, rejection } from './helpers/matchers.js'
-import bigInt64V2 from './fixtures/big-int64-v2.json'
+} from './helpers/builders.ts'
+import { toHex } from './helpers/hex.ts'
+import { int64sBeyond2To53 } from './helpers/int64.ts'
+import { liveFixtures } from './helpers/live-fixtures.ts'
+import { hx, rejection } from './helpers/matchers.ts'
 
 // Expected values that do not come from a participant were produced by running
 // daml_transaction_hashing_v2.py (canton v3.5.1, 08-interactive-submission) on
@@ -256,6 +257,30 @@ describe('hashing scheme V2', () => {
     })
 
     describe('rejections', () => {
+        it('rejects an exercise with external call results', () =>
+            expect(
+                v2(
+                    single(
+                        exerciseNode('0', [], {
+                            externalCallResults: [
+                                {
+                                    extensionId: 'ext',
+                                    functionId: 'fn',
+                                    config: new Uint8Array(),
+                                    input: new Uint8Array(),
+                                    output: new Uint8Array(),
+                                },
+                            ],
+                        })
+                    )
+                )
+            ).rejects.toThrow(
+                rejection(
+                    'FIELD_NOT_COVERED_BY_SCHEME',
+                    'transaction.nodes[0].v1.exercise.externalCallResults'
+                )
+            ))
+
         it('rejects QueryByKey', () =>
             expect(v2(single(queryByKeyNode('0')))).rejects.toThrow(
                 rejection(

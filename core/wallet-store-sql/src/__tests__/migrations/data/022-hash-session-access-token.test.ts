@@ -2,20 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createHash } from 'node:crypto'
-import { expect, test } from 'vitest'
-import { type Kysely, sql } from 'kysely'
 
-import type { DB } from '../../../schema.js'
-import { up } from '../../../migrations/022-hash-session-access-token'
+import { type Kysely, sql } from 'kysely'
+import { expect, test } from 'vitest'
+
+import { up } from '../../../migrations/022-hash-session-access-token.ts'
+import type { DB } from '../../../schema.ts'
 import {
     forEachDialect,
     hasColumn,
     migrateDownThrough,
     migrateUpThrough,
     migrateUpToBefore,
-} from '../helpers'
-import { insertSession } from '../seeds/019-make-session-access-token-nullable'
-import { insertMessageRaw } from '../seeds/021-add-message-kind'
+} from '../helpers.ts'
+import { insertSession } from '../seeds/019-make-session-access-token-nullable.ts'
+import { insertMessageRaw } from '../seeds/021-add-message-kind.ts'
 
 const TARGET = 22
 

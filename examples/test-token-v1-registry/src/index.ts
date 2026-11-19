@@ -1,12 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import allocationInstructionAPIRouter from './api/allocation-instruction/index.js'
-import allocationAPIRouter from './api/allocation/index.js'
-import { APIError } from './api/common'
-import metadataAPIRouter from './api/metadata/index.js'
-import transferInstructionAPIRouter from './api/transfer-instruction/index.js'
-import utilitiesAPIRouter from './api/utilities/index.js'
+import type { Server } from 'http'
+
+import { TestToken } from '@canton-network/core-splice-codegen'
 import cors from 'cors'
 import express from 'express'
 import type {
@@ -15,14 +12,19 @@ import type {
     Request,
     Response,
 } from 'express'
-import { TestToken } from '@canton-network/core-splice-codegen'
-import defaultSdk from './common/defaultSdk.js'
-import type { Server } from 'http'
+
+import allocationInstructionAPIRouter from './api/allocation-instruction/index.ts'
+import allocationAPIRouter from './api/allocation/index.ts'
+import { APIError } from './api/common.ts'
+import metadataAPIRouter from './api/metadata/index.ts'
+import transferInstructionAPIRouter from './api/transfer-instruction/index.ts'
+import utilitiesAPIRouter from './api/utilities/index.ts'
+import defaultSdk from './common/defaultSdk.ts'
 import {
     type RegistryConfig,
     RegistryState,
     defaultConfig,
-} from './common/state.js'
+} from './common/state.ts'
 
 export { RegistryState, defaultConfig, type RegistryConfig }
 

@@ -11,5 +11,6 @@
         "**/routeTree.gen.ts",
         "core/ledger-client-types/src/generated-clients",
         "docs/**/*.mdx"
-    ]
+    ],
+    "sortImports": true
 }

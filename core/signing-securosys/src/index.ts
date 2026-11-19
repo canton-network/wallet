@@ -25,12 +25,15 @@ import {
     type SubscribeTransactionsResult,
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { getLogger } from '@logtape/logtape'
+
 import {
     keyLabelFromPublicKey,
     SigningAPIClient,
+    TsbApiError,
     type SecurosysTSBClientConfig,
     type TsbSignatureAlgorithm,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
 
 export {
     keyLabelFromPublicKey,
@@ -41,7 +44,13 @@ export {
     type SecurosysTSBClientConfig,
     type TsbCreateKeyRequest,
     type TsbSignatureAlgorithm,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
+
+const logger = getLogger([
+    'core',
+    'signing-securosys',
+    'SecurosysSigningDriver',
+])
 
 export type SecurosysConfig = SecurosysTSBClientConfig
 
@@ -95,11 +104,14 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...(tx.metadata !== undefined && {
                             metadata: tx.metadata,
                         }),
+                        ...(tx.failureReason !== undefined && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
                         error: 'signing_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -144,7 +156,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 } catch (error) {
                     return {
                         error: 'signing_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -168,11 +180,14 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...(tx.metadata !== undefined && {
                             metadata: tx.metadata,
                         }),
+                        ...(tx.failureReason !== undefined && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
                         error: 'transaction_not_found',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -200,12 +215,15 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                                 ...(tx.metadata !== undefined && {
                                     metadata: tx.metadata,
                                 }),
+                                ...(tx.failureReason !== undefined && {
+                                    failureReason: tx.failureReason,
+                                }),
                             })),
                         }
                     } catch (error) {
                         return {
                             error: 'fetch_error',
-                            error_description: (error as Error).message,
+                            error_description: errorDescription(error),
                         }
                     }
                 }
@@ -231,7 +249,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 } catch (error) {
                     return {
                         error: 'fetch_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -252,7 +270,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 } catch (error) {
                     return {
                         error: 'create_key_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -286,6 +304,15 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),
         })
+}
+
+// The message of a failed TSB call carries the raw response body, which only
+// goes to the log
+function errorDescription(error: unknown): string {
+    logger.error('Securosys request failed', { error })
+    return error instanceof TsbApiError
+        ? error.userMessage
+        : (error as Error).message
 }
 
 /**

@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
 import { Stack } from '@mui/material'
-import { Toast } from '../components/Toast'
-import { ToastContext, type ToastOptions } from './ToastContext'
+import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react'
+
+import { Toast } from '../components/Toast.tsx'
+import { ToastContext, type ToastOptions } from './ToastContext.ts'
 
 interface ActiveToast extends ToastOptions {
     id: number

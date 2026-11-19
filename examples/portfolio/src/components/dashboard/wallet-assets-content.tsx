@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Alert } from '@mui/material'
-import type { WalletHoldingsResult } from '@hooks/useWalletHoldings'
-import { getInstrumentInitials } from '@utils/instrument-display'
 import {
     AssetBalanceCard,
     AssetBalanceCardSkeleton,
     AssetsPanel,
 } from '@components/dashboard/asset-balance-card'
+import type { WalletHoldingsResult } from '@hooks/useWalletHoldings'
+import { Alert } from '@mui/material'
 import {
     getInstrumentKey,
     type AggregatedHolding,
 } from '@utils/aggregate-holdings'
-import { DashboardEmptyState } from './dashboard-empty-state'
+import { getInstrumentInitials } from '@utils/instrument-display'
+
+import { DashboardEmptyState } from './dashboard-empty-state.tsx'
 
 export function WalletAssetsContent({
     instruments,

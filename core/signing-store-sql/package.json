@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-store-sql",
-    "version": "2.3.0",
+    "version": "2.4.0",
     "type": "module",
     "description": "SQL implementation of the Store API",
     "license": "Apache-2.0",
@@ -17,8 +17,8 @@
         }
     },
     "scripts": {
-        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\" && tsc -p tsconfig.migrations.json",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json && tsc -p tsconfig.migrations.json\"",
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist",
         "test:migrations": "vitest run --project migrations",

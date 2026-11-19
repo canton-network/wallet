@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PreparedCommand } from '../../../transactions/types.js'
 import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 import type { AssetBody } from '@canton-network/core-token-standard-service'
 import type {
@@ -13,6 +12,8 @@ import type {
 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
+
+import type { PreparedCommand } from '../../../transactions/types.ts'
 
 export type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
@@ -45,7 +46,7 @@ export type AllocationChoiceParams = {
     allocationCid: string
     asset: AssetBody
     actors: PartyId[]
-    prefetchedRegistryChoiceContext: AllocationChoiceContextV2
+    prefetchedRegistryChoiceContext?: AllocationChoiceContextV2
 }
 
 export type AllocationContextParams = {
@@ -55,12 +56,12 @@ export type AllocationContextParams = {
 
 /**
  * @param requireBothSides: Require every leg to be allocated on both its sender and receiver side
- * Only meaningful for. aparty taht sees all allocations (e.g. an executor)
+ * Only meaningful for a party that sees all allocations (e.g. an executor)
  * Set to false when polling as a trader. Default true.
  */
 export type AllocationScanParams = {
     partyId: PartyId
-    settlement: Pick<SettlementInfo, 'id' | 'cid'>
+    settlement: Pick<SettlementInfo, 'id' | 'cid' | 'executors'>
     transferLegIds: string[]
     requireBothSides?: boolean
     maxAttempts?: number
@@ -71,6 +72,7 @@ export type AllocationRequestActionParams = {
     request: PrettyContract<AllocationRequestView>
     partyId: PartyId
     actors?: PartyId[]
+    skipSpec?: (spec: AllocationRequestView['allocations'][number]) => boolean
 }
 
 export type SettlementFactoryParams = {
@@ -78,6 +80,10 @@ export type SettlementFactoryParams = {
     registryUrl: string | URL
 }
 
+/**
+ *
+ * @deprecated
+ */
 export function actorsFor(
     availableActions: unknown,
     action: string,
@@ -89,6 +95,12 @@ export function actorsFor(
 }
 
 export const sameSettlement = (
-    a: Pick<SettlementInfo, 'id' | 'cid'>,
-    b: Pick<SettlementInfo, 'id' | 'cid'>
-) => a.id === b.id && (a.cid ?? null) === (b.cid ?? null)
+    a: Pick<SettlementInfo, 'id' | 'cid' | 'executors'>,
+    b: Pick<SettlementInfo, 'id' | 'cid' | 'executors'>
+) =>
+    a.id === b.id &&
+    (a.cid ?? null) === (b.cid ?? null) &&
+    executorsKey(a.executors) === executorsKey(b.executors)
+
+const executorsKey = (executors: readonly string[] = []) =>
+    [...executors].sort().join('|')

@@ -1,8 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, type Locator, type Page, test } from '@playwright/test'
-import { openWalletPicker } from './wallet-picker.js'
+import {
+    expect,
+    type Locator,
+    type Page,
+    type Route,
+    test,
+} from '@playwright/test'
+
+import { openWalletPicker } from './wallet-picker.ts'
 
 export interface NetworkFormInput {
     id: string
@@ -81,6 +88,14 @@ export type WalletGatewayArgs =
 export type LoginCredentials = {
     clientId?: string
     clientSecret?: string
+}
+
+export type TransactionDecision = 'approve' | 'reject'
+
+export type LoginOptions = {
+    credentials?: LoginCredentials
+    /** Runs while the login is redirected away from the gateway, e.g. at the OAuth IdP */
+    whileAtIdp?: () => Promise<void>
 }
 
 export class WalletGateway {
@@ -747,10 +762,7 @@ export class WalletGateway {
     }
 
     // Logs in to a gateway that was opened directly, without a dApp.
-    async login(
-        network: string,
-        credentials?: LoginCredentials
-    ): Promise<void> {
+    async login(network: string, options: LoginOptions = {}): Promise<void> {
         await test.step(`wallet gateway: log in to ${network}`, async () => {
             const page = await this.page()
             const selectNetwork = page.getByLabel('Select a network')
@@ -759,11 +771,41 @@ export class WalletGateway {
                 'the wallet gateway has a network select'
             ).toBeVisible()
             await selectNetwork.selectOption({ label: network })
-            await this.fillLoginCredentials(page, credentials)
+            await this.fillLoginCredentials(page, options.credentials)
+            if (options.whileAtIdp) {
+                await this.pauseAtIdp(page, options.whileAtIdp)
+            }
             await page.getByRole('button', { name: 'Connect' }).click()
             // Wait for the OAuth redirect chain to complete and land on the parties page.
             await page.waitForURL(/\/parties/, { timeout: 30000 })
         })
+    }
+
+    async expectConnectedNetwork(networkId: string): Promise<void> {
+        const page = await this.page()
+        await expect(
+            page.getByTestId('network-status-connected'),
+            `the wallet gateway should be connected to ${networkId}`
+        ).toHaveAttribute('title', networkId)
+    }
+
+    // Holds the first navigation away from the gateway until `whileAtIdp` ran
+    private async pauseAtIdp(
+        page: Page,
+        whileAtIdp: () => Promise<void>
+    ): Promise<void> {
+        const gatewayOrigin = new URL(page.url()).origin
+        const leavesGateway = (url: URL) => url.origin !== gatewayOrigin
+        const handler = async (route: Route) => {
+            // Lets the OIDC discovery and other requests of the login page through
+            if (!route.request().isNavigationRequest()) {
+                return route.fallback()
+            }
+            await whileAtIdp()
+            await route.continue()
+            await page.unroute(leavesGateway, handler)
+        }
+        await page.route(leavesGateway, handler)
     }
 
     async logout(): Promise<void> {
@@ -1251,7 +1293,8 @@ export class WalletGateway {
 
     async expectActivityWithStatus(
         commandId: string,
-        status: ActivityStatus
+        status: ActivityStatus,
+        opts?: { failureReason?: string }
     ): Promise<void> {
         await test.step(`wallet gateway: activity for ${commandId} is ${status}`, async () => {
             await this.reopenActivitiesPage()
@@ -1261,6 +1304,12 @@ export class WalletGateway {
                 card.locator('.status-badge, [data-testid="activity-status"]'),
                 `the wallet activity for ${commandId} should be ${status}`
             ).toHaveText(status)
+            if (opts?.failureReason) {
+                await expect(
+                    card,
+                    `the wallet activity for ${commandId} should show why it failed`
+                ).toContainText(opts.failureReason)
+            }
         })
     }
 
@@ -1328,5 +1377,103 @@ export class WalletGateway {
             popup.getByText('Loading activities...'),
             'the activities page should have finished loading'
         ).not.toBeVisible()
+    }
+
+    /**
+     * Handle several transactions that one dApp action submits back to back,
+     * such as a token standard V2 accept (allocations, then the accept).
+     *
+     * The gateway may show the next request in the same popup instead of closing
+     * it, so success of one approval can't be detected by the popup closing.
+     * Instead, each request is recognised by the commandId in the popup's URL
+     * changing. The popup is expected to close after the last decision.
+     */
+    async handleTransactions(
+        start: () => Promise<void>,
+        decisions: TransactionDecision[],
+        opts?: { waitForClose?: boolean }
+    ): Promise<{ commandIds: string[] }> {
+        return test.step(`wallet gateway: ${decisions.join(', then ')} ${decisions.length} transactions`, async () => {
+            await start()
+
+            const commandIds: string[] = []
+            let popupPage: Page | undefined
+
+            for (const [index, decision] of decisions.entries()) {
+                const next = await this.waitForNextRequest(
+                    commandIds.at(-1),
+                    index
+                )
+                popupPage = next.popupPage
+                commandIds.push(next.commandId)
+
+                if (decision === 'approve') {
+                    await popupPage
+                        .getByRole('button', { name: 'Approve' })
+                        .click()
+                } else {
+                    await this.clickRejectAndConfirm(popupPage)
+                }
+            }
+
+            if (popupPage && opts?.waitForClose !== false) {
+                await this.waitForPopupToCloseAfterAction(popupPage)
+            }
+            return { commandIds }
+        })
+    }
+
+    /** Wait until the popup shows a request other than `previousCommandId` */
+    private async waitForNextRequest(
+        previousCommandId: string | undefined,
+        index: number
+    ): Promise<{ popupPage: Page; commandId: string }> {
+        const currentCommandId = (): string | null => {
+            const popup = this.directPage ?? this._popup
+            if (!popup || popup.isClosed()) return null
+            try {
+                return new URL(popup.url()).searchParams.get('commandId')
+            } catch {
+                return null // mid-navigation
+            }
+        }
+
+        await expect
+            .poll(
+                () => {
+                    const id = currentCommandId()
+                    return id !== null && id !== previousCommandId
+                },
+                {
+                    message: `the wallet should show transaction ${index + 1} for approval`,
+                    timeout: 30_000,
+                }
+            )
+            .toBe(true)
+
+        const popupPage = await this.page()
+        await expect(
+            popupPage.getByRole('button', { name: 'Approve' }),
+            `transaction ${index + 1} should be ready to approve`
+        ).toBeVisible()
+
+        return { popupPage, commandId: currentCommandId()! }
+    }
+
+    /** Reject the shown request, accepting the gateway's confirm dialog */
+    private async clickRejectAndConfirm(popupPage: Page): Promise<void> {
+        let dialogType: string | undefined
+        popupPage.once('dialog', async (dialog) => {
+            dialogType = dialog.type()
+            await dialog.accept()
+        })
+        await popupPage.getByRole('button', { name: 'Reject' }).click()
+        await expect
+            .poll(() => dialogType, {
+                message:
+                    'rejecting a transaction should ask the user to confirm',
+                timeout: 5000,
+            })
+            .toBe('confirm')
     }
 }

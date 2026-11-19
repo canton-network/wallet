@@ -3,8 +3,10 @@
 
 import { readdirSync } from 'node:fs'
 import { resolve } from 'node:path'
+
 import { esmExternalRequirePlugin } from 'rolldown/plugins'
 import { defineConfig } from 'tsdown'
+
 import { base } from '../../tsdown.base.ts'
 
 const damljs = resolve(import.meta.dirname, '../../damljs')

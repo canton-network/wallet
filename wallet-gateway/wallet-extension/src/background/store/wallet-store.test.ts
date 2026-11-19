@@ -1,18 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { createHash } from 'node:crypto'
+
 import type {
     NewSession,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import { createHash } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { createVault, type Vault, VaultLockedError } from '../vault'
-import { loadAuthedStore } from './index'
-import { createWalletStore } from './wallet-store'
+
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+
+import { createVault, type Vault, VaultLockedError } from '../vault/index.ts'
+import { loadAuthedStore } from './index.ts'
+import { createWalletStore } from './wallet-store.ts'
 
 const PASSWORD = 'first password 1'
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }

@@ -10,7 +10,6 @@ import {
     SigningProvider,
     type SignMessageResult,
 } from '@canton-network/core-signing-lib'
-
 import type {
     SignMessageParams,
     SignTransactionParams,
@@ -29,11 +28,12 @@ import type {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
-import type { FireblocksApiKeyInfo } from './fireblocks.js'
-import { FireblocksHandler } from './fireblocks.js'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import _ from 'lodash'
 import { z } from 'zod'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
+
+import type { FireblocksApiKeyInfo } from './fireblocks.ts'
+import { FireblocksHandler } from './fireblocks.ts'
 
 export interface FireblocksConfig {
     defaultKeyInfo?: FireblocksApiKeyInfo
@@ -119,6 +119,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         status: tx.status,
                         signature: toBase64(tx.signature),
                         publicKey: toBase64(tx.publicKey),
+                        ...(tx.failureReason && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
@@ -166,6 +169,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         ...(tx.signature
                             ? { signature: toBase64(tx.signature) }
                             : {}),
+                        ...(tx.failureReason && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
@@ -188,6 +194,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         status: tx.status,
                         signature: toBase64(tx.signature),
                         publicKey: toBase64(tx.publicKey),
+                        ...(tx.failureReason && {
+                            failureReason: tx.failureReason,
+                        }),
                     } as GetTransactionResult
                 } else {
                     return {
@@ -217,6 +226,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                                 status: tx.status,
                                 signature: toBase64(tx.signature),
                                 publicKey: toBase64(tx.publicKey),
+                                ...(tx.failureReason && {
+                                    failureReason: tx.failureReason,
+                                }),
                             })
                         }
                         if (

@@ -1,24 +1,28 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test, vi } from 'vitest'
+import { createServer } from 'http'
 
-import cors from 'cors'
-import request from 'supertest'
-import express from 'express'
-import { dapp } from './server.js'
-import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.js'
 import { NotificationService } from '@canton-network/core-wallet-services'
+import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
+import { getLogger } from '@logtape/logtape'
+import cors from 'cors'
+import express from 'express'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import { createServer } from 'http'
-import { getLogger } from '@logtape/logtape'
+import request from 'supertest'
+import { expect, test, vi } from 'vitest'
+
+import { ConfigUtils, deriveUrls } from '../config/ConfigUtils.ts'
+import { dapp } from './server.ts'
 
 const configPath = '../test/config.json'
 const config = ConfigUtils.loadConfigFile(configPath).config
 
-const store = new StoreInternal(config.bootstrap, getLogger('mock'))
+const store = new StoreInternal(
+    { idps: config.idps, networks: config.networks },
+    getLogger('mock')
+)
 
 const notificationService = new NotificationService()
 
@@ -29,20 +33,20 @@ test('call connect rpc', async () => {
     const server = createServer(app)
     const { dappApiUrl, publicUrl } = deriveUrls(config)
     const response = await request(
-        dapp(
-            '/api/v0/dapp',
+        dapp({
+            route: '/api/v0/dapp',
             app,
-            pino(sink()),
+            logger: pino(sink()),
             server,
-            config.kernel,
-            dappApiUrl,
-            publicUrl,
-            config.server,
+            kernelInfo: config.kernel,
+            dappUrl: dappApiUrl,
+            userUrl: publicUrl,
+            serverConfig: config.server,
             notificationService,
             store,
-            { signingDrivers: {} },
-            'HASHING_SCHEME_VERSION_V3'
-        )
+            deps: { signingDrivers: {} },
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        })
     )
         .post('/api/v0/dapp')
         .send({ jsonrpc: '2.0', id: 0, method: 'connect', params: [] })
@@ -78,20 +82,20 @@ test('streams session & user notifications over SSE until logout', async () => {
     })
     const server = createServer(app)
     const { dappApiUrl, publicUrl } = deriveUrls(config)
-    dapp(
-        '/api/v0/dapp',
+    dapp({
+        route: '/api/v0/dapp',
         app,
-        pino(sink()),
+        logger: pino(sink()),
         server,
-        config.kernel,
-        dappApiUrl,
-        publicUrl,
-        config.server,
-        service,
+        kernelInfo: config.kernel,
+        dappUrl: dappApiUrl,
+        userUrl: publicUrl,
+        serverConfig: config.server,
+        notificationService: service,
         store,
-        { signingDrivers: {} },
-        'HASHING_SCHEME_VERSION_V3'
-    )
+        deps: { signingDrivers: {} },
+        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+    })
 
     const sessionNotifier = service.getNotifier('sse-session')
     const userNotifier = service.getNotifier('sse-user')

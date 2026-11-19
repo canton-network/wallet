@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { DEFAULT_LIMITS } from '../limits.js'
-import { schemeV2 } from '../v2.js'
-import { schemeV3 } from '../v3.js'
+
+import { DEFAULT_LIMITS } from '../limits.ts'
+import { schemeV2 } from '../v2.ts'
+import { schemeV3 } from '../v3.ts'
 import {
     create,
     createNode,
@@ -16,8 +17,8 @@ import {
     nestedLists,
     single,
     withInputContract,
-} from './helpers/builders.js'
-import { rejection } from './helpers/matchers.js'
+} from './helpers/builders.ts'
+import { rejection } from './helpers/matchers.ts'
 
 describe.each([
     ['V2', schemeV2],

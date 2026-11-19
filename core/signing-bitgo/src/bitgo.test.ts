@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { BitGoHandler } from './bitgo.js'
+
+import { BitGoHandler } from './bitgo.ts'
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -538,6 +539,23 @@ describe('BitGoHandler', () => {
             async (bitgoState) => {
                 const tx = await withState(bitgoState)
                 expect(tx?.status).toBe('failed')
+            }
+        )
+
+        it.each([
+            ['canceled', 'BitGo rejected the signing request (canceled)'],
+            ['rejected', 'BitGo rejected the signing request'],
+            ['failed', 'BitGo failed to sign the request'],
+            [
+                'delivered',
+                'BitGo reported the request as delivered but returned no signature',
+            ],
+            ['pendingApproval', undefined],
+        ])(
+            'txRequest state "%s" → failure reason "%s"',
+            async (bitgoState, failureReason) => {
+                const tx = await withState(bitgoState)
+                expect(tx?.failureReason).toBe(failureReason)
             }
         )
 

@@ -1,6 +1,7 @@
-import { test, expect, describe } from 'vitest'
 import { readdirSync, readFileSync } from 'fs'
 import path from 'path'
+
+import { test, expect, describe } from 'vitest'
 
 const snippets = readdirSync('./snippets').filter(
     (f) =>

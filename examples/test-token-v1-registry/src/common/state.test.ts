@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { RegistryState, defaultConfig, type RegistryConfig } from './state'
+
+import { RegistryState, defaultConfig, type RegistryConfig } from './state.ts'
 
 const mocks = vi.hoisted(() => {
     const execute = vi.fn().mockResolvedValue({ result: 'success' })
@@ -44,7 +45,7 @@ const mocks = vi.hoisted(() => {
     }
 })
 
-vi.mock('./defaultSdk', () => {
+vi.mock('./defaultSdk.ts', () => {
     return {
         default: mocks.mockSdk,
     }

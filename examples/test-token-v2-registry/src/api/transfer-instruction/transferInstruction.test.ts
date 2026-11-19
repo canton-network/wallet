@@ -1,14 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { expressContext, mock, type RequestType } from '../../__tests__/mocks'
-import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext'
-import { APIError } from '../common'
-import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext'
-import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext'
-import { getTransferFactory } from './getTransferFactory'
 import type { Account } from '@canton-network/core-token-standard-v2'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+import {
+    expressContext,
+    mock,
+    type RequestType,
+} from '../../__tests__/mocks.ts'
+import { APIError } from '../common.ts'
+import { getTransferFactory } from './getTransferFactory.ts'
+import { getTransferInstructionAcceptContext } from './getTransferInstructionAcceptContext.ts'
+import { getTransferInstructionRejectContext } from './getTransferInstructionRejectContext.ts'
+import { getTransferInstructionWithdrawContext } from './getTransferInstructionWithdrawContext.ts'
 
 const { res, next } = expressContext
 
@@ -28,16 +33,8 @@ const tokenRulesContext = {
     },
 }
 
-vi.mock('../../common/sdk', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
-
-    return {
-        default: importedMock.sdk,
-    }
-})
-
-vi.mock('../../common/state', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
+vi.mock('../../common/state.ts', async () => {
+    const { mock: importedMock } = await import('../../__tests__/mocks.ts')
 
     return importedMock.state
 })

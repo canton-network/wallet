@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { SigningProvider } from '@canton-network/core-signing-lib'
 import { partyStatusToast } from '@canton-network/core-wallet-ui-components/logic'
 import {
     PageHeader,
@@ -8,20 +9,21 @@ import {
     WalletsSync,
 } from '@canton-network/core-wallet-ui-components/react'
 import { useToast } from '@canton-network/core-wallet-ui-components/react'
-import type { SigningProvider } from '@canton-network/core-signing-lib'
 import Add from '@mui/icons-material/Add'
 import Alert from '@mui/material/Alert'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useEffect, useRef } from 'react'
-import { ButtonLink } from '@/ui/components/ButtonLink'
+
+import { ButtonLink } from '@/ui/components/ButtonLink.tsx'
+
 import {
     useAllocateWallet,
     useSetPrimaryWallet,
     useSyncWallets,
     walletSyncNeededQuery,
     walletsQuery,
-} from './api'
+} from './api.ts'
 
 // The extension can only sign with the wallet kernel, so changing a wallet's
 // signing provider isn't supported and its wallets can't be edited. A type

@@ -18,6 +18,8 @@ export const GATEWAY_NAME = 'remote-da'
 // Network whose user `operator` is the configured gateway admin.
 export const DEFAULT_NETWORK = 'Local (OAuth IDP)'
 export const SELF_ISSUED_NETWORK = 'Local (Self issued)'
+// A second authorization code network of the same IdP, logging in as `operator2`
+export const SECOND_OAUTH_NETWORK = 'Local (OAuth IDP - 2)'
 
 const EXECUTED_PAYLOAD_PATTERN =
     /"payload": \{[\s\S]*"updateId": "[^"]+"[\s\S]*"completionOffset": \d+/
@@ -265,7 +267,8 @@ type TxStatus = 'pending' | 'signed' | 'executed' | 'failed'
 export async function expectTxStatusInDappEvents(
     dappPage: Page,
     commandId: string,
-    status: TxStatus
+    status: TxStatus,
+    opts?: { error?: { code: number; message: string } }
 ): Promise<void> {
     let locator = dappPage
         .getByRole('paragraph')
@@ -280,6 +283,14 @@ export async function expectTxStatusInDappEvents(
     if (status === 'executed') {
         locator = locator.filter({ hasText: EXECUTED_PAYLOAD_PATTERN })
         description += ', with an update id and completion offset'
+    }
+    if (opts?.error) {
+        locator = locator
+            .filter({ hasText: `"code": ${opts.error.code}` })
+            .filter({
+                hasText: `"message": ${JSON.stringify(opts.error.message)}`,
+            })
+        description += `, failing with ${opts.error.code}: ${opts.error.message}`
     }
 
     await expect(locator, description).toHaveCount(1)

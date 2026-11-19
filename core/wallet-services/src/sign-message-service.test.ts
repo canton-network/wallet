@@ -1,19 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { errorCodes } from '@canton-network/core-rpc-errors'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type {
     MessageRaw,
     Store,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import {
-    SigningProvider,
-    type SigningDriverInterface,
-} from '@canton-network/core-signing-lib'
-import type { Notifier } from './notification/index.js'
-import { SignMessageService } from './sign-message-service.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { Notifier } from './notification/index.ts'
+import { SignMessageService } from './sign-message-service.ts'
 
 const authContext: AuthContext = {
     userId: 'user-1',
@@ -209,6 +211,10 @@ describe('SignMessageService', () => {
             expect(emit).toHaveBeenCalledExactlyOnceWith('messageSignature', {
                 status: 'failed',
                 messageId: 'msg-1',
+                error: {
+                    code: errorCodes.provider.userRejectedRequest,
+                    message: 'Rejected by the user',
+                },
             })
             expect(
                 store.removeMessageRaw.mock.invocationCallOrder[0]
@@ -407,6 +413,11 @@ describe('SignMessageService', () => {
             expect(emit).toHaveBeenCalledWith('messageSignature', {
                 status: 'failed',
                 messageId: 'msg-1',
+                error: {
+                    code: errorCodes.provider.unsupportedMethod,
+                    message:
+                        'signMessage is only supported for wallet-kernel, dfns, fireblocks, securosys wallets, got participant',
+                },
             })
         })
 
@@ -425,6 +436,10 @@ describe('SignMessageService', () => {
             expect(emit).toHaveBeenCalledWith('messageSignature', {
                 status: 'failed',
                 messageId: 'msg-1',
+                error: {
+                    code: errorCodes.rpc.resourceUnavailable,
+                    message: 'wallet-kernel signing driver not available',
+                },
             })
         })
 
@@ -453,6 +468,10 @@ describe('SignMessageService', () => {
             expect(emit).toHaveBeenCalledWith('messageSignature', {
                 status: 'failed',
                 messageId: 'msg-1',
+                error: {
+                    code: errorCodes.rpc.invalidParams,
+                    message: 'Message request msg-1 has an empty message.',
+                },
             })
         })
 
@@ -482,6 +501,10 @@ describe('SignMessageService', () => {
             expect(emit).toHaveBeenCalledWith('messageSignature', {
                 status: 'failed',
                 messageId: 'msg-1',
+                error: {
+                    code: errorCodes.rpc.resourceNotFound,
+                    message: failureReason,
+                },
             })
         })
 
@@ -513,6 +536,10 @@ describe('SignMessageService', () => {
             expect(emit).toHaveBeenCalledWith('messageSignature', {
                 status: 'failed',
                 messageId: 'msg-1',
+                error: {
+                    code: errorCodes.rpc.invalidInput,
+                    message: failureReason,
+                },
             })
         })
 
@@ -584,6 +611,11 @@ describe('SignMessageService', () => {
                 expect(emit).toHaveBeenCalledWith('messageSignature', {
                     status: 'failed',
                     messageId: 'msg-1',
+                    error: {
+                        code: errorCodes.rpc.internal,
+                        message:
+                            'Signing provider returned status: pending without a txId',
+                    },
                 })
             })
 
@@ -675,9 +707,42 @@ describe('SignMessageService', () => {
                     expect(emit).toHaveBeenCalledWith('messageSignature', {
                         status: 'failed',
                         messageId: 'msg-1',
+                        error: {
+                            code: errorCodes.rpc.transactionRejected,
+                            message: `Signing provider returned status: ${status}`,
+                        },
                     })
                 }
             )
+
+            it('stores the failure reason reported by the driver', async () => {
+                const { store, service } = createDfnsService(
+                    vi.fn().mockResolvedValue({
+                        status: 'rejected',
+                        txId: 'dfns-sig-1',
+                        failureReason: 'Rejected by policy',
+                    })
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    'msg-1',
+                    'regular'
+                )
+
+                expect(result).toMatchObject({
+                    status: 'failed',
+                    failureReason: 'Rejected by policy',
+                })
+                expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                    'msg-1',
+                    'failed',
+                    {
+                        failureReason: 'Rejected by policy',
+                        externalTxId: 'dfns-sig-1',
+                    }
+                )
+            })
 
             it('stores the driver error as the failure reason and throws it', async () => {
                 const { store, service } = createDfnsService(
@@ -704,6 +769,11 @@ describe('SignMessageService', () => {
                 expect(emit).toHaveBeenCalledWith('messageSignature', {
                     status: 'failed',
                     messageId: 'msg-1',
+                    error: {
+                        code: errorCodes.rpc.transactionRejected,
+                        message:
+                            'No Dfns key found for the provided key identifier.',
+                    },
                 })
             })
         })
@@ -866,10 +936,46 @@ describe('SignMessageService', () => {
                 )
                 expect(emit).toHaveBeenCalledExactlyOnceWith(
                     'messageSignature',
-                    { status: 'failed', messageId: 'msg-1' }
+                    {
+                        status: 'failed',
+                        messageId: 'msg-1',
+                        error: {
+                            code: errorCodes.rpc.transactionRejected,
+                            message: `Signing provider returned status: ${providerStatus}`,
+                        },
+                    }
                 )
             }
         )
+
+        it('stores the failure reason reported by the driver when polling', async () => {
+            const { store, service } = createDfnsService(
+                vi.fn().mockResolvedValue({
+                    txId: 'dfns-sig-1',
+                    status: 'rejected',
+                    failureReason: 'Rejected by policy',
+                })
+            )
+
+            const result = await service.refreshMessage(
+                authContext,
+                'msg-1',
+                'regular'
+            )
+
+            expect(result).toMatchObject({
+                status: 'failed',
+                failureReason: 'Rejected by policy',
+            })
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'msg-1',
+                'failed',
+                {
+                    externalTxId: 'dfns-sig-1',
+                    failureReason: 'Rejected by policy',
+                }
+            )
+        })
 
         it('keeps awaiting-signature when the provider is still pending', async () => {
             const { store, service } = createDfnsService(

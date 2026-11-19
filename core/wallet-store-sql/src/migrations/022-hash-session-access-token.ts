@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createHash } from 'node:crypto'
+
 import { type Kysely, sql } from 'kysely'
-import type { DB } from '../schema.js'
-import { isPostgres } from '../utils.js'
+
+import type { DB } from '../schema.ts'
+import { isPostgres } from '../utils.ts'
 
 // A raw token is a JWT and always contains dots, so a value of this form has
 // already been hashed. Skipping those keeps the migration safe to re-run.

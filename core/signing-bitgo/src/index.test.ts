@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
     isRpcError,
     type Error as RpcError,
     type KeyIdentifier,
 } from '@canton-network/core-signing-lib'
-import BitGoSigningDriver from './index.js'
-import type { BitGoConfig, BitGoTransaction } from './bitgo.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { BitGoConfig, BitGoTransaction } from './bitgo.ts'
+import BitGoSigningDriver from './index.ts'
 
 // ─── Fixtures ────────────────────────────────────────────────────────────────
 
@@ -38,8 +39,8 @@ const handlerMock = vi.hoisted(() => ({
     getWalletId: vi.fn(),
 }))
 
-vi.mock('./bitgo.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./bitgo.js')>()
+vi.mock('./bitgo.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./bitgo.ts')>()
     return {
         ...actual,
         BitGoHandler: vi.fn(function BitGoHandler() {
@@ -314,6 +315,21 @@ describe('BitGoSigningDriver', () => {
             expect(result.metadata).toBeUndefined()
         })
 
+        it('passes on the failure reason', async () => {
+            handlerMock.getTransaction.mockResolvedValueOnce({
+                txId: TX_REQUEST_ID,
+                status: 'rejected',
+                failureReason: 'BitGo rejected the signing request (canceled)',
+            })
+            const result = await createDriver()
+                .controller(undefined)
+                .getTransaction({ txId: TX_REQUEST_ID })
+            throwWhenRpcError(result)
+            expect(result.failureReason).toBe(
+                'BitGo rejected the signing request (canceled)'
+            )
+        })
+
         it('returns transaction_not_found when handler returns undefined', async () => {
             handlerMock.getTransaction.mockResolvedValueOnce(undefined)
             const result = await createDriver()
@@ -544,7 +560,7 @@ describe('BitGoSigningDriver', () => {
         })
 
         it('rebuilds handler after config update', async () => {
-            const { BitGoHandler } = await import('./bitgo.js')
+            const { BitGoHandler } = await import('./bitgo.ts')
             const callsBefore = (BitGoHandler as ReturnType<typeof vi.fn>).mock
                 .calls.length
 

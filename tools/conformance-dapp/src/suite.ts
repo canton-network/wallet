@@ -1,6 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    abortable,
+    performInteraction,
+    type TestProvider,
+} from '@canton-network/core-provider-conformance'
+import type { dappAPI } from '@canton-network/dapp-sdk'
+
 import packageJson from '../package.json' with { type: 'json' }
 import type { Config } from './config.ts'
 import {
@@ -9,12 +16,6 @@ import {
     type TestResult,
     type Observation,
 } from './report.ts'
-import {
-    abortable,
-    performInteraction,
-    type TestProvider,
-} from '@canton-network/core-provider-conformance'
-import type { dappAPI } from '@canton-network/dapp-sdk'
 import {
     describeError,
     isWalletError,

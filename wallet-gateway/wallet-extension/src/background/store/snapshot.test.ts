@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { createHash } from 'node:crypto'
+
 import {
     PartyLevelRight,
     UserLevelRight,
@@ -11,16 +13,17 @@ import {
     StoreInternal,
 } from '@canton-network/core-wallet-store-inmemory'
 import { describe, expect, it } from 'vitest'
-import { logger } from '@/shared/logger'
-import { defaultConfig } from './default-config'
+
+import { logger } from '@/shared/logger.ts'
+
+import { defaultConfig } from './default-config.ts'
 import {
     CorruptSnapshotError,
     decodeSnapshot,
     encodeSnapshot,
     type SnapshotV2,
     upgradeSnapshot,
-} from './snapshot'
-import { createHash } from 'node:crypto'
+} from './snapshot.ts'
 
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 const NETWORK_ID = 'canton:local-oauth'

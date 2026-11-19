@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Kysely, sql } from 'kysely'
-import type { DB } from '../schema.js'
-import { isPostgres } from '../utils.js'
+
+import type { DB } from '../schema.ts'
+import { isPostgres } from '../utils.ts'
 
 // Sessions still have access_token until migration 022 renames the column.
 type PreHashDB = Omit<DB, 'sessions'> & {

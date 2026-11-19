@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Alert, Box, Skeleton } from '@mui/material'
-import { OfferRowGrid, OfferRowShell } from './offer-row-layout'
 import type { OfferCategory, OfferItem } from '@hooks/useOffers'
-import { OfferRow } from './offer-row'
+import { Alert, Box, Skeleton } from '@mui/material'
+
+import { OfferRowGrid, OfferRowShell } from './offer-row-layout.tsx'
+import { OfferRow } from './offer-row.tsx'
 
 const OFFER_CATEGORY_LABELS = {
     transfers: 'transfer offers',

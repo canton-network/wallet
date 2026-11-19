@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { getLogger } from '@logtape/logtape'
+import { providerErrors } from '@canton-network/core-rpc-errors'
+import type { AccessToken } from '@canton-network/core-types'
 import {
     type AuthContext,
     type UserId,
@@ -9,7 +10,6 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
-import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store as BaseStore,
     Wallet,
@@ -38,6 +38,8 @@ import {
     hashReconstructedAccessToken,
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
+import { getLogger } from '@logtape/logtape'
+import Database from 'better-sqlite3'
 import {
     CamelCasePlugin,
     Kysely,
@@ -45,7 +47,8 @@ import {
     SqliteDialect,
     sql,
 } from 'kysely'
-import Database from 'better-sqlite3'
+import pg from 'pg'
+
 import {
     type DB,
     fromIdp,
@@ -64,9 +67,7 @@ import {
     fromApiKey,
     toApiKey,
     toSession,
-} from './schema.js'
-import pg from 'pg'
-import type { AccessToken } from '@canton-network/core-types'
+} from './schema.ts'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     private logger = getLogger(['core', 'wallet-store-sql', 'StoreSql'])
@@ -834,8 +835,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             ).map(toNetwork)
             assertUniqueSelfIssuedAudience(existing, network, network.id)
 
-            // we do not set a userId for now and leave all networks global when updating
-            const networkEntry = fromNetwork(network, undefined)
+            // An update keeps the owner of the network
+            const { userId: _userId, ...networkEntry } = fromNetwork(network)
             this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')
@@ -881,7 +882,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async removeNetwork(networkId: string): Promise<void> {
-        const userId = this.assertConnected()
+        this.assertConnected()
         await this.db.transaction().execute(async (trx) => {
             const network = await trx
                 .selectFrom('networks')
@@ -890,11 +891,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .executeTakeFirst()
             if (!network) {
                 throw new Error(`Network ${networkId} does not exists`)
-            }
-            if (network.userId !== userId) {
-                throw new Error(
-                    `Network ${networkId} is not owned by user ${userId}`
-                )
             }
             await trx
                 .deleteFrom('networks')

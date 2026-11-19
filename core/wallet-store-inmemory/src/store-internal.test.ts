@@ -1,10 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, test } from 'vitest'
 import { createHash } from 'node:crypto'
 
-import { StoreInternal, type StoreInternalConfig } from './store-internal'
+import {
+    SelfIssuedTokenService,
+    type AuthContext,
+    type AuthorizationCodeAuth,
+    type Idp,
+} from '@canton-network/core-wallet-auth'
 import {
     type Wallet,
     type NewSession,
@@ -17,13 +21,10 @@ import {
     PartyLevelRight,
     type ApiKey,
 } from '@canton-network/core-wallet-store'
-import {
-    SelfIssuedTokenService,
-    type AuthContext,
-    type AuthorizationCodeAuth,
-    type Idp,
-} from '@canton-network/core-wallet-auth'
 import { getLogger, type Logger } from '@logtape/logtape'
+import { beforeEach, describe, expect, test } from 'vitest'
+
+import { StoreInternal, type StoreInternalConfig } from './store-internal.ts'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',

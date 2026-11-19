@@ -8,6 +8,7 @@ import type {
 } from '@canton-network/core-provider-conformance'
 import type { RequestArgs as ProviderRequestArgs } from '@canton-network/core-types'
 import type { dappAPI } from '@canton-network/dapp-sdk'
+
 import type { Observation } from '../report.ts'
 
 export type RequestArgs<

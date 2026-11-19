@@ -4,7 +4,8 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import { AppLayout } from './app-layout.js'
+
+import { AppLayout } from './app-layout.ts'
 
 describe('app-layout', () => {
     afterEach(() => {
