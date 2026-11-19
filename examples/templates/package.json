@@ -1,0 +1,65 @@
+{
+    "name": "@canton-network/create",
+    "version": "1.0.0",
+    "type": "module",
+    "description": "Starter templates",
+    "license": "Apache-2.0",
+    "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "bin": "./dist/index.js",
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "dev": "NODE_ENV=development tsx --watch src/index.ts",
+        "clean": "rm -rf dist",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
+    },
+    "devDependencies": {
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "tsx": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    },
+    "dependencies": {
+        "@optique/core": "catalog:",
+        "@optique/clack": "catalog:",
+        "@optique/run": "catalog:",
+        "@optique/man": "catalog:"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "examples/templates"
+    },
+    "homepage": "https://github.com/canton-network/wallet/tree/main/examples/templates#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "files": [
+        "dist/**",
+        "src/templates/**"
+    ],
+    "createConfig": {
+        "templates": [
+            {
+                "name": "dapp-react",
+                "description": "React dApp",
+                "template": "./src/templates/dapp/react"
+            },
+            {
+                "name": "dapp-vue",
+                "description": "Vue dApp",
+                "template": "./src/templates/dapp/vue"
+            },
+            {
+                "name": "dapp-lit",
+                "description": "Lit dApp",
+                "template": "./src/templates/dapp/lit"
+            }
+        ]
+    }
+}

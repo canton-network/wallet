@@ -8,6 +8,9 @@
 //    or `workspace:^` (everything else) and is never part of a catalog
 //  - the catalog entries in pnpm-workspace.yaml are sorted alphabetically
 //
+// Template manifests are excluded because they are copied out of the workspace
+// and must contain resolvable versions rather than pnpm-only specifiers.
+//
 // `pnpm add` under `catalogMode: strict` puts workspace packages into the
 // catalog. Run this script with --fix afterwards to turn those into workspace
 // dependencies, sort the catalog and update the lockfile.
@@ -28,6 +31,7 @@ const DEPENDENCY_FIELDS = [
 const fix = process.argv.includes('--fix')
 const root = getRepoRoot()
 const workspaceFile = join(root, 'pnpm-workspace.yaml')
+const templateRoot = 'examples/templates/src/templates/'
 
 type Manifest = Partial<
     Record<(typeof DEPENDENCY_FIELDS)[number], Record<string, string>>
@@ -55,6 +59,7 @@ const manifestFiles = execSync(
 )
     .split('\n')
     .filter(Boolean)
+    .filter((file) => !file.startsWith(templateRoot))
 
 const workspaceNames = new Set(
     (

@@ -1,0 +1,20 @@
+{
+    "name": "canton-dapp-lit",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "tsc && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@canton-network/dapp-sdk": "^1.10.0",
+        "@walletconnect/sign-client": "^2.26.0",
+        "lit": "^3.3.3"
+    },
+    "devDependencies": {
+        "typescript": "~7.0.2",
+        "vite": "^8.3.8"
+    }
+}

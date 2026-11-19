@@ -1,0 +1,14 @@
+{
+    "extends": "../../tsconfig.base.json",
+    "compilerOptions": {
+        "noUncheckedIndexedAccess": true,
+        "noImplicitAny": true,
+        "types": ["node"]
+    },
+    "exclude": [
+        "${configDir}/dist",
+        "${configDir}/build",
+        "${configDir}/out-tsc",
+        "${configDir}/src/templates"
+    ]
+}
