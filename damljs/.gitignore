@@ -12,4 +12,3 @@ canton-traffic-credit/*
 traffic-purchase-models/*
 !traffic-purchase-models/daml.yaml
 !traffic-purchase-models/daml/
-

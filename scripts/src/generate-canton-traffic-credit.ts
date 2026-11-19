@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import * as path from 'path'
-import { getRepoRoot } from './lib/utils.js'
-import { installDPM } from './install-dpm.js'
+
+import { installDPM } from './install-dpm.ts'
 import {
     cleanGeneratedDamlJsPackages,
     runDamlBuild,
     runDamlCodegen,
-} from './lib/daml-codegen.js'
+} from './lib/daml-codegen.ts'
+import { getRepoRoot } from './lib/utils.ts'
 
 const repoRoot = getRepoRoot()
 
