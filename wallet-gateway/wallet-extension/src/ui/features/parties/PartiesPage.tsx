@@ -9,6 +9,7 @@ import {
 } from '@canton-network/core-wallet-ui-components/react'
 import { useToast } from '@canton-network/core-wallet-ui-components/react'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
+import AccountBalanceWalletOutlined from '@mui/icons-material/AccountBalanceWalletOutlined'
 import Add from '@mui/icons-material/Add'
 import Alert from '@mui/material/Alert'
 import { useQuery } from '@tanstack/react-query'
@@ -66,6 +67,13 @@ export function PartiesPage({ createPartyStatus }: PartiesPageProps) {
                     syncing={sync.isPending}
                     onWalletsSync={() => sync.mutate()}
                 />
+                <ButtonLink
+                    to="/assets"
+                    size="small"
+                    startIcon={<AccountBalanceWalletOutlined />}
+                >
+                    Assets
+                </ButtonLink>
                 <ButtonLink
                     to="/parties/add"
                     variant="contained"

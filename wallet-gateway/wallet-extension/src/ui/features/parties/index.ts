@@ -5,5 +5,6 @@
 // isn't supported by the background yet.
 // Ported from extension/entrypoints/parties{,-add} and remote/.../parties.
 
+export { walletsQuery } from './api'
 export { AddPartyPage } from './AddPartyPage'
 export { PartiesPage } from './PartiesPage'
