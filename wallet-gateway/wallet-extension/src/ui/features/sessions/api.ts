@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Session } from '@canton-network/core-wallet-user-rpc-client'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import {
     queryOptions,
     useMutation,
@@ -69,6 +70,7 @@ export function useConnect() {
             )
             // if changing users or networks, then we dont want to keep the old wallet queries in the cache
             await queryClient.resetQueries({ queryKey: queryKeys.wallets.all })
+            await queryClient.resetQueries({ queryKey: tokenQueryKeys.all })
 
             await queryClient.invalidateQueries({
                 queryKey: queryKeys.sessions.list(),
