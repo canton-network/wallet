@@ -7,7 +7,8 @@ export {
     HashMismatchError,
     type ClearSigningResult,
 } from './clear-sign.ts'
-export type { Descriptor } from './descriptor.ts'
+export { parseDescriptorText, type Descriptor } from './descriptor.ts'
+export { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 export {
     signDescriptor,
     signingMessage,

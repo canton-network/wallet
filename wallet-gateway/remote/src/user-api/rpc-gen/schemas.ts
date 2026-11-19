@@ -1127,10 +1127,9 @@ export const paramSchemas: Record<string, z.ZodType> = {
         properties: {
             descriptor: {
                 title: 'ClearSigningDescriptor',
-                type: 'object',
-                additionalProperties: true,
+                type: 'string',
                 description:
-                    'A clear-signing descriptor. It must name a template in context.template, and every signature must verify against the public key in that signature.',
+                    'The descriptor JSON text. It must parse without duplicate member names, be valid against the clear-signing schema, name a template, and carry signatures that verify against the public keys they contain.',
             },
         },
         required: ['descriptor'],

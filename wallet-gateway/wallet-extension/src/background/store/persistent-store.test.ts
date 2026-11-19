@@ -130,7 +130,7 @@ describe('persistent wallet store', () => {
                 packageId: 'pkg',
                 moduleName: 'Mod',
                 entityName: 'Ent',
-                descriptor: {},
+                descriptor: '{}',
             })
         ).rejects.toMatchObject({ code: errorCodes.rpc.methodNotSupported })
 

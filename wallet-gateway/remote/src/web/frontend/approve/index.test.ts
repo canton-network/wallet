@@ -22,72 +22,78 @@ import {
 // The example Ping descriptor (core/tx-clear-signing/examples/descriptors/ping.json),
 // at the version this page's fixture uses. Stored here so this project does not import a file
 // outside its TypeScript program. Signed with the reference key, which clearSign trusts.
-const pingDescriptor = await signWithReferenceKey({
-    $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
-    context: {
-        template: {
-            packageId:
-                'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54',
-            moduleName: 'Canton.Internal.Ping',
-            entityName: 'Ping',
+const pingDescriptor = JSON.stringify(
+    await signWithReferenceKey({
+        $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
+        context: {
+            template: {
+                packageId:
+                    'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54',
+                moduleName: 'Canton.Internal.Ping',
+                entityName: 'Ping',
+            },
         },
-    },
-    metadata: {
-        version: '1.2.0',
-        publisher: 'Blockdaemon',
-        name: 'Canton ping',
-    },
-    display: {
-        create: {
-            intent: 'Ping',
-            interpolatedIntent: 'Ping {id} from {initiator} to {responder}',
-            fields: [
-                { path: 'id', label: 'Ping ID', format: 'string' },
-                { path: 'initiator', label: 'Initiator', format: 'party' },
-                { path: 'responder', label: 'Responder', format: 'party' },
+        metadata: {
+            version: '1.2.0',
+            publisher: 'Blockdaemon',
+            name: 'Canton ping',
+        },
+        display: {
+            create: {
+                intent: 'Ping',
+                interpolatedIntent: 'Ping {id} from {initiator} to {responder}',
+                fields: [
+                    { path: 'id', label: 'Ping ID', format: 'string' },
+                    { path: 'initiator', label: 'Initiator', format: 'party' },
+                    { path: 'responder', label: 'Responder', format: 'party' },
+                ],
+            },
+            exercises: [
+                {
+                    choice: 'Respond',
+                    intent: 'Respond to ping',
+                    interpolatedIntent:
+                        'Respond to ping {@.contract.id} from {@.contract.initiator}',
+                    fields: [
+                        {
+                            path: '@.contract.id',
+                            label: 'Ping ID',
+                            format: 'string',
+                        },
+                        {
+                            path: '@.contract.initiator',
+                            label: 'Initiator',
+                            format: 'party',
+                        },
+                    ],
+                },
+                {
+                    choice: 'AbortPing',
+                    intent: 'Abort ping',
+                    interpolatedIntent:
+                        'Abort ping {@.contract.id} from {@.contract.initiator}, as {anyone}',
+                    fields: [
+                        {
+                            path: '@.contract.id',
+                            label: 'Ping ID',
+                            format: 'string',
+                        },
+                        {
+                            path: '@.contract.initiator',
+                            label: 'Initiator',
+                            format: 'party',
+                        },
+                        {
+                            path: 'anyone',
+                            label: 'Aborted by',
+                            format: 'party',
+                        },
+                    ],
+                },
             ],
         },
-        exercises: [
-            {
-                choice: 'Respond',
-                intent: 'Respond to ping',
-                interpolatedIntent:
-                    'Respond to ping {@.contract.id} from {@.contract.initiator}',
-                fields: [
-                    {
-                        path: '@.contract.id',
-                        label: 'Ping ID',
-                        format: 'string',
-                    },
-                    {
-                        path: '@.contract.initiator',
-                        label: 'Initiator',
-                        format: 'party',
-                    },
-                ],
-            },
-            {
-                choice: 'AbortPing',
-                intent: 'Abort ping',
-                interpolatedIntent:
-                    'Abort ping {@.contract.id} from {@.contract.initiator}, as {anyone}',
-                fields: [
-                    {
-                        path: '@.contract.id',
-                        label: 'Ping ID',
-                        format: 'string',
-                    },
-                    {
-                        path: '@.contract.initiator',
-                        label: 'Initiator',
-                        format: 'party',
-                    },
-                    { path: 'anyone', label: 'Aborted by', format: 'party' },
-                ],
-            },
-        ],
-    },
-})
+    })
+)
 
 // A fetch root decodes and hashes. clearSign reports it as undescribable, because only a create or
 // an exercise root is described. An empty prepared transaction cannot be hashed, which would also

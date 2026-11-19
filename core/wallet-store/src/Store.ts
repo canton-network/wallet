@@ -305,7 +305,7 @@ export interface Store {
 
     // Clear-signing descriptors. One row per template version: the same module
     // and entity can be stored again when the package id differs.
-    listClearSigningDescriptors(): Promise<Array<Record<string, unknown>>>
+    listClearSigningDescriptors(): Promise<string[]>
     setClearSigningDescriptor(descriptor: ClearSigningDescriptor): Promise<void>
     removeClearSigningDescriptor(key: ClearSigningDescriptorKey): Promise<void>
 }
@@ -319,5 +319,6 @@ export interface ClearSigningDescriptorKey {
 
 /** A clear-signing descriptor document stored for one template version. */
 export interface ClearSigningDescriptor extends ClearSigningDescriptorKey {
-    descriptor: Record<string, unknown>
+    /** The descriptor JSON text, exactly as it was uploaded. */
+    descriptor: string
 }

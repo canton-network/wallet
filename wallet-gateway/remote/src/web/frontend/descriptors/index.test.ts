@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Descriptor } from '@canton-network/core-tx-clear-signing'
+import { parseDescriptorText } from '@canton-network/core-tx-clear-signing'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -20,13 +20,18 @@ vi.mock('../rpc-client.ts', () => ({
 import './index.ts'
 import type { UserUiDescriptors } from './index.ts'
 
+const PONG = 'ab'.repeat(32)
+const PKG_1 = '11'.repeat(32)
+const PKG_2 = '22'.repeat(32)
+
 function named(
     packageId: string,
     entityName: string,
     name: string,
-    display: unknown = {}
-): Descriptor {
-    return {
+    display: unknown = { create: { intent: 'Create it' } }
+): string {
+    return JSON.stringify({
+        $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
         context: {
             template: {
                 packageId,
@@ -34,12 +39,12 @@ function named(
                 entityName,
             },
         },
-        metadata: { version: '1', publisher: 'test', name },
+        metadata: { version: '1.0.0', publisher: 'test', name },
         display,
-    } as Descriptor
+    })
 }
 
-const pong = named('pkg-pong', 'Pong', 'Uploaded pong')
+const pong = named(PONG, 'Pong', 'Uploaded pong')
 
 async function render(): Promise<UserUiDescriptors> {
     const el = await fixture<UserUiDescriptors>(
@@ -83,7 +88,7 @@ function jsonFile(path: string, contents: string): File {
 }
 
 describe('descriptors page', () => {
-    let stored: Descriptor[]
+    let stored: string[]
 
     beforeEach(() => {
         stored = []
@@ -95,7 +100,7 @@ describe('descriptors page', () => {
             }: {
                 method: string
                 params?: {
-                    descriptor?: Descriptor
+                    descriptor?: string
                     packageId?: string
                     moduleName?: string
                     entityName?: string
@@ -107,31 +112,31 @@ describe('descriptors page', () => {
                 if (method === 'setClearSigningDescriptor') {
                     const descriptor = params?.descriptor
                     if (!descriptor) throw new Error('missing descriptor')
-                    const key = descriptor.context.template
+                    const key = parseDescriptorText(descriptor).context.template
                     stored = [
-                        ...stored.filter(
-                            (item) =>
-                                item.context.template.packageId !==
-                                    key.packageId ||
-                                item.context.template.moduleName !==
-                                    key.moduleName ||
-                                item.context.template.entityName !==
-                                    key.entityName
-                        ),
+                        ...stored.filter((item) => {
+                            const template =
+                                parseDescriptorText(item).context.template
+                            return (
+                                template.packageId !== key.packageId ||
+                                template.moduleName !== key.moduleName ||
+                                template.entityName !== key.entityName
+                            )
+                        }),
                         descriptor,
                     ]
                     return { descriptor }
                 }
                 if (method === 'removeClearSigningDescriptor') {
-                    stored = stored.filter(
-                        (item) =>
-                            item.context.template.packageId !==
-                                params?.packageId ||
-                            item.context.template.moduleName !==
-                                params?.moduleName ||
-                            item.context.template.entityName !==
-                                params?.entityName
-                    )
+                    stored = stored.filter((item) => {
+                        const template =
+                            parseDescriptorText(item).context.template
+                        return (
+                            template.packageId !== params?.packageId ||
+                            template.moduleName !== params?.moduleName ||
+                            template.entityName !== params?.entityName
+                        )
+                    })
                     return null
                 }
                 throw new Error(`unexpected method ${method}`)
@@ -147,14 +152,14 @@ describe('descriptors page', () => {
 
     it('adds pasted JSON and deletes it', async () => {
         const el = await render()
-        await paste(el, JSON.stringify(pong))
+        await paste(el, pong)
 
         expect(el.problems).toEqual([])
         expect(el.pasted).toBe('')
         const card = [
             ...el.shadowRoot!.querySelectorAll('section.descriptor'),
         ].find((c) => c.textContent?.includes('Uploaded pong'))!
-        expect(card.textContent).toContain('pkg-pong')
+        expect(card.textContent).toContain(PONG)
 
         const remove = [...card.querySelectorAll('button')].find(
             (b) => b.textContent?.trim() === 'Delete'
@@ -166,20 +171,28 @@ describe('descriptors page', () => {
         )
     })
 
-    it('still lists a descriptor whose exercises field is not a list', async () => {
+    it('rejects a descriptor whose exercises field is not a list', async () => {
         const el = await render()
         await paste(
             el,
-            JSON.stringify({
-                ...pong,
-                display: { exercises: { Respond: { intent: 'Respond' } } },
+            named(PONG, 'Pong', 'Uploaded pong', {
+                exercises: { Respond: { intent: 'Respond' } },
             })
         )
 
-        expect(el.shadowRoot!.textContent).toContain(
-            'Clear-signing descriptors'
+        expect(el.problems.join('\n')).toContain('pasted JSON:')
+        expect(el.shadowRoot!.textContent).not.toContain('Uploaded pong')
+    })
+
+    it('rejects a descriptor that repeats a member name', async () => {
+        const el = await render()
+        await paste(
+            el,
+            `{"context":{"template":{"packageId":"${PONG}","moduleName":"Canton.Internal.Ping","entityName":"Pong"}},"context":{"template":{"packageId":"${PONG}","moduleName":"Canton.Internal.Ping","entityName":"Pong"}}}`
         )
-        expect(el.shadowRoot!.textContent).toContain('Uploaded pong')
+
+        expect(el.problems.join('\n')).toContain("duplicate key 'context'")
+        expect(el.descriptors).toEqual([])
     })
 
     it('shows why a descriptor is rejected', async () => {
@@ -188,10 +201,10 @@ describe('descriptors page', () => {
 
         expect(
             el.shadowRoot!.querySelector('.alert-danger')?.textContent
-        ).toContain('descriptor has no template')
+        ).toContain('invalid clear-signing descriptor')
 
         await paste(el, '{ not json')
-        expect(el.problems).toEqual(['pasted JSON: not valid JSON'])
+        expect(el.problems[0]).toContain('pasted JSON:')
     })
 
     it('uploads every JSON file in a directory', async () => {
@@ -200,13 +213,10 @@ describe('descriptors page', () => {
             '#descriptor-directory'
         ) as HTMLInputElement
         const files = [
-            jsonFile(
-                'descriptors/ping.json',
-                JSON.stringify(named('pkg-1', 'Ping', 'Ping one'))
-            ),
+            jsonFile('descriptors/ping.json', named(PKG_1, 'Ping', 'Ping one')),
             jsonFile(
                 'descriptors/v2/ping.json',
-                JSON.stringify(named('pkg-2', 'Ping', 'Ping two'))
+                named(PKG_2, 'Ping', 'Ping two')
             ),
             jsonFile('descriptors/notes.txt', 'not json'),
             jsonFile('descriptors/bad.json', '{'),
@@ -221,12 +231,10 @@ describe('descriptors page', () => {
         await el.updateComplete
 
         expect(el.shadowRoot!.textContent).toContain('Ping one')
-        expect(el.shadowRoot!.textContent).toContain('pkg-1')
+        expect(el.shadowRoot!.textContent).toContain(PKG_1)
         expect(el.shadowRoot!.textContent).toContain('Ping two')
-        expect(el.shadowRoot!.textContent).toContain('pkg-2')
-        expect(el.problems.join('\n')).toContain(
-            'descriptors/bad.json: not valid JSON'
-        )
+        expect(el.shadowRoot!.textContent).toContain(PKG_2)
+        expect(el.problems.join('\n')).toContain('descriptors/bad.json:')
         expect(el.problems.join('\n')).toContain('descriptors/empty.json')
         expect(el.problems.join('\n')).not.toContain('notes.txt')
         expect(showToast).toHaveBeenCalledWith(

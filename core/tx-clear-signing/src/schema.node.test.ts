@@ -7,7 +7,7 @@ import { describe, expect, it } from 'vitest'
 
 import schema from '../canton-clear-signing-v1.schema.json'
 import ping from '../examples/descriptors/ping.json'
-import { parseDescriptor } from './descriptor.ts'
+import { parseDescriptor, parseDescriptorText } from './descriptor.ts'
 import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
     SHARED_CONTAINER_FIELDS,
@@ -16,6 +16,7 @@ import {
     ED25519_PUBLIC_KEY_PATTERN,
     ED25519_SIGNATURE_PATTERN,
 } from './signature.ts'
+import { parseJsonStrict } from './strict-json.ts'
 
 const valid = {
     ...import.meta.glob('../examples/descriptors/*.json', {
@@ -30,7 +31,8 @@ const valid = {
 const invalid = import.meta.glob('../examples/descriptors/invalid/*.json', {
     eager: true,
     import: 'default',
-}) as Record<string, unknown>
+    query: '?raw',
+}) as Record<string, string>
 
 const ajv = new Ajv2020({
     allErrors: true,
@@ -62,9 +64,14 @@ describe('schema conformance', () => {
         expect(() => parseDescriptor(json)).not.toThrow()
     })
 
-    it.each(Object.entries(invalid))('rejects %s', (name, json) => {
-        expect(validate(json), name).toBe(false)
-        expect(() => parseDescriptor(json)).toThrow()
+    it.each(Object.entries(invalid))('rejects %s', (name, text) => {
+        expect(() => parseDescriptorText(text)).toThrow()
+        try {
+            const json = parseJsonStrict(text)
+            expect(validate(json), name).toBe(false)
+        } catch {
+            // The text is not I-JSON, so the schema never sees a value.
+        }
     })
 
     it('accepts an optional interface package ID', () => {

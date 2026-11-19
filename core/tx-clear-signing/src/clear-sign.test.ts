@@ -822,8 +822,9 @@ describe('clearSign', () => {
     it('reports a descriptor with no trusted signature as unverified', async () => {
         const { signatures: _removed, ...unsigned } = pingJson
         const hash = await hashEither(builtinPingCreate)
-        const [op] = (await clearSign(builtinPingCreate, [unsigned], hash))
-            .operations
+        const [op] = (
+            await clearSign(builtinPingCreate, [JSON.stringify(unsigned)], hash)
+        ).operations
         expect(op).toMatchObject({
             status: 'unverified',
             intent: 'Create Canton.Internal.Ping:Ping',
@@ -842,7 +843,7 @@ describe('clearSign', () => {
             await crypto.subtle.exportKey('jwk', pair.privateKey)
         )
         const [untrusted] = (
-            await clearSign(builtinPingCreate, [foreign], hash)
+            await clearSign(builtinPingCreate, [JSON.stringify(foreign)], hash)
         ).operations
         expect(untrusted).toMatchObject({
             status: 'unverified',
@@ -851,13 +852,43 @@ describe('clearSign', () => {
         expect(untrusted).not.toHaveProperty('descriptor')
     })
 
+    it('reports a duplicate key on the root it binds to', async () => {
+        const template = JSON.stringify(ping.context.template)
+        const text = `{"context":{"template":${template}},"context":{"template":${template}},"metadata":{"version":"1.0.0","publisher":"t","name":"n"},"display":{"create":{"intent":"Ping"}}}`
+        const [op] = (
+            await clearSign(
+                builtinPingCreate,
+                [text],
+                await hashEither(builtinPingCreate)
+            )
+        ).operations
+        expect(op).toMatchObject({
+            status: 'invalid',
+            intent: 'Create Canton.Internal.Ping:Ping',
+            fields: [],
+            reason: "duplicate key 'context' at $",
+        })
+        expect(op).not.toHaveProperty('descriptor')
+    })
+
+    it('ignores a duplicate-key descriptor that binds to no root', async () => {
+        const other =
+            '{"context":{"template":{"packageId":"aa","moduleName":"M","entityName":"Other"}},"context":{"template":{"packageId":"aa","moduleName":"M","entityName":"Other"}}}'
+        const result = await clearSign(
+            builtinPingCreate,
+            [other, JSON.stringify(await signWithReferenceKey(ping))],
+            await hashEither(builtinPingCreate)
+        )
+        expect(result.complete).toBe(true)
+    })
+
     it('reports an unsigned malformed descriptor as unverified', async () => {
         const { signatures: _removed, ...unsigned } = pingJson
         const hash = await hashEither(builtinPingCreate)
         const [op] = (
             await clearSign(
                 builtinPingCreate,
-                [{ ...unsigned, display: {} }],
+                [JSON.stringify({ ...unsigned, display: {} })],
                 hash
             )
         ).operations
@@ -880,7 +911,10 @@ describe('clearSign', () => {
         }
         const result = await clearSign(
             builtinPingCreate,
-            [other, await signWithReferenceKey(ping)],
+            [
+                JSON.stringify(other),
+                JSON.stringify(await signWithReferenceKey(ping)),
+            ],
             await hashEither(builtinPingCreate)
         )
         expect(result.complete).toBe(true)
@@ -889,7 +923,11 @@ describe('clearSign', () => {
     it('checks the prepared-transaction hash before the signatures', async () => {
         const { signatures: _removed, ...unsigned } = pingJson
         await expect(
-            clearSign(builtinPingCreate, [unsigned], 'bm90LWEgaGFzaA==')
+            clearSign(
+                builtinPingCreate,
+                [JSON.stringify(unsigned)],
+                'bm90LWEgaGFzaA=='
+            )
         ).rejects.toThrow(HashMismatchError)
     })
 
@@ -922,7 +960,11 @@ describe('clearSign', () => {
 
     it('rejects a transaction that does not have the expected hash', async () => {
         await expect(
-            clearSign(builtinPingCreate, [ping], 'bm90LWEgaGFzaA==')
+            clearSign(
+                builtinPingCreate,
+                [JSON.stringify(ping)],
+                'bm90LWEgaGFzaA=='
+            )
         ).rejects.toThrow(HashMismatchError)
     })
 
@@ -1033,7 +1075,7 @@ describe('clearSign', () => {
         tx.transaction!.nodeSeeds = []
         const unseeded = encode(tx)
         await expect(
-            clearSign(unseeded, [ping], 'bm90LWEgaGFzaA==')
+            clearSign(unseeded, [JSON.stringify(ping)], 'bm90LWEgaGFzaA==')
         ).rejects.toThrow(/has no seed/)
     })
 })

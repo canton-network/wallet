@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Descriptor } from '@canton-network/core-tx-clear-signing'
+import {
+    parseDescriptorText,
+    parseJsonStrict,
+    type Descriptor,
+} from '@canton-network/core-tx-clear-signing'
 import { BaseElement } from '@canton-network/core-wallet-ui-components'
 import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
@@ -27,13 +31,26 @@ function choiceLabel(entry: unknown): string {
         : choice
 }
 
+function descriptorName(text: string): string {
+    try {
+        const json = parseJsonStrict(text) as {
+            metadata?: { name?: unknown }
+        }
+        return typeof json.metadata?.name === 'string'
+            ? json.metadata.name
+            : 'descriptor'
+    } catch {
+        return 'descriptor'
+    }
+}
+
 function fileOrigin(file: File): string {
     return file.webkitRelativePath || file.name
 }
 
 @customElement('user-ui-descriptors')
 export class UserUiDescriptors extends BaseElement {
-    @state() accessor descriptors: Descriptor[] = []
+    @state() accessor descriptors: string[] = []
     @state() accessor pasted = ''
     /** Why the last upload was rejected, one line per problem. */
     @state() accessor problems: string[] = []
@@ -106,9 +123,9 @@ export class UserUiDescriptors extends BaseElement {
     }
 
     /** Stores one descriptor. A failure is recorded against `origin` and does not stop a batch. */
-    private async storeOne(json: unknown, origin: string): Promise<boolean> {
+    private async storeOne(text: string, origin: string): Promise<boolean> {
         try {
-            await addDescriptor(json)
+            await addDescriptor(text)
             return true
         } catch (error) {
             const message =
@@ -120,24 +137,14 @@ export class UserUiDescriptors extends BaseElement {
 
     private async addPasted() {
         this.problems = []
-        try {
-            const json: unknown = JSON.parse(this.pasted)
-            if (await this.storeOne(json, 'pasted JSON')) {
-                this.pasted = ''
-                const name =
-                    json !== null &&
-                    typeof json === 'object' &&
-                    'metadata' in json &&
-                    json.metadata !== null &&
-                    typeof json.metadata === 'object' &&
-                    'name' in json.metadata &&
-                    typeof json.metadata.name === 'string'
-                        ? json.metadata.name
-                        : 'descriptor'
-                showToast('', `Added '${name}' (pasted JSON)`, 'success')
-            }
-        } catch {
-            this.problems = ['pasted JSON: not valid JSON']
+        const text = this.pasted
+        if (await this.storeOne(text, 'pasted JSON')) {
+            this.pasted = ''
+            showToast(
+                '',
+                `Added '${descriptorName(text)}' (pasted JSON)`,
+                'success'
+            )
         }
         await this.reload()
     }
@@ -167,14 +174,8 @@ export class UserUiDescriptors extends BaseElement {
         let added = 0
         for (const file of files) {
             const origin = fileOrigin(file)
-            try {
-                if (
-                    await this.storeOne(JSON.parse(await file.text()), origin)
-                ) {
-                    added++
-                }
-            } catch {
-                this.problems = [...this.problems, `${origin}: not valid JSON`]
+            if (await this.storeOne(await file.text(), origin)) {
+                added++
             }
         }
         const rejected = this.problems.length
@@ -186,14 +187,10 @@ export class UserUiDescriptors extends BaseElement {
         await this.reload()
     }
 
-    private async deleteUpload(d: Descriptor) {
+    private async deleteUpload(text: string) {
         try {
-            await removeDescriptor(d)
-            showToast(
-                '',
-                `Removed '${d.metadata?.name ?? 'descriptor'}'`,
-                'success'
-            )
+            await removeDescriptor(text)
+            showToast('', `Removed '${descriptorName(text)}'`, 'success')
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : String(error)
@@ -207,14 +204,15 @@ export class UserUiDescriptors extends BaseElement {
             <h1 class="h4 fw-semibold">Clear-signing descriptors</h1>
             <p class="text-body-secondary small">
                 Descriptors are stored for your account and start empty. An
-                upload is kept when it names a template and every signature on
-                it verifies against the public key in that signature. At least
-                one signature is required. One for the same package, module and
+                upload is kept when it is valid against the clear-signing
+                schema, does not repeat a member name, and every signature on it
+                verifies against the public key in that signature. At least one
+                signature is required. One for the same package, module and
                 entity replaces the stored one, so two package versions of a
                 template can both be kept. The approve page accepts a stored
                 descriptor when those signatures are from a trusted key. A
-                descriptor that is not valid, or not signed by a trusted key, is
-                reported there and does not supply the sentence.
+                descriptor that is not signed by a trusted key is reported there
+                and does not supply the sentence.
             </p>
 
             <section class="upload">
@@ -285,13 +283,13 @@ export class UserUiDescriptors extends BaseElement {
                 }
             </section>
 
-            ${this.descriptors.map((descriptor) => this.renderCard(descriptor))}
+            ${this.descriptors.map((text) => this.renderCard(text))}
         `
     }
 
-    private renderCard(descriptor: Descriptor) {
+    private renderCard(text: string) {
         try {
-            return this.renderDescriptor(descriptor)
+            return this.renderDescriptor(text, parseDescriptorText(text))
         } catch (error) {
             const message =
                 error instanceof Error ? error.message : String(error)
@@ -301,7 +299,7 @@ export class UserUiDescriptors extends BaseElement {
         }
     }
 
-    private renderDescriptor(descriptor: Descriptor) {
+    private renderDescriptor(text: string, descriptor: Descriptor) {
         // An upload is kept once it names a template, so exercises may not be a list.
         // Mapping a non-list throws, and Lit then draws no cards at all.
         const shown = descriptor as {
@@ -355,14 +353,13 @@ export class UserUiDescriptors extends BaseElement {
                 </dl>
                 <details>
                     <summary class="small">JSON</summary>
-                    <pre class="mb-0">
-${JSON.stringify(descriptor, null, 2)}</pre>
+                    <pre class="mb-0">${text}</pre>
                 </details>
                 <div>
                     <button
                         class="btn btn-outline-danger btn-sm rounded-pill"
                         type="button"
-                        @click=${() => this.deleteUpload(descriptor)}
+                        @click=${() => this.deleteUpload(text)}
                     >
                         Delete
                     </button>

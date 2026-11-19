@@ -10,6 +10,7 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { parseJsonStrict } from '../src/strict-json.ts'
 import { signWithReferenceKey } from '../src/testing/reference-key.ts'
 
 const root = dirname(fileURLToPath(import.meta.url))
@@ -24,10 +25,15 @@ for (const directory of directories) {
     )
     for (const name of names) {
         const path = join(directory, name)
-        const json = JSON.parse(await readFile(path, 'utf8')) as Record<
-            string,
-            unknown
-        >
+        const parsed = parseJsonStrict(await readFile(path, 'utf8'))
+        if (
+            typeof parsed !== 'object' ||
+            parsed === null ||
+            Array.isArray(parsed)
+        ) {
+            throw new Error(`${path} is not a JSON object`)
+        }
+        const json = parsed as Record<string, unknown>
         delete json.signatures
         const signed = await signWithReferenceKey(json)
         await writeFile(path, `${JSON.stringify(signed, null, 4)}\n`)

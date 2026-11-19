@@ -107,7 +107,11 @@ export async function described(
     descriptors: readonly unknown[]
 ): Promise<ClearSigningResult> {
     const signed = await Promise.all(descriptors.map(attest))
-    return clearSign(tx, signed, await hashEither(tx))
+    return clearSign(
+        tx,
+        signed.map((value) => JSON.stringify(value)),
+        await hashEither(tx)
+    )
 }
 
 async function attest(json: unknown): Promise<unknown> {

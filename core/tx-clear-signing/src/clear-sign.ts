@@ -45,6 +45,7 @@ import {
     type TemplateRef,
 } from './roots.ts'
 import { verifySignatures } from './signature.ts'
+import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 import { TRUSTED_KEYS } from './trusted-keys.ts'
 
 /** Shown when an interpolated intent cannot be filled from the transaction. */
@@ -133,14 +134,14 @@ export class HashMismatchError extends Error {
  * described only when it hashes to `expectedHash`.
  *
  * @param tx - the prepared transaction, base64-encoded
- * @param descriptors - clear-signing descriptors; any number, valid or not
+ * @param descriptors - clear-signing descriptors as JSON text; any number, valid or not
  * @param expectedHash - the hash the user is asked to approve, base64-encoded
  * @throws HashMismatchError when the transaction does not hash to `expectedHash`
  * @throws Error when the transaction cannot be hashed or is malformed
  */
 export async function clearSign(
     tx: string,
-    descriptors: readonly unknown[],
+    descriptors: readonly string[],
     expectedHash: string
 ): Promise<ClearSigningResult> {
     const matches = await hashesTo(tx, expectedHash)
@@ -171,7 +172,7 @@ type Binding =
     | { problems: readonly string[] }
 
 async function bindDescriptors(
-    descriptors: readonly unknown[],
+    descriptors: readonly string[],
     roots: readonly Header[]
 ): Promise<Map<string, Binding>> {
     const rootKeys = new Set(
@@ -180,19 +181,47 @@ async function bindDescriptors(
         )
     )
     const bindings = new Map<string, Binding>()
-    for (const json of descriptors) {
-        const template = readTemplate(json)
-        const key = template && templateKey(template)
-        if (!key || !rootKeys.has(key)) continue
-        if (bindings.has(key)) {
-            bindings.set(key, {
-                problems: [`more than one descriptor for template '${key}'`],
+    for (const text of descriptors) {
+        let json: unknown
+        try {
+            json = parseJsonStrict(text)
+        } catch (err) {
+            if (!(err instanceof StrictJsonError)) throw err
+            // The text is not the document that would be signed. JSON.parse only locates the
+            // template the duplicate or the bad text would have been bound to.
+            setBinding(bindings, rootKeys, readTemplate(lenientJson(text)), {
+                problems: [err.message],
             })
             continue
         }
-        bindings.set(key, await bind(json))
+        setBinding(bindings, rootKeys, readTemplate(json), await bind(json))
     }
     return bindings
+}
+
+function setBinding(
+    bindings: Map<string, Binding>,
+    rootKeys: ReadonlySet<string>,
+    template: TemplateRef | undefined,
+    binding: Binding
+): void {
+    const key = template && templateKey(template)
+    if (!key || !rootKeys.has(key)) return
+    if (bindings.has(key)) {
+        bindings.set(key, {
+            problems: [`more than one descriptor for template '${key}'`],
+        })
+        return
+    }
+    bindings.set(key, binding)
+}
+
+function lenientJson(text: string): unknown {
+    try {
+        return JSON.parse(text)
+    } catch {
+        return undefined
+    }
 }
 
 /** Signatures first. An unsigned descriptor is `unverified` even when the rest would not parse. */

@@ -4,7 +4,11 @@
 // Captured Splice fixtures for splice-contracts.test.ts, and the reference descriptors those tests
 // describe them with. Each fixture is a prepared transaction from a local Canton.
 
-import { type Descriptor, parseDescriptor } from '../descriptor.ts'
+import {
+    parseDescriptor,
+    parseDescriptorText,
+    type Descriptor,
+} from '../descriptor.ts'
 import { signWithReferenceKey } from '../testing/reference-key.ts'
 
 interface Fixture {
@@ -22,8 +26,8 @@ const fixtureFiles = import.meta.glob<Fixture>('./fixtures/splice/*.json', {
 })
 const descriptorFiles = import.meta.glob(
     '../../examples/descriptors/splice/*.json',
-    { eager: true, import: 'default' }
-)
+    { eager: true, import: 'default', query: '?raw' }
+) as Record<string, string>
 
 export const capturedIds = Object.values(fixtureFiles).map((f) => f.id)
 
@@ -35,7 +39,7 @@ export function captured(id: string): Fixture {
 
 export const spliceDescriptors: Descriptor[] = Object.values(
     descriptorFiles
-).map((json) => parseDescriptor(json))
+).map((text) => parseDescriptorText(text))
 
 /**
  * `descriptor`, bound to `packageId`: a capture prepared on another version of the package.

@@ -1,14 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Descriptor } from '@canton-network/core-tx-clear-signing'
-import { templateIdOf } from '@canton-network/core-wallet-services/clear-signing'
+import { parseDescriptorText } from '@canton-network/core-tx-clear-signing'
 
 import { detectCurrentOrigin } from './listeners.ts'
 import { createUserClient } from './rpc-client.ts'
 import { stateManager } from './state-manager.ts'
-
-export type { Descriptor }
 
 async function userClient() {
     const origin = await detectCurrentOrigin()
@@ -16,33 +13,30 @@ async function userClient() {
     return createUserClient(token)
 }
 
-/** The descriptors stored for the logged-in user. A new user has none. */
-export async function listDescriptors(): Promise<Descriptor[]> {
+/** The descriptor JSON text stored for the logged-in user. A new user has none. */
+export async function listDescriptors(): Promise<string[]> {
     const client = await userClient()
     const result = await client.request({
         method: 'listClearSigningDescriptors',
     })
-    return result.descriptors as Descriptor[]
+    return result.descriptors
 }
 
 /**
  * Stores a descriptor for the logged-in user. An earlier one for the same
- * package, module and entity is replaced.
- *
- * @throws Error when the JSON does not name a template
+ * package, module and entity is replaced. `text` is sent unchanged.
  */
-export async function addDescriptor(json: unknown): Promise<Descriptor> {
-    templateIdOf(json)
+export async function addDescriptor(text: string): Promise<string> {
     const client = await userClient()
     const result = await client.request({
         method: 'setClearSigningDescriptor',
-        params: { descriptor: json as Descriptor },
+        params: { descriptor: text },
     })
-    return result.descriptor as Descriptor
+    return result.descriptor
 }
 
-export async function removeDescriptor(descriptor: Descriptor): Promise<void> {
-    const template = templateIdOf(descriptor)
+export async function removeDescriptor(text: string): Promise<void> {
+    const template = parseDescriptorText(text).context.template
     const client = await userClient()
     await client.request({
         method: 'removeClearSigningDescriptor',

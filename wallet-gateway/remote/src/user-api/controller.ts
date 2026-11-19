@@ -12,7 +12,10 @@ import {
     rpcErrors,
 } from '@canton-network/core-rpc-errors'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
-import { verifySignatures } from '@canton-network/core-tx-clear-signing'
+import {
+    parseDescriptorText,
+    verifySignatures,
+} from '@canton-network/core-tx-clear-signing'
 import {
     assertConnected,
     type AuthContext,
@@ -38,7 +41,6 @@ import {
     type SelfIssuedLoginSession,
     type SigningDrivers,
 } from '@canton-network/core-wallet-services'
-import { templateIdOf } from '@canton-network/core-wallet-services/clear-signing'
 import type { Store, Network } from '@canton-network/core-wallet-store'
 import type { Logger } from 'pino'
 
@@ -1485,22 +1487,26 @@ export const userController = ({
         setClearSigningDescriptor: async (
             params: SetClearSigningDescriptorParams
         ): Promise<SetClearSigningDescriptorResult> => {
-            let template
+            let parsed
             try {
-                template = templateIdOf(params.descriptor)
+                parsed = parseDescriptorText(params.descriptor)
             } catch (error) {
                 const message =
                     error instanceof Error ? error.message : String(error)
                 throw rpcErrors.invalidParams({ message })
             }
-            const verified = await verifySignatures(params.descriptor)
+            const verified = await verifySignatures(parsed)
             if (!verified.ok) {
                 throw rpcErrors.invalidParams({
                     message: verified.problems.join('; '),
                 })
             }
+            const { packageId, moduleName, entityName } =
+                parsed.context.template
             await store.setClearSigningDescriptor({
-                ...template,
+                packageId,
+                moduleName,
+                entityName,
                 descriptor: params.descriptor,
             })
             return { descriptor: params.descriptor }

@@ -10,13 +10,22 @@
 // From the wallet repository:
 //   pnpm exec tsx core/tx-clear-signing/examples/showcase.ts
 
-import { resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import showcaseTransaction from '../src/__tests__/fixtures/showcase-transaction.json'
 import { clearSign } from '../src/index.ts'
-import amuletAllocationV2 from './descriptors/splice/amulet-allocation-v2.json'
-import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const externalPartyAmuletRules = readFileSync(
+    resolve(here, 'descriptors/splice/amulet-external-party-amulet-rules.json'),
+    'utf8'
+)
+const amuletAllocationV2 = readFileSync(
+    resolve(here, 'descriptors/splice/amulet-allocation-v2.json'),
+    'utf8'
+)
 
 /** Base64 prepared transaction. */
 export const preparedTransaction = showcaseTransaction.preparedTransaction

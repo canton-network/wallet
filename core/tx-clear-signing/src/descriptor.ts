@@ -13,6 +13,7 @@ import {
     ED25519_PUBLIC_KEY_PATTERN,
     ED25519_SIGNATURE_PATTERN,
 } from './signature.ts'
+import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 
 // The patterns are those of canton-clear-signing-v1.schema.json. The conformance test runs the
 // schema and this parser on the same examples.
@@ -207,6 +208,21 @@ export class DescriptorError extends Error {
  *
  * @throws DescriptorError listing every problem found
  */
+/**
+ * Parses descriptor text. Duplicate member names, lone surrogates and trailing data are rejected
+ * before the schema is applied, because `JSON.parse` would drop them.
+ *
+ * @throws DescriptorError listing every problem found
+ */
+export function parseDescriptorText(text: string): Descriptor {
+    try {
+        return parseDescriptor(parseJsonStrict(text))
+    } catch (err) {
+        if (!(err instanceof StrictJsonError)) throw err
+        throw new DescriptorError([err.message])
+    }
+}
+
 export function parseDescriptor(json: unknown): Descriptor {
     const result = DescriptorSchema.safeParse(json)
     if (!result.success) {

@@ -44,7 +44,7 @@ export interface UserStorage {
     /** Keyed by session id. */
     sessions: Map<string, Session>
     apiKeys: Map<string, ApiKey>
-    clearSigningDescriptors: Map<string, Record<string, unknown>>
+    clearSigningDescriptors: Map<string, string>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
 
@@ -93,7 +93,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             messageRaws: new Map<string, MessageRaw>(),
             sessions: new Map<string, Session>(),
             apiKeys: new Map<string, ApiKey>(),
-            clearSigningDescriptors: new Map<string, Record<string, unknown>>(),
+            clearSigningDescriptors: new Map<string, string>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
     }
@@ -840,9 +840,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.updateStorage(storage)
     }
 
-    async listClearSigningDescriptors(): Promise<
-        Array<Record<string, unknown>>
-    > {
+    async listClearSigningDescriptors(): Promise<string[]> {
         this.assertConnected()
         const storage = this.getStorage()
         return Array.from(storage.clearSigningDescriptors.entries())

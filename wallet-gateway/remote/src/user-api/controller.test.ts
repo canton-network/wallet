@@ -1497,7 +1497,11 @@ describe('userController', () => {
     })
 
     describe('clear-signing descriptors', () => {
+        const PKG_1 = '11'.repeat(32)
+        const PKG_2 = '22'.repeat(32)
+        const PKG_3 = '33'.repeat(32)
         const descriptor = (packageId: string, name: string) => ({
+            $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
             context: {
                 template: {
                     packageId,
@@ -1505,11 +1509,12 @@ describe('userController', () => {
                     entityName: 'Ent',
                 },
             },
-            metadata: { name },
+            metadata: { version: '1.0.0', publisher: 'test', name },
+            display: { create: { intent: 'Create it' } },
         })
 
-        it('keeps a descriptor body through param validation', () => {
-            const body = descriptor('pkg-1', 'first')
+        it('keeps descriptor text through param validation', () => {
+            const body = JSON.stringify(descriptor(PKG_1, 'first'))
             expect(
                 paramSchemas.setClearSigningDescriptor.parse({
                     descriptor: body,
@@ -1525,14 +1530,14 @@ describe('userController', () => {
                 logger,
                 auth
             )
-            const first = await signWithReferenceKey(
-                descriptor('pkg-1', 'first')
+            const first = JSON.stringify(
+                await signWithReferenceKey(descriptor(PKG_1, 'first'))
             )
-            const second = await signWithReferenceKey(
-                descriptor('pkg-2', 'second')
+            const second = JSON.stringify(
+                await signWithReferenceKey(descriptor(PKG_2, 'second'))
             )
-            const replaced = await signWithReferenceKey(
-                descriptor('pkg-1', 'replaced')
+            const replaced = JSON.stringify(
+                await signWithReferenceKey(descriptor(PKG_1, 'replaced'))
             )
 
             await controller.setClearSigningDescriptor({ descriptor: first })
@@ -1547,17 +1552,21 @@ describe('userController', () => {
 
             await expect(
                 controller.setClearSigningDescriptor({
-                    descriptor: { metadata: { name: 'no template' } },
+                    descriptor: JSON.stringify({
+                        metadata: { name: 'no template' },
+                    }),
                 })
             ).rejects.toMatchObject({
-                message: expect.stringMatching(/no template/),
+                message: expect.stringMatching(
+                    /invalid clear-signing descriptor/
+                ),
             })
             expect(
                 (await controller.listClearSigningDescriptors()).descriptors
             ).toHaveLength(2)
 
             await controller.removeClearSigningDescriptor({
-                packageId: 'pkg-1',
+                packageId: PKG_1,
                 moduleName: 'Mod',
                 entityName: 'Ent',
             })
@@ -1577,7 +1586,7 @@ describe('userController', () => {
 
             await expect(
                 controller.setClearSigningDescriptor({
-                    descriptor: descriptor('pkg-1', 'first'),
+                    descriptor: JSON.stringify(descriptor(PKG_1, 'first')),
                 })
             ).rejects.toMatchObject({
                 message: expect.stringMatching(/no signatures/),
@@ -1595,17 +1604,37 @@ describe('userController', () => {
                 logger,
                 auth
             )
-            const body = await signWithReferenceKey(
-                descriptor('pkg-1', 'first')
-            )
+            const body = await signWithReferenceKey(descriptor(PKG_1, 'first'))
             const signatures = body.signatures as { signature: string }[]
             signatures[0]!.signature = `${'A'.repeat(86)}==`
 
             await expect(
-                controller.setClearSigningDescriptor({ descriptor: body })
+                controller.setClearSigningDescriptor({
+                    descriptor: JSON.stringify(body),
+                })
             ).rejects.toMatchObject({
                 message: expect.stringMatching(/does not verify/),
             })
+        })
+
+        it('rejects a descriptor that repeats a member name', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+            const text = `{"context":{"template":{"packageId":"${PKG_1}","moduleName":"Mod","entityName":"Ent"}},"context":{"template":{"packageId":"${PKG_1}","moduleName":"Mod","entityName":"Ent"}}}`
+
+            await expect(
+                controller.setClearSigningDescriptor({ descriptor: text })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(/duplicate key 'context'/),
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([])
         })
 
         it('stores a descriptor signed by a key that is not in the trusted list', async () => {
@@ -1621,9 +1650,11 @@ describe('userController', () => {
                 true,
                 ['sign', 'verify']
             )
-            const body = await signDescriptor(
-                descriptor('pkg-3', 'other'),
-                await crypto.subtle.exportKey('jwk', pair.privateKey)
+            const body = JSON.stringify(
+                await signDescriptor(
+                    descriptor(PKG_3, 'other'),
+                    await crypto.subtle.exportKey('jwk', pair.privateKey)
+                )
             )
 
             await controller.setClearSigningDescriptor({ descriptor: body })

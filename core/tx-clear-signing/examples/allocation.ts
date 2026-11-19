@@ -8,12 +8,18 @@
 // From the wallet repository:
 //   pnpm exec tsx core/tx-clear-signing/examples/allocation.ts
 
-import { resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import allocation from '../src/__tests__/fixtures/splice/allocation-factory-allocate-multileg.json'
 import { clearSign } from '../src/index.ts'
-import externalPartyAmuletRules from './descriptors/splice/amulet-external-party-amulet-rules.json'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const externalPartyAmuletRules = readFileSync(
+    resolve(here, 'descriptors/splice/amulet-external-party-amulet-rules.json'),
+    'utf8'
+)
 
 /** Base64 prepared transaction, as `/v2/interactive-submission/prepare` returns it. */
 export const preparedTransaction = allocation.preparedTransaction

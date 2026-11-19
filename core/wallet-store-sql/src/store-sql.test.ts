@@ -1711,7 +1711,7 @@ function clearSigningDescriptor(
         packageId,
         moduleName: 'Canton.Internal.Ping',
         entityName: 'Ping',
-        descriptor: {
+        descriptor: JSON.stringify({
             context: {
                 template: {
                     packageId,
@@ -1720,6 +1720,6 @@ function clearSigningDescriptor(
                 },
             },
             metadata: { name },
-        },
+        }),
     }
 }

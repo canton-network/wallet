@@ -61,7 +61,7 @@ Other Splice roots:
 
 ## The descriptor document
 
-A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example.
+A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example. A descriptor must not contain duplicate keys on any layer. This
 
 The object has two keys that are not sections, `$schema` and `$comment`, and four sections: `context`, `metadata`, `display` and `signatures`.
 
@@ -148,6 +148,8 @@ Five paths read the prepared transaction on both a create and an exercise: `@.co
 Text shown to the user, including labels, intents and enum entries, cannot contain a control, format, line-separator or paragraph-separator character. The same characters in a transaction value are shown escaped.
 
 ### What the parser checks beyond the schema
+
+A descriptor is I-JSON (RFC 7493). [src/strict-json.ts](src/strict-json.ts) rejects duplicate member names, lone surrogates, non-finite numbers and trailing data before the schema runs. JSON Schema cannot express those rules. `parseDescriptorText` is that parse followed by the schema.
 
 [src/descriptor.ts](src/descriptor.ts) rejects a document the schema rejects. It then rejects a document the schema accepts when one of these is true: a path is declared twice in one operation, a `{path}` placeholder does not equal the path of a field of that operation, an enum reference does not name a table in `metadata`, or two exercise entries share a choice and interface. A descriptor that fails and still names a root's template leaves that root `invalid`. The other roots are still described.
 
@@ -251,13 +253,15 @@ A transaction with no `transaction` message, or with no roots, is refused by the
 
 ### The descriptors
 
-`descriptors` is any number of documents, valid or not. A document is parsed when it names a root.
+`descriptors` is any number of JSON texts, valid or not. A text is parsed when it names a root.
+
+Each text is parsed strictly first. A duplicate member name, a lone surrogate, or text that is not JSON leaves a bound root `invalid`. `reason` is that problem. `JSON.parse` is used only to find which root the bad text would have bound to. A text that cannot be read, or that names no root, is ignored.
 
 A document binds to a root when `context.template.packageId`, `moduleName` and `entityName` are non-empty strings and all three equal that root's template ID. The comparison is exact, including the package ID. The key is `packageId:moduleName:entityName`.
 
 A document is ignored when those three strings are missing or empty, or when no root has that template. A descriptor for a template that appears only as a child is ignored.
 
-A document that names a root's template and fails to parse leaves that root `invalid`. `reason` is the parser's problems, joined with `; `.
+A document that names a root's template and fails the schema leaves that root `invalid`, after its signatures have been checked. `reason` is the parser's problems, joined with `; `. An upload through `setClearSigningDescriptor` rejects the same document instead of storing it.
 
 A second document for the same three strings replaces that binding. The root is `invalid`, and `reason` is `more than one descriptor for template '<packageId:moduleName:entityName>'`. The first document is dropped. Another document for the same three strings leaves that same reason in place.
 
@@ -367,7 +371,9 @@ The signing provider signs the hash of the prepared-transaction bytes. The sente
 
 ### The remote approval page
 
-The remote gateway's `/approve` page, [wallet-gateway/remote/src/web/frontend/approve/index.ts](../../wallet-gateway/remote/src/web/frontend/approve/index.ts), loads the stored prepared transaction and its stored hash, and the descriptors stored for the logged-in user. When the descriptor load throws, the list is empty. The page then calls `clearSign` with the stored bytes, that list, and the stored hash. With an empty list, each create and each exercise comes back `undescribed`.
+The remote gateway's `/approve` page, [wallet-gateway/remote/src/web/frontend/approve/index.ts](../../wallet-gateway/remote/src/web/frontend/approve/index.ts), loads the stored prepared transaction and its stored hash, and the descriptor texts stored for the logged-in user. When the descriptor load throws, the list is empty. The page then calls `clearSign` with the stored bytes, that list, and the stored hash. With an empty list, each create and each exercise comes back `undescribed`.
+
+An upload on `/descriptors` sends the file text unchanged. The gateway keeps it only when the text parses strictly, the document is valid against the schema, and every signature verifies against the public key it contains.
 
 "What you are signing" renders `operations`. Each operation shows its `intent` and its rows. When `complete` is false, the section warns "Parts of this transaction are not described. Review the transaction JSON before approving." Approval stays available. The same page shows the decoded transaction.
 
@@ -406,7 +412,7 @@ The extension approval page, [wallet-gateway/extension/entrypoints/approve/index
 2. **Decode** the same bytes to a `PreparedTransaction`, in [src/roots.ts](src/roots.ts). An unknown protobuf field throws here as well.
 3. **Read the roots**, `transaction.roots` in order. A root id with no v1 node is kept, with `nodeType` `missing`. A fetch, a rollback, a query-by-key, and an unset node type are kept as `other`. The remaining roots are still described. A create, exercise, fetch, or query-by-key with no template ID throws, and nothing is returned.
 4. **Index the contracts** an exercise can read. The index holds the v1 input contracts and every v1 create node in the transaction, root or child. A contract ID that occurs more than once is recorded and left out of the index. A later root can exercise a contract an earlier node created.
-5. **Bind** each root template to its descriptor, as Input describes. A descriptor that binds is verified, as `signatures` describes. [src/descriptor.ts](src/descriptor.ts) then parses the document.
+5. **Bind** each root template to its descriptor, as Input describes. The text is parsed strictly first. A descriptor that parses is verified, as `signatures` describes. [src/descriptor.ts](src/descriptor.ts) then checks the schema.
 6. **Select the entry.** A create uses `display.create`. An exercise uses the `exercises` entry, selected as the descriptor document describes.
 7. **Resolve** each field in [src/path.ts](src/path.ts) and **format** it in [src/format.ts](src/format.ts), using the paths and formats above. **Interpolate** the sentence in [src/intent.ts](src/intent.ts). When `interpolatedIntent` is absent, the sentence is `intent`, and the fields are still resolved.
 

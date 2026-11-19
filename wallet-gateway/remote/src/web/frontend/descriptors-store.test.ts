@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Descriptor } from '@canton-network/core-tx-clear-signing'
+import { parseDescriptorText } from '@canton-network/core-tx-clear-signing'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { request, createUserClient } = vi.hoisted(() => ({
@@ -30,12 +30,15 @@ import {
     removeDescriptor,
 } from './descriptors-store.ts'
 
+const PKG_1 = '11'.repeat(32)
+const PKG_2 = '22'.repeat(32)
+
 function template(
     packageId: string,
     entityName: string,
     name = entityName
-): Descriptor {
-    return {
+): string {
+    return JSON.stringify({
         $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
         context: {
             template: {
@@ -44,14 +47,17 @@ function template(
                 entityName,
             },
         },
-        metadata: { version: '1', publisher: 'test', name },
-        display: {},
-        signatures: [],
-    } as Descriptor
+        metadata: { version: '1.0.0', publisher: 'test', name },
+        display: { create: { intent: 'Create it' } },
+    })
+}
+
+function nameOf(text: string): string {
+    return parseDescriptorText(text).metadata.name
 }
 
 describe('descriptors store', () => {
-    let stored: Descriptor[]
+    let stored: string[]
 
     beforeEach(() => {
         stored = []
@@ -62,7 +68,7 @@ describe('descriptors store', () => {
             }: {
                 method: string
                 params?: {
-                    descriptor?: Descriptor
+                    descriptor?: string
                     packageId?: string
                     moduleName?: string
                     entityName?: string
@@ -74,31 +80,31 @@ describe('descriptors store', () => {
                 if (method === 'setClearSigningDescriptor') {
                     const descriptor = params?.descriptor
                     if (!descriptor) throw new Error('missing descriptor')
-                    const key = descriptor.context.template
+                    const key = parseDescriptorText(descriptor).context.template
                     stored = [
-                        ...stored.filter(
-                            (item) =>
-                                item.context.template.packageId !==
-                                    key.packageId ||
-                                item.context.template.moduleName !==
-                                    key.moduleName ||
-                                item.context.template.entityName !==
-                                    key.entityName
-                        ),
+                        ...stored.filter((item) => {
+                            const template =
+                                parseDescriptorText(item).context.template
+                            return (
+                                template.packageId !== key.packageId ||
+                                template.moduleName !== key.moduleName ||
+                                template.entityName !== key.entityName
+                            )
+                        }),
                         descriptor,
                     ]
                     return { descriptor }
                 }
                 if (method === 'removeClearSigningDescriptor') {
-                    stored = stored.filter(
-                        (item) =>
-                            item.context.template.packageId !==
-                                params?.packageId ||
-                            item.context.template.moduleName !==
-                                params?.moduleName ||
-                            item.context.template.entityName !==
-                                params?.entityName
-                    )
+                    stored = stored.filter((item) => {
+                        const template =
+                            parseDescriptorText(item).context.template
+                        return (
+                            template.packageId !== params?.packageId ||
+                            template.moduleName !== params?.moduleName ||
+                            template.entityName !== params?.entityName
+                        )
+                    })
                     return null
                 }
                 throw new Error(`unexpected method ${method}`)
@@ -112,29 +118,27 @@ describe('descriptors store', () => {
     })
 
     it('keeps two package ids and replaces the same one', async () => {
-        await addDescriptor(template('pkg-1', 'Ping', 'first'))
-        await addDescriptor(template('pkg-2', 'Ping', 'second'))
-        await addDescriptor(template('pkg-1', 'Ping', 'replaced'))
+        await addDescriptor(template(PKG_1, 'Ping', 'first'))
+        await addDescriptor(template(PKG_2, 'Ping', 'second'))
+        await addDescriptor(template(PKG_1, 'Ping', 'replaced'))
 
-        expect(
-            (await listDescriptors()).map((d) => d.metadata.name).sort()
-        ).toEqual(['replaced', 'second'])
+        expect((await listDescriptors()).map(nameOf).sort()).toEqual([
+            'replaced',
+            'second',
+        ])
     })
 
     it('rejects a descriptor without a template and stores nothing', async () => {
-        await expect(addDescriptor({ context: {} })).rejects.toThrow(
-            /no template/
-        )
-        expect(request).not.toHaveBeenCalled()
+        await expect(
+            addDescriptor('{"metadata":{"name":"no template"}}')
+        ).rejects.toThrow(/invalid clear-signing descriptor/)
         expect(await listDescriptors()).toEqual([])
     })
 
     it('removes one descriptor', async () => {
-        const ping = await addDescriptor(template('pkg-1', 'Ping'))
-        await addDescriptor(template('pkg-2', 'Ping', 'other'))
+        const ping = await addDescriptor(template(PKG_1, 'Ping'))
+        await addDescriptor(template(PKG_2, 'Ping', 'other'))
         await removeDescriptor(ping)
-        expect((await listDescriptors()).map((d) => d.metadata.name)).toEqual([
-            'other',
-        ])
+        expect((await listDescriptors()).map(nameOf)).toEqual(['other'])
     })
 })

@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest'
 import { described } from './__tests__/helpers.ts'
 import { captured, rebind, spliceDescriptors } from './__tests__/splice.ts'
 import type { OperationDescription } from './clear-sign.ts'
-import { parseDescriptor, type Descriptor } from './descriptor.ts'
+import { parseDescriptorText, type Descriptor } from './descriptor.ts'
 import { decode } from './roots.ts'
 
 interface Capture {
@@ -37,10 +37,10 @@ const captures = Object.values(captureFiles)
 // The token descriptors: examples/descriptors/splice/amulet-*.json and utility-*.json.
 const tokenDescriptorFiles = import.meta.glob(
     '../examples/descriptors/splice/{amulet,utility}-*.json',
-    { eager: true, import: 'default' }
-)
-const tokenDescriptors = Object.values(tokenDescriptorFiles).map((json) =>
-    parseDescriptor(json)
+    { eager: true, import: 'default', query: '?raw' }
+) as Record<string, string>
+const tokenDescriptors = Object.values(tokenDescriptorFiles).map((text) =>
+    parseDescriptorText(text)
 )
 
 function rootTemplate(preparedTransaction: string): Identifier {

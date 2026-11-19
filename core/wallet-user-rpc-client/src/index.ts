@@ -293,15 +293,12 @@ export type CursorAsString = string
  *
  */
 export type Cursor = CursorAsString
-type AlwaysTrue = any
 /**
  *
- * The stored clear-signing descriptor.
+ * The stored descriptor JSON text, exactly as it was uploaded.
  *
  */
-export interface ClearSigningDescriptor {
-    [key: string]: any
-}
+export type ClearSigningDescriptor = string
 /**
  *
  * Package id of the template the descriptor is bound to.
@@ -482,6 +479,7 @@ export interface SignSelfIssuedAccessTokenFailed {
     messageId: MessageId
     failureReason: FailureReason
 }
+type AlwaysTrue = any
 /**
  *
  * Party ids of non-disabled wallets added in this syncWallets call.
@@ -714,7 +712,7 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
- * The stored clear-signing descriptors.
+ * The stored clear-signing descriptors, each as its uploaded JSON text.
  *
  */
 export type Descriptors = ClearSigningDescriptor[]

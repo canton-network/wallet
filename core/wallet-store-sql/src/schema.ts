@@ -507,17 +507,7 @@ export const fromApiKey = (table: ApiKeysTable): ApiKey => {
 
 export const toClearSigningDescriptor = (
     table: ClearSigningDescriptorTable
-): Record<string, unknown> => {
-    const parsed: unknown = JSON.parse(table.descriptor)
-    if (
-        typeof parsed !== 'object' ||
-        parsed === null ||
-        Array.isArray(parsed)
-    ) {
-        throw new Error('stored clear-signing descriptor is not an object')
-    }
-    return parsed as Record<string, unknown>
-}
+): string => table.descriptor
 
 export const fromClearSigningDescriptor = (
     record: ClearSigningDescriptor,
@@ -529,7 +519,7 @@ export const fromClearSigningDescriptor = (
         packageId: record.packageId,
         moduleName: record.moduleName,
         entityName: record.entityName,
-        descriptor: JSON.stringify(record.descriptor),
+        descriptor: record.descriptor,
         createdAt,
     }
 }

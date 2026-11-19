@@ -4,7 +4,11 @@
 import { describe, expect, it } from 'vitest'
 
 import ping from '../examples/descriptors/ping.json'
-import { DescriptorError, parseDescriptor } from './descriptor.ts'
+import {
+    DescriptorError,
+    parseDescriptor,
+    parseDescriptorText,
+} from './descriptor.ts'
 
 // The examples of canton-clear-signing-v1.schema.json. The parser must agree with the schema on every one.
 // No type argument: see core/tx-hashing/src/__tests__/helpers/load-vectors.ts.
@@ -21,7 +25,8 @@ const valid = {
 const invalid = import.meta.glob('../examples/descriptors/invalid/*.json', {
     eager: true,
     import: 'default',
-}) as Record<string, unknown>
+    query: '?raw',
+}) as Record<string, string>
 
 describe('parseDescriptor', () => {
     it('has the schema examples', () => {
@@ -33,8 +38,8 @@ describe('parseDescriptor', () => {
         expect(() => parseDescriptor(json)).not.toThrow()
     })
 
-    it.each(Object.entries(invalid))('rejects %s', (_, json) => {
-        expect(() => parseDescriptor(json)).toThrow(DescriptorError)
+    it.each(Object.entries(invalid))('rejects %s', (_, text) => {
+        expect(() => parseDescriptorText(text)).toThrow(DescriptorError)
     })
 
     it('rejects an unsupported schema', () => {

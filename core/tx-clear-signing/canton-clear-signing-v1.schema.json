@@ -3,7 +3,7 @@
     "$id": "https://example.org/canton-clear-signing/v1/schema.json",
     "version": "1.1.0",
     "type": "object",
-    "description": "Canton Clear Signing Descriptor Schema. A descriptor binds human-readable intent and typed fields to one exact Daml template, so that a wallet can describe the create and exercise nodes of a prepared transaction.",
+    "description": "Canton Clear Signing Descriptor Schema. A descriptor binds human-readable intent and typed fields to one exact Daml template, so that a wallet can describe the create and exercise nodes of a prepared transaction. The document must be I-JSON (RFC 7493): no duplicate member names and no lone surrogates. JSON Schema cannot express that.",
 
     "properties": {
         "$schema": {

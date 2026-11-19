@@ -6,12 +6,15 @@
 // From the wallet repository:
 //   pnpm exec tsx core/tx-clear-signing/examples/ping.ts
 
-import { resolve } from 'node:path'
+import { readFileSync } from 'node:fs'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { builtinPingCreate } from '../src/__tests__/fixtures/ping.ts'
 import { clearSign } from '../src/index.ts'
-import ping from './descriptors/ping.json'
+
+const here = dirname(fileURLToPath(import.meta.url))
+const ping = readFileSync(resolve(here, 'descriptors/ping.json'), 'utf8')
 
 /** Base64 prepared transaction, as `/v2/interactive-submission/prepare` returns it. */
 export const preparedTransaction = builtinPingCreate

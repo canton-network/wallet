@@ -1289,9 +1289,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .execute()
     }
 
-    async listClearSigningDescriptors(): Promise<
-        Array<Record<string, unknown>>
-    > {
+    async listClearSigningDescriptors(): Promise<string[]> {
         const userId = this.assertConnected()
         const rows = await this.db
             .selectFrom('clearSigningDescriptors')
