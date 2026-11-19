@@ -1041,31 +1041,13 @@ describe('Token standard service', () => {
     })
 
     describe('isHoldingLocked', () => {
-        // Used for relative time
         const createdAt = '2026-09-01T10:00:00.000Z'
-
-        const past = '2026-09-01T10:59:59.999Z'
-        const pastRel = { microseconds: '3599999000' }
-
         const now = '2026-09-01T11:00:00.000Z'
-        const nowRel = { microseconds: '3600000000' }
-
-        const future = '2026-09-01T11:00:00.001Z'
-        const futureRel = { microseconds: '3600001000' }
 
         it.each([
             [null, false],
-            [{}, true],
-            [{ expiresAt: null }, true],
-            [{ expiresAt: past }, false],
-            [{ expiresAt: now }, false],
-            [{ expiresAt: future }, true],
-            [{ expiresAfter: pastRel }, false],
-            [{ expiresAfter: nowRel }, false],
-            [{ expiresAfter: futureRel }, true],
-            [{ expiresAt: future, expiresAfter: futureRel }, true],
-            [{ expiresAt: now, expiresAfter: futureRel }, false],
-            [{ expiresAt: future, expiresAfter: nowRel }, false],
+            [{ expiresAfter: { microseconds: '3600001000' } }, true],
+            [{ expiresAfter: { microseconds: '3600000000' } }, false],
         ])('holding locked with lock %o returns %s', (lock, expected) => {
             expect(
                 TokenStandardService.isHoldingLocked(

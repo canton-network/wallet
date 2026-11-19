@@ -38,6 +38,7 @@ import {
 import { TransferServiceV2 } from './v2/transfer-service.js'
 import { TransferService } from './v1/transfer-service.js'
 import { AllocationService } from './v1/allocation-service.js'
+import { checkLock } from './lock.js'
 import { CoreService } from './core-service.js'
 import { getLogger } from '@logtape/logtape'
 import { AllocationService as AllocationServiceV2 } from './v2/allocation-service.js'
@@ -510,41 +511,7 @@ export class TokenStandardService {
         createdAtTime: string,
         currentTime: Date = new Date()
     ): boolean {
-        if (!lock) return false
-
-        let expiresAtAbsolute: Date | null = null
-        let expiresAtRelative: Date | null = null
-
-        if (lock.expiresAfter) {
-            const createdAt = new Date(createdAtTime)
-
-            // 1 microsecond = 0.001 milliseconds
-            const msToAdd = parseInt(lock.expiresAfter.microseconds) / 1000
-
-            expiresAtRelative = new Date(createdAt.getTime() + msToAdd)
-        }
-        if (lock.expiresAt) {
-            expiresAtAbsolute = new Date(lock.expiresAt)
-        }
-
-        let expiresAt: Date
-
-        // If both `expiresAt` and `expiresAfter` are set, the lock expires at the earlier of the two times.
-        if (expiresAtRelative && expiresAtAbsolute) {
-            expiresAt =
-                expiresAtRelative < expiresAtAbsolute
-                    ? expiresAtRelative
-                    : expiresAtAbsolute
-        } else if (expiresAtRelative) {
-            expiresAt = expiresAtRelative
-        } else if (expiresAtAbsolute) {
-            expiresAt = expiresAtAbsolute
-        } else {
-            // No expiration => locked
-            return true
-        }
-
-        return currentTime < expiresAt
+        return checkLock(lock, createdAtTime, currentTime)
     }
 
     static isHoldingLocked(

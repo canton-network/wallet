@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import Decimal from 'decimal.js'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import { checkLock } from '@canton-network/core-token-standard-service/lock'
 import type { Account } from '@canton-network/core-token-standard-v2'
 import { isBasicAccount, type PortfolioHolding } from './holdings'
 
@@ -113,7 +113,7 @@ function sumAccount(
     for (const h of holdings) {
         const amount = new Decimal(h.amount)
         total = total.plus(amount)
-        if (TokenStandardService.checkLock(h.lock, h.createdAt, currentTime))
+        if (checkLock(h.lock, h.createdAt, currentTime))
             locked = locked.plus(amount)
     }
 
