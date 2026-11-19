@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import { checkLock } from '@canton-network/core-token-standard-service/lock'
 import type { Account } from '@canton-network/core-token-standard-v2'
 import { Decimal } from 'decimal.js'
 
@@ -114,7 +114,7 @@ function sumAccount(
     for (const h of holdings) {
         const amount = new Decimal(h.amount)
         total = total.plus(amount)
-        if (TokenStandardService.checkLock(h.lock, h.createdAt, currentTime))
+        if (checkLock(h.lock, h.createdAt, currentTime))
             locked = locked.plus(amount)
     }
 
