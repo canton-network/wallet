@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { signWithReferenceKey } from '@canton-network/core-tx-clear-signing/testing'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import {
     TransactionApproveEvent,
@@ -18,9 +19,10 @@ import {
     mockRequest,
 } from '../__tests__/test-helpers.ts'
 
-// The example Ping descriptor (core/tx-clear-signing/examples/descriptors/ping.json).
-// Stored here so this project does not import a file outside its TypeScript program.
-const pingDescriptor = {
+// The example Ping descriptor (core/tx-clear-signing/examples/descriptors/ping.json),
+// at the version this page's fixture uses. Stored here so this project does not import a file
+// outside its TypeScript program. Signed with the reference key, which clearSign trusts.
+const pingDescriptor = await signWithReferenceKey({
     $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
     context: {
         template: {
@@ -85,8 +87,7 @@ const pingDescriptor = {
             },
         ],
     },
-    signatures: [],
-}
+})
 
 // A fetch root decodes and hashes. clearSign reports it as undescribable, because only a create or
 // an exercise root is described. An empty prepared transaction cannot be hashed, which would also

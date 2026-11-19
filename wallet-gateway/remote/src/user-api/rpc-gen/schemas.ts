@@ -1130,7 +1130,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                 type: 'object',
                 additionalProperties: true,
                 description:
-                    'A clear-signing descriptor. It must name a template in context.template.',
+                    'A clear-signing descriptor. It must name a template in context.template, and every signature must verify against the public key in that signature.',
             },
         },
         required: ['descriptor'],

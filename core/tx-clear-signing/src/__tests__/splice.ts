@@ -5,6 +5,7 @@
 // describe them with. Each fixture is a prepared transaction from a local Canton.
 
 import { type Descriptor, parseDescriptor } from '../descriptor.ts'
+import { signWithReferenceKey } from '../testing/reference-key.ts'
 
 interface Fixture {
     id: string
@@ -36,14 +37,22 @@ export const spliceDescriptors: Descriptor[] = Object.values(
     descriptorFiles
 ).map((json) => parseDescriptor(json))
 
-/** `descriptor`, bound to `packageId`: a capture prepared on another version of the package. */
-export function rebind(descriptor: Descriptor, packageId: string): Descriptor {
-    return {
+/**
+ * `descriptor`, bound to `packageId`: a capture prepared on another version of the package.
+ * The package id is covered by the signature, so the result is signed again.
+ */
+export async function rebind(
+    descriptor: Descriptor,
+    packageId: string
+): Promise<Descriptor> {
+    const copy = {
         ...descriptor,
         context: {
             template: { ...descriptor.context.template, packageId },
         },
     }
+    delete copy.signatures
+    return parseDescriptor(await signWithReferenceKey(copy))
 }
 
 // The parties the fixtures were prepared with.

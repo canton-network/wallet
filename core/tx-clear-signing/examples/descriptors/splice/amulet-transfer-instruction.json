@@ -337,5 +337,11 @@
             }
         ]
     },
-    "signatures": []
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "2Mho4CLVlC6UWZoCQw2KEaPr2NqRFN1jDJhJesTLWyKweTxoeVqBt10i02n5O1jYzFf1+mLjsfT83RwFbIexCg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
 }

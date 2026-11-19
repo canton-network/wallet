@@ -12,6 +12,10 @@ import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
     SHARED_CONTAINER_FIELDS,
 } from './path.ts'
+import {
+    ED25519_PUBLIC_KEY_PATTERN,
+    ED25519_SIGNATURE_PATTERN,
+} from './signature.ts'
 
 const valid = {
     ...import.meta.glob('../examples/descriptors/*.json', {
@@ -82,6 +86,50 @@ describe('schema conformance', () => {
         }
         expect(validate(json), JSON.stringify(validate.errors)).toBe(true)
         expect(() => parseDescriptor(json)).not.toThrow()
+    })
+
+    it('uses the same signature patterns as the parser', () => {
+        const entry = (
+            schema as {
+                $signatures?: {
+                    entry?: {
+                        properties?: {
+                            signature?: { pattern?: string }
+                            publicKey?: { pattern?: string }
+                        }
+                    }
+                }
+            }
+        ).$signatures?.entry?.properties
+        expect(entry?.signature?.pattern).toBe(ED25519_SIGNATURE_PATTERN.source)
+        expect(entry?.publicKey?.pattern).toBe(
+            ED25519_PUBLIC_KEY_PATTERN.source
+        )
+        expect(entry).not.toHaveProperty('scheme.const')
+        expect(entry).not.toHaveProperty('hashAlgorithm.const')
+    })
+
+    it('accepts a scheme other than ed25519', () => {
+        const json = {
+            ...ping,
+            signatures: [
+                {
+                    scheme: 'rsa',
+                    signature:
+                        'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==',
+                    publicKey: 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=',
+                },
+            ],
+        }
+        expect(validate(json), JSON.stringify(validate.errors)).toBe(true)
+        expect(() => parseDescriptor(json)).not.toThrow()
+    })
+
+    it('accepts a descriptor with no signatures', () => {
+        const { signatures: _signatures, ...unsigned } = ping
+        expect(validate(unsigned), JSON.stringify(validate.errors)).toBe(true)
+        expect(validate({ ...unsigned, signatures: [] })).toBe(true)
+        expect(() => parseDescriptor(unsigned)).not.toThrow()
     })
 
     it('uses the same container fields as the parser', () => {

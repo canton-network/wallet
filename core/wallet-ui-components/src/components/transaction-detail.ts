@@ -29,6 +29,7 @@ const OPERATION_STATUS_LABELS: Record<
 > = {
     fallback: 'Partly described',
     undescribed: 'Not described',
+    unverified: 'Unverified descriptor',
     invalid: 'Invalid descriptor',
     undescribable: 'Cannot describe',
 }

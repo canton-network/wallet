@@ -3,6 +3,8 @@
 
 import { errorCodes } from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
+import { signDescriptor } from '@canton-network/core-tx-clear-signing'
+import { signWithReferenceKey } from '@canton-network/core-tx-clear-signing/testing'
 import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
     NotificationService,
@@ -1523,23 +1525,25 @@ describe('userController', () => {
                 logger,
                 auth
             )
+            const first = await signWithReferenceKey(
+                descriptor('pkg-1', 'first')
+            )
+            const second = await signWithReferenceKey(
+                descriptor('pkg-2', 'second')
+            )
+            const replaced = await signWithReferenceKey(
+                descriptor('pkg-1', 'replaced')
+            )
 
+            await controller.setClearSigningDescriptor({ descriptor: first })
+            await controller.setClearSigningDescriptor({ descriptor: second })
             await controller.setClearSigningDescriptor({
-                descriptor: descriptor('pkg-1', 'first'),
-            })
-            await controller.setClearSigningDescriptor({
-                descriptor: descriptor('pkg-2', 'second'),
-            })
-            await controller.setClearSigningDescriptor({
-                descriptor: descriptor('pkg-1', 'replaced'),
+                descriptor: replaced,
             })
 
             expect(
                 (await controller.listClearSigningDescriptors()).descriptors
-            ).toEqual([
-                descriptor('pkg-1', 'replaced'),
-                descriptor('pkg-2', 'second'),
-            ])
+            ).toEqual([replaced, second])
 
             await expect(
                 controller.setClearSigningDescriptor({
@@ -1559,7 +1563,73 @@ describe('userController', () => {
             })
             expect(
                 (await controller.listClearSigningDescriptors()).descriptors
-            ).toEqual([descriptor('pkg-2', 'second')])
+            ).toEqual([second])
+        })
+
+        it('rejects a descriptor with no signature', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(
+                controller.setClearSigningDescriptor({
+                    descriptor: descriptor('pkg-1', 'first'),
+                })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(/no signatures/),
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([])
+        })
+
+        it('rejects a signature that does not verify', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+            const body = await signWithReferenceKey(
+                descriptor('pkg-1', 'first')
+            )
+            const signatures = body.signatures as { signature: string }[]
+            signatures[0]!.signature = `${'A'.repeat(86)}==`
+
+            await expect(
+                controller.setClearSigningDescriptor({ descriptor: body })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(/does not verify/),
+            })
+        })
+
+        it('stores a descriptor signed by a key that is not in the trusted list', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+            const pair = await crypto.subtle.generateKey(
+                { name: 'Ed25519' },
+                true,
+                ['sign', 'verify']
+            )
+            const body = await signDescriptor(
+                descriptor('pkg-3', 'other'),
+                await crypto.subtle.exportKey('jwk', pair.privateKey)
+            )
+
+            await controller.setClearSigningDescriptor({ descriptor: body })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([body])
         })
     })
 

@@ -1588,7 +1588,7 @@
         },
         {
             "name": "setClearSigningDescriptor",
-            "description": "Stores a clear-signing descriptor for the current user. A descriptor for the same package, module and entity replaces the stored one.",
+            "description": "Stores a clear-signing descriptor for the current user. The descriptor must name a template and carry at least one signature, and every signature must verify against the public key it contains. A descriptor for the same package, module and entity replaces the stored one.",
             "params": [
                 {
                     "name": "params",
@@ -1602,7 +1602,7 @@
                                 "title": "ClearSigningDescriptor",
                                 "type": "object",
                                 "additionalProperties": true,
-                                "description": "A clear-signing descriptor. It must name a template in context.template."
+                                "description": "A clear-signing descriptor. It must name a template in context.template, and every signature must verify against the public key in that signature."
                             }
                         },
                         "required": ["descriptor"]

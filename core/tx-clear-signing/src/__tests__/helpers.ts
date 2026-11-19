@@ -20,6 +20,7 @@ import {
     type OperationDescription,
 } from '../clear-sign.ts'
 import { type Descriptor, parseDescriptor } from '../descriptor.ts'
+import { signWithReferenceKey } from '../testing/reference-key.ts'
 
 /** Package of the templates in the core-tx-hashing vectors copied to fixtures/. */
 export const VECTOR_PACKAGE =
@@ -96,12 +97,26 @@ export async function hashEither(tx: string): Promise<string> {
     throw last
 }
 
-/** Describes a transaction after hashing it, as the approve page does. */
+/**
+ * Describes a transaction after hashing it, as the approve page does.
+ * Each descriptor is signed with the reference key, so the tests exercise wording rather than the
+ * trust check. A signature already on the descriptor is replaced.
+ */
 export async function described(
     tx: string,
-    descriptors: readonly Descriptor[]
+    descriptors: readonly unknown[]
 ): Promise<ClearSigningResult> {
-    return clearSign(tx, descriptors, await hashEither(tx))
+    const signed = await Promise.all(descriptors.map(attest))
+    return clearSign(tx, signed, await hashEither(tx))
+}
+
+async function attest(json: unknown): Promise<unknown> {
+    if (typeof json !== 'object' || json === null || Array.isArray(json)) {
+        return json
+    }
+    const copy = { ...(json as Record<string, unknown>) }
+    delete copy.signatures
+    return signWithReferenceKey(copy)
 }
 
 /** The intent of an operation, for assertions on its wording. */

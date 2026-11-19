@@ -22,6 +22,7 @@ import variantEnum from './__tests__/fixtures/v2-variant-enum.json'
 import {
     described,
     encode,
+    hashEither,
     intentText,
     rootNodeType,
     shown,
@@ -37,6 +38,9 @@ import {
     type Descriptor,
 } from './descriptor.ts'
 import { decode } from './roots.ts'
+import { signDescriptor } from './signature.ts'
+import { signWithReferenceKey } from './testing/reference-key.ts'
+import { REFERENCE_SIGNER } from './trusted-keys.ts'
 
 const ping = parseDescriptor(pingJson)
 const ALICE =
@@ -46,6 +50,7 @@ const PING_DESCRIPTOR = {
     name: 'Canton ping',
     publisher: 'Blockdaemon',
     version: '1.0.0',
+    signedBy: [REFERENCE_SIGNER],
 }
 
 const NO_ARGUMENT: Value = {
@@ -812,6 +817,80 @@ describe('clearSign', () => {
         const error = shown(op?.fields[0])
         expect(error).toContain('\\u{202e}')
         expect(error).not.toContain(RLO)
+    })
+
+    it('reports a descriptor with no trusted signature as unverified', async () => {
+        const { signatures: _removed, ...unsigned } = pingJson
+        const hash = await hashEither(builtinPingCreate)
+        const [op] = (await clearSign(builtinPingCreate, [unsigned], hash))
+            .operations
+        expect(op).toMatchObject({
+            status: 'unverified',
+            intent: 'Create Canton.Internal.Ping:Ping',
+            fields: [],
+            reason: 'descriptor has no signatures',
+        })
+        expect(op).not.toHaveProperty('descriptor')
+
+        const pair = await crypto.subtle.generateKey(
+            { name: 'Ed25519' },
+            true,
+            ['sign', 'verify']
+        )
+        const foreign = await signDescriptor(
+            unsigned,
+            await crypto.subtle.exportKey('jwk', pair.privateKey)
+        )
+        const [untrusted] = (
+            await clearSign(builtinPingCreate, [foreign], hash)
+        ).operations
+        expect(untrusted).toMatchObject({
+            status: 'unverified',
+            reason: 'signatures[0]: public key is not trusted',
+        })
+        expect(untrusted).not.toHaveProperty('descriptor')
+    })
+
+    it('reports an unsigned malformed descriptor as unverified', async () => {
+        const { signatures: _removed, ...unsigned } = pingJson
+        const hash = await hashEither(builtinPingCreate)
+        const [op] = (
+            await clearSign(
+                builtinPingCreate,
+                [{ ...unsigned, display: {} }],
+                hash
+            )
+        ).operations
+        expect(op).toMatchObject({
+            status: 'unverified',
+            reason: 'descriptor has no signatures',
+        })
+    })
+
+    it('does not require a signature on a descriptor that binds to no root', async () => {
+        const other = {
+            ...pingJson,
+            context: {
+                template: {
+                    ...pingJson.context.template,
+                    entityName: 'Other',
+                },
+            },
+            signatures: [],
+        }
+        const result = await clearSign(
+            builtinPingCreate,
+            [other, await signWithReferenceKey(ping)],
+            await hashEither(builtinPingCreate)
+        )
+        expect(result.complete).toBe(true)
+    })
+
+    it('checks the prepared-transaction hash before the signatures', async () => {
+        const { signatures: _removed, ...unsigned } = pingJson
+        await expect(
+            clearSign(builtinPingCreate, [unsigned], 'bm90LWEgaGFzaA==')
+        ).rejects.toThrow(HashMismatchError)
     })
 
     it('reports an invalid descriptor on the root it binds to', async () => {

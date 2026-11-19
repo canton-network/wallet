@@ -44,6 +44,8 @@ import {
     type RootNode,
     type TemplateRef,
 } from './roots.ts'
+import { verifySignatures } from './signature.ts'
+import { TRUSTED_KEYS } from './trusted-keys.ts'
 
 /** Shown when an interpolated intent cannot be filled from the transaction. */
 export const MISMATCH_INTENT = 'The descriptor does not match this transaction.'
@@ -75,6 +77,8 @@ export interface OperationDescription {
      * - `fallback`: a placeholder's field could not be shown, so `intent` says the descriptor does
      *   not match the transaction. `reason` names the placeholder.
      * - `undescribed`: no descriptor words the node, so `intent` is generic.
+     * - `unverified`: a signature on the bound descriptor does not verify against a trusted key, or
+     *   there is no signature, so `intent` is generic and `reason` says why. The wording is not shown.
      * - `invalid`: the descriptor bound to the node is not valid, or there is more than one, so
      *   `intent` is generic and `reason` says why.
      * - `undescribable`: the node cannot be read, so `intent` is generic and `reason` says why.
@@ -83,15 +87,21 @@ export interface OperationDescription {
         | 'described'
         | 'fallback'
         | 'undescribed'
+        | 'unverified'
         | 'invalid'
         | 'undescribable'
     reason?: string
-    /** Who the valid bound descriptor says wrote it. Descriptors are unsigned in v1, so this is a claim. */
+    /**
+     * The bound descriptor's claim about itself, and the trusted keys that signed it. Present only
+     * when every signature verified against the trusted list.
+     */
     descriptor?: {
         name: string
         publisher: string
         version: string
         url?: string
+        /** Names from the trusted list, one per signature, in signature order. */
+        signedBy: string[]
     }
     /** The sentence the user reads. Text values from the transaction are JSON-quoted. */
     intent: string
@@ -117,8 +127,10 @@ export class HashMismatchError extends Error {
  * Child nodes are consequences of their root's choice, which the root's descriptor words.
  *
  * A descriptor binds to a root by package ID, module and entity. Descriptors that bind to no root
- * are ignored. The description is only as trustworthy as its binding to what is signed, so the
- * transaction is described only when it hashes to `expectedHash`.
+ * are ignored. A bound descriptor is used only when every signature on it verifies against
+ * {@link TRUSTED_KEYS}. Otherwise that root is `unverified` and its wording is not shown. The
+ * description is only as trustworthy as its binding to what is signed, so the transaction is
+ * described only when it hashes to `expectedHash`.
  *
  * @param tx - the prepared transaction, base64-encoded
  * @param descriptors - clear-signing descriptors; any number, valid or not
@@ -138,7 +150,7 @@ export async function clearSign(
     const prepared = decode(tx)
     const roots = rootNodes(prepared)
     const contracts = contractsOf(prepared)
-    const bindings = bindDescriptors(descriptors, roots.map(nodeHeader))
+    const bindings = await bindDescriptors(descriptors, roots.map(nodeHeader))
     const operations = roots.map((node) =>
         describeNode(node, contracts, bindings, prepared.metadata)
     )
@@ -149,13 +161,19 @@ export async function clearSign(
     return { complete, operations }
 }
 
-/** A descriptor bound to a root template: valid, or why it cannot be used. */
-type Binding = { descriptor: Descriptor } | { problems: readonly string[] }
+/**
+ * A descriptor bound to a root template: verified, unverified, or why it cannot be parsed.
+ * Two descriptors for one template are `problems`, which the root reports as `invalid`.
+ */
+type Binding =
+    | { descriptor: Descriptor; signers: readonly string[] }
+    | { unverified: readonly string[] }
+    | { problems: readonly string[] }
 
-function bindDescriptors(
+async function bindDescriptors(
     descriptors: readonly unknown[],
     roots: readonly Header[]
-): Map<string, Binding> {
+): Promise<Map<string, Binding>> {
     const rootKeys = new Set(
         roots.flatMap(({ template }) =>
             template ? [templateKey(template)] : []
@@ -172,14 +190,17 @@ function bindDescriptors(
             })
             continue
         }
-        bindings.set(key, bind(json))
+        bindings.set(key, await bind(json))
     }
     return bindings
 }
 
-function bind(json: unknown): Binding {
+/** Signatures first. An unsigned descriptor is `unverified` even when the rest would not parse. */
+async function bind(json: unknown): Promise<Binding> {
+    const verified = await verifySignatures(json, TRUSTED_KEYS)
+    if (!verified.ok) return { unverified: verified.problems }
     try {
-        return { descriptor: parseDescriptor(json) }
+        return { descriptor: parseDescriptor(json), signers: verified.signers }
     } catch (err) {
         if (!(err instanceof DescriptorError)) throw err
         return { problems: err.problems }
@@ -224,12 +245,19 @@ function describeNode(
     if (!binding) {
         return { ...generic, status: 'undescribed' }
     }
+    if ('unverified' in binding) {
+        const reason = binding.unverified.join('; ')
+        return { ...generic, status: 'unverified', reason }
+    }
     if ('problems' in binding) {
         const reason = binding.problems.join('; ')
         return { ...generic, status: 'invalid', reason }
     }
-    const { descriptor } = binding
-    const described = { ...generic, descriptor: descriptorInfo(descriptor) }
+    const { descriptor, signers } = binding
+    const described = {
+        ...generic,
+        descriptor: descriptorInfo(descriptor, signers),
+    }
     const operation =
         node.kind === 'create'
             ? descriptor.display.create
@@ -291,11 +319,18 @@ function typeName(id: Identifier | undefined): string {
     return `${id?.moduleName}:${id?.entityName}`
 }
 
-function descriptorInfo({
-    metadata,
-}: Descriptor): NonNullable<OperationDescription['descriptor']> {
+function descriptorInfo(
+    { metadata }: Descriptor,
+    signers: readonly string[]
+): NonNullable<OperationDescription['descriptor']> {
     const { name, publisher, version, url } = metadata
-    return { name, publisher, version, ...(url !== undefined && { url }) }
+    return {
+        name,
+        publisher,
+        version,
+        ...(url !== undefined && { url }),
+        signedBy: [...signers],
+    }
 }
 
 /**

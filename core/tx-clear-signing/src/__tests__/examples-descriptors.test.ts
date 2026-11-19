@@ -3,7 +3,8 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { clearSign, type Descriptor } from '../index.ts'
+import { clearSign, verifySignatures, type Descriptor } from '../index.ts'
+import { REFERENCE_SIGNER, TRUSTED_KEYS } from '../trusted-keys.ts'
 import { builtinPingCreate } from './fixtures/ping.ts'
 import allocateOnLocalNet from './fixtures/token-standard/amulet-v2-allocation-factory-allocate.json'
 import { hashEither, intentText, shown } from './helpers.ts'
@@ -37,6 +38,16 @@ const pingPackageId =
     'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54'
 
 describe('example descriptors', () => {
+    it('is signed by the reference key', async () => {
+        for (const [name, json] of Object.entries(descriptorFiles)) {
+            const verified = await verifySignatures(json, TRUSTED_KEYS)
+            expect(verified, name).toEqual({
+                ok: true,
+                signers: [REFERENCE_SIGNER],
+            })
+        }
+    })
+
     it('fully describes the builtin Ping create', async () => {
         const descriptor = exampleDescriptors().find(
             (d) => d.context.template.entityName === 'Ping'

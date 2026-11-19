@@ -206,12 +206,15 @@ export class UserUiDescriptors extends BaseElement {
         return html`
             <h1 class="h4 fw-semibold">Clear-signing descriptors</h1>
             <p class="text-body-secondary small">
-                Descriptors are stored for your account and start empty. They
-                are used by the approve page and are not verified. An upload is
-                kept when it names a template. One for the same package, module
-                and entity replaces the stored one, so two package versions of a
-                template can both be kept. The approve page reports a descriptor
-                that is not valid.
+                Descriptors are stored for your account and start empty. An
+                upload is kept when it names a template and every signature on
+                it verifies against the public key in that signature. At least
+                one signature is required. One for the same package, module and
+                entity replaces the stored one, so two package versions of a
+                template can both be kept. The approve page accepts a stored
+                descriptor when those signatures are from a trusted key. A
+                descriptor that is not valid, or not signed by a trusted key, is
+                reported there and does not supply the sentence.
             </p>
 
             <section class="upload">

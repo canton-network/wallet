@@ -12,6 +12,7 @@ import {
     rpcErrors,
 } from '@canton-network/core-rpc-errors'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
+import { verifySignatures } from '@canton-network/core-tx-clear-signing'
 import {
     assertConnected,
     type AuthContext,
@@ -1491,6 +1492,12 @@ export const userController = ({
                 const message =
                     error instanceof Error ? error.message : String(error)
                 throw rpcErrors.invalidParams({ message })
+            }
+            const verified = await verifySignatures(params.descriptor)
+            if (!verified.ok) {
+                throw rpcErrors.invalidParams({
+                    message: verified.problems.join('; '),
+                })
             }
             await store.setClearSigningDescriptor({
                 ...template,

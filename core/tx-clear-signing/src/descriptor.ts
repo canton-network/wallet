@@ -9,6 +9,10 @@ import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
     SHARED_CONTAINER_FIELDS,
 } from './path.ts'
+import {
+    ED25519_PUBLIC_KEY_PATTERN,
+    ED25519_SIGNATURE_PATTERN,
+} from './signature.ts'
 
 // The patterns are those of canton-clear-signing-v1.schema.json. The conformance test runs the
 // schema and this parser on the same examples.
@@ -167,7 +171,16 @@ const DescriptorSchema = z.strictObject({
         .refine((d) => d.create !== undefined || d.exercises !== undefined, {
             message: 'display needs create or exercises',
         }),
-    signatures: z.array(z.unknown()).max(0).optional(),
+    signatures: z
+        .array(
+            z.strictObject({
+                scheme: z.string(),
+                hashAlgorithm: z.string().optional(),
+                signature: z.string().regex(ED25519_SIGNATURE_PATTERN),
+                publicKey: z.string().regex(ED25519_PUBLIC_KEY_PATTERN),
+            })
+        )
+        .optional(),
 })
 
 export type Descriptor = z.infer<typeof DescriptorSchema>

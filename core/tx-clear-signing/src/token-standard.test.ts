@@ -8,10 +8,10 @@
 // instruction or allocation it creates is a child that no descriptor words.
 //
 // Amulet and Utility captures were prepared on the running LocalNet, on the package IDs the
-// reference descriptors are bound to. Three descriptor entries have no prepared transaction:
-// accepting or rejecting an external-party setup needs the DSO as a signatory, and renewing a
+// reference descriptors are bound to. Some descriptor entries have no prepared transaction:
+// accepting or rejecting an external-party setup needs the DSO as a signatory, renewing a
 // transfer preapproval needs the DSO's AmuletRules and open mining round, which this participant
-// cannot read.
+// cannot read, and the choices on AmuletRules itself are not a root of any capture here.
 
 import type { Identifier } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest'
 import { described } from './__tests__/helpers.ts'
 import { captured, rebind, spliceDescriptors } from './__tests__/splice.ts'
 import type { OperationDescription } from './clear-sign.ts'
-import { parseDescriptor } from './descriptor.ts'
+import { parseDescriptor, type Descriptor } from './descriptor.ts'
 import { decode } from './roots.ts'
 
 interface Capture {
@@ -61,16 +61,18 @@ function rootTemplate(preparedTransaction: string): Identifier {
 }
 
 /** The reference descriptors, bound to the package the capture's root was prepared on. */
-function boundTo(preparedTransaction: string) {
+async function boundTo(preparedTransaction: string): Promise<Descriptor[]> {
     const { packageId, moduleName, entityName } =
         rootTemplate(preparedTransaction)
-    return spliceDescriptors
-        .filter(
-            (d) =>
-                d.context.template.moduleName === moduleName &&
-                d.context.template.entityName === entityName
-        )
-        .map((d) => rebind(d, packageId))
+    return Promise.all(
+        spliceDescriptors
+            .filter(
+                (d) =>
+                    d.context.template.moduleName === moduleName &&
+                    d.context.template.entityName === entityName
+            )
+            .map((d) => rebind(d, packageId))
+    )
 }
 
 /** Each root the tests describe, for the coverage check. */
@@ -207,7 +209,7 @@ describe('captured token standard roots', () => {
         async (id, capture) => {
             const op = await describeComplete(
                 capture.preparedTransaction,
-                boundTo(capture.preparedTransaction)
+                await boundTo(capture.preparedTransaction)
             )
             expect(op.intent).toBe(capturedIntents[id])
         }
@@ -247,7 +249,18 @@ describe('reference descriptors', () => {
         // No prepared transaction exists for these. Accepting or rejecting an external-party
         // setup needs the DSO as a signatory, and renewing a transfer preapproval needs the
         // DSO's AmuletRules and open mining round, which this participant cannot read.
+        // The AmuletRules choices are not a root of any capture in this file: the captures
+        // exercise the token-standard factories, not AmuletRules itself.
         const withoutAPreparedTransaction = [
+            'Splice.AmuletRules:AmuletRules AmuletRules_AllocateDevelopmentFundCoupon ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_BuyMemberTraffic ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_ComputeFees ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_CreateExternalPartySetupProposal ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_CreateTransferPreapproval ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_DevNet_FeatureApp ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_DevNet_Tap ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_Mint ',
+            'Splice.AmuletRules:AmuletRules AmuletRules_Transfer ',
             'Splice.AmuletRules:ExternalPartySetupProposal ExternalPartySetupProposal_Accept ',
             'Splice.AmuletRules:ExternalPartySetupProposal ExternalPartySetupProposal_Reject ',
             'Splice.AmuletRules:TransferPreapproval TransferPreapproval_Renew ',

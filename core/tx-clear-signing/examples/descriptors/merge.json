@@ -101,5 +101,11 @@
             }
         ]
     },
-    "signatures": []
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "bVJPHB9IM3I6KJyYkxJNcQKQ4d70H9hZhaPASavLy9Q139/sRLxyB3MuyvyxVw2ukUtKWMaiQ3OQNTrQR+zjDw==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
 }
