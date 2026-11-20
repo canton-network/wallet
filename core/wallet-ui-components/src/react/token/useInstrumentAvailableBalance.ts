@@ -12,7 +12,7 @@ import {
 } from './aggregate-holdings'
 import { basicAccount } from './holdings'
 import { holdingsQueryOptions } from './query-options'
-import { useTokenContext } from './TokenProvider'
+import { useTokenContext } from './useTokenContext'
 
 export const useInstrumentAvailableBalance = (
     partyId: string | undefined,

@@ -7,7 +7,7 @@ import {
     enrichWithInstrumentInfo,
 } from './aggregate-holdings'
 import { holdingsQueryOptions } from './query-options'
-import { useTokenContext } from './TokenProvider'
+import { useTokenContext } from './useTokenContext'
 
 export const useAggregatedHoldings = (partyId: string | undefined) => {
     const {

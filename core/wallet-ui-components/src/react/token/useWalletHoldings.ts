@@ -10,7 +10,7 @@ import {
 } from './aggregate-holdings'
 import type { PortfolioHolding } from './holdings'
 import { holdingsQueryOptions } from './query-options'
-import { useTokenContext } from './TokenProvider'
+import { useTokenContext } from './useTokenContext'
 
 export interface WalletHoldingsResult {
     instruments: AggregatedHolding[]
