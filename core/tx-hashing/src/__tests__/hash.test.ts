@@ -232,6 +232,7 @@ describe('computePreparedTransactionHash', () => {
     describe.each([
         ['V2', HashingSchemeVersion.V2, 'HASHING_SCHEME_VERSION_V2'],
         ['V3', HashingSchemeVersion.V3, 'HASHING_SCHEME_VERSION_V3'],
+        ['V4', HashingSchemeVersion.V4, 'HASHING_SCHEME_VERSION_V4'],
     ] as const)('under HashingSchemeVersion.%s', (_label, scheme, name) => {
         it('returns the participant hash for base64 and bytes', async () => {
             const [{ base64, hashHex }] = liveFixtures(name)
