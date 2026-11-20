@@ -11,6 +11,8 @@
 //                                                 field (the field wins)
 //                      - field unset, one label:  the field is set from the label
 //                      - field unset, 2+ labels:  reported as a conflict, skipped
+//                    Product labels are also created, or recoloured, to match
+//                    their option's colour on the board.
 //  --unused-labels   Runs last. Lists repo labels on no issue or PR (open or
 //                    closed) and asks which to delete. Product labels are
 //                    managed by --sync-labels and never offered; to retire one
@@ -52,6 +54,25 @@ const PRODUCTS: { option: string; label: string }[] = [
     { option: 'Portfolio dApp', label: 'portfolio' },
 ]
 const PRODUCT_LABELS = new Set(PRODUCTS.map((p) => p.label))
+
+// Project option colours are named; labels need hex. GitHub's own (Primer) shades.
+const OPTION_COLORS: Record<string, string> = {
+    GRAY: '6e7781',
+    BLUE: '0969da',
+    GREEN: '1a7f37',
+    YELLOW: 'bf8700',
+    ORANGE: 'bc4c00',
+    RED: 'cf222e',
+    PINK: 'bf3989',
+    PURPLE: '8250df',
+}
+
+// A block of the given hex colour, on a terminal only
+function swatch(hex: string): string {
+    if (!process.stdout.isTTY) return ''
+    const [r, g, b] = [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16))
+    return `\x1b[48;2;${r};${g};${b}m  \x1b[49m `
+}
 
 function gh(args: string[], input?: string): Promise<string> {
     const child = spawn('gh', args, { stdio: ['pipe', 'pipe', 'pipe'] })
@@ -123,6 +144,8 @@ interface Project {
     productFieldId: string
     // Product option name -> option id
     productOptions: Map<string, string>
+    // Product option name -> colour name (GRAY, BLUE, ...)
+    productColors: Map<string, string>
 }
 
 async function loadProject(owner: string, number: number): Promise<Project> {
@@ -133,7 +156,7 @@ async function loadProject(owner: string, number: number): Promise<Project> {
                 title: string
                 field: {
                     id: string
-                    options?: { id: string; name: string }[]
+                    options?: { id: string; name: string; color: string }[]
                 } | null
             } | null
         }
@@ -150,6 +173,7 @@ async function loadProject(owner: string, number: number): Promise<Project> {
                                 options {
                                     id
                                     name
+                                    color
                                 }
                             }
                         }
@@ -195,21 +219,28 @@ async function loadProject(owner: string, number: number): Promise<Project> {
         title: project.title,
         productFieldId: project.field.id,
         productOptions,
+        productColors: new Map(
+            project.field.options.map((o) => [o.name, o.color])
+        ),
     }
 }
 
 interface Label {
     id: string
     name: string
+    color: string
     description: string | null
     // Issues and PRs carrying the label, open or closed
     uses: number
 }
 
 interface Repo {
-    id: string
+    // owner/name
+    slug: string
     // Label name -> label id
     labels: Map<string, string>
+    // Label name -> hex colour, lowercase, no `#`
+    labelColors: Map<string, string>
     // Non-product labels on no issue or PR
     unusedLabels: Label[]
 }
@@ -217,18 +248,17 @@ interface Repo {
 async function loadRepo(repo: string): Promise<Repo> {
     const [owner, name] = repo.split('/')
     const labels: Label[] = []
-    let id = ''
     let after: string | null = null
 
     do {
         const data: {
             repository: {
-                id: string
                 labels: {
                     pageInfo: { hasNextPage: boolean; endCursor: string }
                     nodes: {
                         id: string
                         name: string
+                        color: string
                         description: string | null
                         issues: { totalCount: number }
                         pullRequests: { totalCount: number }
@@ -239,7 +269,6 @@ async function loadRepo(repo: string): Promise<Repo> {
             `
                 query ($owner: String!, $name: String!, $after: String) {
                     repository(owner: $owner, name: $name) {
-                        id
                         labels(first: 100, after: $after) {
                             pageInfo {
                                 hasNextPage
@@ -248,6 +277,7 @@ async function loadRepo(repo: string): Promise<Repo> {
                             nodes {
                                 id
                                 name
+                                color
                                 description
                                 issues {
                                     totalCount
@@ -263,12 +293,12 @@ async function loadRepo(repo: string): Promise<Repo> {
             { owner, name, after }
         )
 
-        id = data.repository.id
         const page = data.repository.labels
         for (const l of page.nodes) {
             labels.push({
                 id: l.id,
                 name: l.name,
+                color: l.color.toLowerCase(),
                 description: l.description,
                 uses: l.issues.totalCount + l.pullRequests.totalCount,
             })
@@ -277,25 +307,97 @@ async function loadRepo(repo: string): Promise<Repo> {
     } while (after)
 
     return {
-        id,
+        slug: repo,
         labels: new Map(labels.map((l) => [l.name, l.id])),
+        labelColors: new Map(labels.map((l) => [l.name, l.color])),
         unusedLabels: labels
             .filter((l) => l.uses === 0 && !PRODUCT_LABELS.has(l.name))
             .sort((a, b) => a.name.localeCompare(b.name)),
     }
 }
 
-async function deleteLabel(label: Label): Promise<void> {
-    await graphql(
-        `
-            mutation ($id: ID!) {
-                deleteLabel(input: { id: $id }) {
-                    clientMutationId
-                }
-            }
-        `,
-        { id: label.id }
-    )
+// Label writes use REST: the GraphQL label mutations have been preview-gated.
+const labelPath = (repo: Repo, name?: string) =>
+    `repos/${repo.slug}/labels${name ? `/${encodeURIComponent(name)}` : ''}`
+
+async function createLabel(
+    repo: Repo,
+    name: string,
+    color: string
+): Promise<void> {
+    const out = await gh([
+        'api',
+        '-X',
+        'POST',
+        labelPath(repo),
+        '-f',
+        `name=${name}`,
+        '-f',
+        `color=${color}`,
+    ])
+    repo.labels.set(name, (JSON.parse(out) as { node_id: string }).node_id)
+    repo.labelColors.set(name, color)
+}
+
+async function recolorLabel(
+    repo: Repo,
+    name: string,
+    color: string
+): Promise<void> {
+    await gh([
+        'api',
+        '-X',
+        'PATCH',
+        labelPath(repo, name),
+        '-f',
+        `color=${color}`,
+    ])
+    repo.labelColors.set(name, color)
+}
+
+async function deleteLabel(repo: Repo, label: Label): Promise<void> {
+    await gh(['api', '-X', 'DELETE', labelPath(repo, label.name)])
+}
+
+type LabelAction =
+    | { kind: 'create'; label: string; color: string; option: string }
+    | {
+          kind: 'recolor'
+          label: string
+          from: string
+          color: string
+          option: string
+      }
+
+// Product labels are created, or recoloured, to match their option's colour
+function planLabels(project: Project, repo: Repo): LabelAction[] {
+    return PRODUCTS.flatMap((p): LabelAction[] => {
+        const optionColor = project.productColors.get(p.option) ?? 'GRAY'
+        const color = OPTION_COLORS[optionColor] ?? OPTION_COLORS.GRAY!
+        const current = repo.labelColors.get(p.label)
+        if (current === undefined) {
+            return [{ kind: 'create', label: p.label, color, option: p.option }]
+        }
+        if (current !== color) {
+            return [
+                {
+                    kind: 'recolor',
+                    label: p.label,
+                    from: current,
+                    color,
+                    option: p.option,
+                },
+            ]
+        }
+        return []
+    })
+}
+
+function labelActionLine(project: Project, action: LabelAction): string {
+    const target = `${swatch(action.color)}#${action.color} ${dim(`(${action.option}: ${project.productColors.get(action.option)})`)}`
+    return action.kind === 'create'
+        ? `  ${green(`+ ${action.label.padEnd(20)}`)} ${target}`
+        : `  ${yellow(`~ ${action.label.padEnd(20)}`)} ${swatch(action.from)}#${action.from} → ${target}`
 }
 
 interface Issue {
@@ -462,28 +564,6 @@ async function setProduct(
             optionId: project.productOptions.get(option),
         }
     )
-}
-
-async function createLabel(repo: Repo, name: string): Promise<void> {
-    const data = await graphql<{ createLabel: { label: { id: string } } }>(
-        `
-            mutation ($repositoryId: ID!, $name: String!) {
-                createLabel(
-                    input: {
-                        repositoryId: $repositoryId
-                        name: $name
-                        color: "ededed"
-                    }
-                ) {
-                    label {
-                        id
-                    }
-                }
-            }
-        `,
-        { repositoryId: repo.id, name }
-    )
-    repo.labels.set(name, data.createLabel.label.id)
 }
 
 async function editLabels(
@@ -657,9 +737,7 @@ void program
             : []
         const changes = sync.filter((a) => a.kind !== 'conflict')
         const conflicts = sync.filter((a) => a.kind === 'conflict')
-        const missingLabels = doSync
-            ? PRODUCTS.map((p) => p.label).filter((l) => !repo.labels.has(l))
-            : []
+        const labelActions = doSync ? planLabels(project, repo) : []
 
         if (doAdd) {
             console.log(
@@ -674,14 +752,12 @@ void program
             console.log(
                 header(
                     'sync-labels',
-                    `${changes.length} change(s), ${conflicts.length} conflict(s)`
+                    `${labelActions.length} label(s) to create/recolour, ${changes.length} issue change(s), ${conflicts.length} conflict(s)`
                 )
             )
-            if (missingLabels.length) {
-                console.log(
-                    `  ${green(`+ create label(s): ${missingLabels.join(', ')}`)}`
-                )
-            }
+            labelActions.forEach((a) =>
+                console.log(labelActionLine(project, a))
+            )
             changes.forEach((a) => console.log(line(a.issue, describe(a))))
             conflicts.forEach((a) => console.log(line(a.issue, describe(a))))
         }
@@ -703,9 +779,9 @@ void program
         }
 
         const failures: string[] = []
-        if (noProject.length + changes.length > 0) {
+        if (noProject.length + labelActions.length + changes.length > 0) {
             const proceed = await confirm({
-                message: `Apply the issue changes above to ${opts.repo}?`,
+                message: `Apply the label and issue changes above to ${opts.repo}?`,
                 default: false,
             })
             if (proceed) {
@@ -772,7 +848,7 @@ void program
 
             for (const label of selected) {
                 try {
-                    await deleteLabel(label)
+                    await deleteLabel(repo, label)
                     console.log(`  ${green('✓')} ${red(`-${label.name}`)}`)
                 } catch (error) {
                     console.log(
@@ -807,20 +883,29 @@ void program
                 }
             }
 
-            if (changes.length) {
-                for (const label of missingLabels) {
-                    console.log(green(`+ creating label "${label}"...`))
+            if (labelActions.length) {
+                console.log(
+                    header('sync-labels', `${labelActions.length} label(s)...`)
+                )
+                for (const action of labelActions) {
                     try {
-                        await createLabel(repo, label)
+                        if (action.kind === 'create') {
+                            await createLabel(repo, action.label, action.color)
+                        } else {
+                            await recolorLabel(repo, action.label, action.color)
+                        }
+                        console.log(labelActionLine(project, action))
                     } catch (error) {
-                        // Issues needing this label then fail individually
+                        // Issues needing a label that failed to create then fail individually
                         console.log(
-                            `  ${red('✗')} ${label}: ${red((error as Error).message)}`
+                            `  ${red('✗')} ${action.label}: ${red((error as Error).message)}`
                         )
-                        failures.push(`label "${label}"`)
+                        failures.push(`label "${action.label}"`)
                     }
                 }
+            }
 
+            if (changes.length) {
                 console.log(
                     header('sync-labels', `${changes.length} issue(s)...`)
                 )
