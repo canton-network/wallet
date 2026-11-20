@@ -6,7 +6,7 @@ import { appendFileSync } from 'node:fs'
 
 import { Command } from '@commander-js/extra-typings'
 
-import versionConfig from '../lib/version-config.json' with { type: 'json' }
+import { DAML_RELEASE_VERSION, SUPPORTED_VERSIONS } from '../lib/utils.ts'
 
 type Environment = {
     network: 'devnet' | 'mainnet'
@@ -63,8 +63,7 @@ function selectE2e(projects: string[]): Record<string, string> {
         ...suite,
         environments: projects.includes(suite.project)
             ? suite.environments.map((environment) => {
-                  const versions =
-                      versionConfig.SUPPORTED_VERSIONS[environment.network]
+                  const versions = SUPPORTED_VERSIONS[environment.network]
                   return {
                       ...environment,
                       canton_version: versions.canton.version,
@@ -84,8 +83,8 @@ function selectE2e(projects: string[]): Record<string, string> {
     )
 
     const outputs: Record<string, string> = {
-        daml_release_version: versionConfig.DAML_RELEASE_VERSION,
-        versions: JSON.stringify(versionConfig.SUPPORTED_VERSIONS),
+        daml_release_version: DAML_RELEASE_VERSION,
+        versions: JSON.stringify(SUPPORTED_VERSIONS),
         hydrate: String(hydration.length > 0),
         'hydrate-matrix': JSON.stringify({ include: hydration }),
     }
