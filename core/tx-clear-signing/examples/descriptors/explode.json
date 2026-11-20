@@ -1,0 +1,106 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54",
+            "moduleName": "Canton.Internal.Bong",
+            "entityName": "Explode"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Canton bong explode (canton-builtin-admin-workflow-ping)"
+    },
+    "display": {
+        "create": {
+            "intent": "Explode",
+            "interpolatedIntent": "Explode bong {id} from {initiator} at path {path}, level {maxLevel}",
+            "fields": [
+                {
+                    "path": "id",
+                    "label": "Bong ID",
+                    "format": "string"
+                },
+                {
+                    "path": "initiator",
+                    "label": "Initiator",
+                    "format": "party"
+                },
+                {
+                    "path": "validators",
+                    "label": "Validators",
+                    "format": "raw"
+                },
+                {
+                    "path": "responders",
+                    "label": "Responders",
+                    "format": "raw"
+                },
+                {
+                    "path": "path",
+                    "label": "Path",
+                    "format": "string"
+                },
+                {
+                    "path": "maxLevel",
+                    "label": "Level",
+                    "format": "number"
+                },
+                {
+                    "path": "timeout",
+                    "label": "Timeout",
+                    "format": "dateTime"
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "ProcessExplode",
+                "intent": "Process explode",
+                "interpolatedIntent": "Process explode {@.contract.id} path {@.contract.path} as {winner}",
+                "fields": [
+                    {
+                        "path": "@.contract.id",
+                        "label": "Bong ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.path",
+                        "label": "Path",
+                        "format": "string"
+                    },
+                    {
+                        "path": "winner",
+                        "label": "Winner",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "AbortExplode",
+                "intent": "Abort explode",
+                "interpolatedIntent": "Abort explode {@.contract.id} as {anyone}",
+                "fields": [
+                    {
+                        "path": "@.contract.id",
+                        "label": "Bong ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "anyone",
+                        "label": "Aborted by",
+                        "format": "party"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "dDz5wVF6ApLRiLZ0ShuihpRYja+4HL/A6FcaFxI0U8Mx7q7pg7yrhQ+3KC6cpAZ8mpnIbs8DD1hLE356qu9EBg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

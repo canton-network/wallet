@@ -353,6 +353,13 @@ class AppHeader extends BaseElement {
                         <button
                             type="button"
                             class="menu-item"
+                            @click=${() => this.navigateTo('/descriptors/')}
+                        >
+                            <span>Descriptors</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="menu-item"
                             @click=${() =>
                                 this.navigateTo('/identity-providers/')}
                         >

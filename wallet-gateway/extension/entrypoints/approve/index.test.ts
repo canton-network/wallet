@@ -11,7 +11,10 @@ vi.mock('@canton-network/core-wallet-ui-components', async () => {
     const { LitElement } = await import('lit')
     return { BaseElement: LitElement, handleErrorToast: vi.fn() }
 })
-vi.mock('@canton-network/core-tx-visualizer', () => ({
+vi.mock('@canton-network/core-tx-visualizer', async (importOriginal) => ({
+    ...(await importOriginal<
+        typeof import('@canton-network/core-tx-visualizer')
+    >()),
     parsePreparedTransaction: vi.fn().mockReturnValue({}),
 }))
 vi.mock('@/utils/legacy-frontend/index.ts', () => ({}))
@@ -32,6 +35,8 @@ vi.mock('@/utils/legacy-frontend/navigation.ts', () => ({
 vi.mock('@/utils/legacy-frontend/utils.ts', () => ({ showToast: vi.fn() }))
 
 const { ApproveUi } = await import('./index.ts')
+const { preparedTransaction, preparedTransactionHash } =
+    await import('../background/user/__tests__/prepared-transactions.ts')
 
 const transactionId = 'tx-1'
 const partyId = 'party::namespace'
@@ -47,8 +52,8 @@ describe('ApproveUi', () => {
                         id: transactionId,
                         commandId: 'cmd-1',
                         status: 'pending',
-                        preparedTransaction: 'prepared-tx',
-                        preparedTransactionHash: 'tx-hash',
+                        preparedTransaction,
+                        preparedTransactionHash,
                         payload: '',
                     }
                 case 'listWallets':
@@ -90,9 +95,34 @@ describe('ApproveUi', () => {
         const calls = request.mock.calls.map(([payload]) => payload)
         expect(calls.filter(({ method }) => method !== 'listWallets')).toEqual([
             { method: 'getTransaction', params: { transactionId } },
-            { method: 'sign', params: { transactionId, partyId } },
+            {
+                method: 'sign',
+                params: { transactionId, partyId, preparedTransactionHash },
+            },
             { method: 'execute', params: { transactionId, partyId } },
         ])
+    })
+
+    it('cannot approve when the transaction does not match its hash', async () => {
+        const defaultRequest = request.getMockImplementation()!
+        request.mockImplementation(async (payload: { method: string }) =>
+            payload.method === 'getTransaction'
+                ? {
+                      id: transactionId,
+                      commandId: 'cmd-1',
+                      status: 'pending',
+                      preparedTransaction,
+                      preparedTransactionHash: btoa('x'.repeat(32)),
+                      payload: '',
+                  }
+                : defaultRequest(payload)
+        )
+        const approval = new ApproveUi()
+        approval.transactionId = transactionId
+        await approval['updateState']()
+
+        expect(approval['canApprove']).toBe(false)
+        expect(approval.errorMessage).toContain('does not match the hash')
     })
 
     describe('when the submission of a signed transaction was not confirmed', () => {
@@ -107,8 +137,8 @@ describe('ApproveUi', () => {
                           id: transactionId,
                           commandId: 'cmd-1',
                           status: 'signed',
-                          preparedTransaction: 'prepared-tx',
-                          preparedTransactionHash: 'tx-hash',
+                          preparedTransaction,
+                          preparedTransactionHash,
                           payload: '',
                           failureReason,
                       }
@@ -153,8 +183,8 @@ describe('ApproveUi', () => {
                           id: transactionId,
                           commandId: 'cmd-1',
                           status,
-                          preparedTransaction: 'prepared-tx',
-                          preparedTransactionHash: 'tx-hash',
+                          preparedTransaction,
+                          preparedTransactionHash,
                           payload: '',
                       }
                     : defaultRequest(payload)

@@ -16,6 +16,13 @@ import type {
 } from '@canton-network/core-wallet-store'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+import {
+    otherPreparedTransactionV3,
+    pingPreparedTransactionV3,
+    pingPreparedTransactionHashV3,
+    preparedTransactionHashV3,
+    preparedTransactionV3,
+} from './__tests__/prepared-transaction.ts'
 import { initializeLogRecorder } from './__tests__/test-utils.ts'
 import type { Notifier } from './notification/index.ts'
 import { TransactionService } from './transaction-service.ts'
@@ -47,8 +54,8 @@ const pendingTransaction: Transaction = {
     id: 'tx-1',
     commandId: 'cmd-1',
     status: 'pending',
-    preparedTransaction: 'prepared-tx',
-    preparedTransactionHash: 'tx-hash',
+    preparedTransaction: preparedTransactionV3,
+    preparedTransactionHash: preparedTransactionHashV3,
     origin: 'https://dapp.example',
     createdAt: new Date('2026-01-01T00:00:00.000Z'),
 }
@@ -80,6 +87,7 @@ const executedTransaction: Transaction = {
 const signParams = {
     transactionId: pendingTransaction.id,
     partyId: wallet.partyId,
+    preparedTransactionHash: pendingTransaction.preparedTransactionHash,
 }
 
 const executeParams = {
@@ -266,6 +274,187 @@ describe('TransactionService', () => {
                         },
                     })
                 )
+            })
+        })
+
+        describe('hash binding', () => {
+            it.each([
+                [
+                    'hash',
+                    {
+                        ...pendingTransaction,
+                        preparedTransactionHash: btoa('x'.repeat(32)),
+                    },
+                ],
+                [
+                    'transaction',
+                    {
+                        ...pendingTransaction,
+                        preparedTransaction: otherPreparedTransactionV3,
+                    },
+                ],
+            ])(
+                'refuses to sign when the %s was tampered with',
+                async (_, transaction) => {
+                    const signTransaction = vi.fn()
+                    const service = createService(
+                        createStore(transaction),
+                        {
+                            [SigningProvider.WALLET_KERNEL]: createDriver({
+                                signTransaction,
+                            }),
+                        },
+                        notifier
+                    )
+
+                    await expect(
+                        service.sign(authContext, wallet, signParams)
+                    ).rejects.toThrow('does not match its content')
+                    expect(signTransaction).not.toHaveBeenCalled()
+                }
+            )
+
+            it('refuses to sign when the user approved another hash', async () => {
+                const signTransaction = vi.fn()
+                const service = new TransactionService(
+                    createStore(),
+                    {
+                        [SigningProvider.WALLET_KERNEL]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    'HASHING_SCHEME_VERSION_V3'
+                )
+
+                await expect(
+                    service.sign(authContext, wallet, {
+                        ...signParams,
+                        preparedTransactionHash: pingPreparedTransactionHashV3,
+                    })
+                ).rejects.toThrow('approved hash')
+                expect(signTransaction).not.toHaveBeenCalled()
+            })
+
+            it('logs the approval before signing', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    signature: 'approved-signature',
+                })
+                const service = new TransactionService(
+                    createStore(),
+                    {
+                        [SigningProvider.WALLET_KERNEL]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    'HASHING_SCHEME_VERSION_V3'
+                )
+
+                await service.sign(authContext, wallet, signParams)
+
+                recorder.assertLogged({
+                    level: 'info',
+                    message: /Transaction signing approved/,
+                })
+            })
+
+            it('signs the stored transaction with its hash', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    signature: 'ping-signature',
+                })
+                const transaction = {
+                    ...pendingTransaction,
+                    preparedTransaction: pingPreparedTransactionV3,
+                    preparedTransactionHash: pingPreparedTransactionHashV3,
+                }
+                const service = new TransactionService(
+                    createStore(transaction),
+                    {
+                        [SigningProvider.WALLET_KERNEL]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    'HASHING_SCHEME_VERSION_V3'
+                )
+
+                const result = await service.sign(authContext, wallet, {
+                    ...signParams,
+                    preparedTransactionHash: pingPreparedTransactionHashV3,
+                })
+
+                expect(signTransaction).toHaveBeenCalledWith({
+                    tx: pingPreparedTransactionV3,
+                    txHash: pingPreparedTransactionHashV3,
+                    keyIdentifier: { publicKey: wallet.publicKey },
+                })
+                expect(result).toMatchObject({
+                    status: 'signed',
+                    signature: 'ping-signature',
+                })
+            })
+
+            it('re-signs at execution once the hash matches', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    signature: 'undescribed-signature',
+                })
+                postWithRetry.mockResolvedValue({ updateId: 'ledger-update-1' })
+                const service = new TransactionService(
+                    createStore(signedTransaction),
+                    {
+                        [SigningProvider.WALLET_KERNEL]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    'HASHING_SCHEME_VERSION_V3'
+                )
+
+                await service.execute(
+                    authContext.userId,
+                    wallet,
+                    signedTransaction,
+                    executeParams,
+                    ledgerClient,
+                    authContext,
+                    network
+                )
+
+                expect(signTransaction).toHaveBeenCalledOnce()
+            })
+
+            it('refuses to re-sign at execution when the hash does not match', async () => {
+                const signTransaction = vi.fn()
+                const transaction = {
+                    ...signedTransaction,
+                    preparedTransactionHash: btoa('x'.repeat(32)),
+                }
+                const service = createService(
+                    createStore(transaction),
+                    {
+                        [SigningProvider.WALLET_KERNEL]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier
+                )
+
+                await expect(
+                    service.execute(
+                        authContext.userId,
+                        wallet,
+                        transaction,
+                        executeParams,
+                        ledgerClient,
+                        authContext,
+                        network
+                    )
+                ).rejects.toThrow('does not match its content')
+                expect(signTransaction).not.toHaveBeenCalled()
             })
         })
 
@@ -548,7 +737,7 @@ describe('TransactionService', () => {
 
                 expect(signTransaction).toHaveBeenCalledWith(
                     expect.objectContaining({
-                        txHash: 'tx-hash',
+                        txHash: pendingTransaction.preparedTransactionHash,
                     })
                 )
                 expect(result).toMatchObject({
@@ -1789,16 +1978,22 @@ describe('TransactionService', () => {
             )
 
             it('signs and executes when signing completes synchronously', async () => {
-                const service = createService(createStore(), {}, notifier)
+                const service = createService(
+                    createStore(),
+                    {
+                        [SigningProvider.PARTICIPANT]: createDriver({
+                            signTransaction: vi.fn().mockResolvedValue({
+                                status: 'signed',
+                                signature: 'none',
+                                signedBy: 'namespace',
+                            }),
+                        }),
+                    },
+                    notifier
+                )
                 const executeSpy = vi
                     .spyOn(service, 'execute')
                     .mockResolvedValue({ commandId: 'cmd-1' })
-                vi.spyOn(service, 'sign').mockResolvedValue({
-                    status: 'signed',
-                    signature: 'sig',
-                    signedBy: 'namespace',
-                    partyId: participantWallet.partyId,
-                })
 
                 const result = await service.signAndExecute(
                     authContext,
@@ -1809,28 +2004,40 @@ describe('TransactionService', () => {
 
                 expect(result).toEqual({ commandId: 'cmd-1' })
                 expect(executeSpy).toHaveBeenCalled()
+                // A service account has no reviewer; the approval is recorded as its own.
+                recorder.assertLogged({
+                    level: 'info',
+                    message: /Transaction signing approved/,
+                })
             })
 
             it('returns pending sign result without executing', async () => {
-                const service = createService(createStore(), {}, notifier)
-                const executeSpy = vi.spyOn(service, 'execute')
-                vi.spyOn(service, 'sign').mockResolvedValue({
+                const signTransaction = vi.fn().mockResolvedValue({
                     status: 'pending',
-                    externalTxId: 'ext-1',
-                    partyId: participantWallet.partyId,
+                    txId: 'bitgo-tx-1',
                 })
+                const service = createService(
+                    createStore(),
+                    {
+                        [SigningProvider.BITGO]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier
+                )
+                const executeSpy = vi.spyOn(service, 'execute')
 
                 const result = await service.signAndExecute(
                     authContext,
                     network,
-                    participantWallet,
+                    walletWithProvider(SigningProvider.BITGO),
                     pendingTransaction
                 )
 
                 expect(result).toEqual({
                     status: 'pending',
-                    externalTxId: 'ext-1',
-                    partyId: participantWallet.partyId,
+                    externalTxId: 'bitgo-tx-1',
+                    partyId: wallet.partyId,
                 })
                 expect(executeSpy).not.toHaveBeenCalled()
             })

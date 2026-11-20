@@ -158,6 +158,34 @@ export const hashPreparedTransaction = async (
     }
 }
 
+/**
+ * The hash a user approves when reviewing `preparedTransaction`: computed here from the bytes being
+ * displayed, never taken from the server. `claimedHash` (the hash the gateway reports) only selects
+ * the hashing scheme. Returns undefined when no scheme reproduces it, in which case the displayed
+ * transaction is not the one the gateway would sign, and approval must not be offered.
+ */
+export const hashForReview = async (
+    preparedTransaction: string,
+    claimedHash: string
+): Promise<string | undefined> => {
+    const schemes: HashingScheme[] = [
+        HashingSchemeVersion.V3,
+        HashingSchemeVersion.V2,
+    ]
+    for (const hashingScheme of schemes) {
+        const hash = await hashPreparedTransaction(
+            preparedTransaction,
+            'base64',
+            {
+                hashingScheme,
+                readUnknownField: 'throw',
+            }
+        )
+        if (hash === claimedHash) return hash
+    }
+    return undefined
+}
+
 type ValidationResult = Record<
     string,
     {

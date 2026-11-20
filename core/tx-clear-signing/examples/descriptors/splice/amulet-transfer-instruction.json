@@ -1,0 +1,347 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.AmuletTransferInstruction",
+            "entityName": "AmuletTransferInstruction"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Amulet transfer instruction"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "TransferInstruction_Accept",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Accept an amulet transfer",
+                "interpolatedIntent": "Accept {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender} to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Reject",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Reject an amulet transfer",
+                "interpolatedIntent": "Reject {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Withdraw an amulet transfer",
+                "interpolatedIntent": "Withdraw {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} sent to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Accept",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Accept an amulet transfer",
+                "interpolatedIntent": "Accept {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender} to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Reject",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Reject an amulet transfer",
+                "interpolatedIntent": "Reject {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Withdraw an amulet transfer",
+                "interpolatedIntent": "Withdraw {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} sent to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.lockedAmulet",
+                        "label": "Locked amulet",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "2Mho4CLVlC6UWZoCQw2KEaPr2NqRFN1jDJhJesTLWyKweTxoeVqBt10i02n5O1jYzFf1+mLjsfT83RwFbIexCg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

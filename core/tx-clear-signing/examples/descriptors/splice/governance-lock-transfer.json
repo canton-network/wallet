@@ -1,0 +1,323 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.GovernanceLock.Transfer",
+            "entityName": "GovernanceLockTransfer"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Governance lock transfer"
+    },
+    "display": {
+        "create": {
+            "intent": "Propose a governance lock transfer",
+            "interpolatedIntent": "Propose transferring {amount} of the governance lock of {source.owner} to {receiver}",
+            "fields": [
+                {
+                    "path": "amount",
+                    "label": "Amount",
+                    "format": "number"
+                },
+                {
+                    "path": "source.owner",
+                    "label": "From",
+                    "format": "party"
+                },
+                {
+                    "path": "receiver",
+                    "label": "To",
+                    "format": "party"
+                },
+                {
+                    "path": "source.dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "source.specification",
+                    "label": "Lock type",
+                    "format": "raw"
+                },
+                {
+                    "path": "expiresAt",
+                    "label": "Expires",
+                    "format": "dateTime"
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "TransferInstruction_Accept",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Accept a governance lock transfer",
+                "interpolatedIntent": "Accept {@.contract.amount} of governance locks from {@.contract.source.owner} to {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.source.owner",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.source.specification",
+                        "label": "Lock type",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Reject",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Reject a governance lock transfer",
+                "interpolatedIntent": "Reject {@.contract.amount} of governance locks from {@.contract.source.owner}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.source.owner",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.source.specification",
+                        "label": "Lock type",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Withdraw a governance lock transfer",
+                "interpolatedIntent": "Withdraw {@.contract.amount} of governance locks from {@.contract.source.owner} to {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.source.owner",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.source.specification",
+                        "label": "Lock type",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Reject",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Reject a governance lock transfer",
+                "interpolatedIntent": "Reject {@.contract.amount} of governance locks from {@.contract.source.owner}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.source.owner",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.source.specification",
+                        "label": "Lock type",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Accept",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Accept a governance lock transfer",
+                "interpolatedIntent": "Accept {@.contract.amount} of governance locks from {@.contract.source.owner} to {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.source.owner",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.source.specification",
+                        "label": "Lock type",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Withdraw a governance lock transfer",
+                "interpolatedIntent": "Withdraw {@.contract.amount} of governance locks from {@.contract.source.owner} to {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.source.owner",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.source.specification",
+                        "label": "Lock type",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "Mh3zVT1AjoUS/MRIDFpJIvkzB5Cs5AWsvqbaV5UA4Ammm6sm60L/+qH9/4yydSkNdAX25kNH8v0YFQkGLukxCw==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

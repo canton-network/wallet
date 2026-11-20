@@ -1,0 +1,341 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "106145fd9ef9cb0545dcf0c04e983ed41f5fe5056dcc4c84b6cdf0d14a634408",
+            "moduleName": "Utility.Registry.V0.Holding.Allocation",
+            "entityName": "DvpLegAllocation"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Utility registry allocation (token standard V1)"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "Allocation_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV1",
+                    "entityName": "Allocation"
+                },
+                "intent": "Withdraw an allocation",
+                "interpolatedIntent": "Withdraw the allocation of {@.contract.allocation.transferLeg.amount} {@.contract.allocation.transferLeg.instrumentId.id} from {@.contract.allocation.transferLeg.sender} to {@.contract.allocation.transferLeg.receiver} for settlement {@.contract.allocation.settlement.settlementRef.id}",
+                "fields": [
+                    {
+                        "path": "@.contract.allocation.transferLeg.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settlementRef.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.executor",
+                        "label": "Executor",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegId",
+                        "label": "Leg",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settleBefore",
+                        "label": "Settle before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.lockedHoldingCid",
+                        "label": "Locked holding",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "Allocation_Cancel",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV1",
+                    "entityName": "Allocation"
+                },
+                "intent": "Cancel an allocation",
+                "interpolatedIntent": "Cancel the allocation of {@.contract.allocation.transferLeg.amount} {@.contract.allocation.transferLeg.instrumentId.id} from {@.contract.allocation.transferLeg.sender} to {@.contract.allocation.transferLeg.receiver} for settlement {@.contract.allocation.settlement.settlementRef.id}",
+                "fields": [
+                    {
+                        "path": "@.contract.allocation.transferLeg.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settlementRef.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.executor",
+                        "label": "Executor",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegId",
+                        "label": "Leg",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settleBefore",
+                        "label": "Settle before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.lockedHoldingCid",
+                        "label": "Locked holding",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "Allocation_ExecuteTransfer",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV1",
+                    "entityName": "Allocation"
+                },
+                "intent": "Execute an allocated transfer",
+                "interpolatedIntent": "Transfer {@.contract.allocation.transferLeg.amount} {@.contract.allocation.transferLeg.instrumentId.id} from {@.contract.allocation.transferLeg.sender} to {@.contract.allocation.transferLeg.receiver} for settlement {@.contract.allocation.settlement.settlementRef.id}, executed by {@.contract.allocation.settlement.executor}",
+                "fields": [
+                    {
+                        "path": "@.contract.allocation.transferLeg.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settlementRef.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.executor",
+                        "label": "Executor",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegId",
+                        "label": "Leg",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settleBefore",
+                        "label": "Settle before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.lockedHoldingCid",
+                        "label": "Locked holding",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "Allocation_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV2",
+                    "entityName": "Allocation"
+                },
+                "intent": "Withdraw an allocation",
+                "interpolatedIntent": "Withdraw the allocation of {@.contract.allocation.transferLeg.amount} {@.contract.allocation.transferLeg.instrumentId.id} from {@.contract.allocation.transferLeg.sender} to {@.contract.allocation.transferLeg.receiver} for settlement {@.contract.allocation.settlement.settlementRef.id}",
+                "fields": [
+                    {
+                        "path": "@.contract.allocation.transferLeg.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settlementRef.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.executor",
+                        "label": "Executor",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegId",
+                        "label": "Leg",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settleBefore",
+                        "label": "Settle before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.lockedHoldingCid",
+                        "label": "Locked holding",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "Allocation_Cancel",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.AllocationV2",
+                    "entityName": "Allocation"
+                },
+                "intent": "Cancel an allocation",
+                "interpolatedIntent": "Cancel the allocation of {@.contract.allocation.transferLeg.amount} {@.contract.allocation.transferLeg.instrumentId.id} from {@.contract.allocation.transferLeg.sender} to {@.contract.allocation.transferLeg.receiver} for settlement {@.contract.allocation.settlement.settlementRef.id}",
+                "fields": [
+                    {
+                        "path": "@.contract.allocation.transferLeg.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLeg.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settlementRef.id",
+                        "label": "Settlement",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.executor",
+                        "label": "Executor",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.allocation.transferLegId",
+                        "label": "Leg",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.allocation.settlement.settleBefore",
+                        "label": "Settle before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.lockedHoldingCid",
+                        "label": "Locked holding",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "uL61ao5Ly6SPrmXwaf4thm551s/m3n0AB70FQuIO1XzrcnmEzaAeveDCqS/EEKbx5Tj9PVOWCvEqCik9S3oSAg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

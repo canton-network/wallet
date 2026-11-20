@@ -1,0 +1,66 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.GovernanceLock",
+            "entityName": "GovernanceLock"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Governance lock"
+    },
+    "display": {
+        "create": {
+            "intent": "Create a governance lock",
+            "interpolatedIntent": "Lock {amount} for {owner} under {dso}",
+            "fields": [
+                {
+                    "path": "amount",
+                    "label": "Amount",
+                    "format": "number"
+                },
+                {
+                    "path": "owner",
+                    "label": "Lock owner",
+                    "format": "party"
+                },
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "specification",
+                    "label": "Lock type",
+                    "format": "raw"
+                },
+                {
+                    "path": "lockedAmulet",
+                    "label": "Locked amulet",
+                    "format": "contractId"
+                },
+                {
+                    "path": "originalLockCid",
+                    "label": "Original lock",
+                    "format": "raw",
+                    "optional": true
+                },
+                {
+                    "path": "requestedAt",
+                    "label": "Requested at",
+                    "format": "dateTime"
+                }
+            ]
+        }
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "PZGUlPUg49MMAx4nfknS3UT/jcdi5TgDp0B7tJ/JXgYlySPRBm3n/yntfnLCiPzmer2ghQlSY5inLw4gvdA0Bg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

@@ -15,6 +15,7 @@ import {
     type Transaction,
     UserLevelRight,
     type Wallet,
+    type ClearSigningDescriptor,
 } from '@canton-network/core-wallet-store'
 import type { Kysely } from 'kysely'
 import { describe, expect, test, beforeEach, afterEach } from 'vitest'
@@ -1654,5 +1655,71 @@ implementations.forEach(([name, StoreImpl]) => {
                 store.setMessageRawStatus('missing-msg', 'failed')
             ).rejects.toThrow('MessageRaw not found')
         })
+
+        test('should store clear-signing descriptors per user and package id', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            const first = clearSigningDescriptor('pkg-1', 'first')
+            const secondVersion = clearSigningDescriptor('pkg-2', 'second')
+            const replacement = clearSigningDescriptor('pkg-1', 'replaced')
+
+            expect(await store.listClearSigningDescriptors()).toEqual([])
+
+            await store.setClearSigningDescriptor(first)
+            await store.setClearSigningDescriptor(secondVersion)
+            expect(await store.listClearSigningDescriptors()).toEqual([
+                first.descriptor,
+                secondVersion.descriptor,
+            ])
+
+            await store.setClearSigningDescriptor(replacement)
+            expect(await store.listClearSigningDescriptors()).toEqual([
+                replacement.descriptor,
+                secondVersion.descriptor,
+            ])
+
+            await store.removeClearSigningDescriptor({
+                packageId: 'pkg-1',
+                moduleName: 'Canton.Internal.Ping',
+                entityName: 'Ping',
+            })
+            expect(await store.listClearSigningDescriptors()).toEqual([
+                secondVersion.descriptor,
+            ])
+
+            const other = new StoreImpl(db, {
+                userId: 'other-user',
+                accessToken: 'other-token',
+            })
+            expect(await other.listClearSigningDescriptors()).toEqual([])
+            await other.removeClearSigningDescriptor({
+                packageId: 'pkg-2',
+                moduleName: 'Canton.Internal.Ping',
+                entityName: 'Ping',
+            })
+            expect(await store.listClearSigningDescriptors()).toEqual([
+                secondVersion.descriptor,
+            ])
+        })
     })
 })
+
+function clearSigningDescriptor(
+    packageId: string,
+    name: string
+): ClearSigningDescriptor {
+    return {
+        packageId,
+        moduleName: 'Canton.Internal.Ping',
+        entityName: 'Ping',
+        descriptor: JSON.stringify({
+            context: {
+                template: {
+                    packageId,
+                    moduleName: 'Canton.Internal.Ping',
+                    entityName: 'Ping',
+                },
+            },
+            metadata: { name },
+        }),
+    }
+}

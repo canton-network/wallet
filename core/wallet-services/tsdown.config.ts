@@ -7,5 +7,5 @@ import { base } from '../../tsdown.base.ts'
 
 export default defineConfig({
     ...base,
-    entry: ['src/index.ts'],
+    entry: ['src/index.ts', 'src/clear-signing/index.ts'],
 })

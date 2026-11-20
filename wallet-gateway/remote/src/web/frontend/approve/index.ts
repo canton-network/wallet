@@ -2,6 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    clearSign,
+    HashMismatchError,
+    type ClearSigningResult,
+} from '@canton-network/core-tx-clear-signing'
+import {
+    computePreparedTransactionHash,
+    TxHashingError,
+} from '@canton-network/core-tx-hashing'
+import {
     type ParsedTransactionInfo,
     parsePreparedTransaction,
 } from '@canton-network/core-tx-visualizer'
@@ -19,6 +28,7 @@ import { html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
 import { ACTIVITIES_PAGE_REDIRECT } from '../constants.ts'
+import { listDescriptors } from '../descriptors-store.ts'
 import '../index.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import { setLocationHref } from '../navigation.ts'
@@ -37,8 +47,17 @@ export class ApproveUi extends BaseElement {
     @state() accessor commandId = ''
     @state() accessor partyId = ''
     @state() accessor txHash = ''
+    /**
+     * The hash computed here from the transaction on screen, sent with the approval. The gateway signs
+     * only if it equals the hash of the transaction it holds. Null until computed, or on a mismatch.
+     */
+    @state() accessor reviewedHash: string | null = null
+    @state() accessor hashMismatch = false
     @state() accessor tx = ''
     @state() accessor txParsed: ParsedTransactionInfo | null = null
+    @state() accessor clearSigning: ClearSigningResult | null = null
+    @state() accessor clearSigningError: string | null = null
+    @state() accessor previewNotice: string | null = null
     @state() accessor status = ''
     @state() accessor createdAt: string | null = null
     @state() accessor signedAt: string | null = null
@@ -55,6 +74,13 @@ export class ApproveUi extends BaseElement {
 
     connectedCallback(): void {
         super.connectedCallback()
+        // A transaction to preview travels in the fragment, which never reaches the server.
+        const preview = new URLSearchParams(window.location.hash.slice(1))
+        const previewTx = preview.get('preview')
+        if (previewTx) {
+            void this.showPreview(previewTx)
+            return
+        }
         const url = new URL(window.location.href)
         this.transactionId = url.searchParams.get('transactionId') || ''
         this.pollDelay = POLL_INTERVAL_MS
@@ -108,13 +134,7 @@ export class ApproveUi extends BaseElement {
         this.origin = result.origin || null
         this.externalTxId = result.externalTxId || null
         this.failureReason = result.failureReason || null
-
-        try {
-            this.txParsed = parsePreparedTransaction(this.tx)
-        } catch (error) {
-            console.error('Error parsing prepared transaction:', error)
-            this.txParsed = null
-        }
+        await this.describeTransaction(result.preparedTransactionHash)
 
         const wallets = await userClient.request({
             method: 'listWallets',
@@ -233,6 +253,14 @@ export class ApproveUi extends BaseElement {
     }
 
     private async handleSign() {
+        if (!this.reviewedHash) {
+            showToast(
+                'Cannot approve',
+                'The transaction shown does not match the hash that would be signed',
+                'error'
+            )
+            return
+        }
         if (!this.canSubmit) {
             showToast(
                 'Read-only wallet',
@@ -253,6 +281,7 @@ export class ApproveUi extends BaseElement {
                 params: {
                     transactionId: this.transactionId,
                     partyId: this.partyId,
+                    preparedTransactionHash: this.reviewedHash,
                 },
             })
 
@@ -325,8 +354,102 @@ export class ApproveUi extends BaseElement {
         }
     }
 
+    /** Shows how a prepared transaction would be presented for approval, without loading or signing it. */
+    private async showPreview(tx: string) {
+        this.commandId = 'preview'
+        this.status = 'preview'
+        this.disabled = true
+        this.tx = tx
+        this.previewNotice =
+            'This is a preview, not a transaction to sign. Nothing is submitted.'
+        let hash: string
+        try {
+            hash = await previewTransactionHash(tx)
+        } catch (error) {
+            console.error('Error hashing prepared transaction:', error)
+            this.parseTransaction()
+            this.clearSigning = null
+            this.reviewedHash = null
+            this.hashMismatch = false
+            this.txHash = ''
+            this.clearSigningError =
+                error instanceof Error ? error.message : String(error)
+            return
+        }
+        await this.describeTransaction(hash)
+    }
+
+    /**
+     * Describes `this.tx` when it hashes to `claimedHash`. Once `clearSign` has checked it, that hash
+     * is the one a later sign request sends.
+     */
+    private async describeTransaction(claimedHash: string) {
+        this.parseTransaction()
+        let descriptors: Awaited<ReturnType<typeof listDescriptors>> = []
+        try {
+            descriptors = await listDescriptors()
+        } catch (error) {
+            console.error('Failed to load clear-signing descriptors:', error)
+        }
+        try {
+            this.clearSigning = await clearSign(
+                this.tx,
+                descriptors,
+                claimedHash
+            )
+            this.clearSigningError = null
+            this.reviewedHash = claimedHash
+            this.hashMismatch = false
+            this.txHash = claimedHash
+        } catch (error) {
+            console.error('Error describing prepared transaction:', error)
+            this.clearSigning = null
+            const hashFailed =
+                error instanceof HashMismatchError ||
+                error instanceof TxHashingError
+            if (hashFailed) {
+                this.reviewedHash = null
+                this.hashMismatch = true
+                this.clearSigningError = null
+                this.txHash = claimedHash
+                return
+            }
+            // clearSign checks the hash before it describes, so the hash matched and approval
+            // stays available. The detail view shows why the description failed.
+            this.reviewedHash = claimedHash
+            this.hashMismatch = false
+            this.txHash = claimedHash
+            this.clearSigningError =
+                error instanceof Error ? error.message : String(error)
+        }
+    }
+
+    private parseTransaction() {
+        try {
+            this.txParsed = parsePreparedTransaction(this.tx)
+        } catch (error) {
+            console.error('Error parsing prepared transaction:', error)
+            this.txParsed = null
+        }
+    }
+
     protected render() {
         return html`
+            ${
+                this.previewNotice
+                    ? html`<div class="alert alert-warning" role="alert">
+                          ${this.previewNotice}
+                      </div>`
+                    : ''
+            }
+            ${
+                this.hashMismatch
+                    ? html`<div class="alert alert-danger" role="alert">
+                          The transaction shown does not match the hash that
+                          would be signed. Approval is disabled.
+                      </div>`
+                    : ''
+            }
             ${
                 this.walletCapabilityMessage
                     ? html`<div class="alert alert-warning" role="alert">
@@ -347,6 +470,8 @@ export class ApproveUi extends BaseElement {
                 .txHash=${this.txHash}
                 .tx=${this.tx}
                 .parsed=${this.txParsed}
+                .clearSigning=${this.clearSigning}
+                .clearSigningError=${this.clearSigningError}
                 .createdAt=${this.createdAt}
                 .signedAt=${this.signedAt}
                 .origin=${this.origin}
@@ -356,10 +481,28 @@ export class ApproveUi extends BaseElement {
                 .isDeleting=${this.isDeleting}
                 .isSigning=${this.isSigning}
                 .submitFailed=${!!this.failureReason}
-                .disabled=${this.disabled}
+                .disabled=${this.disabled || this.hashMismatch}
                 @transaction-approve=${this.handleApproveAction}
                 @transaction-delete=${this.handleReject}
             ></wg-transaction-detail>
         `
     }
+}
+
+/**
+ * The scheme V3 hash of a prepared transaction, base64. A preview has no hash from a participant.
+ * `clearSign` tries V3 first, so this is the hash it accepts.
+ */
+async function previewTransactionHash(
+    preparedTransaction: string
+): Promise<string> {
+    const digest = await computePreparedTransactionHash(
+        preparedTransaction,
+        'HASHING_SCHEME_VERSION_V3'
+    )
+    let binary = ''
+    for (let i = 0; i < digest.byteLength; i++) {
+        binary += String.fromCharCode(digest[i] ?? 0)
+    }
+    return btoa(binary)
 }

@@ -15,6 +15,12 @@
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
+        },
+        "./clear-signing": {
+            "types": "./dist/clear-signing/index.d.ts",
+            "import": "./dist/clear-signing/index.js",
+            "require": "./dist/clear-signing/index.cjs",
+            "default": "./dist/clear-signing/index.js"
         }
     },
     "scripts": {
@@ -27,6 +33,7 @@
         "@canton-network/core-ledger-client": "workspace:",
         "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-tx-hashing": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/core-wallet-dapp-rpc-client": "workspace:",
         "@canton-network/core-wallet-store": "workspace:",

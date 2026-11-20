@@ -21,6 +21,7 @@
         "018-add-wallet-is-auth-party": "49ac258f675d63f39c56c7a1e032e038d7007f297b5018a40ced79576bf47411",
         "019-make-session-access-token-nullable": "ac510b00820afebb6a74f1cc5c9eabd53524a954687f746a2535aa69223b50ce",
         "020-add-message-external-tx-id-and-failure-reason": "79d875d49168b5320af44ce735cad32e3a7e5156d14fadb15df813e492b8dc6b",
-        "021-add-message-kind": "6d4b4a27f6e3edbadf5104b7773ed36a06c76c0b1a02c0b39689e4ff60a8e77d"
+        "021-add-message-kind": "6d4b4a27f6e3edbadf5104b7773ed36a06c76c0b1a02c0b39689e4ff60a8e77d",
+        "022-add-clear-signing-descriptors": "57048316661b1842d238477ff0e1e759dd950469d79cc9f78c995d6373302b4b"
     }
 }

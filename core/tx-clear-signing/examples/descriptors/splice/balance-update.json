@@ -1,0 +1,60 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "4c380e09c99b2c5cb938f6cce2a92c03f8941ca6f7af7df7c7370b2d421346da",
+            "moduleName": "Splice.Splitwell",
+            "entityName": "BalanceUpdate"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Splitwell balance update"
+    },
+    "display": {
+        "create": {
+            "intent": "Record a balance update",
+            "interpolatedIntent": "Record a balance update in the group of {group.owner}, managed by {group.provider}",
+            "fields": [
+                {
+                    "path": "group.owner",
+                    "label": "Group owner",
+                    "format": "party"
+                },
+                {
+                    "path": "group.provider",
+                    "label": "Provider",
+                    "format": "party"
+                },
+                {
+                    "path": "group.dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "group.members",
+                    "label": "Members",
+                    "format": "raw"
+                },
+                {
+                    "path": "group.id",
+                    "label": "Group",
+                    "format": "raw"
+                },
+                {
+                    "path": "update",
+                    "label": "Update",
+                    "format": "raw"
+                }
+            ]
+        }
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "vjnlujO5kgtsq8KLkmETcKGKfUiOzj5NhxfwFiStJbevLIfovZ20PEuqTT6NASpbVCLqwtw/pRrG4l+w+f82Ag==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

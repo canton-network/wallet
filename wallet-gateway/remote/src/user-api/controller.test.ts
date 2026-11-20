@@ -3,6 +3,8 @@
 
 import { errorCodes } from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
+import { signDescriptor } from '@canton-network/core-tx-clear-signing'
+import { signWithReferenceKey } from '@canton-network/core-tx-clear-signing/testing'
 import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
     NotificationService,
@@ -29,6 +31,7 @@ import { ServerNotices } from '../notices/server-notices.ts'
 import { ServerStatusService } from '../notices/server-status-service.ts'
 import { GATEWAY_VERSION } from '../version.ts'
 import { userController } from './controller.ts'
+import { paramSchemas } from './rpc-gen/schemas.ts'
 
 const ledgerMocks = vi.hoisted(() => ({
     get: vi.fn(),
@@ -1493,6 +1496,174 @@ describe('userController', () => {
         })
     })
 
+    describe('clear-signing descriptors', () => {
+        const PKG_1 = '11'.repeat(32)
+        const PKG_2 = '22'.repeat(32)
+        const PKG_3 = '33'.repeat(32)
+        const descriptor = (packageId: string, name: string) => ({
+            $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
+            context: {
+                template: {
+                    packageId,
+                    moduleName: 'Mod',
+                    entityName: 'Ent',
+                },
+            },
+            metadata: { version: '1.0.0', publisher: 'test', name },
+            display: { create: { intent: 'Create it' } },
+        })
+
+        it('keeps descriptor text through param validation', () => {
+            const body = JSON.stringify(descriptor(PKG_1, 'first'))
+            expect(
+                paramSchemas.setClearSigningDescriptor.parse({
+                    descriptor: body,
+                })
+            ).toEqual({ descriptor: body })
+        })
+
+        it('stores one descriptor per package id and replaces the same key', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+            const first = JSON.stringify(
+                await signWithReferenceKey(descriptor(PKG_1, 'first'))
+            )
+            const second = JSON.stringify(
+                await signWithReferenceKey(descriptor(PKG_2, 'second'))
+            )
+            const replaced = JSON.stringify(
+                await signWithReferenceKey(descriptor(PKG_1, 'replaced'))
+            )
+
+            await controller.setClearSigningDescriptor({ descriptor: first })
+            await controller.setClearSigningDescriptor({ descriptor: second })
+            await controller.setClearSigningDescriptor({
+                descriptor: replaced,
+            })
+
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([replaced, second])
+
+            await expect(
+                controller.setClearSigningDescriptor({
+                    descriptor: JSON.stringify({
+                        metadata: { name: 'no template' },
+                    }),
+                })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(
+                    /invalid clear-signing descriptor/
+                ),
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toHaveLength(2)
+
+            await controller.removeClearSigningDescriptor({
+                packageId: PKG_1,
+                moduleName: 'Mod',
+                entityName: 'Ent',
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([second])
+        })
+
+        it('rejects a descriptor with no signature', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(
+                controller.setClearSigningDescriptor({
+                    descriptor: JSON.stringify(descriptor(PKG_1, 'first')),
+                })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(/no signatures/),
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([])
+        })
+
+        it('rejects a signature that does not verify', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+            const body = await signWithReferenceKey(descriptor(PKG_1, 'first'))
+            const signatures = body.signatures as { signature: string }[]
+            signatures[0]!.signature = `${'A'.repeat(86)}==`
+
+            await expect(
+                controller.setClearSigningDescriptor({
+                    descriptor: JSON.stringify(body),
+                })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(/does not verify/),
+            })
+        })
+
+        it('rejects a descriptor that repeats a member name', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+            const text = `{"context":{"template":{"packageId":"${PKG_1}","moduleName":"Mod","entityName":"Ent"}},"context":{"template":{"packageId":"${PKG_1}","moduleName":"Mod","entityName":"Ent"}}}`
+
+            await expect(
+                controller.setClearSigningDescriptor({ descriptor: text })
+            ).rejects.toMatchObject({
+                message: expect.stringMatching(/duplicate key 'context'/),
+            })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([])
+        })
+
+        it('stores a descriptor signed by a key that is not in the trusted list', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+            const pair = await crypto.subtle.generateKey(
+                { name: 'Ed25519' },
+                true,
+                ['sign', 'verify']
+            )
+            const body = JSON.stringify(
+                await signDescriptor(
+                    descriptor(PKG_3, 'other'),
+                    await crypto.subtle.exportKey('jwk', pair.privateKey)
+                )
+            )
+
+            await controller.setClearSigningDescriptor({ descriptor: body })
+            expect(
+                (await controller.listClearSigningDescriptors()).descriptors
+            ).toEqual([body])
+        })
+    })
+
     describe('listWallets', () => {
         it('returns wallets from the store', async () => {
             const store = await createStore(logger, auth)
@@ -1877,6 +2048,7 @@ describe('userController', () => {
                 controller.sign({
                     transactionId: 'tx-1',
                     partyId: primaryWallet.partyId,
+                    preparedTransactionHash: 'hash',
                 })
             ).rejects.toThrow('No session found')
         })
@@ -1906,6 +2078,7 @@ describe('userController', () => {
             const signParams = {
                 transactionId: 'tx-1',
                 partyId: participantWallet.partyId,
+                preparedTransactionHash: 'hash',
             }
             const result = await controller.sign(signParams)
 

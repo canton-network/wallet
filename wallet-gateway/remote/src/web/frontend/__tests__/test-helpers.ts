@@ -15,6 +15,8 @@ import type {
 } from '@canton-network/core-wallet-user-rpc-client'
 import { vi, type Mock } from 'vitest'
 
+import { pingCreate, pingCreateHash } from './ping-transaction.ts'
+
 export const mockRequest: Mock = vi.fn()
 
 export function createMockUserClient(): { request: Mock } {
@@ -44,8 +46,8 @@ export function makeTransaction(
         id: 'tx-1',
         commandId: 'cmd-1',
         status: 'pending',
-        preparedTransaction: 'prepared-tx-blob',
-        preparedTransactionHash: 'hash-abc',
+        preparedTransaction: pingCreate,
+        preparedTransactionHash: pingCreateHash,
         createdAt: '2024-06-01T12:00:00.000Z',
         origin: 'https://dapp.example',
         ...overrides,

@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { html, css, nothing } from 'lit'
 
@@ -17,6 +18,34 @@ import {
     getActivityType,
 } from '../internal/activity-utils.ts'
 import { BaseElement } from '../internal/base-element.ts'
+
+type OperationDescription = ClearSigningResult['operations'][number]
+type DescribedField = OperationDescription['fields'][number]
+type TemplateRef = NonNullable<OperationDescription['template']>
+
+const OPERATION_STATUS_LABELS: Record<
+    Exclude<OperationDescription['status'], 'described'>,
+    string
+> = {
+    fallback: 'Partly described',
+    undescribed: 'Not described',
+    unverified: 'Unverified descriptor',
+    invalid: 'Invalid descriptor',
+    undescribable: 'Cannot describe',
+}
+
+const OPERATION_KIND_LABELS: Record<OperationDescription['kind'], string> = {
+    create: 'Create',
+    exercise: 'Exercise',
+    other: 'Other',
+}
+
+const OPERATION_KIND_BADGE_CLASS: Record<OperationDescription['kind'], string> =
+    {
+        create: 'text-bg-secondary',
+        exercise: 'text-bg-primary',
+        other: 'text-bg-warning',
+    }
 
 /** Emitted when the user clicks the "Approve" button */
 export class TransactionApproveEvent extends Event {
@@ -47,6 +76,13 @@ class WgTransactionDetail extends BaseElement {
 
     @property({ type: Object }) accessor parsed: ParsedTransactionInfo | null =
         null
+
+    /** The clear-signing description of the transaction's root operations, when available */
+    @property({ type: Object })
+    accessor clearSigning: ClearSigningResult | null = null
+
+    /** Why the transaction could not be described at all, when it could not */
+    @property() accessor clearSigningError: string | null = null
 
     @property() accessor createdAt: string | null = null
 
@@ -247,6 +283,71 @@ class WgTransactionDetail extends BaseElement {
                 overflow: auto;
             }
 
+            .clear-signing {
+                padding: var(--wg-space-4);
+                border: 1px solid var(--wg-border);
+                border-radius: var(--wg-radius-lg);
+            }
+
+            .operation {
+                display: flex;
+                flex-direction: column;
+                gap: var(--wg-space-2);
+            }
+
+            .operation + .operation {
+                padding-top: var(--wg-space-3);
+                border-top: 1px solid var(--wg-border);
+            }
+
+            .operation-heading {
+                display: flex;
+                align-items: baseline;
+                gap: var(--wg-space-2);
+            }
+
+            .operation-heading .badge {
+                flex: none;
+            }
+
+            .intent {
+                color: var(--wg-text);
+                font-weight: var(--wg-font-weight-semibold);
+                word-break: break-word;
+            }
+
+            .operation-origin {
+                display: grid;
+                grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr);
+                gap: var(--wg-space-1) var(--wg-space-3);
+                margin: 0;
+            }
+
+            .operation-origin dd {
+                margin: 0;
+                color: var(--wg-text);
+                font-size: var(--wg-font-size-sm);
+                word-break: break-word;
+            }
+
+            .operation-origin dd.identifier {
+                font-family: var(--bs-font-monospace);
+            }
+
+            .operation-fields {
+                display: grid;
+                grid-template-columns: minmax(0, 8.5rem) minmax(0, 1fr);
+                gap: var(--wg-space-1) var(--wg-space-3);
+                margin: 0;
+            }
+
+            .operation-fields dd {
+                margin: 0;
+                color: var(--wg-text);
+                font-size: var(--wg-font-size-sm);
+                word-break: break-word;
+            }
+
             .actions {
                 margin-top: var(--wg-space-6);
                 display: flex;
@@ -343,6 +444,75 @@ class WgTransactionDetail extends BaseElement {
         `
     }
 
+    private renderClearSigning() {
+        const result = this.clearSigning
+        if (this.clearSigningError) {
+            return html`
+                <section class="field field--stacked clear-signing">
+                    <h2
+                        class="label small fw-semibold text-body-secondary mb-0"
+                    >
+                        What you are signing
+                    </h2>
+                    <div class="alert alert-danger small mb-0" role="alert">
+                        This transaction could not be described:
+                        ${this.clearSigningError}. Review the transaction JSON
+                        before approving.
+                    </div>
+                </section>
+            `
+        }
+        if (!result) {
+            return nothing
+        }
+
+        return html`
+            <section class="field field--stacked clear-signing">
+                <h2 class="label small fw-semibold text-body-secondary mb-0">
+                    What you are signing
+                </h2>
+                ${
+                    result.complete
+                        ? nothing
+                        : html`<div
+                              class="alert alert-warning small mb-0"
+                              role="alert"
+                          >
+                              Parts of this transaction are not described.
+                              Review the transaction JSON before approving.
+                          </div>`
+                }
+                ${result.operations.map((op) => this.renderOperation(op))}
+            </section>
+        `
+    }
+
+    private renderOperation(op: OperationDescription) {
+        return html`
+            <div class="operation">
+                <div class="operation-heading">
+                    <span
+                        class="badge rounded-pill ${OPERATION_KIND_BADGE_CLASS[op.kind]}"
+                        >${OPERATION_KIND_LABELS[op.kind]}</span
+                    >
+                    <p class="intent mb-0">
+                        ${op.intent}
+                        ${
+                            op.status === 'described'
+                                ? nothing
+                                : html`<span
+                                      class="badge rounded-pill text-bg-warning ms-1"
+                                      >${OPERATION_STATUS_LABELS[op.status]}</span
+                                  >`
+                        }
+                    </p>
+                </div>
+                ${renderOperationOrigin(op)}
+                ${op.fields.length ? renderFields(op.fields) : nothing}
+            </div>
+        `
+    }
+
     private renderDecodedBox(decoded: string) {
         return html`<pre class="decoded-box small mb-0">${decoded}</pre>`
     }
@@ -364,6 +534,7 @@ class WgTransactionDetail extends BaseElement {
             </div>
 
             <div class="detail-grid">
+                ${this.renderClearSigning()}
                 ${this.renderInlineField(
                     'Status',
                     html`<span
@@ -511,4 +682,76 @@ class WgTransactionDetail extends BaseElement {
             </div>
         `
     }
+}
+
+function typeName({ moduleName, entityName }: TemplateRef): string {
+    return `${moduleName}:${entityName}`
+}
+
+// What the transaction itself says it does (kind, choice, template), so an operation is identified
+// even when its descriptor words it vaguely or is missing. The descriptor's own claim is kept apart.
+function renderOperationOrigin(op: OperationDescription) {
+    const { choiceId, descriptor, template } = op
+    return html`<dl class="operation-origin">
+        ${
+            op.kind === 'exercise' && choiceId !== undefined
+                ? html`<dt class="label">Choice</dt>
+                      <dd class="identifier">
+                          ${choiceId}${
+                              op.interface
+                                  ? html` <span class="text-body-secondary"
+                                            >via</span
+                                        >
+                                        ${typeName(op.interface)}`
+                                  : nothing
+                          }
+                      </dd>`
+                : nothing
+        }
+        ${
+            op.reason
+                ? html`<dt class="label">Why</dt>
+                      <dd class="text-warning-emphasis">${op.reason}</dd>`
+                : nothing
+        }
+        ${
+            template
+                ? html`<dt class="label">
+                          ${op.kind === 'exercise' ? 'On' : 'Template'}
+                      </dt>
+                      <dd class="identifier">${typeName(template)}</dd>
+                      <dt class="label">Package</dt>
+                      <dd class="identifier">${template.packageId}</dd>`
+                : nothing
+        }
+        ${
+            descriptor
+                ? html`<dt class="label">Described by</dt>
+                      <dd>
+                          ${descriptor.name} v${descriptor.version} by
+                          ${descriptor.publisher}
+                      </dd>`
+                : nothing
+        }
+    </dl>`
+}
+
+function renderFields(fields: DescribedField[]): unknown {
+    return html`<dl class="operation-fields">
+        ${fields.map(
+            (field) => html`
+                <dt class="label">${field.label}</dt>
+                <dd>${renderFieldValue(field)}</dd>
+            `
+        )}
+    </dl>`
+}
+
+function renderFieldValue(field: DescribedField) {
+    if ('error' in field) {
+        return html`<span class="text-danger"
+            >Cannot display: ${field.error}</span
+        >`
+    }
+    return field.value
 }

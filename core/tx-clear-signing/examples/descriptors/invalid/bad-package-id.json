@@ -1,0 +1,6 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": { "template": { "packageId": "DE2CC2F9", "moduleName": "Canton.Internal.Ping", "entityName": "Ping" } },
+    "metadata": { "version": "1.0.0", "publisher": "<publisher>", "name": "Invalid example" },
+    "display": { "create": { "intent": "Ping", "fields": [ { "path": "id", "label": "Ping ID", "format": "string" } ] } }
+}

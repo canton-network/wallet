@@ -1,0 +1,272 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "5838793a7f11fbc16159065094823fb662120184ede48922dff092958dae6857",
+            "moduleName": "Splice.Wallet.TransferOffer",
+            "entityName": "TransferOffer"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Wallet transfer offer",
+        "enums": {
+            "unit": {
+                "USDUnit": "USD",
+                "AmuletUnit": "Amulet",
+                "ExtUnit": "other unit"
+            }
+        }
+    },
+    "display": {
+        "create": {
+            "intent": "Offer a transfer",
+            "interpolatedIntent": "Offer {amount.amount} {amount.unit} from {sender} to {receiver}: {description}",
+            "fields": [
+                {
+                    "path": "amount.amount",
+                    "label": "Amount",
+                    "format": "number"
+                },
+                {
+                    "path": "amount.unit",
+                    "label": "Unit",
+                    "format": "enum",
+                    "params": {
+                        "$ref": "$.metadata.enums.unit"
+                    }
+                },
+                {
+                    "path": "sender",
+                    "label": "From",
+                    "format": "party"
+                },
+                {
+                    "path": "receiver",
+                    "label": "To",
+                    "format": "party"
+                },
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "description",
+                    "label": "Description",
+                    "format": "string"
+                },
+                {
+                    "path": "expiresAt",
+                    "label": "Expires",
+                    "format": "dateTime"
+                },
+                {
+                    "path": "trackingId",
+                    "label": "Tracking ID",
+                    "format": "string"
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "TransferOffer_Accept",
+                "intent": "Accept a transfer offer",
+                "interpolatedIntent": "Accept {@.contract.amount.amount} {@.contract.amount.unit} from {@.contract.sender}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.amount.unit",
+                        "label": "Unit",
+                        "format": "enum",
+                        "params": {
+                            "$ref": "$.metadata.enums.unit"
+                        }
+                    },
+                    {
+                        "path": "@.contract.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.description",
+                        "label": "Description",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.trackingId",
+                        "label": "Tracking ID",
+                        "format": "string"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferOffer_Reject",
+                "intent": "Reject a transfer offer",
+                "interpolatedIntent": "Reject {@.contract.amount.amount} {@.contract.amount.unit} offered by {@.contract.sender}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.amount.unit",
+                        "label": "Unit",
+                        "format": "enum",
+                        "params": {
+                            "$ref": "$.metadata.enums.unit"
+                        }
+                    },
+                    {
+                        "path": "@.contract.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.description",
+                        "label": "Description",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.trackingId",
+                        "label": "Tracking ID",
+                        "format": "string"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferOffer_Withdraw",
+                "intent": "Withdraw a transfer offer",
+                "interpolatedIntent": "Withdraw the offer of {@.contract.amount.amount} {@.contract.amount.unit} to {@.contract.receiver}: {reason}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.amount.unit",
+                        "label": "Unit",
+                        "format": "enum",
+                        "params": {
+                            "$ref": "$.metadata.enums.unit"
+                        }
+                    },
+                    {
+                        "path": "@.contract.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.description",
+                        "label": "Description",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.trackingId",
+                        "label": "Tracking ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "reason",
+                        "label": "Reason",
+                        "format": "string"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferOffer_Expire",
+                "intent": "Expire a transfer offer",
+                "interpolatedIntent": "Expire, as {actor}, the offer of {@.contract.amount.amount} {@.contract.amount.unit} from {@.contract.sender} to {@.contract.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.amount.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.amount.unit",
+                        "label": "Unit",
+                        "format": "enum",
+                        "params": {
+                            "$ref": "$.metadata.enums.unit"
+                        }
+                    },
+                    {
+                        "path": "@.contract.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.description",
+                        "label": "Description",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.expiresAt",
+                        "label": "Expires",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.trackingId",
+                        "label": "Tracking ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "actor",
+                        "label": "Expired by",
+                        "format": "party"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "uusvLnL+yqDRUQgp8hJan7PgtBTIs2mbbDmKCDMNyAZshtDrA0U/9ygGv72uYmpsmr6WujSFoc3nO4UllSkfAA==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

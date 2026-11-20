@@ -909,8 +909,14 @@ export const paramSchemas: Record<string, z.ZodType> = {
                 description: 'The internal transaction identifier.',
             },
             partyId: { title: 'partyId', type: 'string' },
+            preparedTransactionHash: {
+                title: 'preparedTransactionHash',
+                type: 'string',
+                description:
+                    'The hash the user approved, base64-encoded, computed by the client from the prepared transaction it displayed. The transaction is signed only if this equals the hash computed from the stored transaction.',
+            },
         },
-        required: ['transactionId', 'partyId'],
+        required: ['transactionId', 'partyId', 'preparedTransactionHash'],
     }),
     signMessage: z.fromJSONSchema({
         title: 'SignMessageParams',
@@ -1112,6 +1118,47 @@ export const paramSchemas: Record<string, z.ZodType> = {
             },
         },
         required: ['id'],
+    }),
+    listClearSigningDescriptors: noParams,
+    setClearSigningDescriptor: z.fromJSONSchema({
+        title: 'SetClearSigningDescriptorParams',
+        type: 'object',
+        additionalProperties: { type: 'null' },
+        properties: {
+            descriptor: {
+                title: 'ClearSigningDescriptor',
+                type: 'string',
+                description:
+                    'The descriptor JSON text. It must parse without duplicate member names, be valid against the clear-signing schema, name a template, and carry signatures that verify against the public keys they contain.',
+            },
+        },
+        required: ['descriptor'],
+    }),
+    removeClearSigningDescriptor: z.fromJSONSchema({
+        title: 'RemoveClearSigningDescriptorParams',
+        type: 'object',
+        additionalProperties: { type: 'null' },
+        properties: {
+            packageId: {
+                title: 'packageId',
+                type: 'string',
+                description:
+                    'Package id of the template the descriptor is bound to.',
+            },
+            moduleName: {
+                title: 'moduleName',
+                type: 'string',
+                description:
+                    'Daml module of the template the descriptor is bound to.',
+            },
+            entityName: {
+                title: 'entityName',
+                type: 'string',
+                description:
+                    'Daml entity of the template the descriptor is bound to.',
+            },
+        },
+        required: ['packageId', 'moduleName', 'entityName'],
     }),
     listSigningProviders: noParams,
     listSigningProviderKeys: z.fromJSONSchema({

@@ -24,6 +24,10 @@ By default, the service runs on port `3030`, but this can be overridden via the 
 - The dApp JSON-RPC API is exposed on `localhost:3030/api/v0/dapp`
 - The User JSON-RPC API is exposed on `localhost:3030/api/v0/user`
 
+## Approval
+
+A prepared transaction is shown on `/approve` before a person signs it. The page describes it with that user's clear-signing descriptors and submits the hash of the bytes it showed. Signing is refused unless the gateway recomputes that hash. The schema and the checks are in [@canton-network/core-tx-clear-signing](../../core/tx-clear-signing/README.md). Descriptors are uploaded on `/descriptors` and start empty for a new user. An upload must carry signatures that verify against the public keys inside them. The approve page then checks those signatures against the wallet's trusted keys.
+
 ## Configuration
 
 A configuration file is required to start up the Gateway. Create an example config to edit as a starting point:

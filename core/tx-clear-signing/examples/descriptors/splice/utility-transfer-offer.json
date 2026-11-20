@@ -1,0 +1,347 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "15cf1eaaf35b3736d95bc5c260d3da5507cbd1edc5680f2d55d98de04e34d545",
+            "moduleName": "Utility.Registry.App.V0.Model.Transfer",
+            "entityName": "TransferOffer"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Utility registry transfer offer"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "TransferInstruction_Accept",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Accept a transfer offer",
+                "interpolatedIntent": "Accept {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender} to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.transfer.inputHoldingCids",
+                        "label": "Locked holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Reject",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Reject a transfer offer",
+                "interpolatedIntent": "Reject {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.transfer.inputHoldingCids",
+                        "label": "Locked holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV1",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Withdraw a transfer offer",
+                "interpolatedIntent": "Withdraw {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} sent to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.transfer.inputHoldingCids",
+                        "label": "Locked holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Accept",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Accept a transfer offer",
+                "interpolatedIntent": "Accept {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender} to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.transfer.inputHoldingCids",
+                        "label": "Locked holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Reject",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Reject a transfer offer",
+                "interpolatedIntent": "Reject {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} from {@.contract.transfer.sender}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.transfer.inputHoldingCids",
+                        "label": "Locked holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "TransferInstruction_Withdraw",
+                "interface": {
+                    "moduleName": "Splice.Api.Token.TransferInstructionV2",
+                    "entityName": "TransferInstruction"
+                },
+                "intent": "Withdraw a transfer offer",
+                "interpolatedIntent": "Withdraw {@.contract.transfer.amount} {@.contract.transfer.instrumentId.id} sent to {@.contract.transfer.receiver}",
+                "fields": [
+                    {
+                        "path": "@.contract.transfer.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.transfer.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.transfer.sender",
+                        "label": "From",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.receiver",
+                        "label": "To",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.transfer.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.transfer.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "@.contract.transfer.inputHoldingCids",
+                        "label": "Locked holdings",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "actors",
+                        "label": "Actors",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "/fBY+FaGvhcDfaEMIcuk70WJJ0XXSGjagvFRuriB0rZLyPn5d/8Crtdn+kmjPBBjJ87TeL5TJgyjLu3YBkgmBA==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

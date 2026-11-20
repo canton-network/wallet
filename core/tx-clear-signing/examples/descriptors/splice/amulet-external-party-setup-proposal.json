@@ -1,0 +1,75 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.AmuletRules",
+            "entityName": "ExternalPartySetupProposal"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "External party setup proposal"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "ExternalPartySetupProposal_Accept",
+                "intent": "Accept the external party setup",
+                "interpolatedIntent": "Accept the setup of {@.contract.user} proposed by validator {@.contract.validator}, which creates a transfer preapproval that expires at {@.contract.preapprovalExpiresAt}",
+                "fields": [
+                    {
+                        "path": "@.contract.user",
+                        "label": "Party",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.validator",
+                        "label": "Validator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.dso",
+                        "label": "Amulet administrator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.preapprovalExpiresAt",
+                        "label": "Preapproval expires at",
+                        "format": "dateTime"
+                    }
+                ]
+            },
+            {
+                "choice": "ExternalPartySetupProposal_Reject",
+                "intent": "Reject the external party setup",
+                "interpolatedIntent": "Reject the setup of {@.contract.user} proposed by validator {@.contract.validator}: {reason}",
+                "fields": [
+                    {
+                        "path": "@.contract.user",
+                        "label": "Party",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.validator",
+                        "label": "Validator",
+                        "format": "party"
+                    },
+                    {
+                        "path": "reason",
+                        "label": "Reason",
+                        "format": "string"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "WXQ3Nz5OHPayz2ovZ9b37bx62znJFAwLBD4WxUE9N+yXUQ88H+unpQQ2vWK+lIG74c/MqOQjEAaLLCKURjA9CA==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

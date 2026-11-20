@@ -63,6 +63,7 @@
     "dependencies": {
         "@lit/react": "catalog:",
         "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-tx-clear-signing": "workspace:",
         "@canton-network/core-tx-visualizer": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-store": "workspace:",

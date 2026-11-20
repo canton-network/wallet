@@ -302,4 +302,23 @@ export interface Store {
     listApiKeys(): Promise<Array<ApiKey>>
     getApiKey(digest: string): Promise<ApiKey | undefined>
     removeApiKey(apiKeyId: string): Promise<void>
+
+    // Clear-signing descriptors. One row per template version: the same module
+    // and entity can be stored again when the package id differs.
+    listClearSigningDescriptors(): Promise<string[]>
+    setClearSigningDescriptor(descriptor: ClearSigningDescriptor): Promise<void>
+    removeClearSigningDescriptor(key: ClearSigningDescriptorKey): Promise<void>
+}
+
+/** The template a stored clear-signing descriptor is bound to. */
+export interface ClearSigningDescriptorKey {
+    packageId: string
+    moduleName: string
+    entityName: string
+}
+
+/** A clear-signing descriptor document stored for one template version. */
+export interface ClearSigningDescriptor extends ClearSigningDescriptorKey {
+    /** The descriptor JSON text, exactly as it was uploaded. */
+    descriptor: string
 }
