@@ -257,6 +257,9 @@ catalogs:
     '@protobuf-ts/plugin':
       specifier: ^2.11.1
       version: 2.11.1
+    '@protobuf-ts/protoc':
+      specifier: ^2.11.1
+      version: 2.11.1
     '@protobuf-ts/runtime':
       specifier: ^2.11.1
       version: 2.11.1
@@ -625,6 +628,9 @@ importers:
       '@protobuf-ts/plugin':
         specifier: 'catalog:'
         version: 2.11.1(supports-color@10.2.2)
+      '@protobuf-ts/protoc':
+        specifier: 'catalog:'
+        version: 2.11.1
       '@swc/core':
         specifier: 'catalog:'
         version: 1.16.22(@swc/helpers@0.5.23)

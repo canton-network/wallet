@@ -184,6 +184,7 @@ export const exercise = (fields: Partial<Exercise> = {}): Exercise => ({
     children: [],
     choiceObservers: [],
     byKey: false,
+    externalCallResults: [],
     ...fields,
 })
 

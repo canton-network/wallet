@@ -1,6 +1,6 @@
 {
     "$schema": "./node_modules/oxlint/configuration_schema.json",
-    "plugins": ["unicorn", "typescript", "oxc"],
+    "plugins": ["unicorn", "typescript", "oxc", "import"],
     "jsPlugins": [
         {
             "name": "header",
@@ -39,6 +39,11 @@
                 "fixStyle": "inline-type-imports",
                 "disallowTypeAnnotations": false
             }
+        ],
+        "import/extensions": [
+            "error",
+            "always",
+            { "ignorePackages": true, "checkTypeImports": true, "js": "never" }
         ],
         "typescript/no-import-type-side-effects": "error",
         "typescript/no-explicit-any": "error"

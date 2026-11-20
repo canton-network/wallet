@@ -14,8 +14,6 @@ import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 import { InteractiveSubmissionService } from './interactive_submission_service.ts'
 import type { GetPreferredPackagesResponse } from './interactive_submission_service.ts'
 import type { GetPreferredPackagesRequest } from './interactive_submission_service.ts'
-import type { GetPreferredPackageVersionResponse } from './interactive_submission_service.ts'
-import type { GetPreferredPackageVersionRequest } from './interactive_submission_service.ts'
 import type { ExecuteSubmissionAndWaitForTransactionResponse } from './interactive_submission_service.ts'
 import type { ExecuteSubmissionAndWaitForTransactionRequest } from './interactive_submission_service.ts'
 import type { ExecuteSubmissionAndWaitResponse } from './interactive_submission_service.ts'
@@ -82,29 +80,6 @@ export interface IInteractiveSubmissionServiceClient {
         ExecuteSubmissionAndWaitForTransactionResponse
     >
     /**
-     * A preferred package is the highest-versioned package for a provided package-name
-     * that is vetted by all the participants hosting the provided parties.
-     *
-     * Ledger API clients should use this endpoint for constructing command submissions
-     * that are compatible with the provided preferred package, by making informed decisions on:
-     * - which are the compatible packages that can be used to create contracts
-     * - which contract or exercise choice argument version can be used in the command
-     * - which choices can be executed on a template or interface of a contract
-     *
-     * Can be accessed by any Ledger API client with a valid token when Ledger API authorization is enabled.
-     *
-     * Provided for backwards compatibility, it will be removed in the Canton version 3.4.0
-     *
-     * @generated from protobuf rpc: GetPreferredPackageVersion
-     */
-    getPreferredPackageVersion(
-        input: GetPreferredPackageVersionRequest,
-        options?: RpcOptions
-    ): UnaryCall<
-        GetPreferredPackageVersionRequest,
-        GetPreferredPackageVersionResponse
-    >
-    /**
      * Compute the preferred packages for the vetting requirements in the request.
      * A preferred package is the highest-versioned package for a provided package-name
      * that is vetted by all the participants hosting the provided parties.
@@ -119,8 +94,6 @@ export interface IInteractiveSubmissionServiceClient {
      * a `FAILED_PRECONDITION` error will be returned.
      *
      * Can be accessed by any Ledger API client with a valid token when Ledger API authorization is enabled.
-     *
-     * Experimental API: this endpoint is not guaranteed to provide backwards compatibility in future releases
      *
      * @generated from protobuf rpc: GetPreferredPackages
      */
@@ -221,36 +194,6 @@ export class InteractiveSubmissionServiceClient
         >('unary', this._transport, method, opt, input)
     }
     /**
-     * A preferred package is the highest-versioned package for a provided package-name
-     * that is vetted by all the participants hosting the provided parties.
-     *
-     * Ledger API clients should use this endpoint for constructing command submissions
-     * that are compatible with the provided preferred package, by making informed decisions on:
-     * - which are the compatible packages that can be used to create contracts
-     * - which contract or exercise choice argument version can be used in the command
-     * - which choices can be executed on a template or interface of a contract
-     *
-     * Can be accessed by any Ledger API client with a valid token when Ledger API authorization is enabled.
-     *
-     * Provided for backwards compatibility, it will be removed in the Canton version 3.4.0
-     *
-     * @generated from protobuf rpc: GetPreferredPackageVersion
-     */
-    getPreferredPackageVersion(
-        input: GetPreferredPackageVersionRequest,
-        options?: RpcOptions
-    ): UnaryCall<
-        GetPreferredPackageVersionRequest,
-        GetPreferredPackageVersionResponse
-    > {
-        const method = this.methods[4],
-            opt = this._transport.mergeOptions(options)
-        return stackIntercept<
-            GetPreferredPackageVersionRequest,
-            GetPreferredPackageVersionResponse
-        >('unary', this._transport, method, opt, input)
-    }
-    /**
      * Compute the preferred packages for the vetting requirements in the request.
      * A preferred package is the highest-versioned package for a provided package-name
      * that is vetted by all the participants hosting the provided parties.
@@ -266,15 +209,13 @@ export class InteractiveSubmissionServiceClient
      *
      * Can be accessed by any Ledger API client with a valid token when Ledger API authorization is enabled.
      *
-     * Experimental API: this endpoint is not guaranteed to provide backwards compatibility in future releases
-     *
      * @generated from protobuf rpc: GetPreferredPackages
      */
     getPreferredPackages(
         input: GetPreferredPackagesRequest,
         options?: RpcOptions
     ): UnaryCall<GetPreferredPackagesRequest, GetPreferredPackagesResponse> {
-        const method = this.methods[5],
+        const method = this.methods[4],
             opt = this._transport.mergeOptions(options)
         return stackIntercept<
             GetPreferredPackagesRequest,
