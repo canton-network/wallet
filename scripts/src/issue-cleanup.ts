@@ -22,6 +22,20 @@ import { spawn } from 'child_process'
 
 import { program } from '@commander-js/extra-typings'
 import { confirm } from '@inquirer/prompts'
+import * as colors from 'yoctocolors'
+
+// yoctocolors only checks terminal support, so also drop colours when piped
+const plain = (s: string) => s
+const { bold, cyan, dim, green, red, yellow } = process.stdout.isTTY
+    ? colors
+    : {
+          bold: plain,
+          cyan: plain,
+          dim: plain,
+          green: plain,
+          red: plain,
+          yellow: plain,
+      }
 
 const PRODUCT_FIELD = 'Product'
 
@@ -79,19 +93,21 @@ async function checkGh(): Promise<void> {
     try {
         await gh(['--version'])
     } catch {
-        console.error('Error: gh CLI is not installed.')
+        console.error(red('Error: gh CLI is not installed.'))
         console.error('https://cli.github.com/manual/installation')
         process.exit(1)
     }
 
     if (!process.env.GH_TOKEN) {
-        console.warn('Warning: GH_TOKEN is not set; using gh CLI login.')
+        console.warn(
+            yellow('Warning: GH_TOKEN is not set; using gh CLI login.')
+        )
     }
 
     try {
         await gh(['auth', 'status'])
     } catch (error) {
-        console.error('Error: gh CLI is not authenticated.')
+        console.error(red('Error: gh CLI is not authenticated.'))
         console.error((error as Error).message)
         process.exit(1)
     }
@@ -164,7 +180,9 @@ async function loadProject(owner: string, number: number): Promise<Project> {
     )
     if (unmapped.length) {
         console.warn(
-            `Warning: ${PRODUCT_FIELD} option(s) with no label mapping: ${unmapped.join(', ')}`
+            yellow(
+                `Warning: ${PRODUCT_FIELD} option(s) with no label mapping: ${unmapped.join(', ')}`
+            )
         )
     }
 
@@ -475,24 +493,31 @@ function planSync(project: Project, issue: Issue): SyncAction | null {
     return null
 }
 
+// Pad before colouring, so escape codes don't throw off the columns
 function line(issue: Issue, note = ''): string {
     const title =
         issue.title.length > 60 ? `${issue.title.slice(0, 57)}...` : issue.title
-    const prefix = `  #${String(issue.number).padEnd(5)} `
+    const prefix = `  ${dim(`#${String(issue.number).padEnd(5)}`)} `
     return note ? `${prefix}${title.padEnd(60)}  ${note}` : `${prefix}${title}`
+}
+
+function header(step: string, summary: string): string {
+    return `\n${bold(cyan(`[${step}]`))} ${bold(summary)}`
 }
 
 function describe(action: SyncAction): string {
     switch (action.kind) {
         case 'field':
-            return `label -> ${PRODUCT_FIELD} = ${action.option}`
+            return `${dim('label →')} ${PRODUCT_FIELD} ${green(`= ${action.option}`)}`
         case 'labels':
-            return `${PRODUCT_FIELD} -> ${[
-                ...action.add.map((l) => `+${l}`),
-                ...action.remove.map((l) => `-${l}`),
+            return `${dim(`${PRODUCT_FIELD} →`)} ${[
+                ...action.add.map((l) => green(`+${l}`)),
+                ...action.remove.map((l) => red(`-${l}`)),
             ].join(' ')}`
         case 'conflict':
-            return `CONFLICT: ${action.labels.join(', ')} and no ${PRODUCT_FIELD}`
+            return yellow(
+                `⚠ conflict: ${action.labels.join(', ')}, no ${PRODUCT_FIELD}`
+            )
     }
 }
 
@@ -536,7 +561,9 @@ void program
         )
         const repo = await loadRepo(opts.repo)
         console.log(
-            `Loading ${opts.state} issues from ${opts.repo} (project "${project.title}")...`
+            dim(
+                `Loading ${opts.state} issues from ${opts.repo} (project "${project.title}")...`
+            )
         )
         const issues = await loadIssues(opts.repo, states)
 
@@ -556,16 +583,24 @@ void program
 
         if (doAdd) {
             console.log(
-                `\n[add-to-project] Add to "${project.title}": ${noProject.length} issue(s)`
+                header(
+                    'add-to-project',
+                    `Add to "${project.title}": ${noProject.length} issue(s)`
+                )
             )
             noProject.forEach((i) => console.log(line(i)))
         }
         if (doSync) {
             console.log(
-                `\n[sync-labels] ${changes.length} change(s), ${conflicts.length} conflict(s)`
+                header(
+                    'sync-labels',
+                    `${changes.length} change(s), ${conflicts.length} conflict(s)`
+                )
             )
             if (missingLabels.length) {
-                console.log(`  create label(s): ${missingLabels.join(', ')}`)
+                console.log(
+                    `  ${green(`+ create label(s): ${missingLabels.join(', ')}`)}`
+                )
             }
             changes.forEach((a) => console.log(line(a.issue, describe(a))))
             conflicts.forEach((a) => console.log(line(a.issue, describe(a))))
@@ -573,13 +608,13 @@ void program
 
         if (opts.dryRun) {
             console.log(
-                '\nDry run: no changes made. Re-run with --no-dry-run to apply.'
+                `\n${bold(yellow('Dry run:'))} ${yellow('no changes made. Re-run with --no-dry-run to apply.')}`
             )
             return
         }
 
         if (noProject.length + changes.length === 0) {
-            console.log('\nNothing to do.')
+            console.log(green('\nNothing to do.'))
             return
         }
 
@@ -588,7 +623,7 @@ void program
             default: false,
         })
         if (!proceed) {
-            console.log('Aborting')
+            console.log(yellow('Aborting'))
             return
         }
 
@@ -596,17 +631,19 @@ void program
         const attempt = async (issue: Issue, step: () => Promise<void>) => {
             try {
                 await step()
-                console.log(`  ok   #${issue.number}`)
+                console.log(`  ${green('✓')} #${issue.number}`)
             } catch (error) {
                 console.log(
-                    `  FAIL #${issue.number}: ${(error as Error).message}`
+                    `  ${red('✗')} #${issue.number}: ${red((error as Error).message)}`
                 )
                 failures.push(`#${issue.number}`)
             }
         }
 
         if (noProject.length) {
-            console.log(`\n[add-to-project] ${noProject.length} issue(s)...`)
+            console.log(
+                header('add-to-project', `${noProject.length} issue(s)...`)
+            )
             for (const issue of noProject) {
                 await attempt(issue, async () => {
                     await addToProject(project, issue)
@@ -616,11 +653,11 @@ void program
 
         if (changes.length) {
             for (const label of missingLabels) {
-                console.log(`Creating label "${label}"...`)
+                console.log(green(`+ creating label "${label}"...`))
                 await createLabel(repo, label)
             }
 
-            console.log(`\n[sync-labels] ${changes.length} issue(s)...`)
+            console.log(header('sync-labels', `${changes.length} issue(s)...`))
             for (const action of changes) {
                 await attempt(action.issue, async () => {
                     if (action.kind === 'field') {
@@ -641,15 +678,19 @@ void program
 
         if (conflicts.length) {
             console.log(
-                `\n${conflicts.length} conflict(s) skipped; set ${PRODUCT_FIELD} on them by hand and re-run.`
+                yellow(
+                    `\n⚠ ${conflicts.length} conflict(s) skipped; set ${PRODUCT_FIELD} on them by hand and re-run.`
+                )
             )
         }
         if (failures.length) {
             console.error(
-                `\n${failures.length} issue(s) failed: ${failures.join(', ')}. Re-run to retry.`
+                red(
+                    `\n✗ ${failures.length} issue(s) failed: ${failures.join(', ')}. Re-run to retry.`
+                )
             )
             process.exit(1)
         }
-        console.log('\nDone.')
+        console.log(bold(green('\n✓ Done.')))
     })
     .parseAsync(process.argv)
