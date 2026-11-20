@@ -11,6 +11,7 @@ import type express from 'express'
 
 import type { ServerConfig } from '../config/Config.ts'
 import { jsonRpcHandler } from '../middleware/jsonRpcHandler.ts'
+import { issueSseTicket } from '../middleware/sseTicket.ts'
 import { dappController, type DappControllerOptions } from './controller.ts'
 import type { Methods } from './rpc-gen/index.ts'
 import { paramSchemas } from './rpc-gen/schemas.ts'
@@ -42,6 +43,16 @@ export const dapp = ({
             origin: serverConfig.allowedOrigins,
         })
     )
+
+    // The browser fetches this with Authorization, then opens EventSource with the ticket.
+    app.post(`${route}/events/ticket`, (req, res) => {
+        const token = req.authContext?.accessToken
+        if (!token) {
+            res.status(401).json({ error: 'Unauthenticated' })
+            return
+        }
+        res.json({ ticket: issueSseTicket(token) })
+    })
 
     // SSE endpoint for real-time notifications (must be registered before the JSON-RPC route)
     app.get(`${route}/events`, async (req, res) => {
