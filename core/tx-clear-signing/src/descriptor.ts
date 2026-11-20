@@ -138,14 +138,17 @@ const ExerciseSchema = operationSchema(ExerciseFieldSchema).extend({
     interface: InterfaceSchema.optional(),
 })
 
-const EnumTableSchema = z
-    .record(
-        z.union([z.string().regex(identifier), z.literal(['true', 'false'])]),
-        z.string().regex(displayText)
-    )
-    .refine((table) => Object.keys(table).length > 0, {
-        message: 'an enum table needs at least one entry',
-    })
+const enumTableKey = z.union([
+    z.string().regex(identifier),
+    z.literal(['true', 'false']),
+])
+
+const EnumTableSchema = recordWithoutProto(
+    enumTableKey,
+    z.string().regex(displayText)
+).refine((table) => Object.keys(table).length > 0, {
+    message: 'an enum table needs at least one entry',
+})
 
 const DescriptorSchema = z.strictObject({
     $schema: z.literal(SCHEMA_ID, {
@@ -160,9 +163,10 @@ const DescriptorSchema = z.strictObject({
         publisher: z.string().regex(trimmedLine),
         name: z.string().regex(trimmedLine),
         url: z.url().optional(),
-        enums: z
-            .record(z.string().regex(identifier), EnumTableSchema)
-            .optional(),
+        enums: recordWithoutProto(
+            z.string().regex(identifier),
+            EnumTableSchema
+        ).optional(),
     }),
     display: z
         .strictObject({
@@ -305,6 +309,7 @@ function fieldProblems(
 ): string[] {
     const problems: string[] = []
     const seen = new Set<string>()
+    const tables = d.metadata.enums
     for (const f of fields) {
         if (seen.has(f.path)) {
             problems.push(
@@ -313,7 +318,11 @@ function fieldProblems(
         }
         seen.add(f.path)
         const enumName = f.params?.$ref.slice(ENUM_REF_PREFIX.length)
-        if (enumName !== undefined && !d.metadata.enums?.[enumName]) {
+        const defined =
+            enumName !== undefined &&
+            tables !== undefined &&
+            Object.hasOwn(tables, enumName)
+        if (enumName !== undefined && !defined) {
             problems.push(
                 `${where}: field '${f.path}' references missing enum '${f.params?.$ref}'`
             )
@@ -325,4 +334,36 @@ function fieldProblems(
 // The paths an interpolatedIntent may name: the operation's fields.
 function fieldPaths(op: Operation): string[] {
     return (op.fields ?? []).map((f) => f.path)
+}
+
+/**
+ * A record schema that rejects an own `__proto__` key.
+ *
+ * `z.record` drops that key before the key schema runs. Checking the input keeps the parsed
+ * descriptor equal to the bytes that were signed.
+ */
+function recordWithoutProto<V extends z.ZodType>(
+    key: z.ZodType<string>,
+    value: V
+): z.ZodType<Record<string, z.infer<V>>> {
+    const record = z.record(key, value)
+    return z
+        .unknown()
+        .superRefine((input, ctx) => {
+            if (!hasOwnProto(input)) return
+            ctx.addIssue({
+                code: 'custom',
+                message: "'__proto__' is not allowed",
+            })
+        })
+        .pipe(record)
+}
+
+function hasOwnProto(value: unknown): boolean {
+    return (
+        typeof value === 'object' &&
+        value !== null &&
+        !Array.isArray(value) &&
+        Object.hasOwn(value, '__proto__')
+    )
 }

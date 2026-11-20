@@ -119,7 +119,9 @@ function formatParty(party: string): string {
 
 function formatEnum(v: Value, field: Field, enums: EnumTables): string {
     const ref = field.params?.$ref ?? ''
-    const table = enums[ref.slice(ENUM_REF_PREFIX.length)]
+    const name = ref.slice(ENUM_REF_PREFIX.length)
+    // A missing table is not a prototype property such as `constructor` or `__proto__`.
+    const table = Object.hasOwn(enums, name) ? enums[name] : undefined
     if (!table) {
         throw new FormatError(`enum table '${ref}' does not exist`)
     }

@@ -39,6 +39,7 @@ import {
 } from './descriptor.ts'
 import { decode } from './roots.ts'
 import { signDescriptor } from './signature.ts'
+import { MAX_JSON_NESTING_DEPTH } from './strict-json.ts'
 import { signWithReferenceKey } from './testing/reference-key.ts'
 import { REFERENCE_SIGNER } from './trusted-keys.ts'
 
@@ -850,6 +851,70 @@ describe('clearSign', () => {
             reason: 'signatures[0]: public key is not trusted',
         })
         expect(untrusted).not.toHaveProperty('descriptor')
+    })
+
+    it('reports a descriptor nested too deeply as invalid', async () => {
+        let deep = 'null'
+        for (let i = 0; i < MAX_JSON_NESTING_DEPTH; i++) {
+            deep = `{"k":${deep}}`
+        }
+        const text = `{"context":{"template":${JSON.stringify(ping.context.template)}},"deep":${deep}}`
+        const [op] = (
+            await clearSign(
+                builtinPingCreate,
+                [text],
+                await hashEither(builtinPingCreate)
+            )
+        ).operations
+        expect(op).toMatchObject({
+            status: 'invalid',
+            fields: [],
+            reason: expect.stringContaining(
+                `nesting is deeper than ${MAX_JSON_NESTING_DEPTH}`
+            ),
+        })
+        expect(op).not.toHaveProperty('descriptor')
+    })
+
+    it('escapes a bidirectional character in an invalid reason', async () => {
+        const rlo = String.fromCodePoint(0x202e)
+        const key = JSON.stringify(`bad${rlo}name`)
+        const text = `{"context":{"template":${JSON.stringify(ping.context.template)}},${key}:1,${key}:2}`
+        const [op] = (
+            await clearSign(
+                builtinPingCreate,
+                [text],
+                await hashEither(builtinPingCreate)
+            )
+        ).operations
+        expect(op?.status).toBe('invalid')
+        expect(op?.reason).toContain('\\u{202e}')
+        expect(op?.reason).not.toContain(rlo)
+    })
+
+    it('escapes a bidirectional character in an unverified reason', async () => {
+        const rlo = String.fromCodePoint(0x202e)
+        const signed = await signWithReferenceKey(ping)
+        const signatures = signed.signatures
+        if (!Array.isArray(signatures) || signatures.length === 0) {
+            throw new Error('signed descriptor has no signatures')
+        }
+        const entry = signatures[0]
+        if (typeof entry !== 'object' || entry === null) {
+            throw new Error('signed descriptor has no signature entry')
+        }
+        // A copy: `signatures[0]` is the entry already stored on `ping`.
+        signatures[0] = { ...entry, [`note${rlo}`]: 'x' }
+        const [op] = (
+            await clearSign(
+                builtinPingCreate,
+                [JSON.stringify(signed)],
+                await hashEither(builtinPingCreate)
+            )
+        ).operations
+        expect(op?.status).toBe('unverified')
+        expect(op?.reason).toContain('\\u{202e}')
+        expect(op?.reason).not.toContain(rlo)
     })
 
     it('reports a duplicate key on the root it binds to', async () => {

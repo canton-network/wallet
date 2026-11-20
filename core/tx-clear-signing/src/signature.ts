@@ -291,11 +291,11 @@ function withoutSignatures(json: unknown): unknown {
         throw new CanonicalizeError('descriptor must be a JSON object')
     }
     if (!Object.hasOwn(json, 'signatures')) return json
-    const copy: Record<string, unknown> = {}
-    for (const key of Object.keys(json)) {
-        if (key !== 'signatures') copy[key] = json[key]
-    }
-    return copy
+    // `Object.fromEntries` defines own data properties, so a member named `__proto__` stays in
+    // the signed bytes and the copy's prototype stays `Object.prototype`.
+    return Object.fromEntries(
+        Object.entries(json).filter(([key]) => key !== 'signatures')
+    )
 }
 
 function isJsonObject(value: unknown): value is Record<string, unknown> {

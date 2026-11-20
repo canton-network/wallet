@@ -4,6 +4,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { canonicalize } from './canonical-json.ts'
+import { MAX_JSON_NESTING_DEPTH } from './strict-json.ts'
 
 /** An IEEE 754 double from the hex in RFC 8785 appendix B. */
 function numberFromHex(hex: string): number {
@@ -118,5 +119,17 @@ describe('canonicalize', () => {
         const value: { self?: unknown } = {}
         value.self = value
         expect(() => canonicalize(value)).toThrow(/circular/)
+    })
+
+    it('rejects nesting deeper than the limit', () => {
+        const nest = (levels: number): unknown => {
+            let value: unknown = null
+            for (let i = 0; i < levels; i++) value = { k: value }
+            return value
+        }
+        expect(() => canonicalize(nest(MAX_JSON_NESTING_DEPTH))).not.toThrow()
+        expect(() => canonicalize(nest(MAX_JSON_NESTING_DEPTH + 1))).toThrow(
+            `nesting is deeper than ${MAX_JSON_NESTING_DEPTH}`
+        )
     })
 })

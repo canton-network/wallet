@@ -123,20 +123,28 @@
         "enums": {
             "title": "Enums",
             "type": "object",
-            "description": "Named tables that the enum format uses to replace a value with a human-readable string. Each table is referenced as $.metadata.enums.ENUM_NAME.",
+            "description": "Named tables that the enum format uses to replace a value with a human-readable string. Each table is referenced as $.metadata.enums.ENUM_NAME. A table name cannot be __proto__.",
             "propertyNames": {
-                "$ref": "#/$definitions/identifier"
+                "allOf": [
+                    { "$ref": "#/$definitions/identifier" },
+                    { "not": { "const": "__proto__" } }
+                ]
             },
             "additionalProperties": {
                 "title": "Enumeration",
                 "type": "object",
-                "description": "Keys are Daml enum constructor names, or true and false for a Bool. Values are the displayed strings. A value missing from the table fails formatting; it is never shown raw.",
+                "description": "Keys are Daml enum constructor names, or true and false for a Bool. Values are the displayed strings. A value missing from the table fails formatting; it is never shown raw. A key cannot be __proto__.",
                 "minProperties": 1,
                 "propertyNames": {
-                    "anyOf": [
-                        { "$ref": "#/$definitions/identifier" },
-                        { "const": "true" },
-                        { "const": "false" }
+                    "allOf": [
+                        {
+                            "anyOf": [
+                                { "$ref": "#/$definitions/identifier" },
+                                { "const": "true" },
+                                { "const": "false" }
+                            ]
+                        },
+                        { "not": { "const": "__proto__" } }
                     ]
                 },
                 "additionalProperties": {

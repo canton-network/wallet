@@ -61,7 +61,7 @@ Other Splice roots:
 
 ## The descriptor document
 
-A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example. A descriptor must not contain duplicate keys on any layer. This
+A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example. A descriptor must not contain duplicate keys on any layer. A descriptor containing duplicate keys should get rejected by `clearSign`.
 
 The object has two keys that are not sections, `$schema` and `$comment`, and four sections: `context`, `metadata`, `display` and `signatures`.
 
@@ -149,7 +149,7 @@ Text shown to the user, including labels, intents and enum entries, cannot conta
 
 ### What the parser checks beyond the schema
 
-A descriptor is I-JSON (RFC 7493). [src/strict-json.ts](src/strict-json.ts) rejects duplicate member names, lone surrogates, non-finite numbers and trailing data before the schema runs. JSON Schema cannot express those rules. `parseDescriptorText` is that parse followed by the schema.
+A descriptor is I-JSON (RFC 7493). [src/strict-json.ts](src/strict-json.ts) rejects duplicate member names, lone surrogates, non-finite numbers and trailing data before the schema runs. A member named `__proto__` is an ordinary member: it is kept, and it does not change the object's prototype. Nesting deeper than 64 arrays or objects is rejected. JSON Schema cannot express those rules. `parseDescriptorText` is that parse followed by the schema.
 
 [src/descriptor.ts](src/descriptor.ts) rejects a document the schema rejects. It then rejects a document the schema accepts when one of these is true: a path is declared twice in one operation, a `{path}` placeholder does not equal the path of a field of that operation, an enum reference does not name a table in `metadata`, or two exercise entries share a choice and interface. A descriptor that fails and still names a root's template leaves that root `invalid`. The other roots are still described.
 
@@ -169,7 +169,7 @@ No other field is allowed. The entries are independent, so their order does not 
 The signed message is the descriptor with `signatures` removed. `$comment` and `$schema` are part of the message.
 
 1. Remove `signatures`.
-2. Serialize the remaining value with RFC 8785 (JSON Canonicalization Scheme). Object keys are sorted by UTF-16 code unit. There is no whitespace. Strings and numbers use the ECMAScript `JSON.stringify` rules. A lone surrogate or a non-finite number is rejected. Encode that text as UTF-8.
+2. Serialize the remaining value with RFC 8785 (JSON Canonicalization Scheme). Object keys are sorted by UTF-16 code unit. There is no whitespace. Strings and numbers use the ECMAScript `JSON.stringify` rules. A lone surrogate, a non-finite number, or nesting deeper than 64 arrays or objects is rejected. Encode that text as UTF-8.
 3. Sign with Ed25519.
 4. Append the signature entry to `signatures`.
 
@@ -255,7 +255,7 @@ A transaction with no `transaction` message, or with no roots, is refused by the
 
 `descriptors` is any number of JSON texts, valid or not. A text is parsed when it names a root.
 
-Each text is parsed strictly first. A duplicate member name, a lone surrogate, or text that is not JSON leaves a bound root `invalid`. `reason` is that problem. `JSON.parse` is used only to find which root the bad text would have bound to. A text that cannot be read, or that names no root, is ignored.
+Each text is parsed strictly first. A duplicate member name, a lone surrogate, text that is not JSON, or nesting deeper than 64 arrays or objects leaves a bound root `invalid`. `reason` is that problem. `JSON.parse` is used only to find which root the bad text would have bound to. A text that cannot be read, or that names no root, is ignored.
 
 A document binds to a root when `context.template.packageId`, `moduleName` and `entityName` are non-empty strings and all three equal that root's template ID. The comparison is exact, including the package ID. The key is `packageId:moduleName:entityName`.
 

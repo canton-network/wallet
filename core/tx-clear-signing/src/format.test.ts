@@ -87,6 +87,21 @@ describe('formatValue', () => {
         expect(formatValue(bool, field('enum', ref), enums)).toBe('yes')
     })
 
+    it('does not treat a prototype property as an enum table', () => {
+        const value: Value = {
+            sum: { oneofKind: 'enum', enum: { constructor: 'Yes' } },
+        }
+        for (const name of ['constructor', 'toString', '__proto__']) {
+            expect(() =>
+                formatValue(
+                    value,
+                    field('enum', `$.metadata.enums.${name}`),
+                    {}
+                )
+            ).toThrow(`enum table '$.metadata.enums.${name}' does not exist`)
+        }
+    })
+
     it('fails on a value missing from the enum table', () => {
         const ref = '$.metadata.enums.side'
         const value: Value = {

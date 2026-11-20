@@ -217,4 +217,18 @@ describe('descriptor signatures', () => {
             ])
         }
     })
+
+    it('keeps an own __proto__ member in the signed bytes', () => {
+        const json: Record<string, unknown> = { a: 1, signatures: [] }
+        Object.defineProperty(json, '__proto__', {
+            value: 'x',
+            writable: true,
+            enumerable: true,
+            configurable: true,
+        })
+        expect(new TextDecoder().decode(signingMessage(json))).toBe(
+            '{"__proto__":"x","a":1}'
+        )
+        expect(Object.getPrototypeOf(json)).toBe(Object.prototype)
+    })
 })

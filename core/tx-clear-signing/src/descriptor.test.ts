@@ -353,4 +353,98 @@ describe('parseDescriptor', () => {
             })
         ).not.toThrow()
     })
+
+    it.each(['constructor', 'toString', 'hasOwnProperty', '__proto__'])(
+        'rejects an enum reference to %s when that table is not defined',
+        (name) => {
+            expect(() =>
+                parseDescriptor({
+                    ...ping,
+                    display: {
+                        create: {
+                            intent: 'Ping',
+                            fields: [
+                                {
+                                    path: 'id',
+                                    format: 'enum',
+                                    params: {
+                                        $ref: `$.metadata.enums.${name}`,
+                                    },
+                                },
+                            ],
+                        },
+                    },
+                })
+            ).toThrow(`missing enum '$.metadata.enums.${name}'`)
+        }
+    )
+
+    it('accepts an enum table whose name is a prototype property', () => {
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                metadata: {
+                    ...ping.metadata,
+                    enums: { constructor: { Yes: 'yes' } },
+                },
+                display: {
+                    create: {
+                        intent: 'Ping',
+                        fields: [
+                            {
+                                path: 'id',
+                                format: 'enum',
+                                params: {
+                                    $ref: '$.metadata.enums.constructor',
+                                },
+                            },
+                        ],
+                    },
+                },
+            })
+        ).not.toThrow()
+    })
+
+    it('rejects an own __proto__ member of a strict object', () => {
+        expect(() => parseDescriptor(withOwnProto({ ...ping }, 1))).toThrow(
+            'Unrecognized key: "__proto__"'
+        )
+        const metadata = withOwnProto({ ...ping.metadata }, 1)
+        expect(() => parseDescriptor({ ...ping, metadata })).toThrow(
+            'Unrecognized key: "__proto__"'
+        )
+    })
+
+    it('rejects __proto__ as an enum name or a table key', () => {
+        const named = withOwnProto({}, { Yes: 'yes' })
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                metadata: { ...ping.metadata, enums: named },
+                display: { create: { intent: 'Ping' } },
+            })
+        ).toThrow("'__proto__' is not allowed")
+
+        const table = withOwnProto({ Yes: 'yes' }, 'no')
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                metadata: { ...ping.metadata, enums: { Side: table } },
+                display: { create: { intent: 'Ping' } },
+            })
+        ).toThrow("'__proto__' is not allowed")
+    })
 })
+
+function withOwnProto(
+    target: Record<string, unknown>,
+    value: unknown
+): Record<string, unknown> {
+    Object.defineProperty(target, '__proto__', {
+        value,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+    })
+    return target
+}

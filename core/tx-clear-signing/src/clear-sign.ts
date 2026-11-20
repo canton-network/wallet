@@ -275,12 +275,18 @@ function describeNode(
         return { ...generic, status: 'undescribed' }
     }
     if ('unverified' in binding) {
-        const reason = binding.unverified.join('; ')
-        return { ...generic, status: 'unverified', reason }
+        return {
+            ...generic,
+            status: 'unverified',
+            reason: sanitize(binding.unverified.join('; ')),
+        }
     }
     if ('problems' in binding) {
-        const reason = binding.problems.join('; ')
-        return { ...generic, status: 'invalid', reason }
+        return {
+            ...generic,
+            status: 'invalid',
+            reason: sanitize(binding.problems.join('; ')),
+        }
     }
     const { descriptor, signers } = binding
     const described = {

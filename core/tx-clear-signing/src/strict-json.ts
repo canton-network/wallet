@@ -7,6 +7,10 @@
  * `JSON.parse` keeps the last of a duplicated member name and accepts a lone surrogate. RFC 8785
  * requires I-JSON (RFC 7493), which forbids both. A descriptor is text until this parser has
  * accepted it, so a duplicate cannot be dropped before the signature is checked.
+ *
+ * A member named `__proto__` is stored as an own data property. Nesting deeper than
+ * {@link MAX_JSON_NESTING_DEPTH} is rejected, which RFC 8259 section 9 allows: past that depth the
+ * parser would throw a `RangeError` instead of reporting the document.
  */
 export class StrictJsonError extends Error {
     constructor(message: string) {
@@ -17,10 +21,16 @@ export class StrictJsonError extends Error {
 
 const NUMBER = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/
 
+/**
+ * The deepest array or object accepted, counting the root as 1.
+ * `canonicalize` uses the same limit.
+ */
+export const MAX_JSON_NESTING_DEPTH = 64
+
 /** Parses `text` as I-JSON. @throws StrictJsonError */
 export function parseJsonStrict(text: string): unknown {
     const parser = new Parser(text)
-    const value = parser.parseValue('$')
+    const value = parser.parseValue('$', 1)
     parser.skipWs()
     if (!parser.done()) {
         throw new StrictJsonError(`trailing data at offset ${parser.offset()}`)
@@ -41,11 +51,11 @@ class Parser {
         return this.i >= this.text.length
     }
 
-    parseValue(path: string): unknown {
+    parseValue(path: string, depth: number): unknown {
         this.skipWs()
         const c = this.peek()
-        if (c === '{') return this.parseObject(path)
-        if (c === '[') return this.parseArray(path)
+        if (c === '{') return this.parseObject(path, depth)
+        if (c === '[') return this.parseArray(path, depth)
         if (c === '"') return this.parseString(path)
         if (c === 't') return this.literal('true', true)
         if (c === 'f') return this.literal('false', false)
@@ -71,7 +81,8 @@ class Parser {
         }
     }
 
-    private parseObject(path: string): Record<string, unknown> {
+    private parseObject(path: string, depth: number): Record<string, unknown> {
+        this.assertDepth(path, depth)
         this.expect('{')
         this.skipWs()
         const object: Record<string, unknown> = {}
@@ -92,7 +103,11 @@ class Parser {
             seen.add(key)
             this.skipWs()
             this.expect(':')
-            object[key] = this.parseValue(childPath(path, key))
+            setMember(
+                object,
+                key,
+                this.parseValue(childPath(path, key), depth + 1)
+            )
             this.skipWs()
             const next = this.peek()
             if (next === ',') {
@@ -107,7 +122,8 @@ class Parser {
         }
     }
 
-    private parseArray(path: string): unknown[] {
+    private parseArray(path: string, depth: number): unknown[] {
+        this.assertDepth(path, depth)
         this.expect('[')
         this.skipWs()
         const items: unknown[] = []
@@ -116,7 +132,7 @@ class Parser {
             return items
         }
         for (;;) {
-            items.push(this.parseValue(`${path}[${items.length}]`))
+            items.push(this.parseValue(`${path}[${items.length}]`, depth + 1))
             this.skipWs()
             const next = this.peek()
             if (next === ',') {
@@ -253,9 +269,40 @@ class Parser {
         return this.text[this.i]
     }
 
+    private assertDepth(path: string, depth: number): void {
+        if (depth > MAX_JSON_NESTING_DEPTH) {
+            throw this.fail(
+                `nesting is deeper than ${MAX_JSON_NESTING_DEPTH} at ${path}`
+            )
+        }
+    }
+
     private fail(message: string): StrictJsonError {
         return new StrictJsonError(message)
     }
+}
+
+/**
+ * Stores `key` as an own data property.
+ *
+ * `__proto__` is a setter on `Object.prototype`. An own data property keeps the member and leaves
+ * the object's prototype unchanged, so the text that was signed is the text that is parsed.
+ */
+function setMember(
+    object: Record<string, unknown>,
+    key: string,
+    value: unknown
+): void {
+    if (key !== '__proto__') {
+        object[key] = value
+        return
+    }
+    Object.defineProperty(object, key, {
+        value,
+        writable: true,
+        enumerable: true,
+        configurable: true,
+    })
 }
 
 function childPath(path: string, key: string): string {
