@@ -4,10 +4,6 @@ inputs:
     daml_release_version:
         description: 'DAML version from setup_versions'
         required: true
-    save_cache:
-        description: 'Whether to save the DPM cache on a cache miss'
-        required: false
-        default: 'false'
 runs:
     using: composite
     steps:
@@ -34,7 +30,7 @@ runs:
           run: rm -rf ~/.dpm/cache/oci-layout
 
         - name: Save DPM cache
-          if: inputs.save_cache == 'true'
+          if: ${{ steps.dpm_cache.outputs.cache-hit != 'true' }}
           uses: ./.github/actions/save_cache_if_absent
           with:
               path: |
