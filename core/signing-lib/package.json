@@ -23,7 +23,6 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-wallet-auth": "workspace:",
         "tweetnacl": "catalog:",
         "tweetnacl-util": "catalog:",
         "zod": "catalog:"

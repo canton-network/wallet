@@ -27,8 +27,9 @@ import type {
     SubscribeTransactionsResult,
     SetConfigurationResult,
     Transaction,
+    IdentityClaims,
+    ClaimsFor,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import _ from 'lodash'
 import { z } from 'zod'
 
@@ -82,7 +83,7 @@ function toHex(base64String?: string): string | undefined {
     return base64String && Buffer.from(base64String, 'base64').toString('hex')
 }
 
-export default class FireblocksSigningDriver implements SigningDriverInterface {
+export default class FireblocksSigningDriver implements SigningDriverInterface<'sub'> {
     private fireblocks: FireblocksHandler
     private config: FireblocksConfig
 
@@ -92,7 +93,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
     }
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.FIREBLOCKS
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public requiredClaims = ['sub'] as const
+
+    public controller = ({ sub }: ClaimsFor<'sub'>) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -107,7 +110,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         : params.keyIdentifier
 
                     const tx = await this.fireblocks.signTransaction(
-                        userId,
+                        sub,
                         toHex(params.txHash),
                         hexKeyIdentifier,
                         `Signing transaction with public key ${hexKeyIdentifier.publicKey}`,
@@ -156,7 +159,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     ).toString('hex')
                     const publicKey = toHex(params.keyIdentifier.publicKey)
                     const tx = await this.fireblocks.signTransaction(
-                        userId,
+                        sub,
                         messageHex,
                         { publicKey },
                         `Signing message with public key ${publicKey}`,
@@ -185,7 +188,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 params: GetTransactionParams
             ): Promise<GetTransactionResult> => {
                 const tx = await this.fireblocks.getTransaction(
-                    userId,
+                    sub,
                     params.txId
                 )
                 if (tx) {
@@ -215,7 +218,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     const txIds = new Set(params.txIds)
                     const publicKeys = new Set(params.publicKeys)
                     for await (const tx of this.fireblocks.getTransactions(
-                        userId
+                        sub
                     )) {
                         if (
                             txIds.has(tx.txId) ||
@@ -254,7 +257,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
 
             getKeys: async (): Promise<GetKeysResult> => {
                 try {
-                    const keys = await this.fireblocks.getPublicKeys(userId)
+                    const keys = await this.fireblocks.getPublicKeys(sub)
                     return {
                         keys: keys.map((k) => ({
                             id: k.derivationPath.join('-'),
