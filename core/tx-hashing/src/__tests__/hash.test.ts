@@ -71,10 +71,10 @@ interface Refusal {
 
 const REFUSALS: Refusal[] = [
     {
-        title: 'rejects scheme 4',
-        call: () => run(V2_FIXTURE.base64, 4),
+        title: 'rejects scheme 5',
+        call: () => run(V2_FIXTURE.base64, 5),
         code: 'UNSUPPORTED_SCHEME',
-        says: 'scheme 4 is not supported',
+        says: 'hashing scheme 5 is not supported: expected HashingSchemeVersion.V2, V3 or V4, or HASHING_SCHEME_VERSION_V2, HASHING_SCHEME_VERSION_V3 or HASHING_SCHEME_VERSION_V4',
     },
     {
         title: 'rejects a missing scheme',
@@ -99,7 +99,7 @@ const REFUSALS: Refusal[] = [
     })),
     {
         title: 'checks the scheme before decoding the input',
-        call: () => run('not base64!', 4),
+        call: () => run('not base64!', 5),
         code: 'UNSUPPORTED_SCHEME',
     },
     {
@@ -241,6 +241,20 @@ describe('computePreparedTransactionHash', () => {
             ])
             expect(hashes.map(toHex)).toEqual([hashHex, hashHex])
         })
+    })
+
+    it('hashes under HashingSchemeVersion.V4 and HASHING_SCHEME_VERSION_V4 alike, not as V3', async () => {
+        // A transaction of the V3 fixtures is one that V4 hashes too
+        const [{ base64, hashHex }] = liveFixtures(V3)
+        const [byVersion, byName] = (
+            await Promise.all([
+                run(base64, HashingSchemeVersion.V4),
+                run(base64, 'HASHING_SCHEME_VERSION_V4'),
+            ])
+        ).map(toHex)
+
+        expect(byName).toBe(byVersion)
+        expect(byVersion).not.toBe(hashHex)
     })
 
     it('hashes a Buffer view at a non-zero byteOffset', async () => {

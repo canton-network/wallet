@@ -71,7 +71,7 @@ function encodeDate(days: number, path: string): Uint8Array {
     return encodeInt32(days, path)
 }
 
-function encodeBytes(bytes: Uint8Array): Uint8Array {
+export function encodeBytes(bytes: Uint8Array): Uint8Array {
     return concat(encodeInt32(bytes.length), bytes)
 }
 
