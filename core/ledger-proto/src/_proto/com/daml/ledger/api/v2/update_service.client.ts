@@ -15,6 +15,7 @@ import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
 import { UpdateService } from './update_service.ts'
 import type { GetUpdatesPageResponse } from './update_service.ts'
 import type { GetUpdatesPageRequest } from './update_service.ts'
+import type { GetUpdateByHashRequest } from './update_service.ts'
 import type { GetUpdateByIdRequest } from './update_service.ts'
 import type { GetUpdateResponse } from './update_service.ts'
 import type { GetUpdateByOffsetRequest } from './update_service.ts'
@@ -71,6 +72,18 @@ export interface IUpdateServiceClient {
         input: GetUpdateByIdRequest,
         options?: RpcOptions
     ): UnaryCall<GetUpdateByIdRequest, GetUpdateResponse>
+    /**
+     * Look up an update by its transaction hash.
+     * This is only available for updates received after upgrading to Canton version 3.6.
+     * If there is no update with this transaction hash, or all the events are filtered,
+     * or the update was populated before upgrading to Canton version 3.6, an UPDATE_NOT_FOUND error will be raised.
+     *
+     * @generated from protobuf rpc: GetUpdateByHash
+     */
+    getUpdateByHash(
+        input: GetUpdateByHashRequest,
+        options?: RpcOptions
+    ): UnaryCall<GetUpdateByHashRequest, GetUpdateResponse>
     /**
      * Read a page of ledger's filtered updates. It returns the event types in accordance with
      * the specified contents and filters.
@@ -172,6 +185,28 @@ export class UpdateServiceClient implements IUpdateServiceClient, ServiceInfo {
         )
     }
     /**
+     * Look up an update by its transaction hash.
+     * This is only available for updates received after upgrading to Canton version 3.6.
+     * If there is no update with this transaction hash, or all the events are filtered,
+     * or the update was populated before upgrading to Canton version 3.6, an UPDATE_NOT_FOUND error will be raised.
+     *
+     * @generated from protobuf rpc: GetUpdateByHash
+     */
+    getUpdateByHash(
+        input: GetUpdateByHashRequest,
+        options?: RpcOptions
+    ): UnaryCall<GetUpdateByHashRequest, GetUpdateResponse> {
+        const method = this.methods[3],
+            opt = this._transport.mergeOptions(options)
+        return stackIntercept<GetUpdateByHashRequest, GetUpdateResponse>(
+            'unary',
+            this._transport,
+            method,
+            opt,
+            input
+        )
+    }
+    /**
      * Read a page of ledger's filtered updates. It returns the event types in accordance with
      * the specified contents and filters.
      * Additionally, the selection criteria for individual events depends on the transaction shape chosen.
@@ -185,7 +220,7 @@ export class UpdateServiceClient implements IUpdateServiceClient, ServiceInfo {
         input: GetUpdatesPageRequest,
         options?: RpcOptions
     ): UnaryCall<GetUpdatesPageRequest, GetUpdatesPageResponse> {
-        const method = this.methods[3],
+        const method = this.methods[4],
             opt = this._transport.mergeOptions(options)
         return stackIntercept<GetUpdatesPageRequest, GetUpdatesPageResponse>(
             'unary',
