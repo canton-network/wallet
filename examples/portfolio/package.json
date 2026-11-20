@@ -53,10 +53,12 @@
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitejs/plugin-react": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "nx": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",
-        "vite": "catalog:"
+        "vite": "catalog:",
+        "vitest": "catalog:"
     },
     "files": [
         "dist/**"
