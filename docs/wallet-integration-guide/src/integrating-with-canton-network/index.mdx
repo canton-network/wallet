@@ -34,3 +34,25 @@ Links to the node deployment docs are below depending on the deployment choice:
 - [Validator onboarding process](https://docs.canton.network/global-synchronizer/deployment/onboarding-process)
 - [Docker Compose docs](https://docs.canton.network/global-synchronizer/deployment/validator-docker-compose)
 - [Kubernetes docs](https://docs.canton.network/global-synchronizer/deployment/validator-kubernetes)
+
+## Connection parameters
+
+A wallet or dApp that reads and submits transactions on MainNet needs a handful of endpoints, identifiers and credentials. There is no single network-wide list of them, because almost all of them belong to the validator that hosts your users' parties. If you run that validator, you already have them. If a node provider runs it for you, ask the provider for the values in the first list below. The values in the second list you then read from the validator itself, so they don't need to be hardcoded.
+
+The same parameters apply to DevNet and TestNet, with each environment's own validator. The parameters for setting up the validator itself, such as the migration ID and onboarding secret, are in [Required Network Parameters](https://docs.canton.network/global-synchronizer/deployment/required-network-parameters).
+
+### From your validator or node provider
+
+- **JSON Ledger API URL**: the base URL of the participant's JSON Ledger API. `curl <json-ledger-api-url>/v2/version` returns the Canton version and enabled features when the URL is right.
+- **Authentication**: the OIDC provider's issuer, its discovery URL (usually ending in `/.well-known/openid-configuration`), a client ID and client secret for the client credentials flow, and the audience and scope that the participant expects in tokens. Self-signed tokens are for LocalNet and test setups only. See [OIDC providers](https://docs.canton.network/global-synchronizer/deployment/oidc-providers) for how validators are configured.
+- **Ledger API user and rights**: the user ID your backend acts as, which is the `sub` claim of its token. The user needs `CanActAs` and `CanReadAs` rights for the parties it submits for, or `CanExecuteAsAnyParty` and `CanReadAsAnyParty` for a wallet backend that serves many parties. Granting rights to a user needs `ParticipantAdmin` rights, or `IdentityProviderAdmin` rights within the same identity provider, so on a hosted validator you may have to ask the provider to do it. See [User management](../user-management/index.mdx).
+- **Validator API URL**: the validator app's REST API. In the standard Docker Compose and Kubernetes deployments it is served under `/api/validator` on the validator's host. `curl <validator-api-url>/version` returns the Splice version.
+
+### From the validator, once you have access
+
+- **Synchronizer ID**: the ID of the Global Synchronizer, which looks like `global-domain::1220...`. Read it from `GET /v2/state/connected-synchronizers` on the JSON Ledger API instead of hardcoding it. A validator can be connected to more than one synchronizer. The Global Synchronizer is the entry with the alias `global`.
+- **Scan**: reach the Super Validators' Scan data through the validator's [Scan Proxy](https://docs.canton.network/overview/reference/validator-node-components#scan-proxy) at `<validator-api-url>/v0/scan-proxy`. The proxy queries several Super Validators' Scan instances and returns the result they agree on, so you don't depend on one Super Validator.
+- **Canton Coin registry URL**: Canton Coin's token standard registry is served through Scan, so the Scan Proxy URL is also the registry URL for Canton Coin.
+- **Registry URLs for other tokens**: every other token standard asset has its own registry, run by its issuer, and you get its URL from that issuer. For USDCx and other assets issued through the Digital Asset Registry, see [USDCx support](../usdcx-support/index.mdx).
+
+If you use the [Wallet Gateway](../../../wallet-gateway/operate/networks-and-identity.mdx), each network in its configuration also has an `id`. You choose that value yourself in [CAIP-2](https://github.com/ChainAgnostic/CAIPs/blob/main/CAIPs/caip-2.md) form, for example `canton:mainnet`, and the network doesn't issue it. To check every value with the Wallet SDK, see [How do I validate my configurations?](../wallet-sdk-configuration/index.mdx#how-do-i-validate-my-configurations).
