@@ -3,5 +3,11 @@
     "compilerOptions": {
         "resolveJsonModule": true,
         "types": ["node"]
-    }
+    },
+    "include": ["src", "src/**/*.json"],
+    "references": [
+        {
+            "path": "../ledger-proto"
+        }
+    ]
 }

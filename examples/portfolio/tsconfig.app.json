@@ -22,5 +22,40 @@
         "noFallthroughCasesInSwitch": true,
         "noUncheckedSideEffectImports": true
     },
-    "include": ["src"]
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../../sdk/dapp-sdk"
+        },
+        {
+            "path": "../../core/wallet-auth"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/tx-parser"
+        },
+        {
+            "path": "../../core/token-standard-service"
+        },
+        {
+            "path": "../../core/token-standard-v2"
+        },
+        {
+            "path": "../../core/token-standard"
+        },
+        {
+            "path": "../../core/provider-ledger"
+        },
+        {
+            "path": "../../core/ledger-client-types"
+        },
+        {
+            "path": "../../core/wallet-test-utils"
+        }
+    ]
 }
