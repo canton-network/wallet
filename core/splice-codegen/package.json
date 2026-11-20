@@ -18,8 +18,7 @@
         }
     },
     "scripts": {
-        "build": "pnpm --workspace-root generate:codegen && tsdown",
-        "dev": "tsdown --watch",
+        "build": "tsdown",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
@@ -59,6 +58,15 @@
                 "dependsOn": [
                     "^typecheck",
                     "build"
+                ]
+            },
+            "build": {
+                "inputs": [
+                    "production",
+                    "^production",
+                    "{workspaceRoot}/scripts/src/lib/version-config.json",
+                    "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
+                    "{workspaceRoot}/scripts/src/generate-daml-codegen.ts"
                 ]
             }
         }
