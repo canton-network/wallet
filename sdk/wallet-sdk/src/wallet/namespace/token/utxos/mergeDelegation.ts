@@ -9,9 +9,9 @@ import type {
 } from '@canton-network/core-token-standard-service'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
-
 import type { TokenNamespaceConfig } from '../../../sdk.ts'
 import { LedgerNamespace } from '../../ledger/index.ts'
+import { dedupeDisclosedContracts } from '../../utils/disclosedContracts.ts'
 import { resolveProviderParty } from '../utils.ts'
 import type { UtxoNamespace } from './index.ts'
 
@@ -185,9 +185,8 @@ export class MergeDelegationNamespace {
 
         disclosedContracts.push(...transferCommandDisclosedContracts)
 
-        const uniqueDisclosedContracts = Array.from(
-            new Map(disclosedContracts.map((c) => [c.contractId, c])).values()
-        )
+        const uniqueDisclosedContracts =
+            dedupeDisclosedContracts(disclosedContracts)
 
         transferCommands.map((tc) => {
             const exercise: ExerciseCommand = {

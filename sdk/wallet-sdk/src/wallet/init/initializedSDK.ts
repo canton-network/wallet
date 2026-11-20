@@ -14,7 +14,10 @@ import { EventsNamespace } from '../namespace/events/index.ts'
 import { KeysNamespace } from '../namespace/keys/index.ts'
 import { LedgerNamespace } from '../namespace/ledger/index.ts'
 import { PartyNamespace } from '../namespace/party/index.ts'
-import { TrafficAccountNamespace } from '../namespace/traffic/index.ts'
+import {
+    TrafficAccountNamespace,
+    type TrafficPurchaseContext,
+} from '../namespace/traffic/index.ts'
 import { TokenNamespace } from '../namespace/token/index.ts'
 import { UserNamespace } from '../namespace/user/index.ts'
 import { SDKUtilsNamespace } from '../namespace/utils/index.ts'
@@ -37,6 +40,7 @@ import type {
     RegisteredPlugins,
     SDKInterface,
     TokenConfig,
+    TrafficConfig,
     RegistryAuth,
 } from './types/index.ts'
 
@@ -167,6 +171,22 @@ const createNamespace: {
             websocketURL: new ParsedURL(ctx, config.websocketURL),
         })
     },
+    traffic: async (ctx: SDKContext, config: TrafficConfig) => {
+        const auth = new AuthTokenProvider(config.auth)
+        const tokenStandardService = new TokenStandardService(
+            ctx.ledgerProvider,
+            resolveAuth(config.registryAuth, auth),
+            false
+        )
+        const purchaseCtx: TrafficPurchaseContext = {
+            ...ctx,
+            tokenStandardService,
+            registryUrls: config.registries.map(
+                (input) => new ParsedURL(ctx, input)
+            ),
+        }
+        return new TrafficAccountNamespace(purchaseCtx)
+    },
 }
 
 export class InitializedSDK<
@@ -175,14 +195,12 @@ export class InitializedSDK<
     public readonly keys = new KeysNamespace()
     public readonly ledger: LedgerNamespace
     public readonly party: PartyNamespace
-    public readonly traffic: TrafficAccountNamespace
     public readonly user: UserNamespace
     public readonly utils: SDKUtilsNamespace
 
     constructor(protected ctx: SDKContext) {
         this.ledger = new LedgerNamespace(ctx)
         this.party = new PartyNamespace(ctx)
-        this.traffic = new TrafficAccountNamespace(ctx)
         this.user = new UserNamespace(ctx)
         this.utils = new SDKUtilsNamespace({
             logger: ctx.logger,
@@ -281,6 +299,9 @@ export class ExtendedInitializedSDK<
         : never
     declare readonly events: ExtendedItems extends 'events'
         ? EventsNamespace
+        : never
+    declare readonly traffic: ExtendedItems extends 'traffic'
+        ? TrafficAccountNamespace
         : never
 
     private constructor(

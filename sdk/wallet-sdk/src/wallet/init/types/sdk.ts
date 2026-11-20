@@ -21,6 +21,7 @@ import type {
     AssetConfig,
     EventsConfig,
     TokenConfig,
+    TrafficConfig,
 } from './config.ts'
 
 // SDK OPTIONS
@@ -52,6 +53,7 @@ export const EXTENDED_SDK_OPTION_KEYS = [
     'token',
     'asset',
     'events',
+    'traffic',
 ] as const
 
 type EnforceKeys<
@@ -66,6 +68,7 @@ export type ExtendedSDKOptions = EnforceKeys<
         token: TokenConfig
         asset: AssetConfig
         events: EventsConfig
+        traffic: TrafficConfig
     }>
 >
 
@@ -89,7 +92,6 @@ export type BasicSDKInterface<
     keys: KeysNamespace
     ledger: LedgerNamespace
     party: PartyNamespace
-    traffic: TrafficAccountNamespace
     user: UserNamespace
     utils: SDKUtilsNamespace
     extend: <ExtendedItems extends keyof ExtendedSDKOptions>(
@@ -110,6 +112,7 @@ export type ExtendedFullSDKInterface = Readonly<{
     token: TokenNamespace
     asset: AssetNamespace
     events: EventsNamespace
+    traffic: TrafficAccountNamespace
 }>
 
 export type NullableExtendedFullSDKInterface = {
