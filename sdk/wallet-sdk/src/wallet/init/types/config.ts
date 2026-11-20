@@ -42,4 +42,5 @@ export type EventsConfig = {
 export type TrafficConfig = RegistryAuthConfig & {
     auth: TokenProviderConfig
     registries: URLInput[]
+    paymasterAuth?: RegistryAuth
 }
