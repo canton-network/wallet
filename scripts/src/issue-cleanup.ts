@@ -424,6 +424,9 @@ interface Issue {
         project: { id: string }
         product: { name: string } | null
     }[]
+    // The lists above were cut off at their page size, so may be incomplete
+    moreLabels: boolean
+    moreProjectItems: boolean
 }
 
 type IssueState = 'OPEN' | 'CLOSED'
@@ -445,8 +448,12 @@ async function loadIssues(
                         id: string
                         number: number
                         title: string
-                        labels: { nodes: { id: string; name: string }[] }
+                        labels: {
+                            pageInfo: { hasNextPage: boolean }
+                            nodes: { id: string; name: string }[]
+                        }
                         projectItems: {
+                            pageInfo: { hasNextPage: boolean }
                             nodes: {
                                 id: string
                                 project: { id: string }
@@ -476,12 +483,18 @@ async function loadIssues(
                                 number
                                 title
                                 labels(first: 50) {
+                                    pageInfo {
+                                        hasNextPage
+                                    }
                                     nodes {
                                         id
                                         name
                                     }
                                 }
                                 projectItems(first: 20) {
+                                    pageInfo {
+                                        hasNextPage
+                                    }
                                     nodes {
                                         id
                                         project {
@@ -516,6 +529,9 @@ async function loadIssues(
                     // Non-matching fragments come back as `{}`
                     product: item.product?.name ? item.product : null,
                 })),
+                // Rare enough not to page through; planSync skips these instead
+                moreLabels: node.labels.pageInfo.hasNextPage,
+                moreProjectItems: node.projectItems.pageInfo.hasNextPage,
             })
         }
         after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null
@@ -627,10 +643,25 @@ type SyncAction =
     | { kind: 'field'; issue: Issue; option: string }
     | { kind: 'labels'; issue: Issue; add: string[]; remove: string[] }
     | { kind: 'conflict'; issue: Issue; labels: string[] }
+    | { kind: 'incomplete'; issue: Issue; reason: string }
 
 function planSync(project: Project, issue: Issue): SyncAction | null {
-    const product = issue.projectItems.find((p) => p.project.id === project.id)
-        ?.product?.name
+    const item = issue.projectItems.find((p) => p.project.id === project.id)
+
+    // Acting on a partial view could overwrite a Product we didn't see, or
+    // miss a product label, so leave these issues alone
+    if (issue.moreLabels) {
+        return { kind: 'incomplete', issue, reason: 'too many labels to read' }
+    }
+    if (!item && issue.moreProjectItems) {
+        return {
+            kind: 'incomplete',
+            issue,
+            reason: 'too many projects to find this one',
+        }
+    }
+
+    const product = item?.product?.name
     const labels = issue.labels
         .map((l) => l.name)
         .filter((n) => PRODUCT_LABELS.has(n))
@@ -686,6 +717,8 @@ function describe(action: SyncAction): string {
             return yellow(
                 `⚠ conflict: ${action.labels.join(', ')}, no ${PRODUCT_FIELD}`
             )
+        case 'incomplete':
+            return yellow(`⚠ skipped: ${action.reason}; sync by hand`)
     }
 }
 
@@ -753,8 +786,11 @@ void program
                   .map((i) => planSync(project, i))
                   .filter((a): a is SyncAction => a !== null)
             : []
-        const changes = sync.filter((a) => a.kind !== 'conflict')
+        const changes = sync.filter(
+            (a) => a.kind === 'field' || a.kind === 'labels'
+        )
         const conflicts = sync.filter((a) => a.kind === 'conflict')
+        const incomplete = sync.filter((a) => a.kind === 'incomplete')
         const labelActions = doSync ? planLabels(project, repo) : []
 
         if (doAdd) {
@@ -770,14 +806,18 @@ void program
             console.log(
                 header(
                     'sync-labels',
-                    `${labelActions.length} label(s) to create/recolour, ${changes.length} issue change(s), ${conflicts.length} conflict(s)`
+                    `${labelActions.length} label(s) to create/recolour, ${changes.length} issue change(s), ${conflicts.length} conflict(s)` +
+                        (incomplete.length
+                            ? `, ${incomplete.length} skipped`
+                            : '')
                 )
             )
             labelActions.forEach((a) =>
                 console.log(labelActionLine(project, a))
             )
-            changes.forEach((a) => console.log(line(a.issue, describe(a))))
-            conflicts.forEach((a) => console.log(line(a.issue, describe(a))))
+            ;[...changes, ...conflicts, ...incomplete].forEach((a) =>
+                console.log(line(a.issue, describe(a)))
+            )
         }
         if (doUnused) {
             console.log(
@@ -814,6 +854,13 @@ void program
             await cleanUpLabels()
         }
 
+        if (incomplete.length) {
+            console.log(
+                yellow(
+                    `\n⚠ ${incomplete.length} issue(s) skipped: too many labels or projects to read; sync their ${PRODUCT_FIELD} and labels by hand.`
+                )
+            )
+        }
         if (conflicts.length) {
             console.log(
                 yellow(
