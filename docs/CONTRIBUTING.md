@@ -183,10 +183,9 @@ pnpm script:fetch:canton --network=mainnet  # Fetch mainnet Canton version (defa
 The e2e tests run against production builds, as in CI, not the dev servers of `pnpm start:all`. Dev builds behave differently (e.g. Lit dev mode), so a test passing against them can still fail in CI.
 
 ```bash
-pnpm build:all
 pnpm start:canton --network=devnet         # ping and the extension
 pnpm start:localnet --network=devnet       # portfolio and the wallet SDK examples
-pnpm start:e2e                             # Wallet Gateway, mock OAuth and example dApps
+pnpm start:e2e example-ping                # builds and starts the Wallet Gateway, mock OAuth and ping (all dApps without arguments)
 pnpm nx playwright:e2e @canton-network/example-ping
 pnpm stop:all
 ```
