@@ -11,8 +11,12 @@
 //                                                 field (the field wins)
 //                      - field unset, one label:  the field is set from the label
 //                      - field unset, 2+ labels:  reported as a conflict, skipped
+//  --unused-labels   Runs last. Lists repo labels on no issue or PR (open or
+//                    closed) and asks which to delete. Product labels are
+//                    managed by --sync-labels and never offered; to retire one
+//                    (rename, merge products), drop it from PRODUCTS first.
 //
-// With neither flag, both steps run.
+// With no step flags, all steps run.
 //
 // Uses the `gh` CLI, which authenticates with `GH_TOKEN` when it is set. The token
 // needs the `repo` and `project` scopes (classic) or Issues + Projects write
@@ -21,7 +25,7 @@
 import { spawn } from 'child_process'
 
 import { program } from '@commander-js/extra-typings'
-import { confirm } from '@inquirer/prompts'
+import { checkbox, confirm } from '@inquirer/prompts'
 import * as colors from 'yoctocolors'
 
 // yoctocolors only checks terminal support, so also drop colours when piped
@@ -194,41 +198,104 @@ async function loadProject(owner: string, number: number): Promise<Project> {
     }
 }
 
+interface Label {
+    id: string
+    name: string
+    description: string | null
+    // Issues and PRs carrying the label, open or closed
+    uses: number
+}
+
 interface Repo {
     id: string
     // Label name -> label id
     labels: Map<string, string>
+    // Non-product labels on no issue or PR
+    unusedLabels: Label[]
 }
 
 async function loadRepo(repo: string): Promise<Repo> {
     const [owner, name] = repo.split('/')
-    const data = await graphql<{
-        repository: {
-            id: string
-            labels: { nodes: { id: string; name: string }[] }
-        }
-    }>(
-        `
-            query ($owner: String!, $name: String!) {
-                repository(owner: $owner, name: $name) {
-                    id
-                    labels(first: 100) {
-                        nodes {
-                            id
-                            name
+    const labels: Label[] = []
+    let id = ''
+    let after: string | null = null
+
+    do {
+        const data: {
+            repository: {
+                id: string
+                labels: {
+                    pageInfo: { hasNextPage: boolean; endCursor: string }
+                    nodes: {
+                        id: string
+                        name: string
+                        description: string | null
+                        issues: { totalCount: number }
+                        pullRequests: { totalCount: number }
+                    }[]
+                }
+            }
+        } = await graphql(
+            `
+                query ($owner: String!, $name: String!, $after: String) {
+                    repository(owner: $owner, name: $name) {
+                        id
+                        labels(first: 100, after: $after) {
+                            pageInfo {
+                                hasNextPage
+                                endCursor
+                            }
+                            nodes {
+                                id
+                                name
+                                description
+                                issues {
+                                    totalCount
+                                }
+                                pullRequests {
+                                    totalCount
+                                }
+                            }
                         }
                     }
                 }
+            `,
+            { owner, name, after }
+        )
+
+        id = data.repository.id
+        const page = data.repository.labels
+        for (const l of page.nodes) {
+            labels.push({
+                id: l.id,
+                name: l.name,
+                description: l.description,
+                uses: l.issues.totalCount + l.pullRequests.totalCount,
+            })
+        }
+        after = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null
+    } while (after)
+
+    return {
+        id,
+        labels: new Map(labels.map((l) => [l.name, l.id])),
+        unusedLabels: labels
+            .filter((l) => l.uses === 0 && !PRODUCT_LABELS.has(l.name))
+            .sort((a, b) => a.name.localeCompare(b.name)),
+    }
+}
+
+async function deleteLabel(label: Label): Promise<void> {
+    await graphql(
+        `
+            mutation ($id: ID!) {
+                deleteLabel(input: { id: $id }) {
+                    clientMutationId
+                }
             }
         `,
-        { owner, name }
+        { id: label.id }
     )
-    return {
-        id: data.repository.id,
-        labels: new Map(
-            data.repository.labels.nodes.map((l) => [l.name, l.id])
-        ),
-    }
 }
 
 interface Issue {
@@ -501,6 +568,13 @@ function line(issue: Issue, note = ''): string {
     return note ? `${prefix}${title.padEnd(60)}  ${note}` : `${prefix}${title}`
 }
 
+function labelLine(label: Label): string {
+    const name = `-${label.name}`
+    return label.description
+        ? `  ${red(name.padEnd(30))} ${dim(label.description)}`
+        : `  ${red(name)}`
+}
+
 function header(step: string, summary: string): string {
     return `\n${bold(cyan(`[${step}]`))} ${bold(summary)}`
 }
@@ -523,11 +597,15 @@ function describe(action: SyncAction): string {
 
 void program
     .description(
-        "Add project-less issues to the project, and sync product labels with the project's Product field. Runs both steps unless one is selected."
+        "Add project-less issues to the project, sync product labels with the project's Product field, and clean up unused labels. Runs all steps unless some are selected."
     )
     .option('--no-dry-run', 'Apply the changes (default: dry run)')
     .option('--add-to-project', 'Add issues with no project to the project')
     .option('--sync-labels', `Sync product labels <-> ${PRODUCT_FIELD} field`)
+    .option(
+        '--unused-labels',
+        'List labels on no issue or PR, and choose which to delete (runs last)'
+    )
     .option('--repo <owner/name>', 'Repository', 'canton-network/wallet')
     .option(
         '--project-owner <org>',
@@ -549,9 +627,11 @@ void program
                   : opts.state === 'open'
                     ? ['OPEN']
                     : program.error(`Invalid --state: ${opts.state}`)
-        const runAll = !opts.addToProject && !opts.syncLabels
+        const runAll =
+            !opts.addToProject && !opts.syncLabels && !opts.unusedLabels
         const doAdd = runAll || !!opts.addToProject
         const doSync = runAll || !!opts.syncLabels
+        const doUnused = runAll || !!opts.unusedLabels
 
         await checkGh()
 
@@ -605,6 +685,15 @@ void program
             changes.forEach((a) => console.log(line(a.issue, describe(a))))
             conflicts.forEach((a) => console.log(line(a.issue, describe(a))))
         }
+        if (doUnused) {
+            console.log(
+                header(
+                    'unused-labels',
+                    `${repo.unusedLabels.length} label(s) on no issue or PR`
+                )
+            )
+            repo.unusedLabels.forEach((l) => console.log(labelLine(l)))
+        }
 
         if (opts.dryRun) {
             console.log(
@@ -613,67 +702,20 @@ void program
             return
         }
 
-        if (noProject.length + changes.length === 0) {
-            console.log(green('\nNothing to do.'))
-            return
-        }
-
-        const proceed = await confirm({
-            message: `Apply these changes to ${opts.repo}?`,
-            default: false,
-        })
-        if (!proceed) {
-            console.log(yellow('Aborting'))
-            return
-        }
-
         const failures: string[] = []
-        const attempt = async (issue: Issue, step: () => Promise<void>) => {
-            try {
-                await step()
-                console.log(`  ${green('✓')} #${issue.number}`)
-            } catch (error) {
-                console.log(
-                    `  ${red('✗')} #${issue.number}: ${red((error as Error).message)}`
-                )
-                failures.push(`#${issue.number}`)
+        if (noProject.length + changes.length > 0) {
+            const proceed = await confirm({
+                message: `Apply the issue changes above to ${opts.repo}?`,
+                default: false,
+            })
+            if (proceed) {
+                await applyIssueChanges()
+            } else {
+                console.log(yellow('Skipped issue changes.'))
             }
         }
-
-        if (noProject.length) {
-            console.log(
-                header('add-to-project', `${noProject.length} issue(s)...`)
-            )
-            for (const issue of noProject) {
-                await attempt(issue, async () => {
-                    await addToProject(project, issue)
-                })
-            }
-        }
-
-        if (changes.length) {
-            for (const label of missingLabels) {
-                console.log(green(`+ creating label "${label}"...`))
-                await createLabel(repo, label)
-            }
-
-            console.log(header('sync-labels', `${changes.length} issue(s)...`))
-            for (const action of changes) {
-                await attempt(action.issue, async () => {
-                    if (action.kind === 'field') {
-                        // Idempotent: returns the existing item if already in the project
-                        const itemId = await addToProject(project, action.issue)
-                        await setProduct(project, itemId, action.option)
-                    } else if (action.kind === 'labels') {
-                        await editLabels(
-                            repo,
-                            action.issue,
-                            action.add,
-                            action.remove
-                        )
-                    }
-                })
-            }
+        if (doUnused) {
+            await cleanUpLabels()
         }
 
         if (conflicts.length) {
@@ -686,11 +728,122 @@ void program
         if (failures.length) {
             console.error(
                 red(
-                    `\n✗ ${failures.length} issue(s) failed: ${failures.join(', ')}. Re-run to retry.`
+                    `\n✗ ${failures.length} change(s) failed: ${failures.join(', ')}. Re-run to retry.`
                 )
             )
             process.exit(1)
         }
         console.log(bold(green('\n✓ Done.')))
+
+        async function cleanUpLabels(): Promise<void> {
+            // Re-check: counts may have moved since the plan was printed
+            const { unusedLabels } = await loadRepo(opts.repo)
+            if (!unusedLabels.length) {
+                console.log(header('unused-labels', 'none to delete'))
+                return
+            }
+
+            console.log(header('unused-labels', 'choose labels to delete'))
+            const selected = await checkbox({
+                message: `Delete which unused label(s)? Deleting cannot be undone.`,
+                choices: unusedLabels.map((l) => ({
+                    name: l.name,
+                    value: l,
+                    ...(l.description && { description: l.description }),
+                })),
+                pageSize: Math.min(
+                    unusedLabels.length,
+                    (process.stdout.rows ?? 20) - 4
+                ),
+            })
+            if (!selected.length) {
+                console.log(yellow('No labels deleted.'))
+                return
+            }
+
+            const ok = await confirm({
+                message: `Delete ${selected.length} label(s): ${selected.map((l) => l.name).join(', ')}?`,
+                default: false,
+            })
+            if (!ok) {
+                console.log(yellow('No labels deleted.'))
+                return
+            }
+
+            for (const label of selected) {
+                try {
+                    await deleteLabel(label)
+                    console.log(`  ${green('✓')} ${red(`-${label.name}`)}`)
+                } catch (error) {
+                    console.log(
+                        `  ${red('✗')} ${label.name}: ${red((error as Error).message)}`
+                    )
+                    failures.push(`label "${label.name}"`)
+                }
+            }
+        }
+
+        async function applyIssueChanges(): Promise<void> {
+            const attempt = async (issue: Issue, step: () => Promise<void>) => {
+                try {
+                    await step()
+                    console.log(`  ${green('✓')} #${issue.number}`)
+                } catch (error) {
+                    console.log(
+                        `  ${red('✗')} #${issue.number}: ${red((error as Error).message)}`
+                    )
+                    failures.push(`#${issue.number}`)
+                }
+            }
+
+            if (noProject.length) {
+                console.log(
+                    header('add-to-project', `${noProject.length} issue(s)...`)
+                )
+                for (const issue of noProject) {
+                    await attempt(issue, async () => {
+                        await addToProject(project, issue)
+                    })
+                }
+            }
+
+            if (changes.length) {
+                for (const label of missingLabels) {
+                    console.log(green(`+ creating label "${label}"...`))
+                    try {
+                        await createLabel(repo, label)
+                    } catch (error) {
+                        // Issues needing this label then fail individually
+                        console.log(
+                            `  ${red('✗')} ${label}: ${red((error as Error).message)}`
+                        )
+                        failures.push(`label "${label}"`)
+                    }
+                }
+
+                console.log(
+                    header('sync-labels', `${changes.length} issue(s)...`)
+                )
+                for (const action of changes) {
+                    await attempt(action.issue, async () => {
+                        if (action.kind === 'field') {
+                            // Idempotent: returns the existing item if already in the project
+                            const itemId = await addToProject(
+                                project,
+                                action.issue
+                            )
+                            await setProduct(project, itemId, action.option)
+                        } else if (action.kind === 'labels') {
+                            await editLabels(
+                                repo,
+                                action.issue,
+                                action.add,
+                                action.remove
+                            )
+                        }
+                    })
+                }
+            }
+        }
     })
     .parseAsync(process.argv)
