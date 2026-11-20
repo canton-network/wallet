@@ -25,6 +25,8 @@
 //                    managed by --sync-labels and never offered.
 //
 // With no step flags, all steps run; --unused-labels always runs last.
+// --yes skips the confirmation prompt, for CI (.github/workflows/issue-cleanup.yml);
+// it never deletes labels.
 //
 // Renaming a product label: rename it in the repo's label settings (it stays on
 // every issue) and update its name in PRODUCTS.
@@ -797,6 +799,10 @@ void program
         "Add project-less issues to the project, sync product labels with the project's Product field, and clean up unused labels. Runs all steps unless some are selected."
     )
     .option('--no-dry-run', 'Apply the changes (default: dry run)')
+    .option(
+        '--yes',
+        'Apply without asking (for CI). Never deletes labels; --unused-labels only lists them'
+    )
     .option('--add-to-project', 'Add issues with no project to the project')
     .option('--sync-labels', `Sync product labels <-> ${PRODUCT_FIELD} field`)
     .option(
@@ -934,10 +940,12 @@ void program
                 epics.length >
             0
         ) {
-            const proceed = await confirm({
-                message: `Apply the label and issue changes above to ${opts.repo}?`,
-                default: false,
-            })
+            const proceed =
+                opts.yes ||
+                (await confirm({
+                    message: `Apply the label and issue changes above to ${opts.repo}?`,
+                    default: false,
+                }))
             if (proceed) {
                 await applyIssueChanges()
             } else {
@@ -966,6 +974,14 @@ void program
         console.log(bold(green('\n✓ Done.')))
 
         async function cleanUpLabels(): Promise<void> {
+            if (opts.yes) {
+                console.log(
+                    yellow(
+                        '\nSkipped deleting unused labels: --yes never deletes labels; run without it to choose.'
+                    )
+                )
+                return
+            }
             // Re-check: counts may have moved since the plan was printed
             const { unusedLabels } = await loadRepo(opts.repo)
             if (!unusedLabels.length) {

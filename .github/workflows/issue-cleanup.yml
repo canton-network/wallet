@@ -1,0 +1,68 @@
+# Keeps issues in line with the Wallets project board: adds issues to the
+# board, syncs product labels with the Product field (and label colours), and
+# turns "Epic" labels into the Feature issue type. See scripts/src/issue-cleanup.ts.
+#
+# Needs the ISSUE_CLEANUP_TOKEN repo secret: a personal access token with the
+# `repo` and `project` scopes. The workflow's own GITHUB_TOKEN cannot access
+# org projects. Changes made by the script show up as the token's owner.
+#
+# Unused labels are never deleted here; run the script locally for that.
+
+name: Issue cleanup
+run-name: Issue cleanup
+
+on:
+    schedule:
+        - cron: '*/30 * * * *'
+    workflow_dispatch:
+        inputs:
+            apply:
+                description: Apply the changes (unchecked = dry run)
+                type: boolean
+                default: false
+
+permissions:
+    contents: read
+
+concurrency:
+    group: ${{ github.workflow }}
+    cancel-in-progress: false
+
+jobs:
+    issue-cleanup:
+        # Forks have neither the secret nor the board
+        if: github.repository == 'canton-network/wallet'
+        runs-on: ubuntu-26.04
+        timeout-minutes: 20
+        steps:
+            - name: Check token
+              env:
+                  GH_TOKEN: ${{ secrets.ISSUE_CLEANUP_TOKEN }}
+              run: |
+                  if [ -z "$GH_TOKEN" ]; then
+                    echo "::error::The ISSUE_CLEANUP_TOKEN secret is not set."
+                    exit 1
+                  fi
+
+            - name: Checkout
+              uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+              with:
+                  persist-credentials: false
+
+            - name: Install pnpm and Node.js
+              uses: pnpm/setup@fa36a5ef7dcdefc3a7cb25655c122e00cf6e636e # v3.1.2
+              with:
+                  node-version-file: .nvmrc
+                  cache: true
+
+            - name: Run issue cleanup
+              env:
+                  GH_TOKEN: ${{ secrets.ISSUE_CLEANUP_TOKEN }}
+                  # Scheduled runs apply; manual runs are a dry run unless "apply" is ticked
+                  APPLY: ${{ github.event_name == 'schedule' || inputs.apply }}
+              run: |
+                  args=(--add-to-project --sync-labels --epic-to-feature --yes)
+                  if [ "$APPLY" = "true" ]; then
+                    args+=(--no-dry-run)
+                  fi
+                  pnpm script:issue-cleanup "${args[@]}"
