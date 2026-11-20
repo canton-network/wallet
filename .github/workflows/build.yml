@@ -51,14 +51,13 @@ jobs:
             - uses: ./.github/actions/setup_pnpm/initial
 
             - uses: ./.github/actions/setup_versions
-              id: setup
+              id: affected
               with:
-                  affected: 'false'
+                  affected: ${{ github.event_name == 'pull_request' }}
 
             - uses: ./.github/actions/setup_dpm
               with:
-                  daml_release_version: ${{ steps.setup.outputs.daml_release_version }}
-                  save_cache: 'true'
+                  daml_release_version: ${{ steps.affected.outputs.daml_release_version }}
 
             - name: Generate all
               run: pnpm run generate:all
@@ -74,11 +73,6 @@ jobs:
 
             - name: Build project
               run: pnpm build:all
-
-            - uses: ./.github/actions/setup_versions
-              id: affected
-              with:
-                  affected: ${{ github.event_name == 'pull_request' }}
 
             - name: Upload build artifacts
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
