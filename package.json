@@ -48,6 +48,7 @@
         "script:conformance-cli": "pnpm --filter @canton-network/tool-conformance-cli run run",
         "script:release": "tsx ./scripts/src/release.ts",
         "script:retag": "tsx ./scripts/src/retag.ts",
+        "script:issue-cleanup": "tsx ./scripts/src/issue-cleanup.ts",
         "script:flat-pack": "tsx ./scripts/src/flat-pack.ts",
         "script:upgrade:splice": "tsx ./scripts/src/upgrade-splice.ts",
         "script:clear-blockdaemon-policies": "tsx ./scripts/src/clear-blockdaemon-policies.ts",
