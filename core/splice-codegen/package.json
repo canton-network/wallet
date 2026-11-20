@@ -57,7 +57,7 @@
             "typecheck": {
                 "dependsOn": [
                     "^typecheck",
-                    "build"
+                    "dist-types"
                 ]
             },
             "build": {
@@ -67,6 +67,12 @@
                     "{workspaceRoot}/scripts/src/lib/version-config.json",
                     "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
                     "{workspaceRoot}/scripts/src/generate-daml-codegen.ts"
+                ]
+            },
+            "dist-types": {
+                "executor": "nx:noop",
+                "dependsOn": [
+                    "build"
                 ]
             }
         }
