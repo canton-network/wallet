@@ -13,7 +13,7 @@ import {
 } from './aggregate-holdings.ts'
 import type { PortfolioHolding } from './holdings.ts'
 import { holdingsQueryOptions } from './query-options.ts'
-import { useTokenContext } from './TokenProvider.tsx'
+import { useTokenContext } from './useTokenContext.ts'
 
 export interface TokenWallet {
     partyId: string

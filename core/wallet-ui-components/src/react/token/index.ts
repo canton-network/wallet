@@ -2,12 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export type { ListHoldingsParams, TokenClient } from './client'
-export {
-    TokenProvider,
-    useTokenContext,
-    type TokenContextValue,
-    type TokenProviderProps,
-} from './TokenProvider'
+export { TokenProvider, type TokenProviderProps } from './TokenProvider'
+export type { TokenContextValue } from './TokenContext'
+export { useTokenContext } from './useTokenContext'
 export { tokenQueryKeys } from './query-keys'
 export { holdingsQueryOptions } from './query-options'
 export {
