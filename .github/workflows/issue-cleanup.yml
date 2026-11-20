@@ -1,6 +1,6 @@
 # Keeps issues in line with the Wallets project board: adds issues to the
-# board, syncs product labels with the Product field (and label colours), and
-# turns "Epic" labels into the Feature issue type. See scripts/src/issue-cleanup.ts.
+# board, and syncs product labels with the Product field (and label colours).
+# See scripts/src/issue-cleanup.ts.
 #
 # Needs the ISSUE_CLEANUP_TOKEN repo secret: a personal access token with the
 # `repo` and `project` scopes. The workflow's own GITHUB_TOKEN cannot access
@@ -61,7 +61,7 @@ jobs:
                   # Scheduled runs apply; manual runs are a dry run unless "apply" is ticked
                   APPLY: ${{ github.event_name == 'schedule' || inputs.apply }}
               run: |
-                  args=(--add-to-project --sync-labels --epic-to-feature --yes)
+                  args=(--add-to-project --sync-labels --yes)
                   if [ "$APPLY" = "true" ]; then
                     args+=(--no-dry-run)
                   fi
