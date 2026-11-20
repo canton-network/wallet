@@ -184,16 +184,7 @@ export class TokenStandardService {
         })
     }
 
-    async instrumentsToAsset(registryUrl: URL): Promise<
-        {
-            id: string
-            displayName: string
-            symbol: string
-            registryUrl: URL
-            admin: PartyId
-            capabilities: AssetCapabilities
-        }[]
-    > {
+    async instrumentsToAsset(registryUrl: URL): Promise<AssetBody[]> {
         let instrumentsResponse = await this.listInstruments(registryUrl)
         const instruments = [...instrumentsResponse.instruments]
 
@@ -216,18 +207,16 @@ export class TokenStandardService {
             capabilities: resolveCapabilities({
                 supportedApis: instrument.supportedApis,
             }),
+            decimals: instrument.decimals,
+            paused: instrument.paused,
+            ...(instrument.pauseInfo !== undefined && {
+                pauseInfo: instrument.pauseInfo,
+            }),
         }))
     }
 
     async registriesToAssets(registryUrls: URL[]): Promise<AssetBody[]> {
-        const allInstruments: {
-            id: string
-            displayName: string
-            symbol: string
-            registryUrl: URL
-            admin: PartyId
-            capabilities: AssetCapabilities
-        }[] = []
+        const allInstruments: AssetBody[] = []
         for (const registryUrl of registryUrls) {
             const instruments = await this.instrumentsToAsset(registryUrl)
             allInstruments.push(...instruments)
