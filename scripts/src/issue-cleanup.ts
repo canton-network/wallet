@@ -17,8 +17,10 @@
 //                    closed) and asks which to delete. Product labels are
 //                    managed by --sync-labels and never offered; to retire one
 //                    (rename, merge products), drop it from PRODUCTS first.
+//  --epic-to-feature Open issues labelled "Epic" get their issue Type set to
+//                    "Feature" and the label removed (whatever --state is).
 //
-// With no step flags, all steps run.
+// With no step flags, all steps run; --unused-labels always runs last.
 //
 // Uses the `gh` CLI, which authenticates with `GH_TOKEN` when it is set. The token
 // needs the `repo` and `project` scopes (classic) or Issues + Projects write
@@ -54,6 +56,12 @@ const PRODUCTS: { option: string; label: string }[] = [
     { option: 'Portfolio dApp', label: 'portfolio' },
 ]
 const PRODUCT_LABELS = new Set(PRODUCTS.map((p) => p.label))
+
+// --epic-to-feature: label (matched case-insensitively) -> issue type
+const EPIC_LABEL = 'Epic'
+const EPIC_TYPE = 'Feature'
+const isEpicLabel = (name: string) =>
+    name.toLowerCase() === EPIC_LABEL.toLowerCase()
 
 // Project option colours are named; labels need hex. GitHub's own (Primer) shades.
 const OPTION_COLORS: Record<string, string> = {
@@ -104,7 +112,15 @@ async function graphql<T>(
     variables: Record<string, unknown> = {}
 ): Promise<T> {
     const out = await gh(
-        ['api', 'graphql', '--input', '-'],
+        // Issue types needed this opt-in while in preview; harmless otherwise
+        [
+            'api',
+            'graphql',
+            '-H',
+            'GraphQL-Features: issue_types',
+            '--input',
+            '-',
+        ],
         JSON.stringify({ query, variables })
     )
     const res = JSON.parse(out) as { data: T; errors?: { message: string }[] }
@@ -404,6 +420,9 @@ interface Issue {
     id: string
     number: number
     title: string
+    state: IssueState
+    // Only loaded for --epic-to-feature
+    issueType: string | null
     labels: { id: string; name: string }[]
     projectItems: {
         id: string
@@ -416,7 +435,8 @@ type IssueState = 'OPEN' | 'CLOSED'
 
 async function loadIssues(
     repo: string,
-    states: IssueState[]
+    states: IssueState[],
+    withType: boolean
 ): Promise<Issue[]> {
     const [owner, name] = repo.split('/')
     const issues: Issue[] = []
@@ -431,6 +451,8 @@ async function loadIssues(
                         id: string
                         number: number
                         title: string
+                        state: IssueState
+                        issueType?: { name: string } | null
                         labels: { nodes: { id: string; name: string }[] }
                         projectItems: {
                             nodes: {
@@ -450,6 +472,7 @@ async function loadIssues(
                     $states: [IssueState!]
                     $after: String
                     $field: String!
+                    $withType: Boolean!
                 ) {
                     repository(owner: $owner, name: $name) {
                         issues(first: 100, after: $after, states: $states) {
@@ -461,6 +484,10 @@ async function loadIssues(
                                 id
                                 number
                                 title
+                                state
+                                issueType @include(if: $withType) {
+                                    name
+                                }
                                 labels(first: 50) {
                                     nodes {
                                         id
@@ -487,7 +514,7 @@ async function loadIssues(
                     }
                 }
             `,
-            { owner, name, states, after, field: PRODUCT_FIELD }
+            { owner, name, states, after, field: PRODUCT_FIELD, withType }
         )
 
         const page = data.repository.issues
@@ -496,6 +523,8 @@ async function loadIssues(
                 id: node.id,
                 number: node.number,
                 title: node.title,
+                state: node.state,
+                issueType: node.issueType?.name ?? null,
                 labels: node.labels.nodes,
                 projectItems: node.projectItems.nodes.map((item) => ({
                     ...item,
@@ -508,6 +537,70 @@ async function loadIssues(
     } while (after)
 
     return issues
+}
+
+// Id of the issue type called `name`; throws listing the available ones
+async function loadIssueTypeId(repo: string, name: string): Promise<string> {
+    const [owner, repoName] = repo.split('/')
+    const data = await graphql<{
+        repository: {
+            issueTypes: { nodes: { id: string; name: string }[] } | null
+        }
+    }>(
+        `
+            query ($owner: String!, $name: String!) {
+                repository(owner: $owner, name: $name) {
+                    issueTypes(first: 50) {
+                        nodes {
+                            id
+                            name
+                        }
+                    }
+                }
+            }
+        `,
+        { owner, name: repoName }
+    )
+    const types = data.repository.issueTypes?.nodes ?? []
+    const type = types.find((t) => t.name === name)
+    if (!type) {
+        throw new Error(
+            `Issue type "${name}" not found in ${repo} (has: ${types.map((t) => t.name).join(', ') || 'none'})`
+        )
+    }
+    return type.id
+}
+
+async function setIssueType(issue: Issue, issueTypeId: string): Promise<void> {
+    await graphql(
+        `
+            mutation ($issueId: ID!, $issueTypeId: ID) {
+                updateIssueIssueType(
+                    input: { issueId: $issueId, issueTypeId: $issueTypeId }
+                ) {
+                    issue {
+                        id
+                    }
+                }
+            }
+        `,
+        { issueId: issue.id, issueTypeId }
+    )
+}
+
+async function removeLabelIds(issue: Issue, labelIds: string[]): Promise<void> {
+    await graphql(
+        `
+            mutation ($labelableId: ID!, $labelIds: [ID!]!) {
+                removeLabelsFromLabelable(
+                    input: { labelableId: $labelableId, labelIds: $labelIds }
+                ) {
+                    clientMutationId
+                }
+            }
+        `,
+        { labelableId: issue.id, labelIds }
+    )
 }
 
 async function addToProject(project: Project, issue: Issue): Promise<string> {
@@ -655,6 +748,18 @@ function labelLine(label: Label): string {
         : `  ${red(name)}`
 }
 
+function describeEpic(issue: Issue): string {
+    const labels = issue.labels
+        .filter((l) => isEpicLabel(l.name))
+        .map((l) => red(`-${l.name}`))
+        .join(' ')
+    const type =
+        issue.issueType === EPIC_TYPE
+            ? dim(`Type already ${EPIC_TYPE}`)
+            : `${dim('Type:')} ${issue.issueType ?? 'none'} → ${green(EPIC_TYPE)}`
+    return `${labels}  ${type}`
+}
+
 function header(step: string, summary: string): string {
     return `\n${bold(cyan(`[${step}]`))} ${bold(summary)}`
 }
@@ -683,6 +788,10 @@ void program
     .option('--add-to-project', 'Add issues with no project to the project')
     .option('--sync-labels', `Sync product labels <-> ${PRODUCT_FIELD} field`)
     .option(
+        '--epic-to-feature',
+        `Open "${EPIC_LABEL}" issues: set Type to "${EPIC_TYPE}", remove the label`
+    )
+    .option(
         '--unused-labels',
         'List labels on no issue or PR, and choose which to delete (runs last)'
     )
@@ -708,9 +817,13 @@ void program
                     ? ['OPEN']
                     : program.error(`Invalid --state: ${opts.state}`)
         const runAll =
-            !opts.addToProject && !opts.syncLabels && !opts.unusedLabels
+            !opts.addToProject &&
+            !opts.syncLabels &&
+            !opts.epicToFeature &&
+            !opts.unusedLabels
         const doAdd = runAll || !!opts.addToProject
         const doSync = runAll || !!opts.syncLabels
+        const doEpic = runAll || !!opts.epicToFeature
         const doUnused = runAll || !!opts.unusedLabels
 
         await checkGh()
@@ -720,12 +833,19 @@ void program
             Number(opts.projectNumber)
         )
         const repo = await loadRepo(opts.repo)
+        const featureTypeId = doEpic
+            ? await loadIssueTypeId(opts.repo, EPIC_TYPE)
+            : ''
+        // The epic step covers open issues even when --state excludes them
+        const loadStates: IssueState[] =
+            doEpic && !states.includes('OPEN') ? [...states, 'OPEN'] : states
         console.log(
             dim(
                 `Loading ${opts.state} issues from ${opts.repo} (project "${project.title}")...`
             )
         )
-        const issues = await loadIssues(opts.repo, states)
+        const loaded = await loadIssues(opts.repo, loadStates, doEpic)
+        const issues = loaded.filter((i) => states.includes(i.state))
 
         const noProject = doAdd
             ? issues.filter((i) => i.projectItems.length === 0)
@@ -738,6 +858,13 @@ void program
         const changes = sync.filter((a) => a.kind !== 'conflict')
         const conflicts = sync.filter((a) => a.kind === 'conflict')
         const labelActions = doSync ? planLabels(project, repo) : []
+        const epics = doEpic
+            ? loaded.filter(
+                  (i) =>
+                      i.state === 'OPEN' &&
+                      i.labels.some((l) => isEpicLabel(l.name))
+              )
+            : []
 
         if (doAdd) {
             console.log(
@@ -761,6 +888,15 @@ void program
             changes.forEach((a) => console.log(line(a.issue, describe(a))))
             conflicts.forEach((a) => console.log(line(a.issue, describe(a))))
         }
+        if (doEpic) {
+            console.log(
+                header(
+                    'epic-to-feature',
+                    `${epics.length} open "${EPIC_LABEL}" issue(s)`
+                )
+            )
+            epics.forEach((i) => console.log(line(i, describeEpic(i))))
+        }
         if (doUnused) {
             console.log(
                 header(
@@ -779,7 +915,13 @@ void program
         }
 
         const failures: string[] = []
-        if (noProject.length + labelActions.length + changes.length > 0) {
+        if (
+            noProject.length +
+                labelActions.length +
+                changes.length +
+                epics.length >
+            0
+        ) {
             const proceed = await confirm({
                 message: `Apply the label and issue changes above to ${opts.repo}?`,
                 default: false,
@@ -926,6 +1068,26 @@ void program
                                 action.remove
                             )
                         }
+                    })
+                }
+            }
+
+            if (epics.length) {
+                console.log(
+                    header('epic-to-feature', `${epics.length} issue(s)...`)
+                )
+                for (const issue of epics) {
+                    await attempt(issue, async () => {
+                        if (issue.issueType !== EPIC_TYPE) {
+                            await setIssueType(issue, featureTypeId)
+                        }
+                        // Removed last, so a failed issue keeps the label and a re-run retries it
+                        await removeLabelIds(
+                            issue,
+                            issue.labels
+                                .filter((l) => isEpicLabel(l.name))
+                                .map((l) => l.id)
+                        )
                     })
                 }
             }
