@@ -13,14 +13,26 @@
 //                      - field unset, 2+ labels:  reported as a conflict, skipped
 //                    Product labels are also created, or recoloured, to match
 //                    their option's colour on the board.
-//  --unused-labels   Runs last. Lists repo labels on no issue or PR (open or
-//                    closed) and asks which to delete. Product labels are
-//                    managed by --sync-labels and never offered; to retire one
-//                    (rename, merge products), drop it from PRODUCTS first.
+//                    An empty Product with no label is valid ("no product",
+//                    e.g. internal work). To remove a product on purpose, clear
+//                    the field AND remove the label together: clearing only the
+//                    field is undone from the label, and removing only the label
+//                    is undone from the field.
 //  --epic-to-feature Open issues labelled "Epic" get their issue Type set to
 //                    "Feature" and the label removed (whatever --state is).
+//  --unused-labels   Runs last. Lists repo labels on no issue or PR (open or
+//                    closed) and asks which to delete. Product labels are
+//                    managed by --sync-labels and never offered.
 //
 // With no step flags, all steps run; --unused-labels always runs last.
+//
+// Renaming a product label: rename it in the repo's label settings (it stays on
+// every issue) and update its name in PRODUCTS.
+// Retiring/merging a product: with the old entry still in PRODUCTS, move its
+// issues to the new Product value and run --sync-labels, which swaps the
+// labels. Then remove the old entry from PRODUCTS and the old option from the
+// board; the old label is now unused and --unused-labels offers to delete it.
+// (Dropping it from PRODUCTS first would leave the old label on every issue.)
 //
 // Uses the `gh` CLI, which authenticates with `GH_TOKEN` when it is set. The token
 // needs the `repo` and `project` scopes (classic) or Issues + Projects write
