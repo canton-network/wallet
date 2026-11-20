@@ -1,11 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// One-off GitHub issue cleanup. Dry run by default; pass --no-dry-run to apply.
+// GitHub issue triage. Dry run by default; pass --no-dry-run to apply.
 //
-//  1. Issues that belong to no project (`no:project`) are added to the project.
-//  2. Issues labelled `wallet-gateway` get the project's "Product" field set to
-//     "Wallet Gateway", and the label is removed.
+//  --add-to-project  Issues that belong to no project (`no:project`) are added
+//                    to the project.
+//  --sync-labels     Keeps the product labels and the project's "Product" field
+//                    in sync, in both directions:
+//                      - field set:               labels are made to match the
+//                                                 field (the field wins)
+//                      - field unset, one label:  the field is set from the label
+//                      - field unset, 2+ labels:  reported as a conflict, skipped
+//
+// With neither flag, both steps run.
 //
 // Uses the `gh` CLI, which authenticates with `GH_TOKEN` when it is set. The token
 // needs the `repo` and `project` scopes (classic) or Issues + Projects write
@@ -16,9 +23,17 @@ import { spawn } from 'child_process'
 import { program } from '@commander-js/extra-typings'
 import { confirm } from '@inquirer/prompts'
 
-const LABEL = 'wallet-gateway'
 const PRODUCT_FIELD = 'Product'
-const PRODUCT_VALUE = 'Wallet Gateway'
+
+// Product field option -> issue label. Labels missing from the repo are created.
+const PRODUCTS: { option: string; label: string }[] = [
+    { option: 'Wallet Gateway', label: 'wallet-gateway' },
+    { option: 'Wallet Extension', label: 'wallet-extension' },
+    { option: 'dApp SDK', label: 'dapp-sdk' },
+    { option: 'Wallet SDK', label: 'wallet-sdk' },
+    { option: 'Portfolio dApp', label: 'portfolio' },
+]
+const PRODUCT_LABELS = new Set(PRODUCTS.map((p) => p.label))
 
 function gh(args: string[], input?: string): Promise<string> {
     const child = spawn('gh', args, { stdio: ['pipe', 'pipe', 'pipe'] })
@@ -86,7 +101,8 @@ interface Project {
     id: string
     title: string
     productFieldId: string
-    productOptionId: string
+    // Product option name -> option id
+    productOptions: Map<string, string>
 }
 
 async function loadProject(owner: string, number: number): Promise<Project> {
@@ -133,11 +149,22 @@ async function loadProject(owner: string, number: number): Promise<Project> {
             `Project "${project.title}" has no single-select field "${PRODUCT_FIELD}"`
         )
     }
-    const option = project.field.options.find((o) => o.name === PRODUCT_VALUE)
-    if (!option) {
-        const names = project.field.options.map((o) => o.name).join(', ')
+
+    const productOptions = new Map(
+        project.field.options.map((o) => [o.name, o.id])
+    )
+    const missing = PRODUCTS.filter((p) => !productOptions.has(p.option))
+    if (missing.length) {
         throw new Error(
-            `Field "${PRODUCT_FIELD}" has no option "${PRODUCT_VALUE}" (options: ${names})`
+            `Field "${PRODUCT_FIELD}" is missing option(s) ${missing.map((p) => `"${p.option}"`).join(', ')} (has: ${[...productOptions.keys()].join(', ')})`
+        )
+    }
+    const unmapped = [...productOptions.keys()].filter(
+        (name) => !PRODUCTS.some((p) => p.option === name)
+    )
+    if (unmapped.length) {
+        console.warn(
+            `Warning: ${PRODUCT_FIELD} option(s) with no label mapping: ${unmapped.join(', ')}`
         )
     }
 
@@ -145,7 +172,44 @@ async function loadProject(owner: string, number: number): Promise<Project> {
         id: project.id,
         title: project.title,
         productFieldId: project.field.id,
-        productOptionId: option.id,
+        productOptions,
+    }
+}
+
+interface Repo {
+    id: string
+    // Label name -> label id
+    labels: Map<string, string>
+}
+
+async function loadRepo(repo: string): Promise<Repo> {
+    const [owner, name] = repo.split('/')
+    const data = await graphql<{
+        repository: {
+            id: string
+            labels: { nodes: { id: string; name: string }[] }
+        }
+    }>(
+        `
+            query ($owner: String!, $name: String!) {
+                repository(owner: $owner, name: $name) {
+                    id
+                    labels(first: 100) {
+                        nodes {
+                            id
+                            name
+                        }
+                    }
+                }
+            }
+        `,
+        { owner, name }
+    )
+    return {
+        id: data.repository.id,
+        labels: new Map(
+            data.repository.labels.nodes.map((l) => [l.name, l.id])
+        ),
     }
 }
 
@@ -279,7 +343,11 @@ async function addToProject(project: Project, issue: Issue): Promise<string> {
     return data.addProjectV2ItemById.item.id
 }
 
-async function setProduct(project: Project, itemId: string): Promise<void> {
+async function setProduct(
+    project: Project,
+    itemId: string,
+    option: string
+): Promise<void> {
     await graphql(
         `
             mutation (
@@ -306,37 +374,135 @@ async function setProduct(project: Project, itemId: string): Promise<void> {
             projectId: project.id,
             itemId,
             fieldId: project.productFieldId,
-            optionId: project.productOptionId,
+            optionId: project.productOptions.get(option),
         }
     )
 }
 
-async function removeLabel(issue: Issue, labelId: string): Promise<void> {
-    await graphql(
+async function createLabel(repo: Repo, name: string): Promise<void> {
+    const data = await graphql<{ createLabel: { label: { id: string } } }>(
         `
-            mutation ($labelableId: ID!, $labelIds: [ID!]!) {
-                removeLabelsFromLabelable(
-                    input: { labelableId: $labelableId, labelIds: $labelIds }
+            mutation ($repositoryId: ID!, $name: String!) {
+                createLabel(
+                    input: {
+                        repositoryId: $repositoryId
+                        name: $name
+                        color: "ededed"
+                    }
                 ) {
-                    clientMutationId
+                    label {
+                        id
+                    }
                 }
             }
         `,
-        { labelableId: issue.id, labelIds: [labelId] }
+        { repositoryId: repo.id, name }
     )
+    repo.labels.set(name, data.createLabel.label.id)
+}
+
+async function editLabels(
+    repo: Repo,
+    issue: Issue,
+    add: string[],
+    remove: string[]
+): Promise<void> {
+    const ids = (names: string[]) => names.map((n) => repo.labels.get(n)!)
+    if (add.length) {
+        await graphql(
+            `
+                mutation ($labelableId: ID!, $labelIds: [ID!]!) {
+                    addLabelsToLabelable(
+                        input: {
+                            labelableId: $labelableId
+                            labelIds: $labelIds
+                        }
+                    ) {
+                        clientMutationId
+                    }
+                }
+            `,
+            { labelableId: issue.id, labelIds: ids(add) }
+        )
+    }
+    if (remove.length) {
+        await graphql(
+            `
+                mutation ($labelableId: ID!, $labelIds: [ID!]!) {
+                    removeLabelsFromLabelable(
+                        input: {
+                            labelableId: $labelableId
+                            labelIds: $labelIds
+                        }
+                    ) {
+                        clientMutationId
+                    }
+                }
+            `,
+            { labelableId: issue.id, labelIds: ids(remove) }
+        )
+    }
+}
+
+type SyncAction =
+    | { kind: 'field'; issue: Issue; option: string }
+    | { kind: 'labels'; issue: Issue; add: string[]; remove: string[] }
+    | { kind: 'conflict'; issue: Issue; labels: string[] }
+
+function planSync(project: Project, issue: Issue): SyncAction | null {
+    const product = issue.projectItems.find((p) => p.project.id === project.id)
+        ?.product?.name
+    const labels = issue.labels
+        .map((l) => l.name)
+        .filter((n) => PRODUCT_LABELS.has(n))
+
+    if (product) {
+        // The field wins: exactly its label (or none, for an unmapped option)
+        const want = PRODUCTS.find((p) => p.option === product)?.label
+        const add = want && !labels.includes(want) ? [want] : []
+        const remove = labels.filter((l) => l !== want)
+        return add.length || remove.length
+            ? { kind: 'labels', issue, add, remove }
+            : null
+    }
+    if (labels.length === 1) {
+        const option = PRODUCTS.find((p) => p.label === labels[0])!.option
+        return { kind: 'field', issue, option }
+    }
+    if (labels.length > 1) {
+        return { kind: 'conflict', issue, labels }
+    }
+    return null
 }
 
 function line(issue: Issue, note = ''): string {
     const title =
-        issue.title.length > 70 ? `${issue.title.slice(0, 67)}...` : issue.title
-    return `  #${String(issue.number).padEnd(5)} ${title}${note ? `  (${note})` : ''}`
+        issue.title.length > 60 ? `${issue.title.slice(0, 57)}...` : issue.title
+    const prefix = `  #${String(issue.number).padEnd(5)} `
+    return note ? `${prefix}${title.padEnd(60)}  ${note}` : `${prefix}${title}`
+}
+
+function describe(action: SyncAction): string {
+    switch (action.kind) {
+        case 'field':
+            return `label -> ${PRODUCT_FIELD} = ${action.option}`
+        case 'labels':
+            return `${PRODUCT_FIELD} -> ${[
+                ...action.add.map((l) => `+${l}`),
+                ...action.remove.map((l) => `-${l}`),
+            ].join(' ')}`
+        case 'conflict':
+            return `CONFLICT: ${action.labels.join(', ')} and no ${PRODUCT_FIELD}`
+    }
 }
 
 void program
     .description(
-        `Add project-less issues to the project, and move the "${LABEL}" label into the project's ${PRODUCT_FIELD} field.`
+        "Add project-less issues to the project, and sync product labels with the project's Product field. Runs both steps unless one is selected."
     )
     .option('--no-dry-run', 'Apply the changes (default: dry run)')
+    .option('--add-to-project', 'Add issues with no project to the project')
+    .option('--sync-labels', `Sync product labels <-> ${PRODUCT_FIELD} field`)
     .option('--repo <owner/name>', 'Repository', 'canton-network/wallet')
     .option(
         '--project-owner <org>',
@@ -358,6 +524,9 @@ void program
                   : opts.state === 'open'
                     ? ['OPEN']
                     : program.error(`Invalid --state: ${opts.state}`)
+        const runAll = !opts.addToProject && !opts.syncLabels
+        const doAdd = runAll || !!opts.addToProject
+        const doSync = runAll || !!opts.syncLabels
 
         await checkGh()
 
@@ -365,31 +534,42 @@ void program
             opts.projectOwner,
             Number(opts.projectNumber)
         )
+        const repo = await loadRepo(opts.repo)
         console.log(
             `Loading ${opts.state} issues from ${opts.repo} (project "${project.title}")...`
         )
         const issues = await loadIssues(opts.repo, states)
 
-        const noProject = issues.filter((i) => i.projectItems.length === 0)
-        const labelled = issues.filter((i) =>
-            i.labels.some((l) => l.name === LABEL)
-        )
+        const noProject = doAdd
+            ? issues.filter((i) => i.projectItems.length === 0)
+            : []
+        const sync = doSync
+            ? issues
+                  .map((i) => planSync(project, i))
+                  .filter((a): a is SyncAction => a !== null)
+            : []
+        const changes = sync.filter((a) => a.kind !== 'conflict')
+        const conflicts = sync.filter((a) => a.kind === 'conflict')
+        const missingLabels = doSync
+            ? PRODUCTS.map((p) => p.label).filter((l) => !repo.labels.has(l))
+            : []
 
-        console.log(
-            `\n[1] Add to "${project.title}" (no project): ${noProject.length} issue(s)`
-        )
-        noProject.forEach((i) => console.log(line(i)))
-
-        console.log(
-            `\n[2] Remove "${LABEL}" label, set ${PRODUCT_FIELD} = "${PRODUCT_VALUE}": ${labelled.length} issue(s)`
-        )
-        labelled.forEach((i) => {
-            const item = i.projectItems.find((p) => p.project.id === project.id)
-            const current = item
-                ? (item.product?.name ?? 'unset')
-                : 'not in project'
-            console.log(line(i, `${PRODUCT_FIELD}: ${current}`))
-        })
+        if (doAdd) {
+            console.log(
+                `\n[add-to-project] Add to "${project.title}": ${noProject.length} issue(s)`
+            )
+            noProject.forEach((i) => console.log(line(i)))
+        }
+        if (doSync) {
+            console.log(
+                `\n[sync-labels] ${changes.length} change(s), ${conflicts.length} conflict(s)`
+            )
+            if (missingLabels.length) {
+                console.log(`  create label(s): ${missingLabels.join(', ')}`)
+            }
+            changes.forEach((a) => console.log(line(a.issue, describe(a))))
+            conflicts.forEach((a) => console.log(line(a.issue, describe(a))))
+        }
 
         if (opts.dryRun) {
             console.log(
@@ -398,7 +578,7 @@ void program
             return
         }
 
-        if (noProject.length + labelled.length === 0) {
+        if (noProject.length + changes.length === 0) {
             console.log('\nNothing to do.')
             return
         }
@@ -425,27 +605,45 @@ void program
             }
         }
 
-        console.log(
-            `\n[1] Adding ${noProject.length} issue(s) to the project...`
-        )
-        for (const issue of noProject) {
-            await attempt(issue, async () => {
-                await addToProject(project, issue)
-            })
+        if (noProject.length) {
+            console.log(`\n[add-to-project] ${noProject.length} issue(s)...`)
+            for (const issue of noProject) {
+                await attempt(issue, async () => {
+                    await addToProject(project, issue)
+                })
+            }
         }
 
-        console.log(`\n[2] Updating ${labelled.length} "${LABEL}" issue(s)...`)
-        for (const issue of labelled) {
-            await attempt(issue, async () => {
-                // Idempotent: returns the existing item if already in the project
-                const itemId = await addToProject(project, issue)
-                await setProduct(project, itemId)
-                // Removed last, so a failed issue keeps the label and a re-run retries it
-                const label = issue.labels.find((l) => l.name === LABEL)!
-                await removeLabel(issue, label.id)
-            })
+        if (changes.length) {
+            for (const label of missingLabels) {
+                console.log(`Creating label "${label}"...`)
+                await createLabel(repo, label)
+            }
+
+            console.log(`\n[sync-labels] ${changes.length} issue(s)...`)
+            for (const action of changes) {
+                await attempt(action.issue, async () => {
+                    if (action.kind === 'field') {
+                        // Idempotent: returns the existing item if already in the project
+                        const itemId = await addToProject(project, action.issue)
+                        await setProduct(project, itemId, action.option)
+                    } else if (action.kind === 'labels') {
+                        await editLabels(
+                            repo,
+                            action.issue,
+                            action.add,
+                            action.remove
+                        )
+                    }
+                })
+            }
         }
 
+        if (conflicts.length) {
+            console.log(
+                `\n${conflicts.length} conflict(s) skipped; set ${PRODUCT_FIELD} on them by hand and re-run.`
+            )
+        }
         if (failures.length) {
             console.error(
                 `\n${failures.length} issue(s) failed: ${failures.join(', ')}. Re-run to retry.`
