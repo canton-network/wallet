@@ -19,8 +19,9 @@
         "016-add-failure-reason-and-awaiting-signature": "03ae3395a8f56e7e7294b7fe04fe807d3741562d7b9e82935c03c9147ad6d3f6",
         "017-make-idp-issuer-nullable": "14d239fe4b72d952fad18945aa54d2cb4105e35b9326521e893244d0632d9708",
         "018-add-wallet-is-auth-party": "49ac258f675d63f39c56c7a1e032e038d7007f297b5018a40ced79576bf47411",
-        "019-make-session-access-token-nullable": "ac510b00820afebb6a74f1cc5c9eabd53524a954687f746a2535aa69223b50ce",
+        "019-make-session-access-token-nullable": "f10a15bc2323c1177d5dad4b1f4df81853e71a9df968223fe388836d8584ec35",
         "020-add-message-external-tx-id-and-failure-reason": "79d875d49168b5320af44ce735cad32e3a7e5156d14fadb15df813e492b8dc6b",
-        "021-add-message-kind": "6d4b4a27f6e3edbadf5104b7773ed36a06c76c0b1a02c0b39689e4ff60a8e77d"
+        "021-add-message-kind": "6d4b4a27f6e3edbadf5104b7773ed36a06c76c0b1a02c0b39689e4ff60a8e77d",
+        "022-hash-session-access-token": "503631a5b374ebe74547f3bee1a26e756d4b97bb7df4c2c7542eeec4467d1a4c"
     }
 }

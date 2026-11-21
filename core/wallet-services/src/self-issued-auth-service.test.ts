@@ -786,7 +786,7 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
         })
@@ -897,7 +897,8 @@ describe('SelfIssuedAuthService', () => {
             expect(probeGet).toHaveBeenCalledWith('/v2/authenticated-user')
             expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledWith(
                 'onboarding-session',
-                accessToken
+                accessToken,
+                'login-message'
             )
             expect(result).toMatchObject({
                 status: 'connected',
@@ -992,10 +993,50 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(probeGet).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('clears the signature when looking up the ledger user fails', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            ledgerClient.get.mockRejectedValue(new Error('ledger unavailable'))
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('ledger unavailable')
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                { failureReason: 'ledger unavailable', signature: null }
+            )
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('clears the signature when setting the auth party fails', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            ledgerClient.patch.mockRejectedValue(new Error('patch failed'))
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('patch failed')
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                { failureReason: 'patch failed', signature: null }
+            )
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
         })
 
@@ -1027,7 +1068,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession
@@ -1048,7 +1092,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession

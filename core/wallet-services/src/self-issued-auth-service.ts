@@ -325,10 +325,26 @@ export class SelfIssuedAuthService {
         }
 
         const username = this.session.userId
-        const existingUser = await this.getExistingUser()
-        const authPartyWallet = canUserUseSelfIssuedAuth(existingUser)
-            ? this.requireExistingAuthParty(wallet, existingUser.primaryParty)
-            : await this.setUserAuthParty(username, wallet)
+        let authPartyWallet: Wallet
+        try {
+            const existingUser = await this.getExistingUser()
+            authPartyWallet = canUserUseSelfIssuedAuth(existingUser)
+                ? this.requireExistingAuthParty(
+                      wallet,
+                      existingUser.primaryParty
+                  )
+                : await this.setUserAuthParty(username, wallet)
+        } catch (error) {
+            // The signature is already stored. Clear it so a retry can't
+            // rebuild the token from this message.
+            await this.failTokenMessage(
+                messageId,
+                error instanceof Error
+                    ? error.message
+                    : 'Self-issued login could not be completed.'
+            )
+            throw error
+        }
 
         const accessToken = SelfIssuedTokenService.appendJwtSignature(
             message.message,
@@ -345,7 +361,8 @@ export class SelfIssuedAuthService {
         }
         const session = await this.store.upgradeSelfIssuedLoginSession(
             this.session.sessionId,
-            accessToken
+            accessToken,
+            messageId
         )
 
         this.logger.info(
@@ -514,8 +531,10 @@ export class SelfIssuedAuthService {
         messageId: string,
         failureReason: string
     ): Promise<void> {
+        // A failed login never uses the signed token, so drop the signature
         await this.store.setMessageRawStatus(messageId, 'failed', {
             failureReason,
+            signature: null,
         })
     }
 
