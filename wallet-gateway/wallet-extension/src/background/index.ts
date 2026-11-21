@@ -3,20 +3,16 @@
 
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { NotificationService } from '@canton-network/core-wallet-services'
-import { registerService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
-import {
-    DAPP_RPC_KEY,
-    TOKEN_RPC_KEY,
-    USER_RPC_KEY,
-} from '@/shared/service-keys.ts'
+import { TOKEN_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys.ts'
 
 import { createAuthContextStore } from './auth-context.ts'
 import { registerAuthService } from './auth-service.ts'
 import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
 import { userController } from './controllers/user/index.ts'
+import { registerDappService } from './dapp-service.ts'
 import {
     currentSessionSubscriber,
     registerNotificationPorts,
@@ -60,9 +56,7 @@ export function startBackground({
     registerVaultService(vault)
     registerAuthService({ ...deps, vault })
     // The dApp controller scopes the store to each request's user itself.
-    // The content script is its caller, so it takes any sender.
-    registerService(
-        DAPP_RPC_KEY,
+    registerDappService(
         createDappDispatcher(
             { getStore: () => walletStore.get(), notificationService },
             vault,

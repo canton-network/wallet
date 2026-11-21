@@ -3,7 +3,7 @@
 
 import type { ProxyServiceKey } from '@webext-core/proxy-service'
 
-import type { DappDispatcher } from '@/background/controllers/dapp/dispatch.ts'
+import type { DappService } from '@/background/controllers/dapp/dispatch.ts'
 import type { Methods as UserRpcMethods } from '@/background/controllers/user/rpc-gen/index.ts'
 import type { TokenService } from '@/background/token/service.ts'
 
@@ -12,8 +12,7 @@ export const USER_RPC_KEY =
     'user-rpc-service' as ProxyServiceKey<UserRpcMethods>
 
 /** The dApp API dispatcher, called by the content script. */
-export const DAPP_RPC_KEY =
-    'dapp-rpc-service' as ProxyServiceKey<DappDispatcher>
+export const DAPP_RPC_KEY = 'dapp-rpc-service' as ProxyServiceKey<DappService>
 
 /**
  * The read-only token API, called by the extension pages. The background

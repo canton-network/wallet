@@ -18,6 +18,12 @@ import { VaultErrorName, vaultMessenger } from '@/shared/vault-protocol.ts'
 import { startBackground } from './index.ts'
 import { createVault } from './vault/index.ts'
 
+const contentScriptSender = {
+    id: fakeBrowser.runtime.id,
+    origin: 'https://dapp.example',
+    url: 'https://dapp.example/',
+}
+
 describe('startBackground', () => {
     beforeEach(() => {
         fakeBrowser.reset()
@@ -57,13 +63,11 @@ describe('startBackground', () => {
 
     it('answers dApp requests from the content script', async () => {
         startBackground()
+        sendMessagesFrom(contentScriptSender)
         const dispatcher = createProxyService(DAPP_RPC_KEY)
 
         await expect(
-            dispatcher.request(
-                { jsonrpc: '2.0', id: 1, method: 'isConnected' },
-                'https://dapp.example'
-            )
+            dispatcher.request({ jsonrpc: '2.0', id: 1, method: 'isConnected' })
         ).resolves.toEqual({
             jsonrpc: '2.0',
             id: 1,
@@ -75,10 +79,7 @@ describe('startBackground', () => {
             },
         })
         await expect(
-            dispatcher.request(
-                { jsonrpc: '2.0', id: 2, method: 'constructor' },
-                'https://dapp.example'
-            )
+            dispatcher.request({ jsonrpc: '2.0', id: 2, method: 'constructor' })
         ).resolves.toMatchObject({
             id: 2,
             error: { code: errorCodes.rpc.methodNotFound },
@@ -123,14 +124,12 @@ describe('startBackground', () => {
             token.token.v1.utxos.list({ partyId: 'alice::1220' })
         ).rejects.toThrow('Not signed in')
     })
+
     it('answers only the dApp dispatcher from the content script', async () => {
         const vault = createVault({ iterations: 1000 })
         startBackground({ vault })
         await vault.create('abcde1')
-        sendMessagesFrom({
-            id: fakeBrowser.runtime.id,
-            url: 'https://dapp.example/',
-        })
+        sendMessagesFrom(contentScriptSender)
 
         await expect(
             createProxyService(USER_RPC_KEY).listNetworks()
@@ -139,10 +138,11 @@ describe('startBackground', () => {
             createProxyService(TOKEN_RPC_KEY).token.assets()
         ).rejects.toThrow('is only for the extension pages')
         await expect(
-            createProxyService(DAPP_RPC_KEY).request(
-                { jsonrpc: '2.0', id: 1, method: 'isConnected' },
-                'https://dapp.example'
-            )
+            createProxyService(DAPP_RPC_KEY).request({
+                jsonrpc: '2.0',
+                id: 1,
+                method: 'isConnected',
+            })
         ).resolves.toMatchObject({ id: 1, result: { isConnected: false } })
     })
 })

@@ -13,7 +13,6 @@ import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import { createJsonRpcProxyHandler } from './json-rpc-proxy.ts'
 
 const runtimeId = 'runtime-id'
-const origin = 'https://dapp.example'
 
 const connectRequest: JsonRpcRequest = {
     jsonrpc: '2.0',
@@ -35,9 +34,7 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('createJsonRpcProxyHandler', () => {
     let page: { postMessage: Mock }
-    let request: Mock<
-        (request: JsonRpcRequest, origin: string) => Promise<JsonRpcResponse>
-    >
+    let request: Mock<(request: JsonRpcRequest) => Promise<JsonRpcResponse>>
     let sendMessage: Mock<(message: SpliceMessage) => Promise<unknown>>
     let onResponse: Mock
     let handle: ReturnType<typeof createJsonRpcProxyHandler>
@@ -56,12 +53,11 @@ describe('createJsonRpcProxyHandler', () => {
             sendMessage,
             notificationRelay: { onResponse },
             window: page,
-            origin,
             runtimeId,
         })
     })
 
-    it('forwards a request with the page origin and posts the response', async () => {
+    it('forwards a request and posts the response', async () => {
         const response: JsonRpcResponse = {
             jsonrpc: '2.0',
             id: 'request-1',
@@ -71,7 +67,7 @@ describe('createJsonRpcProxyHandler', () => {
 
         await fromPage(requestMessage(connectRequest, runtimeId))
 
-        expect(request).toHaveBeenCalledWith(connectRequest, origin)
+        expect(request).toHaveBeenCalledWith(connectRequest)
         expect(page.postMessage).toHaveBeenCalledWith(
             { type: WalletEvent.SPLICE_WALLET_RESPONSE, response },
             '*'
