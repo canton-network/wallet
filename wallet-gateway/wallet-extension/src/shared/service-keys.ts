@@ -5,6 +5,7 @@ import type { ProxyServiceKey } from '@webext-core/proxy-service'
 
 import type { DappService } from '@/background/controllers/dapp/dispatch.ts'
 import type { Methods as UserRpcMethods } from '@/background/controllers/user/rpc-gen/index.ts'
+import type { SiteApprovalService } from '@/background/site-approval.ts'
 import type { TokenService } from '@/background/token/service.ts'
 
 /** The user API, called by the extension pages. */
@@ -20,3 +21,7 @@ export const DAPP_RPC_KEY = 'dapp-rpc-service' as ProxyServiceKey<DappService>
  */
 export const TOKEN_RPC_KEY =
     'token-rpc-service' as ProxyServiceKey<TokenService>
+
+/** Approves or rejects a site's `connect`, called by the approval page. */
+export const SITE_APPROVAL_RPC_KEY =
+    'site-approval-rpc-service' as ProxyServiceKey<SiteApprovalService>

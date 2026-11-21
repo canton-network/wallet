@@ -6,7 +6,11 @@ import { NotificationService } from '@canton-network/core-wallet-services'
 import { browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
-import { TOKEN_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys.ts'
+import {
+    SITE_APPROVAL_RPC_KEY,
+    TOKEN_RPC_KEY,
+    USER_RPC_KEY,
+} from '@/shared/service-keys.ts'
 
 import { createAuthContextStore } from './auth-context.ts'
 import { registerAuthService } from './auth-service.ts'
@@ -14,10 +18,13 @@ import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
 import { userController } from './controllers/user/index.ts'
 import { registerDappService } from './dapp-service.ts'
 import {
+    createSitePorts,
     currentSessionSubscriber,
     registerNotificationPorts,
 } from './notifications.ts'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui.ts'
+import { createSiteApprovals, currentSessionCheck } from './site-approval.ts'
+import { createApprovedSiteStore } from './store/approved-sites.ts'
 import {
     createSigningStore,
     createWalletStore,
@@ -52,13 +59,27 @@ export function startBackground({
     // TODO(#2498/#2406): use the HD-wallet driver.
     const signingDriver = new InternalSigningDriver(createSigningStore(vault))
     const deps = { getStore, authContext, signingDriver, notificationService }
+    const sites = createApprovedSiteStore(vault)
+    const siteApprovals = createSiteApprovals({
+        vault,
+        authContext,
+        isCurrent: currentSessionCheck(getStore, authContext),
+        sites,
+    })
+    const sitePorts = createSitePorts(vault)
 
     registerVaultService(vault)
     registerAuthService({ ...deps, vault })
     // The dApp controller scopes the store to each request's user itself.
     registerDappService(
         createDappDispatcher(
-            { getStore: () => walletStore.get(), notificationService },
+            {
+                getStore: () => walletStore.get(),
+                notificationService,
+                sites,
+                siteApprovals,
+                sitePorts,
+            },
             vault,
             authContext
         )
@@ -79,9 +100,14 @@ export function startBackground({
             })
         )
     )
+    registerTrustedService(
+        SITE_APPROVAL_RPC_KEY,
+        requireUnlocked(vault, siteApprovals.service)
+    )
     registerNotificationPorts(
         notificationService,
-        currentSessionSubscriber(getStore, authContext)
+        currentSessionSubscriber(getStore, authContext, sites),
+        sitePorts
     )
     registerOpenUiHandler()
     registerFirstRunOnboarding()

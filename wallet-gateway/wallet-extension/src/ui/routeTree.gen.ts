@@ -14,6 +14,7 @@ import { Route as UnlockedRouteImport } from './routes/_unlocked'
 import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as UnlockRouteImport } from './routes/unlock'
 import { Route as UnlockedConnectedRouteImport } from './routes/_unlocked/_connected'
+import { Route as UnlockedApproveSiteRouteImport } from './routes/_unlocked/approve-site'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as OnboardingPasswordRouteImport } from './routes/onboarding/password'
 import { Route as UnlockedConnectIndexRouteImport } from './routes/_unlocked/connect/index'
@@ -42,6 +43,11 @@ const UnlockRoute = UnlockRouteImport.update({
 } as any)
 const UnlockedConnectedRoute = UnlockedConnectedRouteImport.update({
   id: '/_connected',
+  getParentRoute: () => UnlockedRoute,
+} as any)
+const UnlockedApproveSiteRoute = UnlockedApproveSiteRouteImport.update({
+  id: '/approve-site',
+  path: '/approve-site',
   getParentRoute: () => UnlockedRoute,
 } as any)
 const OnboardingIndexRoute = OnboardingIndexRouteImport.update({
@@ -82,6 +88,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/onboarding': typeof OnboardingRouteWithChildren
   '/unlock': typeof UnlockRoute
+  '/approve-site': typeof UnlockedApproveSiteRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/connect/': typeof UnlockedConnectIndexRoute
@@ -92,6 +99,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/unlock': typeof UnlockRoute
+  '/approve-site': typeof UnlockedApproveSiteRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding': typeof OnboardingIndexRoute
   '/connect': typeof UnlockedConnectIndexRoute
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/onboarding': typeof OnboardingRouteWithChildren
   '/unlock': typeof UnlockRoute
   '/_unlocked/_connected': typeof UnlockedConnectedRouteWithChildren
+  '/_unlocked/approve-site': typeof UnlockedApproveSiteRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
   '/_unlocked/connect/': typeof UnlockedConnectIndexRoute
@@ -119,6 +128,7 @@ export interface FileRouteTypes {
     | '/'
     | '/onboarding'
     | '/unlock'
+    | '/approve-site'
     | '/onboarding/password'
     | '/onboarding/'
     | '/connect/'
@@ -129,6 +139,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/unlock'
+    | '/approve-site'
     | '/onboarding/password'
     | '/onboarding'
     | '/connect'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/unlock'
     | '/_unlocked/_connected'
+    | '/_unlocked/approve-site'
     | '/onboarding/password'
     | '/onboarding/'
     | '/_unlocked/connect/'
@@ -192,6 +204,13 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof UnlockedConnectedRouteImport
+      parentRoute: typeof UnlockedRoute
+    }
+    '/_unlocked/approve-site': {
+      id: '/_unlocked/approve-site'
+      path: '/approve-site'
+      fullPath: '/approve-site'
+      preLoaderRoute: typeof UnlockedApproveSiteRouteImport
       parentRoute: typeof UnlockedRoute
     }
     '/onboarding/': {
@@ -256,11 +275,13 @@ const UnlockedConnectedRouteWithChildren =
 
 interface UnlockedRouteChildren {
   UnlockedConnectedRoute: typeof UnlockedConnectedRouteWithChildren
+  UnlockedApproveSiteRoute: typeof UnlockedApproveSiteRoute
   UnlockedConnectIndexRoute: typeof UnlockedConnectIndexRoute
 }
 
 const UnlockedRouteChildren: UnlockedRouteChildren = {
   UnlockedConnectedRoute: UnlockedConnectedRouteWithChildren,
+  UnlockedApproveSiteRoute: UnlockedApproveSiteRoute,
   UnlockedConnectIndexRoute: UnlockedConnectIndexRoute,
 }
 

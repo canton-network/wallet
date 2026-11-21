@@ -9,23 +9,24 @@ import { logger } from '@/shared/logger.ts'
 /**
  * Opens the wallet UI at a hash route. Tries the toolbar popup first, which
  * needs a focused browser window and always opens at `/`. Otherwise opens
- * `popup.html` in a small window.
+ * `popup.html` in a small window. Resolves to that window's ID.
  */
-export async function openWalletUi(path = '/'): Promise<void> {
+export async function openWalletUi(path = '/'): Promise<number | undefined> {
     if (path === '/') {
         try {
             await browser.action.openPopup()
-            return
+            return undefined
         } catch {
             // No focused window, or a browser without openPopup()
         }
     }
-    await browser.windows.create({
+    const window = await browser.windows.create({
         url: browser.runtime.getURL(`/popup.html#${path}`),
         type: 'popup',
         width: 360,
         height: 600,
     })
+    return window?.id
 }
 
 /**

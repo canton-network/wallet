@@ -19,11 +19,12 @@ src/
 │   │   ├── dapp/     dApp API: controller.ts, the dispatch.ts entry point and rpc-gen/
 │   │   └── user/     user API: one module per area (sessions.ts, wallets.ts, …) and rpc-gen/
 │   ├── vault/        the encrypted vault: crypto, envelope format, the lock/unlock coordinator and requireUnlocked
-│   ├── store/        the wallet store: the holder that keeps it in the vault, the snapshot format, the default config and the registries item
+│   ├── store/        the wallet store: the holder that keeps it in the vault, the snapshot format, the default config, the registries item and the approved sites item
 │   ├── token/        the token service: sdk.ts builds the wallet SDK, service.ts is what the pages call
 │   ├── vault-service.ts  vault messages for the extension pages
 │   ├── trusted-service.ts  isTrustedSender and registerTrustedService, for services only the extension pages may call
 │   ├── dapp-service.ts  registerDappService, which takes each dApp request's origin from the browser
+│   ├── site-approval.ts  the pending site approvals that a dApp's connect waits on
 │   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
 ├── content/          content script code: startContent(), the JSON-RPC proxy and the notification relay
@@ -52,7 +53,7 @@ Chrome stops an idle service worker and starts it again for the next message or 
 
 `background/vault/` keeps data encrypted in `local:vault`. The key comes from the user's password through PBKDF2-SHA-256, and the data is encrypted with AES-256-GCM. While the vault is unlocked, the decrypted data is in the background's memory and the key is cached in `session:vaultSession`. After a service worker restart, `startBackground()` restores the vault from that cached key without the password. Closing the browser, reloading the extension or pressing Lock clears it. Store secrets with `vault.defineItem(key, { fallback })`, which has the same shape as a WXT storage item.
 
-The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet-store)), the auth context (item `authContext`), which is the signed-in user's access token and user ID, the signing keys and signing transactions of the wallet-kernel driver (item `signingStore`), and the token standard registry URLs by network ID (item `registries`, see [Token service](#token-service)). `createAuthContextStore(vault)` in `background/auth-context.ts` reads and writes the auth context, and its methods reject with `VaultLockedError` while the vault is locked. A lock doesn't sign the user out, so after an unlock the same user is signed in again. A reset deletes the token with everything else.
+The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet-store)), the auth context (item `authContext`), which is the signed-in user's access token and user ID, the signing keys and signing transactions of the wallet-kernel driver (item `signingStore`), the token standard registry URLs by network ID (item `registries`, see [Token service](#token-service)), and the sites each user approved for the dApp API (item `approvedSites`, see [Site approval](#site-approval)). `createAuthContextStore(vault)` in `background/auth-context.ts` reads and writes the auth context, and its methods reject with `VaultLockedError` while the vault is locked. A lock doesn't sign the user out, so after an unlock the same user is signed in again. A reset deletes the token with everything else.
 
 The pages send `vault.getStatus`, `vault.create`, `vault.unlock` and `vault.lock` through `vaultMessenger` (`shared/vault-protocol.ts`). `vault-service.ts` answers them only from `popup.html` and `app.html`. Errors arrive as plain `Error`s, so compare `error.name` with `VaultErrorName`. While the vault isn't unlocked, every user API method rejects with `VaultLockedError`. The dApp dispatcher answers `status`, `isConnected` and `connect` with a not-connected result whose reason is `Locked`, and every other method with error 4100. Its `connect` also opens the unlock page.
 
@@ -65,6 +66,7 @@ The pages and the content script call the background through [`@webext-core/prox
 
 - `USER_RPC_KEY` is the user API, for the extension pages.
 - `TOKEN_RPC_KEY` is the token service, for the extension pages. See [Token service](#token-service).
+- `SITE_APPROVAL_RPC_KEY` is for the site approval page. See [Site approval](#site-approval).
 - `DAPP_RPC_KEY` is the dApp dispatcher, for the content script. `registerDappService` (`background/dapp-service.ts`) answers it, because proxy-service's `registerService` drops the sender. The content script calls `request(request)`, and the background takes the origin from the message sender (`sender.origin`, or the origin of `sender.url` in Firefox). It refuses a sender without an http or https origin, which includes `file:` pages and the extension's own pages. The content script starts nothing on a page whose own origin is opaque (`window.origin` is `'null'`), such as a CSP-sandboxed page, because in Firefox the background only sees the page's URL. The dispatcher builds the dApp controller for that origin, calls only the controller's own methods (`Object.hasOwn`) and always resolves to a JSON-RPC response. Thrown errors become JSON-RPC errors that keep their code.
 
 `registerService` ignores the sender, so the user API and the token service use `registerTrustedService` (`background/trusted-service.ts`) instead. It answers the same `createProxyService` messages, but only from `popup.html` and `app.html`, and it calls only the service's own methods (`Object.hasOwn` at every step of the path), so paths such as `token.constructor` are refused. Both services also sit behind `requireUnlocked` (`background/vault/`), which wraps every method, nested ones included, so it rejects with `VaultLockedError` while the vault isn't unlocked.
@@ -86,6 +88,17 @@ The background builds the wallet SDK (`@canton-network/wallet-sdk`) for the sign
 - The SDK is built with `registryAuth: 'none'`. Without it the SDK sends the user's ledger token to every registry.
 - Registry URLs come from the vault item `registries` (`store/registries.ts`). A new vault starts with `http://scan.localhost:4000` for `canton:localnet`.
 - Results have to survive runtime messaging, which turns a `URL` into a string and a `Date` into an ISO string. `token.assets()` returns `registryUrl` as a string.
+
+### Site approval
+
+A site can only use the dApp API once the signed-in user has approved its origin. The approvals live in the vault item `approvedSites` (`store/approved-sites.ts`), by principal and origin. The principal is the access token's issuer and subject (`sitePrincipal`), because a subject is only unique within its issuer. They hold on every network and can't be read while the vault is locked.
+
+- `connect` from a site the user hasn't approved opens `/approve-site` in a popup window and waits for the answer. Approving stores the origin and `connect` continues as before. Rejecting, closing the window or not answering within 2 minutes fails `connect` with error 4001, and a lock fails it with 4100. A second `connect` from the same origin, for the same principal, waits on the same prompt. The prompt belongs to the token that asked: an expired token or one without a session gets no prompt, signing out, switching account or a new token cancels it with 4100, and an answer that arrives after the session ended stores nothing. The prompts live in the background's memory (`site-approval.ts`), so a service worker restart drops them along with the requests that wait on them.
+- While locked or signed out, `connect` behaves as before: it reports not connected and, when locked, opens the unlock page. The dApp connects again after the unlock, and then it gets the prompt.
+- Before approval, only `connect`, `isConnected`, `disconnect` and `status` answer. `status` and `isConnected` report not connected with the reason `Unauthenticated`, without the network, token or user. Every other method fails with error 4100.
+- `connect` sends its `statusChanged` and `connected` events, which carry the token, only to the connecting origin's ports.
+- `disconnect` revokes the site's approval and closes its notification ports, after sending them a `statusChanged` with `isConnected: false`. The user stays signed in, and other sites stay connected. While locked or signed out it fails with 4100 and revokes nothing. Disconnect only stops the extension serving the site: a site that received the user's access token can keep using it until it expires.
+- The notification port subscribes only pages whose origin, taken from the port's sender, the user approved. `notifications.ts` tracks the ports by origin, so `disconnect` closes one origin's ports and a lock closes them all.
 
 ### Controllers
 

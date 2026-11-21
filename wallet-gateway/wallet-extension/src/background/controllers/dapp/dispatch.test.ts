@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import { errorCodes } from '@canton-network/core-rpc-errors'
+import { errorCodes, providerErrors } from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { JsonRpcRequest } from '@canton-network/core-types'
 import {
@@ -14,25 +14,69 @@ import {
     type Store,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    type Mock,
+    vi,
+} from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+import { asPort, fakePort } from '@/__tests__/fake-port.ts'
+import { inAnHour, jwt } from '@/__tests__/jwt.ts'
 import { approvalRequestsItem } from '@/shared/storage.ts'
 import type { VaultStatus } from '@/shared/vault-protocol.ts'
 
+import {
+    createSitePorts,
+    handleNotificationPort,
+    type SitePorts,
+} from '../../notifications.ts'
+import type { SiteApprovals } from '../../site-approval.ts'
+import { disconnectedStatusEvent } from '../../status.ts'
+import {
+    type ApprovedSiteStore,
+    sitePrincipal,
+} from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
 import { createTestWalletStore } from '../../store/test-store.ts'
 import { VaultLockedError } from '../../vault/index.ts'
+import type { DappControllerDeps } from './controller.ts'
 import { createDappDispatcher, type DappDispatcher } from './dispatch.ts'
 
 const origin = 'https://dapp.example'
 const networkId = 'canton:local-oauth'
-const authContext = { userId: 'user-1', accessToken: 'token-1' }
+const issuer = 'https://idp.example'
+const authContext = {
+    userId: 'user-1',
+    accessToken: jwt({ iss: issuer, sub: 'user-1', exp: inAnHour() }),
+}
+const principal = sitePrincipal(authContext.accessToken)!
 const vaultIn = (status: VaultStatus) => ({
     ready: Promise.resolve(),
     status: () => status,
 })
+
+/** In memory, like the vault item, without the vault. */
+function fakeApprovedSites() {
+    const approved = new Set<string>()
+    const key = (owner: string, site: string) => JSON.stringify([owner, site])
+    return {
+        isApproved: vi.fn(async (owner: string, site: string) =>
+            approved.has(key(owner, site))
+        ),
+        approve: vi.fn(async (owner: string, site: string) => {
+            approved.add(key(owner, site))
+        }),
+        revoke: vi.fn(async (owner: string, site: string) => {
+            approved.delete(key(owner, site))
+        }),
+    } satisfies ApprovedSiteStore
+}
 
 const request = (
     method: string,
@@ -48,6 +92,14 @@ describe('createDappDispatcher', () => {
     let service: NotificationService
     let walletStore: WalletStore
     let authContextStore: ReturnType<typeof fakeAuthContext>
+    let sites: ReturnType<typeof fakeApprovedSites>
+    let deps: DappControllerDeps & {
+        siteApprovals: { request: Mock<SiteApprovals['request']> }
+        sitePorts: {
+            send: Mock<SitePorts['send']>
+            close: Mock<SitePorts['close']>
+        }
+    }
     let dispatcher: DappDispatcher
 
     beforeEach(() => {
@@ -55,11 +107,16 @@ describe('createDappDispatcher', () => {
         service = new NotificationService()
         walletStore = createTestWalletStore()
         authContextStore = fakeAuthContext()
+        sites = fakeApprovedSites()
+        deps = {
+            getStore: async () => walletStore,
+            notificationService: service,
+            sites,
+            siteApprovals: { request: vi.fn() },
+            sitePorts: { send: vi.fn(), close: vi.fn() },
+        }
         dispatcher = createDappDispatcher(
-            {
-                getStore: async () => walletStore,
-                notificationService: service,
-            },
+            deps,
             vaultIn('unlocked'),
             authContextStore
         )
@@ -126,27 +183,11 @@ describe('createDappDispatcher', () => {
         })
     })
 
-    it('turns any other thrown error into an internal error', async () => {
-        const response = await dispatcher.request(
-            request('signMessage', { message: 'hello' }),
-            origin
-        )
-
-        expect(response).toMatchObject({
-            jsonrpc: '2.0',
-            id: 7,
-            error: {
-                code: errorCodes.rpc.internal,
-                message: 'Function signMessage not implemented.',
-            },
-        })
-    })
-
     it('answers status and refuses other methods while locked', async () => {
         const signedIn = fakeAuthContext(authContext)
         const getStore = vi.fn(async () => walletStore)
         const locked = createDappDispatcher(
-            { getStore, notificationService: service },
+            { ...deps, getStore },
             vaultIn('locked'),
             signedIn
         )
@@ -156,6 +197,14 @@ describe('createDappDispatcher', () => {
         ).resolves.toMatchObject({
             result: { connection: { isConnected: false, reason: 'Locked' } },
         })
+        // As before site approval: connect shows the unlock page and reports
+        // not connected, without asking about the site.
+        await expect(
+            locked.request(request('connect'), origin)
+        ).resolves.toMatchObject({
+            result: { isConnected: false, reason: 'Locked' },
+        })
+        expect(deps.siteApprovals.request).not.toHaveBeenCalled()
         await expect(
             locked.request(request('listAccounts'), origin)
         ).resolves.toMatchObject({
@@ -215,6 +264,161 @@ describe('createDappDispatcher', () => {
                 accessToken: authContext.accessToken,
             })
             await store.addWallet({ ...wallet })
+            await sites.approve(principal, origin)
+        })
+
+        it('turns any other thrown error into an internal error', async () => {
+            const response = await dispatcher.request(
+                request('signMessage', { message: 'hello' }),
+                origin
+            )
+
+            expect(response).toMatchObject({
+                jsonrpc: '2.0',
+                id: 7,
+                error: {
+                    code: errorCodes.rpc.internal,
+                    message: 'Function signMessage not implemented.',
+                },
+            })
+        })
+
+        it('connects an approved site without asking', async () => {
+            vi.spyOn(LedgerClient.prototype, 'get').mockResolvedValue({
+                version: '3.4.0',
+            })
+
+            await expect(
+                dispatcher.request(request('connect'), origin)
+            ).resolves.toMatchObject({ result: { isConnected: true } })
+            expect(deps.siteApprovals.request).not.toHaveBeenCalled()
+        })
+
+        it('revokes only this site on disconnect and keeps the session', async () => {
+            await sites.approve(principal, 'https://other.example')
+
+            await expect(
+                dispatcher.request(request('disconnect'), origin)
+            ).resolves.toEqual({ jsonrpc: '2.0', id: 7, result: null })
+
+            expect(await sites.isApproved(principal, origin)).toBe(false)
+            expect(
+                await sites.isApproved(principal, 'https://other.example')
+            ).toBe(true)
+            expect(deps.sitePorts.close).toHaveBeenCalledWith(
+                origin,
+                disconnectedStatusEvent('disconnect')
+            )
+            expect(deps.sitePorts.close).toHaveBeenCalledTimes(1)
+            expect(await store.getSession(authContext.accessToken)).toEqual(
+                expect.objectContaining({ id: sessionId })
+            )
+            await expect(
+                dispatcher.request(request('listAccounts'), origin)
+            ).resolves.toMatchObject({
+                error: { code: errorCodes.provider.unauthorized },
+            })
+        })
+
+        describe('from a site the user has not approved', () => {
+            const unapproved = 'https://unapproved.example'
+
+            it.each([
+                ['listAccounts', undefined],
+                ['getPrimaryAccount', undefined],
+                ['getActiveNetwork', undefined],
+                [
+                    'ledgerApi',
+                    { requestMethod: 'get', resource: '/v2/version' },
+                ],
+                ['prepareExecute', { commands: [{ CreateCommand: {} }] }],
+            ] as const)('refuses %s', async (method, params) => {
+                const ledgerGet = vi.spyOn(LedgerClient.prototype, 'get')
+                const ledgerPost = vi.spyOn(
+                    LedgerClient.prototype,
+                    'postWithRetry'
+                )
+
+                const response = await dispatcher.request(
+                    request(method, params),
+                    unapproved
+                )
+
+                expect(response).toMatchObject({
+                    error: {
+                        code: errorCodes.provider.unauthorized,
+                        message:
+                            'The user has not approved this site. Call connect first.',
+                    },
+                })
+                expect(ledgerGet).not.toHaveBeenCalled()
+                expect(ledgerPost).not.toHaveBeenCalled()
+            })
+
+            it.each(['status', 'isConnected'])(
+                'reports not connected in %s, without the token or user',
+                async (method) => {
+                    const response = await dispatcher.request(
+                        request(method),
+                        unapproved
+                    )
+
+                    const notConnected =
+                        disconnectedStatusEvent('Unauthenticated')
+                    expect(response).toEqual({
+                        jsonrpc: '2.0',
+                        id: 7,
+                        result:
+                            method === 'status'
+                                ? notConnected
+                                : notConnected.connection,
+                    })
+                }
+            )
+
+            it('connects once the user approves', async () => {
+                vi.spyOn(LedgerClient.prototype, 'get').mockResolvedValue({
+                    version: '3.4.0',
+                })
+                deps.siteApprovals.request.mockImplementation(async (asked) =>
+                    sites.approve(asked.principal, asked.origin)
+                )
+
+                await expect(
+                    dispatcher.request(request('connect'), unapproved)
+                ).resolves.toMatchObject({ result: { isConnected: true } })
+                expect(deps.siteApprovals.request).toHaveBeenCalledWith({
+                    principal,
+                    origin: unapproved,
+                    accessToken: authContext.accessToken,
+                })
+                await expect(
+                    dispatcher.request(request('listAccounts'), unapproved)
+                ).resolves.toMatchObject({
+                    result: [
+                        expect.objectContaining({ partyId: wallet.partyId }),
+                    ],
+                })
+            })
+
+            it('fails connect with the approval error', async () => {
+                const error = providerErrors.userRejectedRequest({
+                    message: 'The user rejected the site',
+                })
+                deps.siteApprovals.request.mockRejectedValue(error)
+
+                await expect(
+                    dispatcher.request(request('connect'), unapproved)
+                ).resolves.toMatchObject({
+                    error: {
+                        code: errorCodes.provider.userRejectedRequest,
+                        message: error.message,
+                    },
+                })
+                expect(await sites.isApproved(principal, unapproved)).toBe(
+                    false
+                )
+            })
         })
 
         it('reports the session in status', async () => {
@@ -298,6 +502,92 @@ describe('createDappDispatcher', () => {
             expect(sink.send).toHaveBeenCalledWith('txChanged', [
                 { status: 'pending', commandId: 'command-1' },
             ])
+        })
+
+        it('refuses disconnect while locked and keeps the approval', async () => {
+            const locked = createDappDispatcher(
+                deps,
+                vaultIn('locked'),
+                authContextStore
+            )
+
+            await expect(
+                locked.request(request('disconnect'), origin)
+            ).resolves.toMatchObject({
+                error: {
+                    code: errorCodes.provider.unauthorized,
+                    message: 'Wallet is locked',
+                },
+            })
+
+            // Unlocked again: the site is still approved, as the error said.
+            expect(sites.revoke).not.toHaveBeenCalled()
+            expect(deps.sitePorts.close).not.toHaveBeenCalled()
+            await expect(
+                dispatcher.request(request('listAccounts'), origin)
+            ).resolves.toMatchObject({
+                result: [expect.objectContaining({ partyId: wallet.partyId })],
+            })
+        })
+
+        it('does not share an approval between equal subjects of different issuers', async () => {
+            const otherIssuer = {
+                userId: authContext.userId,
+                accessToken: jwt({
+                    iss: 'https://other-idp.example',
+                    sub: authContext.userId,
+                    exp: inAnHour(),
+                }),
+            }
+            authContextStore.load.mockResolvedValue(otherIssuer)
+
+            await expect(
+                dispatcher.request(request('listAccounts'), origin)
+            ).resolves.toMatchObject({
+                error: { code: errorCodes.provider.unauthorized },
+            })
+            await expect(
+                dispatcher.request(request('status'), origin)
+            ).resolves.toMatchObject({
+                result: { connection: { isConnected: false } },
+            })
+        })
+
+        it("sends connect's events only to the connecting site", async () => {
+            vi.spyOn(LedgerClient.prototype, 'get').mockResolvedValue({
+                version: '3.4.0',
+            })
+            const other = 'https://other.example'
+            await sites.approve(principal, other)
+            const sitePorts = createSitePorts({ onLock: () => {} })
+            const ports = {
+                [origin]: fakePort(origin),
+                [other]: fakePort(other),
+            }
+            for (const port of Object.values(ports)) {
+                await handleNotificationPort(
+                    asPort(port),
+                    service,
+                    async () => ({ sessionId, userId: authContext.userId }),
+                    sitePorts
+                )
+            }
+            const connecting = createDappDispatcher(
+                { ...deps, sitePorts },
+                vaultIn('unlocked'),
+                authContextStore
+            )
+
+            await expect(
+                connecting.request(request('connect'), origin)
+            ).resolves.toMatchObject({ result: { isConnected: true } })
+
+            expect(ports[other]!.postMessage).not.toHaveBeenCalled()
+            expect(
+                ports[origin]!.postMessage.mock.calls.map(
+                    ([message]) => (message as { method: string }).method
+                )
+            ).toEqual(['statusChanged', 'connected'])
         })
     })
 })

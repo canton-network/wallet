@@ -23,11 +23,15 @@ function fakeEvent<T extends unknown[]>() {
  * not fire `onDisconnect` on the same end; use `remoteDisconnect()` to
  * simulate the other end going away.
  */
-export function fakePort(name = NOTIFICATIONS_PORT_NAME) {
+export function fakePort(
+    origin = 'https://dapp.example',
+    name = NOTIFICATIONS_PORT_NAME
+) {
     const onMessage = fakeEvent<[unknown]>()
     const onDisconnect = fakeEvent<[unknown]>()
     const fake = {
         name,
+        sender: { origin, url: `${origin}/` } as Browser.runtime.MessageSender,
         onMessage,
         onDisconnect,
         postMessage: vi.fn<(message: unknown) => void>(),
