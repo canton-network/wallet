@@ -1,8 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AuthContext } from '@canton-network/core-wallet-auth'
-import type { Store } from '@canton-network/core-wallet-store'
+import type { SignedInContext } from '../auth-context'
 import type { Vault } from '../vault'
 
 /** Approved site origins by principal, see `sitePrincipal`. */
@@ -10,21 +9,15 @@ type ApprovedSites = Record<string, string[]>
 
 /**
  * Who site approvals belong to: the configured identity provider the user
- * signed in through, plus the user's subject. The provider comes from the
- * extension's own network config, not from the token, whose issuer claim any
- * configured provider could set. Undefined while the token has no session.
+ * signed in through, plus the user's subject. The provider is the one the
+ * extension recorded at sign-in, not the token's issuer claim, which any
+ * configured provider could set, nor the session's network, which can be
+ * changed after sign-in. Undefined for a context stored before the provider
+ * was recorded, so it matches no approval.
  */
-export async function sitePrincipal(
-    store: Pick<Store, 'getSession' | 'listNetworks'>,
-    context: AuthContext
-): Promise<string | undefined> {
-    const session = await store.getSession(context.accessToken)
-    if (!session) return undefined
-    const network = (await store.listNetworks()).find(
-        (candidate) => candidate.id === session.network
-    )
-    if (!network) return undefined
-    return JSON.stringify([network.identityProviderId, context.userId])
+export function sitePrincipal(context: SignedInContext): string | undefined {
+    if (context.identityProviderId === undefined) return undefined
+    return JSON.stringify([context.identityProviderId, context.userId])
 }
 
 /**

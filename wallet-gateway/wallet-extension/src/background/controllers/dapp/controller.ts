@@ -147,7 +147,7 @@ export const dappController = (
                 if (principal === undefined) {
                     throw providerErrors.unauthorized({
                         message:
-                            "The session's network is not configured, so sites cannot be approved",
+                            'Sign in again to approve sites: the identity provider you signed in through is not recorded',
                     })
                 }
                 // Throws unless the user approves. A second connect from the

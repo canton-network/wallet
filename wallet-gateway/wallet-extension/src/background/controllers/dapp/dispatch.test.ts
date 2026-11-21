@@ -47,12 +47,18 @@ import { createDappDispatcher, type DappDispatcher } from './dispatch.ts'
 
 const origin = 'https://dapp.example'
 const networkId = 'canton:local-oauth'
+// Signed in through the IdP of `networkId` in the default config.
 const authContext = {
     userId: 'user-1',
     accessToken: jwt({ sub: 'user-1', exp: inAnHour() }),
+    identityProviderId: 'idp-mock-oauth',
 }
-// The IdP of `networkId` in the default config.
 const principal = JSON.stringify(['idp-mock-oauth', authContext.userId])
+// `canton:localnet` signs in through another IdP.
+const selfSignedPrincipal = JSON.stringify([
+    'idp-self-signed',
+    authContext.userId,
+])
 const vaultIn = (status: VaultStatus) => ({
     ready: Promise.resolve(),
     status: () => status,
@@ -624,6 +630,7 @@ describe('createDappDispatcher', () => {
                     exp: inAnHour(),
                     jti: 'other',
                 }),
+                identityProviderId: 'idp-self-signed',
             }
             await walletStore.withAuthContext(otherIdp).setSession({
                 id: 'session-2',
@@ -643,6 +650,64 @@ describe('createDappDispatcher', () => {
             ).resolves.toMatchObject({
                 result: { connection: { isConnected: false } },
             })
+        })
+
+        /** Expects the origin to be treated as unapproved. */
+        async function expectUnapproved() {
+            await expect(
+                dispatcher.request(request('listAccounts'), origin)
+            ).resolves.toMatchObject({
+                error: { code: errorCodes.provider.unauthorized },
+            })
+            await expect(
+                dispatcher.request(request('status'), origin)
+            ).resolves.toMatchObject({
+                result: { connection: { isConnected: false } },
+            })
+        }
+
+        it("does not pick up the approvals of a network's IdP when the session moves there", async () => {
+            await sites.revoke(principal, origin)
+            await sites.approve(selfSignedPrincipal, origin)
+            await store.setSession({
+                id: sessionId,
+                origin: 'browserext',
+                network: 'canton:localnet',
+                accessToken: authContext.accessToken,
+            })
+
+            await expectUnapproved()
+        })
+
+        it('keeps the approval when the same user signs in again', async () => {
+            const again = {
+                ...authContext,
+                accessToken: jwt({
+                    sub: authContext.userId,
+                    exp: inAnHour(),
+                    jti: 'again',
+                }),
+            }
+            await walletStore.withAuthContext(again).setSession({
+                id: 'session-2',
+                origin: 'browserext',
+                network: networkId,
+                accessToken: again.accessToken,
+            })
+            authContextStore.load.mockResolvedValue(again)
+
+            await expect(
+                dispatcher.request(request('listAccounts'), origin)
+            ).resolves.toMatchObject({
+                result: [expect.objectContaining({ partyId: wallet.partyId })],
+            })
+        })
+
+        it('grants nothing to a context stored without its IdP', async () => {
+            const { identityProviderId: _, ...legacy } = authContext
+            authContextStore.load.mockResolvedValue(legacy)
+
+            await expectUnapproved()
         })
 
         it('fails connect and sends no events when the session ended during it', async () => {
@@ -678,7 +743,11 @@ describe('createDappDispatcher', () => {
                 await handleNotificationPort(
                     asPort(port),
                     service,
-                    async () => ({ sessionId, userId: authContext.userId }),
+                    async () => ({
+                        sessionId,
+                        userId: authContext.userId,
+                        principal,
+                    }),
                     sitePorts
                 )
             }
