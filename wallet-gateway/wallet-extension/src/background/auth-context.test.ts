@@ -15,7 +15,11 @@ const base64url = (value: object) =>
         .replaceAll('/', '_')
 // Unsigned: the store only reads the subject.
 const TOKEN = `${base64url({ alg: 'none' })}.${base64url({ sub: 'alice' })}.signature`
-const CONTEXT = { userId: 'alice', accessToken: TOKEN }
+const CONTEXT = {
+    userId: 'alice',
+    accessToken: TOKEN,
+    identityProviderId: 'idp-1',
+}
 
 async function createdVault(): Promise<Vault> {
     const vault = createVault({ iterations: 1000 })
@@ -32,7 +36,7 @@ describe('createAuthContextStore', () => {
     it('keeps the context through a lock and loses it on reset', async () => {
         const vault = await createdVault()
         const authContext = createAuthContextStore(vault)
-        await authContext.store(TOKEN)
+        await authContext.store(TOKEN, 'idp-1')
 
         await vault.lock()
         await expect(authContext.load()).rejects.toThrow(VaultLockedError)
@@ -48,7 +52,7 @@ describe('createAuthContextStore', () => {
     it('never writes the token to storage in plaintext', async () => {
         const authContext = createAuthContextStore(await createdVault())
 
-        await authContext.store(TOKEN)
+        await authContext.store(TOKEN, 'idp-1')
 
         const stored = JSON.stringify([
             await fakeBrowser.storage.local.get(),

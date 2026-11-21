@@ -5,55 +5,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { createVault, VaultLockedError } from '../vault'
 import { createApprovedSiteStore, sitePrincipal } from './approved-sites'
-import { createTestWalletStore } from './test-store'
 
 describe('sitePrincipal', () => {
-    /** Alice, signed in to `network` with a token of her own. */
-    async function aliceOn(network: string) {
-        const context = { userId: 'alice', accessToken: `token-${network}` }
-        const store = createTestWalletStore(context)
-        await store.setSession({
-            id: `session-${network}`,
-            origin: 'browserext',
-            network,
-            accessToken: context.accessToken,
-        })
-        return sitePrincipal(store, context)
-    }
+    const alice = { userId: 'alice', accessToken: 'token-1' }
 
-    it('tells equal subjects of different configured providers apart', async () => {
-        // The default config signs in to these through different IdPs.
-        const oauth = await aliceOn('canton:local-oauth')
-        const selfSigned = await aliceOn('canton:localnet')
-
-        expect(oauth).toBeDefined()
-        expect(selfSigned).toBeDefined()
-        expect(oauth).not.toBe(selfSigned)
-    })
-
-    it('is the same on every network of a provider', async () => {
-        const context = { userId: 'alice', accessToken: 'token-copy' }
-        const store = createTestWalletStore(context)
-        const network = await store.getNetwork('canton:local-oauth')
-        await store.addNetwork({ ...network, id: 'canton:copy' })
-        await store.setSession({
-            id: 'session-copy',
-            origin: 'browserext',
-            network: 'canton:copy',
-            accessToken: context.accessToken,
-        })
-
-        expect(await sitePrincipal(store, context)).toBe(
-            await aliceOn('canton:local-oauth')
-        )
-    })
-
-    it('is undefined for a token without a session', async () => {
-        const context = { userId: 'alice', accessToken: 'token-1' }
-
+    it('tells equal subjects of different configured providers apart', () => {
         expect(
-            await sitePrincipal(createTestWalletStore(context), context)
-        ).toBeUndefined()
+            sitePrincipal({ ...alice, identityProviderId: 'idp-a' })
+        ).not.toBe(sitePrincipal({ ...alice, identityProviderId: 'idp-b' }))
+    })
+
+    it('is undefined for a context stored without its provider', () => {
+        expect(sitePrincipal(alice)).toBeUndefined()
     })
 })
 

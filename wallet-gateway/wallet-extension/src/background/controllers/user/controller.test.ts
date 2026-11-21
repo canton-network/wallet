@@ -33,7 +33,11 @@ import { createVault, type Vault, VaultLockedError } from '../../vault/index.ts'
 import { userController } from './index.ts'
 
 const networkId = 'canton:local-oauth'
-const authContext = { userId: 'user-1', accessToken: 'token-1' }
+const authContext = {
+    userId: 'user-1',
+    accessToken: 'token-1',
+    identityProviderId: 'idp-mock-oauth',
+}
 
 describe('userController.addSession', () => {
     let service: NotificationService
@@ -88,6 +92,31 @@ describe('userController.addSession', () => {
             { status: 'pending' },
         ])
         expect(firstSink.send).not.toHaveBeenCalled()
+    })
+
+    it('refuses a network of another identity provider than the sign-in', async () => {
+        // Signed in through idp-mock-oauth; canton:localnet uses
+        // idp-self-signed.
+        await expect(
+            controller.addSession({
+                origin: 'https://dapp.example',
+                networkId: 'canton:localnet',
+            })
+        ).rejects.toThrow('another identity provider')
+    })
+
+    it('refuses to move a session while the sign-in provider is unknown', async () => {
+        const { identityProviderId: _, ...legacy } = authContext
+        controller = userController({
+            getStore: async () => createTestWalletStore(legacy),
+            authContext: fakeAuthContext(legacy),
+            signingDriver: {} as SigningDriverInterface,
+            notificationService: service,
+        })
+
+        await expect(
+            controller.addSession({ origin: 'https://dapp.example', networkId })
+        ).rejects.toThrow('another identity provider')
     })
 })
 

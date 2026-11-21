@@ -85,7 +85,13 @@ export function createAuthService({
         async getStatus(): Promise<ConnectionStatus> {
             await assertUnlocked()
             const context = await authContext.load()
-            if (!context || jwtExpired(context.accessToken)) {
+            // A sign-in saved before the provider was recorded can't approve
+            // sites, so send the user back through sign-in.
+            if (
+                !context ||
+                !context.identityProviderId ||
+                jwtExpired(context.accessToken)
+            ) {
                 return 'disconnected'
             }
             const store = await getStore()
@@ -156,7 +162,7 @@ export function createAuthService({
             await serialized(async () => {
                 signal.throwIfAborted() // check inside the lock, right before writing
                 const previous = await authContext.load()
-                await authContext.store(token)
+                await authContext.store(token, network.identityProviderId)
                 try {
                     await sessions(deps).addSession({
                         origin: EXTENSION_ORIGIN,
@@ -164,7 +170,10 @@ export function createAuthService({
                     })
                 } catch (error) {
                     await (previous
-                        ? authContext.store(previous.accessToken)
+                        ? authContext.store(
+                              previous.accessToken,
+                              previous.identityProviderId
+                          )
                         : authContext.clear())
                     throw error
                 }

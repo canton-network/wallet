@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
     type DappNotificationEvent,
     type INotificationService,
@@ -18,7 +17,11 @@ import {
     type NotificationPortMessage,
 } from '@/shared/ports.ts'
 
-import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
+import type {
+    AuthContextChanges,
+    AuthContextStore,
+    SignedInContext,
+} from './auth-context.ts'
 import type { StatusEvent } from './controllers/dapp/rpc-gen/typings.ts'
 import { senderOrigin } from './dapp-service.ts'
 import { disconnectedStatusEvent } from './status.ts'
@@ -55,6 +58,11 @@ export class PortNotificationSink implements NotificationSink {
     }
 }
 
+/** A port's subscriber, with the principal that approved its origin. */
+export interface SiteSubscriber extends NotificationSubscriber {
+    principal: string
+}
+
 /**
  * Resolves the session & user a port from `origin` should be subscribed to,
  * or `undefined` when there is no authenticated session or the user hasn't
@@ -62,7 +70,7 @@ export class PortNotificationSink implements NotificationSink {
  */
 export type ResolveSubscriber = (
     origin: string
-) => Promise<NotificationSubscriber | undefined>
+) => Promise<SiteSubscriber | undefined>
 
 /**
  * Resolves the signed-in user's current session, which content-script ports
@@ -76,32 +84,31 @@ export function currentSessionSubscriber(
 ): ResolveSubscriber {
     return async (origin) => {
         let store: Store
-        let context: AuthContext | undefined
-        let approved: boolean
+        let context: SignedInContext | undefined
+        let principal: string | undefined
         // All three reject with `VaultLockedError` while the vault is locked,
         // and a locked vault has no session.
         try {
             store = await getStore()
             context = await authContext.load()
             if (!context) return undefined
-            const principal = await sitePrincipal(store, context)
-            approved =
-                principal !== undefined &&
-                (await sites.isApproved(principal, origin))
+            principal = sitePrincipal(context)
+            if (principal === undefined) return undefined
+            if (!(await sites.isApproved(principal, origin))) return undefined
         } catch (error) {
             if (error instanceof VaultLockedError) return undefined
             throw error
         }
-        if (!approved) return undefined
 
         const session = await store.getSession(context.accessToken)
         if (!session) return undefined
 
-        return { sessionId: session.id, userId: context.userId }
+        return { sessionId: session.id, userId: context.userId, principal }
     }
 }
 
 interface SitePort {
+    principal: string
     sink: NotificationSink
     unsubscribe: () => void
 }
@@ -111,8 +118,8 @@ export interface SitePorts {
     /**
      * Call before looking up a port's subscriber. The returned check turns
      * false once the origin's ports were closed, or the vault locked or the
-     * signed-in user changed, since: the lookup may then have read an
-     * approval or a user that is gone.
+     * auth context was written, since: the lookup may then have read an
+     * approval or a session that is gone.
      */
     watch(origin: string): () => boolean
     /** Tracks a subscribed port. Returns the function that stops tracking it. */
@@ -142,9 +149,11 @@ function attempt(step: string, fn: () => void): void {
 }
 
 /**
- * Closes every port when the vault locks or the signed-in user changes. A
- * port is subscribed to one user's session, and a new user signing in
- * without a logout only ends the sessions of the new user.
+ * Closes every port when the vault locks, and the ports of other principals
+ * when the signed-in user changes: a port is subscribed to one user's
+ * session, and a new user signing in without a logout only ends the sessions
+ * of the new user. The same user signing in again keeps their ports, as the
+ * replaced session's logout already closes them.
  */
 export function createSitePorts(
     vault: Pick<Vault, 'onLock'>,
@@ -164,26 +173,41 @@ export function createSitePorts(
         }
     }
 
+    function closePort(port: SitePort, event: StatusEvent | undefined) {
+        if (event) {
+            attempt('send', () => port.sink.send('statusChanged', [event]))
+        }
+        attempt('unsubscribe', port.unsubscribe)
+        attempt('close', () => port.sink.close())
+    }
+
     function close(origin: string, event: StatusEvent) {
         closes.set(origin, (closes.get(origin) ?? 0) + 1)
         const closing = [...(ports.get(origin) ?? [])]
         ports.delete(origin)
-        for (const port of closing) {
-            attempt('send', () => port.sink.send('statusChanged', [event]))
-            attempt('unsubscribe', port.unsubscribe)
-            attempt('close', () => port.sink.close())
-        }
+        for (const port of closing) closePort(port, event)
     }
 
-    function closeAll(event: StatusEvent) {
+    vault.onLock(() => {
         resets++
-        for (const origin of ports.keys()) close(origin, event)
-    }
+        for (const origin of ports.keys()) {
+            close(origin, disconnectedStatusEvent('Locked'))
+        }
+    })
 
-    vault.onLock(() => closeAll(disconnectedStatusEvent('Locked')))
-    authContext.onChange(() =>
-        closeAll(disconnectedStatusEvent('Session changed'))
-    )
+    // Any auth write may have replaced what a pending lookup read, so it is
+    // redone. Ports of another principal close without a status event: a
+    // disconnected status makes dApps call `disconnect`, which would revoke
+    // the incoming user's approval of the site.
+    authContext.onChange((context) => {
+        resets++
+        const principal = context && sitePrincipal(context)
+        for (const set of ports.values()) {
+            for (const port of set) {
+                if (port.principal !== principal) closePort(port, undefined)
+            }
+        }
+    })
 
     return {
         watch(origin) {
@@ -238,7 +262,7 @@ export async function handleNotificationPort(
     }
 
     const unchanged = sitePorts.watch(origin)
-    let subscriber: NotificationSubscriber | undefined
+    let subscriber: SiteSubscriber | undefined
     try {
         subscriber = await resolveSubscriber(origin)
     } catch (error) {
@@ -269,7 +293,11 @@ export async function handleNotificationPort(
         subscriber,
         sink
     )
-    untrack = sitePorts.add(origin, { sink, unsubscribe })
+    untrack = sitePorts.add(origin, {
+        principal: subscriber.principal,
+        sink,
+        unsubscribe,
+    })
     port.onDisconnect.addListener(() => {
         unsubscribe()
         untrack()

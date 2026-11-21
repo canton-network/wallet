@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import type { Store } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -12,6 +11,7 @@ import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
 import { jwt } from '@/__tests__/jwt.ts'
 import { logger } from '@/shared/logger.ts'
 
+import type { SignedInContext } from './auth-context.ts'
 import {
     createSitePorts,
     currentSessionSubscriber,
@@ -23,7 +23,16 @@ import { disconnectedStatusEvent } from './status.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 import { VaultLockedError } from './vault/index.ts'
 
-const subscriber = { sessionId: 'session-1', userId: 'user-1' }
+const userA = {
+    userId: 'user-1',
+    accessToken: 'token-a',
+    identityProviderId: 'idp-mock-oauth',
+}
+const subscriber = {
+    sessionId: 'session-1',
+    userId: userA.userId,
+    principal: JSON.stringify([userA.identityProviderId, userA.userId]),
+}
 const origin = 'https://dapp.example'
 
 /** A vault whose `lock()` only runs the lock listeners. */
@@ -37,16 +46,16 @@ function fakeLockingVault() {
 
 /** Auth context changes that only happen on `signIn()`. */
 function fakeAuthChanges() {
-    const listeners: ((context: AuthContext | undefined) => void)[] = []
+    const listeners: ((context: SignedInContext | undefined) => void)[] = []
     return {
-        onChange: (listener: (context: AuthContext | undefined) => void) =>
+        onChange: (listener: (context: SignedInContext | undefined) => void) =>
             void listeners.push(listener),
-        signIn: (context?: AuthContext) =>
+        signIn: (context?: SignedInContext) =>
             listeners.forEach((listener) => listener(context)),
     }
 }
 
-const userB = { userId: 'user-2', accessToken: 'token-b' }
+const userB = { ...userA, userId: 'user-2', accessToken: 'token-b' }
 
 describe('PortNotificationSink', () => {
     let port: FakePort
@@ -223,7 +232,7 @@ describe('handleNotificationPort', () => {
         expect(port.disconnect).toHaveBeenCalledTimes(1)
     })
 
-    it('closes every port when another user signs in, so pages resubscribe as them', async () => {
+    it('closes every port without a status when another user signs in', async () => {
         const otherPort = fakePort('https://other.example')
         await subscribe(port)
         await subscribe(otherPort)
@@ -231,17 +240,33 @@ describe('handleNotificationPort', () => {
         auth.signIn(userB)
         service.getNotifier('session-1').emit('txChanged', {})
 
+        // A disconnected status would make the dApp call `disconnect`,
+        // revoking the incoming user's approval.
         for (const closed of [port, otherPort]) {
-            expect(closed.postMessage.mock.calls).toEqual([
-                [
-                    {
-                        method: 'statusChanged',
-                        params: disconnectedStatusEvent('Session changed'),
-                    },
-                ],
-            ])
+            expect(closed.postMessage).not.toHaveBeenCalled()
             expect(closed.disconnect).toHaveBeenCalledTimes(1)
         }
+    })
+
+    it('keeps the ports open when the same user signs in again', async () => {
+        await subscribe(port)
+
+        auth.signIn({ ...userA, accessToken: 'token-a2' })
+        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+
+        expect(port.disconnect).not.toHaveBeenCalled()
+        expect(port.postMessage.mock.calls).toEqual([
+            [{ method: 'txChanged', params: { status: 'x' } }],
+        ])
+    })
+
+    it('closes the ports when the same subject signs in through another IdP', async () => {
+        await subscribe(port)
+
+        auth.signIn({ ...userA, identityProviderId: 'idp-self-signed' })
+
+        expect(port.postMessage).not.toHaveBeenCalled()
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
     })
 
     it('disconnects a port whose lookup raced another user signing in', async () => {
@@ -425,11 +450,10 @@ describe('handleNotificationPort', () => {
 
 describe('currentSessionSubscriber', () => {
     const context = {
-        userId: 'user-1',
+        ...userA,
         accessToken: jwt({ iss: 'https://idp', sub: 'user-1' }),
     }
-    // The IdP of the session's network in the default config.
-    const principal = JSON.stringify(['idp-mock-oauth', context.userId])
+    const { principal } = subscriber
     const approvedSites = {
         isApproved: vi.fn(
             async (owner: string, site: string) =>

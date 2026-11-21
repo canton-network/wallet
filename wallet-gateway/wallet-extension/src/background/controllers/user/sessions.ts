@@ -38,6 +38,13 @@ export const sessions = ({
         )
 
         const network = await store.getNetwork(params.networkId)
+        // Site approvals belong to the provider the user signed in through,
+        // so the token must not move to a network of another provider.
+        if (network.identityProviderId !== context.identityProviderId) {
+            throw new Error(
+                `Network ${params.networkId} uses another identity provider than the one the user signed in through.`
+            )
+        }
         const idp = await store.getIdp(network.identityProviderId)
         // assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
