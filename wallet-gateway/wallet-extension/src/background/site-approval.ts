@@ -76,6 +76,8 @@ interface PendingApproval extends SiteApprovalRequest {
     promise: Promise<void>
     settle: (error?: Error) => void
     windowId?: number | undefined
+    /** Set when the session changed while the user's approval was being saved. */
+    stale?: boolean
 }
 
 export interface SiteApprovalsOptions {
@@ -90,7 +92,7 @@ export interface SiteApprovalsOptions {
 const rejected = (message: string) =>
     providerErrors.userRejectedRequest({ message })
 
-const sessionEnded = () =>
+export const sessionEnded = () =>
     providerErrors.unauthorized({
         message: 'The session that asked for the site approval has ended',
     })
@@ -110,6 +112,15 @@ export function createSiteApprovals({
 }: SiteApprovalsOptions): SiteApprovals {
     const byKey = new Map<string, PendingApproval>()
     const byId = new Map<string, PendingApproval>()
+    // Answered with an approval that is still being saved.
+    const saving = new Set<PendingApproval>()
+
+    function closeWindow(pending: PendingApproval): void {
+        if (pending.windowId === undefined) return
+        browser.windows.remove(pending.windowId).catch(() => {
+            // Already closed.
+        })
+    }
 
     function claim(pending: PendingApproval): boolean {
         if (byId.get(pending.id) !== pending) return false
@@ -118,8 +129,11 @@ export function createSiteApprovals({
         return true
     }
 
-    function finish(pending: PendingApproval, error?: Error): void {
-        if (claim(pending)) pending.settle(error)
+    /** Settles a prompt the user didn't answer, and closes its page. */
+    function finish(pending: PendingApproval, error: Error): void {
+        if (!claim(pending)) return
+        pending.settle(error)
+        closeWindow(pending)
     }
 
     vault.onLock(() => {
@@ -139,6 +153,11 @@ export function createSiteApprovals({
                 finish(pending, sessionEnded())
             }
         }
+        for (const pending of saving) {
+            if (pending.accessToken !== context?.accessToken) {
+                pending.stale = true
+            }
+        }
     })
 
     browser.windows.onRemoved.addListener((windowId) => {
@@ -148,6 +167,16 @@ export function createSiteApprovals({
             }
         }
     })
+
+    async function undo(pending: PendingApproval): Promise<void> {
+        try {
+            await sites.revoke(pending.principal, pending.origin)
+        } catch (error) {
+            // A lock doesn't change who is signed in, so the grant still
+            // belongs to the user who gave it.
+            if (!(error instanceof VaultLockedError)) throw error
+        }
+    }
 
     function start(request: SiteApprovalRequest, key: string) {
         let resolve!: () => void
@@ -177,6 +206,10 @@ export function createSiteApprovals({
         open(`/approve-site?id=${encodeURIComponent(pending.id)}`).then(
             (windowId) => {
                 pending.windowId = windowId
+                // Cancelled while the page was opening.
+                if (!byId.has(pending.id) && !saving.has(pending)) {
+                    closeWindow(pending)
+                }
             },
             (error: unknown) =>
                 finish(
@@ -215,16 +248,33 @@ export function createSiteApprovals({
                     pending.settle(rejected('The user rejected the site'))
                     return
                 }
+                saving.add(pending)
                 try {
                     // The user may have signed out or switched accounts
                     // while the page was open.
-                    if (!(await isCurrent(pending.accessToken))) {
+                    if (
+                        !(await isCurrent(pending.accessToken)) ||
+                        pending.stale
+                    ) {
                         throw sessionEnded()
                     }
                     await sites.approve(pending.principal, pending.origin)
+                    // An auth change can land between the check and the
+                    // write, as they are separate vault operations. Checking
+                    // again after the write catches it, and the grant is
+                    // undone.
+                    if (
+                        pending.stale ||
+                        !(await isCurrent(pending.accessToken))
+                    ) {
+                        await undo(pending)
+                        throw sessionEnded()
+                    }
                 } catch (error) {
                     pending.settle(error as Error)
                     throw error
+                } finally {
+                    saving.delete(pending)
                 }
                 pending.settle()
             },

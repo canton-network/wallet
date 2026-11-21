@@ -60,13 +60,14 @@ export function startBackground({
     const signingDriver = new InternalSigningDriver(createSigningStore(vault))
     const deps = { getStore, authContext, signingDriver, notificationService }
     const sites = createApprovedSiteStore(vault)
+    const isCurrent = currentSessionCheck(getStore, authContext)
     const siteApprovals = createSiteApprovals({
         vault,
         authContext,
-        isCurrent: currentSessionCheck(getStore, authContext),
+        isCurrent,
         sites,
     })
-    const sitePorts = createSitePorts(vault)
+    const sitePorts = createSitePorts(vault, authContext)
 
     registerVaultService(vault)
     registerAuthService({ ...deps, vault })
@@ -79,6 +80,7 @@ export function startBackground({
                 sites,
                 siteApprovals,
                 sitePorts,
+                isCurrent,
             },
             vault,
             authContext

@@ -1,39 +1,35 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { Store } from '@canton-network/core-wallet-store'
 import type { Vault } from '../vault'
 
 /** Approved site origins by principal, see `sitePrincipal`. */
 type ApprovedSites = Record<string, string[]>
 
 /**
- * Who site approvals belong to: the access token's issuer and subject. A
- * subject is only unique within its issuer, and the extension signs in
- * through several identity providers. Undefined for a token without both
- * claims, which then can't hold approvals.
+ * Who site approvals belong to: the configured identity provider the user
+ * signed in through, plus the user's subject. The provider comes from the
+ * extension's own network config, not from the token, whose issuer claim any
+ * configured provider could set. Undefined while the token has no session.
  */
-export function sitePrincipal(accessToken: string): string | undefined {
-    let claims: unknown
-    try {
-        const payload = accessToken.split('.')[1]!
-        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/')
-        const bytes = Uint8Array.from(atob(base64), (char) =>
-            char.charCodeAt(0)
-        )
-        claims = JSON.parse(new TextDecoder().decode(bytes))
-    } catch {
-        return undefined
-    }
-    if (typeof claims !== 'object' || claims === null) return undefined
-    const { iss, sub } = claims as { iss?: unknown; sub?: unknown }
-    if (typeof iss !== 'string' || typeof sub !== 'string') return undefined
-    if (iss === '' || sub === '') return undefined
-    return JSON.stringify([iss, sub])
+export async function sitePrincipal(
+    store: Pick<Store, 'getSession' | 'listNetworks'>,
+    context: AuthContext
+): Promise<string | undefined> {
+    const session = await store.getSession(context.accessToken)
+    if (!session) return undefined
+    const network = (await store.listNetworks()).find(
+        (candidate) => candidate.id === session.network
+    )
+    if (!network) return undefined
+    return JSON.stringify([network.identityProviderId, context.userId])
 }
 
 /**
  * The sites each principal allowed to use the dApp API. Not per network: an
- * approval holds on every network the principal signs in to. Every method
+ * approval holds on every network of the same identity provider. Every method
  * throws `VaultLockedError` while the vault is locked.
  */
 export interface ApprovedSiteStore {
@@ -42,11 +38,14 @@ export interface ApprovedSiteStore {
     revoke(principal: string, origin: string): Promise<void>
 }
 
-/** Keeps the approved sites in the vault item `approvedSites`. */
+/**
+ * Keeps the approved sites in the vault item `approvedSitesV2`. The old
+ * `approvedSites` item was keyed by the token's issuer claim and is ignored.
+ */
 export function createApprovedSiteStore(
     vault: Pick<Vault, 'defineItem'>
 ): ApprovedSiteStore {
-    const item = vault.defineItem<ApprovedSites>('approvedSites', {
+    const item = vault.defineItem<ApprovedSites>('approvedSitesV2', {
         fallback: {},
     })
     const originsOf = (sites: ApprovedSites, principal: string): string[] => {

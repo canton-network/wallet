@@ -31,7 +31,9 @@ const alice = { principal: 'alice', origin, accessToken: 'token-a' }
 describe('createSiteApprovals', () => {
     let lockListeners: (() => void)[]
     let authListeners: ((context: AuthContext | undefined) => void)[]
-    let sites: { approve: Mock<ApprovedSiteStore['approve']> }
+    let sites: {
+        [K in keyof ApprovedSiteStore]: Mock<ApprovedSiteStore[K]>
+    }
     let isCurrent: Mock<SessionCheck>
     let open: Mock<(path: string) => Promise<number>>
     let approvals: SiteApprovals
@@ -49,7 +51,21 @@ describe('createSiteApprovals', () => {
         fakeBrowser.reset()
         lockListeners = []
         authListeners = []
-        sites = { approve: vi.fn(async () => {}) }
+        // In memory, like the vault item.
+        const granted = new Set<string>()
+        const key = (owner: string, site: string) =>
+            JSON.stringify([owner, site])
+        sites = {
+            isApproved: vi.fn(async (owner, site) =>
+                granted.has(key(owner, site))
+            ),
+            approve: vi.fn(async (owner, site) => {
+                granted.add(key(owner, site))
+            }),
+            revoke: vi.fn(async (owner, site) => {
+                granted.delete(key(owner, site))
+            }),
+        }
         isCurrent = vi.fn(async () => true)
         open = vi.fn(async () => windowId)
         approvals = createSiteApprovals({
@@ -58,11 +74,7 @@ describe('createSiteApprovals', () => {
                 onChange: (listener) => void authListeners.push(listener),
             },
             isCurrent,
-            sites: {
-                approve: sites.approve,
-                isApproved: vi.fn(),
-                revoke: vi.fn(),
-            },
+            sites,
             open,
             timeoutMs: 1000,
         })
@@ -207,6 +219,82 @@ describe('createSiteApprovals', () => {
             code: errorCodes.provider.unauthorized,
         })
         expect(sites.approve).not.toHaveBeenCalled()
+    })
+
+    it('writes no approval when another user signs in while the answer is checked', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
+        let checked!: (current: boolean) => void
+        // The check read the old session, then the switch lands.
+        isCurrent.mockImplementationOnce(
+            () => new Promise((resolve) => (checked = resolve))
+        )
+        isCurrent.mockResolvedValue(false)
+
+        const decided = approvals.service.decide(id, true)
+        await vi.waitFor(() => expect(checked).toBeDefined())
+        signIn({ userId: 'bob', accessToken: 'token-b' })
+        checked(true)
+
+        await expect(decided).rejects.toThrow('has ended')
+        await expect(request).rejects.toMatchObject({
+            code: errorCodes.provider.unauthorized,
+        })
+        expect(await sites.isApproved('alice', origin)).toBe(false)
+    })
+
+    it('undoes the approval when another user signs in during its write', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
+        const approve = sites.approve.getMockImplementation()!
+        sites.approve.mockImplementationOnce(async (owner, site) => {
+            await approve(owner, site)
+            isCurrent.mockResolvedValue(false)
+            signIn({ userId: 'bob', accessToken: 'token-b' })
+        })
+
+        await expect(approvals.service.decide(id, true)).rejects.toThrow(
+            'has ended'
+        )
+        await expect(request).rejects.toMatchObject({
+            code: errorCodes.provider.unauthorized,
+        })
+        expect(sites.approve).toHaveBeenCalled()
+        expect(await sites.isApproved('alice', origin)).toBe(false)
+    })
+
+    it('closes the approval page when the prompt is cancelled', async () => {
+        const remove = vi
+            .spyOn(fakeBrowser.windows, 'remove')
+            .mockResolvedValue(undefined)
+        const request = approvals.request(alice).catch(() => {})
+        await openedId()
+        // Let `open` resolve to the window's ID.
+        await Promise.resolve()
+
+        signIn(undefined)
+        await request
+
+        expect(remove).toHaveBeenCalledWith(windowId)
+    })
+
+    it('closes a page that opens after its prompt was cancelled', async () => {
+        const remove = vi
+            .spyOn(fakeBrowser.windows, 'remove')
+            .mockResolvedValue(undefined)
+        let opened!: (id: number) => void
+        open.mockImplementationOnce(
+            () => new Promise((resolve) => (opened = resolve))
+        )
+        const request = approvals.request(alice).catch(() => {})
+        await openedId()
+
+        signIn(undefined)
+        await request
+        expect(remove).not.toHaveBeenCalled()
+        opened(windowId)
+
+        await vi.waitFor(() => expect(remove).toHaveBeenCalledWith(windowId))
     })
 })
 

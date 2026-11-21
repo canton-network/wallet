@@ -30,7 +30,11 @@ import { logger } from '@/shared/logger.ts'
 
 import type { SitePorts } from '../../notifications.ts'
 import { openWalletUi } from '../../open-ui.ts'
-import type { SiteApprovals } from '../../site-approval.ts'
+import {
+    type SessionCheck,
+    type SiteApprovals,
+    sessionEnded,
+} from '../../site-approval.ts'
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
@@ -53,6 +57,7 @@ export interface DappControllerDeps {
     sites: ApprovedSiteStore
     siteApprovals: Pick<SiteApprovals, 'request'>
     sitePorts: Pick<SitePorts, 'send' | 'close'>
+    isCurrent: SessionCheck
 }
 
 /** Where a dApp request comes from. */
@@ -84,6 +89,7 @@ export const dappController = (
         sites,
         siteApprovals,
         sitePorts,
+        isCurrent,
     }: DappControllerDeps,
     { origin, locked, auth, principal, approved }: DappRequestContext
 ) => {
@@ -141,7 +147,7 @@ export const dappController = (
                 if (principal === undefined) {
                     throw providerErrors.unauthorized({
                         message:
-                            'The access token has no issuer or subject, so sites cannot be approved',
+                            "The session's network is not configured, so sites cannot be approved",
                     })
                 }
                 // Throws unless the user approves. A second connect from the
@@ -156,6 +162,10 @@ export const dappController = (
             const status = await networkStatus(
                 ledgerClientFor(network, context.accessToken)
             )
+
+            // The user may have signed out or switched accounts during the
+            // prompt or the network check. The token must not reach the site.
+            if (!(await isCurrent(context.accessToken))) throw sessionEnded()
 
             logger.info('Dapp connect status: {*}', { status })
             const connection = {

@@ -62,7 +62,12 @@ export function createDappDispatcher(
         if (vault.status() === 'unlocked') {
             try {
                 const auth = await authContext.load()
-                const principal = auth && sitePrincipal(auth.accessToken)
+                const principal =
+                    auth &&
+                    (await sitePrincipal(
+                        (await deps.getStore()).withAuthContext(auth),
+                        auth
+                    ))
                 const approved =
                     principal !== undefined &&
                     (await deps.sites.isApproved(principal, origin))
