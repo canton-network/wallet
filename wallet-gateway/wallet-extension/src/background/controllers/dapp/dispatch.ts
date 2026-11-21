@@ -1,7 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { rpcErrors, toJsonRpcError } from '@canton-network/core-rpc-errors'
+import {
+    providerErrors,
+    rpcErrors,
+    toJsonRpcError,
+} from '@canton-network/core-rpc-errors'
 import type {
     JsonRpcRequest,
     JsonRpcResponse,
@@ -10,6 +14,7 @@ import type {
 import { logger } from '@/shared/logger.ts'
 
 import type { AuthContextStore } from '../../auth-context.ts'
+import { sitePrincipal } from '../../store/approved-sites.ts'
 import { type VaultLockState, VaultLockedError } from '../../vault/index.ts'
 import {
     dappController,
@@ -34,9 +39,13 @@ export interface DappService {
     request(request: JsonRpcRequest): Promise<JsonRpcResponse>
 }
 
+/** What a site the user hasn't approved may call. */
+const OPEN_METHODS = new Set(['connect', 'isConnected', 'disconnect', 'status'])
+
 /**
- * Answers dApp requests: resolves who each one acts for, like the remote's
- * auth middleware, then hands it to the controller.
+ * Answers dApp requests: resolves who each one acts for and whether the user
+ * approved the requesting site, like the remote's auth middleware, then
+ * hands it to the controller.
  */
 export function createDappDispatcher(
     deps: DappControllerDeps,
@@ -52,23 +61,42 @@ export function createDappDispatcher(
         await vault.ready
         if (vault.status() === 'unlocked') {
             try {
-                return { origin, locked: false, auth: await authContext.load() }
+                const auth = await authContext.load()
+                const principal = auth && sitePrincipal(auth.accessToken)
+                const approved =
+                    principal !== undefined &&
+                    (await deps.sites.isApproved(principal, origin))
+                return { origin, locked: false, auth, principal, approved }
             } catch (error) {
                 // A lock() landed after the status check.
                 if (!(error instanceof VaultLockedError)) throw error
             }
         }
-        return { origin, locked: true, auth: undefined }
+        return {
+            origin,
+            locked: true,
+            auth: undefined,
+            principal: undefined,
+            approved: false,
+        }
+    }
+
+    function notApproved({ locked, auth }: DappRequestContext) {
+        return providerErrors.unauthorized({
+            message: locked
+                ? 'Wallet is locked'
+                : auth
+                  ? 'The user has not approved this site. Call connect first.'
+                  : 'User is not connected',
+        })
     }
 
     return {
         async request(request, origin) {
             const id = request.id ?? null
             try {
-                const controller = dappController(
-                    deps,
-                    await requestContext(origin)
-                )
+                const context = await requestContext(origin)
+                const controller = dappController(deps, context)
 
                 // Only the controller's own methods: never `constructor`,
                 // `toString` or anything else on the prototype chain.
@@ -82,6 +110,10 @@ export function createDappDispatcher(
                             })
                             .serialize(),
                     }
+                }
+
+                if (!context.approved && !OPEN_METHODS.has(request.method)) {
+                    throw notApproved(context)
                 }
 
                 const method = controller[

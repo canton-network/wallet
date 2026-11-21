@@ -24,12 +24,11 @@ import type {
 import { enqueueApprovalRequest } from '@/shared/approval-requests.ts'
 import { logger } from '@/shared/logger.ts'
 
+import type { SitePorts } from '../../notifications.ts'
 import { openWalletUi } from '../../open-ui.ts'
-import {
-    disconnectedStatusEvent,
-    extensionProvider,
-    notifySessionTerminated,
-} from '../../status.ts'
+import type { SiteApprovals } from '../../site-approval.ts'
+import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
+import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
 import buildController from './rpc-gen/index.ts'
 import type {
@@ -45,6 +44,9 @@ export interface DappControllerDeps {
     /** The wallet store, not yet scoped to a user. */
     getStore: () => Promise<WalletStore>
     notificationService: INotificationService
+    sites: ApprovedSiteStore
+    siteApprovals: Pick<SiteApprovals, 'request'>
+    sitePorts: Pick<SitePorts, 'send' | 'close'>
 }
 
 /** Where a dApp request comes from. */
@@ -55,6 +57,10 @@ export interface DappRequestContext {
     locked: boolean
     /** The signed-in user. Always undefined while locked. */
     auth: AuthContext | undefined
+    /** Who approvals belong to, see `sitePrincipal`. Undefined without a user. */
+    principal: string | undefined
+    /** The principal approved `origin`. Always false without one. */
+    approved: boolean
 }
 
 function ledgerClientFor(network: StoreNetwork, accessToken: string) {
@@ -66,8 +72,14 @@ function ledgerClientFor(network: StoreNetwork, accessToken: string) {
 
 /** The dApp API. Built per request, for the page that sent it. */
 export const dappController = (
-    { getStore, notificationService }: DappControllerDeps,
-    { origin, locked, auth }: DappRequestContext
+    {
+        getStore,
+        notificationService,
+        sites,
+        siteApprovals,
+        sitePorts,
+    }: DappControllerDeps,
+    { origin, locked, auth, principal, approved }: DappRequestContext
 ) => {
     const notConnected = () =>
         disconnectedStatusEvent(locked ? 'Locked' : 'Unauthenticated')
@@ -87,13 +99,19 @@ export const dappController = (
         return (await getStore()).withAuthContext(auth)
     }
 
-    /** The signed-in user's auth context, store and session, if any. */
-    async function loadSession() {
-        if (!auth) return undefined
-
+    async function sessionOf(context: AuthContext) {
         const store = await loadStore()
-        const session = await store.getSession(auth.accessToken)
-        return session && { context: auth, store, session }
+        const session = await store.getSession(context.accessToken)
+        return session && { context, store, session }
+    }
+
+    /**
+     * The signed-in user's auth context, store and session, if any. None for
+     * a site the user hasn't approved, so it learns nothing about the user.
+     */
+    async function loadSession() {
+        if (!auth || !approved) return undefined
+        return sessionOf(auth)
     }
 
     return buildController({
@@ -109,17 +127,31 @@ export const dappController = (
                 })
             }
 
-            const signedIn = await loadSession()
+            const signedIn = auth && (await sessionOf(auth))
             if (!signedIn) return notConnected().connection
 
-            const { context, store, session } = signedIn
+            const { context, store } = signedIn
+            if (!approved) {
+                if (principal === undefined) {
+                    throw providerErrors.unauthorized({
+                        message:
+                            'The access token has no issuer or subject, so sites cannot be approved',
+                    })
+                }
+                // Throws unless the user approves. A second connect from the
+                // origin waits on the same prompt.
+                await siteApprovals.request({
+                    principal,
+                    origin,
+                    accessToken: context.accessToken,
+                })
+            }
             const network = await store.getCurrentNetwork()
             const status = await networkStatus(
                 ledgerClientFor(network, context.accessToken)
             )
 
             logger.info('Dapp connect status: {*}', { status })
-            const notifier = notificationService.getNotifier(session.id)
             const connection = {
                 isConnected: true,
                 reason: 'OK',
@@ -139,24 +171,20 @@ export const dappController = (
                     userId: context.userId,
                 },
             }
-            // NOTE: a dApp only subscribes after a successful `connect`
-            // response, so it may miss these; the response carries the same data.
-            notifier.emit('statusChanged', statusEvent)
-            notifier.emit('connected', statusEvent)
+            // They carry the token, so only the site that connected gets
+            // them, not every site of the session. A page only subscribes
+            // after a connected response, so mostly its other tabs see them.
+            sitePorts.send(origin, 'statusChanged', [statusEvent])
+            sitePorts.send(origin, 'connected', [statusEvent])
             return connection
         },
+        // Revokes this site only. The user stays signed in, and other sites
+        // stay connected. Fails rather than report a revocation it can't
+        // make while locked or signed out.
         disconnect: async () => {
-            const signedIn = await loadSession()
-            if (!signedIn) return null
-
-            const { context, store, session } = signedIn
-            await store.removeSession(context.accessToken)
-
-            notifySessionTerminated(
-                notificationService,
-                session.id,
-                'disconnect'
-            )
+            requireAuth()
+            if (principal !== undefined) await sites.revoke(principal, origin)
+            sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
             return null
         },
         isConnected: async () => {

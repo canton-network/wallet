@@ -8,17 +8,32 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
 import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
+import { jwt } from '@/__tests__/jwt.ts'
 import { logger } from '@/shared/logger.ts'
 
 import {
+    createSitePorts,
     currentSessionSubscriber,
     handleNotificationPort,
     PortNotificationSink,
+    type SitePorts,
 } from './notifications.ts'
+import { disconnectedStatusEvent } from './status.ts'
+import { sitePrincipal } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 import { VaultLockedError } from './vault/index.ts'
 
 const subscriber = { sessionId: 'session-1', userId: 'user-1' }
+const origin = 'https://dapp.example'
+
+/** A vault whose `lock()` only runs the lock listeners. */
+function fakeLockingVault() {
+    const listeners: (() => void)[] = []
+    return {
+        onLock: (listener: () => void) => void listeners.push(listener),
+        lock: () => listeners.forEach((listener) => listener()),
+    }
+}
 
 describe('PortNotificationSink', () => {
     let port: FakePort
@@ -69,17 +84,201 @@ describe('PortNotificationSink', () => {
 describe('handleNotificationPort', () => {
     let service: NotificationService
     let port: FakePort
+    let vault: ReturnType<typeof fakeLockingVault>
+    let sitePorts: SitePorts
 
     beforeEach(() => {
         service = new NotificationService()
         port = fakePort()
+        vault = fakeLockingVault()
+        sitePorts = createSitePorts(vault)
+    })
+
+    const subscribe = (sitePort: FakePort) =>
+        handleNotificationPort(
+            asPort(sitePort),
+            service,
+            async () => subscriber,
+            sitePorts
+        )
+
+    it("resolves the subscriber for the port's origin", async () => {
+        const resolve = vi.fn(async () => subscriber)
+
+        await handleNotificationPort(asPort(port), service, resolve, sitePorts)
+
+        expect(resolve).toHaveBeenCalledWith(origin)
+    })
+
+    it('disconnects a port without a web origin', async () => {
+        const extensionPort = fakePort('chrome-extension://other-extension')
+        const resolve = vi.fn(async () => subscriber)
+
+        await handleNotificationPort(
+            asPort(extensionPort),
+            service,
+            resolve,
+            sitePorts
+        )
+
+        expect(resolve).not.toHaveBeenCalled()
+        expect(extensionPort.disconnect).toHaveBeenCalledTimes(1)
+    })
+
+    it("closing an origin's ports tells them and leaves other origins", async () => {
+        const otherPort = fakePort('https://other.example')
+        await subscribe(port)
+        await subscribe(otherPort)
+
+        sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+
+        expect(port.postMessage.mock.calls).toEqual([
+            [
+                {
+                    method: 'statusChanged',
+                    params: disconnectedStatusEvent('disconnect'),
+                },
+            ],
+        ])
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+        expect(otherPort.postMessage).toHaveBeenCalledWith({
+            method: 'txChanged',
+            params: { status: 'x' },
+        })
+        expect(otherPort.disconnect).not.toHaveBeenCalled()
+    })
+
+    it('closes every port when the vault locks', async () => {
+        const otherPort = fakePort('https://other.example')
+        await subscribe(port)
+        await subscribe(otherPort)
+
+        vault.lock()
+        service.getNotifier('session-1').emit('txChanged', {})
+
+        for (const closed of [port, otherPort]) {
+            expect(closed.postMessage.mock.calls).toEqual([
+                [
+                    {
+                        method: 'statusChanged',
+                        params: disconnectedStatusEvent('Locked'),
+                    },
+                ],
+            ])
+            expect(closed.disconnect).toHaveBeenCalledTimes(1)
+        }
+    })
+
+    /** Starts subscribing `sitePort`, with a lookup that waits for `resolve`. */
+    function pendingSubscribe(sitePort: FakePort) {
+        let resolve!: (value: typeof subscriber) => void
+        const done = handleNotificationPort(
+            asPort(sitePort),
+            service,
+            () => new Promise((r) => (resolve = r)),
+            sitePorts
+        )
+        return {
+            finish: async () => {
+                resolve(subscriber)
+                await done
+            },
+        }
+    }
+
+    it("disconnects a port whose lookup raced its origin's close", async () => {
+        const pending = pendingSubscribe(port)
+
+        sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+        await pending.finish()
+
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+        expect(service.getNotifier('session-1').emit('txChanged', {})).toBe(
+            false
+        )
+    })
+
+    it('disconnects a port whose lookup raced a lock', async () => {
+        const pending = pendingSubscribe(port)
+
+        vault.lock()
+        await pending.finish()
+
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+    })
+
+    it('still subscribes a port when another origin closes during its lookup', async () => {
+        const pending = pendingSubscribe(port)
+
+        sitePorts.close(
+            'https://other.example',
+            disconnectedStatusEvent('disconnect')
+        )
+        await pending.finish()
+
+        expect(port.disconnect).not.toHaveBeenCalled()
+        expect(service.getNotifier('session-1').emit('txChanged', {})).toBe(
+            true
+        )
+    })
+
+    it('sends an event to one origin only', async () => {
+        const otherPort = fakePort('https://other.example')
+        await subscribe(port)
+        await subscribe(otherPort)
+
+        sitePorts.send(origin, 'connected', [{ ok: true }])
+
+        expect(port.postMessage).toHaveBeenCalledWith({
+            method: 'connected',
+            params: { ok: true },
+        })
+        expect(otherPort.postMessage).not.toHaveBeenCalled()
+    })
+
+    it('cleans up every port of an origin when one fails to send', async () => {
+        const failing = fakePort()
+        failing.postMessage.mockImplementation(() => {
+            throw new Error('Attempting to use a disconnected port object')
+        })
+        await subscribe(failing)
+        await subscribe(port)
+
+        sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+
+        expect(failing.disconnect).toHaveBeenCalledTimes(1)
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+        expect(service.getNotifier('session-1').emit('txChanged', {})).toBe(
+            false
+        )
+    })
+
+    it('closes every origin on lock when a port fails', async () => {
+        const otherPort = fakePort('https://other.example')
+        port.postMessage.mockImplementation(() => {
+            throw new Error('Attempting to use a disconnected port object')
+        })
+        port.disconnect.mockImplementation(() => {
+            throw new Error('Attempting to use a disconnected port object')
+        })
+        await subscribe(port)
+        await subscribe(otherPort)
+
+        vault.lock()
+
+        expect(otherPort.disconnect).toHaveBeenCalledTimes(1)
+        expect(service.getNotifier('session-1').emit('txChanged', {})).toBe(
+            false
+        )
     })
 
     it('forwards session and user notifications to the port', async () => {
         await handleNotificationPort(
             asPort(port),
             service,
-            async () => subscriber
+            async () => subscriber,
+            sitePorts
         )
 
         service
@@ -99,7 +298,8 @@ describe('handleNotificationPort', () => {
         await handleNotificationPort(
             asPort(port),
             service,
-            async () => undefined
+            async () => undefined,
+            sitePorts
         )
 
         expect(port.disconnect).toHaveBeenCalledTimes(1)
@@ -109,9 +309,14 @@ describe('handleNotificationPort', () => {
     })
 
     it('disconnects the port when the session lookup fails', async () => {
-        await handleNotificationPort(asPort(port), service, async () => {
-            throw new Error('store unavailable')
-        })
+        await handleNotificationPort(
+            asPort(port),
+            service,
+            async () => {
+                throw new Error('store unavailable')
+            },
+            sitePorts
+        )
 
         expect(port.disconnect).toHaveBeenCalledTimes(1)
     })
@@ -120,7 +325,8 @@ describe('handleNotificationPort', () => {
         await handleNotificationPort(
             asPort(port),
             service,
-            async () => subscriber
+            async () => subscriber,
+            sitePorts
         )
 
         service.getNotifier('session-1').emit('logout')
@@ -134,7 +340,8 @@ describe('handleNotificationPort', () => {
         await handleNotificationPort(
             asPort(port),
             service,
-            async () => subscriber
+            async () => subscriber,
+            sitePorts
         )
 
         port.remoteDisconnect()
@@ -153,7 +360,8 @@ describe('handleNotificationPort', () => {
         const pending = handleNotificationPort(
             asPort(port),
             service,
-            () => new Promise((r) => (resolve = r))
+            () => new Promise((r) => (resolve = r)),
+            sitePorts
         )
 
         port.remoteDisconnect()
@@ -168,7 +376,17 @@ describe('handleNotificationPort', () => {
 })
 
 describe('currentSessionSubscriber', () => {
-    const context = { userId: 'user-1', accessToken: 'token-1' }
+    const context = {
+        userId: 'user-1',
+        accessToken: jwt({ iss: 'https://idp', sub: 'user-1' }),
+    }
+    const principal = sitePrincipal(context.accessToken)
+    const approvedSites = {
+        isApproved: vi.fn(
+            async (owner: string, site: string) =>
+                owner === principal && site === origin
+        ),
+    }
     let store: Store
 
     beforeEach(() => {
@@ -183,19 +401,41 @@ describe('currentSessionSubscriber', () => {
     it('resolves nothing when signed out', async () => {
         const resolve = currentSessionSubscriber(
             async () => store,
-            fakeAuthContext()
+            fakeAuthContext(),
+            approvedSites
         )
 
-        await expect(resolve()).resolves.toBeUndefined()
+        await expect(resolve(origin)).resolves.toBeUndefined()
     })
 
     it('resolves nothing when the token has no session', async () => {
         const resolve = currentSessionSubscriber(
             async () => store,
-            fakeAuthContext(context)
+            fakeAuthContext(context),
+            approvedSites
         )
 
-        await expect(resolve()).resolves.toBeUndefined()
+        await expect(resolve(origin)).resolves.toBeUndefined()
+    })
+
+    it('resolves nothing for a site the user has not approved', async () => {
+        await store.setSession({
+            id: 'session-1',
+            origin: 'browserext',
+            network: 'canton:local-oauth',
+            accessToken: context.accessToken,
+        })
+        const resolve = currentSessionSubscriber(
+            async () => store,
+            fakeAuthContext(context),
+            approvedSites
+        )
+
+        await expect(resolve('https://other.example')).resolves.toBeUndefined()
+        expect(approvedSites.isApproved).toHaveBeenCalledWith(
+            principal,
+            'https://other.example'
+        )
     })
 
     it("resolves the token's session and user", async () => {
@@ -207,10 +447,11 @@ describe('currentSessionSubscriber', () => {
         })
         const resolve = currentSessionSubscriber(
             async () => store,
-            fakeAuthContext(context)
+            fakeAuthContext(context),
+            approvedSites
         )
 
-        await expect(resolve()).resolves.toEqual(subscriber)
+        await expect(resolve(origin)).resolves.toEqual(subscriber)
     })
 
     const locked = async (): Promise<never> => {
@@ -226,17 +467,19 @@ describe('currentSessionSubscriber', () => {
         'resolves nothing, without an error log, when $rejects finds the vault locked',
         async ({ getStore, load }) => {
             const logError = vi.spyOn(logger, 'error')
-            const resolve = currentSessionSubscriber(getStore, {
-                ...fakeAuthContext(),
-                load,
-            })
+            const resolve = currentSessionSubscriber(
+                getStore,
+                { ...fakeAuthContext(), load },
+                approvedSites
+            )
             const port = fakePort()
 
-            await expect(resolve()).resolves.toBeUndefined()
+            await expect(resolve(origin)).resolves.toBeUndefined()
             await handleNotificationPort(
                 asPort(port),
                 new NotificationService(),
-                resolve
+                resolve,
+                createSitePorts(fakeLockingVault())
             )
 
             expect(port.disconnect).toHaveBeenCalledTimes(1)
@@ -245,10 +488,14 @@ describe('currentSessionSubscriber', () => {
     )
 
     it('still fails on other store errors', async () => {
-        const resolve = currentSessionSubscriber(async () => {
-            throw new Error('corrupt snapshot')
-        }, fakeAuthContext(context))
+        const resolve = currentSessionSubscriber(
+            async () => {
+                throw new Error('corrupt snapshot')
+            },
+            fakeAuthContext(context),
+            approvedSites
+        )
 
-        await expect(resolve()).rejects.toThrow('corrupt snapshot')
+        await expect(resolve(origin)).rejects.toThrow('corrupt snapshot')
     })
 })

@@ -42,6 +42,11 @@ export const queryKeys = {
         syncNeeded: () => ['wallets', 'syncNeeded'] as const,
     },
 
+    siteApprovals: {
+        all: ['siteApprovals'] as const,
+        detail: (id: string) => ['siteApprovals', id] as const,
+    },
+
     // Under the shared token keys, so that clearing `tokenQueryKeys.all`
     // also drops the previous network's assets.
     token: {

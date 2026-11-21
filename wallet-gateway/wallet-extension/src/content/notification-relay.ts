@@ -55,7 +55,8 @@ export function isConnectedResponse(method: string, result: unknown): boolean {
  * A notifications port is opened once the dApp is connected. Each port
  * message is posted to the page as a JSON-RPC notification (a request without
  * `id`), which `WindowTransport.onNotification` delivers to the dApp. The
- * background closes the port when there is no session or on logout; it is
+ * background closes the port when there is no session, on logout, when the
+ * site isn't approved or disconnects, and when the vault locks; it is
  * reopened on the next connected `connect` / `status` response.
  */
 export class NotificationRelay {

@@ -16,6 +16,11 @@ export interface AuthContextStore {
     clear(): Promise<void>
 }
 
+export interface AuthContextChanges {
+    /** Called after every `store` and `clear`, with the new context. */
+    onChange(listener: (context: AuthContext | undefined) => void): void
+}
+
 /**
  * Keeps the signed-in user's token and user ID in the vault item
  * `authContext`. It survives a service worker restart and a lock, so the
@@ -23,21 +28,39 @@ export interface AuthContextStore {
  */
 export function createAuthContextStore(
     vault: Pick<Vault, 'defineItem'>
-): AuthContextStore {
+): AuthContextStore & AuthContextChanges {
     const item = vault.defineItem<AuthContext | null>('authContext', {
         fallback: null,
     })
+    const listeners = new Set<(context: AuthContext | undefined) => void>()
+    function changed(context: AuthContext | undefined) {
+        for (const listener of listeners) {
+            try {
+                listener(context)
+            } catch (error) {
+                logger.error('Auth context listener failed: {error}', {
+                    error,
+                })
+            }
+        }
+    }
     return {
         async store(token) {
             const userId = jwtUserId(token)
             logger.info('Storing auth context', { userId })
-            await item.setValue({ userId, accessToken: token })
+            const context = { userId, accessToken: token }
+            await item.setValue(context)
+            changed(context)
         },
         async load() {
             return (await item.getValue()) ?? undefined
         },
         async clear() {
             await item.removeValue()
+            changed(undefined)
+        },
+        onChange(listener) {
+            listeners.add(listener)
         },
     }
 }
