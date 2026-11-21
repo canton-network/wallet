@@ -3,26 +3,57 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { jwt } from '@/__tests__/jwt'
 import { createVault, VaultLockedError } from '../vault'
 import { createApprovedSiteStore, sitePrincipal } from './approved-sites'
+import { createTestWalletStore } from './test-store'
 
 describe('sitePrincipal', () => {
-    it('tells equal subjects of different issuers apart', () => {
-        const a = sitePrincipal(jwt({ iss: 'https://idp-a', sub: 'alice' }))
-        const b = sitePrincipal(jwt({ iss: 'https://idp-b', sub: 'alice' }))
+    /** Alice, signed in to `network` with a token of her own. */
+    async function aliceOn(network: string) {
+        const context = { userId: 'alice', accessToken: `token-${network}` }
+        const store = createTestWalletStore(context)
+        await store.setSession({
+            id: `session-${network}`,
+            origin: 'browserext',
+            network,
+            accessToken: context.accessToken,
+        })
+        return sitePrincipal(store, context)
+    }
 
-        expect(a).toBeDefined()
-        expect(b).toBeDefined()
-        expect(a).not.toBe(b)
+    it('tells equal subjects of different configured providers apart', async () => {
+        // The default config signs in to these through different IdPs.
+        const oauth = await aliceOn('canton:local-oauth')
+        const selfSigned = await aliceOn('canton:localnet')
+
+        expect(oauth).toBeDefined()
+        expect(selfSigned).toBeDefined()
+        expect(oauth).not.toBe(selfSigned)
     })
 
-    it.each([
-        ['no issuer', jwt({ sub: 'alice' })],
-        ['no subject', jwt({ iss: 'https://idp-a' })],
-        ['not a JWT', 'token-1'],
-    ])('is undefined for a token with %s', (_, token) => {
-        expect(sitePrincipal(token)).toBeUndefined()
+    it('is the same on every network of a provider', async () => {
+        const context = { userId: 'alice', accessToken: 'token-copy' }
+        const store = createTestWalletStore(context)
+        const network = await store.getNetwork('canton:local-oauth')
+        await store.addNetwork({ ...network, id: 'canton:copy' })
+        await store.setSession({
+            id: 'session-copy',
+            origin: 'browserext',
+            network: 'canton:copy',
+            accessToken: context.accessToken,
+        })
+
+        expect(await sitePrincipal(store, context)).toBe(
+            await aliceOn('canton:local-oauth')
+        )
+    })
+
+    it('is undefined for a token without a session', async () => {
+        const context = { userId: 'alice', accessToken: 'token-1' }
+
+        expect(
+            await sitePrincipal(createTestWalletStore(context), context)
+        ).toBeUndefined()
     })
 })
 
@@ -39,10 +70,8 @@ describe('createApprovedSiteStore', () => {
 
     it('keeps approvals per principal and origin', async () => {
         const sites = createApprovedSiteStore(await createdVault())
-        const alice = sitePrincipal(jwt({ iss: 'https://idp-a', sub: 'u1' }))!
-        const otherAlice = sitePrincipal(
-            jwt({ iss: 'https://idp-b', sub: 'u1' })
-        )!
+        const alice = JSON.stringify(['idp-a', 'u1'])
+        const otherAlice = JSON.stringify(['idp-b', 'u1'])
 
         await sites.approve(alice, 'https://a.example')
         await sites.approve(alice, 'https://b.example')
@@ -63,16 +92,11 @@ describe('createApprovedSiteStore', () => {
     it('grants nothing from entries of another shape', async () => {
         const vault = await createdVault()
         await vault
-            .defineItem<unknown>('approvedSites', { fallback: {} })
-            .setValue({ u1: ['https://a.example'], [`["i","u1"]`]: 'x' })
+            .defineItem<unknown>('approvedSitesV2', { fallback: {} })
+            .setValue({ u1: 'https://a.example' })
         const sites = createApprovedSiteStore(vault)
 
-        expect(
-            await sites.isApproved(
-                sitePrincipal(jwt({ iss: 'i', sub: 'u1' }))!,
-                'https://a.example'
-            )
-        ).toBe(false)
+        expect(await sites.isApproved('u1', 'https://a.example')).toBe(false)
     })
 
     it('does not rewrite the vault to revoke a site that was not approved', async () => {

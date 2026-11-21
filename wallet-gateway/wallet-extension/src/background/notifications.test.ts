@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import type { Store } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -19,7 +20,6 @@ import {
     type SitePorts,
 } from './notifications.ts'
 import { disconnectedStatusEvent } from './status.ts'
-import { sitePrincipal } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 import { VaultLockedError } from './vault/index.ts'
 
@@ -34,6 +34,19 @@ function fakeLockingVault() {
         lock: () => listeners.forEach((listener) => listener()),
     }
 }
+
+/** Auth context changes that only happen on `signIn()`. */
+function fakeAuthChanges() {
+    const listeners: ((context: AuthContext | undefined) => void)[] = []
+    return {
+        onChange: (listener: (context: AuthContext | undefined) => void) =>
+            void listeners.push(listener),
+        signIn: (context?: AuthContext) =>
+            listeners.forEach((listener) => listener(context)),
+    }
+}
+
+const userB = { userId: 'user-2', accessToken: 'token-b' }
 
 describe('PortNotificationSink', () => {
     let port: FakePort
@@ -85,13 +98,15 @@ describe('handleNotificationPort', () => {
     let service: NotificationService
     let port: FakePort
     let vault: ReturnType<typeof fakeLockingVault>
+    let auth: ReturnType<typeof fakeAuthChanges>
     let sitePorts: SitePorts
 
     beforeEach(() => {
         service = new NotificationService()
         port = fakePort()
         vault = fakeLockingVault()
-        sitePorts = createSitePorts(vault)
+        auth = fakeAuthChanges()
+        sitePorts = createSitePorts(vault, auth)
     })
 
     const subscribe = (sitePort: FakePort) =>
@@ -206,6 +221,39 @@ describe('handleNotificationPort', () => {
         await pending.finish()
 
         expect(port.disconnect).toHaveBeenCalledTimes(1)
+    })
+
+    it('closes every port when another user signs in, so pages resubscribe as them', async () => {
+        const otherPort = fakePort('https://other.example')
+        await subscribe(port)
+        await subscribe(otherPort)
+
+        auth.signIn(userB)
+        service.getNotifier('session-1').emit('txChanged', {})
+
+        for (const closed of [port, otherPort]) {
+            expect(closed.postMessage.mock.calls).toEqual([
+                [
+                    {
+                        method: 'statusChanged',
+                        params: disconnectedStatusEvent('Session changed'),
+                    },
+                ],
+            ])
+            expect(closed.disconnect).toHaveBeenCalledTimes(1)
+        }
+    })
+
+    it('disconnects a port whose lookup raced another user signing in', async () => {
+        const pending = pendingSubscribe(port)
+
+        auth.signIn(userB)
+        await pending.finish()
+
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+        expect(service.getNotifier('session-1').emit('txChanged', {})).toBe(
+            false
+        )
     })
 
     it('still subscribes a port when another origin closes during its lookup', async () => {
@@ -380,7 +428,8 @@ describe('currentSessionSubscriber', () => {
         userId: 'user-1',
         accessToken: jwt({ iss: 'https://idp', sub: 'user-1' }),
     }
-    const principal = sitePrincipal(context.accessToken)
+    // The IdP of the session's network in the default config.
+    const principal = JSON.stringify(['idp-mock-oauth', context.userId])
     const approvedSites = {
         isApproved: vi.fn(
             async (owner: string, site: string) =>
@@ -479,7 +528,7 @@ describe('currentSessionSubscriber', () => {
                 asPort(port),
                 new NotificationService(),
                 resolve,
-                createSitePorts(fakeLockingVault())
+                createSitePorts(fakeLockingVault(), fakeAuthChanges())
             )
 
             expect(port.disconnect).toHaveBeenCalledTimes(1)

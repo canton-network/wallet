@@ -38,10 +38,7 @@ import {
 } from '../../notifications.ts'
 import type { SiteApprovals } from '../../site-approval.ts'
 import { disconnectedStatusEvent } from '../../status.ts'
-import {
-    type ApprovedSiteStore,
-    sitePrincipal,
-} from '../../store/approved-sites.ts'
+import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
 import { createTestWalletStore } from '../../store/test-store.ts'
 import { VaultLockedError } from '../../vault/index.ts'
@@ -50,12 +47,12 @@ import { createDappDispatcher, type DappDispatcher } from './dispatch.ts'
 
 const origin = 'https://dapp.example'
 const networkId = 'canton:local-oauth'
-const issuer = 'https://idp.example'
 const authContext = {
     userId: 'user-1',
-    accessToken: jwt({ iss: issuer, sub: 'user-1', exp: inAnHour() }),
+    accessToken: jwt({ sub: 'user-1', exp: inAnHour() }),
 }
-const principal = sitePrincipal(authContext.accessToken)!
+// The IdP of `networkId` in the default config.
+const principal = JSON.stringify(['idp-mock-oauth', authContext.userId])
 const vaultIn = (status: VaultStatus) => ({
     ready: Promise.resolve(),
     status: () => status,
@@ -99,6 +96,7 @@ describe('createDappDispatcher', () => {
             send: Mock<SitePorts['send']>
             close: Mock<SitePorts['close']>
         }
+        isCurrent: Mock<DappControllerDeps['isCurrent']>
     }
     let dispatcher: DappDispatcher
 
@@ -114,6 +112,7 @@ describe('createDappDispatcher', () => {
             sites,
             siteApprovals: { request: vi.fn() },
             sitePorts: { send: vi.fn(), close: vi.fn() },
+            isCurrent: vi.fn(async () => true),
         }
         dispatcher = createDappDispatcher(
             deps,
@@ -616,16 +615,23 @@ describe('createDappDispatcher', () => {
             })
         })
 
-        it('does not share an approval between equal subjects of different issuers', async () => {
-            const otherIssuer = {
+        it('does not share an approval between equal subjects of different identity providers', async () => {
+            // The same subject, signed in to a network of another IdP.
+            const otherIdp = {
                 userId: authContext.userId,
                 accessToken: jwt({
-                    iss: 'https://other-idp.example',
                     sub: authContext.userId,
                     exp: inAnHour(),
+                    jti: 'other',
                 }),
             }
-            authContextStore.load.mockResolvedValue(otherIssuer)
+            await walletStore.withAuthContext(otherIdp).setSession({
+                id: 'session-2',
+                origin: 'browserext',
+                network: 'canton:localnet',
+                accessToken: otherIdp.accessToken,
+            })
+            authContextStore.load.mockResolvedValue(otherIdp)
 
             await expect(
                 dispatcher.request(request('listAccounts'), origin)
@@ -639,13 +645,31 @@ describe('createDappDispatcher', () => {
             })
         })
 
+        it('fails connect and sends no events when the session ended during it', async () => {
+            vi.spyOn(LedgerClient.prototype, 'get').mockResolvedValue({
+                version: '3.4.0',
+            })
+            deps.isCurrent.mockResolvedValue(false)
+
+            await expect(
+                dispatcher.request(request('connect'), origin)
+            ).resolves.toMatchObject({
+                error: { code: errorCodes.provider.unauthorized },
+            })
+            expect(deps.isCurrent).toHaveBeenCalledWith(authContext.accessToken)
+            expect(deps.sitePorts.send).not.toHaveBeenCalled()
+        })
+
         it("sends connect's events only to the connecting site", async () => {
             vi.spyOn(LedgerClient.prototype, 'get').mockResolvedValue({
                 version: '3.4.0',
             })
             const other = 'https://other.example'
             await sites.approve(principal, other)
-            const sitePorts = createSitePorts({ onLock: () => {} })
+            const sitePorts = createSitePorts(
+                { onLock: () => {} },
+                { onChange: () => {} }
+            )
             const ports = {
                 [origin]: fakePort(origin),
                 [other]: fakePort(other),

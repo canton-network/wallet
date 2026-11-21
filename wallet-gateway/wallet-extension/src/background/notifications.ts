@@ -18,7 +18,7 @@ import {
     type NotificationPortMessage,
 } from '@/shared/ports.ts'
 
-import type { AuthContextStore } from './auth-context.ts'
+import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
 import type { StatusEvent } from './controllers/dapp/rpc-gen/typings.ts'
 import { senderOrigin } from './dapp-service.ts'
 import { disconnectedStatusEvent } from './status.ts'
@@ -84,7 +84,7 @@ export function currentSessionSubscriber(
             store = await getStore()
             context = await authContext.load()
             if (!context) return undefined
-            const principal = sitePrincipal(context.accessToken)
+            const principal = await sitePrincipal(store, context)
             approved =
                 principal !== undefined &&
                 (await sites.isApproved(principal, origin))
@@ -110,8 +110,9 @@ interface SitePort {
 export interface SitePorts {
     /**
      * Call before looking up a port's subscriber. The returned check turns
-     * false once the origin's ports were closed, or the vault locked, since:
-     * the lookup may then have read an approval that is gone.
+     * false once the origin's ports were closed, or the vault locked or the
+     * signed-in user changed, since: the lookup may then have read an
+     * approval or a user that is gone.
      */
     watch(origin: string): () => boolean
     /** Tracks a subscribed port. Returns the function that stops tracking it. */
@@ -140,11 +141,18 @@ function attempt(step: string, fn: () => void): void {
     }
 }
 
-/** Closes every port when the vault locks. */
-export function createSitePorts(vault: Pick<Vault, 'onLock'>): SitePorts {
+/**
+ * Closes every port when the vault locks or the signed-in user changes. A
+ * port is subscribed to one user's session, and a new user signing in
+ * without a logout only ends the sessions of the new user.
+ */
+export function createSitePorts(
+    vault: Pick<Vault, 'onLock'>,
+    authContext: AuthContextChanges
+): SitePorts {
     const ports = new Map<string, Set<SitePort>>()
     const closes = new Map<string, number>()
-    let locks = 0
+    let resets = 0
 
     function send(
         origin: string,
@@ -167,19 +175,22 @@ export function createSitePorts(vault: Pick<Vault, 'onLock'>): SitePorts {
         }
     }
 
-    vault.onLock(() => {
-        locks++
-        for (const origin of ports.keys()) {
-            close(origin, disconnectedStatusEvent('Locked'))
-        }
-    })
+    function closeAll(event: StatusEvent) {
+        resets++
+        for (const origin of ports.keys()) close(origin, event)
+    }
+
+    vault.onLock(() => closeAll(disconnectedStatusEvent('Locked')))
+    authContext.onChange(() =>
+        closeAll(disconnectedStatusEvent('Session changed'))
+    )
 
     return {
         watch(origin) {
             const closed = closes.get(origin) ?? 0
-            const locked = locks
+            const reset = resets
             return () =>
-                (closes.get(origin) ?? 0) === closed && locks === locked
+                (closes.get(origin) ?? 0) === closed && resets === reset
         },
         add(origin, port) {
             let set = ports.get(origin)
