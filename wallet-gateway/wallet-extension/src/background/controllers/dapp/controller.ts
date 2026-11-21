@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    type GetEndpoint,
+    isValidGetEndpoint,
+    isValidPostEndpoint,
     LedgerClient,
+    type PostEndpoint,
     type PrepareSubmissionResponse,
 } from '@canton-network/core-ledger-client'
 import { providerErrors } from '@canton-network/core-rpc-errors'
@@ -33,6 +37,8 @@ import type { WalletStore } from '../../store/index.ts'
 import buildController from './rpc-gen/index.ts'
 import type {
     ConnectResult,
+    LedgerApiParams,
+    LedgerApiResult,
     Network,
     PrepareExecuteParams,
     StatusEvent,
@@ -203,8 +209,50 @@ export const dappController = (
                 networkReason: status.reason ? status.reason : 'OK',
             } satisfies ConnectResult
         },
-        ledgerApi: async () =>
-            Promise.resolve({ response: 'default-response' }),
+        // Every route of the ledger's OpenAPI, as on the remote gateway, with
+        // the user's token. Site approval is what limits who can call it.
+        ledgerApi: async (
+            params: LedgerApiParams
+        ): Promise<LedgerApiResult> => {
+            const context = requireAuth()
+            const store = await loadStore()
+            const network = await store.getCurrentNetwork()
+            const ledgerClient = ledgerClientFor(network, context.accessToken)
+            const options = {
+                path: params.path ?? {},
+                query: params.query ?? {},
+            }
+
+            switch (params.requestMethod) {
+                case 'get':
+                    if (!isValidGetEndpoint(params.resource)) {
+                        throw new Error(
+                            `Unsupported get resource: ${params.resource}`
+                        )
+                    }
+                    return await ledgerClient.getWithRetry(
+                        params.resource as GetEndpoint,
+                        undefined,
+                        options
+                    )
+                case 'post':
+                    if (!isValidPostEndpoint(params.resource)) {
+                        throw new Error(
+                            `Unsupported post resource: ${params.resource}`
+                        )
+                    }
+                    return await ledgerClient.postWithRetry(
+                        params.resource as PostEndpoint,
+                        params.body as never,
+                        undefined,
+                        options
+                    )
+                default:
+                    throw new Error(
+                        `Unsupported request method: ${String(params.requestMethod)}`
+                    )
+            }
+        },
 
         prepareExecute: async (params: PrepareExecuteParams) => {
             const context = requireAuth()

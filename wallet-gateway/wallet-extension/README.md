@@ -98,6 +98,7 @@ A site can only use the dApp API once the signed-in user has approved its origin
 - Before approval, only `connect`, `isConnected`, `disconnect` and `status` answer. `status` and `isConnected` report not connected with the reason `Unauthenticated`, without the network, token or user. Every other method fails with error 4100.
 - `connect` sends its `statusChanged` and `connected` events, which carry the token, only to the connecting origin's ports.
 - `disconnect` revokes the site's approval and closes its notification ports, after sending them a `statusChanged` with `isConnected: false`. The user stays signed in, and other sites stay connected. While locked or signed out it fails with 4100 and revokes nothing. Disconnect only stops the extension serving the site: a site that received the user's access token can keep using it until it expires.
+- `ledgerApi` forwards a GET or POST to the current network's ledger with the user's token, like the remote gateway's: any route in the ledger's OpenAPI (`isValidGetEndpoint` and `isValidPostEndpoint` from `core-ledger-client`), command submission and user management included. Approving a site gives it that.
 - The notification port subscribes only pages whose origin, taken from the port's sender, the user approved. `notifications.ts` tracks the ports by origin, so `disconnect` closes one origin's ports and a lock closes them all.
 
 ### Controllers

@@ -320,6 +320,92 @@ describe('createDappDispatcher', () => {
             })
         })
 
+        describe('ledgerApi', () => {
+            it('forwards a GET with its path and query', async () => {
+                const getWithRetry = vi
+                    .spyOn(LedgerClient.prototype, 'getWithRetry')
+                    .mockResolvedValue({ ok: true })
+
+                const response = await dispatcher.request(
+                    request('ledgerApi', {
+                        requestMethod: 'get',
+                        resource: '/v2/parties',
+                        path: { partyId: 'party::x' },
+                        query: { limit: '10' },
+                    }),
+                    origin
+                )
+
+                expect(response).toEqual({
+                    jsonrpc: '2.0',
+                    id: 7,
+                    result: { ok: true },
+                })
+                expect(getWithRetry).toHaveBeenCalledWith(
+                    '/v2/parties',
+                    undefined,
+                    { path: { partyId: 'party::x' }, query: { limit: '10' } }
+                )
+            })
+
+            it('forwards a POST with its body and query', async () => {
+                const postWithRetry = vi
+                    .spyOn(LedgerClient.prototype, 'postWithRetry')
+                    .mockResolvedValue({ created: true })
+
+                const response = await dispatcher.request(
+                    request('ledgerApi', {
+                        requestMethod: 'post',
+                        resource: '/v2/commands/submit-and-wait',
+                        body: { commands: [] },
+                        query: { wait: 'true' },
+                    }),
+                    origin
+                )
+
+                expect(response).toMatchObject({ result: { created: true } })
+                expect(postWithRetry).toHaveBeenCalledWith(
+                    '/v2/commands/submit-and-wait',
+                    { commands: [] },
+                    undefined,
+                    { query: { wait: 'true' }, path: {} }
+                )
+            })
+
+            it.each([
+                [
+                    { requestMethod: 'patch', resource: '/v2/parties' },
+                    'Unsupported request method: patch',
+                ],
+                [
+                    { requestMethod: 'get', resource: '/v2/badresource' },
+                    'Unsupported get resource: /v2/badresource',
+                ],
+                [
+                    { requestMethod: 'post', resource: '/v2/state/ledger-end' },
+                    'Unsupported post resource: /v2/state/ledger-end',
+                ],
+            ])('refuses %o', async (params, message) => {
+                const getWithRetry = vi.spyOn(
+                    LedgerClient.prototype,
+                    'getWithRetry'
+                )
+                const postWithRetry = vi.spyOn(
+                    LedgerClient.prototype,
+                    'postWithRetry'
+                )
+
+                const response = await dispatcher.request(
+                    request('ledgerApi', params),
+                    origin
+                )
+
+                expect(response).toMatchObject({ error: { message } })
+                expect(getWithRetry).not.toHaveBeenCalled()
+                expect(postWithRetry).not.toHaveBeenCalled()
+            })
+        })
+
         describe('from a site the user has not approved', () => {
             const unapproved = 'https://unapproved.example'
 
