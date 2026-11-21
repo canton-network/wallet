@@ -669,9 +669,38 @@ describe('DappSDK', () => {
             expect(provider.request).toHaveBeenCalledWith(
                 expect.objectContaining({ method: 'status' })
             )
-            expect(provider.request).toHaveBeenCalledWith(
-                expect.objectContaining({ method: 'disconnect' })
+            expect(
+                provider.request.mock.calls.filter(
+                    ([args]) => args.method === 'disconnect'
+                )
+            ).toHaveLength(1)
+        })
+
+        it('forgets the session when the wallet refuses to disconnect', async () => {
+            const refusal = new Error('locked')
+            const { sdk, provider, adapter } = await connectSdk()
+            const connected = provider.request.getMockImplementation()!
+            provider.request.mockImplementation(async (args) =>
+                args.method === 'disconnect'
+                    ? Promise.reject(refusal)
+                    : connected(args)
             )
+
+            await expect(sdk.disconnect()).rejects.toBe(refusal)
+
+            expect(
+                provider.request.mock.calls.filter(
+                    ([args]) => args.method === 'disconnect'
+                )
+            ).toHaveLength(1)
+            expect(sdk.getConnectedProvider()).toBeNull()
+            expect(adapter.teardown).toHaveBeenCalled()
+            expect(mockClearAllLocalState).toHaveBeenCalledWith({
+                closePopup: true,
+            })
+            await expect(sdk.isConnected()).resolves.toMatchObject({
+                isConnected: false,
+            })
         })
 
         it('registers and removes event listeners on the active client', async () => {

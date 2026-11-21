@@ -494,17 +494,21 @@ export class DappSDK {
     }
 
     async disconnect(): Promise<null> {
-        // This may result in double call to dapp-api with method `disconnect` and double event `statusChanged`
-        if (this.client) {
-            await this.client.disconnect()
-            this.client = null
-        }
-        if (this.discovery) {
-            try {
+        // A wallet can refuse to disconnect (the extension does while locked).
+        // The error still reaches the caller, but the dApp must forget the
+        // session, or the next page load restores it without the picker.
+        // Only one layer sends the request, so a refusal is never retried.
+        const client = this.client
+        this.client = null
+        try {
+            if (this.discovery?.getActiveSession()) {
+                // Tears down the adapter and the saved choice even on failure.
                 await this.discovery.disconnect()
-            } catch {
-                // already cleaned up via DappClient.disconnect()
+            } else if (client) {
+                await client.disconnect()
             }
+        } finally {
+            if (client) clearAllLocalState({ closePopup: true })
         }
         return null
     }
