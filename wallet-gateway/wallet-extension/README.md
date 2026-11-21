@@ -23,6 +23,7 @@ src/
 │   ├── token/        the token service: sdk.ts builds the wallet SDK, service.ts is what the pages call
 │   ├── vault-service.ts  vault messages for the extension pages
 │   ├── trusted-service.ts  isTrustedSender and registerTrustedService, for services only the extension pages may call
+│   ├── dapp-service.ts  registerDappService, which takes each dApp request's origin from the browser
 │   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
 ├── content/          content script code: startContent(), the JSON-RPC proxy and the notification relay
@@ -64,7 +65,7 @@ The pages and the content script call the background through [`@webext-core/prox
 
 - `USER_RPC_KEY` is the user API, for the extension pages.
 - `TOKEN_RPC_KEY` is the token service, for the extension pages. See [Token service](#token-service).
-- `DAPP_RPC_KEY` is the dApp dispatcher, for the content script. It stays on proxy-service's `registerService`, which takes any sender of this extension, because the content script runs in every web page. The content script calls `request(request, location.origin)`. The dispatcher builds the dApp controller for that origin, calls only the controller's own methods (`Object.hasOwn`) and always resolves to a JSON-RPC response. Thrown errors become JSON-RPC errors that keep their code.
+- `DAPP_RPC_KEY` is the dApp dispatcher, for the content script. `registerDappService` (`background/dapp-service.ts`) answers it, because proxy-service's `registerService` drops the sender. The content script calls `request(request)`, and the background takes the origin from the message sender (`sender.origin`, or the origin of `sender.url` in Firefox). It refuses a sender without an http or https origin, which includes `file:` pages and the extension's own pages. The content script starts nothing on a page whose own origin is opaque (`window.origin` is `'null'`), such as a CSP-sandboxed page, because in Firefox the background only sees the page's URL. The dispatcher builds the dApp controller for that origin, calls only the controller's own methods (`Object.hasOwn`) and always resolves to a JSON-RPC response. Thrown errors become JSON-RPC errors that keep their code.
 
 `registerService` ignores the sender, so the user API and the token service use `registerTrustedService` (`background/trusted-service.ts`) instead. It answers the same `createProxyService` messages, but only from `popup.html` and `app.html`, and it calls only the service's own methods (`Object.hasOwn` at every step of the path), so paths such as `token.constructor` are refused. Both services also sit behind `requireUnlocked` (`background/vault/`), which wraps every method, nested ones included, so it rejects with `VaultLockedError` while the vault isn't unlocked.
 

@@ -11,7 +11,7 @@ import {
 import { createProxyService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
 
-import type { DappDispatcher } from '@/background/controllers/dapp/dispatch.ts'
+import type { DappService } from '@/background/controllers/dapp/dispatch.ts'
 import { logger } from '@/shared/logger.ts'
 import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
@@ -19,14 +19,12 @@ import type { NotificationRelay } from './notification-relay.ts'
 
 export interface JsonRpcProxyOptions {
     /** The background dApp dispatcher. */
-    dispatcher: Pick<DappDispatcher, 'request'>
+    dispatcher: DappService
     /** Forwards a message to the background (`runtime.sendMessage`). */
     sendMessage: (message: SpliceMessage) => Promise<unknown>
     notificationRelay: Pick<NotificationRelay, 'onResponse'>
     /** The dApp page window requests come from and responses go to. */
     window: Pick<Window, 'postMessage'>
-    /** The page origin, sent with each request. */
-    origin: string
     /** Routing key of this extension, see `SpliceMessage.target`. */
     runtimeId: string | undefined
 }
@@ -50,7 +48,7 @@ export function createJsonRpcProxyHandler(options: JsonRpcProxyOptions) {
 
     async function dispatch(request: JsonRpcRequest): Promise<JsonRpcResponse> {
         try {
-            return await dispatcher.request(request, options.origin)
+            return await dispatcher.request(request)
         } catch (error) {
             // e.g. "Extension context invalidated" after an extension reload
             return {
@@ -128,7 +126,6 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay): void {
         sendMessage: (message) => browser.runtime.sendMessage(message),
         notificationRelay,
         window,
-        origin: location.origin,
         runtimeId: browser.runtime?.id,
     })
     window.addEventListener('message', (event: MessageEvent) => {

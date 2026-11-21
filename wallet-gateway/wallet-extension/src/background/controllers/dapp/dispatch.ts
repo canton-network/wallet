@@ -18,14 +18,20 @@ import {
 } from './controller.ts'
 
 /**
- * The single entry point of the dApp API, registered as a proxy service and
- * called by the content script. It always resolves to a JSON-RPC response.
+ * The single entry point of the dApp API. It always resolves to a JSON-RPC
+ * response. `origin` comes from the browser's sender information, see
+ * `registerDappService`.
  */
 export interface DappDispatcher {
     request(
         request: JsonRpcRequest,
         origin: DappRequestContext['origin']
     ): Promise<JsonRpcResponse>
+}
+
+/** What the content script calls. The background adds the origin. */
+export interface DappService {
+    request(request: JsonRpcRequest): Promise<JsonRpcResponse>
 }
 
 /**
