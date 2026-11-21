@@ -83,11 +83,12 @@ const makeHolding = (
     amount: string,
     admin: string,
     instrumentId: string,
-    lock: HoldingView['lock'] = null
+    lock: HoldingView['lock'] = null,
+    owner = 'dummy'
 ): PrettyContract<HoldingView> => ({
     contractId: id,
     interfaceViewValue: {
-        owner: 'dummy',
+        owner,
         instrumentId: {
             admin: admin,
             id: instrumentId,
@@ -153,13 +154,27 @@ describe('CoreService', () => {
     })
 
     it('should fetch only unlocked holdings', async () => {
-        const lockedHolding = makeHolding('1', '20', 'admin:123', 'amulet', {
-            holders: [],
-            expiresAt: null,
-            expiresAfter: null,
-            context: null,
-        })
-        const unlockedHolding = makeHolding('2', '20', 'admin:123', 'amulet')
+        const lockedHolding = makeHolding(
+            '1',
+            '20',
+            'admin:123',
+            'amulet',
+            {
+                holders: [],
+                expiresAt: null,
+                expiresAfter: null,
+                context: null,
+            },
+            senderParty
+        )
+        const unlockedHolding = makeHolding(
+            '2',
+            '20',
+            'admin:123',
+            'amulet',
+            null,
+            senderParty
+        )
         const { service } = makeService()
         vi.spyOn(service.core, 'listContractsByInterface').mockResolvedValue([
             lockedHolding,
@@ -171,6 +186,47 @@ describe('CoreService', () => {
         })
         expect(result).toHaveLength(1)
         expect(result[0]).toEqual('2')
+    })
+
+    it('should only select holdings the sender owns', async () => {
+        // The instrument admin observes every holding of its instrument
+        const ownHolding = makeHolding(
+            'own',
+            '10',
+            instrumentAdmin,
+            instrumentId,
+            null,
+            instrumentAdmin
+        )
+        const othersHolding = makeHolding(
+            'others',
+            '25',
+            instrumentAdmin,
+            instrumentId,
+            null,
+            senderParty
+        )
+        const { service } = makeService()
+        vi.spyOn(service.core, 'listContractsByInterface').mockResolvedValue([
+            ownHolding,
+            othersHolding,
+        ])
+
+        await expect(
+            service.core.getInputHoldingsCids({
+                sender: instrumentAdmin,
+                instrumentAdmin,
+                instrumentId,
+            })
+        ).resolves.toEqual(['own'])
+        await expect(
+            service.core.getInputHoldingsCids({
+                sender: instrumentAdmin,
+                instrumentAdmin,
+                instrumentId,
+                amount: new Decimal(25),
+            })
+        ).rejects.toThrow("Sender doesn't have sufficient funds")
     })
 
     it('should not read account holdings until completion by default', async () => {
