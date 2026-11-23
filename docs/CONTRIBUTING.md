@@ -90,7 +90,7 @@ pnpm test:all           # Run tests across all packages
 pnpm test-coverage:all  # Run tests with coverage across all packages
 pnpm full:rebuild       # Clean, regenerate, and rebuild everything
 pnpm full:up            # Start localnet and all dev servers
-pnpm full:down          # Stop everything and rebuild
+pnpm full:down          # Stop localnet and all dev servers
 ```
 
 Tests use [Vitest](https://vitest.dev/) and are exposed as the `test` Nx target, inferred by
@@ -114,21 +114,28 @@ pnpm generate:all   # Regenerate all API specs
 
 ### Live Reloading
 
-To support fast iteration loops, most workspaces have `dev` scripts that watch their source directories for changes and rebuild. Start all dev servers with:
+To support fast iteration loops, the Wallet Gateway, the mock OAuth server and the example dApps run
+as dev servers that restart or reload on change. Start them with:
 
 ```bash
 pnpm start:all
 ```
 
-This uses `pm2` to run each dev server in parallel. See the `pm2` [cheatsheet](https://pm2.keymetrics.io/docs/usage/quick-start/#cheatsheet) for more commands (preface them with `pnpm pm2` when invoking).
+This uses `pm2` to run each dev server as a background process with its own log, next to the UI
+components watcher and their Storybook. The dev servers import the workspace libraries from their
+`src/` (the `@canton-network/source` export condition), so library changes reach them without a
+build. Only the libraries bundling generated Daml bindings (`core-token-standard`,
+`core-token-standard-v2`, `core-splice-codegen`) are used from `dist/`; `pnpm generate:all` builds them. See the `pm2`
+[cheatsheet](https://pm2.keymetrics.io/docs/usage/quick-start/#cheatsheet) for more commands
+(preface them with `pnpm pm2` when invoking).
 
 ```bash
-pnpm pm2 list   # Show running processes
-pnpm pm2 logs   # View logs
-pnpm stop:all   # Stop all services
+pnpm pm2 list         # Show running processes
+pnpm pm2 logs remote  # View the Wallet Gateway logs
+pnpm stop:all         # Stop all services
 ```
 
-> Note: Codegenned artifacts are not automatically watched. Use `pnpm generate:all` if updating the API specs.
+> Note: Codegenned artifacts are not regenerated automatically. Use `pnpm generate:all` if updating the API specs.
 
 After running `pnpm start:all`, you'll have services exposed on the following ports:
 
@@ -171,6 +178,20 @@ pnpm script:fetch:canton --network=devnet   # Fetch devnet Canton version
 pnpm script:fetch:canton --network=mainnet  # Fetch mainnet Canton version (default)
 ```
 
+### End-to-end Tests
+
+The e2e tests run against production builds, as in CI, not the dev servers of `pnpm start:all`. Dev builds behave differently (e.g. Lit dev mode), so a test passing against them can still fail in CI.
+
+```bash
+pnpm start:canton --network=devnet         # ping and the extension
+pnpm start:localnet --network=devnet       # portfolio and the wallet SDK examples
+pnpm start:e2e example-ping                # builds and starts the Wallet Gateway, mock OAuth and ping (all dApps without arguments)
+pnpm nx playwright:e2e @canton-network/example-ping
+pnpm stop:all
+```
+
+Rebuild and run `pnpm pm2 restart all` after changing code, the e2e services do not watch for changes.
+
 ## Migrating from `yarn`
 
 If you've cloned this repository when it was set up to use `yarn`, finalize the switch to `pnpm`:
@@ -184,6 +205,17 @@ If you've cloned this repository when it was set up to use `yarn`, finalize the 
     - `yarn start:all` --> `pnpm start:all`
     - `yarn pm2 list` --> `pnpm pm2 list`
     - ... etc
+
+## Migrating from per-package dev watchers
+
+`pnpm start:all` used to start a `tsdown --watch` process per library, as the dev servers imported
+the libraries from `dist/`. If your pm2 daemon still runs those, remove them once (this also stops
+Canton started with `pnpm start:canton`):
+
+```bash
+pnpm pm2 delete all
+pnpm start:all
+```
 
 ## Migrating from `corepack`
 

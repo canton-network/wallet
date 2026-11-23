@@ -6,6 +6,7 @@ import { resolve } from 'path'
 import { defineConfig } from 'vite'
 
 import { standardDecorators } from '../../vite.decorators.ts'
+import { workspaceSources } from '../../vite.source.ts'
 import { resolveRouteInputs } from './src/web/route-inputs.ts'
 
 const frontendRoot = resolve(import.meta.dirname, 'src/web/frontend')
@@ -23,7 +24,10 @@ export default defineConfig({
             input: resolveRouteInputs(frontendRoot),
         },
     },
-    plugins: [standardDecorators(resolve(frontendRoot, '**/*.ts'))],
+    plugins: [
+        standardDecorators(resolve(frontendRoot, '**/*.ts')),
+        workspaceSources(),
+    ],
     resolve: {
         alias: {
             // Must come before the package alias below, which would turn

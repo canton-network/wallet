@@ -1,5 +1,10 @@
 name: Setup Playwright
 description: 'Setup Playwright for jobs that consume build artifacts from the same workflow run'
+inputs:
+    browsers:
+        description: 'Space separated Playwright browsers to install'
+        required: false
+        default: 'chromium'
 runs:
     using: composite
     steps:
@@ -10,22 +15,29 @@ runs:
               # awk extracts just the number.
               version="$(pnpm exec playwright --version | awk '{print $2}')"
               echo "version=$version" >> "$GITHUB_OUTPUT"
+              # Part of the cache key, so a job never restores a cache that
+              # misses one of its browsers
+              echo "browsers=$(echo "$BROWSERS" | tr ' ' '\n' | sort | paste -sd- -)" >> "$GITHUB_OUTPUT"
           shell: bash
+          env:
+              BROWSERS: ${{ inputs.browsers }}
 
         - name: Load Playwright browser cache
           uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
           id: playwright-cache
           with:
               path: '~/.cache/ms-playwright'
-              key: '${{ runner.os }}-0-playwright-${{ steps.playwright-version.outputs.version }}'
+              key: '${{ runner.os }}-0-playwright-${{ steps.playwright-version.outputs.browsers }}-${{ steps.playwright-version.outputs.version }}'
               restore-keys: |
-                  ${{ runner.os }}-0-playwright-
+                  ${{ runner.os }}-0-playwright-${{ steps.playwright-version.outputs.browsers }}-
 
         - name: Install Playwright browsers
           run: |
               if [ "${{ steps.playwright-cache.outputs.cache-hit }}" = "true" ]; then
-                  pnpm exec playwright install chromium firefox
+                  pnpm exec playwright install $BROWSERS
               else
-                pnpm exec playwright install chromium firefox --with-deps
+                pnpm exec playwright install $BROWSERS --with-deps
               fi
           shell: bash
+          env:
+              BROWSERS: ${{ inputs.browsers }}

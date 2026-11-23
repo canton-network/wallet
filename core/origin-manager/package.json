@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-origin-manager",
-    "version": "1.9.0",
+    "version": "1.10.0",
     "type": "module",
     "description": "Secure cross-window origin handshake and guarded postMessage helpers.",
     "license": "Apache-2.0",
@@ -11,6 +11,7 @@
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
