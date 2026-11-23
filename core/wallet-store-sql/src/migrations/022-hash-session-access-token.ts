@@ -18,12 +18,16 @@ async function hasColumn(
     column: string
 ): Promise<boolean> {
     if (await isPostgres(db)) {
+        // Resolve the table through search_path so a sessions table that
+        // isn't in public still hashes and renames the same column.
         const res = await sql<{ exists: boolean }>`
             SELECT EXISTS (
-                SELECT 1 FROM information_schema.columns
-                WHERE table_schema = 'public'
-                  AND table_name = ${table}
-                  AND column_name = ${column}
+                SELECT 1
+                FROM pg_attribute a
+                WHERE a.attrelid = to_regclass(${table})::oid
+                  AND a.attname = ${column}
+                  AND a.attnum > 0
+                  AND NOT a.attisdropped
             ) AS exists
         `.execute(db)
         return res.rows[0]?.exists ?? false
@@ -163,6 +167,11 @@ async function removeLeftoverSelfIssuedTokens(trx: Kysely<DB>): Promise<void> {
 
 export async function up(db: Kysely<DB>): Promise<void> {
     await db.transaction().execute(async (trx) => {
+        if (await isPostgres(trx)) {
+            // Hold the table so another gateway cannot insert a raw
+            // token after the SELECT and have it renamed unhashed.
+            await sql`LOCK TABLE sessions IN ACCESS EXCLUSIVE MODE`.execute(trx)
+        }
         // First run hashes values in access_token and then renames the
         // column. A second run finds the new name and leaves the hashes
         // alone, including values that were already 64-character hex.
@@ -202,11 +211,18 @@ export async function up(db: Kysely<DB>): Promise<void> {
 // Hashes can't be reversed, and older code looks sessions up by the raw
 // token, so hashed sessions are dropped and their users log in again.
 export async function down(db: Kysely<DB>): Promise<void> {
-    await sql`
-        ALTER TABLE sessions
-        RENAME COLUMN access_token_hash TO access_token
-    `.execute(db)
-    await sql`
-        DELETE FROM sessions WHERE access_token IS NOT NULL
-    `.execute(db)
+    await db.transaction().execute(async (trx) => {
+        // Both statements have to commit together so a retry still works
+        // if rollback is interrupted after the rename. hasColumn lets a
+        // retry skip the rename when it already happened.
+        if (await hasColumn(trx, 'sessions', 'access_token_hash')) {
+            await sql`
+                ALTER TABLE sessions
+                RENAME COLUMN access_token_hash TO access_token
+            `.execute(trx)
+        }
+        await sql`
+            DELETE FROM sessions WHERE access_token IS NOT NULL
+        `.execute(trx)
+    })
 }
