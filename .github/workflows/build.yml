@@ -41,6 +41,7 @@ jobs:
             extension-matrix: ${{ steps.affected.outputs.extension-matrix }}
             portfolio-matrix: ${{ steps.affected.outputs.portfolio-matrix }}
             sdk-examples-matrix: ${{ steps.affected.outputs.sdk-examples-matrix }}
+            sdk-package: ${{ steps.affected.outputs.sdk-package }}
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -71,8 +72,10 @@ jobs:
                     exit 1
                   fi
 
-            - name: Build project
-              run: pnpm build:all
+            # Later jobs build what else they need, restoring from the
+            # uploaded Nx cache where possible.
+            - name: Build affected projects
+              run: pnpm nx "$NX_SELECT" -t build --parallel
 
             - name: Upload build artifacts
               uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
@@ -142,6 +145,9 @@ jobs:
 
             - name: check for unused and unlisted dependencies
               run: pnpm knip --reporter github-actions
+
+            - name: check TypeScript project references are in sync
+              run: pnpm nx sync:check
 
             - name: run typechecking
               run: pnpm nx "$NX_SELECT" -t typecheck --parallel
@@ -293,7 +299,7 @@ jobs:
                     export DFNS_PRIVATE_KEY="${{ vars.DFNS_PRIVATE_KEY }}"
                     export DFNS_AUTH_TOKEN="${{ vars.DFNS_AUTH_TOKEN }}"
                   fi
-                  pnpm start:e2e
+                  pnpm start:e2e example-ping
 
             - uses: ./.github/actions/setup_playwright
               with:
@@ -441,7 +447,7 @@ jobs:
                   multi_sync: 'true'
 
             - name: Start remote WK
-              run: pnpm start:e2e
+              run: pnpm start:e2e example-portfolio
 
             - uses: ./.github/actions/setup_playwright
 
@@ -634,7 +640,10 @@ jobs:
                     echo "build or affected detection did not succeed"
                     exit 1
                   fi
-                  if [ "${{ needs.wallet-sdk-pkg.result }}" != "success" ]; then
+                  if [ "${{ needs.build.outputs.sdk-package }}" = "false" ] &&
+                     [ "${{ needs.wallet-sdk-pkg.result }}" = "skipped" ]; then
+                    echo "wallet-sdk package validation skipped (not affected)"
+                  elif [ "${{ needs.wallet-sdk-pkg.result }}" != "success" ]; then
                     echo "wallet-sdk package validation did not succeed"
                     exit 1
                   fi
@@ -655,11 +664,16 @@ jobs:
     wallet-sdk-pkg:
         runs-on: ubuntu-26.04
         needs: build
+        if: needs.build.outputs.sdk-package == 'true'
         steps:
             - name: Checkout
               uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
             - uses: ./.github/actions/setup_pnpm/artifacts
+
+            # Make sure both SDKs are built, even if only one was affected by the changes
+            - name: Build SDKs
+              run: pnpm nx run-many -t build -p @canton-network/wallet-sdk @canton-network/dapp-sdk --parallel
 
             - name: Validate SDK package install
               run: pnpm script:validate:package

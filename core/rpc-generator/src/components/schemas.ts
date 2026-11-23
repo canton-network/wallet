@@ -24,6 +24,14 @@ const allowNullExtras = (value: unknown): unknown => {
     )
 }
 
+const paramSchema = (
+    param: { schema: unknown; required?: boolean } | undefined
+): string => {
+    if (!param) return 'noParams'
+    const schema = `z.fromJSONSchema(${JSON.stringify(allowNullExtras(param.schema))})`
+    return param.required ? schema : `optionalParams(${schema})`
+}
+
 // openrpcDocument still has cross-file $refs; methodTypings holds the dereferenced document.
 const paramSchemasTemplate = template(
     `// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
@@ -35,12 +43,20 @@ import { z } from 'zod'
 
 // Methods without a declared param only accept an omitted or empty \`params\`.
 const noParams = z.union([z.undefined(), z.tuple([]), z.strictObject({})])
-
+<% if (methodTypings.openrpcDocument.methods.some(({ params: [param] }) => param && !param.required)) { %>
+// An optional param may also be omitted positionally, as \`[]\`.
+const optionalParams = (schema: z.ZodType) =>
+    z.preprocess(
+        (params) =>
+            Array.isArray(params) && params.length === 0 ? undefined : params,
+        schema.optional()
+    )
+<% } %>
 export const paramSchemas: Record<string, z.ZodType> = {
-<% methodTypings.openrpcDocument.methods.forEach(({ name, params: [param] }) => { %>  <%= JSON.stringify(name) %>: <%= param ? 'z.fromJSONSchema(' + JSON.stringify(allowNullExtras(param.schema)) + ')' + (param.required ? '' : '.optional()') : 'noParams' %>,
+<% methodTypings.openrpcDocument.methods.forEach(({ name, params: [param] }) => { %>  <%= JSON.stringify(name) %>: <%= paramSchema(param) %>,
 <% }); %>}
 `,
-    { imports: { allowNullExtras } }
+    { imports: { paramSchema } }
 )
 
 const hooks: components.IHooks = {

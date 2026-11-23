@@ -2,6 +2,42 @@
     "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
         "allowImportingTsExtensions": true,
-        "jsx": "react-jsx"
-    }
+        "jsx": "react-jsx",
+        "customConditions": ["@canton-network/source"]
+    },
+    "references": [
+        {
+            "path": "../../core/wallet-user-rpc-client"
+        },
+        {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
+            "path": "../../core/wallet-store-inmemory"
+        },
+        {
+            "path": "../../core/wallet-store"
+        },
+        {
+            "path": "../../core/wallet-services"
+        },
+        {
+            "path": "../../core/wallet-auth"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/signing-lib"
+        },
+        {
+            "path": "../../core/signing-internal"
+        },
+        {
+            "path": "../../core/rpc-errors"
+        },
+        {
+            "path": "../../core/ledger-client"
+        }
+    ]
 }

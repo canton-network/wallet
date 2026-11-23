@@ -6,6 +6,8 @@ import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+import { workspaceSources } from '../../vite.source.ts'
+
 // https://vite.dev/config/
 export default defineConfig({
     plugins: [
@@ -15,6 +17,7 @@ export default defineConfig({
             autoCodeSplitting: true,
         }),
         react(),
+        workspaceSources(),
     ],
     resolve: {
         tsconfigPaths: true,

@@ -26,7 +26,7 @@ const store = new StoreInternal(
 
 const notificationService = new NotificationService()
 
-test('call connect rpc', async () => {
+test('call connect rpc with scopes', async () => {
     const app = express()
     app.use(cors())
     app.use(express.json())
@@ -69,6 +69,39 @@ test('call connect rpc', async () => {
                 'http://localhost:3030/login/?scopes=ledger%3Aread&scopes=l%3Apkg%3A%23pkg-one',
         },
     })
+})
+
+test.each([
+    { name: 'omitted', params: undefined },
+    { name: 'an empty array', params: [] },
+])('call connect rpc with params $name', async ({ params }) => {
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+    const server = createServer(app)
+    const { dappApiUrl, publicUrl } = deriveUrls(config)
+    const response = await request(
+        dapp({
+            route: '/api/v0/dapp',
+            app,
+            logger: pino(sink()),
+            server,
+            kernelInfo: config.kernel,
+            dappUrl: dappApiUrl,
+            userUrl: publicUrl,
+            serverConfig: config.server,
+            notificationService,
+            store,
+            deps: { signingDrivers: {} },
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        })
+    )
+        .post('/api/v0/dapp')
+        .send({ jsonrpc: '2.0', id: 0, method: 'connect', params })
+        .set('Accept', 'application/json')
+
+    expect(response.statusCode).toBe(200)
+    expect(response.body.result.userUrl).toBe('http://localhost:3030/login/')
 })
 
 test('streams session & user notifications over SSE until logout', async () => {

@@ -38,6 +38,12 @@ if (!provider) throw new Error('Not connected')
 Every operation is a `request({ method, params })` call. The methods mirror the SDK
 functions one-to-one.
 
+<Note>
+It is highly recommended to enable TypeScript `strictNullChecks` or full strict mode.
+Without it, TypeScript accepts `null` and `undefined` in place of method params object or its fields,
+so these mistakes only surface in runtime.
+</Note>
+
 | Method              | Output              | Description                                             |
 | ------------------- | ------------------- | ------------------------------------------------------- |
 | `connect`           | `ConnectResult`     | Establishes a connection to the wallet.                 |

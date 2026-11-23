@@ -8,6 +8,14 @@ import { z } from 'zod'
 // Methods without a declared param only accept an omitted or empty `params`.
 const noParams = z.union([z.undefined(), z.tuple([]), z.strictObject({})])
 
+// An optional param may also be omitted positionally, as `[]`.
+const optionalParams = (schema: z.ZodType) =>
+    z.preprocess(
+        (params) =>
+            Array.isArray(params) && params.length === 0 ? undefined : params,
+        schema.optional()
+    )
+
 export const paramSchemas: Record<string, z.ZodType> = {
     addNetwork: z.fromJSONSchema({
         title: 'AddNetworkParams',
@@ -818,8 +826,8 @@ export const paramSchemas: Record<string, z.ZodType> = {
         },
         required: ['sessionId', 'messageId'],
     }),
-    removeSelfIssuedLoginSession: z
-        .fromJSONSchema({
+    removeSelfIssuedLoginSession: optionalParams(
+        z.fromJSONSchema({
             title: 'RemoveSelfIssuedLoginSessionParams',
             type: 'object',
             additionalProperties: { type: 'null' },
@@ -833,7 +841,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
             },
             required: ['sessionId'],
         })
-        .optional(),
+    ),
     allocatePartyForWallet: z.fromJSONSchema({
         title: 'AllocatePartyForWalletParams',
         type: 'object',
@@ -940,8 +948,8 @@ export const paramSchemas: Record<string, z.ZodType> = {
         },
         required: ['messageId'],
     }),
-    getSignMessageStatus: z
-        .fromJSONSchema({
+    getSignMessageStatus: optionalParams(
+        z.fromJSONSchema({
             title: 'GetSignMessageStatusParams',
             type: 'object',
             additionalProperties: { type: 'null' },
@@ -956,7 +964,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
             },
             required: ['messageId'],
         })
-        .optional(),
+    ),
     getMessageToSign: z.fromJSONSchema({
         title: 'GetMessageToSignParams',
         type: 'object',
@@ -1058,8 +1066,8 @@ export const paramSchemas: Record<string, z.ZodType> = {
         },
         required: ['transactionId'],
     }),
-    listTransactions: z
-        .fromJSONSchema({
+    listTransactions: optionalParams(
+        z.fromJSONSchema({
             title: 'ListTransactionsParams',
             type: 'object',
             additionalProperties: { type: 'null' },
@@ -1076,7 +1084,7 @@ export const paramSchemas: Record<string, z.ZodType> = {
                 },
             },
         })
-        .optional(),
+    ),
     deleteTransaction: z.fromJSONSchema({
         title: 'DeleteTransactionParams',
         type: 'object',
