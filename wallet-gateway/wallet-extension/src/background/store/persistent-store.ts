@@ -88,12 +88,14 @@ export interface StoreAccess {
 
 /**
  * Wraps `store` so its writes go through `access.write()`, and its reads
- * and `withAuthContext()` fail once the store is closed.
+ * and `withAuthContext()` fail once the store is closed. Also adds the
+ * extension's own writes, see `ExtensionStore`.
  */
 export function persistent(
     store: StoreInternal,
     access: StoreAccess
 ): WalletStore {
+    // The proxy adds what `StoreInternal` lacks, so the cast holds.
     return new Proxy(store, {
         get(target, prop, receiver) {
             if (prop === 'withAuthContext') {
@@ -101,6 +103,15 @@ export function persistent(
                     access.assertOpen()
                     return persistent(target.withAuthContext(context), access)
                 }
+            }
+            if (prop === 'removePendingTransaction') {
+                return (id: string) =>
+                    access.write(async () => {
+                        const transaction = await target.getTransaction(id)
+                        if (transaction?.status !== 'pending') return false
+                        await target.removeTransaction(id)
+                        return true
+                    })
             }
             const value: unknown = Reflect.get(target, prop, receiver)
             const kind = Object.hasOwn(KIND, prop)
@@ -128,5 +139,5 @@ export function persistent(
                 return result
             }
         },
-    })
+    }) as unknown as WalletStore
 }

@@ -8,11 +8,21 @@ import { logger } from '@/shared/logger.ts'
 
 import { defaultConfig } from './default-config.ts'
 import type { WalletStore } from './index.ts'
+import { persistent } from './persistent-store.ts'
 
 /**
- * For tests: a plain in-memory store with the default config, not kept in
- * the vault, scoped to `context` (if any).
+ * For tests: an in-memory store with the default config, not kept in the
+ * vault, scoped to `context` (if any). Its writes run one at a time, as in
+ * the vault's store.
  */
 export function createTestWalletStore(context?: AuthContext): WalletStore {
-    return new StoreInternal(defaultConfig(), logger, context)
+    let writes: Promise<unknown> = Promise.resolve()
+    return persistent(new StoreInternal(defaultConfig(), logger, context), {
+        assertOpen() {},
+        write(change) {
+            const result = writes.then(change)
+            writes = result.catch(() => undefined)
+            return result
+        },
+    })
 }
