@@ -605,4 +605,21 @@ describe('createTxApprovals', () => {
 
         await expect(approval.outcome).rejects.toBe(ledgerError)
     })
+
+    it('shows the newest of two transactions on a tab, and the older one once it ends', async () => {
+        const first = await prompt()
+        const second = await prompt()
+        const badge = () =>
+            fakeBrowser.action.getBadgeText({ tabId: tab.tabId })
+        const shown = (request: TxApprovalRequest) =>
+            `popup.html#/approve-transaction?id=${request.transactionId}`
+
+        await vi.waitFor(async () => expect(await badge()).toBe('2'))
+        expect(popups.get(tab.tabId)).toBe(shown(second.request))
+
+        await approvals.service.decide(second.request.transactionId, false)
+
+        await vi.waitFor(async () => expect(await badge()).toBe('1'))
+        expect(popups.get(tab.tabId)).toBe(shown(first.request))
+    })
 })
