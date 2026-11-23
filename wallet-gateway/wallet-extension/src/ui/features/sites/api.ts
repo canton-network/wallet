@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { queryOptions, useMutation } from '@tanstack/react-query'
-import { queryKeys } from '@/ui/lib/query/keys'
-import { getSiteApprovalClient } from '@/ui/lib/site-approval-client'
+
+import { queryKeys } from '@/ui/lib/query/keys.ts'
+import { getSiteApprovalClient } from '@/ui/lib/site-approval-client.ts'
 
 export const siteApprovalQuery = (id: string) =>
     queryOptions({

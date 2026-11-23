@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SignedInContext } from '../auth-context'
-import type { Vault } from '../vault'
+import type { SignedInContext } from '../auth-context.ts'
+import type { Vault } from '../vault/index.ts'
 
 /** Approved site origins by principal, see `sitePrincipal`. */
 type ApprovedSites = Record<string, string[]>

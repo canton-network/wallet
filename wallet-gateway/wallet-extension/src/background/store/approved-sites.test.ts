@@ -3,8 +3,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { createVault, VaultLockedError } from '../vault'
-import { createApprovedSiteStore, sitePrincipal } from './approved-sites'
+
+import { createVault, VaultLockedError } from '../vault/index.ts'
+import { createApprovedSiteStore, sitePrincipal } from './approved-sites.ts'
 
 describe('sitePrincipal', () => {
     const alice = { userId: 'alice', accessToken: 'token-1' }

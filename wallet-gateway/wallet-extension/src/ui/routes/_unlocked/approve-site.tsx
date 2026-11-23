@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createFileRoute } from '@tanstack/react-router'
-import { ApproveSitePage, siteApprovalQuery } from '@/ui/features/sites'
+
+import {
+    ApproveSitePage,
+    siteApprovalQuery,
+} from '@/ui/features/sites/index.ts'
 
 export const Route = createFileRoute('/_unlocked/approve-site')({
     validateSearch: (search: Record<string, unknown>): { id: string } => ({

@@ -7,7 +7,8 @@ import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { siteApprovalQuery, useDecideSiteApproval } from './api'
+
+import { siteApprovalQuery, useDecideSiteApproval } from './api.ts'
 
 export function ApproveSitePage({ id }: { id: string }) {
     const { data: request } = useSuspenseQuery(siteApprovalQuery(id))

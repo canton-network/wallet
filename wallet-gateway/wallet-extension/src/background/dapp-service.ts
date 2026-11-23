@@ -8,8 +8,10 @@ import {
     type RemoveListenerCallback,
 } from '@webext-core/messaging'
 import type { Browser } from 'wxt/browser'
-import { DAPP_RPC_KEY } from '@/shared/service-keys'
-import type { DappDispatcher } from './controllers/dapp/dispatch'
+
+import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
+
+import type { DappDispatcher } from './controllers/dapp/dispatch.ts'
 
 type Sender = Pick<Browser.runtime.MessageSender, 'origin' | 'url'>
 

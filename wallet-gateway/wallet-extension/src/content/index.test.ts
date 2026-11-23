@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { startContent } from '.'
+
+import { startContent } from './index.ts'
 
 describe('startContent', () => {
     afterEach(() => {

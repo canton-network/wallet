@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createProxyService } from '@webext-core/proxy-service'
-import type { SiteApprovalService } from '@/background/site-approval'
-import { SITE_APPROVAL_RPC_KEY } from '@/shared/service-keys'
+
+import type { SiteApprovalService } from '@/background/site-approval.ts'
+import { SITE_APPROVAL_RPC_KEY } from '@/shared/service-keys.ts'
 
 let client: SiteApprovalService | undefined
 
