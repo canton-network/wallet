@@ -8,9 +8,9 @@
  * its rate/paymaster display panel reads from it too. Leave running until
  * Ctrl+C.
  */
-import { requireEnvVar, writeEnvVar } from './env-file.js'
-import { createAdminSdk } from './lib.js'
-import { PaymasterApi } from './paymaster-api.js'
+import { requireEnvVar, writeEnvVar } from './env-file.ts'
+import { createAdminSdk } from './lib.ts'
+import { PaymasterApi } from './paymaster-api.ts'
 
 async function main() {
     const paymaster = await requireEnvVar('VITE_PAYMASTER_PARTY_ID')

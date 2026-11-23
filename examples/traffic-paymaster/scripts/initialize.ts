@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { randomUUID } from 'node:crypto'
 /**
  * One-shot paymaster setup against a real splice LocalNet (`pnpm start:localnet`
  * from the repo root, with traffic-enforcement enabled; `pnpm generate:traffic-purchase`
@@ -13,11 +14,12 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { randomUUID } from 'node:crypto'
+
 import { packageId } from '@canton-network/core-traffic-purchase'
 import { localNetStaticConfig } from '@canton-network/wallet-sdk'
-import { BYTES_PER_AMULET, createAdminSdk } from './lib.js'
-import { writeEnvVar } from './env-file.js'
+
+import { writeEnvVar } from './env-file.ts'
+import { BYTES_PER_AMULET, createAdminSdk } from './lib.ts'
 
 async function trafficPurchaseDarPath(): Promise<string> {
     const darPath = path.join(

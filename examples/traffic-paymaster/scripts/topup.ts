@@ -9,7 +9,7 @@
  *
  * Usage: pnpm topup -- <partyId> [bytes]
  */
-import { createAdminSdk, BYTES_PER_AMULET } from './lib.js'
+import { createAdminSdk, BYTES_PER_AMULET } from './lib.ts'
 
 async function main() {
     // pnpm passes the `--` separator through to the script rather than eating it, so the

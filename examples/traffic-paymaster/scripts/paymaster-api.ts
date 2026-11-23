@@ -11,6 +11,7 @@
  */
 import { createServer, type Server, type ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
+
 import type {
     ConversionRateWithDisclosures,
     TrafficPurchaserWithDisclosures,
@@ -20,7 +21,8 @@ import {
     TrafficPurchaser,
 } from '@canton-network/core-traffic-purchase'
 import type { PartyId } from '@canton-network/core-types'
-import type { AdminSdk } from './lib.js'
+
+import type { AdminSdk } from './lib.ts'
 
 const BASE_PATH = '/registry/traffic-purchase/v1'
 const RATES_PATH = `${BASE_PATH}/conversion-rates/`

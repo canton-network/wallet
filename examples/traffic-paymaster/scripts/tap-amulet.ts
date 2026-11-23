@@ -13,7 +13,7 @@
  *
  * Usage: pnpm tap-amulet -- <partyId> [amount]
  */
-import { createAdminSdk } from './lib.js'
+import { createAdminSdk } from './lib.ts'
 
 /** One Amulet, matching the UI's old default tap amount. */
 const DEFAULT_AMOUNT = '10'
