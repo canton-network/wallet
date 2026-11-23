@@ -1,8 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Decimal } from 'decimal.js'
-import { z } from 'zod'
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { Ops } from '@canton-network/core-provider-ledger'
 import {
     HOLDING_INTERFACE_ID,
@@ -17,14 +16,16 @@ import {
 } from '@canton-network/core-traffic-purchase'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { Numeric } from '@canton-network/core-types'
+import { Decimal } from 'decimal.js'
+import { z } from 'zod'
+
 import type { SDKContext } from '../../init/types/context.ts'
 import type { SDKLogger } from '../../logger/logger.ts'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { PreparedCommand } from '../transactions/types.js'
-import { dedupeDisclosedContracts } from '../utils/disclosedContracts.js'
-import { findAsset } from '../asset/index.js'
-import { ParsedURL, parseAssets, type URLInput } from '../utils/url.js'
-import { assetNeededFor, sumAmounts, wholeBytes } from './pricing.js'
+import { findAsset } from '../asset/index.ts'
+import type { PreparedCommand } from '../transactions/types.ts'
+import { dedupeDisclosedContracts } from '../utils/disclosedContracts.ts'
+import { ParsedURL, parseAssets, type URLInput } from '../utils/url.ts'
+import { assetNeededFor, sumAmounts, wholeBytes } from './pricing.ts'
 import type {
     PurchaseTrafficParams,
     TopUpTrafficParams,

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import { assetNeededFor, sumAmounts, wholeBytes } from './pricing'
+
+import { assetNeededFor, sumAmounts, wholeBytes } from './pricing.ts'
 
 /**
  * Throw away coverage test for the pure pricing helpers. A fuller test that

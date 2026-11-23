@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Decimal } from 'decimal.js'
 import type { Numeric } from '@canton-network/core-types'
+import { Decimal } from 'decimal.js'
 
 /**
  * Price a traffic purchase exactly as `Tea.TrafficPurchase` does on-ledger

@@ -9,6 +9,7 @@ import type {
 } from '@canton-network/core-token-standard-service'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
+
 import type { TokenNamespaceConfig } from '../../../sdk.ts'
 import { LedgerNamespace } from '../../ledger/index.ts'
 import { dedupeDisclosedContracts } from '../../utils/disclosedContracts.ts'

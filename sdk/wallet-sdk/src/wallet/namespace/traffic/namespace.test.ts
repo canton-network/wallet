@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect } from 'vitest'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
+import { describe, it, vi, beforeEach, expect } from 'vitest'
 
 import * as mock from '../../__tests__/mocks.ts'
 import { TrafficAccountNamespace } from './namespace.ts'

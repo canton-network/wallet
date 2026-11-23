@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import typescript from '@rollup/plugin-typescript'
-import commonjs from '@rollup/plugin-commonjs'
-import { nodeResolve } from '@rollup/plugin-node-resolve'
-import json from '@rollup/plugin-json'
-import alias from '@rollup/plugin-alias'
-
 import fs from 'node:fs'
 import path from 'node:path'
+
+import alias from '@rollup/plugin-alias'
+import commonjs from '@rollup/plugin-commonjs'
+import json from '@rollup/plugin-json'
+import { nodeResolve } from '@rollup/plugin-node-resolve'
+import typescript from '@rollup/plugin-typescript'
 import dts from 'rollup-plugin-dts'
 
 const DAML_JS_BASE = path.resolve(

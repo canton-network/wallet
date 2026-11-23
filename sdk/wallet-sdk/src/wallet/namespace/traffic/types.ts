@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Ops } from '@canton-network/core-provider-ledger'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import type { Ops } from '@canton-network/core-provider-ledger'
 import type { Numeric, PartyId } from '@canton-network/core-types'
-import type { URLInput } from '../utils/url.js'
+
+import type { URLInput } from '../utils/url.ts'
 
 /** The state a participant reports for one traffic account. */
 export type TrafficAccount =
