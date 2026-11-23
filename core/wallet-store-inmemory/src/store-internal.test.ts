@@ -22,7 +22,7 @@ import {
     type ApiKey,
 } from '@canton-network/core-wallet-store'
 import { getLogger, type Logger } from '@logtape/logtape'
-import { beforeEach, describe, expect, test } from 'vitest'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
 import { StoreInternal, type StoreInternalConfig } from './store-internal.ts'
 
@@ -825,6 +825,106 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(connected.getSession(accessToken)).resolves.toEqual(
                 expect.objectContaining({ id: 'onboarding-session' })
             )
+        })
+
+        test('does not restore a signature if the message is consumed while hashing', async () => {
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+            const signingInput = 'header.payload'
+            const signature = Buffer.from('sig-bytes').toString('base64')
+            const accessToken = SelfIssuedTokenService.appendJwtSignature(
+                signingInput,
+                signature
+            )
+            await store.setMessageRaw({
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: signingInput,
+                signature,
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            })
+            await store.setMessageRaw({
+                id: 'late-message',
+                kind: 'self-issued-token',
+                status: 'pending',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: signingInput,
+                origin: null,
+                createdAt: new Date('2026-01-01T00:01:00.000Z'),
+            })
+
+            const digest = globalThis.crypto.subtle.digest.bind(
+                globalThis.crypto.subtle
+            )
+            let stallHash = false
+            let release!: () => void
+            const gate = new Promise<void>((resolve) => {
+                release = resolve
+            })
+            const spy = vi
+                .spyOn(globalThis.crypto.subtle, 'digest')
+                .mockImplementation(async (...args) => {
+                    if (stallHash) {
+                        await gate
+                    }
+                    return digest(...args)
+                })
+            try {
+                stallHash = true
+                const statusPromise = store.setMessageRawStatus(
+                    'late-message',
+                    'signed',
+                    { signature }
+                )
+                await vi.waitFor(() => {
+                    expect(spy).toHaveBeenCalled()
+                })
+                stallHash = false
+                await store.upgradeSelfIssuedLoginSession(
+                    'onboarding-session',
+                    accessToken,
+                    'login-message'
+                )
+                release()
+                await statusPromise
+                await expect(
+                    store.getMessageRaw('late-message')
+                ).resolves.toBeUndefined()
+                await expect(
+                    store.getMessageRaw('login-message')
+                ).resolves.toBeUndefined()
+            } finally {
+                spy.mockRestore()
+            }
+        })
+
+        test('does not restore a regular message that was removed', async () => {
+            await store.setMessageRaw({
+                id: 'msg-1',
+                kind: 'regular',
+                status: 'pending',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: 'hello',
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            })
+            await store.removeMessageRaw('msg-1')
+            await expect(
+                store.setMessageRawStatus('msg-1', 'signed')
+            ).rejects.toThrow('MessageRaw not found with id: msg-1')
+            await expect(store.getMessageRaw('msg-1')).resolves.toBeUndefined()
         })
 
         test('deletes a tokenless self-issued login session and leaves one that already has an access token', async () => {

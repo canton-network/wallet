@@ -82,13 +82,13 @@ function reconstructAccessToken(
     }
 }
 
-// A signed self-issued message plus its signature is a full access token.
-// Failed logins never use it, so their signatures are cleared. Signed ones
-// that rebuild a token already stored on an authenticated session are
-// deleted. Remaining signed ones are kept only if the login can still
-// finish: the token hasn't expired and the user still has a tokenless
-// login session on that network. If that login is open but the token has
-// expired, the message is marked failed so a status poll can show why.
+// A self-issued message plus its signature is a full access token.
+// Failed logins never use it, so their signatures are cleared. Rows
+// that still have a signature (including awaiting-signature leftovers)
+// are treated like signed requests: deleted if they rebuild a token
+// already stored on an authenticated session, kept only if the login
+// can still finish, or marked failed when that login is open but the
+// token has expired.
 async function removeLeftoverSelfIssuedTokens(trx: Kysely<DB>): Promise<void> {
     await trx
         .updateTable('messagesRaw')
@@ -101,7 +101,12 @@ async function removeLeftoverSelfIssuedTokens(trx: Kysely<DB>): Promise<void> {
         .selectFrom('messagesRaw')
         .select(['id', 'userId', 'networkId', 'message', 'signature'])
         .where('kind', '=', 'self-issued-token')
-        .where('status', '=', 'signed')
+        .where((eb) =>
+            eb.or([
+                eb('status', '=', 'signed'),
+                eb('signature', 'is not', null),
+            ])
+        )
         .execute()
     const sessions = await trx
         .selectFrom('sessions')

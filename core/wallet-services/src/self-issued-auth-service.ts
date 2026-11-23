@@ -323,7 +323,10 @@ export class SelfIssuedAuthService {
                 )
             }
             if (SelfIssuedTokenService.isSigningInputExpired(message.message)) {
-                return this.failLogin(messageId, SELF_ISSUED_LOGIN_EXPIRED)
+                return await this.failLogin(
+                    messageId,
+                    SELF_ISSUED_LOGIN_EXPIRED
+                )
             }
 
             const username = this.session.userId
@@ -346,7 +349,10 @@ export class SelfIssuedAuthService {
                     { error },
                     'Ledger API rejected the self-issued token'
                 )
-                return this.failLogin(messageId, SELF_ISSUED_TOKEN_REJECTED)
+                return await this.failLogin(
+                    messageId,
+                    SELF_ISSUED_TOKEN_REJECTED
+                )
             }
             const session = await this.store.upgradeSelfIssuedLoginSession(
                 this.session.sessionId,

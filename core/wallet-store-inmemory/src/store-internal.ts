@@ -770,10 +770,13 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                 `MessageRaw userId mismatch: expected ${userId}, got ${message.userId}`
             )
         }
-        if (await this.selfIssuedTokenAlreadyUsed(message)) {
+        const tokenHash = await this.selfIssuedTokenHash(message)
+        // Hash first, then check and write with no further await, so a
+        // concurrent upgrade cannot sneak a signature back in.
+        const storage = this.getStorage()
+        if (this.hasAuthenticatedTokenHash(storage, tokenHash)) {
             return
         }
-        const storage = this.getStorage()
         storage.messageRaws.set(message.id, message)
         this.updateStorage(storage)
     }
@@ -784,8 +787,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         updates: MessageRawStatusUpdate = {}
     ): Promise<void> {
         this.assertConnected()
-        const storage = this.getStorage()
-        const existing = storage.messageRaws.get(messageId)
+        const existing = this.getStorage().messageRaws.get(messageId)
         if (!existing) {
             throw new Error(`MessageRaw not found with id: ${messageId}`)
         }
@@ -794,7 +796,15 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             status,
             updates
         )
-        if (await this.selfIssuedTokenAlreadyUsed(updated)) {
+        const tokenHash = await this.selfIssuedTokenHash(updated)
+        const storage = this.getStorage()
+        // If the message was cancelled or consumed while hashing, leave
+        // it gone. Regular messages skip the await, so this is a no-gap
+        // write.
+        if (!storage.messageRaws.has(messageId)) {
+            return
+        }
+        if (this.hasAuthenticatedTokenHash(storage, tokenHash)) {
             storage.messageRaws.delete(messageId)
             this.updateStorage(storage)
             return
@@ -803,22 +813,22 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         this.updateStorage(storage)
     }
 
-    private async selfIssuedTokenAlreadyUsed(
+    private async selfIssuedTokenHash(
         message: MessageRaw
-    ): Promise<boolean> {
+    ): Promise<string | undefined> {
         if (message.kind !== 'self-issued-token' || !message.signature) {
-            return false
+            return undefined
         }
-        const tokenHash = await hashReconstructedAccessToken(
-            message.message,
-            message.signature
-        )
+        return hashReconstructedAccessToken(message.message, message.signature)
+    }
+
+    private hasAuthenticatedTokenHash(
+        storage: UserStorage,
+        tokenHash: string | undefined
+    ): boolean {
         if (!tokenHash) {
             return false
         }
-        // Don't use getCurrentNetwork: during a self-issued login the
-        // session still has no token, and that lookup would throw.
-        const storage = this.getStorage()
         for (const session of storage.sessions.values()) {
             if (session.accessTokenHash === tokenHash) {
                 return true

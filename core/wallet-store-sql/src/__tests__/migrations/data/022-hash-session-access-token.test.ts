@@ -259,6 +259,77 @@ forEachDialect(
             expect(result.rows).toEqual([{ id: 'alice-open' }])
         })
 
+        test('cleans up awaiting-signature rows that still have a signature', async () => {
+            const db = getDb()
+            await migrateUpToBefore(db, TARGET)
+            const usedInput = signingInput(() => nowSeconds() + 3600)
+            const openInput = signingInput(() => nowSeconds() + 7200)
+            const expiredInput = signingInput(anHourAgo)
+            await insertSession(db, {
+                id: 'alice-logged-in',
+                network: 'network-1',
+                accessToken: accessTokenFrom(usedInput),
+                userId: 'alice',
+                origin: 'https://app.example',
+            })
+            await insertSession(db, {
+                id: 'bob-login',
+                network: 'network-1',
+                userId: 'bob',
+                origin: 'https://example.com',
+            })
+            const leftover = {
+                ...message,
+                kind: 'self-issued-token',
+                status: 'awaiting-signature',
+                signature: SIGNATURE,
+            }
+            await insertMessageRaw(db, {
+                ...leftover,
+                id: 'alice-used',
+                message: usedInput,
+            })
+            await insertMessageRaw(db, {
+                ...leftover,
+                id: 'bob-open',
+                userId: 'bob',
+                message: openInput,
+            })
+            await insertMessageRaw(db, {
+                ...leftover,
+                id: 'bob-expired',
+                userId: 'bob',
+                message: expiredInput,
+            })
+
+            await migrateUpThrough(db, TARGET)
+
+            const result = await sql<{
+                id: string
+                status: string
+                signature: string | null
+                failureReason: string | null
+            }>`
+                SELECT id, status, signature, failure_reason
+                FROM messages_raw
+                ORDER BY id
+            `.execute(db)
+            expect(result.rows).toEqual([
+                {
+                    id: 'bob-expired',
+                    status: 'failed',
+                    signature: null,
+                    failureReason: SELF_ISSUED_LOGIN_EXPIRED,
+                },
+                {
+                    id: 'bob-open',
+                    status: 'awaiting-signature',
+                    signature: SIGNATURE,
+                    failureReason: null,
+                },
+            ])
+        })
+
         test('down drops sessions with a hashed token and keeps tokenless ones', async () => {
             const db = getDb()
             await migrateUpToBefore(db, TARGET)

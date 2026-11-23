@@ -1001,6 +1001,34 @@ describe('SelfIssuedAuthService', () => {
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
         })
 
+        it('retries cleanup when failing an expired token cannot write', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({
+                    status: 'signed',
+                    signature,
+                    message: signingInputExpiringIn(-1),
+                })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            store.setMessageRawStatus.mockRejectedValue(
+                new Error('store write failed')
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('store write failed')
+            expect(store.setMessageRawStatus).toHaveBeenCalledTimes(2)
+            expect(logger.warn).toHaveBeenCalledWith(
+                {
+                    error: expect.any(Error),
+                    messageId: 'login-message',
+                },
+                'Failed to clear signed self-issued token after login error'
+            )
+        })
+
         it('clears the signature when looking up the ledger user fails', async () => {
             store.getMessageRaw.mockResolvedValue(
                 selfIssuedTokenMessage({ status: 'signed', signature })
@@ -1236,6 +1264,30 @@ describe('SelfIssuedAuthService', () => {
                         failureReason: SELF_ISSUED_TOKEN_REJECTED,
                         signature: null,
                     }
+                )
+                expect(
+                    store.upgradeSelfIssuedLoginSession
+                ).not.toHaveBeenCalled()
+            })
+
+            it('retries cleanup when failing a rejected token cannot write', async () => {
+                probeGet.mockRejectedValue({ code: 'UNAUTHENTICATED' })
+                store.setMessageRawStatus.mockRejectedValue(
+                    new Error('store write failed')
+                )
+
+                await expect(
+                    createService().connectWithSignedAccessToken(
+                        'login-message'
+                    )
+                ).rejects.toThrow('store write failed')
+                expect(store.setMessageRawStatus).toHaveBeenCalledTimes(2)
+                expect(logger.warn).toHaveBeenCalledWith(
+                    {
+                        error: expect.any(Error),
+                        messageId: 'login-message',
+                    },
+                    'Failed to clear signed self-issued token after login error'
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession
