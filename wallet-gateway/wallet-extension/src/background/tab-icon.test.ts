@@ -42,12 +42,10 @@ describe('createTabIcons', () => {
         const tabIcons = createTabIcons()
 
         await tabIcons.set(7, 'site', prompt)
-        await tabIcons.set(8, 'transaction', prompt)
         await vi.waitFor(async () =>
-            expect(await overriddenTabs()).toEqual([7, 8])
+            expect(await overriddenTabs()).toEqual([7])
         )
         await tabIcons.set(7, 'site', undefined)
-        await tabIcons.set(8, 'transaction', undefined)
 
         await vi.waitFor(async () => expect(await overriddenTabs()).toEqual([]))
     })
@@ -83,7 +81,7 @@ describe('createTabIcons', () => {
         // The browser kept these across a worker restart.
         await fakeBrowser.storage.session.set({ overriddenTabs: [7, 9] })
         popups.set(7, 'popup.html#/unlock')
-        popups.set(9, 'popup.html#/approve-transaction?id=old')
+        popups.set(9, 'popup.html#/approve-site?id=old')
         await fakeBrowser.action.setBadgeText({ tabId: 7, text: '!' })
         await fakeBrowser.action.setBadgeText({ tabId: 9, text: '1' })
 

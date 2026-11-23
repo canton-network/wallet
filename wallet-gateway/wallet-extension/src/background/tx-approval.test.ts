@@ -527,12 +527,14 @@ describe('createTxApprovals', () => {
         ).resolves.toMatchObject({ id: first.request.transactionId })
     })
 
-    it('deletes pending transactions without a prompt on unlock and at start-up, and keeps signed ones', async () => {
+    it('deletes pending transactions without a prompt on unlock and at start-up, and keeps signed or signing ones', async () => {
         const live = await prompt()
         const orphan = nextRequest()
         const signed = nextRequest()
+        const signing = nextRequest()
         await storeTransaction(orphan)
         await storeTransaction(signed, 'signed')
+        await storeTransaction(signing, 'awaiting-signature')
 
         unlockListeners.forEach((listener) => listener())
 
@@ -540,6 +542,7 @@ describe('createTxApprovals', () => {
             expect(await stored(orphan.transactionId)).toBeUndefined()
         )
         expect(await stored(signed.transactionId)).toBeDefined()
+        expect(await stored(signing.transactionId)).toBeDefined()
         expect(await stored(live.request.transactionId)).toBeDefined()
 
         // A new worker, started while unlocked.
