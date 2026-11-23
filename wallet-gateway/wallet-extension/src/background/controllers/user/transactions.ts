@@ -13,6 +13,7 @@ import type { Session, Store } from '@canton-network/core-wallet-store'
 
 import { logger } from '@/shared/logger.ts'
 
+import type { TxChangedSite } from '../../notifications.ts'
 import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.ts'
 import { toSigningDrivers, type UserControllerDeps } from './deps.ts'
 import type { Methods } from './rpc-gen/index.ts'
@@ -245,7 +246,9 @@ export const transactions = ({
                     code: errorCodes.provider.userRejectedRequest,
                     message: 'Rejected by the user',
                 },
-            } satisfies TxChangedFailedEvent)
+                id: transaction.id,
+                origin: transaction.origin,
+            } satisfies TxChangedFailedEvent & TxChangedSite)
             return null
         },
         getTransactionStatus: async () => {

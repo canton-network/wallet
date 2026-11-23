@@ -147,10 +147,15 @@ describe('createTxApprovals', () => {
 
     const stored = (id: string) => store.getTransaction(id)
 
-    const failedEvent = (commandId: string, code: number) => ({
+    const failedEvent = (
+        { transactionId, commandId }: TxApprovalRequest,
+        code: number
+    ) => ({
         status: 'failed',
         commandId,
         error: { code, message: expect.any(String) },
+        id: transactionId,
+        origin,
     })
 
     function create() {
@@ -242,7 +247,12 @@ describe('createTxApprovals', () => {
             `popup.html#/approve-transaction?id=${request.transactionId}`
         )
         expect(events).toEqual([
-            { status: 'pending', commandId: request.commandId },
+            {
+                status: 'pending',
+                commandId: request.commandId,
+                id: request.transactionId,
+                origin,
+            },
         ])
 
         await approvals.service.decide(request.transactionId, true)
@@ -278,10 +288,7 @@ describe('createTxApprovals', () => {
         })
         expect(await stored(request.transactionId)).toBeUndefined()
         expect(events).toContainEqual(
-            failedEvent(
-                request.commandId,
-                errorCodes.provider.userRejectedRequest
-            )
+            failedEvent(request, errorCodes.provider.userRejectedRequest)
         )
         expect(sign).not.toHaveBeenCalled()
     })
@@ -365,7 +372,7 @@ describe('createTxApprovals', () => {
             await vi.waitFor(async () =>
                 expect(await stored(request.transactionId)).toBeUndefined()
             )
-            expect(events).toContainEqual(failedEvent(request.commandId, code))
+            expect(events).toContainEqual(failedEvent(request, code))
             await expect(
                 approvals.service.decide(request.transactionId, true)
             ).rejects.toThrow('no longer waiting')
@@ -403,7 +410,7 @@ describe('createTxApprovals', () => {
         })
         await vi.waitFor(() =>
             expect(events).toContainEqual(
-                failedEvent(request.commandId, errorCodes.provider.unauthorized)
+                failedEvent(request, errorCodes.provider.unauthorized)
             )
         )
         expect(await stored(request.transactionId)).toBeDefined()
@@ -503,7 +510,14 @@ describe('createTxApprovals', () => {
 
         await new Promise((resolve) => setTimeout(resolve, 0))
         expect(result).not.toHaveBeenCalled()
-        expect(events).toEqual([{ status: 'pending', commandId: 'command-x' }])
+        expect(events).toEqual([
+            {
+                status: 'pending',
+                commandId: 'command-x',
+                id: first.request.transactionId,
+                origin,
+            },
+        ])
         await expect(
             approvals.service.get(first.request.transactionId)
         ).resolves.toMatchObject({ id: first.request.transactionId })

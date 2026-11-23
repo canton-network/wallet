@@ -21,6 +21,7 @@ import type {
     TxChangedPendingEvent,
 } from './controllers/dapp/rpc-gen/typings.ts'
 import type { TransactionSubmitter } from './controllers/user/transactions.ts'
+import type { TxChangedSite } from './notifications.ts'
 import type { PagePresence } from './page-presence.ts'
 import type { SessionCheck, SiteApprovalTab } from './site-approval.ts'
 import type { WalletStore } from './store/index.ts'
@@ -158,6 +159,11 @@ function actingParty(transaction: Transaction): string | undefined {
         : undefined
 }
 
+const siteOf = ({ transactionId, origin }: Prompt): TxChangedSite => ({
+    id: transactionId,
+    origin,
+})
+
 const messageOf = (error: unknown) =>
     error instanceof Error ? error.message : String(error)
 
@@ -227,7 +233,8 @@ export function createTxApprovals({
             status: 'failed',
             commandId: prompt.commandId,
             error: { code: error.code, message: error.message },
-        } satisfies TxChangedFailedEvent)
+            ...siteOf(prompt),
+        } satisfies TxChangedFailedEvent & TxChangedSite)
     }
 
     /**
@@ -374,7 +381,8 @@ export function createTxApprovals({
         notificationService.getNotifier(prompt.sessionId).emit('txChanged', {
             status: 'pending',
             commandId: prompt.commandId,
-        } satisfies TxChangedPendingEvent)
+            ...siteOf(prompt),
+        } satisfies TxChangedPendingEvent & TxChangedSite)
         const { tabId, windowId } = prompt.tab!
         byTab.set(tabId, [...(byTab.get(tabId) ?? []), prompt])
         void showTab(tabId).then(() => {

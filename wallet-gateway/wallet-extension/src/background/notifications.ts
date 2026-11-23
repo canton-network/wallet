@@ -58,6 +58,25 @@ export class PortNotificationSink implements NotificationSink {
     }
 }
 
+/**
+ * The fields of a `txChanged` event that say which site's transaction it
+ * is. The transaction service's events spread the stored transaction, so
+ * they carry them too.
+ */
+export interface TxChangedSite {
+    id: string
+    origin: string | null
+}
+
+/**
+ * Whether a port of `origin` may see `event`. A transaction's events, its
+ * signature included, are only for the site that asked for it.
+ */
+function isFor(origin: string, event: DappNotificationEvent, args: unknown[]) {
+    if (event !== 'txChanged') return true
+    return (args[0] as Partial<TxChangedSite> | undefined)?.origin === origin
+}
+
 /** A port's subscriber, with the principal that approved its origin. */
 export interface SiteSubscriber extends NotificationSubscriber {
     principal: string
@@ -282,7 +301,9 @@ export async function handleNotificationPort(
     let untrack = () => {}
     // Closed on logout too, so the port is then no longer tracked.
     const sink: NotificationSink = {
-        send: (event, args) => portSink.send(event, args),
+        send: (event, args) => {
+            if (isFor(origin, event, args)) portSink.send(event, args)
+        },
         close: () => {
             untrack()
             portSink.close()
