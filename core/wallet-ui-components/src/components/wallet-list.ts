@@ -4,9 +4,10 @@
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { isWalletEditable, partitionWallets } from '../logic/parties.js'
-import { BaseElement } from '../internal/base-element.js'
-import './wallet-card.js'
+
+import { BaseElement } from '../internal/base-element.ts'
+import { isWalletEditable, partitionWallets } from '../logic/parties.ts'
+import './wallet-card.ts'
 
 /**
  * The grid of party cards: wallets that still need to be allocated first, then

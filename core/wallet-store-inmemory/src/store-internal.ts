@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from '@logtape/logtape'
+import { providerErrors } from '@canton-network/core-rpc-errors'
+import type { AccessToken } from '@canton-network/core-types'
 import {
     type AuthContext,
     type UserId,
@@ -9,7 +10,6 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
-import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store,
     Wallet,
@@ -33,7 +33,7 @@ import {
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
-import type { AccessToken } from '@canton-network/core-types'
+import type { Logger } from '@logtape/logtape'
 
 export interface UserStorage {
     wallets: Array<Wallet>

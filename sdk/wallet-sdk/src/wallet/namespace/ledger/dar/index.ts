@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SDKContext } from '../../../sdk.js'
 import type { Ops } from '@canton-network/core-provider-ledger'
-import { SynchronizerResolver } from '../../../init/synchronizer.js'
+
+import { SynchronizerResolver } from '../../../init/synchronizer.ts'
+import type { SDKContext } from '../../../sdk.ts'
 
 export class DarNamespace {
     constructor(private readonly sdkContext: SDKContext) {}
 
     async upload(
-        darBytes: Uint8Array | Buffer,
+        darBytes: Uint8Array,
         packageId: string,
         synchronizerId?: string,
         vetAllPackages?: boolean

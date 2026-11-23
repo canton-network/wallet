@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import SpliceWalletJSONRPCDAppAPI, {
-    type RpcTypes as DappRpcTypes,
-} from '@canton-network/core-wallet-dapp-rpc-client'
-import { AbstractProvider } from '@canton-network/core-splice-provider'
-import type { RequestArgs } from '@canton-network/core-types'
 import {
     type RpcTransport,
     WindowTransport,
 } from '@canton-network/core-rpc-transport'
+import { AbstractProvider } from '@canton-network/core-splice-provider'
+import type { RequestArgs } from '@canton-network/core-types'
+import SpliceWalletJSONRPCDAppAPI, {
+    type RpcTypes as DappRpcTypes,
+} from '@canton-network/core-wallet-dapp-rpc-client'
 
 export class DappSyncProvider extends AbstractProvider<DappRpcTypes> {
     private client: SpliceWalletJSONRPCDAppAPI

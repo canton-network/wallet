@@ -9,6 +9,14 @@ import type {
     SigningTransaction,
 } from '@canton-network/core-signing-lib'
 import type { UserId } from '@canton-network/core-wallet-auth'
+
+import {
+    signingKeysItem,
+    type SigningKeyRecord,
+    signingTransactionsItem,
+    type SigningTransactionRecord,
+    signingDriverConfigItem,
+} from './items.ts'
 import {
     toSigningKey,
     fromSigningKey,
@@ -16,14 +24,7 @@ import {
     fromSigningTransaction,
     toSigningDriverConfig,
     fromSigningDriverConfig,
-} from './schemas.js'
-import {
-    signingKeysItem,
-    type SigningKeyRecord,
-    signingTransactionsItem,
-    type SigningTransactionRecord,
-    signingDriverConfigItem,
-} from './items.js'
+} from './schemas.ts'
 
 // Every signing-transaction mutation reads and replaces the whole stored array.
 // This module-level queue runs those mutations one at a time for every WxtStore

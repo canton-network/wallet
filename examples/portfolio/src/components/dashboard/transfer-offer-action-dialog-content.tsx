@@ -1,6 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { PartyId } from '@canton-network/core-types'
+import { CopyableIdentifier } from '@components/copyable-identifier'
+import { DateTimeText } from '@components/date-time-text'
+import { DescriptionText } from '@components/description-text'
+import type { TransferActionItem } from '@components/types'
+import { PillButton } from '@components/ui/PillButton'
+import { getCounterparty, isReceiver } from '@components/utils'
+import CloseIcon from '@mui/icons-material/Close'
 import {
     Box,
     Chip,
@@ -8,22 +16,14 @@ import {
     IconButton,
     Typography,
 } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
-import { useMemo, type ComponentProps, type ReactNode } from 'react'
-import { CopyableIdentifier } from '@components/copyable-identifier'
-import { DescriptionText } from '@components/description-text'
-import { PillButton } from '@components/ui/PillButton'
-import type { TransferActionItem } from '@components/types'
-import { getCounterparty, isReceiver } from '@components/utils'
 import { formatDistanceToNow } from '@utils/date-format'
-import { DateTimeText } from '@components/date-time-text'
 import { formatAmount } from '@utils/decimal'
 import {
     getTransferActions,
     type TransferAction,
     type TransferActionAvailability,
 } from '@utils/transfer-actions'
-import type { PartyId } from '@canton-network/core-types'
+import { useMemo, type ComponentProps, type ReactNode } from 'react'
 
 export type AvailableTransferAction = Extract<
     TransferActionAvailability,

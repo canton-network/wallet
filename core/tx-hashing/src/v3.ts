@@ -7,7 +7,8 @@ import type {
     Fetch,
     Metadata,
 } from '@canton-network/core-ledger-proto'
-import { concat } from './bytes.js'
+
+import { concat } from './bytes.ts'
 import {
     encodeBool,
     encodeHex,
@@ -18,15 +19,15 @@ import {
     encodeString,
     encodeTime,
     encodeValue,
-} from './encoding.js'
-import { TxHashingError } from './errors.js'
+} from './encoding.ts'
+import { TxHashingError } from './errors.ts'
 import {
     encodeInputContracts,
     encodeStrings,
     submitterInfoOf,
     type QueryByKey,
     type Scheme,
-} from './scheme.js'
+} from './scheme.ts'
 
 // Hashing scheme V3, after daml_transaction_hashing_v3.py (canton v3.5.1,
 // 08-interactive-submission). Unlike V2: no encoding version in nodes and
@@ -85,6 +86,13 @@ function encodeExercise(
 ): Uint8Array {
     checkLfVersion(exercise.lfVersion, `${at}.lfVersion`)
     checkKeyUse(exercise, at)
+    if (exercise.externalCallResults.length > 0) {
+        throw new TxHashingError(
+            'FIELD_NOT_COVERED_BY_SCHEME',
+            'external call results are not covered by hashing scheme V3',
+            `${at}.externalCallResults`
+        )
+    }
     return concat(
         encodeString(exercise.lfVersion),
         0x01,

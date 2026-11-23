@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, test } from 'vitest'
 import { sql } from 'kysely'
+import { expect, test } from 'vitest'
 
 import {
     forEachDialect,
@@ -11,13 +11,13 @@ import {
     migrateUpToBefore,
     hasColumn,
     listColumns,
-} from '../helpers'
+} from '../helpers.ts'
 import {
     insertIdp,
     insertNetwork,
     insertWallet as insertWallet001,
-} from '../seeds/001-init'
-import { insertWallet as insertWallet005 } from '../seeds/005-add-wallet-disabled-reason'
+} from '../seeds/001-init.ts'
+import { insertWallet as insertWallet005 } from '../seeds/005-add-wallet-disabled-reason.ts'
 
 const TARGET = 5
 

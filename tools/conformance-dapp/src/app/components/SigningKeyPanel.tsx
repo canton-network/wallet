@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import KeyIcon from '@mui/icons-material/Key'
 import Box from '@mui/material/Box'
 import Button from '@mui/material/Button'
-import KeyIcon from '@mui/icons-material/Key'
 import type React from 'react'
+
 import { FileUploadButton } from './FileUploadButton.tsx'
 
 interface SigningKeyPanelProps {

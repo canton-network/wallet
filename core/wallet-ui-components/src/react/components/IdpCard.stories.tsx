@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Meta, StoryObj } from '@storybook/react-vite'
 import type {
     OauthIdp,
     SelfIssuedIdp,
     SelfSignedIdp,
 } from '@canton-network/core-wallet-user-rpc-client'
+import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
     findByShadowRole,
     findByShadowText,
@@ -14,7 +14,8 @@ import {
     queryByShadowText,
 } from 'shadow-dom-testing-library'
 import { expect, fn } from 'storybook/test'
-import { IdpCard } from './IdpCard'
+
+import { IdpCard } from './IdpCard.tsx'
 
 const oauthIdp: OauthIdp = {
     id: 'my-idp',

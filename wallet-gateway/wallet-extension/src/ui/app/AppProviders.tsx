@@ -7,8 +7,9 @@ import GlobalStyles from '@mui/material/GlobalStyles'
 import { ThemeProvider } from '@mui/material/styles'
 import { type QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
-import { litBridgeStyles } from '@/ui/theme/lit-bridge'
-import { theme } from '@/ui/theme/theme'
+
+import { litBridgeStyles } from '@/ui/theme/lit-bridge.ts'
+import { theme } from '@/ui/theme/theme.ts'
 
 export function AppProviders({
     queryClient,

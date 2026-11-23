@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync } from 'node:fs'
+
 import type {
     CreateKeyParams,
     GetTransactionParams,

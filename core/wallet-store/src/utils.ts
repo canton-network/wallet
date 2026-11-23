@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Network } from './config/schema.js'
+import type { Network } from './config/schema.ts'
 
 // Throws if the given network has a self-issued audience that is already used by another network.
 export function assertUniqueSelfIssuedAudience(

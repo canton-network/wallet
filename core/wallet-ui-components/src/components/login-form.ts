@@ -1,17 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing, type PropertyValues } from 'lit'
-import { customElement, property, state } from 'lit/decorators.js'
-import './back-link.js'
-import './scope-list.js'
-import { BaseElement } from '../internal/base-element.js'
 import type {
     PublicNetwork,
     Idp,
 } from '@canton-network/core-wallet-user-rpc-client'
-import { chevronDownIcon } from '../icons'
+import { css, html, nothing, type PropertyValues } from 'lit'
+
+import './back-link.ts'
+import './scope-list.ts'
+import { customElement, property, state } from 'lit/decorators.js'
+
 import cantonLogo from '../../images/logos/canton-logo.png'
+import { chevronDownIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 /** Emitted when the user clicks the Connect button */
 export class LoginConnectEvent extends Event {
@@ -53,6 +55,8 @@ class WgLoginForm extends BaseElement {
     @property({ type: String }) accessor backHref = '/'
     @property({ type: Array }) accessor scopes: string[] | undefined = undefined
 
+    @property({ type: Boolean }) accessor displayTopBar = true
+
     @state() accessor selectedNetwork: PublicNetwork | null = null
     @state() accessor message: string | null = null
     @state() accessor messageType: 'error' | 'info' | null = null
@@ -61,12 +65,14 @@ class WgLoginForm extends BaseElement {
         BaseElement.styles,
         css`
             :host {
-                display: block;
+                display: flex;
+                flex-direction: column;
                 min-height: 100dvh;
             }
 
             .screen {
-                min-height: 100dvh;
+                height: 100%;
+                flex: 1;
                 display: flex;
                 flex-direction: column;
             }
@@ -338,9 +344,17 @@ class WgLoginForm extends BaseElement {
 
         return html`
             <form class="screen" @submit=${this.handleSubmit}>
-                <div class="top-bar">
-                    <img class="top-logo" src=${cantonLogo} alt="Canton logo" />
-                </div>
+                ${
+                    this.displayTopBar
+                        ? html`<div class="top-bar">
+                              <img
+                                  class="top-logo"
+                                  src=${cantonLogo}
+                                  alt="Canton logo"
+                              />
+                          </div>`
+                        : nothing
+                }
 
                 <div class="content">
                     <div class="title-row">

@@ -8,7 +8,6 @@ import {
     SigningProvider,
     type SignMessageResult,
 } from '@canton-network/core-signing-lib'
-
 import type {
     SignTransactionParams,
     SignTransactionResult,
@@ -27,17 +26,18 @@ import type {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
-import {
-    DfnsHandler,
-    type DfnsCredentials,
-    type DfnsSignature,
-} from './dfns.js'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import _ from 'lodash'
 import { z } from 'zod'
 
-export type { DfnsCredentials, DfnsKey, DfnsSignature } from './dfns.js'
-export { DfnsHandler } from './dfns.js'
+import {
+    DfnsHandler,
+    type DfnsCredentials,
+    type DfnsSignature,
+} from './dfns.ts'
+
+export type { DfnsCredentials, DfnsKey, DfnsSignature } from './dfns.ts'
+export { DfnsHandler } from './dfns.ts'
 
 export interface DfnsConfig {
     orgId: string

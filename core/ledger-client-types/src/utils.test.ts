@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { EventFilterBySetup } from './utils'
+
+import { EventFilterBySetup } from './utils.ts'
 
 const PARTY_ID = 'alice::abc123'
 const TEMPLATE_ID = 'pkg:Module:Template'

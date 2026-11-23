@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi, type Mock } from 'vitest'
 import type { Provider } from '@canton-network/core-splice-provider'
 import type { RpcTypes as DappRpcTypes } from '@canton-network/core-wallet-dapp-rpc-client'
+import { vi, type Mock } from 'vitest'
 
 /**
  * A dapp provider mock that is also assignable to Provider<DappRpcTypes>,

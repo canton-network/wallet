@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing, type TemplateResult } from 'lit'
-import { BaseElement } from '../internal/base-element.js'
 import type {
     Key,
     SigningProviderId,
 } from '@canton-network/core-wallet-user-rpc-client'
+import { css, html, nothing, type TemplateResult } from 'lit'
 import { property } from 'lit/decorators.js'
+
+import { BaseElement } from '../internal/base-element.ts'
 
 export class SigningProviderChangeEvent extends Event {
     constructor(public signingProviderId: SigningProviderId) {

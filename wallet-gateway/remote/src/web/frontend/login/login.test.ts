@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fixture, waitUntil } from '@open-wc/testing-helpers'
-import { html } from 'lit'
 import {
     LoginConnectEvent,
     type WgLoginForm,
 } from '@canton-network/core-wallet-ui-components'
+import { fixture, waitUntil } from '@open-wc/testing-helpers'
+import { html } from 'lit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createMockUserClient,
     makeIdp,
     makePublicNetwork,
     mockRequest,
-} from '../__tests__/test-helpers.js'
+} from '../__tests__/test-helpers.ts'
 
 const {
     mockCreateUserClient,
@@ -48,15 +49,15 @@ const defaultAccessToken =
     ) +
     '.signature'
 
-vi.mock('../index.js', () => ({
+vi.mock('../index.ts', () => ({
     redirectToIntendedOrDefault: mockRedirectToIntendedOrDefault,
     addUserSession: mockAddUserSession,
 }))
-vi.mock('../navigation.js', () => ({ setLocationHref }))
-vi.mock('../rpc-client.js', () => ({
+vi.mock('../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../state-manager.js', () => ({
+vi.mock('../state-manager.ts', () => ({
     stateManager: {
         accessToken: {
             get: () => undefined,
@@ -76,8 +77,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     return { ...actual, handleErrorToast }
 })
 
-import './login.js'
-import type { LoginUI } from './login.js'
+import './login.ts'
+import type { LoginUI } from './login.ts'
 
 const selfSignedNetwork = makePublicNetwork({
     id: 'net-1',
@@ -460,6 +461,12 @@ describe('LoginUI', () => {
         expect(redirectUrl).toContain('response_type=code')
         expect(redirectUrl).toContain('client_id=oauth-client-id')
         expect(redirectUrl).toContain('code_challenge_method=S256')
+        const state = JSON.parse(
+            atob(new URL(redirectUrl).searchParams.get('state')!)
+        )
+        expect(sessionStorage.getItem(`oauth-network-${state.stateId}`)).toBe(
+            'net-oauth'
+        )
         expect(mockRedirectToIntendedOrDefault).not.toHaveBeenCalled()
     })
 })

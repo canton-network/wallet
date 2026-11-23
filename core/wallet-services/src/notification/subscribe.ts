@@ -6,12 +6,12 @@ import {
     LOGOUT_EVENT,
     SESSION_SCOPED_EVENTS,
     USER_SCOPED_EVENTS,
-} from './events.js'
+} from './events.ts'
 import type {
     INotificationService,
     NotificationListener,
     Notifier,
-} from './notification-service.js'
+} from './notification-service.ts'
 
 /**
  * Transport-specific delivery of notifications to a single connected client,

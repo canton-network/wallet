@@ -2,7 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
-import buildController from './dapp-api/rpc-gen'
+import {
+    isCip103ErrorCode,
+    JsonRpcError,
+    rpcErrors,
+} from '@canton-network/core-rpc-errors'
+import type * as dappAsyncAPI from '@canton-network/core-wallet-dapp-remote-rpc-client'
+import { popup } from '@canton-network/core-wallet-ui-components'
+
+import buildController from './dapp-api/rpc-gen/index.ts'
 import type {
     ConnectParams,
     ConnectResult,
@@ -14,14 +22,7 @@ import type {
     SignMessageParams,
     SignMessageResult,
     Wallet,
-} from './dapp-api/rpc-gen/typings'
-import {
-    isCip103ErrorCode,
-    JsonRpcError,
-    rpcErrors,
-} from '@canton-network/core-rpc-errors'
-import { popup } from '@canton-network/core-wallet-ui-components'
-import type * as dappAsyncAPI from '@canton-network/core-wallet-dapp-remote-rpc-client'
+} from './dapp-api/rpc-gen/typings.ts'
 
 const withTimeout = (
     reject: (reason?: unknown) => void,

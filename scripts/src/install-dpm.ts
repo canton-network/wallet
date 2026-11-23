@@ -2,16 +2,17 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { execSync } from 'child_process'
+import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
-import * as fs from 'fs'
+
 import {
     DAML_RELEASE_VERSION,
     info,
     success,
     error,
     warn,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 function getDpmHomeDir(): string {
     const configuredDpmHome = process.env.DPM_HOME?.trim()

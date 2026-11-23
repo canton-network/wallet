@@ -1,8 +1,9 @@
-import React from 'react'
+import { normalizeSx } from '@components/ui/utils'
 import { Box, Typography } from '@mui/material'
 import type { SxProps, Theme } from '@mui/material/styles'
-import { normalizeSx } from '@components/ui/utils'
-import { CopyIconButton } from './ui/CopyIconButton'
+import React from 'react'
+
+import { CopyIconButton } from './ui/CopyIconButton.tsx'
 
 const truncate = (str: string, len: number) => {
     if (str.length <= len) {

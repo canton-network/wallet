@@ -1,11 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import * as path from 'path'
-import type { components } from '@open-rpc/generator'
 import { execSync } from 'child_process'
+import * as path from 'path'
+
+import type { components } from '@open-rpc/generator'
 import lodash from 'lodash'
-import { validateOpenRpc } from './validate-openrpc.js'
+
+import { validateOpenRpc } from './validate-openrpc.ts'
 const { template } = lodash
 
 // Unknown keys are still rejected unless null (e.g. fields the Scan app returns as null).

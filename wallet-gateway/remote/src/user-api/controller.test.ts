@@ -1,11 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { pino, type Logger } from 'pino'
-import { sink } from 'pino-test'
 import { errorCodes } from '@canton-network/core-rpc-errors'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
+import {
+    NotificationService,
+    SELF_ISSUED_LOGIN_EXPIRED,
+    SignMessageService,
+} from '@canton-network/core-wallet-services'
 import {
     type MessageRaw,
     type Network as StoreNetwork,
@@ -15,19 +18,17 @@ import {
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { KernelInfo } from '../config/Config.js'
-import {
-    NotificationService,
-    SELF_ISSUED_LOGIN_EXPIRED,
-    SignMessageService,
-} from '@canton-network/core-wallet-services'
-import { userController } from './controller.js'
-import type { ConfigManagedIds } from '../config/ConfigUtils.js'
-import { ServerStatusService } from '../notices/server-status-service.js'
-import { ServerNotices } from '../notices/server-notices.js'
-import { GATEWAY_VERSION } from '../version.js'
 import { getLogger } from '@logtape/logtape'
+import { pino, type Logger } from 'pino'
+import { sink } from 'pino-test'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { KernelInfo } from '../config/Config.ts'
+import type { ConfigManagedIds } from '../config/ConfigUtils.ts'
+import { ServerNotices } from '../notices/server-notices.ts'
+import { ServerStatusService } from '../notices/server-status-service.ts'
+import { GATEWAY_VERSION } from '../version.ts'
+import { userController } from './controller.ts'
 
 const ledgerMocks = vi.hoisted(() => ({
     get: vi.fn(),
@@ -121,19 +122,19 @@ vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
     }
 })
 
-vi.mock('../ledger/wallet-allocation/wallet-allocation-service.js', () => ({
+vi.mock('../ledger/wallet-allocation/wallet-allocation-service.ts', () => ({
     WalletAllocationService: vi.fn(function WalletAllocationServiceMock() {
         return walletAllocationMocks
     }),
 }))
 
-vi.mock('../ledger/wallet-sync-service.js', () => ({
+vi.mock('../ledger/wallet-sync-service.ts', () => ({
     WalletSyncService: vi.fn(function WalletSyncServiceMock() {
         return walletSyncMocks
     }),
 }))
 
-vi.mock('../ledger/party-allocation-service.js', () => ({
+vi.mock('../ledger/party-allocation-service.ts', () => ({
     PartyAllocationService: vi.fn(),
 }))
 

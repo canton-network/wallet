@@ -14,7 +14,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Duration } from '../../../../../google/protobuf/duration.js'
+
+import { Duration } from '../../../../../google/protobuf/duration.ts'
 /**
  * @generated from protobuf message com.digitalasset.canton.protocol.v30.TrafficControlParameters
  */

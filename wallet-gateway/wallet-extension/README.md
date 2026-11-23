@@ -53,6 +53,8 @@ The vault holds the wallet store (item `walletStore`, see [Wallet store](#wallet
 
 The pages send `vault.getStatus`, `vault.create`, `vault.unlock` and `vault.lock` through `vaultMessenger` (`shared/vault-protocol.ts`). `vault-service.ts` answers them only from `popup.html` and `app.html`. Errors arrive as plain `Error`s, so compare `error.name` with `VaultErrorName`. While the vault isn't unlocked, every user API method rejects with `VaultLockedError`. The dApp dispatcher answers `status`, `isConnected` and `connect` with a not-connected result whose reason is `Locked`, and every other method with error 4100. Its `connect` also opens the unlock page.
 
+The pages connect to a network through `authMessenger` (`shared/auth-protocol.ts`), which `auth-service.ts` answers only from `popup.html` and `app.html`. `auth.getStatus` says whether the pages are connected: a signed-in user whose token hasn't expired, with a session for `EXTENSION_ORIGIN`. `auth.connect` signs in to the network's IdP, stores the token as the auth context and adds that session, so the token never reaches the pages. Only the `authorization_code` flow is supported so far. It runs in `browser.identity.launchWebAuthFlow` with PKCE (`oauth.ts`), so the IdP must allow `browser.identity.getRedirectURL()` (`https://<extension-id>.chromiumapp.org/` in Chrome) as a redirect URI for the network's client.
+
 The pages and the content script call the background through [`@webext-core/proxy-service`](https://webext-core.aklinker1.dev/proxy-service/installation). `shared/service-keys.ts` defines the keys:
 
 - `USER_RPC_KEY` is the user API, for the extension pages.

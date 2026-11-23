@@ -9,6 +9,6 @@ export {
     type SigningProviderMockRoute,
     type SigningProviderMockServer,
     type SigningProviderMockServerOptions,
-} from './server.js'
+} from './server.ts'
 
-export * from './providers/index.js'
+export * from './providers/index.ts'

@@ -7,57 +7,60 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { TopologyManagerReadService } from './topology_manager_read_service.js'
-import type { SequencerLsuStateResponse } from './topology_manager_read_service.js'
-import type { SequencerLsuStateRequest } from './topology_manager_read_service.js'
-import type { GenesisStateV2Response } from './topology_manager_read_service.js'
-import type { GenesisStateV2Request } from './topology_manager_read_service.js'
-import type { GenesisStateResponse } from './topology_manager_read_service.js'
-import type { GenesisStateRequest } from './topology_manager_read_service.js'
-import type { ExportTopologySnapshotV2Response } from './topology_manager_read_service.js'
-import type { ExportTopologySnapshotV2Request } from './topology_manager_read_service.js'
-import type { ExportTopologySnapshotResponse } from './topology_manager_read_service.js'
-import type { ExportTopologySnapshotRequest } from './topology_manager_read_service.js'
 import type { ServerStreamingCall } from '@protobuf-ts/runtime-rpc'
-import type { ListAllV2Response } from './topology_manager_read_service.js'
-import type { ListAllV2Request } from './topology_manager_read_service.js'
-import type { ListAllResponse } from './topology_manager_read_service.js'
-import type { ListAllRequest } from './topology_manager_read_service.js'
-import type { ListAvailableStoresResponse } from './topology_manager_read_service.js'
-import type { ListAvailableStoresRequest } from './topology_manager_read_service.js'
-import type { ListLsuSequencerConnectionSuccessorResponse } from './topology_manager_read_service.js'
-import type { ListLsuSequencerConnectionSuccessorRequest } from './topology_manager_read_service.js'
-import type { ListLsuAnnouncementResponse } from './topology_manager_read_service.js'
-import type { ListLsuAnnouncementRequest } from './topology_manager_read_service.js'
-import type { ListSequencerSynchronizerStateResponse } from './topology_manager_read_service.js'
-import type { ListSequencerSynchronizerStateRequest } from './topology_manager_read_service.js'
-import type { ListMediatorSynchronizerStateResponse } from './topology_manager_read_service.js'
-import type { ListMediatorSynchronizerStateRequest } from './topology_manager_read_service.js'
-import type { ListSequencingParametersStateResponse } from './topology_manager_read_service.js'
-import type { ListSequencingParametersStateRequest } from './topology_manager_read_service.js'
-import type { ListSynchronizerParametersStateResponse } from './topology_manager_read_service.js'
-import type { ListSynchronizerParametersStateRequest } from './topology_manager_read_service.js'
-import type { ListPartyToParticipantResponse } from './topology_manager_read_service.js'
-import type { ListPartyToParticipantRequest } from './topology_manager_read_service.js'
-import type { ListVettedPackagesResponse } from './topology_manager_read_service.js'
-import type { ListVettedPackagesRequest } from './topology_manager_read_service.js'
-import type { ListPartyHostingLimitsResponse } from './topology_manager_read_service.js'
-import type { ListPartyHostingLimitsRequest } from './topology_manager_read_service.js'
-import type { ListParticipantSynchronizerPermissionResponse } from './topology_manager_read_service.js'
-import type { ListParticipantSynchronizerPermissionRequest } from './topology_manager_read_service.js'
-import type { ListSynchronizerTrustCertificateResponse } from './topology_manager_read_service.js'
-import type { ListSynchronizerTrustCertificateRequest } from './topology_manager_read_service.js'
-import type { ListPartyToKeyMappingResponse } from './topology_manager_read_service.js'
-import type { ListPartyToKeyMappingRequest } from './topology_manager_read_service.js'
-import type { ListOwnerToKeyMappingResponse } from './topology_manager_read_service.js'
-import type { ListOwnerToKeyMappingRequest } from './topology_manager_read_service.js'
-import type { ListDecentralizedNamespaceDefinitionResponse } from './topology_manager_read_service.js'
-import type { ListDecentralizedNamespaceDefinitionRequest } from './topology_manager_read_service.js'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { ListNamespaceDelegationResponse } from './topology_manager_read_service.js'
-import type { ListNamespaceDelegationRequest } from './topology_manager_read_service.js'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { TopologyManagerReadService } from './topology_manager_read_service.ts'
+import type { GenerateOnboardingTopologyTransactionsResponse } from './topology_manager_read_service.ts'
+import type { GenerateOnboardingTopologyTransactionsRequest } from './topology_manager_read_service.ts'
+import type { SequencerLsuStateResponse } from './topology_manager_read_service.ts'
+import type { SequencerLsuStateRequest } from './topology_manager_read_service.ts'
+import type { GenesisStateV2Response } from './topology_manager_read_service.ts'
+import type { GenesisStateV2Request } from './topology_manager_read_service.ts'
+import type { GenesisStateResponse } from './topology_manager_read_service.ts'
+import type { GenesisStateRequest } from './topology_manager_read_service.ts'
+import type { ExportTopologySnapshotV2Response } from './topology_manager_read_service.ts'
+import type { ExportTopologySnapshotV2Request } from './topology_manager_read_service.ts'
+import type { ExportTopologySnapshotResponse } from './topology_manager_read_service.ts'
+import type { ExportTopologySnapshotRequest } from './topology_manager_read_service.ts'
+import type { ListAllV2Response } from './topology_manager_read_service.ts'
+import type { ListAllV2Request } from './topology_manager_read_service.ts'
+import type { ListAllResponse } from './topology_manager_read_service.ts'
+import type { ListAllRequest } from './topology_manager_read_service.ts'
+import type { ListAvailableStoresResponse } from './topology_manager_read_service.ts'
+import type { ListAvailableStoresRequest } from './topology_manager_read_service.ts'
+import type { ListLsuSequencerConnectionSuccessorResponse } from './topology_manager_read_service.ts'
+import type { ListLsuSequencerConnectionSuccessorRequest } from './topology_manager_read_service.ts'
+import type { ListLsuAnnouncementResponse } from './topology_manager_read_service.ts'
+import type { ListLsuAnnouncementRequest } from './topology_manager_read_service.ts'
+import type { ListSequencerSynchronizerStateResponse } from './topology_manager_read_service.ts'
+import type { ListSequencerSynchronizerStateRequest } from './topology_manager_read_service.ts'
+import type { ListMediatorSynchronizerStateResponse } from './topology_manager_read_service.ts'
+import type { ListMediatorSynchronizerStateRequest } from './topology_manager_read_service.ts'
+import type { ListSequencingParametersStateResponse } from './topology_manager_read_service.ts'
+import type { ListSequencingParametersStateRequest } from './topology_manager_read_service.ts'
+import type { ListSynchronizerParametersStateResponse } from './topology_manager_read_service.ts'
+import type { ListSynchronizerParametersStateRequest } from './topology_manager_read_service.ts'
+import type { ListPartyToParticipantResponse } from './topology_manager_read_service.ts'
+import type { ListPartyToParticipantRequest } from './topology_manager_read_service.ts'
+import type { ListVettedPackagesResponse } from './topology_manager_read_service.ts'
+import type { ListVettedPackagesRequest } from './topology_manager_read_service.ts'
+import type { ListPartyHostingLimitsResponse } from './topology_manager_read_service.ts'
+import type { ListPartyHostingLimitsRequest } from './topology_manager_read_service.ts'
+import type { ListParticipantSynchronizerPermissionResponse } from './topology_manager_read_service.ts'
+import type { ListParticipantSynchronizerPermissionRequest } from './topology_manager_read_service.ts'
+import type { ListSynchronizerTrustCertificateResponse } from './topology_manager_read_service.ts'
+import type { ListSynchronizerTrustCertificateRequest } from './topology_manager_read_service.ts'
+import type { ListPartyToKeyMappingResponse } from './topology_manager_read_service.ts'
+import type { ListPartyToKeyMappingRequest } from './topology_manager_read_service.ts'
+import type { ListOwnerToKeyMappingResponse } from './topology_manager_read_service.ts'
+import type { ListOwnerToKeyMappingRequest } from './topology_manager_read_service.ts'
+import type { ListDecentralizedNamespaceDefinitionResponse } from './topology_manager_read_service.ts'
+import type { ListDecentralizedNamespaceDefinitionRequest } from './topology_manager_read_service.ts'
+import type { ListNamespaceDelegationResponse } from './topology_manager_read_service.ts'
+import type { ListNamespaceDelegationRequest } from './topology_manager_read_service.ts'
 /**
  * @generated from protobuf service com.digitalasset.canton.topology.admin.v30.TopologyManagerReadService
  */
@@ -270,6 +273,16 @@ export interface ITopologyManagerReadServiceClient {
         input: SequencerLsuStateRequest,
         options?: RpcOptions
     ): ServerStreamingCall<SequencerLsuStateRequest, SequencerLsuStateResponse>
+    /**
+     * @generated from protobuf rpc: GenerateOnboardingTopologyTransactions
+     */
+    generateOnboardingTopologyTransactions(
+        input: GenerateOnboardingTopologyTransactionsRequest,
+        options?: RpcOptions
+    ): UnaryCall<
+        GenerateOnboardingTopologyTransactionsRequest,
+        GenerateOnboardingTopologyTransactionsResponse
+    >
 }
 /**
  * @generated from protobuf service com.digitalasset.canton.topology.admin.v30.TopologyManagerReadService
@@ -670,5 +683,22 @@ export class TopologyManagerReadServiceClient
             SequencerLsuStateRequest,
             SequencerLsuStateResponse
         >('serverStreaming', this._transport, method, opt, input)
+    }
+    /**
+     * @generated from protobuf rpc: GenerateOnboardingTopologyTransactions
+     */
+    generateOnboardingTopologyTransactions(
+        input: GenerateOnboardingTopologyTransactionsRequest,
+        options?: RpcOptions
+    ): UnaryCall<
+        GenerateOnboardingTopologyTransactionsRequest,
+        GenerateOnboardingTopologyTransactionsResponse
+    > {
+        const method = this.methods[23],
+            opt = this._transport.mergeOptions(options)
+        return stackIntercept<
+            GenerateOnboardingTopologyTransactionsRequest,
+            GenerateOnboardingTopologyTransactionsResponse
+        >('unary', this._transport, method, opt, input)
     }
 }

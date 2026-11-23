@@ -3,7 +3,7 @@
 
 import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import { DfnsHandler, type DfnsCredentials } from './dfns.js'
+import { DfnsHandler, type DfnsCredentials } from './dfns.ts'
 
 const ORG_ID = 'or-test-org'
 const BASE_URL = 'https://api.dfns.io'
@@ -40,8 +40,8 @@ vi.mock('@dfns/sdk', () => ({
     }),
 }))
 
-import { AsymmetricKeySigner } from '@dfns/sdk-keysigner'
 import { DfnsApiClient } from '@dfns/sdk'
+import { AsymmetricKeySigner } from '@dfns/sdk-keysigner'
 
 function createHandler() {
     return new DfnsHandler(ORG_ID, BASE_URL, TEST_CREDENTIALS)

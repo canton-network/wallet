@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { OffLedger } from '@canton-network/core-token-standard'
-import { emptyChoiceContext } from '../common'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
+
+import { emptyChoiceContext } from '../common.ts'
 
 /**
  * @returns Empty choice context payload for the transfer reject operation.

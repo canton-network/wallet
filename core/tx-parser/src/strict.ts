@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PrettyTransactions, TokenStandardEvent } from './types.js'
+import type { PrettyTransactions, TokenStandardEvent } from './types.ts'
 
 export function validateStrict(
     output: PrettyTransactions,
