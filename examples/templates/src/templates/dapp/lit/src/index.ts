@@ -3,8 +3,11 @@
 
 import * as sdk from '@canton-network/dapp-sdk'
 import type { StatusEvent, Wallet } from '@canton-network/dapp-sdk'
-import { LitElement, css, html, nothing } from 'lit'
+import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
+import { Ping } from '@canton-network/core-splice-codegen'
+import { CantonComponent } from './components/common/base'
+import './components'
 
 // SDK errors may be plain JSON-RPC error objects rather than Error instances.
 function errorMessage(error: unknown): string {
@@ -16,19 +19,31 @@ function errorMessage(error: unknown): string {
 }
 
 @customElement('canton-app')
-export class CantonApp extends LitElement {
-    @state() private status: StatusEvent | undefined
+export class CantonApp extends CantonComponent {
+    @state() private status: StatusEvent | null = null
     @state() private accounts: Wallet[] = []
+    @state() private transactions: sdk.dappAPI.TxChangedEvent[] = []
     @state() private busy = false
     @state() private error: string | undefined
 
     private subscribed = false
+
+    private get primaryParty() {
+        if (!this.accounts.length) return
+        return this.accounts.find((account) => account.primary)
+    }
 
     private readonly onStatusChanged = (status: StatusEvent) => {
         this.status = status
         if (!status.connection.isConnected) {
             this.accounts = []
         }
+    }
+
+    private readonly onTransactionChanged = (
+        event: sdk.dappAPI.TxChangedEvent
+    ) => {
+        this.transactions = [event, ...this.transactions]
     }
 
     private readonly onAccountsChanged = (accounts: Wallet[]) => {
@@ -62,6 +77,7 @@ export class CantonApp extends LitElement {
         if (!this.subscribed) {
             await sdk.onStatusChanged(this.onStatusChanged)
             await sdk.onAccountsChanged(this.onAccountsChanged)
+            await sdk.onTxChanged(this.onTransactionChanged)
             this.subscribed = true
         }
     }
@@ -86,7 +102,7 @@ export class CantonApp extends LitElement {
     }
 
     private connect() {
-        return this.run(async () => {
+        this.run(async () => {
             await sdk.connect()
             await this.refresh()
         })
@@ -96,8 +112,19 @@ export class CantonApp extends LitElement {
         return this.run(async () => {
             await this.unsubscribe()
             await sdk.disconnect()
-            this.status = undefined
+            this.status = null
             this.accounts = []
+        })
+    }
+
+    private ping() {
+        if (!this.primaryParty || !this.primaryParty.partyId) return
+        this.run(async () => {
+            await sdk.prepareExecute({
+                commands: [
+                    Ping.commands.create.ping(this.primaryParty!.partyId),
+                ],
+            })
         })
     }
 
@@ -108,9 +135,22 @@ export class CantonApp extends LitElement {
     override render() {
         return html`
             <main>
-                <h1>Canton dApp</h1>
-
-                ${this.connected ? this.renderConnected() : this.renderIntro()}
+                ${
+                    this.connected
+                        ? html`<canton-connected
+                              .status=${this.status}
+                              .accounts=${this.accounts}
+                              .transactions=${this.transactions}
+                              ?busy=${this.busy}
+                              @disconnect=${this.disconnect}
+                              @ping=${this.ping}
+                              @wallet=${this.openWallet}
+                          ></canton-connected>`
+                        : html`<canton-disconnected
+                              ?busy=${this.busy}
+                              @connect=${this.connect}
+                          ></canton-disconnected>`
+                }
                 ${
                     this.error
                         ? html`<p class="error" role="alert">${this.error}</p>`
@@ -120,155 +160,10 @@ export class CantonApp extends LitElement {
         `
     }
 
-    private renderIntro() {
-        return html`
-            <p>Connect a Canton wallet to get started.</p>
-            <div class="actions">
-                <button
-                    class="primary"
-                    ?disabled=${this.busy}
-                    @click=${this.connect}
-                >
-                    Connect wallet
-                </button>
-            </div>
-        `
-    }
-
-    private renderConnected() {
-        return html`
-            <dl>
-                <dt>Wallet</dt>
-                <dd>${this.status?.provider.id ?? 'unknown'}</dd>
-                <dt>Network</dt>
-                <dd>${this.status?.network?.networkId ?? 'unknown'}</dd>
-            </dl>
-
-            <h2>Accounts</h2>
-            ${
-                this.accounts.length === 0
-                    ? html`<p class="muted">No accounts available.</p>`
-                    : html`
-                          <ul>
-                              ${this.accounts.map(
-                                  (account) => html`
-                                      <li>
-                                          <code>${account.partyId}</code>
-                                          ${
-                                              account.primary
-                                                  ? html`<span class="badge"
-                                                        >primary</span
-                                                    >`
-                                                  : nothing
-                                          }
-                                      </li>
-                                  `
-                              )}
-                          </ul>
-                      `
-            }
-
-            <div class="actions">
-                <button ?disabled=${this.busy} @click=${this.openWallet}>
-                    Open wallet
-                </button>
-                <button ?disabled=${this.busy} @click=${this.disconnect}>
-                    Disconnect
-                </button>
-            </div>
-        `
-    }
-
     static override styles = css`
-        :host {
-            display: block;
-            width: min(100%, 36rem);
-        }
-
-        main {
-            padding: 2rem;
-            border: 1px solid color-mix(in srgb, currentColor 15%, transparent);
-            border-radius: 1rem;
-        }
-
-        h1 {
-            margin-top: 0;
-        }
-
-        h2 {
-            font-size: 1rem;
-        }
-
-        dl {
-            display: grid;
-            grid-template-columns: max-content 1fr;
-            gap: 0.25rem 1rem;
-        }
-
-        dt {
-            font-weight: 600;
-        }
-
-        dd {
-            margin: 0;
-        }
-
-        ul {
-            padding: 0;
-            list-style: none;
-        }
-
-        li {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.25rem 0;
-        }
-
-        code {
-            overflow-wrap: anywhere;
-        }
-
-        .actions {
-            display: flex;
-            gap: 0.5rem;
-            margin-top: 1.5rem;
-        }
-
-        button {
-            padding: 0.5rem 1rem;
-            border: 1px solid color-mix(in srgb, currentColor 25%, transparent);
-            border-radius: 0.5rem;
-            background: transparent;
-            color: inherit;
-            font: inherit;
-            cursor: pointer;
-        }
-
-        button.primary {
-            border-color: var(--info-color);
-            background: var(--info-color);
-            color: var(--light-color);
-        }
-
-        button:disabled {
-            opacity: 0.6;
-            cursor: progress;
-        }
-
-        .badge {
-            padding: 0 0.5rem;
-            border-radius: 999px;
-            background: color-mix(in srgb, var(--info-color) 20%, transparent);
-            font-size: 0.75rem;
-        }
-
-        .muted {
-            opacity: 0.7;
-        }
-
-        .error {
-            color: var(--error-color);
-        }
-    `
+    ${super.styles}
+    :host {
+      display: block;
+      width: 100%;
+  `
 }
