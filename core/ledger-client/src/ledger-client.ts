@@ -564,14 +564,14 @@ export class LedgerClient {
     ): Promise<PostResponse<Path>> {
         let lastBody: PostRequest<Path> | undefined
 
-        return await retryable(() => {
-            lastBody = isBodyFactory(body) ? body() : body
-            return this.post(path, lastBody, params, additionalOptions)
-        }, retryOptions).catch((e) => {
-            this.logger.warn(`Error in postWithRetry for path {path}`, {
-                path,
-                options: retryOptions,
-            })
+        return await retryable(
+            () => {
+                lastBody = isBodyFactory(body) ? body() : body
+                return this.post(path, lastBody, params, additionalOptions)
+            },
+            retryOptions,
+            `POST ${path}`
+        ).catch((e) => {
             this.logger.debug({ body: lastBody })
             throw asJsCantonError(e)
         })
@@ -587,12 +587,9 @@ export class LedgerClient {
     ): Promise<GetResponse<Path>> {
         return await retryable(
             () => this.get(path, params),
-            retryOptions
+            retryOptions,
+            `GET ${path}`
         ).catch((e) => {
-            this.logger.warn(
-                `Error in getWithRetry for path ${path} with retry options ${JSON.stringify(retryOptions)}`
-            )
-
             throw asJsCantonError(e)
         })
     }
@@ -609,11 +606,9 @@ export class LedgerClient {
     ): Promise<PatchResponse<Path>> {
         return await retryable(
             () => this.patch(path, body, params, additionalOptions),
-            retryOptions
+            retryOptions,
+            `PATCH ${path}`
         ).catch((e) => {
-            this.logger.warn(
-                `Error in patchWithRetry for path ${path} with body retry options ${JSON.stringify(retryOptions)}`
-            )
             throw asJsCantonError(e)
         })
     }

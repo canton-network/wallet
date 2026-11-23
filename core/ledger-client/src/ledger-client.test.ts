@@ -522,6 +522,65 @@ describe('LedgerClient', () => {
                 'idp-3',
             ])
         })
+
+        it('logs that an error matching no retryable key was not retried', async () => {
+            const rejectedToken = {
+                code: 'NA',
+                cause: 'A security-sensitive error has been received',
+                context: {},
+                errorCategory: -1,
+                grpcCodeValue: 16,
+            }
+            fetchMock
+                .mockResolvedValueOnce(versionResponse())
+                .mockResolvedValueOnce(jsonResponse(rejectedToken, 401))
+
+            await expect(
+                createLedgerClient().getWithRetry(
+                    '/v2/users/{user-id}/rights',
+                    undefined,
+                    { path: { 'user-id': 'alice' } }
+                )
+            ).rejects.toEqual(rejectedToken)
+
+            expect(fetchMock).toHaveBeenCalledTimes(2)
+            recorder.assertLogged({
+                level: 'warning',
+                rawMessage: '{request} failed and was not retried: {error}',
+                properties: {
+                    request: 'GET /v2/users/{user-id}/rights',
+                    attempts: 1,
+                },
+            })
+        })
+
+        it('logs how often a retried request was tried', async () => {
+            fetchMock
+                .mockResolvedValueOnce(versionResponse())
+                .mockResolvedValueOnce(
+                    jsonResponse(grpcError('SEQUENCER_REQUEST_FAILED'), 503)
+                )
+                .mockResolvedValueOnce(
+                    jsonResponse(grpcError('SEQUENCER_REQUEST_FAILED'), 503)
+                )
+
+            await expect(
+                createLedgerClient().getWithRetry(
+                    '/v2/state/connected-synchronizers',
+                    { retries: 2, delayMs: 1, cantonErrorKeys: [] }
+                )
+            ).rejects.toMatchObject({ message: 'SEQUENCER_REQUEST_FAILED' })
+
+            recorder.assertLogged({
+                level: 'warning',
+                rawMessage:
+                    '{request} failed after {attempts} attempts: {error}',
+                properties: {
+                    request: 'GET /v2/state/connected-synchronizers',
+                    attempts: 2,
+                },
+            })
+        })
     })
 
     describe('is valid get endpoint', () => {

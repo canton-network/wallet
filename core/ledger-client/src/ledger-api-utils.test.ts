@@ -67,11 +67,15 @@ describe('ledger-api-utils', () => {
                 return 'ok'
             })
 
-            const result = retryable(fn, {
-                retries: 2,
-                delayMs: 1000,
-                cantonErrorKeys: ['SEQUENCER_REQUEST_FAILED'],
-            })
+            const result = retryable(
+                fn,
+                {
+                    retries: 2,
+                    delayMs: 1000,
+                    cantonErrorKeys: ['SEQUENCER_REQUEST_FAILED'],
+                },
+                'GET /test'
+            )
             await vi.advanceTimersByTimeAsync(1000)
 
             await expect(result).resolves.toBe('ok')
@@ -84,7 +88,7 @@ describe('ledger-api-utils', () => {
             })
 
             await expect(
-                retryable(fn, defaultRetryableOptions)
+                retryable(fn, defaultRetryableOptions, 'GET /test')
             ).rejects.toMatchObject({ message: 'INVALID_ARGUMENT' })
         })
     })
