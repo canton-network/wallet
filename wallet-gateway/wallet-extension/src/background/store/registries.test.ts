@@ -3,8 +3,9 @@
 
 import { beforeEach, describe, expect, it } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { createVault, VaultLockedError } from '../vault'
-import { createRegistryStore } from './registries'
+
+import { createVault, VaultLockedError } from '../vault/index.ts'
+import { createRegistryStore } from './registries.ts'
 
 describe('createRegistryStore', () => {
     beforeEach(() => {

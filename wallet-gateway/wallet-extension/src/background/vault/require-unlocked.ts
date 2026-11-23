@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { VaultLockedError } from './errors'
-import type { VaultLockState } from './vault'
+import { VaultLockedError } from './errors.ts'
+import type { VaultLockState } from './vault.ts'
 
 /** An object of async methods, nested in plain objects to any depth. */
 export type LockableService = {

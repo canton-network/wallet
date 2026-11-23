@@ -3,7 +3,12 @@
 
 import type { Network } from '@canton-network/core-wallet-store'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createTokenSdkCache, type TokenSdk, type TokenSdkConfig } from './sdk'
+
+import {
+    createTokenSdkCache,
+    type TokenSdk,
+    type TokenSdkConfig,
+} from './sdk.ts'
 
 const network = { id: 'canton:localnet' } as Network
 const config: TokenSdkConfig = {

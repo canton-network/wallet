@@ -4,11 +4,12 @@
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Wallet } from '@canton-network/core-wallet-store'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { AuthContextStore } from '../auth-context'
-import type { RegistryStore } from '../store/registries'
-import { createTestWalletStore } from '../store/test-store'
-import type { TokenSdk, TokenSdkCache } from './sdk'
-import { createTokenService } from './service'
+
+import type { AuthContextStore } from '../auth-context.ts'
+import type { RegistryStore } from '../store/registries.ts'
+import { createTestWalletStore } from '../store/test-store.ts'
+import type { TokenSdk, TokenSdkCache } from './sdk.ts'
+import { createTokenService } from './service.ts'
 
 const networkId = 'canton:localnet'
 const context: AuthContext = { userId: 'alice', accessToken: 'alice-token' }

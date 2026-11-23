@@ -5,9 +5,10 @@ import type { PartyId } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import type { AssetBody } from '@canton-network/wallet-sdk'
-import type { AuthContextStore } from '../auth-context'
-import type { RegistryStore } from '../store/registries'
-import type { TokenSdk, TokenSdkCache } from './sdk'
+
+import type { AuthContextStore } from '../auth-context.ts'
+import type { RegistryStore } from '../store/registries.ts'
+import type { TokenSdk, TokenSdkCache } from './sdk.ts'
 
 /** An asset as the pages receive it: messaging turns a `URL` into a string. */
 export type TokenAsset = Omit<AssetBody, 'registryUrl'> & {

@@ -10,7 +10,8 @@ import {
     type SDKInterface,
     type SDKOptions,
 } from '@canton-network/wallet-sdk'
-import type { Vault } from '../vault'
+
+import type { Vault } from '../vault/index.ts'
 
 /** The wallet SDK with its `token` namespace. */
 export type TokenSdk = SDKInterface<'token'>

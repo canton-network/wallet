@@ -2,8 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, vi } from 'vitest'
-import { VaultErrorName, type VaultStatus } from '@/shared/vault-protocol'
-import { requireUnlocked } from './require-unlocked'
+
+import { VaultErrorName, type VaultStatus } from '@/shared/vault-protocol.ts'
+
+import { requireUnlocked } from './require-unlocked.ts'
 
 describe('requireUnlocked', () => {
     function lockedService(status: VaultStatus) {
