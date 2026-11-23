@@ -58,6 +58,9 @@ const suites: Suite[] = [
     },
 ]
 
+// The SDKs whose packed install the wallet-sdk-pkg job checks
+const sdks = ['@canton-network/wallet-sdk', '@canton-network/dapp-sdk']
+
 function selectE2e(projects: string[]): Record<string, string> {
     const selections = suites.map((suite) => ({
         ...suite,
@@ -117,20 +120,12 @@ function selectE2e(projects: string[]): Record<string, string> {
     return outputs
 }
 
-function showE2eProjects(extraArgs: string[] = []): string[] {
+function showProjects(args: string[]): string[] {
     const projects: unknown = JSON.parse(
-        execFileSync(
-            'pnpm',
-            [
-                'nx',
-                'show',
-                'projects',
-                '--with-target=playwright:e2e,snippets',
-                '--json',
-                ...extraArgs,
-            ],
-            { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'] }
-        )
+        execFileSync('pnpm', ['nx', 'show', 'projects', '--json', ...args], {
+            encoding: 'utf8',
+            stdio: ['ignore', 'pipe', 'inherit'],
+        })
     )
     if (
         !Array.isArray(projects) ||
@@ -156,7 +151,8 @@ function main(): void {
         program.error('--base and --head must not be empty')
     }
 
-    const allProjects = showE2eProjects()
+    const e2eTargets = '--with-target=playwright:e2e,snippets'
+    const allProjects = showProjects([e2eTargets])
     const mappedProjects = new Set(suites.map((suite) => suite.project))
     const unmappedProjects = allProjects.filter(
         (project) => !mappedProjects.has(project)
@@ -176,16 +172,17 @@ function main(): void {
         )
     }
 
+    const affected =
+        base && head ? ['--affected', `--base=${base}`, `--head=${head}`] : []
     const projects =
-        base && head
-            ? showE2eProjects([
-                  '--affected',
-                  `--base=${base}`,
-                  `--head=${head}`,
-              ])
-            : allProjects
+        base && head ? showProjects([e2eTargets, ...affected]) : allProjects
     console.log('Parsed e2e projects:', projects)
-    const outputs = selectE2e(projects)
+    const affectedSdks = showProjects([...affected, '--projects', ...sdks])
+    console.log('Parsed SDK projects:', affectedSdks)
+    const outputs = {
+        ...selectE2e(projects),
+        'sdk-package': String(affectedSdks.length > 0),
+    }
     const content = Object.entries(outputs)
         .map(([key, value]) => `${key}=${value}\n`)
         .join('')
