@@ -531,6 +531,13 @@ export const paramSchemas: Record<string, z.ZodType> = {
                 description:
                     "Client secret that must match the selected network's auth.clientSecret",
             },
+            scopes: {
+                title: 'scopes',
+                type: 'array',
+                description:
+                    'Ledger api token scopes. They will be added to network.auth.scope.',
+                items: { title: 'scope', type: 'string' },
+            },
         },
         required: ['networkId', 'clientId', 'clientSecret'],
     }),

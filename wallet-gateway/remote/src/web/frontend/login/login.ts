@@ -275,7 +275,12 @@ export class LoginUI extends BaseElement {
         )
         const { accessToken } = await userClient.request({
             method: 'selfSignedAccessToken',
-            params: { networkId, clientId, clientSecret },
+            params: {
+                networkId,
+                clientId,
+                clientSecret,
+                ...(this.scopes && { scopes: this.scopes }),
+            },
         })
 
         stateManager.expirationDate.set(

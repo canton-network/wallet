@@ -142,6 +142,12 @@ export interface Network {
  *
  */
 export type NetworkName = string
+/**
+ *
+ * Ledger api token scopes. They will be added to network.auth.scope.
+ *
+ */
+export type Scopes = Scope[]
 export type Id = string
 /**
  *
@@ -711,6 +717,7 @@ export interface SelfSignedAccessTokenParams {
     networkId: NetworkId
     clientId: ClientId
     clientSecret: ClientSecret
+    scopes?: Scopes
 }
 export interface AddIdpParams {
     idp: Idp
