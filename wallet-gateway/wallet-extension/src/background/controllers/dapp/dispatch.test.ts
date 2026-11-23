@@ -475,7 +475,7 @@ describe('createDappDispatcher', () => {
                     sites.approve(asked.principal, asked.origin)
                 )
 
-                const tab = { tabId: 7, windowId: 3 }
+                const tab = { tabId: 7, windowId: 3, page: 'document-1' }
 
                 await expect(
                     dispatcher.request(request('connect'), unapproved, tab)

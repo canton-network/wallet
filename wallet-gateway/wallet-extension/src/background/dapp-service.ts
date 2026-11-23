@@ -36,14 +36,25 @@ export function senderOrigin(sender: Sender | undefined): string | undefined {
         : undefined
 }
 
-/** The tab of a message from a content script, if the browser reports one. */
+/**
+ * The tab and document of a message or port from a content script, if the
+ * browser reports a tab. Firefox has no `documentId`, so there the document
+ * is the tab and frame, which a reload keeps.
+ */
 export function senderTab(
-    sender: Pick<Browser.runtime.MessageSender, 'tab'> | undefined
+    sender:
+        | Pick<Browser.runtime.MessageSender, 'documentId' | 'frameId' | 'tab'>
+        | undefined
 ): SiteApprovalTab | undefined {
     const tab = sender?.tab
-    return tab?.id === undefined || tab.windowId === undefined
-        ? undefined
-        : { tabId: tab.id, windowId: tab.windowId }
+    if (tab?.id === undefined || tab.windowId === undefined) return undefined
+    return {
+        tabId: tab.id,
+        windowId: tab.windowId,
+        page:
+            sender?.documentId ??
+            JSON.stringify([tab.id, sender?.frameId ?? 0]),
+    }
 }
 
 interface ProxyCall {

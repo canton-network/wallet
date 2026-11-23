@@ -16,6 +16,7 @@ import { logger } from '@/shared/logger.ts'
 import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
 import type { NotificationRelay } from './notification-relay.ts'
+import { createPagePresence, type PagePresence } from './page-presence.ts'
 
 export interface JsonRpcProxyOptions {
     /** The background dApp dispatcher. */
@@ -23,6 +24,8 @@ export interface JsonRpcProxyOptions {
     /** Forwards a message to the background (`runtime.sendMessage`). */
     sendMessage: (message: SpliceMessage) => Promise<unknown>
     notificationRelay: Pick<NotificationRelay, 'onResponse'>
+    /** Opened before a request is relayed, as `connect` may prompt. */
+    presence: PagePresence
     /** The dApp page window requests come from and responses go to. */
     window: Pick<Window, 'postMessage'>
     /** Routing key of this extension, see `SpliceMessage.target`. */
@@ -38,7 +41,8 @@ export interface JsonRpcProxyOptions {
  * access token.
  */
 export function createJsonRpcProxyHandler(options: JsonRpcProxyOptions) {
-    const { dispatcher, notificationRelay, runtimeId, window } = options
+    const { dispatcher, notificationRelay, presence, runtimeId, window } =
+        options
 
     const shouldHandle = (target: string | undefined): boolean => {
         if (!target) return true
@@ -75,6 +79,7 @@ export function createJsonRpcProxyHandler(options: JsonRpcProxyOptions) {
                 // They must not be proxied back to the background script.
                 if (msg.request.id == null) return
 
+                presence.open()
                 const response = await dispatch(msg.request)
                 window.postMessage(
                     {
@@ -125,6 +130,7 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay): void {
         dispatcher: createProxyService(DAPP_RPC_KEY),
         sendMessage: (message) => browser.runtime.sendMessage(message),
         notificationRelay,
+        presence: createPagePresence(),
         window,
         runtimeId: browser.runtime?.id,
     })
