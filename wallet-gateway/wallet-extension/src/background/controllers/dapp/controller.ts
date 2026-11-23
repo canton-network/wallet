@@ -26,7 +26,6 @@ import type {
     Transaction,
 } from '@canton-network/core-wallet-store'
 
-import { enqueueApprovalRequest } from '@/shared/approval-requests.ts'
 import { logger } from '@/shared/logger.ts'
 
 import type { SitePorts } from '../../notifications.ts'
@@ -39,6 +38,7 @@ import {
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
+import type { TxApprovals } from '../../tx-approval.ts'
 import type { UnlockRequests } from '../../unlock-request.ts'
 import buildController from './rpc-gen/index.ts'
 import type {
@@ -46,6 +46,7 @@ import type {
     LedgerApiParams,
     LedgerApiResult,
     Network,
+    PrepareExecuteAndWaitResult,
     PrepareExecuteParams,
     StatusEvent,
     TxChangedPendingEvent,
@@ -59,6 +60,7 @@ export interface DappControllerDeps {
     sites: ApprovedSiteStore
     siteApprovals: Pick<SiteApprovals, 'request'>
     unlockRequests: Pick<UnlockRequests, 'request'>
+    txApprovals: Pick<TxApprovals, 'request'>
     sitePorts: Pick<SitePorts, 'send' | 'close'>
     isCurrent: SessionCheck
 }
@@ -94,6 +96,7 @@ export const dappController = (
         sites,
         siteApprovals,
         unlockRequests,
+        txApprovals,
         sitePorts,
         isCurrent,
     }: DappControllerDeps,
@@ -133,6 +136,108 @@ export const dappController = (
     async function loadSession() {
         if (!auth || !approved) return undefined
         return sessionOf(auth)
+    }
+
+    /**
+     * Prepares the transaction, stores it as pending and puts its approval
+     * prompt on the tab's toolbar icon. Resolves once the prompt is up.
+     */
+    async function prepareForApproval(params: PrepareExecuteParams) {
+        const context = requireAuth()
+        const store = await loadStore()
+        const session = await store.getSession(context.accessToken)
+        if (!session) {
+            throw new Error('No active session found')
+        }
+
+        const primaryWallet = await store.getPrimaryWallet()
+        const wallets = await store.getWallets()
+        const network = await store.getCurrentNetwork()
+
+        let actAs = params.actAs ? [...params.actAs] : []
+        if (actAs.length === 0) {
+            if (!primaryWallet) {
+                throw new Error(
+                    'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
+                )
+            }
+            actAs = [primaryWallet.partyId]
+        }
+
+        for (const party of actAs) {
+            if (!wallets.some((wallet) => wallet.partyId === party)) {
+                throw new Error(`Acting party ${party} does not belong to user`)
+            }
+        }
+
+        const wallet = wallets.find(
+            (candidate) => candidate.partyId === actAs[0]
+        )
+        if (!wallet) {
+            throw new Error(
+                'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
+            )
+        }
+
+        const ledgerClient = ledgerClientFor(network, context.accessToken)
+        const commandId = params.commandId || crypto.randomUUID()
+        const transactionId = crypto.randomUUID()
+        const synchronizerId =
+            network.synchronizerId ?? (await ledgerClient.getSynchronizerId())
+
+        logger.info('prepareExecute: Submitting request to ledger', {
+            transactionId,
+            commandId,
+            actAs,
+        })
+
+        const prepared: PrepareSubmissionResponse =
+            await ledgerClient.postWithRetry(
+                '/v2/interactive-submission/prepare',
+                ledgerPrepareParams({
+                    userId: context.userId,
+                    commandId,
+                    actAs,
+                    synchronizerId,
+                    params,
+                    hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                })
+            )
+
+        const transaction: Transaction = {
+            id: transactionId,
+            commandId,
+            status: 'pending',
+            preparedTransaction: prepared.preparedTransaction,
+            preparedTransactionHash: prepared.preparedTransactionHash,
+            payload: { ...params, commandId, actAs },
+            // The requesting page, not the session's login origin.
+            origin,
+            createdAt: new Date(),
+        }
+
+        await store.setTransaction(transaction)
+
+        notificationService.getNotifier(session.id).emit('txChanged', {
+            status: 'pending',
+            commandId,
+        } satisfies TxChangedPendingEvent)
+
+        const prompt = await txApprovals.request({
+            transactionId,
+            commandId,
+            sessionId: session.id,
+            auth: context,
+            tab,
+        })
+
+        logger.info('prepareExecute: Prepared transaction for approval', {
+            transactionId,
+            commandId,
+            actAs,
+        })
+
+        return prompt
     }
 
     return buildController({
@@ -276,101 +381,14 @@ export const dappController = (
         },
 
         prepareExecute: async (params: PrepareExecuteParams) => {
-            const context = requireAuth()
-            const store = await loadStore()
-            const session = await store.getSession(context.accessToken)
-            if (!session) {
-                throw new Error('No active session found')
-            }
-
-            const primaryWallet = await store.getPrimaryWallet()
-            const wallets = await store.getWallets()
-            const network = await store.getCurrentNetwork()
-
-            let actAs = params.actAs ? [...params.actAs] : []
-            if (actAs.length === 0) {
-                if (!primaryWallet) {
-                    throw new Error(
-                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
-                    )
-                }
-                actAs = [primaryWallet.partyId]
-            }
-
-            for (const party of actAs) {
-                if (!wallets.some((wallet) => wallet.partyId === party)) {
-                    throw new Error(
-                        `Acting party ${party} does not belong to user`
-                    )
-                }
-            }
-
-            const wallet = wallets.find(
-                (candidate) => candidate.partyId === actAs[0]
-            )
-            if (!wallet) {
-                throw new Error(
-                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
-                )
-            }
-
-            const ledgerClient = ledgerClientFor(network, context.accessToken)
-            const commandId = params.commandId || crypto.randomUUID()
-            const transactionId = crypto.randomUUID()
-            const synchronizerId =
-                network.synchronizerId ??
-                (await ledgerClient.getSynchronizerId())
-
-            logger.info('prepareExecute: Submitting request to ledger', {
-                transactionId,
-                commandId,
-                actAs,
-            })
-
-            const prepared: PrepareSubmissionResponse =
-                await ledgerClient.postWithRetry(
-                    '/v2/interactive-submission/prepare',
-                    ledgerPrepareParams({
-                        userId: context.userId,
-                        commandId,
-                        actAs,
-                        synchronizerId,
-                        params,
-                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-                    })
-                )
-
-            const transaction: Transaction = {
-                id: transactionId,
-                commandId,
-                status: 'pending',
-                preparedTransaction: prepared.preparedTransaction,
-                preparedTransactionHash: prepared.preparedTransactionHash,
-                payload: { ...params, commandId, actAs },
-                // The requesting page, not the session's login origin.
-                origin,
-                createdAt: new Date(),
-            }
-
-            await store.setTransaction(transaction)
-
-            notificationService.getNotifier(session.id).emit('txChanged', {
-                status: 'pending',
-                commandId,
-            } satisfies TxChangedPendingEvent)
-
-            await enqueueApprovalRequest({ transactionId, commandId })
-
-            logger.info('prepareExecute: Prepared transaction for approval', {
-                transactionId,
-                commandId,
-                actAs,
-            })
-
+            await prepareForApproval(params)
             return null
         },
-        prepareExecuteAndWait: async () => {
-            throw new Error('Function prepareExecuteAndWait not implemented.')
+        prepareExecuteAndWait: async (
+            params: PrepareExecuteParams
+        ): Promise<PrepareExecuteAndWaitResult> => {
+            const { outcome } = await prepareForApproval(params)
+            return { tx: await outcome }
         },
         status: async (): Promise<StatusEvent> => {
             const signedIn = await loadSession()

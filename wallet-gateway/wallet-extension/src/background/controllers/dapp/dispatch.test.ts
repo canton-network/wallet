@@ -2,7 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import { errorCodes, providerErrors } from '@canton-network/core-rpc-errors'
+import {
+    errorCodes,
+    providerErrors,
+    rpcErrors,
+} from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { JsonRpcRequest } from '@canton-network/core-types'
 import {
@@ -21,6 +25,7 @@ import {
     expect,
     it,
     type Mock,
+    type MockInstance,
     vi,
 } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
@@ -28,7 +33,6 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
 import { asPort, fakePort } from '@/__tests__/fake-port.ts'
 import { inAnHour, jwt } from '@/__tests__/jwt.ts'
-import { approvalRequestsItem } from '@/shared/storage.ts'
 import type { VaultStatus } from '@/shared/vault-protocol.ts'
 
 import {
@@ -41,6 +45,7 @@ import { disconnectedStatusEvent } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
 import { createTestWalletStore } from '../../store/test-store.ts'
+import type { TxApprovals } from '../../tx-approval.ts'
 import type { UnlockRequests } from '../../unlock-request.ts'
 import { VaultLockedError } from '../../vault/index.ts'
 import type { DappControllerDeps } from './controller.ts'
@@ -100,6 +105,7 @@ describe('createDappDispatcher', () => {
     let deps: DappControllerDeps & {
         siteApprovals: { request: Mock<SiteApprovals['request']> }
         unlockRequests: { request: Mock<UnlockRequests['request']> }
+        txApprovals: { request: Mock<TxApprovals['request']> }
         sitePorts: {
             send: Mock<SitePorts['send']>
             close: Mock<SitePorts['close']>
@@ -120,6 +126,7 @@ describe('createDappDispatcher', () => {
             sites,
             siteApprovals: { request: vi.fn() },
             unlockRequests: { request: vi.fn(async () => {}) },
+            txApprovals: { request: vi.fn() },
             sitePorts: { send: vi.fn(), close: vi.fn() },
             isCurrent: vi.fn(async () => true),
         }
@@ -591,52 +598,154 @@ describe('createDappDispatcher', () => {
             })
         })
 
-        it('records the requesting origin on a prepared transaction', async () => {
-            const postWithRetry = vi
-                .spyOn(LedgerClient.prototype, 'postWithRetry')
-                .mockResolvedValue({
-                    preparedTransaction: 'prepared-tx',
-                    preparedTransactionHash: 'prepared-hash',
-                })
-            const sink = { send: vi.fn(), close: vi.fn() }
-            subscribeNotifications(
-                service,
-                { sessionId, userId: authContext.userId },
-                sink
-            )
-
-            const response = await dispatcher.request(
-                request('prepareExecute', {
-                    commandId: 'command-1',
-                    commands: [{ CreateCommand: {} }],
-                }),
-                origin
-            )
-
-            expect(response).toEqual({ jsonrpc: '2.0', id: 7, result: null })
-            expect(postWithRetry).toHaveBeenCalledWith(
-                '/v2/interactive-submission/prepare',
-                expect.objectContaining({
-                    commandId: 'command-1',
-                    actAs: [wallet.partyId],
-                })
-            )
-            const [queued] = await approvalRequestsItem.getValue()
-            expect(queued).toEqual({
-                transactionId: expect.any(String),
+        describe('prepareExecute', () => {
+            const tab = {
+                tabId: 7,
+                windowId: 3,
+                page: 'document-1',
+                connection: { page: 'document-1', origin, live: true },
+            }
+            const executed = {
+                status: 'executed' as const,
                 commandId: 'command-1',
-            })
-            expect(
-                await store.getTransaction(queued!.transactionId)
-            ).toMatchObject({
-                status: 'pending',
+                payload: { updateId: 'update-1', completionOffset: 42 },
+            }
+            const params = {
                 commandId: 'command-1',
-                preparedTransaction: 'prepared-tx',
-                origin,
+                commands: [{ CreateCommand: {} }],
+            }
+            let postWithRetry: MockInstance<LedgerClient['postWithRetry']>
+
+            beforeEach(() => {
+                postWithRetry = vi
+                    .spyOn(LedgerClient.prototype, 'postWithRetry')
+                    .mockResolvedValue({
+                        preparedTransaction: 'prepared-tx',
+                        preparedTransactionHash: 'prepared-hash',
+                    })
             })
-            expect(sink.send).toHaveBeenCalledWith('txChanged', [
-                { status: 'pending', commandId: 'command-1' },
-            ])
+
+            it('stores the transaction and prompts for it on the tab', async () => {
+                const sink = { send: vi.fn(), close: vi.fn() }
+                subscribeNotifications(
+                    service,
+                    { sessionId, userId: authContext.userId },
+                    sink
+                )
+                deps.txApprovals.request.mockResolvedValue({
+                    outcome: new Promise(() => {}),
+                })
+
+                const response = await dispatcher.request(
+                    request('prepareExecute', params),
+                    origin,
+                    tab
+                )
+
+                expect(response).toEqual({
+                    jsonrpc: '2.0',
+                    id: 7,
+                    result: null,
+                })
+                expect(postWithRetry).toHaveBeenCalledWith(
+                    '/v2/interactive-submission/prepare',
+                    expect.objectContaining({
+                        commandId: 'command-1',
+                        actAs: [wallet.partyId],
+                    })
+                )
+                expect(deps.txApprovals.request).toHaveBeenCalledWith({
+                    transactionId: expect.any(String),
+                    commandId: 'command-1',
+                    sessionId,
+                    auth: authContext,
+                    tab,
+                })
+                const [{ transactionId }] =
+                    deps.txApprovals.request.mock.calls[0]!
+                expect(await store.getTransaction(transactionId)).toMatchObject(
+                    {
+                        status: 'pending',
+                        commandId: 'command-1',
+                        preparedTransaction: 'prepared-tx',
+                        origin,
+                    }
+                )
+                expect(sink.send).toHaveBeenCalledWith('txChanged', [
+                    { status: 'pending', commandId: 'command-1' },
+                ])
+            })
+
+            it('fails when the prompt cannot be set up', async () => {
+                deps.txApprovals.request.mockRejectedValue(
+                    providerErrors.userRejectedRequest({
+                        message: 'The page that asked was closed',
+                    })
+                )
+
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecute', params),
+                        origin
+                    )
+                ).resolves.toMatchObject({
+                    error: { code: errorCodes.provider.userRejectedRequest },
+                })
+            })
+
+            it('waits for the executed transaction in prepareExecuteAndWait', async () => {
+                deps.txApprovals.request.mockResolvedValue({
+                    outcome: Promise.resolve(executed),
+                })
+
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecuteAndWait', params),
+                        origin,
+                        tab
+                    )
+                ).resolves.toEqual({
+                    jsonrpc: '2.0',
+                    id: 7,
+                    result: { tx: executed },
+                })
+            })
+
+            it.each([
+                [
+                    'rejected',
+                    providerErrors.userRejectedRequest({
+                        message: 'Rejected by the user',
+                    }),
+                ],
+                [
+                    'failed',
+                    rpcErrors.transactionRejected({ message: 'INVALID: no' }),
+                ],
+                [
+                    'timed out',
+                    providerErrors.userRejectedRequest({
+                        message: 'The transaction approval timed out',
+                    }),
+                ],
+            ])(
+                'returns the error of a transaction that %s in prepareExecuteAndWait',
+                async (_, error) => {
+                    const outcome = Promise.reject(error)
+                    outcome.catch(() => {})
+                    deps.txApprovals.request.mockResolvedValue({ outcome })
+
+                    await expect(
+                        dispatcher.request(
+                            request('prepareExecuteAndWait', params),
+                            origin,
+                            tab
+                        )
+                    ).resolves.toMatchObject({
+                        error: { code: error.code, message: error.message },
+                    })
+                }
+            )
         })
 
         it('refuses disconnect while locked and keeps the approval', async () => {

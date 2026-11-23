@@ -5,18 +5,6 @@ import { storage } from 'wxt/utils/storage'
 
 import type { VaultStatus } from './vault-protocol.ts'
 
-/** A transaction a dApp prepared that waits for the user's approval. */
-export interface ApprovalRequest {
-    transactionId: string
-    commandId: string
-}
-
-/** Pending approvals, oldest first. Cleared when the browser closes. */
-export const approvalRequestsItem = storage.defineItem<ApprovalRequest[]>(
-    'session:approvalRequests',
-    { fallback: [] }
-)
-
 /**
  * The vault's status, for pages to watch. Not secret. The background writes it
  * after every change; ask the background (`vault.getStatus`) for the current

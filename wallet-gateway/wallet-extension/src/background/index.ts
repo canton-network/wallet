@@ -36,6 +36,7 @@ import { createTabIcons } from './tab-icon.ts'
 import { createTokenSdk } from './token/sdk.ts'
 import { createTokenService } from './token/service.ts'
 import { registerTrustedService } from './trusted-service.ts'
+import { createTxApprovals } from './tx-approval.ts'
 import { createUnlockRequests } from './unlock-request.ts'
 import { registerVaultService } from './vault-service.ts'
 import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
@@ -75,6 +76,15 @@ export function startBackground({
         sites,
     })
     const unlockRequests = createUnlockRequests({ vault, presence, tabIcons })
+    const txApprovals = createTxApprovals({
+        vault,
+        authContext,
+        presence,
+        tabIcons,
+        isCurrent,
+        notificationService,
+        getStore: () => walletStore.get(),
+    })
     const sitePorts = createSitePorts(vault, authContext)
 
     registerVaultService(vault)
@@ -88,6 +98,7 @@ export function startBackground({
                 sites,
                 siteApprovals,
                 unlockRequests,
+                txApprovals,
                 sitePorts,
                 isCurrent,
             },

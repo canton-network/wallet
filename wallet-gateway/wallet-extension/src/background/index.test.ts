@@ -52,10 +52,10 @@ describe('startBackground', () => {
         // added synchronously are counted.
         startBackground()
 
-        // The page presence ports, the site approval ports and the
-        // notification ports
+        // The page presence ports, the site and transaction approval ports
+        // and the notification ports
         expect(fakeBrowser.runtime.onConnect.addListener).toHaveBeenCalledTimes(
-            3
+            4
         )
         // The vault service, the auth service, the dApp dispatcher, the user
         // controller, the token service, the site approval service and the
