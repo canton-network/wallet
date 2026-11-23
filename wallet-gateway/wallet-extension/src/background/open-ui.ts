@@ -6,27 +6,57 @@ import { browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
 
-/**
- * Opens the wallet UI at a hash route. Tries the toolbar popup first, which
- * needs a focused browser window and always opens at `/`. Otherwise opens
- * `popup.html` in a small window. Resolves to that window's ID.
- */
-export async function openWalletUi(path = '/'): Promise<number | undefined> {
-    if (path === '/') {
-        try {
-            await browser.action.openPopup()
-            return undefined
-        } catch {
-            // No focused window, or a browser without openPopup()
+const DEFAULT_POPUP = 'popup.html'
+
+// The popup URL is global state, so one attempt at a time: another attempt
+// could otherwise open this one's route, or restore the default too early.
+let popupTurn: Promise<unknown> = Promise.resolve()
+
+async function openToolbarPopup(path: string): Promise<boolean> {
+    const route = path !== '/'
+    try {
+        if (route) {
+            await browser.action.setPopup({ popup: `${DEFAULT_POPUP}#${path}` })
+        }
+        await browser.action.openPopup()
+        return true
+    } catch {
+        // No focused window, or a browser without openPopup()
+        return false
+    } finally {
+        // So that a click on the toolbar icon opens the wallet's start page.
+        if (route) {
+            await browser.action
+                .setPopup({ popup: DEFAULT_POPUP })
+                .catch((error: unknown) => {
+                    logger.error('Failed to restore the popup: {error}', {
+                        error,
+                    })
+                })
         }
     }
-    const window = await browser.windows.create({
+}
+
+/**
+ * Opens the wallet UI at a hash route. With `toolbarPopup`, the default for
+ * `/`, tries the toolbar popup first, which needs a focused browser window.
+ * Otherwise, or when that fails, opens `popup.html` in a small window.
+ */
+export async function openWalletUi(
+    path = '/',
+    { toolbarPopup = path === '/' }: { toolbarPopup?: boolean } = {}
+): Promise<void> {
+    if (toolbarPopup) {
+        const opened = popupTurn.then(() => openToolbarPopup(path))
+        popupTurn = opened
+        if (await opened) return
+    }
+    await browser.windows.create({
         url: browser.runtime.getURL(`/popup.html#${path}`),
         type: 'popup',
         width: 360,
         height: 600,
     })
-    return window?.id
 }
 
 /**

@@ -18,3 +18,19 @@ export interface NotificationPortMessage {
     method: DappNotificationEvent
     params?: unknown
 }
+
+const SITE_APPROVAL_PORT_PREFIX = 'wg-site-approval:'
+
+/**
+ * Name of the `runtime.Port` the site approval page holds open for its
+ * request. The background rejects the request when the port disconnects, and
+ * disconnects it to make the page close.
+ */
+export const siteApprovalPortName = (id: string) =>
+    `${SITE_APPROVAL_PORT_PREFIX}${id}`
+
+/** The request ID of a site approval port, or undefined for another port. */
+export const siteApprovalPortId = (name: string) =>
+    name.startsWith(SITE_APPROVAL_PORT_PREFIX)
+        ? name.slice(SITE_APPROVAL_PORT_PREFIX.length)
+        : undefined
