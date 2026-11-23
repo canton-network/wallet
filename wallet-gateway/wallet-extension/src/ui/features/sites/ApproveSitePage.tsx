@@ -14,8 +14,7 @@ export function ApproveSitePage({ id }: { id: string }) {
     const { data: request } = useSuspenseQuery(siteApprovalQuery(id))
     const decide = useDecideSiteApproval(id)
 
-    // The page opens in the toolbar popup or its own window, which have
-    // nothing else to show.
+    // The page opens in the toolbar popup, which has nothing else to show.
     const answer = (approved: boolean) =>
         decide.mutate(approved, { onSuccess: () => window.close() })
 

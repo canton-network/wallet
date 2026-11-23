@@ -12,6 +12,7 @@ import type { Browser } from 'wxt/browser'
 import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
 import type { DappDispatcher } from './controllers/dapp/dispatch.ts'
+import type { SiteApprovalTab } from './site-approval.ts'
 
 type Sender = Pick<Browser.runtime.MessageSender, 'origin' | 'url'>
 
@@ -33,6 +34,16 @@ export function senderOrigin(sender: Sender | undefined): string | undefined {
     return url.protocol === 'http:' || url.protocol === 'https:'
         ? url.origin
         : undefined
+}
+
+/** The tab of a message from a content script, if the browser reports one. */
+export function senderTab(
+    sender: Pick<Browser.runtime.MessageSender, 'tab'> | undefined
+): SiteApprovalTab | undefined {
+    const tab = sender?.tab
+    return tab?.id === undefined || tab.windowId === undefined
+        ? undefined
+        : { tabId: tab.id, windowId: tab.windowId }
 }
 
 interface ProxyCall {
@@ -75,7 +86,11 @@ export function registerDappService(
             if (typeof request !== 'object' || request === null) {
                 throw new Error('Invalid dApp request')
             }
-            return await dispatcher.request(request as JsonRpcRequest, origin)
+            return await dispatcher.request(
+                request as JsonRpcRequest,
+                origin,
+                senderTab(sender)
+            )
         }
     )
 }

@@ -5,6 +5,7 @@ import { errorCodes } from '@canton-network/core-rpc-errors'
 import type { JsonRpcRequest } from '@canton-network/core-types'
 import { createProxyService } from '@webext-core/proxy-service'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import { sendMessagesFrom } from '@/__tests__/message-sender.ts'
@@ -69,7 +70,25 @@ describe('registerDappService', () => {
 
         expect(dispatcher.request).toHaveBeenCalledWith(
             request,
-            'https://dapp.example'
+            'https://dapp.example',
+            undefined
+        )
+    })
+
+    it("passes the sender's tab, for the site approval prompt", async () => {
+        sendMessagesFrom({
+            id: fakeBrowser.runtime.id,
+            origin: 'https://dapp.example',
+            url: 'https://dapp.example/page',
+            tab: { id: 7, windowId: 3 } as Browser.tabs.Tab,
+        })
+
+        await createProxyService(DAPP_RPC_KEY).request(request)
+
+        expect(dispatcher.request).toHaveBeenCalledWith(
+            request,
+            'https://dapp.example',
+            { tabId: 7, windowId: 3 }
         )
     })
 

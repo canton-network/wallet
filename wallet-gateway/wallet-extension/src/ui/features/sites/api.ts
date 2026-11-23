@@ -23,21 +23,21 @@ export function useDecideSiteApproval(id: string) {
     })
 }
 
-let held: Browser.runtime.Port | undefined
+let held: { id: string; port: Browser.runtime.Port } | undefined
 
 /**
- * Holds the request's port open while the page shows it, so the background
- * rejects the request when the page goes away, and closes the page when the
- * background cancels it.
+ * Holds a port for the request the page shows, so the page closes when the
+ * background cancels it. Does nothing when it already holds this request's.
  */
 export function holdSiteApproval(id: string): void {
+    if (held?.id === id) return
     releaseSiteApproval()
     const port = browser.runtime.connect({ name: siteApprovalPortName(id) })
     port.onDisconnect.addListener(() => window.close())
-    held = port
+    held = { id, port }
 }
 
 export function releaseSiteApproval(): void {
-    held?.disconnect()
+    held?.port.disconnect()
     held = undefined
 }

@@ -10,6 +10,7 @@ import {
     expect,
     it,
     type Mock,
+    type MockInstance,
     vi,
 } from 'vitest'
 import type { Browser } from 'wxt/browser'
@@ -30,7 +31,8 @@ import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 
 const origin = 'https://dapp.example'
-const alice = { principal: 'alice', origin, accessToken: 'token-a' }
+const tab = { tabId: 7, windowId: 3 }
+const alice = { principal: 'alice', origin, accessToken: 'token-a', tab }
 
 describe('createSiteApprovals', () => {
     let lockListeners: (() => void)[]
@@ -39,16 +41,28 @@ describe('createSiteApprovals', () => {
         [K in keyof ApprovedSiteStore]: Mock<ApprovedSiteStore[K]>
     }
     let isCurrent: Mock<SessionCheck>
-    let open: Mock<(path: string) => Promise<void>>
+    // The popup of each tab, as set through `action.setPopup`.
+    let popups: Map<number | undefined, string>
+    let setPopup: MockInstance<typeof fakeBrowser.action.setPopup>
+    let openPopup: MockInstance<typeof fakeBrowser.action.openPopup>
     let connectListeners: ((port: Browser.runtime.Port) => void)[]
     let approvals: SiteApprovals
 
-    /** The request ID from the path of the page that was opened last. */
+    /** The request ID the tab's toolbar icon points at. */
+    const shownId = (tabId = tab.tabId) =>
+        new URLSearchParams(popups.get(tabId)?.split('?')[1]).get('id')
+    /** The request ID of the prompt that opened last. */
     const openedId = async () => {
-        await vi.waitFor(() => expect(open).toHaveBeenCalled())
-        const path = open.mock.lastCall![0]
-        return new URLSearchParams(path.split('?')[1]).get('id')!
+        await vi.waitFor(() => expect(openPopup).toHaveBeenCalled())
+        return shownId()!
     }
+    const badge = (tabId = tab.tabId) =>
+        fakeBrowser.action.getBadgeText({ tabId })
+    const expectRestored = () =>
+        vi.waitFor(async () => {
+            expect(popups.get(tab.tabId)).toBe('popup.html')
+            expect(await badge()).toBe('')
+        })
     const signIn = (context?: AuthContext) =>
         authListeners.forEach((listener) => listener(context))
     /** Opens the request's port, from the approval page by default. */
@@ -82,7 +96,16 @@ describe('createSiteApprovals', () => {
             }),
         }
         isCurrent = vi.fn(async () => true)
-        open = vi.fn(async () => {})
+        popups = new Map()
+        // The fake browser doesn't implement setPopup or openPopup.
+        setPopup = vi
+            .spyOn(fakeBrowser.action, 'setPopup')
+            .mockImplementation(async ({ tabId, popup }) => {
+                popups.set(tabId ?? undefined, popup)
+            })
+        openPopup = vi
+            .spyOn(fakeBrowser.action, 'openPopup')
+            .mockResolvedValue(undefined)
         connectListeners = []
         // The fake browser doesn't implement runtime.onConnect.
         vi.spyOn(
@@ -96,7 +119,6 @@ describe('createSiteApprovals', () => {
             },
             isCurrent,
             sites,
-            open,
             timeoutMs: 1000,
         })
     })
@@ -118,10 +140,7 @@ describe('createSiteApprovals', () => {
 
         await expect(first).resolves.toBeUndefined()
         await expect(second).resolves.toBeUndefined()
-        expect(open).toHaveBeenCalledTimes(1)
-        expect(open).toHaveBeenCalledWith(
-            expect.stringMatching(/^\/approve-site\?id=/)
-        )
+        expect(openPopup).toHaveBeenCalledTimes(1)
         expect(sites.approve).toHaveBeenCalledWith('alice', origin)
         await expect(approvals.service.get(id)).resolves.toBeNull()
     })
@@ -155,35 +174,159 @@ describe('createSiteApprovals', () => {
         await expect(approvals.service.get(id)).resolves.toBeNull()
     })
 
-    it('rejects with 4001 when the user closes the page', async () => {
-        const request = approvals.request(alice)
-        const port = connectPage(await openedId())
+    it("prompts on the toolbar icon of the dApp's tab", async () => {
+        const create = vi.spyOn(fakeBrowser.windows, 'create')
 
-        port.remoteDisconnect()
-
-        await expect(request).rejects.toMatchObject({
-            code: errorCodes.provider.userRejectedRequest,
-            message: 'The user closed the approval page',
-        })
-    })
-
-    it('refuses a port from a content script', async () => {
-        const request = approvals.request(alice)
+        void approvals.request(alice).catch(() => {})
         const id = await openedId()
 
-        const port = connectPage(id, `${origin}/`)
-        port.remoteDisconnect()
+        expect(popups.get(tab.tabId)).toBe(`popup.html#/approve-site?id=${id}`)
+        expect(await badge()).toBe('1')
+        expect(openPopup).toHaveBeenCalledWith({ windowId: tab.windowId })
+        expect(
+            setPopup.mock.calls.every(([details]) => details.tabId === 7)
+        ).toBe(true)
+        expect(create).not.toHaveBeenCalled()
+    })
 
-        expect(port.disconnect).toHaveBeenCalled()
+    it('leaves the prompt on the icon when the toolbar popup cannot open', async () => {
+        openPopup.mockRejectedValue(
+            new Error('Could not find an active browser window.')
+        )
+        const create = vi.spyOn(fakeBrowser.windows, 'create')
+
+        const request = approvals.request(alice)
+        await vi.waitFor(() => expect(openPopup).toHaveBeenCalled())
+        const id = shownId()!
+
+        expect(create).not.toHaveBeenCalled()
+        expect(await badge()).toBe('1')
         await expect(approvals.service.get(id)).resolves.toEqual({ origin })
         await approvals.service.decide(id, true)
         await expect(request).resolves.toBeUndefined()
     })
 
-    it('keeps an approval that is being saved when the page closes', async () => {
+    it('waits for the timeout without a tab, and opens nothing', async () => {
+        vi.useFakeTimers()
+        const request = approvals.request({ ...alice, tab: undefined })
+        const settled = expect(request).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+            message: 'The site approval timed out',
+        })
+        await vi.advanceTimersByTimeAsync(1000)
+
+        await settled
+        expect(setPopup).not.toHaveBeenCalled()
+        expect(openPopup).not.toHaveBeenCalled()
+    })
+
+    it.each<[string, (id: string) => unknown]>([
+        ['approved', (id) => approvals.service.decide(id, true)],
+        ['rejected', (id) => approvals.service.decide(id, false)],
+        ['timed out', () => vi.advanceTimersByTime(1000)],
+        ['cancelled by a lock', () => lockListeners.forEach((l) => l())],
+        ['cancelled by a sign-out', () => signIn(undefined)],
+    ])(
+        'points the tab back at the wallet once the prompt is %s',
+        async (_, settle) => {
+            vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+            const request = approvals.request(alice).catch(() => {})
+            const id = await openedId()
+
+            await settle(id)
+            await request
+
+            await expectRestored()
+            expect(
+                setPopup.mock.calls.every(([details]) => details.tabId === 7)
+            ).toBe(true)
+        }
+    )
+
+    it('rejects with 4001 when the tab closes', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
+        setPopup.mockClear()
+
+        await fakeBrowser.tabs.onRemoved.trigger(tab.tabId, {
+            windowId: tab.windowId,
+            isWindowClosing: false,
+        })
+
+        await expect(request).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+        })
+        await expect(approvals.service.get(id)).resolves.toBeNull()
+        expect(setPopup).not.toHaveBeenCalled()
+    })
+
+    it('ignores another tab closing', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
+
+        await fakeBrowser.tabs.onRemoved.trigger(8, {
+            windowId: tab.windowId,
+            isWindowClosing: false,
+        })
+        await approvals.service.decide(id, true)
+
+        await expect(request).resolves.toBeUndefined()
+    })
+
+    it('shows the newest of two prompts on a tab, then the other', async () => {
+        const first = approvals.request(alice)
+        const firstId = await openedId()
+        const second = approvals.request({
+            ...alice,
+            origin: 'https://widget.example',
+        })
+        await vi.waitFor(() => expect(openPopup).toHaveBeenCalledTimes(2))
+        const secondId = shownId()!
+
+        expect(secondId).not.toBe(firstId)
+        expect(await badge()).toBe('2')
+
+        await approvals.service.decide(secondId, true)
+        await vi.waitFor(() => expect(shownId()).toBe(firstId))
+        expect(await badge()).toBe('1')
+
+        await approvals.service.decide(firstId, false)
+        await expectRestored()
+        await expect(second).resolves.toBeUndefined()
+        await expect(first).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+        })
+    })
+
+    it('leaves the request pending when the page closes', async () => {
         const request = approvals.request(alice)
         const id = await openedId()
         const port = connectPage(id)
+
+        port.remoteDisconnect()
+
+        await expect(approvals.service.get(id)).resolves.toEqual({ origin })
+        expect(shownId()).toBe(id)
+        await approvals.service.decide(id, true)
+        await expect(request).resolves.toBeUndefined()
+    })
+
+    it('refuses a port from a content script', async () => {
+        const request = approvals.request(alice).catch(() => {})
+        const id = await openedId()
+
+        const port = connectPage(id, `${origin}/`)
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+        signIn(undefined)
+        await request
+
+        // Not attached to the prompt, so its cancellation didn't reach it.
+        expect(port.disconnect).toHaveBeenCalledTimes(1)
+    })
+
+    it('keeps an approval that is being saved when the tab closes', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
         const approve = sites.approve.getMockImplementation()!
         let saved!: () => void
         sites.approve.mockImplementationOnce(async (owner, site) => {
@@ -193,7 +336,10 @@ describe('createSiteApprovals', () => {
 
         const decided = approvals.service.decide(id, true)
         await vi.waitFor(() => expect(saved).toBeDefined())
-        port.remoteDisconnect()
+        await fakeBrowser.tabs.onRemoved.trigger(tab.tabId, {
+            windowId: tab.windowId,
+            isWindowClosing: false,
+        })
         saved()
 
         await expect(decided).resolves.toBeUndefined()
@@ -219,7 +365,7 @@ describe('createSiteApprovals', () => {
             .request({ ...alice, principal: 'bob', accessToken: 'token-b' })
             .catch(() => {})
 
-        await vi.waitFor(() => expect(open).toHaveBeenCalledTimes(2))
+        await vi.waitFor(() => expect(openPopup).toHaveBeenCalledTimes(2))
     })
 
     it('does not prompt for a session that is not current', async () => {
@@ -228,7 +374,7 @@ describe('createSiteApprovals', () => {
         await expect(approvals.request(alice)).rejects.toMatchObject({
             code: errorCodes.provider.unauthorized,
         })
-        expect(open).not.toHaveBeenCalled()
+        expect(setPopup).not.toHaveBeenCalled()
     })
 
     it.each([
@@ -390,13 +536,12 @@ describe('currentSessionCheck', () => {
     it('gives an expired session no prompt and no grant', async () => {
         const token = jwt({ iss: 'idp', sub: 'alice', exp: 1 })
         const approve = vi.fn<ApprovedSiteStore['approve']>()
-        const open = vi.fn(async () => {})
+        const setPopup = vi.spyOn(fakeBrowser.action, 'setPopup')
         const approvals = createSiteApprovals({
             vault: { onLock: () => {} },
             authContext: { onChange: () => {} },
             isCurrent: await signedIn(token),
             sites: { approve, isApproved: vi.fn(), revoke: vi.fn() },
-            open,
         })
 
         await expect(
@@ -404,9 +549,10 @@ describe('currentSessionCheck', () => {
                 principal: 'alice',
                 origin,
                 accessToken: token,
+                tab,
             })
         ).rejects.toMatchObject({ code: errorCodes.provider.unauthorized })
-        expect(open).not.toHaveBeenCalled()
+        expect(setPopup).not.toHaveBeenCalled()
         expect(approve).not.toHaveBeenCalled()
     })
 })

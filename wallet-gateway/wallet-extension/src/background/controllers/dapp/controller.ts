@@ -34,6 +34,7 @@ import { openWalletUi } from '../../open-ui.ts'
 import {
     type SessionCheck,
     type SiteApprovals,
+    type SiteApprovalTab,
     sessionEnded,
 } from '../../site-approval.ts'
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
@@ -65,6 +66,8 @@ export interface DappControllerDeps {
 export interface DappRequestContext {
     /** Origin of the page that sent the request, e.g. `https://app.example`. */
     origin: string
+    /** The browser tab of the page, where a site approval prompt shows. */
+    tab?: SiteApprovalTab
     /** The vault isn't unlocked. */
     locked: boolean
     /** The signed-in user. Always undefined while locked. */
@@ -92,7 +95,7 @@ export const dappController = (
         sitePorts,
         isCurrent,
     }: DappControllerDeps,
-    { origin, locked, auth, principal, approved }: DappRequestContext
+    { origin, tab, locked, auth, principal, approved }: DappRequestContext
 ) => {
     const notConnected = () =>
         disconnectedStatusEvent(locked ? 'Locked' : 'Unauthenticated')
@@ -160,6 +163,7 @@ export const dappController = (
                     principal,
                     origin,
                     accessToken: context.accessToken,
+                    tab,
                 })
             }
             const network = await store.getCurrentNetwork()
