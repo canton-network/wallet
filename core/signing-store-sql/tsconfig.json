@@ -2,5 +2,14 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "types": []
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-auth"
+        },
+        {
+            "path": "../signing-lib"
+        }
+    ]
 }
