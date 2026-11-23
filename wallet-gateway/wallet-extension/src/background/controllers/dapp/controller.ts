@@ -14,6 +14,7 @@ import {
     assertConnected,
     type AuthContext,
     AuthTokenProvider,
+    jwtExpired,
 } from '@canton-network/core-wallet-auth'
 import {
     type INotificationService,
@@ -112,6 +113,9 @@ export const dappController = (
     }
 
     async function sessionOf(context: AuthContext) {
+        // The store still holds the session, but the wallet treats an expired
+        // token as signed out, so sites must too.
+        if (jwtExpired(context.accessToken)) return undefined
         const store = await loadStore()
         const session = await store.getSession(context.accessToken)
         return session && { context, store, session }

@@ -512,6 +512,32 @@ describe('createDappDispatcher', () => {
             })
         })
 
+        it('reports an expired session as not connected', async () => {
+            const expired = {
+                ...authContext,
+                accessToken: jwt({ sub: authContext.userId, exp: 1 }),
+            }
+            authContextStore.load.mockResolvedValue(expired)
+            await walletStore.withAuthContext(expired).setSession({
+                id: sessionId,
+                origin: 'browserext',
+                network: networkId,
+                accessToken: expired.accessToken,
+            })
+
+            await expect(
+                dispatcher.request(request('status'), origin)
+            ).resolves.toMatchObject({
+                result: { connection: { isConnected: false } },
+            })
+            await expect(
+                dispatcher.request(request('isConnected'), origin)
+            ).resolves.toMatchObject({ result: { isConnected: false } })
+            await expect(
+                dispatcher.request(request('connect'), origin)
+            ).resolves.toMatchObject({ result: { isConnected: false } })
+        })
+
         it('reports the session in status', async () => {
             vi.spyOn(LedgerClient.prototype, 'get').mockResolvedValue({
                 version: '3.4.0',
