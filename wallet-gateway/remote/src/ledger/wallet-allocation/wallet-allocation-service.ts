@@ -58,31 +58,26 @@ export class WalletAllocationService {
         signingProviderId: SigningProvider
     ) => InternalWalletAllocator
 
-    private getAllocator(
-        signingProviderId: SigningProvider
-    ): WalletAllocator | undefined {
+    private getAllocator(signingProviderId: SigningProvider): WalletAllocator {
         const driver = this.signingDrivers[signingProviderId]
+        let allocator: WalletAllocator | undefined
 
         if (driver?.partyMode === PartyMode.INTERNAL) {
-            return this.createInternalAllocator(signingProviderId)
+            allocator = this.createInternalAllocator(signingProviderId)
+        } else {
+            if (signingProviderId === SigningProvider.WALLET_KERNEL) {
+                allocator = this.kernelAllocator
+            } else {
+                allocator = this.createExternalAllocator(signingProviderId)
+            }
         }
 
-        if (signingProviderId === SigningProvider.WALLET_KERNEL) {
-            return this.kernelAllocator
-        }
-
-        return this.createExternalAllocator(signingProviderId)
-    }
-
-    private getAllocatorOrThrow(
-        signingProviderId: SigningProvider
-    ): WalletAllocator {
-        const allocator = this.getAllocator(signingProviderId)
         if (!allocator) {
             throw new Error(
                 `Signing driver for ${signingProviderId} not available`
             )
         }
+
         return allocator
     }
 
@@ -137,7 +132,7 @@ export class WalletAllocationService {
         signingProviderId: SigningProvider,
         keyName?: KeyName
     ): Promise<Wallet> {
-        return this.getAllocatorOrThrow(signingProviderId).createWallet(
+        return this.getAllocator(signingProviderId).createWallet(
             authContext,
             partyHint,
             primary,
@@ -150,7 +145,7 @@ export class WalletAllocationService {
         existingWallet: Wallet,
         signingProviderId: SigningProvider
     ): Promise<void> {
-        const allocator = this.getAllocatorOrThrow(signingProviderId)
+        const allocator = this.getAllocator(signingProviderId)
         return allocator.allocateParty(authContext, existingWallet)
     }
 
@@ -158,7 +153,7 @@ export class WalletAllocationService {
         authContext: AuthContext,
         signingProviderId: SigningProvider
     ) {
-        const allocator = this.getAllocatorOrThrow(signingProviderId)
+        const allocator = this.getAllocator(signingProviderId)
         return allocator.getKeys(authContext)
     }
 }

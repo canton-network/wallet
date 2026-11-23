@@ -545,7 +545,7 @@ describe('WalletAllocationService', () => {
                     false,
                     SigningProvider.WALLET_KERNEL
                 )
-            ).rejects.toThrow('Wallet Gateway signing driver not available')
+            ).rejects.toThrow('Signing driver for wallet-kernel not available')
         })
 
         it('throws when createKey returns a signing error', async () => {
