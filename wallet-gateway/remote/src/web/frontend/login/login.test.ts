@@ -27,7 +27,9 @@ const {
     mockNetworkIdGet,
     mockOnboardingSessionIdSet,
     setLocationHref,
+    mockDetectCurrentOrigin,
 } = vi.hoisted(() => ({
+    mockDetectCurrentOrigin: vi.fn(),
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
     mockRedirectToIntendedOrDefault: vi.fn(),
@@ -54,6 +56,9 @@ vi.mock('../index.ts', () => ({
     addUserSession: mockAddUserSession,
 }))
 vi.mock('../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../listeners.ts', () => ({
+    detectCurrentOrigin: mockDetectCurrentOrigin,
+}))
 vi.mock('../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -164,6 +169,8 @@ describe('LoginUI', () => {
         mockNetworkIdGet.mockReturnValue('net-1')
         mockOnboardingSessionIdSet.mockReset()
         setLocationHref.mockReset()
+        mockDetectCurrentOrigin.mockReset()
+        mockDetectCurrentOrigin.mockResolvedValue(window.origin)
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listNetworks') {
@@ -217,6 +224,14 @@ describe('LoginUI', () => {
         } finally {
             window.history.replaceState(null, '', originalUrl)
         }
+    })
+
+    it('passes the current origin to the login form', async () => {
+        mockDetectCurrentOrigin.mockResolvedValue('https://dapp.example')
+        const dappEl = await fixture<LoginUI>(componentFixture)
+        await waitUntil(() => dappEl.networks.length === 1)
+
+        expect(getLoginForm(dappEl)?.origin).toBe('https://dapp.example')
     })
 
     it('does not pass scopes when the URL has no scopes query', async () => {

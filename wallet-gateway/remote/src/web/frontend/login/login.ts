@@ -79,6 +79,9 @@ export class LoginUI extends BaseElement {
     @state()
     accessor connectingMessage = 'Connecting...'
 
+    @state()
+    accessor origin = ''
+
     private readonly scopes = getScopesFromUrl()
 
     private async loadNetworks() {
@@ -104,12 +107,14 @@ export class LoginUI extends BaseElement {
         try {
             // Connecting needs both, so fetch them together and publish them update once both are resolved
 
-            const [networks, idps] = await Promise.all([
+            const [networks, idps, origin] = await Promise.all([
                 this.loadNetworks(),
                 this.loadIdps(),
+                detectCurrentOrigin(),
             ])
             this.networks = networks
             this.idps = idps
+            this.origin = origin
         } catch (e) {
             handleErrorToast(e)
         } finally {
@@ -296,6 +301,7 @@ export class LoginUI extends BaseElement {
                 .loading=${this.loading}
                 .connecting=${this.connecting}
                 .scopes=${this.scopes}
+                .origin=${this.origin}
                 @login-connect=${this.handleConnect}
             ></wg-login-form>
         `

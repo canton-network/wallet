@@ -3,7 +3,8 @@
 
 import { html, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element.js'
+
+import { BaseElement } from '../internal/base-element.ts'
 
 /** Read-only list of Ledger API access token scopes requested by a dApp */
 export

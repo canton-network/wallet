@@ -4,8 +4,9 @@
 import { fixture } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
-import './scope-list.js'
-import type { WgScopeList } from './scope-list.js'
+
+import './scope-list.ts'
+import type { WgScopeList } from './scope-list.ts'
 
 describe('wg-scope-list', () => {
     afterEach(() => {

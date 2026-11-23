@@ -54,6 +54,7 @@ class WgLoginForm extends BaseElement {
     @property({ type: Boolean }) accessor connecting = false
     @property({ type: String }) accessor backHref = '/'
     @property({ type: Array }) accessor scopes: string[] | undefined = undefined
+    @property({ type: String }) accessor origin = ''
 
     @property({ type: Boolean }) accessor displayTopBar = true
 
@@ -365,7 +366,10 @@ class WgLoginForm extends BaseElement {
                         this.scopes?.length
                             ? html`<div class="alert alert-warning">
                                   <p class="mb-2">
-                                      This dApp requested ledger permissions:
+                                      <strong class="text-break"
+                                          >${this.origin}</strong
+                                      >
+                                      requested ledger permissions:
                                   </p>
                                   <wg-scope-list
                                       .scopes=${this.scopes}
