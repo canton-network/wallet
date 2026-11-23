@@ -219,6 +219,25 @@ Additional guidance:
 - `adminAuth` credentials are sensitive: store them securely, rotate them regularly, and use
   them only where truly needed.
 
+### Disabling the token client ID check
+
+The Wallet Gateway rejects access tokens whose `azp` (or `client_id`) claim doesn't match the
+network's `auth.clientId`. If your identity provider issues tokens with a different client ID and
+you can't change that, you can skip this check by setting:
+
+```bash
+export WALLET_GATEWAY_DANGEROUSLY_DISABLE_CLIENT_ID_CHECK=true
+```
+
+<Warning>
+
+This weakens token validation: the Wallet Gateway then accepts tokens issued to any client of the
+same issuer and audience. Use it only as a temporary workaround when you can't fix the identity
+provider configuration, and remove it as soon as possible. The issuer and audience checks still
+apply.
+
+</Warning>
+
 ### Suggested environment profiles
 
 | Setting | Development | Production |

@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-store-wxt",
-    "version": "1.8.0",
+    "version": "1.9.0",
     "type": "module",
     "description": "WXT implementation of the Store API",
     "license": "Apache-2.0",
@@ -11,6 +11,7 @@
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
