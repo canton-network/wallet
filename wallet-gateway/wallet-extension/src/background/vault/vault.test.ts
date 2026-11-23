@@ -133,6 +133,8 @@ describe('vault', () => {
         async (_, pause) => {
             const vault = await createdVault()
             await vault.lock()
+            const unlocked = vi.fn()
+            vault.onUnlock(unlocked)
 
             const paused = pause()
             const unlocking = vault.unlock(PASSWORD)
@@ -143,6 +145,7 @@ describe('vault', () => {
             await expect(unlocking).rejects.toThrow(VaultLockedError)
             await locking
             expect(vault.status()).toBe('locked')
+            expect(unlocked).not.toHaveBeenCalled()
             // No key stays cached, so a background restart stays locked too.
             expect((await startVault()).status()).toBe('locked')
         }

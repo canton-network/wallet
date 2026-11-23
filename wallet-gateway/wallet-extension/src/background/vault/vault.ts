@@ -51,8 +51,9 @@ export interface Vault {
      */
     onLock(listener: () => void): void
     /**
-     * Calls `listener` once `create()` or `unlock()` has opened the vault.
-     * If it throws, the error is logged.
+     * Calls `listener` once `create()` or `unlock()` has completed with the
+     * vault open, not when a `lock()` interrupted it. If it throws, the error
+     * is logged.
      */
     onUnlock(listener: () => void): void
     /**
@@ -136,17 +137,23 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
     /**
      * Runs an operation in the queue, then publishes the status. With
      * `rejectIfLocked`, a `lock()` that came in at any await, the status write
-     * included, turns the operation's success into `VaultLockedError`.
+     * included, turns the operation's success into `VaultLockedError`. With
+     * `unlocks`, the unlock listeners run once the operation has succeeded
+     * and the vault is still open.
      */
     function run<T>(
         op: (gen: number) => Promise<T>,
-        { rejectIfLocked = false } = {}
+        { rejectIfLocked = false, unlocks = false } = {}
     ): Promise<T> {
         const gen = generation
         return enqueue(async () => {
             const result = await op(gen).finally(publishStatus)
-            // Nothing awaits after this check, so no lock() can come in after it.
+            // Nothing awaits after these checks, so no lock() can come in
+            // between them and the listeners.
             if (rejectIfLocked) assertCurrent(gen)
+            if (unlocks && gen === generation && status === 'unlocked') {
+                notifyUnlock()
+            }
             return result
         })
     }
@@ -298,23 +305,27 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
         status: () => status,
 
         create: (password) =>
-            run(async (gen) => {
-                const problems = passwordProblems(password)
-                if (problems.length > 0) throw new WeakPasswordError(problems)
-                if ((await vaultItem.getValue()) !== null) {
-                    throw new VaultExistsError()
-                }
-                const header = newHeader(iterations)
-                const key = await deriveVaultKey(password, header)
-                const doc: VaultDocV1 = { items: {} }
-                const envelope = await sealDocument(key, header, doc)
-                assertCurrent(gen)
-                await vaultItem.setValue(envelope)
-                // The vault exists now, even if a lock() keeps it locked.
-                status = 'locked'
-                if (await openSession(gen, key, header, doc)) notifyUnlock()
-                log.info('Vault created')
-            }),
+            run(
+                async (gen) => {
+                    const problems = passwordProblems(password)
+                    if (problems.length > 0)
+                        throw new WeakPasswordError(problems)
+                    if ((await vaultItem.getValue()) !== null) {
+                        throw new VaultExistsError()
+                    }
+                    const header = newHeader(iterations)
+                    const key = await deriveVaultKey(password, header)
+                    const doc: VaultDocV1 = { items: {} }
+                    const envelope = await sealDocument(key, header, doc)
+                    assertCurrent(gen)
+                    await vaultItem.setValue(envelope)
+                    // The vault exists now, even if a lock() keeps it locked.
+                    status = 'locked'
+                    await openSession(gen, key, header, doc)
+                    log.info('Vault created')
+                },
+                { unlocks: true }
+            ),
 
         unlock: (password) =>
             run(
@@ -324,11 +335,10 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
                     const doc = await openDocument(key, envelope)
                     if (await openSession(gen, key, headerOf(envelope), doc)) {
                         log.info('Vault unlocked')
-                        notifyUnlock()
                     }
                 },
                 // An unlock that a lock() interrupts must not report success.
-                { rejectIfLocked: true }
+                { rejectIfLocked: true, unlocks: true }
             ),
 
         lock: () => {
