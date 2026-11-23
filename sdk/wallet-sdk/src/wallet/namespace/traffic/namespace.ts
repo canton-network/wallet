@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Ops } from '@canton-network/core-provider-ledger'
-import type { SDKContext } from '../../init/types/context.js'
-import type { SDKLogger } from '../../logger/logger.js'
-import type { TopUpTrafficParams, TrafficAccount } from './types.js'
+
+import type { SDKContext } from '../../init/types/context.ts'
+import type { SDKLogger } from '../../logger/logger.ts'
+import type { TopUpTrafficParams, TrafficAccount } from './types.ts'
 
 /**
  * Traffic accounting on a Canton participant.

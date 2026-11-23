@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, vi, beforeEach, expect } from 'vitest'
-import { TrafficAccountNamespace } from './namespace'
-import * as mock from '../../__tests__/mocks'
+
+import * as mock from '../../__tests__/mocks.ts'
+import { TrafficAccountNamespace } from './namespace.ts'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**

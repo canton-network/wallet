@@ -8,14 +8,15 @@ import {
     AuthTokenProvider,
     type AccessTokenProvider,
 } from '@canton-network/core-wallet-auth'
+
 import { AmuletNamespace } from '../namespace/amulet/namespace.ts'
 import { AssetNamespace } from '../namespace/asset/index.ts'
 import { EventsNamespace } from '../namespace/events/index.ts'
 import { KeysNamespace } from '../namespace/keys/index.ts'
 import { LedgerNamespace } from '../namespace/ledger/index.ts'
 import { PartyNamespace } from '../namespace/party/index.ts'
-import { TrafficAccountNamespace } from '../namespace/traffic/index.ts'
 import { TokenNamespace } from '../namespace/token/index.ts'
+import { TrafficAccountNamespace } from '../namespace/traffic/index.ts'
 import { UserNamespace } from '../namespace/user/index.ts'
 import { SDKUtilsNamespace } from '../namespace/utils/index.ts'
 import { parseAssets, ParsedURL } from '../namespace/utils/url.ts'

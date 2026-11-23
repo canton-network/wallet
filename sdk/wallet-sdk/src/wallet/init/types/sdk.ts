@@ -4,6 +4,7 @@
 import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
 import type { Provider } from '@canton-network/core-splice-provider'
 import type { TokenProviderConfig } from '@canton-network/core-wallet-auth'
+
 import type { AllowedLogAdapters } from '../../logger/types.ts'
 import type { AmuletNamespace } from '../../namespace/amulet/namespace.ts'
 import type { EventsNamespace } from '../../namespace/events/namespace.ts'
