@@ -14,7 +14,7 @@ import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import type { PageConnection } from './page-presence.ts'
-import type { SiteApprovalTab } from './site-approval.ts'
+import type { RequestTab } from './page-presence.ts'
 import { createTabIcons, type TabIcons } from './tab-icon.ts'
 import { createUnlockRequests, type UnlockRequests } from './unlock-request.ts'
 
@@ -29,7 +29,7 @@ const openPage = (page = 'document-1') => ({
 describe('createUnlockRequests', () => {
     let unlockListeners: (() => void)[]
     let endListeners: ((connection: PageConnection) => void)[]
-    let tab: SiteApprovalTab & { connection: { live: boolean } }
+    let tab: RequestTab & { connection: { live: boolean } }
     // The popup of each tab, as set through `action.setPopup`.
     let popups: Map<number | undefined, string>
     let setPopup: MockInstance<typeof fakeBrowser.action.setPopup>
@@ -43,9 +43,7 @@ describe('createUnlockRequests', () => {
         expect(popups.get(tab.tabId)).toBe('popup.html')
         expect(await badge()).toBe('')
     }
-    const endPage = (
-        page: SiteApprovalTab & { connection: { live: boolean } }
-    ) => {
+    const endPage = (page: RequestTab & { connection: { live: boolean } }) => {
         page.connection.live = false
         endListeners.forEach((listener) => listener(page.connection!))
     }

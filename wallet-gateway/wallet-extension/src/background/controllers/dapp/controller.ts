@@ -28,12 +28,9 @@ import type {
 import { logger } from '@/shared/logger.ts'
 
 import type { SitePorts } from '../../notifications.ts'
-import {
-    type SessionCheck,
-    type SiteApprovals,
-    type SiteApprovalTab,
-    sessionEnded,
-} from '../../site-approval.ts'
+import type { RequestTab } from '../../page-presence.ts'
+import type { SessionCheck } from '../../session-check.ts'
+import { type SiteApprovals, sessionEnded } from '../../site-approval.ts'
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
@@ -67,7 +64,7 @@ export interface DappRequestContext {
     /** Origin of the page that sent the request, e.g. `https://app.example`. */
     origin: string
     /** The browser tab of the page, where a site approval prompt shows. */
-    tab?: SiteApprovalTab
+    tab?: RequestTab
     /** The vault isn't unlocked. */
     locked: boolean
     /** The signed-in user. Always undefined while locked. */

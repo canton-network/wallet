@@ -22,8 +22,8 @@ import type {
 } from './controllers/dapp/rpc-gen/typings.ts'
 import type { TransactionSubmitter } from './controllers/user/transactions.ts'
 import type { TxChangedSite } from './notifications.ts'
-import type { PagePresence } from './page-presence.ts'
-import type { SessionCheck, SiteApprovalTab } from './site-approval.ts'
+import type { PagePresence, RequestTab } from './page-presence.ts'
+import type { SessionCheck } from './session-check.ts'
 import type { WalletStore } from './store/index.ts'
 import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
 import { isTrustedSender } from './trusted-service.ts'
@@ -37,7 +37,6 @@ import { type Vault, VaultLockedError } from './vault/index.ts'
  */
 export const TX_APPROVAL_TIMEOUT_MS = 4 * 60 * 1000
 
-/** A dApp request for a transaction the user must approve. */
 export interface TxApprovalRequest {
     transactionId: string
     commandId: string
@@ -45,9 +44,8 @@ export interface TxApprovalRequest {
     sessionId: string
     /** The user who asked, whose store holds the transaction. */
     auth: AuthContext
-    /** The requesting page's origin. */
     origin: string
-    tab: SiteApprovalTab | undefined
+    tab: RequestTab | undefined
 }
 
 export interface TxApproval {
@@ -122,10 +120,8 @@ interface Prompt extends TxApprovalRequest {
      */
     state: 'preparing' | 'waiting' | 'deciding'
     outcome: Promise<TxChangedExecutedEvent>
-    /** Set once `outcome` has settled. */
     ended: boolean
     settle: (result: TxChangedExecutedEvent | Error) => void
-    /** Stops the timer and the session's logout listener. */
     stop: () => void
     /** The open approval pages, which close when their port disconnects. */
     ports: Set<Browser.runtime.Port>

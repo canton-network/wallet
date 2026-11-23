@@ -25,8 +25,12 @@ import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
 import { PAGE_PRESENCE_PORT_NAME, txApprovalPortName } from '@/shared/ports.ts'
 
 import type { TransactionSubmitter } from './controllers/user/transactions.ts'
-import { createPagePresence, type PagePresence } from './page-presence.ts'
-import type { SessionCheck, SiteApprovalTab } from './site-approval.ts'
+import {
+    createPagePresence,
+    type PagePresence,
+    type RequestTab,
+} from './page-presence.ts'
+import type { SessionCheck } from './session-check.ts'
 import type { WalletStore } from './store/index.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 import { createTabIcons } from './tab-icon.ts'
@@ -71,7 +75,7 @@ describe('createTxApprovals', () => {
     let presence: PagePresence
     let approvals: TxApprovals
     let alicePage: FakePort
-    let pageTab: SiteApprovalTab
+    let pageTab: RequestTab
     let counter: number
 
     const expectRestored = () =>

@@ -9,7 +9,7 @@ import { senderOrigin, senderTab } from './dapp-service.ts'
 
 /** One presence port of a dApp page, from connect to disconnect. */
 export interface PageConnection {
-    /** See `SiteApprovalTab`. */
+    /** See `RequestTab`. */
     readonly page: string
     readonly origin: string
     /**
@@ -17,6 +17,19 @@ export interface PageConnection {
      * tab and frame replaced it.
      */
     readonly live: boolean
+}
+
+/** The browser tab of the page that sent a dApp request. */
+export interface RequestTab {
+    tabId: number
+    windowId: number
+    /** The document that sent it: `documentId`, or the tab and frame. */
+    page: string
+    /**
+     * The page's presence connection when the request arrived. None, or not
+     * live, means the page has gone.
+     */
+    connection: PageConnection | undefined
 }
 
 export interface PagePresence {

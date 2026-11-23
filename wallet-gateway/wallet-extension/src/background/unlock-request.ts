@@ -5,8 +5,11 @@ import { browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
 
-import type { PageConnection, PagePresence } from './page-presence.ts'
-import type { SiteApprovalTab } from './site-approval.ts'
+import type {
+    PageConnection,
+    PagePresence,
+    RequestTab,
+} from './page-presence.ts'
 import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
 import type { Vault } from './vault/index.ts'
 
@@ -19,7 +22,7 @@ export interface UnlockRequests {
      * unlocks, the tab closes or the page that asked unloads. Does nothing
      * once that page has gone.
      */
-    request(tab: SiteApprovalTab | undefined): Promise<void>
+    request(tab: RequestTab | undefined): Promise<void>
 }
 
 export interface UnlockRequestsOptions {

@@ -13,7 +13,7 @@ import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
 import type { DappDispatcher } from './controllers/dapp/dispatch.ts'
 import type { PagePresence } from './page-presence.ts'
-import type { SiteApprovalTab } from './site-approval.ts'
+import type { RequestTab } from './page-presence.ts'
 
 type Sender = Pick<Browser.runtime.MessageSender, 'origin' | 'url'>
 
@@ -46,7 +46,7 @@ export function senderTab(
     sender:
         | Pick<Browser.runtime.MessageSender, 'documentId' | 'frameId' | 'tab'>
         | undefined
-): Omit<SiteApprovalTab, 'connection'> | undefined {
+): Omit<RequestTab, 'connection'> | undefined {
     const tab = sender?.tab
     if (tab?.id === undefined || tab.windowId === undefined) return undefined
     return {

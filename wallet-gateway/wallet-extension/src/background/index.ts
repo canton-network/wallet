@@ -26,7 +26,8 @@ import {
 } from './notifications.ts'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui.ts'
 import { createPagePresence } from './page-presence.ts'
-import { createSiteApprovals, currentSessionCheck } from './site-approval.ts'
+import { currentSessionCheck } from './session-check.ts'
+import { createSiteApprovals } from './site-approval.ts'
 import { createApprovedSiteStore } from './store/approved-sites.ts'
 import {
     createSigningStore,
