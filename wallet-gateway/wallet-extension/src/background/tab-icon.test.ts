@@ -41,26 +41,55 @@ describe('createTabIcons', () => {
     it('records the tabs whose icon it changed', async () => {
         const tabIcons = createTabIcons()
 
-        await tabIcons.set(7, 'approval', prompt)
+        await tabIcons.set(7, 'site', prompt)
+        await tabIcons.set(8, 'transaction', prompt)
         await vi.waitFor(async () =>
-            expect(await overriddenTabs()).toEqual([7])
+            expect(await overriddenTabs()).toEqual([7, 8])
         )
-        await tabIcons.set(7, 'approval', undefined)
+        await tabIcons.set(7, 'site', undefined)
+        await tabIcons.set(8, 'transaction', undefined)
 
         await vi.waitFor(async () => expect(await overriddenTabs()).toEqual([]))
+    })
+
+    it('shows a site approval, then a transaction, then the unlock page', async () => {
+        const tabIcons = createTabIcons()
+        const site = prompt
+        const transaction = {
+            popup: 'popup.html#/approve-transaction?id=tx-1',
+            badge: '2',
+        }
+        const unlock = { popup: 'popup.html#/unlock', badge: '!' }
+        const shown = async () => [
+            popups.get(7),
+            await fakeBrowser.action.getBadgeText({ tabId: 7 }),
+        ]
+
+        await tabIcons.set(7, 'unlock', unlock)
+        await tabIcons.set(7, 'transaction', transaction)
+        expect(await shown()).toEqual([transaction.popup, '2'])
+        await tabIcons.set(7, 'site', site)
+        expect(await shown()).toEqual([site.popup, '1'])
+
+        await tabIcons.set(7, 'site', undefined)
+        expect(await shown()).toEqual([transaction.popup, '2'])
+        await tabIcons.set(7, 'transaction', undefined)
+        expect(await shown()).toEqual([unlock.popup, '!'])
+        await tabIcons.set(7, 'unlock', undefined)
+        expect(await shown()).toEqual(['popup.html', ''])
     })
 
     it("resets the icons the previous worker left, but not a new request's", async () => {
         // The browser kept these across a worker restart.
         await fakeBrowser.storage.session.set({ overriddenTabs: [7, 9] })
         popups.set(7, 'popup.html#/unlock')
-        popups.set(9, 'popup.html#/approve-site?id=old')
+        popups.set(9, 'popup.html#/approve-transaction?id=old')
         await fakeBrowser.action.setBadgeText({ tabId: 7, text: '!' })
         await fakeBrowser.action.setBadgeText({ tabId: 9, text: '1' })
 
         const tabIcons = createTabIcons()
         // A request that wakes the worker sets its tab's icon right away.
-        void tabIcons.set(9, 'approval', prompt)
+        void tabIcons.set(9, 'site', prompt)
 
         await vi.waitFor(async () => {
             expect(popups.get(7)).toBe('popup.html')

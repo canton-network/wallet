@@ -181,14 +181,14 @@ describe('createUnlockRequests', () => {
         }
         await unlockRequests.request(tab)
 
-        await tabIcons.set(tab.tabId, 'approval', approval)
+        await tabIcons.set(tab.tabId, 'site', approval)
         expect(popups.get(tab.tabId)).toBe(approval.popup)
         await unlockRequests.request(tab)
         expect(openPopup).toHaveBeenCalledTimes(2)
         expect(popups.get(tab.tabId)).toBe(approval.popup)
         expect(await badge()).toBe('1')
 
-        await tabIcons.set(tab.tabId, 'approval', undefined)
+        await tabIcons.set(tab.tabId, 'site', undefined)
         expect(popups.get(tab.tabId)).toBe('popup.html#/unlock')
         unlockListeners.forEach((listener) => listener())
         await vi.waitFor(expectRestored)

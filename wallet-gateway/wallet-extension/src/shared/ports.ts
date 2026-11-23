@@ -34,9 +34,23 @@ export const siteApprovalPortId = (name: string) =>
         ? name.slice(SITE_APPROVAL_PORT_PREFIX.length)
         : undefined
 
+const TX_APPROVAL_PORT_PREFIX = 'wg-tx-approval:'
+
+/**
+ * Name of the `runtime.Port` the transaction approval page holds open for
+ * its transaction. The background disconnects it to make the page close.
+ */
+export const txApprovalPortName = (transactionId: string) =>
+    `${TX_APPROVAL_PORT_PREFIX}${transactionId}`
+
+/** The transaction ID of a transaction approval port, or undefined. */
+export const txApprovalPortId = (name: string) =>
+    name.startsWith(TX_APPROVAL_PORT_PREFIX)
+        ? name.slice(TX_APPROVAL_PORT_PREFIX.length)
+        : undefined
+
 /**
  * Name of the `runtime.Port` the content script holds open while its page is
- * loaded. The background ends the page's site approval prompts when it
- * disconnects.
+ * loaded. The background ends the page's prompts when it disconnects.
  */
 export const PAGE_PRESENCE_PORT_NAME = 'wg-page-presence'

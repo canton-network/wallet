@@ -13,7 +13,7 @@ export interface TabIconView {
 }
 
 /** Who asks for a tab's icon, highest priority first. */
-const USERS = ['approval', 'unlock'] as const
+const USERS = ['site', 'transaction', 'unlock'] as const
 
 export type TabIconUser = (typeof USERS)[number]
 

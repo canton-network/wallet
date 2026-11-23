@@ -178,7 +178,7 @@ export function createSiteApprovals({
         const newest = prompts.at(-1)
         return tabIcons.set(
             tabId,
-            'approval',
+            'site',
             newest && {
                 popup: approvalPopup(newest.id),
                 badge: String(prompts.length),
