@@ -35,20 +35,10 @@ console.log(
 )
 
 // do not run tests from these directory names; full name match
-const EXCEPTIONS_DIR_NAMES = [
-    'stress',
-    '13-rewards-for-deposits',
-    ...(network === 'mainnet' ? ['18-two-step-transfer-v2'] : []),
-]
+const EXCEPTIONS_DIR_NAMES = ['stress', '13-rewards-for-deposits']
 
 // do not run these tests; exceptions can be full filename or just any length subset of its starting characters
-const EXCEPTIONS_FILE_NAMES = [
-    '_',
-    'utils',
-    'types.ts',
-    'upload-dars.ts',
-    ...(network === 'mainnet' ? ['19-token-standard-allocation-v2.ts'] : []),
-]
+const EXCEPTIONS_FILE_NAMES = ['_', 'utils', 'types.ts', 'upload-dars.ts']
 
 function getScriptsRecursive(currentDir: string): string[] {
     return fs.readdirSync(currentDir).flatMap((f) => {
