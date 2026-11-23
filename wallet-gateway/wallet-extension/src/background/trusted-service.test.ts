@@ -9,8 +9,10 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { appPageSender, sendMessagesFrom } from '@/__tests__/message-sender'
-import { isTrustedSender, registerTrustedService } from './trusted-service'
+
+import { appPageSender, sendMessagesFrom } from '@/__tests__/message-sender.ts'
+
+import { isTrustedSender, registerTrustedService } from './trusted-service.ts'
 
 describe('isTrustedSender', () => {
     const id = 'test-extension-id'

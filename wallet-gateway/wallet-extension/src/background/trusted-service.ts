@@ -7,7 +7,8 @@ import {
 } from '@webext-core/messaging'
 import type { ProxyServiceKey } from '@webext-core/proxy-service'
 import { browser, type Browser } from 'wxt/browser'
-import { logger } from '@/shared/logger'
+
+import { logger } from '@/shared/logger.ts'
 
 /** The extension pages that may use the page services. */
 const TRUSTED_PAGES = new Set(['/popup.html', '/app.html'])
