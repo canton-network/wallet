@@ -1,6 +1,6 @@
 {
     "name": "@canton-network/core-signing-dsrv",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "type": "module",
     "description": "Wallet Gateway signing driver for the DSRV signing API",
     "license": "Apache-2.0",
