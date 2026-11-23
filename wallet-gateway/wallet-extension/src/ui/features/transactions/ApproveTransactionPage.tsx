@@ -3,36 +3,28 @@
 
 import { parsePreparedTransaction } from '@canton-network/core-tx-visualizer'
 import { TransactionDetail } from '@canton-network/core-wallet-ui-components/react'
-import type { GetTransactionResult } from '@canton-network/core-wallet-user-rpc-client'
 import Alert from '@mui/material/Alert'
 import Paper from '@mui/material/Paper'
 import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
-import { useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
+import { useSuspenseQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import { queryKeys } from '@/ui/lib/query/keys.ts'
+import type { TxApprovalDetail } from '@/background/tx-approval.ts'
 
-import {
-    actingParty,
-    transactionQuery,
-    useApproveTransaction,
-    useRejectTransaction,
-} from './api.ts'
+import { transactionQuery, useDecideTransaction } from './api.ts'
 
 const monospace = { fontFamily: 'monospace', wordBreak: 'break-all' } as const
 
 export function ApproveTransactionPage({ id }: { id: string }) {
     const { data: transaction } = useSuspenseQuery(transactionQuery(id))
-    const waiting =
-        transaction?.status === 'pending' || transaction?.status === 'signed'
 
     return (
         <Stack spacing={2} sx={{ p: 1, maxWidth: 440, mx: 'auto' }}>
             <Typography variant="h5" component="h1" sx={{ fontWeight: 600 }}>
                 Approve this transaction?
             </Typography>
-            {transaction && waiting ? (
+            {transaction ? (
                 <TransactionPrompt transaction={transaction} />
             ) : (
                 <Alert severity="info">
@@ -44,15 +36,8 @@ export function ApproveTransactionPage({ id }: { id: string }) {
     )
 }
 
-function TransactionPrompt({
-    transaction,
-}: {
-    transaction: GetTransactionResult
-}) {
-    const queryClient = useQueryClient()
-    const party = actingParty(transaction.payload ?? '')
-    const approve = useApproveTransaction(transaction.id, party ?? '')
-    const reject = useRejectTransaction(transaction.id)
+function TransactionPrompt({ transaction }: { transaction: TxApprovalDetail }) {
+    const decide = useDecideTransaction(transaction.id)
     const parsed = useMemo(() => {
         try {
             return parsePreparedTransaction(transaction.preparedTransaction)
@@ -62,19 +47,8 @@ function TransactionPrompt({
     }, [transaction.preparedTransaction])
 
     // The page opens in the toolbar popup, which has nothing else to show.
-    const onApprove = () =>
-        approve.mutate(undefined, {
-            onSuccess: (status) => {
-                if (status === 'executed') window.close()
-            },
-            // An execution that failed may have left it signed.
-            onError: () =>
-                queryClient.invalidateQueries({
-                    queryKey: queryKeys.transactions.detail(transaction.id),
-                }),
-        })
-    const onReject = () =>
-        reject.mutate(undefined, { onSuccess: () => window.close() })
+    const answer = (approved: boolean) =>
+        decide.mutate(approved, { onSuccess: () => window.close() })
 
     return (
         <>
@@ -83,51 +57,48 @@ function TransactionPrompt({
                     <Typography variant="body2" color="text.secondary">
                         Site
                     </Typography>
-                    <Typography sx={monospace}>
-                        {transaction.origin ?? 'Unknown'}
-                    </Typography>
+                    <Typography sx={monospace}>{transaction.origin}</Typography>
                     <Typography variant="body2" color="text.secondary">
                         Party
                     </Typography>
-                    <Typography sx={monospace}>{party ?? 'Unknown'}</Typography>
+                    <Typography sx={monospace}>
+                        {transaction.partyId ?? 'Unknown'}
+                    </Typography>
                 </Stack>
             </Paper>
             <Alert severity="info" sx={{ color: 'text.primary' }}>
                 Approving signs this transaction as the party above and submits
                 it to the ledger.
             </Alert>
-            {approve.data !== undefined && approve.data !== 'executed' && (
-                <Alert severity="info" sx={{ color: 'text.primary' }}>
-                    Awaiting external signature. Approve the request with your
-                    signing provider.
-                </Alert>
-            )}
-            {approve.isError && (
+            {decide.isError && (
                 <Alert severity="error">
-                    Couldn't approve the transaction. {approve.error.message}
-                </Alert>
-            )}
-            {reject.isError && (
-                <Alert severity="error">
-                    Couldn't reject the transaction. {reject.error.message}
+                    {decide.variables
+                        ? "Couldn't approve the transaction."
+                        : "Couldn't reject the transaction."}{' '}
+                    {decide.error.message}
                 </Alert>
             )}
             <TransactionDetail
                 commandId={transaction.commandId}
-                status={transaction.status}
+                status="pending"
                 txHash={transaction.preparedTransactionHash}
                 tx={transaction.preparedTransaction}
                 parsed={parsed}
                 createdAt={transaction.createdAt ?? null}
-                signedAt={transaction.signedAt ?? null}
-                origin={transaction.origin ?? null}
-                externalTxId={transaction.externalTxId ?? null}
-                isApproving={approve.isPending}
-                isDeleting={reject.isPending}
-                submitFailed={Boolean(transaction.failureReason)}
-                disabled={party === undefined}
-                onTransactionApprove={onApprove}
-                onTransactionDelete={onReject}
+                signedAt={null}
+                origin={transaction.origin}
+                externalTxId={null}
+                isApproving={decide.isPending && decide.variables}
+                isDeleting={decide.isPending && !decide.variables}
+                submitFailed={false}
+                // A decision ends the prompt, even one that failed.
+                disabled={
+                    transaction.partyId === undefined ||
+                    decide.isPending ||
+                    decide.isError
+                }
+                onTransactionApprove={() => answer(true)}
+                onTransactionDelete={() => answer(false)}
             />
             {parsed === null && (
                 <Paper variant="outlined" sx={{ p: 2 }}>

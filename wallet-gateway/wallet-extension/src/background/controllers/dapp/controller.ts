@@ -17,7 +17,6 @@ import {
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
 import {
-    type INotificationService,
     ledgerPrepareParams,
     networkStatus,
 } from '@canton-network/core-wallet-services'
@@ -49,18 +48,16 @@ import type {
     PrepareExecuteAndWaitResult,
     PrepareExecuteParams,
     StatusEvent,
-    TxChangedPendingEvent,
     Wallet,
 } from './rpc-gen/typings.ts'
 
 export interface DappControllerDeps {
     /** The wallet store, not yet scoped to a user. */
     getStore: () => Promise<WalletStore>
-    notificationService: INotificationService
     sites: ApprovedSiteStore
     siteApprovals: Pick<SiteApprovals, 'request'>
     unlockRequests: Pick<UnlockRequests, 'request'>
-    txApprovals: Pick<TxApprovals, 'request'>
+    txApprovals: Pick<TxApprovals, 'begin'>
     sitePorts: Pick<SitePorts, 'send' | 'close'>
     isCurrent: SessionCheck
 }
@@ -92,7 +89,6 @@ function ledgerClientFor(network: StoreNetwork, accessToken: string) {
 export const dappController = (
     {
         getStore,
-        notificationService,
         sites,
         siteApprovals,
         unlockRequests,
@@ -139,8 +135,10 @@ export const dappController = (
     }
 
     /**
-     * Prepares the transaction, stores it as pending and puts its approval
-     * prompt on the tab's toolbar icon. Resolves once the prompt is up.
+     * Starts the approval prompt, then prepares the transaction, stores it
+     * as pending and puts the prompt on the tab's toolbar icon. `prompted`
+     * resolves once the prompt is up; `outcome` may settle before that, for
+     * example when the prompt times out during the preparation.
      */
     async function prepareForApproval(params: PrepareExecuteParams) {
         const context = requireAuth()
@@ -150,94 +148,105 @@ export const dappController = (
             throw new Error('No active session found')
         }
 
-        const primaryWallet = await store.getPrimaryWallet()
-        const wallets = await store.getWallets()
-        const network = await store.getCurrentNetwork()
-
-        let actAs = params.actAs ? [...params.actAs] : []
-        if (actAs.length === 0) {
-            if (!primaryWallet) {
-                throw new Error(
-                    'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
-                )
-            }
-            actAs = [primaryWallet.partyId]
-        }
-
-        for (const party of actAs) {
-            if (!wallets.some((wallet) => wallet.partyId === party)) {
-                throw new Error(`Acting party ${party} does not belong to user`)
-            }
-        }
-
-        const wallet = wallets.find(
-            (candidate) => candidate.partyId === actAs[0]
-        )
-        if (!wallet) {
-            throw new Error(
-                'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
-            )
-        }
-
-        const ledgerClient = ledgerClientFor(network, context.accessToken)
         const commandId = params.commandId || crypto.randomUUID()
         const transactionId = crypto.randomUUID()
-        const synchronizerId =
-            network.synchronizerId ?? (await ledgerClient.getSynchronizerId())
-
-        logger.info('prepareExecute: Submitting request to ledger', {
-            transactionId,
-            commandId,
-            actAs,
-        })
-
-        const prepared: PrepareSubmissionResponse =
-            await ledgerClient.postWithRetry(
-                '/v2/interactive-submission/prepare',
-                ledgerPrepareParams({
-                    userId: context.userId,
-                    commandId,
-                    actAs,
-                    synchronizerId,
-                    params,
-                    hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-                })
-            )
-
-        const transaction: Transaction = {
-            id: transactionId,
-            commandId,
-            status: 'pending',
-            preparedTransaction: prepared.preparedTransaction,
-            preparedTransactionHash: prepared.preparedTransactionHash,
-            payload: { ...params, commandId, actAs },
-            // The requesting page, not the session's login origin.
-            origin,
-            createdAt: new Date(),
-        }
-
-        await store.setTransaction(transaction)
-
-        notificationService.getNotifier(session.id).emit('txChanged', {
-            status: 'pending',
-            commandId,
-        } satisfies TxChangedPendingEvent)
-
-        const prompt = await txApprovals.request({
+        const approval = txApprovals.begin({
             transactionId,
             commandId,
             sessionId: session.id,
             auth: context,
+            origin,
             tab,
         })
 
-        logger.info('prepareExecute: Prepared transaction for approval', {
-            transactionId,
-            commandId,
-            actAs,
-        })
+        async function prepare() {
+            const primaryWallet = await store.getPrimaryWallet()
+            const wallets = await store.getWallets()
+            const network = await store.getCurrentNetwork()
 
-        return prompt
+            let actAs = params.actAs ? [...params.actAs] : []
+            if (actAs.length === 0) {
+                if (!primaryWallet) {
+                    throw new Error(
+                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
+                    )
+                }
+                actAs = [primaryWallet.partyId]
+            }
+
+            for (const party of actAs) {
+                if (!wallets.some((wallet) => wallet.partyId === party)) {
+                    throw new Error(
+                        `Acting party ${party} does not belong to user`
+                    )
+                }
+            }
+
+            const wallet = wallets.find(
+                (candidate) => candidate.partyId === actAs[0]
+            )
+            if (!wallet) {
+                throw new Error(
+                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
+                )
+            }
+
+            const ledgerClient = ledgerClientFor(network, context.accessToken)
+            const synchronizerId =
+                network.synchronizerId ??
+                (await ledgerClient.getSynchronizerId())
+
+            logger.info('prepareExecute: Submitting request to ledger', {
+                transactionId,
+                commandId,
+                actAs,
+            })
+
+            const prepared: PrepareSubmissionResponse =
+                await ledgerClient.postWithRetry(
+                    '/v2/interactive-submission/prepare',
+                    ledgerPrepareParams({
+                        userId: context.userId,
+                        commandId,
+                        actAs,
+                        synchronizerId,
+                        params,
+                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                    })
+                )
+
+            const transaction: Transaction = {
+                id: transactionId,
+                commandId,
+                status: 'pending',
+                preparedTransaction: prepared.preparedTransaction,
+                preparedTransactionHash: prepared.preparedTransactionHash,
+                payload: { ...params, commandId, actAs },
+                // The requesting page, not the session's login origin.
+                origin,
+                createdAt: new Date(),
+            }
+
+            await store.setTransaction(transaction)
+        }
+
+        const prompted = prepare().then(
+            async () => {
+                await approval.prompt()
+                logger.info(
+                    'prepareExecute: Prepared transaction for approval',
+                    {
+                        transactionId,
+                        commandId,
+                    }
+                )
+            },
+            (error: unknown) => {
+                approval.abort(error as Error)
+                throw error
+            }
+        )
+        return { prompted, outcome: approval.outcome }
     }
 
     return buildController({
@@ -381,13 +390,18 @@ export const dappController = (
         },
 
         prepareExecute: async (params: PrepareExecuteParams) => {
-            await prepareForApproval(params)
+            const { prompted } = await prepareForApproval(params)
+            await prompted
             return null
         },
+        // Answers within the prompt's timeout, even while the ledger is
+        // still preparing the transaction.
         prepareExecuteAndWait: async (
             params: PrepareExecuteParams
         ): Promise<PrepareExecuteAndWaitResult> => {
-            const { outcome } = await prepareForApproval(params)
+            const { prompted, outcome } = await prepareForApproval(params)
+            // Its error also ends `outcome`.
+            prompted.catch(() => {})
             return { tx: await outcome }
         },
         status: async (): Promise<StatusEvent> => {

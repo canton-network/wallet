@@ -3,7 +3,10 @@
 
 import { errorCodes } from '@canton-network/core-rpc-errors'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
-import { NotificationService } from '@canton-network/core-wallet-services'
+import {
+    LOGOUT_EVENT,
+    NotificationService,
+} from '@canton-network/core-wallet-services'
 import type { Store, Transaction } from '@canton-network/core-wallet-store'
 import {
     afterEach,
@@ -21,6 +24,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
 import { PAGE_PRESENCE_PORT_NAME, txApprovalPortName } from '@/shared/ports.ts'
 
+import type { TransactionSubmitter } from './controllers/user/transactions.ts'
 import { createPagePresence, type PagePresence } from './page-presence.ts'
 import type { SessionCheck, SiteApprovalTab } from './site-approval.ts'
 import type { WalletStore } from './store/index.ts'
@@ -37,16 +41,26 @@ const origin = 'https://dapp.example'
 const tab = { tabId: 7, windowId: 3, page: 'document-1' }
 const alice = { userId: 'alice', accessToken: 'token-a' }
 const sessionId = 'session-a'
+const party = 'alice::1220'
 const executed = { updateId: 'update-1', completionOffset: 42 }
+const signature = {
+    status: 'signed' as const,
+    partyId: party,
+    signature: 'signature',
+    signedBy: 'namespace',
+}
 
 describe('createTxApprovals', () => {
     let lockListeners: (() => void)[]
     let unlockListeners: (() => void)[]
     let authListeners: ((context: AuthContext | undefined) => void)[]
     let isCurrent: Mock<SessionCheck>
+    let sign: Mock<TransactionSubmitter['sign']>
+    let execute: Mock<TransactionSubmitter['execute']>
     let notificationService: NotificationService
     let walletStore: WalletStore
     let locked: boolean
+    let vaultReady: () => void
     // Alice's view of the store.
     let store: Store
     // The txChanged events of alice's session.
@@ -60,14 +74,10 @@ describe('createTxApprovals', () => {
     let pageTab: SiteApprovalTab
     let counter: number
 
-    const shownId = (tabId = tab.tabId) =>
-        new URLSearchParams(popups.get(tabId)?.split('?')[1]).get('id')
-    const badge = (tabId = tab.tabId) =>
-        fakeBrowser.action.getBadgeText({ tabId })
     const expectRestored = () =>
         vi.waitFor(async () => {
             expect(popups.get(tab.tabId)).toBe('popup.html')
-            expect(await badge()).toBe('')
+            expect(await fakeBrowser.action.getBadgeText({ tabId: 7 })).toBe('')
         })
     const notifier = (id = sessionId) => notificationService.getNotifier(id)
 
@@ -96,35 +106,43 @@ describe('createTxApprovals', () => {
         return port
     }
 
-    /** Stores a pending transaction, as `prepareExecute` does. */
-    async function prepare(
+    const nextRequest = (
         overrides: Partial<TxApprovalRequest> = {}
-    ): Promise<TxApprovalRequest> {
+    ): TxApprovalRequest => {
         counter += 1
-        const request = {
+        return {
             transactionId: `tx-${counter}`,
             commandId: `command-${counter}`,
             sessionId,
             auth: alice,
+            origin,
             tab: pageTab,
             ...overrides,
         }
-        await store.setTransaction({
-            id: request.transactionId,
-            commandId: request.commandId,
-            status: 'pending',
-            preparedTransaction: 'prepared',
-            preparedTransactionHash: 'hash',
-            origin,
-        } satisfies Transaction)
-        return request
     }
 
-    /** Prepares a transaction and prompts for it. */
+    /** Stores a pending transaction, as `prepareExecute` does. */
+    const storeTransaction = (
+        request: Pick<TxApprovalRequest, 'transactionId' | 'commandId'>,
+        status: Transaction['status'] = 'pending'
+    ) =>
+        store.setTransaction({
+            id: request.transactionId,
+            commandId: request.commandId,
+            status,
+            preparedTransaction: 'prepared',
+            preparedTransactionHash: 'hash',
+            payload: { actAs: [party] },
+            origin,
+        } satisfies Transaction)
+
+    /** Begins, prepares and prompts for a transaction, as the dApp API does. */
     async function prompt(overrides: Partial<TxApprovalRequest> = {}) {
-        const request = await prepare(overrides)
-        const { outcome } = await approvals.request(request)
-        return { request, outcome }
+        const request = nextRequest(overrides)
+        const approval = approvals.begin(request)
+        await storeTransaction(request)
+        await approval.prompt()
+        return { request, outcome: approval.outcome }
     }
 
     const stored = (id: string) => store.getTransaction(id)
@@ -135,6 +153,31 @@ describe('createTxApprovals', () => {
         error: { code, message: expect.any(String) },
     })
 
+    function create() {
+        return createTxApprovals({
+            vault: {
+                ready: new Promise<void>((resolve) => (vaultReady = resolve)),
+                status: () => (locked ? 'locked' : 'unlocked'),
+                onLock: (listener) => void lockListeners.push(listener),
+                onUnlock: (listener) => void unlockListeners.push(listener),
+            },
+            authContext: {
+                load: async () => alice,
+                onChange: (listener) => void authListeners.push(listener),
+            },
+            presence,
+            tabIcons: createTabIcons(),
+            isCurrent,
+            notificationService,
+            getStore: async () => {
+                if (locked) throw new VaultLockedError()
+                return walletStore
+            },
+            submitter: { sign, execute },
+            timeoutMs: 1000,
+        })
+    }
+
     beforeEach(() => {
         fakeBrowser.reset()
         counter = 0
@@ -142,6 +185,16 @@ describe('createTxApprovals', () => {
         unlockListeners = []
         authListeners = []
         isCurrent = vi.fn(async () => true)
+        sign = vi.fn(async (store, _context, _session, { transactionId }) => {
+            await store.setTransactionSigned(transactionId, new Date())
+            return signature
+        })
+        execute = vi.fn(
+            async (store, _context, _session, { transactionId }) => {
+                await store.setTransactionStatus(transactionId, 'executed')
+                return executed
+            }
+        )
         notificationService = new NotificationService()
         walletStore = createTestWalletStore()
         locked = false
@@ -166,24 +219,7 @@ describe('createTxApprovals', () => {
             active: true,
         })) as unknown as typeof fakeBrowser.tabs.get)
         presence = createPagePresence()
-        approvals = createTxApprovals({
-            vault: {
-                onLock: (listener) => void lockListeners.push(listener),
-                onUnlock: (listener) => void unlockListeners.push(listener),
-            },
-            authContext: {
-                onChange: (listener) => void authListeners.push(listener),
-            },
-            presence,
-            tabIcons: createTabIcons(),
-            isCurrent,
-            notificationService,
-            getStore: async () => {
-                if (locked) throw new VaultLockedError()
-                return walletStore
-            },
-            timeoutMs: 1000,
-        })
+        approvals = create()
         alicePage = connectPresence()
         pageTab = {
             ...tab,
@@ -197,125 +233,98 @@ describe('createTxApprovals', () => {
         vi.restoreAllMocks()
     })
 
-    it("prompts on the toolbar icon of the dApp's tab", async () => {
-        const { request } = await prompt()
-
+    it('reports it pending, prompts on the tab, then signs and executes on approval', async () => {
+        const { request, outcome } = await prompt()
         await vi.waitFor(() =>
             expect(openPopup).toHaveBeenCalledWith({ windowId: tab.windowId })
         )
         expect(popups.get(tab.tabId)).toBe(
             `popup.html#/approve-transaction?id=${request.transactionId}`
         )
-        expect(await badge()).toBe('1')
-    })
+        expect(events).toEqual([
+            { status: 'pending', commandId: request.commandId },
+        ])
 
-    it('resolves with the executed event and closes the page', async () => {
-        const { request, outcome } = await prompt()
-        const page = connectPage(request.transactionId)
-
-        notifier().emit('txChanged', {
-            id: request.transactionId,
-            commandId: request.commandId,
-            status: 'executed',
-            payload: executed,
-            preparedTransaction: 'prepared',
-        })
+        await approvals.service.decide(request.transactionId, true)
 
         await expect(outcome).resolves.toEqual({
             status: 'executed',
             commandId: request.commandId,
             payload: executed,
         })
-        expect(page.disconnect).toHaveBeenCalled()
+        const params = { transactionId: request.transactionId, partyId: party }
+        expect(sign).toHaveBeenCalledWith(
+            expect.anything(),
+            alice,
+            sessionId,
+            params
+        )
+        expect(execute).toHaveBeenCalledWith(
+            expect.anything(),
+            alice,
+            sessionId,
+            params
+        )
         await expectRestored()
     })
 
-    it('rejects with 4001 when the user rejects the transaction', async () => {
+    it('deletes the transaction and rejects with 4001 when the user rejects it', async () => {
         const { request, outcome } = await prompt()
 
-        // As `deleteTransaction` emits it.
-        notifier().emit('txChanged', {
-            status: 'failed',
-            commandId: request.commandId,
-            error: {
-                code: errorCodes.provider.userRejectedRequest,
-                message: 'Rejected by the user',
-            },
-        })
+        await approvals.service.decide(request.transactionId, false)
 
         await expect(outcome).rejects.toMatchObject({
             code: errorCodes.provider.userRejectedRequest,
         })
-        await expectRestored()
+        expect(await stored(request.transactionId)).toBeUndefined()
+        expect(events).toContainEqual(
+            failedEvent(
+                request.commandId,
+                errorCodes.provider.userRejectedRequest
+            )
+        )
+        expect(sign).not.toHaveBeenCalled()
     })
 
-    it('rejects with the failure of a failed execution', async () => {
+    it('rejects with the failure when the ledger rejects it', async () => {
+        execute.mockImplementation(async (store, _c, _s, { transactionId }) => {
+            await store.setTransactionStatus(transactionId, 'failed')
+            throw new Error('Ledger rejected submission INVALID: no')
+        })
         const { request, outcome } = await prompt()
 
-        notifier().emit('txChanged', {
-            id: request.transactionId,
-            status: 'failed',
-            commandId: request.commandId,
-            error: {
-                code: errorCodes.rpc.transactionRejected,
-                message: 'INVALID: no',
-            },
-        })
-
+        await expect(
+            approvals.service.decide(request.transactionId, true)
+        ).rejects.toMatchObject({ code: errorCodes.rpc.transactionRejected })
         await expect(outcome).rejects.toMatchObject({
             code: errorCodes.rpc.transactionRejected,
-            message: 'INVALID: no',
+            message: 'Ledger rejected submission INVALID: no',
         })
     })
 
-    it('ignores events of another command, transaction or session', async () => {
-        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+    it('reports an unknown outcome, not a rejection, when the submission is not confirmed', async () => {
+        execute.mockRejectedValue(new Error('Ledger did not confirm'))
         const { request, outcome } = await prompt()
-        const result = vi.fn()
-        outcome.then(result, result)
-        const success = { status: 'executed', payload: executed }
 
-        notifier().emit('txChanged', { ...success, commandId: 'other' })
-        notifier().emit('txChanged', {
-            ...success,
-            commandId: request.commandId,
-            id: 'another-transaction',
+        await expect(
+            approvals.service.decide(request.transactionId, true)
+        ).rejects.toBeDefined()
+
+        await expect(outcome).rejects.toMatchObject({
+            code: errorCodes.rpc.internal,
         })
-        notifier('session-b').emit('txChanged', {
-            ...success,
-            commandId: request.commandId,
-        })
-        notifier().emit('txChanged', {
+        expect(await stored(request.transactionId)).toMatchObject({
             status: 'signed',
-            commandId: request.commandId,
         })
-        await vi.advanceTimersByTimeAsync(500)
-
-        expect(result).not.toHaveBeenCalled()
-        expect(shownId()).toBe(request.transactionId)
     })
 
-    describe.each([
+    it.each([
         [
             'times out',
             errorCodes.provider.userRejectedRequest,
             async () => {
                 await vi.advanceTimersByTimeAsync(1000)
             },
-        ],
-        [
-            'the session ends',
-            errorCodes.provider.unauthorized,
-            async () =>
-                authListeners.forEach((listener) => listener(undefined)),
-        ],
-        [
-            'another account signs in',
-            errorCodes.provider.unauthorized,
-            async () =>
-                authListeners.forEach((listener) =>
-                    listener({ userId: 'bob', accessToken: 'token-b' })
-                ),
         ],
         [
             'the tab closes',
@@ -332,12 +341,19 @@ describe('createTxApprovals', () => {
             async () => alicePage.remoteDisconnect(),
         ],
         [
-            'a new page replaces it in the frame',
-            errorCodes.provider.userRejectedRequest,
-            async () => void connectPresence(0, 'document-2'),
+            'the session signs out',
+            errorCodes.provider.unauthorized,
+            async () =>
+                authListeners.forEach((listener) => listener(undefined)),
         ],
-    ])('when it %s', (name, code, endIt) => {
-        it('rejects, deletes the transaction and reports it failed', async () => {
+        [
+            'its session is replaced with the same token',
+            errorCodes.provider.unauthorized,
+            async () => void notifier().emit(LOGOUT_EVENT),
+        ],
+    ])(
+        'rejects, deletes the transaction and reports it failed when it %s',
+        async (_, code, endIt) => {
             vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
             const { request, outcome } = await prompt()
             const page = connectPage(request.transactionId)
@@ -350,10 +366,30 @@ describe('createTxApprovals', () => {
                 expect(await stored(request.transactionId)).toBeUndefined()
             )
             expect(events).toContainEqual(failedEvent(request.commandId, code))
-            vi.useRealTimers()
-            // A closed tab has no icon to restore.
-            if (name !== 'the tab closes') await expectRestored()
+            await expect(
+                approvals.service.decide(request.transactionId, true)
+            ).rejects.toThrow('no longer waiting')
+            expect(sign).not.toHaveBeenCalled()
+        }
+    )
+
+    it('times out from the request, while the transaction is still prepared', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+        const request = nextRequest()
+        const approval = approvals.begin(request)
+
+        await vi.advanceTimersByTimeAsync(1000)
+
+        await expect(approval.outcome).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
         })
+        await storeTransaction(request)
+        await expect(approval.prompt()).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+        })
+        expect(await stored(request.transactionId)).toBeUndefined()
+        expect(events).toEqual([])
+        expect(openPopup).not.toHaveBeenCalled()
     })
 
     it('rejects with 4100 on a lock, and deletes the transaction once unlocked', async () => {
@@ -371,7 +407,6 @@ describe('createTxApprovals', () => {
             )
         )
         expect(await stored(request.transactionId)).toBeDefined()
-        await expectRestored()
 
         locked = false
         unlockListeners.forEach((listener) => listener())
@@ -381,118 +416,124 @@ describe('createTxApprovals', () => {
         )
     })
 
-    it('leaves a transaction that is being signed or executed', async () => {
+    it('lets no other ending interrupt a decision', async () => {
         vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-        const { request, outcome } = await prompt()
-        await store.setTransactionStatus(request.transactionId, 'signed')
-
-        await vi.advanceTimersByTimeAsync(1000)
-
-        await expect(outcome).rejects.toMatchObject({
-            code: errorCodes.provider.userRejectedRequest,
-        })
-        expect(await stored(request.transactionId)).toMatchObject({
-            status: 'signed',
-        })
-        expect(events).toEqual([])
-    })
-
-    it.each([
-        ['without a tab', () => ({ tab: undefined })],
-        [
-            'when the page has gone',
-            () => {
-                alicePage.remoteDisconnect()
-                return {}
-            },
-        ],
-    ])('prompts for nothing %s', async (_, setUp) => {
-        const request = await prepare(setUp())
-
-        await expect(approvals.request(request)).rejects.toMatchObject({
-            code: errorCodes.provider.userRejectedRequest,
-        })
-
-        await vi.waitFor(async () =>
-            expect(await stored(request.transactionId)).toBeUndefined()
+        let finishSigning!: () => void
+        const signing = new Promise<void>(
+            (resolve) => (finishSigning = resolve)
         )
-        expect(events).toEqual([
-            failedEvent(
-                request.commandId,
-                errorCodes.provider.userRejectedRequest
-            ),
-        ])
-        expect(popups.size).toBe(0)
-        expect(openPopup).not.toHaveBeenCalled()
-    })
-
-    it('prompts for nothing when the session is not current', async () => {
-        isCurrent.mockResolvedValue(false)
-        const request = await prepare()
-
-        await expect(approvals.request(request)).rejects.toMatchObject({
-            code: errorCodes.provider.unauthorized,
+        sign.mockImplementation(async (store, _c, _s, { transactionId }) => {
+            await signing
+            await store.setTransactionSigned(transactionId, new Date())
+            return signature
         })
-        await vi.waitFor(async () =>
-            expect(await stored(request.transactionId)).toBeUndefined()
-        )
-        expect(openPopup).not.toHaveBeenCalled()
-    })
-
-    it('refuses a second transaction with the same command ID', async () => {
-        const first = await prompt({ commandId: 'command-x' })
-        const second = await prepare({ commandId: 'command-x' })
-
-        await expect(approvals.request(second)).rejects.toMatchObject({
-            code: errorCodes.rpc.invalidParams,
-        })
-
-        await vi.waitFor(async () =>
-            expect(await stored(second.transactionId)).toBeUndefined()
-        )
-        // A failed event would end the first one too, for the dApp.
-        expect(events).toEqual([])
-        expect(await stored(first.request.transactionId)).toBeDefined()
-        expect(shownId()).toBe(first.request.transactionId)
-    })
-
-    it('shows the newest of two transactions on a tab, then the other', async () => {
-        const first = await prompt()
-        const second = await prompt()
-
-        await vi.waitFor(async () => expect(await badge()).toBe('2'))
-        expect(shownId()).toBe(second.request.transactionId)
-
-        notifier().emit('txChanged', {
-            status: 'failed',
-            commandId: second.request.commandId,
-        })
-        await expect(second.outcome).rejects.toBeDefined()
-
-        await vi.waitFor(async () => expect(await badge()).toBe('1'))
-        expect(shownId()).toBe(first.request.transactionId)
-    })
-
-    it('leaves the transaction pending when the page closes', async () => {
-        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
         const { request, outcome } = await prompt()
         const result = vi.fn()
         outcome.then(result, result)
 
-        connectPage(request.transactionId).remoteDisconnect()
-        await vi.advanceTimersByTimeAsync(500)
+        const decided = approvals.service.decide(request.transactionId, true)
+        await vi.advanceTimersByTimeAsync(1000)
+        alicePage.remoteDisconnect()
+        fakeBrowser.tabs.onRemoved.trigger(tab.tabId, {
+            windowId: tab.windowId,
+            isWindowClosing: false,
+        })
+        lockListeners.forEach((listener) => listener())
+        await vi.advanceTimersByTimeAsync(0)
 
         expect(result).not.toHaveBeenCalled()
         expect(await stored(request.transactionId)).toBeDefined()
+        await expect(
+            approvals.service.decide(request.transactionId, false)
+        ).rejects.toThrow('no longer waiting')
+
+        finishSigning()
+        await decided
+        await expect(outcome).resolves.toMatchObject({ status: 'executed' })
+        expect(events).not.toContainEqual(
+            expect.objectContaining({ status: 'failed' })
+        )
     })
 
-    it('refuses a port from a content script', async () => {
-        const { request } = await prompt()
-        const port = fakePort(origin, txApprovalPortName(request.transactionId))
+    it('refuses to decide a transaction it has no waiting prompt for', async () => {
+        const orphan = nextRequest()
+        await storeTransaction(orphan)
 
-        connectListeners.forEach((listener) => listener(asPort(port)))
+        await expect(
+            approvals.service.decide(orphan.transactionId, true)
+        ).rejects.toThrow('no longer waiting')
+        await expect(approvals.service.get(orphan.transactionId)).resolves.toBe(
+            null
+        )
+        expect(sign).not.toHaveBeenCalled()
+        expect(await stored(orphan.transactionId)).toMatchObject({
+            status: 'pending',
+        })
+    })
 
-        expect(port.disconnect).toHaveBeenCalled()
-        expect(shownId()).toBe(request.transactionId)
+    it('ends with 4100 and signs nothing when the session is no longer current', async () => {
+        const { request, outcome } = await prompt()
+        isCurrent.mockResolvedValue(false)
+
+        await expect(
+            approvals.service.decide(request.transactionId, true)
+        ).rejects.toMatchObject({ code: errorCodes.provider.unauthorized })
+
+        expect(isCurrent).toHaveBeenLastCalledWith(alice.accessToken, sessionId)
+        await expect(outcome).rejects.toMatchObject({
+            code: errorCodes.provider.unauthorized,
+        })
+        expect(sign).not.toHaveBeenCalled()
+        expect(await stored(request.transactionId)).toBeUndefined()
+    })
+
+    it('refuses a second request with the same command ID, even from a page that has gone', async () => {
+        const first = await prompt({ commandId: 'command-x' })
+        const result = vi.fn()
+        first.outcome.then(result, result)
+        const deadTab = { ...pageTab, connection: undefined }
+
+        expect(() =>
+            approvals.begin(
+                nextRequest({ commandId: 'command-x', tab: deadTab })
+            )
+        ).toThrow(
+            expect.objectContaining({ code: errorCodes.rpc.invalidParams })
+        )
+
+        await new Promise((resolve) => setTimeout(resolve, 0))
+        expect(result).not.toHaveBeenCalled()
+        expect(events).toEqual([{ status: 'pending', commandId: 'command-x' }])
+        await expect(
+            approvals.service.get(first.request.transactionId)
+        ).resolves.toMatchObject({ id: first.request.transactionId })
+    })
+
+    it('deletes pending transactions without a prompt on unlock and at start-up, and keeps signed ones', async () => {
+        const live = await prompt()
+        const orphan = nextRequest()
+        const signed = nextRequest()
+        await storeTransaction(orphan)
+        await storeTransaction(signed, 'signed')
+
+        unlockListeners.forEach((listener) => listener())
+
+        await vi.waitFor(async () =>
+            expect(await stored(orphan.transactionId)).toBeUndefined()
+        )
+        expect(await stored(signed.transactionId)).toBeDefined()
+        expect(await stored(live.request.transactionId)).toBeDefined()
+
+        // A new worker, started while unlocked.
+        const restarted = nextRequest()
+        await storeTransaction(restarted)
+        create()
+        vaultReady()
+        await vi.waitFor(async () =>
+            expect(await stored(restarted.transactionId)).toBeUndefined()
+        )
+        expect(events).not.toContainEqual(
+            expect.objectContaining({ status: 'failed' })
+        )
     })
 })

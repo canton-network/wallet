@@ -9,10 +9,7 @@ import {
 } from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { JsonRpcRequest } from '@canton-network/core-types'
-import {
-    NotificationService,
-    subscribeNotifications,
-} from '@canton-network/core-wallet-services'
+import { NotificationService } from '@canton-network/core-wallet-services'
 import {
     PartyLevelRight,
     type Store,
@@ -105,7 +102,7 @@ describe('createDappDispatcher', () => {
     let deps: DappControllerDeps & {
         siteApprovals: { request: Mock<SiteApprovals['request']> }
         unlockRequests: { request: Mock<UnlockRequests['request']> }
-        txApprovals: { request: Mock<TxApprovals['request']> }
+        txApprovals: { begin: Mock<TxApprovals['begin']> }
         sitePorts: {
             send: Mock<SitePorts['send']>
             close: Mock<SitePorts['close']>
@@ -122,11 +119,10 @@ describe('createDappDispatcher', () => {
         sites = fakeApprovedSites()
         deps = {
             getStore: async () => walletStore,
-            notificationService: service,
             sites,
             siteApprovals: { request: vi.fn() },
             unlockRequests: { request: vi.fn(async () => {}) },
-            txApprovals: { request: vi.fn() },
+            txApprovals: { begin: vi.fn() },
             sitePorts: { send: vi.fn(), close: vi.fn() },
             isCurrent: vi.fn(async () => true),
         }
@@ -625,16 +621,18 @@ describe('createDappDispatcher', () => {
                     })
             })
 
-            it('stores the transaction and prompts for it on the tab', async () => {
-                const sink = { send: vi.fn(), close: vi.fn() }
-                subscribeNotifications(
-                    service,
-                    { sessionId, userId: authContext.userId },
-                    sink
-                )
-                deps.txApprovals.request.mockResolvedValue({
-                    outcome: new Promise(() => {}),
-                })
+            const approval = (outcome: Promise<typeof executed>) => {
+                outcome.catch(() => {})
+                return {
+                    outcome,
+                    prompt: vi.fn(async () => {}),
+                    abort: vi.fn(),
+                }
+            }
+
+            it('stores the transaction, then prompts for it on the tab', async () => {
+                const started = approval(new Promise(() => {}))
+                deps.txApprovals.begin.mockReturnValue(started)
 
                 const response = await dispatcher.request(
                     request('prepareExecute', params),
@@ -654,15 +652,16 @@ describe('createDappDispatcher', () => {
                         actAs: [wallet.partyId],
                     })
                 )
-                expect(deps.txApprovals.request).toHaveBeenCalledWith({
+                expect(deps.txApprovals.begin).toHaveBeenCalledWith({
                     transactionId: expect.any(String),
                     commandId: 'command-1',
                     sessionId,
                     auth: authContext,
+                    origin,
                     tab,
                 })
                 const [{ transactionId }] =
-                    deps.txApprovals.request.mock.calls[0]!
+                    deps.txApprovals.begin.mock.calls[0]!
                 expect(await store.getTransaction(transactionId)).toMatchObject(
                     {
                         status: 'pending',
@@ -671,32 +670,33 @@ describe('createDappDispatcher', () => {
                         origin,
                     }
                 )
-                expect(sink.send).toHaveBeenCalledWith('txChanged', [
-                    { status: 'pending', commandId: 'command-1' },
-                ])
+                expect(started.prompt).toHaveBeenCalled()
             })
 
-            it('fails when the prompt cannot be set up', async () => {
-                deps.txApprovals.request.mockRejectedValue(
-                    providerErrors.userRejectedRequest({
-                        message: 'The page that asked was closed',
-                    })
-                )
+            it('ends the prompt when the transaction cannot be prepared', async () => {
+                const started = approval(new Promise(() => {}))
+                deps.txApprovals.begin.mockReturnValue(started)
+                postWithRetry.mockRejectedValue(new Error('ledger down'))
 
                 await expect(
                     dispatcher.request(
                         request('prepareExecute', params),
-                        origin
+                        origin,
+                        tab
                     )
                 ).resolves.toMatchObject({
-                    error: { code: errorCodes.provider.userRejectedRequest },
+                    error: { message: 'ledger down' },
                 })
+                expect(started.abort).toHaveBeenCalledWith(
+                    expect.objectContaining({ message: 'ledger down' })
+                )
+                expect(started.prompt).not.toHaveBeenCalled()
             })
 
             it('waits for the executed transaction in prepareExecuteAndWait', async () => {
-                deps.txApprovals.request.mockResolvedValue({
-                    outcome: Promise.resolve(executed),
-                })
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(Promise.resolve(executed))
+                )
 
                 await expect(
                     dispatcher.request(
@@ -708,6 +708,29 @@ describe('createDappDispatcher', () => {
                     jsonrpc: '2.0',
                     id: 7,
                     result: { tx: executed },
+                })
+            })
+
+            it('answers prepareExecuteAndWait when the prompt ends before the ledger has prepared it', async () => {
+                postWithRetry.mockReturnValue(new Promise(() => {}))
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(
+                        Promise.reject(
+                            providerErrors.userRejectedRequest({
+                                message: 'The transaction approval timed out',
+                            })
+                        )
+                    )
+                )
+
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecuteAndWait', params),
+                        origin,
+                        tab
+                    )
+                ).resolves.toMatchObject({
+                    error: { code: errorCodes.provider.userRejectedRequest },
                 })
             })
 
@@ -723,6 +746,12 @@ describe('createDappDispatcher', () => {
                     rpcErrors.transactionRejected({ message: 'INVALID: no' }),
                 ],
                 [
+                    'has an unknown outcome',
+                    rpcErrors.internal({
+                        message: 'The outcome of the transaction is unknown',
+                    }),
+                ],
+                [
                     'timed out',
                     providerErrors.userRejectedRequest({
                         message: 'The transaction approval timed out',
@@ -731,9 +760,9 @@ describe('createDappDispatcher', () => {
             ])(
                 'returns the error of a transaction that %s in prepareExecuteAndWait',
                 async (_, error) => {
-                    const outcome = Promise.reject(error)
-                    outcome.catch(() => {})
-                    deps.txApprovals.request.mockResolvedValue({ outcome })
+                    deps.txApprovals.begin.mockReturnValue(
+                        approval(Promise.reject(error))
+                    )
 
                     await expect(
                         dispatcher.request(

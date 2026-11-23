@@ -5,6 +5,7 @@ import { LedgerClient } from '@canton-network/core-ledger-client'
 import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     assertConnected,
+    type AuthContext,
     AuthTokenProvider,
 } from '@canton-network/core-wallet-auth'
 import { TransactionService } from '@canton-network/core-wallet-services'
@@ -34,20 +35,14 @@ async function requireSession(
     return session
 }
 
-export const transactions = ({
-    getStore,
-    authContext,
+/**
+ * Signs and executes a transaction as `context`, reporting on the notifier
+ * of `sessionId`. The user API and the transaction approvals share it.
+ */
+export function transactionSubmitter({
     signingDriver,
     notificationService,
-}: UserControllerDeps): Pick<
-    Methods,
-    | 'sign'
-    | 'execute'
-    | 'getTransaction'
-    | 'listTransactions'
-    | 'deleteTransaction'
-    | 'getTransactionStatus'
-> => {
+}: Pick<UserControllerDeps, 'signingDriver' | 'notificationService'>) {
     const signingDrivers = toSigningDrivers(signingDriver)
     const createTransactionService = (store: Store, sessionId: string) =>
         new TransactionService(
@@ -58,9 +53,12 @@ export const transactions = ({
         )
 
     return {
-        sign: async (signParams: SignParams) => {
-            const connectedContext = assertConnected(await authContext.load())
-            const store = await getStore()
+        async sign(
+            store: Store,
+            context: AuthContext,
+            sessionId: string,
+            signParams: SignParams
+        ) {
             const network = await store.getCurrentNetwork()
             if (network === undefined) {
                 throw new Error('No network session found')
@@ -74,32 +72,25 @@ export const transactions = ({
                 throw new Error('No primary wallet found')
             }
 
-            const session = await requireSession(
-                store,
-                connectedContext.accessToken
-            )
-            const transactionService = createTransactionService(
-                store,
-                session.id
-            )
-
             logger.info('Signing transaction', {
                 transactionId: signParams.transactionId,
             })
-            const response = await transactionService.sign(
-                connectedContext,
-                wallet,
-                signParams
-            )
+            const response = await createTransactionService(
+                store,
+                sessionId
+            ).sign(context, wallet, signParams)
             logger.info('Transaction signed', {
                 transactionId: signParams.transactionId,
             })
 
             return response
         },
-        execute: async (executeParams: ExecuteParams) => {
-            const connectedContext = assertConnected(await authContext.load())
-            const store = await getStore()
+        async execute(
+            store: Store,
+            context: AuthContext,
+            sessionId: string,
+            executeParams: ExecuteParams
+        ) {
             const wallets = await store.getWallets()
             const network = await store.getCurrentNetwork()
             const transaction = await store.getTransaction(
@@ -119,32 +110,26 @@ export const transactions = ({
                 throw new Error('No network session found')
             }
 
-            const session = await requireSession(
-                store,
-                connectedContext.accessToken
-            )
-
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
                 accessTokenProvider: AuthTokenProvider.fromToken(
-                    connectedContext.accessToken
+                    context.accessToken
                 ),
             })
-            const transactionService = createTransactionService(
-                store,
-                session.id
-            )
 
             logger.info('Executing transaction', {
                 transactionId: executeParams.transactionId,
             })
-            const response = await transactionService.execute(
-                connectedContext.userId,
+            const response = await createTransactionService(
+                store,
+                sessionId
+            ).execute(
+                context.userId,
                 wallet,
                 transaction,
                 executeParams,
                 ledgerClient,
-                connectedContext,
+                context,
                 network
             )
             logger.info('Transaction executed', {
@@ -152,6 +137,43 @@ export const transactions = ({
             })
 
             return response
+        },
+    }
+}
+
+export type TransactionSubmitter = ReturnType<typeof transactionSubmitter>
+
+export const transactions = ({
+    getStore,
+    authContext,
+    signingDriver,
+    notificationService,
+}: UserControllerDeps): Pick<
+    Methods,
+    | 'sign'
+    | 'execute'
+    | 'getTransaction'
+    | 'listTransactions'
+    | 'deleteTransaction'
+    | 'getTransactionStatus'
+> => {
+    const submitter = transactionSubmitter({
+        signingDriver,
+        notificationService,
+    })
+
+    return {
+        sign: async (signParams: SignParams) => {
+            const context = assertConnected(await authContext.load())
+            const store = await getStore()
+            const session = await requireSession(store, context.accessToken)
+            return submitter.sign(store, context, session.id, signParams)
+        },
+        execute: async (executeParams: ExecuteParams) => {
+            const context = assertConnected(await authContext.load())
+            const store = await getStore()
+            const session = await requireSession(store, context.accessToken)
+            return submitter.execute(store, context, session.id, executeParams)
         },
         getTransaction: async (
             params: GetTransactionParams

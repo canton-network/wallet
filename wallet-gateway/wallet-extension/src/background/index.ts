@@ -9,6 +9,7 @@ import { logger } from '@/shared/logger.ts'
 import {
     SITE_APPROVAL_RPC_KEY,
     TOKEN_RPC_KEY,
+    TX_APPROVAL_RPC_KEY,
     USER_RPC_KEY,
 } from '@/shared/service-keys.ts'
 
@@ -16,6 +17,7 @@ import { createAuthContextStore } from './auth-context.ts'
 import { registerAuthService } from './auth-service.ts'
 import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
 import { userController } from './controllers/user/index.ts'
+import { transactionSubmitter } from './controllers/user/transactions.ts'
 import { registerDappService } from './dapp-service.ts'
 import {
     createSitePorts,
@@ -84,6 +86,7 @@ export function startBackground({
         isCurrent,
         notificationService,
         getStore: () => walletStore.get(),
+        submitter: transactionSubmitter(deps),
     })
     const sitePorts = createSitePorts(vault, authContext)
 
@@ -94,7 +97,6 @@ export function startBackground({
         createDappDispatcher(
             {
                 getStore: () => walletStore.get(),
-                notificationService,
                 sites,
                 siteApprovals,
                 unlockRequests,
@@ -126,6 +128,10 @@ export function startBackground({
     registerTrustedService(
         SITE_APPROVAL_RPC_KEY,
         requireUnlocked(vault, siteApprovals.service)
+    )
+    registerTrustedService(
+        TX_APPROVAL_RPC_KEY,
+        requireUnlocked(vault, txApprovals.service)
     )
     registerNotificationPorts(
         notificationService,

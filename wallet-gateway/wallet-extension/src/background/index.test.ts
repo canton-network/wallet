@@ -58,9 +58,9 @@ describe('startBackground', () => {
             4
         )
         // The vault service, the auth service, the dApp dispatcher, the user
-        // controller, the token service, the site approval service and the
-        // open-UI handler
-        expect(onMessage).toHaveBeenCalledTimes(7)
+        // controller, the token service, the site and transaction approval
+        // services and the open-UI handler
+        expect(onMessage).toHaveBeenCalledTimes(8)
         expect(onInstalled).toHaveBeenCalledTimes(1)
     })
 

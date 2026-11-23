@@ -70,23 +70,30 @@ export interface SiteApprovals {
 }
 
 /**
- * Whether `accessToken` is the signed-in user's, unexpired and has a session.
- * The same rule as the auth service's `getStatus`: an expired token counts as
- * signed out.
+ * Whether `accessToken` is the signed-in user's, unexpired and has a session,
+ * with the ID `sessionId` if given. The same rule as the auth service's
+ * `getStatus`: an expired token counts as signed out.
  */
-export type SessionCheck = (accessToken: string) => Promise<boolean>
+export type SessionCheck = (
+    accessToken: string,
+    sessionId?: string
+) => Promise<boolean>
 
 export function currentSessionCheck(
     getStore: () => Promise<Pick<Store, 'getSession'>>,
     authContext: Pick<AuthContextStore, 'load'>
 ): SessionCheck {
-    return async (accessToken) => {
+    return async (accessToken, sessionId) => {
         try {
             const context = await authContext.load()
             if (context?.accessToken !== accessToken) return false
             if (jwtExpired(accessToken)) return false
             const store = await getStore()
-            return (await store.getSession(accessToken)) !== undefined
+            const session = await store.getSession(accessToken)
+            return (
+                session !== undefined &&
+                (sessionId === undefined || session.id === sessionId)
+            )
         } catch (error) {
             if (error instanceof VaultLockedError) return false
             throw error
