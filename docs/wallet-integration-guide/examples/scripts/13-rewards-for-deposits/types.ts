@@ -1,7 +1,7 @@
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
 import type { KeyPair } from '@canton-network/core-signing-lib'
-import pino from 'pino'
 import type { TokenNamespace, SDKInterface } from '@canton-network/wallet-sdk'
+import pino from 'pino'
 
 export type RewardsForDepositsTestScriptParameters = {
     sdk: SDKInterface<'token' | 'amulet'>

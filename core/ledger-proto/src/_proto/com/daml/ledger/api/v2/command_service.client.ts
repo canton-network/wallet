@@ -7,16 +7,17 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { CommandService } from './command_service.js'
-import type { SubmitAndWaitForReassignmentResponse } from './command_service.js'
-import type { SubmitAndWaitForReassignmentRequest } from './command_service.js'
-import type { SubmitAndWaitForTransactionResponse } from './command_service.js'
-import type { SubmitAndWaitForTransactionRequest } from './command_service.js'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { SubmitAndWaitResponse } from './command_service.js'
-import type { SubmitAndWaitRequest } from './command_service.js'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { CommandService } from './command_service.ts'
+import type { SubmitAndWaitForReassignmentResponse } from './command_service.ts'
+import type { SubmitAndWaitForReassignmentRequest } from './command_service.ts'
+import type { SubmitAndWaitForTransactionResponse } from './command_service.ts'
+import type { SubmitAndWaitForTransactionRequest } from './command_service.ts'
+import type { SubmitAndWaitResponse } from './command_service.ts'
+import type { SubmitAndWaitRequest } from './command_service.ts'
 /**
  * Command Service is able to correlate submitted commands with completion data, identify timeouts, and return contextual
  * information with each tracking result. This supports the implementation of stateless clients.

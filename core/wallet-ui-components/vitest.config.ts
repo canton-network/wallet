@@ -1,13 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { defineConfig } from 'vitest/config'
-import { standardDecorators } from '../../vite.decorators.js'
-import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
-import path from 'node:path'
 import { readdirSync, readFileSync } from 'node:fs'
+import path from 'node:path'
+
 import { storybookTest } from '@storybook/addon-vitest/vitest-plugin'
 import { playwright } from '@vitest/browser-playwright'
+import { defineConfig } from 'vitest/config'
+
+import { standardDecorators } from '../../vite.decorators.ts'
+import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 
 // The packages the React sources and stories import (type-only imports and
 // workspace packages left out).

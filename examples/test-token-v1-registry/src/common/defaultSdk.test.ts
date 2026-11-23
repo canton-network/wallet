@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import { beforeEach } from 'node:test'
+
+import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import { describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
@@ -37,7 +38,7 @@ describe('defaultSdk', () => {
     beforeEach(() => {})
 
     it('should create a default instance of wallet-sdk', async () => {
-        await import('./defaultSdk')
+        await import('./defaultSdk.ts')
 
         expect(mocks.create).toHaveBeenLastCalledWith({
             auth: {

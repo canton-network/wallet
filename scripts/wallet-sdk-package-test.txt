@@ -19,7 +19,6 @@ console.log('SDK structure is correct')
 
 import type {
     LogAdapter,
-    CommonCtx,
     PrepareOptions,
     ExecuteOptions,
     TokenProviderConfig,

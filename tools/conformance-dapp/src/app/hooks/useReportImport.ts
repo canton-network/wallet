@@ -3,8 +3,7 @@
 
 import { useState } from 'react'
 import type { Dispatch, RefObject, SetStateAction } from 'react'
-import { validateReport } from '../../validation.ts'
-import { describeError } from '../../tests/helpers.ts'
+
 import {
     redact,
     DiagnosticsSchema,
@@ -13,6 +12,8 @@ import {
     type TestResult,
     type Observation,
 } from '../../report.ts'
+import { describeError } from '../../tests/helpers.ts'
+import { validateReport } from '../../validation.ts'
 
 /**
  * Never connects to a wallet. Signatures are detached, so an imported report

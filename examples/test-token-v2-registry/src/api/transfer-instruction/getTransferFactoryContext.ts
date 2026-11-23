@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { getTokenRulesContext } from '../getTokenRulesContext'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
-import { RegistryState } from '../../common/state'
-import { APIError } from '../common'
 import z from 'zod'
+
+import { RegistryState } from '../../common/state.ts'
+import { APIError } from '../common.ts'
+import { getTokenRulesContext } from '../getTokenRulesContext.ts'
 
 const transferOfferSchema = z.object({
     transfer: z.object({ inputHoldingCids: z.array(z.string()) }),

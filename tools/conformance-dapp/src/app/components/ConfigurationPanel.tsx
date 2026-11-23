@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import Box from '@mui/material/Box'
 import type React from 'react'
 import { z } from 'zod'
-import Box from '@mui/material/Box'
+
 import { ConfigSchema, type Config } from '../../config.ts'
-import { TestSelectionPanel } from './TestSelectionPanel.tsx'
 import { ProviderConfigPanel } from './ProviderConfigPanel.tsx'
 import { SigningKeyPanel } from './SigningKeyPanel.tsx'
+import { TestSelectionPanel } from './TestSelectionPanel.tsx'
 
 interface ConfigurationPanelProps {
     configText: string

@@ -3,6 +3,7 @@
 
 import { test, expect } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
 import {
     connectPingDapp,
     connectWalletGateway,
@@ -12,7 +13,7 @@ import {
     expectDappConnected,
     expectDappDisconnected,
     GATEWAY_NAME,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 test('dApp: execute externally signed tx', async ({
     page: dappPage,

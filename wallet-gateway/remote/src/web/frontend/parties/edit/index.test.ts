@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { WalletEditEvent } from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { WalletEditEvent } from '@canton-network/core-wallet-ui-components'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createMockUserClient,
     makeWallet,
     mockRequest,
-} from '../../__tests__/test-helpers.js'
+} from '../../__tests__/test-helpers.ts'
 
 const {
     mockCreateUserClient,
@@ -23,12 +24,12 @@ const {
     mockNetworkIdGet: vi.fn<() => string | undefined>(() => 'network1'),
 }))
 
-vi.mock('../../index.js', () => ({}))
-vi.mock('../../navigation.js', () => ({ setLocationHref }))
-vi.mock('../../rpc-client.js', () => ({
+vi.mock('../../index.ts', () => ({}))
+vi.mock('../../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../../state-manager.js', () => ({
+vi.mock('../../state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         networkId: { get: mockNetworkIdGet },
@@ -46,9 +47,10 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     }
 })
 
-import './index.js'
-import { UserUiEditParty } from './index.js'
+import './index.ts'
 import { WALLET_STATUS_CODE } from '@canton-network/core-wallet-ui-components/logic'
+
+import { UserUiEditParty } from './index.ts'
 
 describe('UserUiEditParty', () => {
     let el: UserUiEditParty

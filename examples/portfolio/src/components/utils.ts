@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TransferActionItem, TransferLegWithAllocation } from './types'
+import type { TransferActionItem, TransferLegWithAllocation } from './types.ts'
 
 export const isReceiver = (item: TransferActionItem) => {
     return item.currentPartyId === item.receiver

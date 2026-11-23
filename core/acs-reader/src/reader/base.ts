@@ -1,23 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type {
     AbstractLedgerProvider,
     Ops,
 } from '@canton-network/core-provider-ledger'
+
 import type {
     ACSCacheCollection,
     PaginatedACSCacheCollection,
-} from '../cache/collection/collection'
+} from '../cache/collection/collection.ts'
+import type { ACSCacheCollectionOptions } from '../cache/collection/index.ts'
 import {
     type AcsOptions,
     type PaginatedAcsOptions,
     AcsService,
     type PaginatedResolvedAcsOptions,
     type ResolvedAcsOptions,
-} from '../service'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
-import type { ACSCacheCollectionOptions } from '../cache/collection'
+} from '../service.ts'
 
 export abstract class BaseReader<
     Options extends AcsOptions | PaginatedAcsOptions,

@@ -4,7 +4,8 @@
 import { exec } from 'node:child_process'
 import { readFile, writeFile } from 'node:fs/promises'
 import { promisify } from 'node:util'
-import { error, getRepoRoot, success, warn } from './lib/utils.js'
+
+import { error, getRepoRoot, success, warn } from './lib/utils.ts'
 
 const ex = promisify(exec)
 const repoRoot = getRepoRoot()

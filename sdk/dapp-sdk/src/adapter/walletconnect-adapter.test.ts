@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { JsonRpcError } from '@canton-network/core-rpc-errors'
 import type { EventListener } from '@canton-network/core-splice-provider'
 import type { StatusEvent } from '@canton-network/core-wallet-dapp-rpc-client'
-import { JsonRpcError } from '@canton-network/core-rpc-errors'
-import { WALLETCONNECT_ICON } from '../assets'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { WALLETCONNECT_ICON } from '../assets.ts'
 import {
     WalletConnectAdapter,
     type WalletConnectAdapterConfig,
-} from './walletconnect-adapter'
+} from './walletconnect-adapter.ts'
 
 const { mockSession, mockSignClient, SignClientInit, sessionEventHandler } =
     vi.hoisted(() => {

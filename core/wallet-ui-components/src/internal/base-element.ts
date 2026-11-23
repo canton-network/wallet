@@ -6,9 +6,10 @@ import { css, type CSSResultGroup, LitElement, unsafeCSS } from 'lit'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import '../../themes/default.css'
 
-import bootstrapCss from 'bootstrap/dist/css/bootstrap.min.css?inline'
+import mainStyles from '../styles/index.ts'
+
 import defaultTheme from '../../themes/default.css?inline'
-import mainStyles from '../styles/index.js'
+import bootstrapCss from 'bootstrap/dist/css/bootstrap.min.css?inline'
 
 /**
  * Use this element as the base class for all custom elements to ensure consistent theming

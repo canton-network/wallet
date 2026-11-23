@@ -13,7 +13,8 @@
         "skipLibCheck": true,
         "verbatimModuleSyntax": true,
         "isolatedModules": true,
-        "allowImportingTsExtensions": true
+        "allowImportingTsExtensions": true,
+        "rewriteRelativeImportExtensions": true
     },
     "include": ["${configDir}/src", "${configDir}/*.ts"],
     "exclude": [

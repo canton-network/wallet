@@ -1,11 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, type Page } from '@playwright/test'
 import type {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
+import { test, expect, type Page } from '@playwright/test'
+
+import type { TokenStandardVersion } from '../src/types/instruments.ts'
 import {
     createGatewayApi,
     connectGateway,
@@ -26,8 +28,7 @@ import {
     selectTransferVersion,
     recordTransferChoiceContexts,
     amuletSupportsTransferV2,
-} from './utils'
-import type { TokenStandardVersion } from '../src/types/instruments'
+} from './utils.ts'
 
 // Transfer tests involve multiple ledger transactions (tap + transfer + accept/reject/withdraw),
 // so give them more time than the default 30s.

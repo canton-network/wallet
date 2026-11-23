@@ -1,17 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type {
-    MessageRaw,
-    MessageRawKind,
-    Store,
-} from '@canton-network/core-wallet-store'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     isRpcError,
     SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
     SigningProvider,
 } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { MessageSignatureEvent } from '@canton-network/core-wallet-dapp-rpc-client'
+import type {
+    MessageRaw,
+    MessageRawKind,
+    Store,
+} from '@canton-network/core-wallet-store'
 import type {
     GetMessageToSignResult,
     GetSignMessageStatusResult,
@@ -19,10 +21,9 @@ import type {
     MessageRaw as MessageToSign,
     SignMessageResult,
 } from '@canton-network/core-wallet-user-rpc-client'
-import type { MessageSignatureEvent } from '@canton-network/core-wallet-dapp-rpc-client'
-import { errorCodes } from '@canton-network/core-rpc-errors'
-import type { SigningDrivers } from './types.js'
-import type { Notifier } from './notification/index.js'
+
+import type { Notifier } from './notification/index.ts'
+import type { SigningDrivers } from './types.ts'
 
 export class SignMessageService {
     constructor(

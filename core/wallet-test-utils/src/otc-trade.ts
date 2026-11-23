@@ -4,6 +4,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
+
 import type { PartyId } from '@canton-network/core-types'
 import {
     SDK,
@@ -12,7 +13,8 @@ import {
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
 import { getLogger } from '@logtape/logtape'
-import { localNetGlobalSynchronizer } from './localnet.js'
+
+import { localNetGlobalSynchronizer } from './localnet.ts'
 
 // This example needs uploaded .dar for splice-token-test-trading-app
 // It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script

@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createHashHistory, createRouter } from '@tanstack/react-router'
-import { NotFound, PageLoader, RouteError } from '@/ui/components/feedback'
-import { routeTree } from '@/ui/routeTree.gen'
-import type { RouterContext } from './router-context'
+
+import { NotFound, PageLoader, RouteError } from '@/ui/components/feedback.tsx'
+import { routeTree } from '@/ui/routeTree.gen.ts'
+
+import type { RouterContext } from './router-context.ts'
 
 export function createAppRouter(context: RouterContext) {
     return createRouter({

@@ -171,6 +171,21 @@ pnpm script:fetch:canton --network=devnet   # Fetch devnet Canton version
 pnpm script:fetch:canton --network=mainnet  # Fetch mainnet Canton version (default)
 ```
 
+### End-to-end Tests
+
+The e2e tests run against production builds, as in CI, not the dev servers of `pnpm start:all`. Dev builds behave differently (e.g. Lit dev mode), so a test passing against them can still fail in CI.
+
+```bash
+pnpm build:all
+pnpm start:canton --network=devnet         # ping and the extension
+pnpm start:localnet --network=devnet       # portfolio and the wallet SDK examples
+pnpm start:e2e                             # Wallet Gateway, mock OAuth and example dApps
+pnpm nx playwright:e2e @canton-network/example-ping
+pnpm stop:all
+```
+
+Rebuild and run `pnpm pm2 restart all` after changing code, the e2e services do not watch for changes.
+
 ## Migrating from `yarn`
 
 If you've cloned this repository when it was set up to use `yarn`, finalize the switch to `pnpm`:

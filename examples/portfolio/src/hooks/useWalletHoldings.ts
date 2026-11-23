@@ -1,17 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
-import { useQuery } from '@tanstack/react-query'
 import { useInstruments } from '@hooks/useInstruments'
+import { useQuery } from '@tanstack/react-query'
+import type { PortfolioHolding } from '@utils/holdings'
+import { useMemo } from 'react'
+
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     type AggregatedHolding,
-} from '../utils/aggregate-holdings'
-import { holdingsQueryOptions } from './query-options'
-import { useWalletSdk } from './useWalletSdk'
-import type { PortfolioHolding } from '@utils/holdings'
+} from '../utils/aggregate-holdings.ts'
+import { holdingsQueryOptions } from './query-options.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export interface WalletHoldingsResult {
     instruments: AggregatedHolding[]

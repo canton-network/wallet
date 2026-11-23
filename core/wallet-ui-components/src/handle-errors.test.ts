@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it } from 'vitest'
 import { JsonRpcError } from '@canton-network/core-rpc-errors'
-import './components/custom-toast.js'
-import { handleErrorToast } from './handle-errors.js'
+import { afterEach, describe, expect, it } from 'vitest'
+
+import './components/custom-toast.ts'
+import { handleErrorToast } from './handle-errors.ts'
 
 type ToastElement = HTMLElement & {
     title: string

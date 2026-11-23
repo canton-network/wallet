@@ -1,14 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import type { DappSDK } from '@canton-network/dapp-sdk'
 import { createHash, generateKeyPairSync, sign, verify } from 'node:crypto'
-import packageJson from '../package.json' with { type: 'json' }
+
+import { WrappingTestProvider } from '@canton-network/core-provider-conformance'
+import {
+    createProvider,
+    type Provider,
+} from '@canton-network/core-provider-conformance'
+import { providerErrors } from '@canton-network/core-rpc-errors'
+import type { DappSDK } from '@canton-network/dapp-sdk'
 import { validateStrict } from 'ctrf'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+
+import packageJson from '../package.json' with { type: 'json' }
 import { ConfigSchema, defaultConfig as defaultRunConfig } from './config.ts'
-import { runSuite as runFullSuite, TEST_CASE_COUNT } from './suite.ts'
-import { cases } from './tests/index.ts'
 import {
     redact,
     runPassed,
@@ -18,12 +24,8 @@ import {
     signReportWithWallet,
     SignatureSchema,
 } from './report.ts'
-import { WrappingTestProvider } from '@canton-network/core-provider-conformance'
-import { providerErrors } from '@canton-network/core-rpc-errors'
-import {
-    createProvider,
-    type Provider,
-} from '@canton-network/core-provider-conformance'
+import { runSuite as runFullSuite, TEST_CASE_COUNT } from './suite.ts'
+import { cases } from './tests/index.ts'
 
 const errorHandlingTestIds = [
     'request.unknownMethod',

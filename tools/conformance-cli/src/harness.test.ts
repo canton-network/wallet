@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, onTestFinished, vi } from 'vitest'
+import { execFile } from 'node:child_process'
+import { generateKeyPairSync, sign } from 'node:crypto'
 import {
     access,
     mkdir,
@@ -13,24 +14,25 @@ import {
 import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { generateKeyPairSync, sign } from 'node:crypto'
-import { chromium, type BrowserContext } from 'playwright'
-import { runHarness } from './harness.ts'
-import {
-    readArtifact,
-    readSignature,
-    verifyArtifactSignature,
-} from './artifact.ts'
-import { loadCommandOptions } from './cli-config.ts'
+
+import type { RpcTypes as DappRpcTypes } from '@canton-network/core-wallet-dapp-rpc-client'
 import {
     ConfigSchema,
     cases,
     signReportWithWallet,
     type Report,
 } from '@canton-network/tool-conformance-dapp'
-import type { RpcTypes as DappRpcTypes } from '@canton-network/core-wallet-dapp-rpc-client'
+import { chromium, type BrowserContext } from 'playwright'
+import { describe, expect, it, onTestFinished, vi } from 'vitest'
+
+import {
+    readArtifact,
+    readSignature,
+    verifyArtifactSignature,
+} from './artifact.ts'
+import { loadCommandOptions } from './cli-config.ts'
+import { runHarness } from './harness.ts'
 
 async function createTempDir() {
     const directory = await mkdtemp(resolve(tmpdir(), 'harness-'))

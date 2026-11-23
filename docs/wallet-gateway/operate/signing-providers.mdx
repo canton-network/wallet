@@ -6,7 +6,9 @@ description: "How the Wallet Gateway delegates transaction signing, and how to c
 The Wallet Gateway does not have to hold private keys. Signing is delegated to a **signing
 provider** chosen per wallet, so you decide where each wallet's keys live and who performs the
 cryptographic signing. Different wallets in the same Wallet Gateway can use different providers,
-and you select the provider per party when you create a wallet.
+and you select the provider per party when you create a wallet. You can later switch a wallet
+to a different provider or key, for example to a key the party's namespace is delegated to. See
+[Change the signing key of a wallet](../use/party-management.mdx#change-the-signing-key-of-a-wallet).
 
 When a wallet submits a transaction, the Wallet Gateway hands the prepared transaction to that
 wallet's signing provider, which signs it with the party's key and returns it for the Wallet

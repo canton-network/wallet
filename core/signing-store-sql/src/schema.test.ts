@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, test } from 'vitest'
 import type {
     SigningDriverConfig,
     SigningKey,
     SigningTransaction,
 } from '@canton-network/core-signing-lib'
+import { describe, expect, test } from 'vitest'
+
 import {
     fromSigningDriverConfig,
     fromSigningKey,
@@ -14,7 +15,7 @@ import {
     toSigningDriverConfig,
     toSigningKey,
     toSigningTransaction,
-} from './schema.js'
+} from './schema.ts'
 
 const userId = 'user-1'
 const createdAt = new Date('2024-06-01T12:00:00.000Z')

@@ -2,24 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
-import { expressContext, mock, type RequestType } from '../../__tests__/mocks'
-import { getAllocationFactory } from './getAllocationFactory'
-import { APIError, emptyChoiceContext } from '../common'
-import { getAllocationInstructionAcceptContext } from './getAllocationInstructionAcceptContext'
-import { getAllocationInstructionWithdrawContext } from './getAllocationInstructionWithdrawContext'
+
+import {
+    expressContext,
+    mock,
+    type RequestType,
+} from '../../__tests__/mocks.ts'
+import { APIError, emptyChoiceContext } from '../common.ts'
+import { getAllocationFactory } from './getAllocationFactory.ts'
+import { getAllocationInstructionAcceptContext } from './getAllocationInstructionAcceptContext.ts'
+import { getAllocationInstructionWithdrawContext } from './getAllocationInstructionWithdrawContext.ts'
 
 const { res, next } = expressContext
 
-vi.mock('../../common/sdk', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
-
-    return {
-        default: importedMock.sdk,
-    }
-})
-
-vi.mock('../../common/state', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
+vi.mock('../../common/state.ts', async () => {
+    const { mock: importedMock } = await import('../../__tests__/mocks.ts')
 
     return importedMock.state
 })

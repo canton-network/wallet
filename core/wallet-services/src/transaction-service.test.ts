@@ -1,9 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
 import { errorCodes } from '@canton-network/core-rpc-errors'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type {
     Network,
@@ -11,13 +14,11 @@ import type {
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import {
-    SigningProvider,
-    type SigningDriverInterface,
-} from '@canton-network/core-signing-lib'
-import type { Notifier } from './notification/index.js'
-import { TransactionService } from './transaction-service.js'
-import { initializeLogRecorder } from './__tests__/test-utils.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { initializeLogRecorder } from './__tests__/test-utils.ts'
+import type { Notifier } from './notification/index.ts'
+import { TransactionService } from './transaction-service.ts'
 
 const authContext: AuthContext = {
     userId: 'user-1',

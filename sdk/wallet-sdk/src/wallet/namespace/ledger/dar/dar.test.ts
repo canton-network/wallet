@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { DarNamespace } from '.'
-import * as mock from '../../../__tests__/mocks'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
+import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+import * as mock from '../../../__tests__/mocks.ts'
+import { DarNamespace } from './index.ts'
 
 const { ledgerProvider, ctx } = mock
 

@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing } from 'lit'
-import { customElement, property } from 'lit/decorators.js'
-import { chevronDownIcon } from '../icons/index.js'
-import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
+import type { PartyId } from '@canton-network/core-types'
 import type {
     Key,
     SigningProviderId,
 } from '@canton-network/core-wallet-user-rpc-client'
-import type { PartyId } from '@canton-network/core-types'
+import { css, html, nothing } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+
+import { chevronDownIcon } from '../icons/index.ts'
+import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.ts'
 
 export class WalletEditEvent extends Event {
     constructor(

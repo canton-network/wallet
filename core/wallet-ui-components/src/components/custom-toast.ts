@@ -3,7 +3,8 @@
 
 import { html, css } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
+
+import { BaseElement } from '../internal/base-element.ts'
 
 export type ToastMessageType = 'info' | 'success' | 'error'
 

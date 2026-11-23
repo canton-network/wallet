@@ -7,7 +7,8 @@ import type {
     Fetch,
     Metadata,
 } from '@canton-network/core-ledger-proto'
-import { concat } from './bytes.js'
+
+import { concat } from './bytes.ts'
 import {
     encodeBool,
     encodeHex,
@@ -17,14 +18,14 @@ import {
     encodeString,
     encodeTime,
     encodeValue,
-} from './encoding.js'
-import { TxHashingError } from './errors.js'
+} from './encoding.ts'
+import { TxHashingError } from './errors.ts'
 import {
     encodeInputContracts,
     encodeStrings,
     submitterInfoOf,
     type Scheme,
-} from './scheme.js'
+} from './scheme.ts'
 
 // Hashing scheme V2, after daml_transaction_hashing_v2.py (canton v3.5.1,
 // 08-interactive-submission). Contract keys, byKey, QueryByKey nodes and
@@ -81,6 +82,7 @@ function encodeExercise(
 ): Uint8Array {
     checkLfVersion(exercise.lfVersion, `${at}.lfVersion`)
     checkNoKey(exercise, at)
+    checkNoExternalCallResults(exercise, at)
     return concat(
         ENCODING_VERSION,
         encodeString(exercise.lfVersion),
@@ -165,6 +167,12 @@ function checkLfVersion(lfVersion: string, path: string): void {
 function checkNoKey(node: Exercise | Fetch, at: string): void {
     if (node.key !== undefined) throw notCovered('a contract key', `${at}.key`)
     if (node.byKey) throw notCovered('byKey = true', `${at}.byKey`)
+}
+
+function checkNoExternalCallResults(exercise: Exercise, at: string): void {
+    if (exercise.externalCallResults.length > 0) {
+        throw notCovered('external call results', `${at}.externalCallResults`)
+    }
 }
 
 const notCovered = (what: string, path: string) =>

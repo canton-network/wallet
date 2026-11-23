@@ -14,10 +14,11 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { SynchronizerTime } from './offset_checkpoint.js'
-import { TraceContext } from './trace_context.js'
-import { Duration } from '../../../../../google/protobuf/duration.js'
-import { Status } from '../../../../../google/rpc/status.js'
+
+import { Duration } from '../../../../../google/protobuf/duration.ts'
+import { Status } from '../../../../../google/rpc/status.ts'
+import { SynchronizerTime } from './offset_checkpoint.ts'
+import { TraceContext } from './trace_context.ts'
 /**
  * A completion represents the status of a submitted command on the ledger: it can be successful or failed.
  *
@@ -190,6 +191,24 @@ export interface Completion {
      * @generated from protobuf field: int64 paid_traffic_cost = 12
      */
     paidTrafficCost: bigint
+    /**
+     * The transaction hash signed by the external party for prepared transactions
+     * that were submitted using `InteractiveSubmissionService.ExecuteSubmission`
+     * or one of its variants.
+     *
+     * Use this to correlate prepared transactions with their execution result
+     * on the *same participant* that executed the transaction.
+     *
+     * Not available for:
+     *
+     * - transactions executed on Canton versions prior to 3.5
+     * - transactions of internal parties submitted using `CommandSubmissionService.Submit` and its variants
+     *
+     * Optional: can be empty
+     *
+     * @generated from protobuf field: optional bytes transaction_hash = 13
+     */
+    transactionHash?: Uint8Array
 }
 // @generated message type with reflection information, may provide speed optimized methods
 class Completion$Type extends MessageType<Completion> {
@@ -267,6 +286,13 @@ class Completion$Type extends MessageType<Completion> {
                 kind: 'scalar',
                 T: 3 /*ScalarType.INT64*/,
                 L: 0 /*LongType.BIGINT*/,
+            },
+            {
+                no: 13,
+                name: 'transaction_hash',
+                kind: 'scalar',
+                opt: true,
+                T: 12 /*ScalarType.BYTES*/,
             },
         ])
     }
@@ -359,6 +385,9 @@ class Completion$Type extends MessageType<Completion> {
                 case /* int64 paid_traffic_cost */ 12:
                     message.paidTrafficCost = reader.int64().toBigInt()
                     break
+                case /* optional bytes transaction_hash */ 13:
+                    message.transactionHash = reader.bytes()
+                    break
                 default:
                     let u = options.readUnknownField
                     if (u === 'throw')
@@ -437,6 +466,11 @@ class Completion$Type extends MessageType<Completion> {
         /* int64 paid_traffic_cost = 12; */
         if (message.paidTrafficCost !== 0n)
             writer.tag(12, WireType.Varint).int64(message.paidTrafficCost)
+        /* optional bytes transaction_hash = 13; */
+        if (message.transactionHash !== undefined)
+            writer
+                .tag(13, WireType.LengthDelimited)
+                .bytes(message.transactionHash)
         let u = options.writeUnknownFields
         if (u !== false)
             (u == true ? UnknownFieldHandler.onWrite : u)(

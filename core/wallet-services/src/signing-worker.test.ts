@@ -1,6 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { SigningProvider } from '@canton-network/core-signing-lib'
+import type {
+    Network,
+    Store,
+    Transaction,
+    Wallet,
+} from '@canton-network/core-wallet-store'
 import {
     afterEach,
     beforeEach,
@@ -10,27 +17,21 @@ import {
     type Mock,
     vi,
 } from 'vitest'
-import type {
-    Network,
-    Store,
-    Transaction,
-    Wallet,
-} from '@canton-network/core-wallet-store'
-import { SigningProvider } from '@canton-network/core-signing-lib'
+
+import { initializeLogRecorder } from './__tests__/test-utils.ts'
+import type { Notifier } from './notification/index.ts'
 import {
     SigningWorker,
     type SigningWorkerRunContext,
     type SigningWorkerRunContextResolver,
-} from './signing-worker.js'
-import { TransactionService } from './transaction-service.js'
-import type { Notifier } from './notification/index.js'
-import { initializeLogRecorder } from './__tests__/test-utils.js'
+} from './signing-worker.ts'
+import { TransactionService } from './transaction-service.ts'
 
 const mocks = vi.hoisted(() => ({
     signAndExecute: vi.fn(),
 }))
 
-vi.mock('./transaction-service.js', () => ({
+vi.mock('./transaction-service.ts', () => ({
     TransactionService: vi.fn(function TransactionServiceMock() {
         return { signAndExecute: mocks.signAndExecute }
     }),

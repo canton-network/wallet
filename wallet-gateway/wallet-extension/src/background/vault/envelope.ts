@@ -8,8 +8,8 @@ import {
     fromB64,
     randomBytes,
     toB64,
-} from './crypto'
-import { CorruptVaultError, InvalidPasswordError } from './errors'
+} from './crypto.ts'
+import { CorruptVaultError, InvalidPasswordError } from './errors.ts'
 
 /** What `local:vault` holds. Binary fields are base64. */
 export interface VaultEnvelopeV1 {

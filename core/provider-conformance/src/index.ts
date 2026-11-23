@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-export { createProvider } from './create-provider.js'
+export { createProvider } from './create-provider.ts'
 
 export {
     WrappingTestProvider,
@@ -11,7 +11,7 @@ export {
     testMethodNames,
     abortable,
     performInteraction,
-} from './test-provider.js'
+} from './test-provider.ts'
 export type {
     Provider,
     TestMethods,
@@ -20,4 +20,4 @@ export type {
     Decision,
     Interaction,
     InteractionHandler,
-} from './test-provider.js'
+} from './test-provider.ts'
