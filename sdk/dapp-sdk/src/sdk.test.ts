@@ -676,6 +676,31 @@ describe('DappSDK', () => {
             ).toHaveLength(1)
         })
 
+        it('removes listeners while a disconnect is in flight', async () => {
+            const { sdk, provider } = await connectSdk()
+            const listener = makeListener<StatusEvent>()
+            await sdk.onStatusChanged(listener)
+            let finish!: () => void
+            const connected = provider.request.getMockImplementation()!
+            provider.request.mockImplementation(async (args) =>
+                args.method === 'disconnect'
+                    ? new Promise((resolve) => {
+                          finish = () => resolve(null)
+                      })
+                    : connected(args)
+            )
+
+            const disconnecting = sdk.disconnect()
+            await sdk.removeOnStatusChanged(listener)
+            finish()
+            await disconnecting
+
+            expect(provider.removeListener).toHaveBeenCalledWith(
+                'statusChanged',
+                listener
+            )
+        })
+
         it('forgets the session when the wallet refuses to disconnect', async () => {
             const refusal = new Error('locked')
             const { sdk, provider, adapter } = await connectSdk()
