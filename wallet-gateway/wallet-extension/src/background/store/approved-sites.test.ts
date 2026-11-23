@@ -56,7 +56,7 @@ describe('createApprovedSiteStore', () => {
     it('grants nothing from entries of another shape', async () => {
         const vault = await createdVault()
         await vault
-            .defineItem<unknown>('approvedSitesV2', { fallback: {} })
+            .defineItem<unknown>('approvedSites', { fallback: {} })
             .setValue({ u1: 'https://a.example' })
         const sites = createApprovedSiteStore(vault)
 
