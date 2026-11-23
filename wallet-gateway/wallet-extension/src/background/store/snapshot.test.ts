@@ -161,6 +161,48 @@ describe('wallet store snapshot', () => {
         expect((await restored.getCurrentNetwork()).id).toBe(NETWORK_ID)
     })
 
+    it('keeps a user whose id is __proto__ when upgrading a version 1 snapshot', async () => {
+        const { snapshot } = await filledStore()
+        const user = snapshot.users[CONTEXT.userId]!
+        const legacy = {
+            version: 1,
+            config: snapshot.config,
+            users: Object.fromEntries([
+                [
+                    '__proto__',
+                    {
+                        ...user,
+                        sessions: [
+                            {
+                                ...user.sessions[0],
+                                accessToken: CONTEXT.accessToken,
+                            },
+                        ],
+                    },
+                ],
+            ]),
+        }
+
+        const { snapshot: upgraded, upgraded: changed } = await upgradeSnapshot(
+            JSON.parse(JSON.stringify(legacy))
+        )
+
+        expect(changed).toBe(true)
+        const upgradedUser = (upgraded as SnapshotV2).users['__proto__']
+        expect(
+            Object.prototype.hasOwnProperty.call(
+                (upgraded as SnapshotV2).users,
+                '__proto__'
+            )
+        ).toBe(true)
+        expect(upgradedUser?.sessions[0]?.accessTokenHash).toBe(DIGEST)
+        const { memory } = decodeSnapshot(upgraded)
+        expect(
+            memory.get('__proto__')?.sessions.get(user.sessions[0]!.id)
+                ?.accessTokenHash
+        ).toBe(DIGEST)
+    })
+
     it('leaves a current snapshot as it is', async () => {
         const { snapshot } = await filledStore()
 

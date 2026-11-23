@@ -79,7 +79,9 @@ export async function upgradeSnapshot(
     if (!isRecord(raw) || raw.version !== 1 || !isRecord(raw.users)) {
         return { snapshot: raw, upgraded: false }
     }
-    const users: Record<string, unknown> = {}
+    // Null prototype so a user id like "__proto__" is stored as a
+    // real entry instead of changing Object.prototype.
+    const users: Record<string, unknown> = Object.create(null)
     for (const [userId, user] of Object.entries(raw.users)) {
         users[userId] =
             isRecord(user) && Array.isArray(user.sessions)
