@@ -25,8 +25,9 @@ src/
 │   ├── trusted-service.ts  isTrustedSender and registerTrustedService, for services only the extension pages may call
 │   ├── dapp-service.ts  registerDappService, which takes each dApp request's origin from the browser
 │   ├── site-approval.ts  the pending site approvals that a dApp's connect waits on
+│   ├── tx-approval.ts  the transactions from prepareExecute that wait for the user's approval
 │   ├── unlock-request.ts  the tabs whose locked connect shows the unlock page
-│   ├── tab-icon.ts   what each tab's toolbar icon opens, for the two above
+│   ├── tab-icon.ts   what each tab's toolbar icon opens, for the three above
 │   ├── page-presence.ts  the content scripts' presence ports, which tell when a dApp page unloads
 │   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
@@ -101,6 +102,14 @@ A site can use the dApp API only after the signed-in user approves it. Approvals
 - Each site is kept separate: the origin comes from the browser, events and the token go only to that site, and `disconnect` forgets only that site.
 - Approved sites can call `ledgerApi`, which forwards to the current network's ledger with the user's token.
 - An approved site keeps the token it was given until it expires, even after it disconnects.
+
+### Transaction approval
+
+A transaction a site prepares with `prepareExecute` or `prepareExecuteAndWait` waits for the user on the same tab's toolbar icon, under any site approval (`background/tx-approval.ts`).
+
+- Approve signs and executes it through the user API, Reject deletes it. The page is `/approve-transaction` (`ui/features/transactions/`).
+- It ends after 5 minutes, or when the vault locks, the user signs out, the tab closes or the page reloads. The transaction is then deleted.
+- `prepareExecuteAndWait` waits in the background and returns the executed transaction, or the error the prompt ended with.
 
 ### Controllers
 
