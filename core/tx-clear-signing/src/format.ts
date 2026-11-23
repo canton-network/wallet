@@ -152,8 +152,19 @@ function enumKey(v: Value): string {
     throw new FormatError(`format 'enum' does not accept ${describeKind(v)}`)
 }
 
+// Daml's Time and Date range: 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999Z.
+const MIN_TIMESTAMP_MICROS = -62_135_596_800_000_000n
+const MAX_TIMESTAMP_MICROS = 253_402_300_799_999_999n
+const MIN_DATE_DAYS = -719_162
+const MAX_DATE_DAYS = 2_932_896
+
 function formatTimestamp(micros: string): string {
     const total = BigInt(micros)
+    // `clearSign` hashes first, and the hasher refuses these values. The check keeps `formatValue` safe on
+    // its own: outside the range `toISOString` throws a RangeError rather than a FormatError.
+    if (total < MIN_TIMESTAMP_MICROS || total > MAX_TIMESTAMP_MICROS) {
+        throw new FormatError(`timestamp '${micros}' is outside the Daml range`)
+    }
     let seconds = total / MICROS_PER_SECOND
     let fraction = total % MICROS_PER_SECOND
     if (fraction < 0n) {
@@ -167,6 +178,13 @@ function formatTimestamp(micros: string): string {
 }
 
 function formatDate(days: number): string {
+    if (
+        !Number.isInteger(days) ||
+        days < MIN_DATE_DAYS ||
+        days > MAX_DATE_DAYS
+    ) {
+        throw new FormatError(`date '${days}' is outside the Daml range`)
+    }
     return new Date(days * MS_PER_DAY).toISOString().slice(0, 10)
 }
 
@@ -210,78 +228,152 @@ function formatDuration(micros: bigint): string {
     return sign + parts.join(' ')
 }
 
+/**
+ * Text and composite values are JSON text. Other scalars are shown as they are. Every entry of a
+ * record or map is written, in order, so a repeated label or key is shown twice, never merged.
+ */
 function formatRaw(v: Value): string {
-    const plain = toPlain(v)
-    const quoted = v.sum.oneofKind === 'text' || typeof plain !== 'string'
-    return quoted ? JSON.stringify(plain) : plain
+    const sum = v.sum
+    if (sum.oneofKind === 'optional' && sum.optional.value) {
+        return formatRaw(sum.optional.value)
+    }
+    if (sum.oneofKind === 'record') {
+        const micros = relTimeMicros(v)
+        if (micros !== undefined) return formatDuration(micros)
+    }
+    switch (sum.oneofKind) {
+        case 'unit':
+        case 'bool':
+        case 'int64':
+        case 'numeric':
+        case 'party':
+        case 'contractId':
+        case 'timestamp':
+        case 'date':
+        case 'enum':
+            return scalarText(v)
+        default:
+            return rawJson(v)
+    }
 }
 
-type Plain = string | boolean | null | Plain[] | { [key: string]: Plain }
-
-function toPlain(v: Value | undefined): Plain {
-    const sum = v?.sum
-    switch (sum?.oneofKind) {
+/** A scalar's text: what `raw` shows at the top level, and a JSON string inside a composite. */
+function scalarText(v: Value): string {
+    const sum = v.sum
+    switch (sum.oneofKind) {
         case 'unit':
             return '()'
         case 'bool':
-            return sum.bool
+            return String(sum.bool)
         case 'int64':
             return sum.int64
         case 'numeric':
             return sum.numeric
         case 'party':
             return sum.party
-        case 'text':
-            return sum.text
         case 'contractId':
             return sum.contractId
         case 'timestamp':
             return formatTimestamp(sum.timestamp)
         case 'date':
             return formatDate(sum.date)
-        case 'optional':
-            return sum.optional.value ? toPlain(sum.optional.value) : null
-        case 'list':
-            return sum.list.elements.map(toPlain)
-        case 'textMap':
-            return Object.fromEntries(
-                sum.textMap.entries.map((e) => [e.key, toPlain(e.value)])
-            )
-        case 'genMap':
-            return sum.genMap.entries.map((e) => [
-                toPlain(e.key),
-                toPlain(e.value),
-            ])
-        case 'record': {
-            const micros = relTimeMicros({ sum })
-            if (micros !== undefined) return formatDuration(micros)
-            return Object.fromEntries(
-                sum.record.fields.map((f, i) => [
-                    f.label || String(i),
-                    toPlain(f.value),
-                ])
-            )
-        }
-        case 'variant':
-            return { [sum.variant.constructor]: toPlain(sum.variant.value) }
         case 'enum':
             return sum.enum.constructor
         default:
             throw new FormatError(
-                `format 'raw' does not accept ${sum?.oneofKind ?? 'an empty value'}`
+                `format 'raw' does not accept ${describeKind(v)}`
             )
     }
 }
 
-// Values come from the transaction and are untrusted. Control, format (bidirectional overrides,
-// zero-width characters) and line or paragraph separator characters could break lines, hide text or
-// reorder the text around them, so they are shown escaped. Descriptor text rejects the same set.
-export const UNSAFE_CLASS = String.raw`\p{Cc}\p{Cf}\p{Zl}\p{Zp}`
-const UNSAFE = new RegExp(`[${UNSAFE_CLASS}]`, 'gu')
+/**
+ * JSON text for a value, written directly rather than through an object, so that no entry is dropped.
+ * A bool is a JSON boolean, None is null, Text and the other scalars are JSON strings.
+ */
+function rawJson(v: Value | undefined): string {
+    const sum = v?.sum
+    switch (sum?.oneofKind) {
+        case 'bool':
+            return String(sum.bool)
+        case 'text':
+            return JSON.stringify(sum.text)
+        case 'optional':
+            return sum.optional.value ? rawJson(sum.optional.value) : 'null'
+        case 'list':
+            return `[${sum.list.elements.map(rawJson).join(',')}]`
+        case 'textMap':
+            return jsonObject(
+                sum.textMap.entries.map((e) => [e.key, rawJson(e.value)])
+            )
+        case 'genMap':
+            return `[${sum.genMap.entries
+                .map((e) => `[${rawJson(e.key)},${rawJson(e.value)}]`)
+                .join(',')}]`
+        case 'record': {
+            const micros = relTimeMicros({ sum })
+            if (micros !== undefined) {
+                return JSON.stringify(formatDuration(micros))
+            }
+            return jsonObject(
+                sum.record.fields.map((f, i) => [
+                    f.label || String(i),
+                    rawJson(f.value),
+                ])
+            )
+        }
+        case 'variant':
+            return jsonObject([
+                [sum.variant.constructor, rawJson(sum.variant.value)],
+            ])
+        case undefined:
+            throw new FormatError(`format 'raw' does not accept an empty value`)
+        default:
+            return JSON.stringify(scalarText(v as Value))
+    }
+}
+
+/** `{"key":value,...}` with every member kept, in order, repeated keys included. */
+function jsonObject(members: [string, string][]): string {
+    return `{${members.map(([key, json]) => `${JSON.stringify(key)}:${json}`).join(',')}}`
+}
+
+// Values come from the transaction and are untrusted, so characters that could hide, reorder or smear
+// text are shown escaped as `\u{...}`:
+// - control, format (bidirectional overrides, zero-width), line and paragraph separators;
+// - private-use characters, and default-ignorable code points such as the Hangul fillers U+115F,
+//   U+1160, U+3164 and U+FFA0, which render blank;
+// - U+2800, the blank Braille cell.
+// Descriptor text rejects the same set.
+export const UNSAFE_CLASS = String.raw`\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Co}\p{Default_Ignorable_Code_Point}⠀`
+
+/** Nonspacing and enclosing marks: the marks that stack on the character before them. */
+export const STACKING_MARK_CLASS = String.raw`\p{Mn}\p{Me}`
+
+/**
+ * The most stacking marks shown in a row. Two cover a base letter with two diacritics, as in
+ * Vietnamese written decomposed. Descriptor text rejects a longer run.
+ */
+export const MAX_MARK_RUN = 2
+
+// Unassigned code points are escaped for display too. Descriptor text does not reject them, because
+// which code points are assigned depends on the Unicode version of the JavaScript engine.
+const ESCAPED = new RegExp(`[${UNSAFE_CLASS}\\p{Cn}]`, 'u')
+const STACKING_MARK = new RegExp(`[${STACKING_MARK_CLASS}]`, 'u')
+
+function escapeCodePoint(c: string): string {
+    return `\\u{${c.codePointAt(0)?.toString(16).padStart(4, '0')}}`
+}
 
 export function sanitize(s: string): string {
-    return s.replace(
-        UNSAFE,
-        (c) => `\\u{${c.codePointAt(0)?.toString(16).padStart(4, '0')}}`
-    )
+    let out = ''
+    let marks = 0
+    for (const c of s) {
+        // A variation selector is both a mark and default-ignorable: it is escaped, and still
+        // continues the run of marks.
+        const mark = STACKING_MARK.test(c)
+        marks = mark ? marks + 1 : 0
+        const escaped = ESCAPED.test(c) || marks > MAX_MARK_RUN
+        out += escaped ? escapeCodePoint(c) : c
+    }
+    return out
 }

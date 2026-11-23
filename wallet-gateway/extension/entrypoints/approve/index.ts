@@ -270,6 +270,9 @@ export class ApproveUi extends BaseElement {
 
     private async handleApprove(): Promise<void> {
         if (!this.canApprove || this.actionInProgress) return
+        // canApprove already requires it: a missing hash sets errorMessage.
+        const reviewedHash = this.reviewedHash
+        if (reviewedHash === null) return
 
         this.isApproving = true
         try {
@@ -282,7 +285,7 @@ export class ApproveUi extends BaseElement {
                           params: {
                               transactionId: this.transactionId,
                               partyId: this.partyId,
-                              preparedTransactionHash: this.reviewedHash ?? '',
+                              preparedTransactionHash: reviewedHash,
                           },
                       })
 

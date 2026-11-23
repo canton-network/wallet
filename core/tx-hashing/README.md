@@ -38,6 +38,8 @@ if (btoa(String.fromCharCode(...hash)) !== response.preparedTransactionHash) {
 - `scheme`: `HashingSchemeVersion.V2` or `.V3` of `@canton-network/core-ledger-proto`, or the JSON API names `'HASHING_SCHEME_VERSION_V2'` and `'HASHING_SCHEME_VERSION_V3'`.
 - `options.limits`: see [Limits](#limits).
 
+`decodeBase64(text)` is the decoder `computePreparedTransactionHash` applies to a base64 input. It accepts only non-empty canonical standard base64: padded to a multiple of 4, no whitespace, and zero trailing bits, so each byte string has exactly one accepted encoding. Anything else throws a `TxHashingError` with code `DECODE_FAILED`.
+
 The [wallet integration guide example](../../docs/wallet-integration-guide/examples/snippets/verify-transaction-hash.ts) runs the same check with the Wallet SDK, from prepare to execute.
 
 Display the transaction as `@canton-network/core-ledger-proto` decodes it, directly or through `core-tx-visualizer`: that is what the hash covers.

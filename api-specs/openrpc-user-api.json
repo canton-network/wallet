@@ -860,14 +860,10 @@
                             "preparedTransactionHash": {
                                 "title": "preparedTransactionHash",
                                 "type": "string",
-                                "description": "The hash the user approved, base64-encoded, computed by the client from the prepared transaction it displayed. The transaction is signed only if this equals the hash computed from the stored transaction."
+                                "description": "The hash the user approved, base64-encoded, computed by the client from the prepared transaction it displayed. When given, the transaction is signed only if this equals the hash computed from the stored transaction. When omitted, the stored hash is still checked against the stored transaction."
                             }
                         },
-                        "required": [
-                            "transactionId",
-                            "partyId",
-                            "preparedTransactionHash"
-                        ]
+                        "required": ["transactionId", "partyId"]
                     }
                 }
             ],

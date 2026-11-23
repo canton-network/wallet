@@ -5,10 +5,21 @@ export { canonicalize, CanonicalizeError } from './canonical-json.ts'
 export {
     clearSign,
     HashMismatchError,
+    readDescriptorTemplate,
     type ClearSigningResult,
 } from './clear-sign.ts'
-export { parseDescriptorText, type Descriptor } from './descriptor.ts'
-export { parseJsonStrict, StrictJsonError } from './strict-json.ts'
+export {
+    DescriptorError,
+    parseDescriptor,
+    parseDescriptorText,
+    type Descriptor,
+} from './descriptor.ts'
+export {
+    assertDescriptorSize,
+    MAX_DESCRIPTOR_BYTES,
+    parseJsonStrict,
+    StrictJsonError,
+} from './strict-json.ts'
 export {
     signDescriptor,
     signingMessage,

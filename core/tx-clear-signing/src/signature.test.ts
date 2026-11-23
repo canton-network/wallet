@@ -106,6 +106,31 @@ describe('descriptor signatures', () => {
         })
     })
 
+    it('rejects a signature or public key that is not canonical base64', async () => {
+        const signed = await signDescriptor(descriptor, REFERENCE_PRIVATE_KEY)
+        const [entry] = signaturesOf(signed)
+        if (!entry) throw new Error('expected a signature')
+        // The next character sets a padding bit: the same bytes to a lenient decoder, a second
+        // encoding to the strict one.
+        const setPaddingBit = (b64: string, at: number): string =>
+            b64.slice(0, at) +
+            String.fromCharCode(b64.charCodeAt(at) + 1) +
+            b64.slice(at + 1)
+        for (const changed of [
+            { ...entry, signature: setPaddingBit(entry.signature, 85) },
+            { ...entry, publicKey: setPaddingBit(entry.publicKey, 42) },
+        ]) {
+            const verified = await verifySignatures(
+                { ...signed, signatures: [changed] },
+                TRUSTED_KEYS
+            )
+            expect(verified).toEqual({
+                ok: false,
+                problems: ['signatures[0]: signature could not be decoded'],
+            })
+        }
+    })
+
     it('rejects a key that is not trusted, and accepts it when no list is given', async () => {
         const signed = await signDescriptor(descriptor, await otherKey())
         const untrusted = await verifySignatures(signed, TRUSTED_KEYS)

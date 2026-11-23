@@ -1,14 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/** Decodes standard base64. `atob` is available in Node and in the browser. */
+import { decodeBase64 } from '@canton-network/core-tx-hashing'
+
+/**
+ * Decodes canonical standard base64: padded, no whitespace, zero trailing bits. One byte string has
+ * exactly one accepted encoding. This is the decoder the transaction hasher applies.
+ *
+ * @throws TxHashingError when `b64` is not canonical
+ */
 export function fromBase64(b64: string): Uint8Array {
-    const binaryString = atob(b64)
-    const bytes = new Uint8Array(binaryString.length)
-    for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i)
-    }
-    return bytes
+    return decodeBase64(b64)
 }
 
 /** Encodes bytes as standard base64. `btoa` is available in Node and in the browser. */

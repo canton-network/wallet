@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { parseDescriptorText } from '@canton-network/core-tx-clear-signing'
+import {
+    parseDescriptorText,
+    readDescriptorTemplate,
+} from '@canton-network/core-tx-clear-signing'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const { request, createUserClient } = vi.hoisted(() => ({
@@ -97,9 +100,9 @@ describe('descriptors store', () => {
                 }
                 if (method === 'removeClearSigningDescriptor') {
                     stored = stored.filter((item) => {
-                        const template =
-                            parseDescriptorText(item).context.template
+                        const template = readDescriptorTemplate(item)
                         return (
+                            template === undefined ||
                             template.packageId !== params?.packageId ||
                             template.moduleName !== params?.moduleName ||
                             template.entityName !== params?.entityName
@@ -140,5 +143,38 @@ describe('descriptors store', () => {
         await addDescriptor(template(PKG_2, 'Ping', 'other'))
         await removeDescriptor(ping)
         expect((await listDescriptors()).map(nameOf)).toEqual(['other'])
+    })
+
+    it('removes a stored descriptor that the parser now rejects', async () => {
+        // Stored before the parser rejected an invisible label: it no longer parses strictly.
+        const stale = JSON.stringify({
+            ...JSON.parse(template(PKG_1, 'Ping', 'stale')),
+            display: {
+                create: {
+                    intent: 'Create it',
+                    fields: [{ path: 'id', label: '\u3164' }],
+                },
+            },
+        })
+        expect(() => parseDescriptorText(stale)).toThrow()
+        stored = [stale]
+
+        await removeDescriptor(stale)
+
+        expect(request).toHaveBeenLastCalledWith({
+            method: 'removeClearSigningDescriptor',
+            params: {
+                packageId: PKG_1,
+                moduleName: 'Canton.Internal.Ping',
+                entityName: 'Ping',
+            },
+        })
+        expect(await listDescriptors()).toEqual([])
+    })
+
+    it('refuses to remove text that names no template', async () => {
+        await expect(removeDescriptor('not json')).rejects.toThrow(
+            /does not name a template/
+        )
     })
 })

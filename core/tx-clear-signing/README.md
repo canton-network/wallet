@@ -143,9 +143,36 @@ Five paths read the prepared transaction on both a create and an exercise: `@.co
 - `dateTime` shows a `Time` as an ISO 8601 UTC timestamp with microseconds, or a `Date` as `YYYY-MM-DD`.
 - `duration` shows a `DA.Time` `RelTime` in days, hours, minutes and seconds, such as `1d 2h 0.5s`.
 - `enum` shows the table entry for an enum constructor, a variant constructor with no payload, or a `Bool`. The table is the one named by `params`. A value missing from the table fails the field.
-- `raw` shows any value: a record, list or map as JSON, a variant as an object keyed by its constructor, `Text` as a JSON string literal, and other scalars as they are.
+- `raw` shows any value: a record, list or map as JSON, a variant as an object keyed by its constructor, `Text` as a JSON string literal, and other scalars as they are. Every entry is written, in order. A text-map key or a record label that occurs twice is shown twice, as `{"to":"alice","to":"mallory"}`, never merged. A record field with an empty label is keyed by its position.
+- `dateTime`, and `raw` on a timestamp or date, fail a value outside Daml's range, 0001-01-01 to 9999-12-31. The hasher refuses such a transaction first, so `clearSign` does not reach this.
 
-Text shown to the user, including labels, intents and enum entries, cannot contain a control, format, line-separator or paragraph-separator character. The same characters in a transaction value are shown escaped.
+Text shown to the user, including labels, intents and enum entries, cannot contain:
+
+- a control, format, line-separator or paragraph-separator character;
+- a private-use character;
+- a default-ignorable code point, such as the Hangul fillers U+115F, U+1160, U+3164 and U+FFA0, variation selectors and zero-width characters, which render blank;
+- U+2800, the blank Braille cell;
+- a run of more than two nonspacing or enclosing marks, which would stack over the text around them.
+
+The same characters in a value or name read from the transaction are shown escaped as `\u{...}`. So are unassigned code points, and every mark after the second in a run. Descriptor text does not reject unassigned code points, because which code points are assigned depends on the JavaScript engine's Unicode version. Characters that only look like others, such as a Cyrillic `С` in `USDС`, are not flagged.
+
+### Size limits
+
+The caps guard against abuse. How much of a long text fits on a screen is the wallet's concern. Lengths count Unicode code points, as JSON Schema's `maxLength` does. The schema states each cap, and [src/descriptor.ts](src/descriptor.ts) exports them as `LIMITS`.
+
+| What                                        | Cap             |
+| ------------------------------------------- | --------------- |
+| `label`, `publisher`, `name`, an enum entry | 256 characters  |
+| `intent`, `interpolatedIntent`              | 512 characters  |
+| `$comment`                                  | 4096 characters |
+| `path`                                      | 1024 characters |
+| `fields` of one operation                   | 256             |
+| `exercises`                                 | 256             |
+| enum tables                                 | 256             |
+| entries in one enum table                   | 1024            |
+| `signatures`                                | 16              |
+
+Descriptor text larger than 256 KiB of UTF-8 (`MAX_DESCRIPTOR_BYTES`) is refused before it is parsed. An upload is rejected. In `clearSign`, such a text is ignored, because it is not read far enough to find the template it names.
 
 ### What the parser checks beyond the schema
 
@@ -161,6 +188,8 @@ A descriptor is I-JSON (RFC 7493). [src/strict-json.ts](src/strict-json.ts) reje
 - `hashAlgorithm`, optional. A string. It is not supported. A signature that sets it fails verification. When it is omitted, the signature is over the canonical bytes. Ed25519 hashes internally.
 - `signature`, required. The Ed25519 signature, standard base64 of 64 bytes.
 - `publicKey`, required. The Ed25519 public key, standard base64 of 32 bytes.
+
+Both must be canonical base64, as `decodeBase64` of `@canton-network/core-tx-hashing` accepts it: padded, and with the unused bits of the last character zero. Another encoding of the same bytes does not decode, and the signature is reported as `could not be decoded`.
 
 No other field is allowed. The entries are independent, so their order does not matter. Omitting the array and sending an empty array have the same effect: the descriptor has no signature.
 
@@ -321,7 +350,7 @@ interface OperationDescription {
 }
 ```
 
-`kind`, `template`, `choiceId` and `interface` are read from the transaction. A descriptor does not change which action is reported.
+`kind`, `template`, `choiceId` and `interface` are read from the transaction. A descriptor does not change which action is reported. Their strings, the generic intent built from them, and a `reason` that quotes the transaction are escaped as transaction values are, so a bidirectional or invisible character in a choice or module name is shown as `\u{...}`. The descriptor is bound with the unescaped names.
 
 `template` is present on a create, an exercise, a fetch, and a query-by-key. It is absent on a rollback, on a root id that has no node, and on a node whose type is unset.
 
@@ -373,15 +402,15 @@ The signing provider signs the hash of the prepared-transaction bytes. The sente
 
 The remote gateway's `/approve` page, [wallet-gateway/remote/src/web/frontend/approve/index.ts](../../wallet-gateway/remote/src/web/frontend/approve/index.ts), loads the stored prepared transaction and its stored hash, and the descriptor texts stored for the logged-in user. When the descriptor load throws, the list is empty. The page then calls `clearSign` with the stored bytes, that list, and the stored hash. With an empty list, each create and each exercise comes back `undescribed`.
 
-An upload on `/descriptors` sends the file text unchanged. The gateway keeps it only when the text parses strictly, the document is valid against the schema, and every signature verifies against the public key it contains.
+An upload on `/descriptors` sends the file text unchanged. The gateway keeps it only when the text is within the size cap, parses strictly, the document is valid against the schema, and every signature verifies against the public key it contains. The signatures are checked on the strictly parsed JSON, as `clearSign` checks them. Deleting a stored descriptor reads its template leniently (`readDescriptorTemplate`), so a row that a later version of the parser rejects can still be deleted. Its card shows the parse error and a Delete button.
 
-"What you are signing" renders `operations`. Each operation shows its `intent` and its rows. When `complete` is false, the section warns "Parts of this transaction are not described. Review the transaction JSON before approving." Approval stays available. The same page shows the decoded transaction.
+"What you are signing" renders `operations`. Each operation shows its `intent` and its rows. When `complete` is false, the section warns "Parts of this transaction are not described. Review the transaction JSON before approving." Below the operations is a checkbox, "I have reviewed the raw transaction and want to approve it anyway". Approve is disabled until it is ticked. It is cleared whenever the description changes. The same page shows the decoded transaction.
 
 When `clearSign` throws `HashMismatchError`, or the hasher throws, approval is disabled. The page says "The transaction shown does not match the hash that would be signed. Approval is disabled."
 
-A root whose descriptor is `unverified` or `invalid` keeps the generic sentence. `complete` is false, so the page warns that parts of the transaction are not described. Approval stays available. The untrusted wording is not shown.
+A root whose descriptor is `unverified` or `invalid` keeps the generic sentence. `complete` is false, so the page warns that parts of the transaction are not described, and Approve waits for the checkbox. The untrusted wording is not shown.
 
-When the hash matches and a later read of the transaction throws, approval stays available. The section reports that the transaction could not be described, quotes the error, and tells the user to review the transaction JSON.
+When the hash matches and a later read of the transaction throws, the section reports that the transaction could not be described, quotes the error, and tells the user to review the transaction JSON. Approve waits for the same checkbox.
 
 Approve submits the hash `clearSign` accepted. That is the stored hash.
 
@@ -392,9 +421,11 @@ A preview on the same page is a description of pasted bytes, and approval stays 
 `TransactionService.sign` in `@canton-network/core-wallet-services` loads the stored transaction and recomputes the hash of the stored bytes under the gateway's `hashingScheme.version`. When that setting is omitted, the scheme is V3. Signing is refused in either of these cases:
 
 - The recomputed digest differs from the stored hash. The error is `Prepared transaction hash of transaction '<id>' does not match its content; refusing to sign`.
-- The recomputed digest differs from the hash the page submitted. The error is `The approved hash of transaction '<id>' does not match the transaction; refusing to sign`.
+- The request carries `preparedTransactionHash`, and it is not canonical base64 of the recomputed digest. The error is `The approved hash of transaction '<id>' does not match the transaction; refusing to sign`.
 
-When both digests match, it logs `Transaction signing approved` with the transaction id, the prepared-transaction hash, `approvedBy` set to `user`, the user id, the party id, the signing provider, and the time. It then asks the signing provider to sign the stored bytes and the stored hash.
+`preparedTransactionHash` is optional in the `sign` request, so a client written before it existed still signs, after the first check. Both approval pages send it.
+
+When the checks pass, it logs `Transaction signing approved` with the transaction id, the prepared-transaction hash, `approvedBy` set to `user`, whether the client's hash was checked (`clientHashChecked`), the user id, the party id, the signing provider, and the time. It then asks the signing provider to sign the stored bytes and the stored hash.
 
 ### A service account
 

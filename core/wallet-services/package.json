@@ -15,12 +15,6 @@
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
-        },
-        "./clear-signing": {
-            "types": "./dist/clear-signing/index.d.ts",
-            "import": "./dist/clear-signing/index.js",
-            "require": "./dist/clear-signing/index.cjs",
-            "default": "./dist/clear-signing/index.js"
         }
     },
     "scripts": {

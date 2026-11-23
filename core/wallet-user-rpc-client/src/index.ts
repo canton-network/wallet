@@ -802,7 +802,7 @@ export interface ListWalletsParams {
 export interface SignParams {
     transactionId: TransactionId
     partyId: PartyId
-    preparedTransactionHash: PreparedTransactionHash
+    preparedTransactionHash?: PreparedTransactionHash
 }
 export interface SignMessageParams {
     messageId: MessageId

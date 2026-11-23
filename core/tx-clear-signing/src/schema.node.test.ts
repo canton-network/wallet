@@ -7,7 +7,16 @@ import { describe, expect, it } from 'vitest'
 
 import schema from '../canton-clear-signing-v1.schema.json'
 import ping from '../examples/descriptors/ping.json'
-import { parseDescriptor, parseDescriptorText } from './descriptor.ts'
+import {
+    CREATE_PATH_PATTERN,
+    DISPLAY_TEXT,
+    LIMITS,
+    parseDescriptor,
+    parseDescriptorText,
+    PATH_PATTERN,
+    STABLE_INTENT,
+    TRIMMED_LINE,
+} from './descriptor.ts'
 import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
     SHARED_CONTAINER_FIELDS,
@@ -151,4 +160,92 @@ describe('schema conformance', () => {
             expect(createPath).not.toContain(name)
         }
     })
+
+    it('uses the same text and path patterns as the parser', () => {
+        const s = schema as unknown as SchemaShape
+        expect(s.$definitions.displayText.pattern).toBe(DISPLAY_TEXT.source)
+        expect(s.$definitions.trimmedLine.pattern).toBe(TRIMMED_LINE.source)
+        expect(s.$definitions.stableIntent.pattern).toBe(STABLE_INTENT.source)
+        expect(s.$format.path.pattern).toBe(PATH_PATTERN.source)
+        expect(s.$format.createPath.pattern).toBe(CREATE_PATH_PATTERN.source)
+    })
+
+    it('states the same caps as the parser', () => {
+        const s = schema as unknown as SchemaShape
+        const operation = s.$display.operation.properties
+        expect(s.properties.$comment.maxLength).toBe(LIMITS.comment)
+        expect(s.$metadata.main.properties.publisher.maxLength).toBe(
+            LIMITS.text
+        )
+        expect(s.$metadata.main.properties.name.maxLength).toBe(LIMITS.text)
+        expect(s.$metadata.enums.maxProperties).toBe(LIMITS.enumTables)
+        expect(s.$metadata.enums.additionalProperties.maxProperties).toBe(
+            LIMITS.enumEntries
+        )
+        expect(
+            s.$metadata.enums.additionalProperties.additionalProperties
+                .maxLength
+        ).toBe(LIMITS.text)
+        expect(s.$display.main.properties.exercises.maxItems).toBe(
+            LIMITS.exercises
+        )
+        expect(operation.intent.maxLength).toBe(LIMITS.intent)
+        expect(operation.interpolatedIntent.maxLength).toBe(LIMITS.intent)
+        expect(operation.fields.maxItems).toBe(LIMITS.fieldsPerOperation)
+        expect(s.$format.path.maxLength).toBe(LIMITS.path)
+        expect(s.$format.createPath.maxLength).toBe(LIMITS.path)
+        expect(s.$format.field.properties.label.maxLength).toBe(LIMITS.text)
+        expect(s.$signatures.main.maxItems).toBe(LIMITS.signatures)
+    })
+
+    it('counts code points, as maxLength does', () => {
+        const label = '\u{1F600}'.repeat(LIMITS.text)
+        const json = {
+            ...ping,
+            display: {
+                create: { intent: 'Ping', fields: [{ path: 'id', label }] },
+            },
+        }
+        const { signatures: _signatures, ...unsigned } = json
+        expect(validate(unsigned), JSON.stringify(validate.errors)).toBe(true)
+        expect(() => parseDescriptor(unsigned)).not.toThrow()
+    })
 })
+
+interface Capped {
+    pattern?: string
+    maxLength?: number
+    maxItems?: number
+    maxProperties?: number
+}
+
+interface SchemaShape {
+    properties: { $comment: Capped }
+    $metadata: {
+        main: { properties: { publisher: Capped; name: Capped } }
+        enums: Capped & {
+            additionalProperties: Capped & { additionalProperties: Capped }
+        }
+    }
+    $display: {
+        main: { properties: { exercises: Capped } }
+        operation: {
+            properties: {
+                intent: Capped
+                interpolatedIntent: Capped
+                fields: Capped
+            }
+        }
+    }
+    $format: {
+        path: Capped
+        createPath: Capped
+        field: { properties: { label: Capped } }
+    }
+    $signatures: { main: Capped }
+    $definitions: {
+        displayText: Capped
+        trimmedLine: Capped
+        stableIntent: Capped
+    }
+}

@@ -27,6 +27,26 @@ const NUMBER = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/
  */
 export const MAX_JSON_NESTING_DEPTH = 64
 
+/** The largest descriptor text accepted, in UTF-8 bytes. Longer text is refused before it is parsed. */
+export const MAX_DESCRIPTOR_BYTES = 256 * 1024
+
+/**
+ * Throws when `text` is longer than {@link MAX_DESCRIPTOR_BYTES} in UTF-8. A UTF-16 code unit is at
+ * least one UTF-8 byte, so text with more code units than the cap is refused without encoding it.
+ *
+ * @throws StrictJsonError
+ */
+export function assertDescriptorSize(text: string): void {
+    const tooLong =
+        text.length > MAX_DESCRIPTOR_BYTES ||
+        new TextEncoder().encode(text).length > MAX_DESCRIPTOR_BYTES
+    if (tooLong) {
+        throw new StrictJsonError(
+            `descriptor is larger than ${MAX_DESCRIPTOR_BYTES} bytes`
+        )
+    }
+}
+
 /** Parses `text` as I-JSON. @throws StrictJsonError */
 export function parseJsonStrict(text: string): unknown {
     const parser = new Parser(text)

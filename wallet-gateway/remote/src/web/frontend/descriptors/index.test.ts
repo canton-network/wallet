@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { parseDescriptorText } from '@canton-network/core-tx-clear-signing'
+import {
+    parseDescriptorText,
+    readDescriptorTemplate,
+} from '@canton-network/core-tx-clear-signing'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -129,9 +132,9 @@ describe('descriptors page', () => {
                 }
                 if (method === 'removeClearSigningDescriptor') {
                     stored = stored.filter((item) => {
-                        const template =
-                            parseDescriptorText(item).context.template
+                        const template = readDescriptorTemplate(item)
                         return (
+                            template === undefined ||
                             template.packageId !== params?.packageId ||
                             template.moduleName !== params?.moduleName ||
                             template.entityName !== params?.entityName
@@ -169,6 +172,31 @@ describe('descriptors page', () => {
             () => !el.shadowRoot!.textContent?.includes('Uploaded pong'),
             'descriptor removed'
         )
+    })
+
+    it('deletes a stored descriptor that no longer parses', async () => {
+        // An invisible label, accepted before the parser rejected it.
+        stored = [
+            named(PONG, 'Pong', 'Stale pong', {
+                create: {
+                    intent: 'Create it',
+                    fields: [{ path: 'id', label: '\u3164' }],
+                },
+            }),
+        ]
+        const el = await render()
+        const card = el.shadowRoot!.querySelector('section.descriptor')!
+        expect(card.querySelector('.text-danger')).not.toBeNull()
+
+        const remove = [...card.querySelectorAll('button')].find(
+            (b) => b.textContent?.trim() === 'Delete'
+        )!
+        remove.click()
+        await waitUntil(
+            () => el.shadowRoot!.querySelector('section.descriptor') === null,
+            'stale descriptor removed'
+        )
+        expect(stored).toEqual([])
     })
 
     it('rejects a descriptor whose exercises field is not a list', async () => {

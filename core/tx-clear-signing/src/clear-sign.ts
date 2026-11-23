@@ -45,7 +45,11 @@ import {
     type TemplateRef,
 } from './roots.ts'
 import { verifySignatures } from './signature.ts'
-import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
+import {
+    assertDescriptorSize,
+    parseJsonStrict,
+    StrictJsonError,
+} from './strict-json.ts'
 import { TRUSTED_KEYS } from './trusted-keys.ts'
 
 /** Shown when an interpolated intent cannot be filled from the transaction. */
@@ -184,6 +188,13 @@ async function bindDescriptors(
     for (const text of descriptors) {
         let json: unknown
         try {
+            assertDescriptorSize(text)
+        } catch (err) {
+            if (!(err instanceof StrictJsonError)) throw err
+            // Too large to read even leniently, so it binds to no root and is ignored.
+            continue
+        }
+        try {
             json = parseJsonStrict(text)
         } catch (err) {
             if (!(err instanceof StrictJsonError)) throw err
@@ -236,6 +247,14 @@ async function bind(json: unknown): Promise<Binding> {
     }
 }
 
+/**
+ * The template a descriptor text names, read leniently: it is found even when the text does not
+ * parse strictly or the document is invalid. Undefined when no template can be read.
+ */
+export function readDescriptorTemplate(text: string): TemplateRef | undefined {
+    return readTemplate(lenientJson(text))
+}
+
 /** `context.template`, read leniently, so an invalid descriptor can still be bound and reported. */
 function readTemplate(json: unknown): TemplateRef | undefined {
     const template = (
@@ -263,11 +282,17 @@ function describeNode(
     bindings: Map<string, Binding>,
     metadata: Metadata | undefined
 ): OperationDescription {
+    // `header` binds the descriptor and selects the exercise entry. What is shown is sanitized: the
+    // names come from the transaction.
     const header = nodeHeader(node)
-    const generic = { ...header, intent: genericIntent(node), fields: [] }
+    const generic = {
+        ...shownHeader(header),
+        intent: sanitize(genericIntent(node)),
+        fields: [],
+    }
     if (node.kind === 'other') {
         const reason = `root node '${node.nodeId}' is a '${node.nodeType}' node`
-        return { ...generic, status: 'undescribable', reason }
+        return { ...generic, status: 'undescribable', reason: sanitize(reason) }
     }
     const binding =
         header.template && bindings.get(templateKey(header.template))
@@ -306,7 +331,11 @@ function describeNode(
     }
     const args = argumentsOf(node, contracts, metadata)
     if ('reason' in args) {
-        return { ...described, status: 'undescribable', reason: args.reason }
+        return {
+            ...described,
+            status: 'undescribable',
+            reason: sanitize(args.reason),
+        }
     }
     const enums = descriptor.metadata.enums ?? {}
     return { ...described, ...describeOperation(operation, args, enums) }
@@ -335,6 +364,26 @@ function nodeHeader(node: RootNode): Header {
                 kind: 'other',
                 ...(node.template && { template: node.template }),
             }
+    }
+}
+
+/** The header with each name escaped as `sanitize` escapes a value from the transaction. */
+function shownHeader(header: Header): Header {
+    return {
+        kind: header.kind,
+        ...(header.template && { template: shownTemplate(header.template) }),
+        ...(header.choiceId !== undefined && {
+            choiceId: sanitize(header.choiceId),
+        }),
+        ...(header.interface && { interface: shownTemplate(header.interface) }),
+    }
+}
+
+function shownTemplate(t: TemplateRef): TemplateRef {
+    return {
+        packageId: sanitize(t.packageId),
+        moduleName: sanitize(t.moduleName),
+        entityName: sanitize(t.entityName),
     }
 }
 

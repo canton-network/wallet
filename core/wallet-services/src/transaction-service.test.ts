@@ -336,6 +336,88 @@ describe('TransactionService', () => {
                 expect(signTransaction).not.toHaveBeenCalled()
             })
 
+            it.each([
+                ['not canonical base64', `${'A'.repeat(42)}B=`],
+                ['empty', ''],
+            ])(
+                'refuses to sign when the approved hash is %s',
+                async (_, preparedTransactionHash) => {
+                    const signTransaction = vi.fn()
+                    const service = new TransactionService(
+                        createStore(),
+                        {
+                            [SigningProvider.WALLET_KERNEL]: createDriver({
+                                signTransaction,
+                            }),
+                        },
+                        notifier,
+                        'HASHING_SCHEME_VERSION_V3'
+                    )
+
+                    await expect(
+                        service.sign(authContext, wallet, {
+                            ...signParams,
+                            preparedTransactionHash,
+                        })
+                    ).rejects.toThrow('approved hash')
+                    expect(signTransaction).not.toHaveBeenCalled()
+                }
+            )
+
+            it('signs without an approved hash, after checking the stored hash', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    signature: 'legacy-client-signature',
+                })
+                const service = new TransactionService(
+                    createStore(),
+                    {
+                        [SigningProvider.WALLET_KERNEL]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier,
+                    'HASHING_SCHEME_VERSION_V3'
+                )
+                const { preparedTransactionHash: _omitted, ...legacy } =
+                    signParams
+
+                const result = await service.sign(authContext, wallet, legacy)
+
+                expect(signTransaction).toHaveBeenCalledOnce()
+                expect(result).toMatchObject({
+                    status: 'signed',
+                    signature: 'legacy-client-signature',
+                })
+                recorder.assertLogged({
+                    level: 'info',
+                    message: /Transaction signing approved/,
+                })
+            })
+
+            it('refuses to sign without an approved hash when the stored hash was tampered with', async () => {
+                const signTransaction = vi.fn()
+                const service = createService(
+                    createStore({
+                        ...pendingTransaction,
+                        preparedTransactionHash: btoa('x'.repeat(32)),
+                    }),
+                    {
+                        [SigningProvider.WALLET_KERNEL]: createDriver({
+                            signTransaction,
+                        }),
+                    },
+                    notifier
+                )
+                const { preparedTransactionHash: _omitted, ...legacy } =
+                    signParams
+
+                await expect(
+                    service.sign(authContext, wallet, legacy)
+                ).rejects.toThrow('does not match its content')
+                expect(signTransaction).not.toHaveBeenCalled()
+            })
+
             it('logs the approval before signing', async () => {
                 const signTransaction = vi.fn().mockResolvedValue({
                     status: 'signed',

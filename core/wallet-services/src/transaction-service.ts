@@ -17,7 +17,10 @@ import {
     type Methods as SigningController,
     type SignTransactionParams,
 } from '@canton-network/core-signing-lib'
-import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
+import {
+    computePreparedTransactionHash,
+    decodeBase64,
+} from '@canton-network/core-tx-hashing'
 import {
     type AuthContext,
     AuthTokenProvider,
@@ -49,12 +52,22 @@ import { ledgerPrepareParams, type PrepareParams } from './utils.ts'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
+// Canonical base64 only, so a hash has one accepted encoding.
 function base64Bytes(base64: string): Uint8Array {
-    return Uint8Array.from(atob(base64), (c) => c.charCodeAt(0))
+    return decodeBase64(base64)
 }
 
 function bytesEqual(a: Uint8Array, b: Uint8Array): boolean {
     return a.length === b.length && a.every((byte, i) => byte === b[i])
+}
+
+// False for anything that is not canonical base64 of the same bytes.
+function matchesHash(computed: Uint8Array, base64: string): boolean {
+    try {
+        return bytesEqual(computed, base64Bytes(base64))
+    } catch {
+        return false
+    }
 }
 
 const SUBMIT_OUTCOME_UNKNOWN_ERROR_CODES = [
@@ -86,9 +99,11 @@ export class TransactionService {
     ) {}
 
     /**
-     * Signs a transaction a user approved. `signParams.preparedTransactionHash` is the hash the user's
-     * client computed from the transaction it displayed; signing is refused unless it equals the hash
-     * of the stored transaction, so the user cannot be shown one transaction and sign another.
+     * Signs a transaction a user approved. The stored hash is always recomputed from the stored
+     * transaction first. `signParams.preparedTransactionHash`, when given, is the hash the user's client
+     * computed from the transaction it displayed; signing is then refused unless it equals that hash, so
+     * the user cannot be shown one transaction and sign another. It is optional so that clients written
+     * before it existed keep working.
      */
     public async sign(
         authContext: AuthContext,
@@ -99,17 +114,18 @@ export class TransactionService {
             signParams.transactionId
         )
         const computed = await this.assertHashBinding(tx)
+        const approvedHash = signParams.preparedTransactionHash
         if (
-            !bytesEqual(
-                computed,
-                base64Bytes(signParams.preparedTransactionHash)
-            )
+            approvedHash !== undefined &&
+            !matchesHash(computed, approvedHash)
         ) {
             throw new Error(
                 `The approved hash of transaction '${tx.id}' does not match the transaction; refusing to sign`
             )
         }
-        this.logApproval(tx, authContext, wallet, 'user')
+        this.logApproval(tx, authContext, wallet, 'user', {
+            clientHashChecked: approvedHash !== undefined,
+        })
         return this.signVerified(authContext, wallet, tx)
     }
 
@@ -535,12 +551,14 @@ export class TransactionService {
         tx: Transaction,
         authContext: AuthContext,
         wallet: Wallet,
-        approvedBy: 'user' | 'service account'
+        approvedBy: 'user' | 'service account',
+        detail: { clientHashChecked?: boolean } = {}
     ): void {
         this.logger.info('Transaction signing approved', {
             transactionId: tx.id,
             preparedTransactionHash: tx.preparedTransactionHash,
             approvedBy,
+            ...detail,
             userId: authContext.userId,
             partyId: wallet.partyId,
             signingProvider: wallet.signingProviderId,

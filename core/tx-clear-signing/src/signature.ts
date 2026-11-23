@@ -257,12 +257,17 @@ function trustedName(
     trusted: readonly TrustedKey[],
     publicKey: string
 ): string | undefined {
-    const bytes = fromBase64(publicKey)
+    const bytes = decodeFixed(publicKey, ED25519_PUBLIC_KEY_PATTERN, 32)
+    if (bytes === undefined) return undefined
     for (const key of trusted) {
         if (key.scheme !== SIGNATURE_SCHEME) continue
-        if (!ED25519_PUBLIC_KEY_PATTERN.test(key.publicKey)) continue
-        const candidate = fromBase64(key.publicKey)
-        if (candidate.length !== bytes.length) continue
+        // A trusted entry that is not canonical base64 of 32 bytes matches nothing.
+        const candidate = decodeFixed(
+            key.publicKey,
+            ED25519_PUBLIC_KEY_PATTERN,
+            32
+        )
+        if (candidate === undefined) continue
         let same = true
         for (let i = 0; i < bytes.length; i++) {
             if (candidate[i] !== bytes[i]) same = false

@@ -295,8 +295,23 @@ export class UserUiDescriptors extends BaseElement {
                 error instanceof Error ? error.message : String(error)
             return html`<section class="descriptor">
                 <p class="text-danger mb-0">${message}</p>
+                <details>
+                    <summary class="small">JSON</summary>
+                    <pre class="mb-0">${text}</pre>
+                </details>
+                <div>${this.renderDelete(text)}</div>
             </section>`
         }
+    }
+
+    private renderDelete(text: string) {
+        return html`<button
+            class="btn btn-outline-danger btn-sm rounded-pill"
+            type="button"
+            @click=${() => this.deleteUpload(text)}
+        >
+            Delete
+        </button>`
     }
 
     private renderDescriptor(text: string, descriptor: Descriptor) {
@@ -355,15 +370,7 @@ export class UserUiDescriptors extends BaseElement {
                     <summary class="small">JSON</summary>
                     <pre class="mb-0">${text}</pre>
                 </details>
-                <div>
-                    <button
-                        class="btn btn-outline-danger btn-sm rounded-pill"
-                        type="button"
-                        @click=${() => this.deleteUpload(text)}
-                    >
-                        Delete
-                    </button>
-                </div>
+                <div>${this.renderDelete(text)}</div>
             </section>
         `
     }

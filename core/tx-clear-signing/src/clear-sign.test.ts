@@ -787,6 +787,16 @@ describe('clearSign', () => {
         )
     })
 
+    it('escapes a bidirectional character in a choice name from the transaction', async () => {
+        const RLO = String.fromCodePoint(0x202e)
+        const tx = encode(exercisePing(`Respond${RLO}`))
+        const [op] = (await described(tx, [])).operations
+        expect(op?.status).toBe('undescribed')
+        expect(op?.choiceId).toBe('Respond\\u{202e}')
+        expect(op?.intent).toContain('Respond\\u{202e}')
+        expect(JSON.stringify(op)).not.toContain(RLO)
+    })
+
     it('escapes a bidirectional character in a field error', async () => {
         const RLO = String.fromCodePoint(0x202e)
         const create = decode(builtinPingCreate)

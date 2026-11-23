@@ -5,7 +5,7 @@ import type { Value } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
 
 import type { Field } from './descriptor.ts'
-import { formatValue, FormatError } from './format.ts'
+import { formatValue, FormatError, sanitize } from './format.ts'
 
 const text = (t: string): Value => ({ sum: { oneofKind: 'text', text: t } })
 const int64 = (n: string): Value => ({ sum: { oneofKind: 'int64', int64: n } })
@@ -222,6 +222,110 @@ describe('formatValue', () => {
         }
         expect(formatValue(legs, field('raw'), {})).toBe(
             '[{"transferLegId":"leg-1","side":"SenderSide","otherside":{"owner":"alice::1","provider":null},"amount":"0.3000000000"}]'
+        )
+    })
+
+    it.each([
+        ['9223372036854775807'],
+        ['-9223372036854775808'],
+        ['253402300800000000'],
+        ['-62135596800000001'],
+    ])('fails a timestamp of %s µs outside the Daml range', (micros) => {
+        const v: Value = { sum: { oneofKind: 'timestamp', timestamp: micros } }
+        expect(() => formatValue(v, field('dateTime'), {})).toThrow(FormatError)
+        expect(() => formatValue(v, field('raw'), {})).toThrow(FormatError)
+    })
+
+    it('formats the first and last Daml timestamps', () => {
+        const at = (timestamp: string): Value => ({
+            sum: { oneofKind: 'timestamp', timestamp },
+        })
+        expect(
+            formatValue(at('-62135596800000000'), field('dateTime'), {})
+        ).toBe('0001-01-01T00:00:00Z')
+        expect(
+            formatValue(at('253402300799999999'), field('dateTime'), {})
+        ).toBe('9999-12-31T23:59:59.999999Z')
+    })
+
+    it('fails a date outside the Daml range and formats its bounds', () => {
+        const on = (date: number): Value => ({
+            sum: { oneofKind: 'date', date },
+        })
+        expect(() =>
+            formatValue(on(2147483647), field('dateTime'), {})
+        ).toThrow(FormatError)
+        expect(() => formatValue(on(-719163), field('dateTime'), {})).toThrow(
+            FormatError
+        )
+        expect(formatValue(on(-719162), field('dateTime'), {})).toBe(
+            '0001-01-01'
+        )
+        expect(formatValue(on(2932896), field('dateTime'), {})).toBe(
+            '9999-12-31'
+        )
+    })
+
+    it('shows every entry of a text map with a repeated key', () => {
+        const map: Value = {
+            sum: {
+                oneofKind: 'textMap',
+                textMap: {
+                    entries: [
+                        { key: 'to', value: text('alice') },
+                        { key: 'to', value: text('mallory') },
+                    ],
+                },
+            },
+        }
+        expect(formatValue(map, field('raw'), {})).toBe(
+            '{"to":"alice","to":"mallory"}'
+        )
+    })
+
+    it('shows every field of a record with a repeated or positional label', () => {
+        const record: Value = {
+            sum: {
+                oneofKind: 'record',
+                record: {
+                    fields: [
+                        { label: 'amount', value: int64('1') },
+                        { label: 'amount', value: int64('2') },
+                        { label: '0', value: int64('3') },
+                        { label: '', value: int64('4') },
+                    ],
+                },
+            },
+        }
+        expect(formatValue(record, field('raw'), {})).toBe(
+            '{"amount":"1","amount":"2","0":"3","3":"4"}'
+        )
+    })
+})
+
+describe('sanitize', () => {
+    it.each([
+        ['a Hangul filler', 0x3164],
+        ['a halfwidth Hangul filler', 0xffa0],
+        ['the blank Braille cell', 0x2800],
+        ['a private-use character', 0xe000],
+        ['a variation selector', 0xfe0f],
+        ['an unassigned code point', 0x0378],
+    ])('escapes %s', (_name, code) => {
+        const c = String.fromCodePoint(code)
+        expect(sanitize(`a${c}b`)).toBe(
+            `a\\u{${code.toString(16).padStart(4, '0')}}b`
+        )
+    })
+
+    it('keeps two stacked marks and escapes the rest of the run', () => {
+        const mark = String.fromCodePoint(0x0336)
+        expect(sanitize(`a${mark}${mark}b`)).toBe(`a${mark}${mark}b`)
+        expect(sanitize(`a${mark.repeat(5)}b`)).toBe(
+            `a${mark}${mark}${'\\u{0336}'.repeat(3)}b`
+        )
+        expect(sanitize(`a${mark}${mark}b${mark}${mark}`)).toBe(
+            `a${mark}${mark}b${mark}${mark}`
         )
     })
 })

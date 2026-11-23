@@ -404,7 +404,7 @@ const clearSigning: ClearSigningResult = {
 
 export const ClearSigned: Story = {
     args: { clearSigning },
-    play: async ({ canvasElement }) => {
+    play: async ({ canvasElement, userEvent }) => {
         for (const text of [
             'What you are signing',
             // Text values read from the transaction are quoted, in the intent and in the field
@@ -424,9 +424,7 @@ export const ClearSigned: Story = {
         await expect(
             await findByShadowRole(canvasElement, 'alert')
         ).toHaveTextContent('Parts of this transaction are not described.')
-        await expect(
-            await findByShadowRole(canvasElement, 'button', { name: 'Approve' })
-        ).toBeEnabled()
+        await expectAcknowledgementGatesApprove(canvasElement, userEvent)
     },
 }
 
@@ -479,14 +477,48 @@ export const WithoutClearSigning: Story = {
 
 export const ClearSigningFailed: Story = {
     args: { clearSigningError: "contract '00ab' occurs 2 times" },
-    play: async ({ canvasElement }) => {
+    play: async ({ canvasElement, userEvent }) => {
         await expect(
             await findByShadowRole(canvasElement, 'alert')
         ).toHaveTextContent(
             "This transaction could not be described: contract '00ab' occurs 2 times."
         )
+        await expectAcknowledgementGatesApprove(canvasElement, userEvent)
+    },
+}
+
+export const ClearSignedComplete: Story = {
+    args: {
+        clearSigning: {
+            complete: true,
+            operations: clearSigning.operations.filter(
+                (op) => op.status === 'described'
+            ),
+        },
+    },
+    play: async ({ canvasElement }) => {
+        await expect(
+            queryByShadowRole(canvasElement, 'checkbox')
+        ).not.toBeInTheDocument()
         await expect(
             await findByShadowRole(canvasElement, 'button', { name: 'Approve' })
         ).toBeEnabled()
     },
+}
+
+/** Approve stays disabled until the user confirms they reviewed the raw transaction. */
+async function expectAcknowledgementGatesApprove(
+    canvasElement: HTMLElement,
+    userEvent: { click: (element: Element) => Promise<void> }
+): Promise<void> {
+    const approve = await findByShadowRole(canvasElement, 'button', {
+        name: 'Approve',
+    })
+    await expect(approve).toBeDisabled()
+    await userEvent.click(
+        await findByShadowRole(canvasElement, 'checkbox', {
+            name: 'I have reviewed the raw transaction and want to approve it anyway',
+        })
+    )
+    await waitFor(() => expect(approve).toBeEnabled())
 }

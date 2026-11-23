@@ -26,12 +26,8 @@ export default defineConfig({
     plugins: [standardDecorators(resolve(frontendRoot, '**/*.ts'))],
     resolve: {
         alias: {
-            // Subpath entries must come before a package alias, which would turn
-            // the suffix into a path inside the package directory.
-            '@canton-network/core-wallet-services/clear-signing': resolve(
-                import.meta.dirname,
-                '../../core/wallet-services/dist/clear-signing/index.js'
-            ),
+            // Must come before the package alias below, which would turn
+            // `/logic` into a path inside the package directory
             '@canton-network/core-wallet-ui-components/logic': resolve(
                 import.meta.dirname,
                 '../../core/wallet-ui-components/dist/logic/index.js'

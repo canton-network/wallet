@@ -13,8 +13,13 @@ import {
 } from '@canton-network/core-rpc-errors'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
 import {
-    parseDescriptorText,
+    assertDescriptorSize,
+    DescriptorError,
+    parseDescriptor,
+    parseJsonStrict,
+    StrictJsonError,
     verifySignatures,
+    type Descriptor,
 } from '@canton-network/core-tx-clear-signing'
 import {
     assertConnected,
@@ -1487,15 +1492,24 @@ export const userController = ({
         setClearSigningDescriptor: async (
             params: SetClearSigningDescriptorParams
         ): Promise<SetClearSigningDescriptorResult> => {
-            let parsed
+            // The same steps on the same value as clearSign: the strictly parsed JSON is validated,
+            // and its signatures are checked on that JSON, not on the schema's output.
+            let json: unknown
+            let parsed: Descriptor
             try {
-                parsed = parseDescriptorText(params.descriptor)
+                assertDescriptorSize(params.descriptor)
+                json = parseJsonStrict(params.descriptor)
+                parsed = parseDescriptor(json)
             } catch (error) {
-                const message =
-                    error instanceof Error ? error.message : String(error)
-                throw rpcErrors.invalidParams({ message })
+                if (
+                    !(error instanceof StrictJsonError) &&
+                    !(error instanceof DescriptorError)
+                ) {
+                    throw error
+                }
+                throw rpcErrors.invalidParams({ message: error.message })
             }
-            const verified = await verifySignatures(parsed)
+            const verified = await verifySignatures(json)
             if (!verified.ok) {
                 throw rpcErrors.invalidParams({
                     message: verified.problems.join('; '),

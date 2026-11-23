@@ -3,7 +3,7 @@
 
 import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
-import { html, css, nothing } from 'lit'
+import { html, css, nothing, type PropertyValues } from 'lit'
 
 import './back-link.ts'
 import './copy-button.ts'
@@ -104,6 +104,12 @@ class WgTransactionDetail extends BaseElement {
     @property({ type: Boolean }) accessor disabled = false
 
     @state() private accessor decodedExpanded = false
+
+    /**
+     * Ticked when the user confirms they reviewed a transaction that is not fully described.
+     * Cleared whenever the description changes.
+     */
+    @state() private accessor acknowledged = false
 
     static styles = [
         BaseElement.styles,
@@ -369,8 +375,27 @@ class WgTransactionDetail extends BaseElement {
         `,
     ]
 
+    /**
+     * True for a pending transaction whose description is incomplete or failed. Approve then waits for
+     * the user to confirm they reviewed the raw transaction. Without a description at all (the
+     * extension, a preview) there is nothing to confirm.
+     */
+    private get needsAcknowledgement(): boolean {
+        if (this.status !== 'pending') return false
+        if (this.clearSigningError) return true
+        return this.clearSigning !== null && !this.clearSigning.complete
+    }
+
+    protected willUpdate(changed: PropertyValues<this>): void {
+        super.willUpdate(changed)
+        if (changed.has('clearSigning') || changed.has('clearSigningError')) {
+            this.acknowledged = false
+        }
+    }
+
     private get isApproveDisabled() {
         return (
+            (this.needsAcknowledgement && !this.acknowledged) ||
             this.disabled ||
             this.isApproving ||
             this.isDeleting ||
@@ -459,6 +484,7 @@ class WgTransactionDetail extends BaseElement {
                         ${this.clearSigningError}. Review the transaction JSON
                         before approving.
                     </div>
+                    ${this.renderAcknowledgement()}
                 </section>
             `
         }
@@ -483,8 +509,29 @@ class WgTransactionDetail extends BaseElement {
                           </div>`
                 }
                 ${result.operations.map((op) => this.renderOperation(op))}
+                ${this.renderAcknowledgement()}
             </section>
         `
+    }
+
+    private renderAcknowledgement() {
+        if (!this.needsAcknowledgement) return nothing
+        return html`<div class="form-check acknowledgement">
+            <input
+                class="form-check-input"
+                type="checkbox"
+                id="acknowledge-undescribed"
+                .checked=${this.acknowledged}
+                ?disabled=${this.disabled}
+                @change=${(e: Event) => {
+                    this.acknowledged = (e.target as HTMLInputElement).checked
+                }}
+            />
+            <label class="form-check-label small" for="acknowledge-undescribed">
+                I have reviewed the raw transaction and want to approve it
+                anyway
+            </label>
+        </div>`
     }
 
     private renderOperation(op: OperationDescription) {
