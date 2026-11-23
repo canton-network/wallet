@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// Disabled unused vars rule to allow for future implementations
-/* oxlint-disable no-unused-vars */
 import {
     buildController,
     PartyMode,
@@ -27,7 +25,6 @@ import type {
     SubscribeTransactionsResult,
     SetConfigurationResult,
     Transaction,
-    IdentityClaims,
     ClaimsFor,
 } from '@canton-network/core-signing-lib'
 import _ from 'lodash'
@@ -330,7 +327,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface<'
             //  when the controller is not running in a server context
             // v8 ignore next -- @preserve
             subscribeTransactions: async (
-                params: SubscribeTransactionsParams
+                _params: SubscribeTransactionsParams
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),
         })

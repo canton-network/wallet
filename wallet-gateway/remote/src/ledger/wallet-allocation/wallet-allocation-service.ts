@@ -67,12 +67,23 @@ export class WalletAllocationService {
             return this.createInternalAllocator(signingProviderId)
         }
 
-        switch (signingProviderId) {
-            case SigningProvider.WALLET_KERNEL:
-                return this.kernelAllocator
-            default:
-                return this.createExternalAllocator(signingProviderId)
+        if (signingProviderId === SigningProvider.WALLET_KERNEL) {
+            return this.kernelAllocator
         }
+
+        return this.createExternalAllocator(signingProviderId)
+    }
+
+    private getAllocatorOrThrow(
+        signingProviderId: SigningProvider
+    ): WalletAllocator {
+        const allocator = this.getAllocator(signingProviderId)
+        if (!allocator) {
+            throw new Error(
+                `Signing driver for ${signingProviderId} not available`
+            )
+        }
+        return allocator
     }
 
     constructor(
@@ -126,33 +137,12 @@ export class WalletAllocationService {
         signingProviderId: SigningProvider,
         keyName?: KeyName
     ): Promise<Wallet> {
-        const allocator = this.getAllocator(signingProviderId)
-
-        switch (signingProviderId) {
-            case SigningProvider.WALLET_KERNEL:
-                if (!this.kernelAllocator) {
-                    throw new Error(
-                        'Wallet Gateway signing driver not available'
-                    )
-                }
-                return this.kernelAllocator.createWallet(
-                    authContext,
-                    partyHint,
-                    primary
-                )
-            default:
-                if (!allocator) {
-                    throw new Error(
-                        `Signing driver for ${signingProviderId} not available`
-                    )
-                }
-                return allocator.createWallet(
-                    authContext,
-                    partyHint,
-                    primary,
-                    keyName
-                )
-        }
+        return this.getAllocatorOrThrow(signingProviderId).createWallet(
+            authContext,
+            partyHint,
+            primary,
+            keyName
+        )
     }
 
     public async allocateParty(
@@ -160,44 +150,15 @@ export class WalletAllocationService {
         existingWallet: Wallet,
         signingProviderId: SigningProvider
     ): Promise<void> {
-        const allocator = this.getAllocator(signingProviderId)
-
-        switch (signingProviderId) {
-            case SigningProvider.WALLET_KERNEL:
-                if (!this.kernelAllocator) {
-                    throw new Error(
-                        'Wallet Gateway signing driver not available'
-                    )
-                }
-                return this.kernelAllocator.allocateParty(
-                    authContext,
-                    existingWallet
-                )
-            case SigningProvider.BITGO:
-            case SigningProvider.BLOCKDAEMON:
-            case SigningProvider.DFNS:
-            case SigningProvider.FIREBLOCKS:
-            case SigningProvider.SECUROSYS:
-            default:
-                if (!allocator) {
-                    throw new Error(
-                        `Signing driver for ${signingProviderId} not available`
-                    )
-                }
-                return allocator.allocateParty(authContext, existingWallet)
-        }
+        const allocator = this.getAllocatorOrThrow(signingProviderId)
+        return allocator.allocateParty(authContext, existingWallet)
     }
 
     public async getKeys(
         authContext: AuthContext,
         signingProviderId: SigningProvider
     ) {
-        const allocator = this.getAllocator(signingProviderId)
-        if (!allocator) {
-            throw new Error(
-                `Could not find signing driver for ${signingProviderId}`
-            )
-        }
+        const allocator = this.getAllocatorOrThrow(signingProviderId)
         return allocator.getKeys(authContext)
     }
 }
