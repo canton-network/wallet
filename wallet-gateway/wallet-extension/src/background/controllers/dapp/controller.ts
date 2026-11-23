@@ -73,6 +73,8 @@ export interface DappRequestContext {
     principal: string | undefined
     /** The principal approved `origin`. Always false without one. */
     approved: boolean
+    /** When the request arrived, before the vault restore and the checks. */
+    receivedAt: number
 }
 
 function ledgerClientFor(network: StoreNetwork, accessToken: string) {
@@ -93,7 +95,15 @@ export const dappController = (
         sitePorts,
         isCurrent,
     }: DappControllerDeps,
-    { origin, tab, locked, auth, principal, approved }: DappRequestContext
+    {
+        origin,
+        tab,
+        locked,
+        auth,
+        principal,
+        approved,
+        receivedAt,
+    }: DappRequestContext
 ) => {
     const notConnected = () =>
         disconnectedStatusEvent(locked ? 'Locked' : 'Unauthenticated')
@@ -154,6 +164,7 @@ export const dappController = (
             auth: context,
             origin,
             tab,
+            receivedAt,
         })
 
         async function prepare() {
@@ -239,7 +250,7 @@ export const dappController = (
                 )
             },
             (error: unknown) => {
-                approval.abort(error as Error)
+                approval.abort(error)
                 throw error
             }
         )

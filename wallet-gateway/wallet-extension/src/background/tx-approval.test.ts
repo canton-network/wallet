@@ -8,6 +8,7 @@ import {
     NotificationService,
 } from '@canton-network/core-wallet-services'
 import type { Store, Transaction } from '@canton-network/core-wallet-store'
+import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import {
     afterEach,
     beforeEach,
@@ -121,6 +122,7 @@ describe('createTxApprovals', () => {
             auth: alice,
             origin,
             tab: pageTab,
+            receivedAt: Date.now(),
             ...overrides,
         }
     }
@@ -386,10 +388,11 @@ describe('createTxApprovals', () => {
 
     it('times out from the request, while the transaction is still prepared', async () => {
         vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-        const request = nextRequest()
+        // The checks before `begin` took most of the time.
+        const request = nextRequest({ receivedAt: Date.now() - 600 })
         const approval = approvals.begin(request)
 
-        await vi.advanceTimersByTimeAsync(1000)
+        await vi.advanceTimersByTimeAsync(400)
 
         await expect(approval.outcome).rejects.toMatchObject({
             code: errorCodes.provider.userRejectedRequest,
@@ -482,21 +485,30 @@ describe('createTxApprovals', () => {
         })
     })
 
-    it('ends with 4100 and signs nothing when the session is no longer current', async () => {
-        const { request, outcome } = await prompt()
-        isCurrent.mockResolvedValue(false)
+    it.each([
+        ['approved', true],
+        ['rejected', false],
+    ])(
+        'ends with 4100 and signs nothing when %s after the session ended',
+        async (_, approved) => {
+            const { request, outcome } = await prompt()
+            isCurrent.mockResolvedValue(false)
 
-        await expect(
-            approvals.service.decide(request.transactionId, true)
-        ).rejects.toMatchObject({ code: errorCodes.provider.unauthorized })
+            await expect(
+                approvals.service.decide(request.transactionId, approved)
+            ).rejects.toMatchObject({ code: errorCodes.provider.unauthorized })
 
-        expect(isCurrent).toHaveBeenLastCalledWith(alice.accessToken, sessionId)
-        await expect(outcome).rejects.toMatchObject({
-            code: errorCodes.provider.unauthorized,
-        })
-        expect(sign).not.toHaveBeenCalled()
-        expect(await stored(request.transactionId)).toBeUndefined()
-    })
+            expect(isCurrent).toHaveBeenLastCalledWith(
+                alice.accessToken,
+                sessionId
+            )
+            await expect(outcome).rejects.toMatchObject({
+                code: errorCodes.provider.unauthorized,
+            })
+            expect(sign).not.toHaveBeenCalled()
+            expect(await stored(request.transactionId)).toBeUndefined()
+        }
+    )
 
     it('refuses a second request with the same command ID, even from a page that has gone', async () => {
         const first = await prompt({ commandId: 'command-x' })
@@ -556,5 +568,41 @@ describe('createTxApprovals', () => {
         expect(events).not.toContainEqual(
             expect.objectContaining({ status: 'failed' })
         )
+    })
+
+    it('keeps an orphan that is signed before its deletion runs', async () => {
+        const orphan = nextRequest()
+        await storeTransaction(orphan)
+        const list = StoreInternal.prototype.listAllPendingTransactions
+        const listed = vi
+            .spyOn(StoreInternal.prototype, 'listAllPendingTransactions')
+            .mockImplementation(async function (this: StoreInternal) {
+                const pending = await list.call(this)
+                // Queued before the clean-up's deletion.
+                void store.setTransactionSigned(
+                    orphan.transactionId,
+                    new Date()
+                )
+                return pending
+            })
+
+        unlockListeners.forEach((listener) => listener())
+
+        await vi.waitFor(() => expect(listed).toHaveBeenCalled())
+        // The clean-up's store writes are all microtasks.
+        await new Promise((resolve) => setTimeout(resolve, 0))
+        expect(await stored(orphan.transactionId)).toMatchObject({
+            status: 'signed',
+        })
+    })
+
+    it('rejects with a ledger error that is not an Error', async () => {
+        const request = nextRequest()
+        const approval = approvals.begin(request)
+        const ledgerError = { code: 'INVALID_ARGUMENT', cause: 'bad command' }
+
+        approval.abort(ledgerError)
+
+        await expect(approval.outcome).rejects.toBe(ledgerError)
     })
 })

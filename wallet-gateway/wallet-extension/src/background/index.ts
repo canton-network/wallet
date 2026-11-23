@@ -112,7 +112,7 @@ export function startBackground({
     )
     registerTrustedService(
         USER_RPC_KEY,
-        requireUnlocked(vault, userController(deps))
+        requireUnlocked(vault, userController(deps, txApprovals))
     )
     registerTrustedService(
         TOKEN_RPC_KEY,

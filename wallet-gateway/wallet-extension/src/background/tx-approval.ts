@@ -7,7 +7,7 @@ import {
     type INotificationService,
     LOGOUT_EVENT,
 } from '@canton-network/core-wallet-services'
-import type { Store, Transaction } from '@canton-network/core-wallet-store'
+import type { Transaction } from '@canton-network/core-wallet-store'
 import { browser, type Browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
@@ -24,7 +24,7 @@ import type { TransactionSubmitter } from './controllers/user/transactions.ts'
 import type { TxChangedSite } from './notifications.ts'
 import type { PagePresence, RequestTab } from './page-presence.ts'
 import type { SessionCheck } from './session-check.ts'
-import type { WalletStore } from './store/index.ts'
+import type { ExtensionStore, WalletStore } from './store/index.ts'
 import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
 import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
@@ -46,6 +46,8 @@ export interface TxApprovalRequest {
     auth: AuthContext
     origin: string
     tab: RequestTab | undefined
+    /** When the dApp's request arrived, from which the timeout counts. */
+    receivedAt: number
 }
 
 export interface TxApproval {
@@ -64,7 +66,7 @@ export interface TxApproval {
      */
     prompt(): Promise<void>
     /** The transaction couldn't be prepared or stored. */
-    abort(error: Error): void
+    abort(error: unknown): void
 }
 
 export type TxApprovalDetail = {
@@ -96,6 +98,11 @@ export interface TxApprovals {
      * with the same session and command ID is still in progress.
      */
     begin(request: TxApprovalRequest): TxApproval
+    /**
+     * Whether a prompt is in progress for the transaction, answered or not.
+     * Only its `service.decide` may then sign or delete it.
+     */
+    hasPrompt(transactionId: string): boolean
     service: TxApprovalService
 }
 
@@ -121,7 +128,8 @@ interface Prompt extends TxApprovalRequest {
     state: 'preparing' | 'waiting' | 'deciding'
     outcome: Promise<TxChangedExecutedEvent>
     ended: boolean
-    settle: (result: TxChangedExecutedEvent | Error) => void
+    resolve: (event: TxChangedExecutedEvent) => void
+    reject: (error: unknown) => void
     stop: () => void
     /** The open approval pages, which close when their port disconnects. */
     ports: Set<Browser.runtime.Port>
@@ -191,7 +199,7 @@ export function createTxApprovals({
     // The waiting prompts of each tab, oldest first.
     const byTab = new Map<number, Prompt[]>()
 
-    const storeOf = async (prompt: Prompt): Promise<Store> =>
+    const storeOf = async (prompt: Prompt): Promise<ExtensionStore> =>
         (await getStore()).withAuthContext(prompt.auth)
 
     function showTab(tabId: number): Promise<void> {
@@ -244,10 +252,7 @@ export function createTxApprovals({
     ): Promise<void> {
         try {
             const store = await storeOf(prompt)
-            const transaction = await store.getTransaction(prompt.transactionId)
-            if (transaction?.status === 'pending') {
-                await store.removeTransaction(prompt.transactionId)
-            }
+            await store.removePendingTransaction(prompt.transactionId)
         } catch (cause) {
             if (!(cause instanceof VaultLockedError)) {
                 logger.error('Failed to delete transaction {id}: {cause}', {
@@ -265,7 +270,7 @@ export function createTxApprovals({
      */
     function cancel(prompt: Prompt, error: CodedError): void {
         if (prompt.ended || prompt.state === 'deciding') return
-        prompt.settle(error)
+        prompt.reject(error)
         if (prompt.state !== 'waiting') return
         untrack(prompt)
         for (const port of prompt.ports) port.disconnect()
@@ -292,13 +297,12 @@ export function createTxApprovals({
             const context = await authContext.load()
             if (!context) return
             const store = (await getStore()).withAuthContext(context)
-            for (const transaction of await store.listAllPendingTransactions()) {
-                if (
-                    transaction.status === 'pending' &&
-                    !prompts.has(transaction.id)
-                ) {
-                    await store.removeTransaction(transaction.id)
-                }
+            const orphans = (await store.listAllPendingTransactions()).filter(
+                ({ id, status }) => status === 'pending' && !prompts.has(id)
+            )
+            // A later one may be signed while an earlier one is deleted.
+            for (const { id } of orphans) {
+                if (!prompts.has(id)) await store.removePendingTransaction(id)
             }
         } catch (error) {
             if (error instanceof VaultLockedError) return
@@ -448,7 +452,7 @@ export function createTxApprovals({
     }
 
     function begin(request: TxApprovalRequest): TxApproval {
-        const { transactionId, commandId, sessionId, tab } = request
+        const { transactionId, commandId, sessionId, tab, receivedAt } = request
         // A dApp's `txChanged` listener can't tell two of them apart.
         for (const other of prompts.values()) {
             if (
@@ -463,7 +467,7 @@ export function createTxApprovals({
         if (!tab?.connection?.live) throw pageGone()
 
         let resolve!: (event: TxChangedExecutedEvent) => void
-        let reject!: (error: Error) => void
+        let reject!: (error: unknown) => void
         const outcome = new Promise<TxChangedExecutedEvent>((res, rej) => {
             resolve = res
             reject = rej
@@ -473,7 +477,7 @@ export function createTxApprovals({
         const timer = setTimeout(
             () =>
                 cancel(prompt, rejected('The transaction approval timed out')),
-            timeoutMs
+            Math.max(0, receivedAt + timeoutMs - Date.now())
         )
         // A replaced session logs out with the same token.
         const notifier = notificationService.getNotifier(sessionId)
@@ -489,12 +493,17 @@ export function createTxApprovals({
                 clearTimeout(timer)
                 notifier.removeListener(LOGOUT_EVENT, onLogout)
             },
-            settle: (result) => {
+            resolve: (event) => {
                 if (prompt.ended) return
                 prompt.ended = true
                 prompt.stop()
-                if (result instanceof Error) reject(result)
-                else resolve(result)
+                resolve(event)
+            },
+            reject: (error) => {
+                if (prompt.ended) return
+                prompt.ended = true
+                prompt.stop()
+                reject(error)
             },
             ports: new Set(),
         }
@@ -504,7 +513,7 @@ export function createTxApprovals({
             outcome,
             prompt: () => show(prompt),
             abort(error) {
-                prompt.settle(error)
+                prompt.reject(error)
                 release(prompt)
             },
         }
@@ -512,6 +521,7 @@ export function createTxApprovals({
 
     return {
         begin,
+        hasPrompt: (transactionId) => prompts.has(transactionId),
         service: {
             async get(id) {
                 const prompt = prompts.get(id)
@@ -543,25 +553,29 @@ export function createTxApprovals({
                 prompt.stop()
                 untrack(prompt)
                 try {
-                    let result: TxChangedExecutedEvent | CodedError
                     if (
                         !(await isCurrent(
                             prompt.auth.accessToken,
                             prompt.sessionId
                         ).catch(() => false))
                     ) {
-                        result = sessionEnded()
-                        await discard(prompt, result)
-                    } else if (approved !== true) {
-                        result = rejected('Rejected by the user')
-                        await discard(prompt, result)
-                    } else {
-                        result = await approve(prompt)
+                        const error = sessionEnded()
+                        await discard(prompt, error)
+                        prompt.reject(error)
+                        throw error
                     }
-                    prompt.settle(result)
-                    if (result instanceof Error && approved === true) {
+                    if (approved !== true) {
+                        const error = rejected('Rejected by the user')
+                        await discard(prompt, error)
+                        prompt.reject(error)
+                        return
+                    }
+                    const result = await approve(prompt)
+                    if (result instanceof Error) {
+                        prompt.reject(result)
                         throw result
                     }
+                    prompt.resolve(result)
                 } finally {
                     release(prompt)
                 }

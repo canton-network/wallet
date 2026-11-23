@@ -144,12 +144,20 @@ export function transactionSubmitter({
 
 export type TransactionSubmitter = ReturnType<typeof transactionSubmitter>
 
-export const transactions = ({
-    getStore,
-    authContext,
-    signingDriver,
-    notificationService,
-}: UserControllerDeps): Pick<
+/** The dApp transactions that wait for, or have, the user's answer. */
+export interface TxPrompts {
+    hasPrompt(transactionId: string): boolean
+}
+
+export const transactions = (
+    {
+        getStore,
+        authContext,
+        signingDriver,
+        notificationService,
+    }: UserControllerDeps,
+    txPrompts: TxPrompts
+): Pick<
     Methods,
     | 'sign'
     | 'execute'
@@ -163,14 +171,25 @@ export const transactions = ({
         notificationService,
     })
 
+    // Only the approval prompt may settle it, so the dApp gets one outcome.
+    function refusePrompted(transactionId: string): void {
+        if (txPrompts.hasPrompt(transactionId)) {
+            throw new Error(
+                `Transaction ${transactionId} is waiting for its approval prompt`
+            )
+        }
+    }
+
     return {
         sign: async (signParams: SignParams) => {
+            refusePrompted(signParams.transactionId)
             const context = assertConnected(await authContext.load())
             const store = await getStore()
             const session = await requireSession(store, context.accessToken)
             return submitter.sign(store, context, session.id, signParams)
         },
         execute: async (executeParams: ExecuteParams) => {
+            refusePrompted(executeParams.transactionId)
             const context = assertConnected(await authContext.load())
             const store = await getStore()
             const session = await requireSession(store, context.accessToken)
@@ -219,6 +238,7 @@ export const transactions = ({
         deleteTransaction: async (
             params: DeleteTransactionParams
         ): Promise<null> => {
+            refusePrompted(params.transactionId)
             const connectedContext = assertConnected(await authContext.load())
             const store = await getStore()
             const transaction = await store.getTransaction(params.transactionId)

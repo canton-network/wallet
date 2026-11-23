@@ -134,6 +134,7 @@ describe('createDappDispatcher', () => {
     })
 
     afterEach(() => {
+        vi.useRealTimers()
         vi.restoreAllMocks()
     })
 
@@ -659,6 +660,7 @@ describe('createDappDispatcher', () => {
                     auth: authContext,
                     origin,
                     tab,
+                    receivedAt: expect.any(Number),
                 })
                 const [{ transactionId }] =
                     deps.txApprovals.begin.mock.calls[0]!
@@ -671,6 +673,32 @@ describe('createDappDispatcher', () => {
                     }
                 )
                 expect(started.prompt).toHaveBeenCalled()
+            })
+
+            it('counts the approval time from the request, before the vault has restored', async () => {
+                vi.useFakeTimers({ toFake: ['Date'] })
+                let restored!: () => void
+                const vault = {
+                    ready: new Promise<void>((resolve) => (restored = resolve)),
+                    status: () => 'unlocked' as const,
+                }
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(new Promise(() => {}))
+                )
+                const arrived = Date.now()
+
+                const response = createDappDispatcher(
+                    deps,
+                    vault,
+                    authContextStore
+                ).request(request('prepareExecute', params), origin, tab)
+                vi.setSystemTime(arrived + 60_000)
+                restored()
+                await response
+
+                expect(deps.txApprovals.begin).toHaveBeenCalledWith(
+                    expect.objectContaining({ receivedAt: arrived })
+                )
             })
 
             it('ends the prompt when the transaction cannot be prepared', async () => {
