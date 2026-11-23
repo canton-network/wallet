@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect, useState } from 'react'
 import * as sdk from '@canton-network/dapp-sdk'
+import { useEffect, useState } from 'react'
 
 /** Connects to the wallet gateway and tracks the live connection/account state. */
 export function useConnect() {
@@ -44,15 +44,19 @@ export function useConnect() {
     }, [])
 
     useEffect(() => {
+        if (!connected) return
+
         const onStatusChanged = (status: sdk.dappAPI.StatusEvent) => {
             setConnectResult(status.connection)
             setSessionToken(status.session?.accessToken)
         }
-        sdk.onStatusChanged(onStatusChanged)
+        void sdk.onStatusChanged(onStatusChanged).catch((error: unknown) => {
+            console.error('Failed to subscribe to wallet status changes', error)
+        })
         return () => {
             void sdk.removeOnStatusChanged(onStatusChanged)
         }
-    }, [])
+    }, [connected])
 
     useEffect(() => {
         if (!connected) return
