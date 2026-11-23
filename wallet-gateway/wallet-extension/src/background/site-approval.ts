@@ -4,11 +4,14 @@
 import { providerErrors } from '@canton-network/core-rpc-errors'
 import { jwtExpired } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
-import { browser } from 'wxt/browser'
+import { browser, type Browser } from 'wxt/browser'
+
+import { siteApprovalPortId } from '@/shared/ports.ts'
 
 import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
 import { openWalletUi } from './open-ui.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
+import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
 
 /**
@@ -37,8 +40,9 @@ export interface SiteApprovals {
     /**
      * Opens the approval page for the origin and resolves once the user has
      * approved it. Rejects with error 4001 when the user rejects, closes the
-     * page or doesn't answer in time, and with 4100 when the session isn't
-     * current (expired, signed out, another account) or the vault locks.
+     * page (its port disconnects) or doesn't answer in time, and with 4100
+     * when the session isn't current (expired, signed out, another account)
+     * or the vault locks.
      * Calls for a principal and origin that is already pending share its
      * answer.
      */
@@ -76,7 +80,8 @@ interface PendingApproval extends SiteApprovalRequest {
     key: string
     promise: Promise<void>
     settle: (error?: Error) => void
-    windowId?: number | undefined
+    /** The approval pages that hold a port open for this request. */
+    ports: Set<Browser.runtime.Port>
     /** Set when the session changed while the user's approval was being saved. */
     stale?: boolean
 }
@@ -86,7 +91,7 @@ export interface SiteApprovalsOptions {
     authContext: AuthContextChanges
     isCurrent: SessionCheck
     sites: ApprovedSiteStore
-    open?: (path: string) => Promise<number | undefined>
+    open?: (path: string) => Promise<void>
     timeoutMs?: number
 }
 
@@ -98,17 +103,24 @@ export const sessionEnded = () =>
         message: 'The session that asked for the site approval has ended',
     })
 
+const openInToolbarPopup = (path: string) =>
+    openWalletUi(path, { toolbarPopup: true })
+
 /**
  * Keeps the pending site approvals in memory. A service worker restart drops
  * them, along with the dApp requests that wait for them. Must be created
- * synchronously during background start-up, as it adds a window listener.
+ * synchronously during background start-up, as it adds a port listener.
+ *
+ * The approval page holds a port open for its request. The background can't
+ * close the toolbar popup by window ID, so it disconnects the port and the
+ * page closes itself; the popup window fallback works the same way.
  */
 export function createSiteApprovals({
     vault,
     authContext,
     isCurrent,
     sites,
-    open = openWalletUi,
+    open = openInToolbarPopup,
     timeoutMs = SITE_APPROVAL_TIMEOUT_MS,
 }: SiteApprovalsOptions): SiteApprovals {
     const byKey = new Map<string, PendingApproval>()
@@ -116,11 +128,9 @@ export function createSiteApprovals({
     // Answered with an approval that is still being saved.
     const saving = new Set<PendingApproval>()
 
-    function closeWindow(pending: PendingApproval): void {
-        if (pending.windowId === undefined) return
-        browser.windows.remove(pending.windowId).catch(() => {
-            // Already closed.
-        })
+    function closePages(pending: PendingApproval): void {
+        for (const port of pending.ports) port.disconnect()
+        pending.ports.clear()
     }
 
     function claim(pending: PendingApproval): boolean {
@@ -134,7 +144,7 @@ export function createSiteApprovals({
     function finish(pending: PendingApproval, error: Error): void {
         if (!claim(pending)) return
         pending.settle(error)
-        closeWindow(pending)
+        closePages(pending)
     }
 
     vault.onLock(() => {
@@ -161,12 +171,27 @@ export function createSiteApprovals({
         }
     })
 
-    browser.windows.onRemoved.addListener((windowId) => {
-        for (const pending of byId.values()) {
-            if (pending.windowId === windowId) {
-                finish(pending, rejected('The user closed the approval page'))
-            }
+    browser.runtime.onConnect.addListener((port) => {
+        const id = siteApprovalPortId(port.name)
+        if (id === undefined) return
+        // A content script could otherwise cancel a prompt.
+        if (port.sender === undefined || !isTrustedSender(port.sender)) {
+            port.disconnect()
+            return
         }
+        const pending = byId.get(id)
+        if (!pending) {
+            // Settled or cancelled while the page was opening.
+            port.disconnect()
+            return
+        }
+        pending.ports.add(port)
+        // After an answer the request is no longer in `byId`, so `finish`
+        // leaves an approval that is being saved alone.
+        port.onDisconnect.addListener(() => {
+            pending.ports.delete(port)
+            finish(pending, rejected('The user closed the approval page'))
+        })
     })
 
     async function undo(pending: PendingApproval): Promise<void> {
@@ -200,18 +225,12 @@ export function createSiteApprovals({
                 if (error) reject(error)
                 else resolve()
             },
+            ports: new Set(),
         }
         byKey.set(key, pending)
         byId.set(pending.id, pending)
 
-        open(`/approve-site?id=${encodeURIComponent(pending.id)}`).then(
-            (windowId) => {
-                pending.windowId = windowId
-                // Cancelled while the page was opening.
-                if (!byId.has(pending.id) && !saving.has(pending)) {
-                    closeWindow(pending)
-                }
-            },
+        open(`/approve-site?id=${encodeURIComponent(pending.id)}`).catch(
             (error: unknown) =>
                 finish(
                     pending,

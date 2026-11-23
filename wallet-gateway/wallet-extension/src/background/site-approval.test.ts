@@ -12,10 +12,13 @@ import {
     type Mock,
     vi,
 } from 'vitest'
+import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+import { asPort, fakePort } from '@/__tests__/fake-port.ts'
 import { inAnHour, jwt } from '@/__tests__/jwt.ts'
+import { siteApprovalPortName } from '@/shared/ports.ts'
 
 import {
     createSiteApprovals,
@@ -27,7 +30,6 @@ import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 
 const origin = 'https://dapp.example'
-const windowId = 42
 const alice = { principal: 'alice', origin, accessToken: 'token-a' }
 
 describe('createSiteApprovals', () => {
@@ -37,7 +39,8 @@ describe('createSiteApprovals', () => {
         [K in keyof ApprovedSiteStore]: Mock<ApprovedSiteStore[K]>
     }
     let isCurrent: Mock<SessionCheck>
-    let open: Mock<(path: string) => Promise<number>>
+    let open: Mock<(path: string) => Promise<void>>
+    let connectListeners: ((port: Browser.runtime.Port) => void)[]
     let approvals: SiteApprovals
 
     /** The request ID from the path of the page that was opened last. */
@@ -48,6 +51,16 @@ describe('createSiteApprovals', () => {
     }
     const signIn = (context?: AuthContext) =>
         authListeners.forEach((listener) => listener(context))
+    /** Opens the request's port, from the approval page by default. */
+    const connectPage = (
+        id: string,
+        url = fakeBrowser.runtime.getURL(`/popup.html#/approve-site?id=${id}`)
+    ) => {
+        const port = fakePort(origin, siteApprovalPortName(id))
+        port.sender = { id: fakeBrowser.runtime.id, url }
+        connectListeners.forEach((listener) => listener(asPort(port)))
+        return port
+    }
 
     beforeEach(() => {
         fakeBrowser.reset()
@@ -69,7 +82,13 @@ describe('createSiteApprovals', () => {
             }),
         }
         isCurrent = vi.fn(async () => true)
-        open = vi.fn(async () => windowId)
+        open = vi.fn(async () => {})
+        connectListeners = []
+        // The fake browser doesn't implement runtime.onConnect.
+        vi.spyOn(
+            fakeBrowser.runtime.onConnect,
+            'addListener'
+        ).mockImplementation((listener) => void connectListeners.push(listener))
         approvals = createSiteApprovals({
             vault: { onLock: (listener) => void lockListeners.push(listener) },
             authContext: {
@@ -86,6 +105,7 @@ describe('createSiteApprovals', () => {
         // Settles anything still pending, which clears its timer.
         lockListeners.forEach((listener) => listener())
         vi.useRealTimers()
+        vi.restoreAllMocks()
     })
 
     it('stores the approval and resolves every waiting request', async () => {
@@ -137,15 +157,49 @@ describe('createSiteApprovals', () => {
 
     it('rejects with 4001 when the user closes the page', async () => {
         const request = approvals.request(alice)
-        await openedId()
-        // Let `open` resolve to the window's ID.
-        await Promise.resolve()
+        const port = connectPage(await openedId())
 
-        await fakeBrowser.windows.onRemoved.trigger(windowId)
+        port.remoteDisconnect()
 
         await expect(request).rejects.toMatchObject({
             code: errorCodes.provider.userRejectedRequest,
+            message: 'The user closed the approval page',
         })
+    })
+
+    it('refuses a port from a content script', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
+
+        const port = connectPage(id, `${origin}/`)
+        port.remoteDisconnect()
+
+        expect(port.disconnect).toHaveBeenCalled()
+        await expect(approvals.service.get(id)).resolves.toEqual({ origin })
+        await approvals.service.decide(id, true)
+        await expect(request).resolves.toBeUndefined()
+    })
+
+    it('keeps an approval that is being saved when the page closes', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
+        const port = connectPage(id)
+        const approve = sites.approve.getMockImplementation()!
+        let saved!: () => void
+        sites.approve.mockImplementationOnce(async (owner, site) => {
+            await new Promise<void>((resolve) => (saved = resolve))
+            await approve(owner, site)
+        })
+
+        const decided = approvals.service.decide(id, true)
+        await vi.waitFor(() => expect(saved).toBeDefined())
+        port.remoteDisconnect()
+        saved()
+
+        await expect(decided).resolves.toBeUndefined()
+        await expect(request).resolves.toBeUndefined()
+        expect(await sites.isApproved('alice', origin)).toBe(true)
+        expect(sites.revoke).not.toHaveBeenCalled()
     })
 
     it('rejects with 4100 when the vault locks', async () => {
@@ -266,43 +320,38 @@ describe('createSiteApprovals', () => {
     })
 
     it('closes the approval page when the prompt is cancelled', async () => {
-        const remove = vi
-            .spyOn(fakeBrowser.windows, 'remove')
-            .mockResolvedValue(undefined)
         const request = approvals.request(alice).catch(() => {})
-        await openedId()
-        // Let `open` resolve to the window's ID.
-        await Promise.resolve()
+        const port = connectPage(await openedId())
 
         signIn(undefined)
         await request
 
-        expect(remove).toHaveBeenCalledWith(windowId)
+        expect(port.disconnect).toHaveBeenCalled()
     })
 
-    it('closes a page that opens after its prompt was cancelled', async () => {
-        const remove = vi
-            .spyOn(fakeBrowser.windows, 'remove')
-            .mockResolvedValue(undefined)
-        let opened!: (id: number) => void
-        open.mockImplementationOnce(
-            () => new Promise((resolve) => (opened = resolve))
-        )
+    it('closes a page that connects after its prompt was cancelled', async () => {
         const request = approvals.request(alice).catch(() => {})
-        await openedId()
+        const id = await openedId()
 
         signIn(undefined)
         await request
-        expect(remove).not.toHaveBeenCalled()
-        opened(windowId)
+        const port = connectPage(id)
 
-        await vi.waitFor(() => expect(remove).toHaveBeenCalledWith(windowId))
+        expect(port.disconnect).toHaveBeenCalled()
     })
 })
 
 describe('currentSessionCheck', () => {
     beforeEach(() => {
         fakeBrowser.reset()
+        vi.spyOn(
+            fakeBrowser.runtime.onConnect,
+            'addListener'
+        ).mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+        vi.restoreAllMocks()
     })
 
     async function signedIn(accessToken: string) {
@@ -341,7 +390,7 @@ describe('currentSessionCheck', () => {
     it('gives an expired session no prompt and no grant', async () => {
         const token = jwt({ iss: 'idp', sub: 'alice', exp: 1 })
         const approve = vi.fn<ApprovedSiteStore['approve']>()
-        const open = vi.fn(async () => windowId)
+        const open = vi.fn(async () => {})
         const approvals = createSiteApprovals({
             vault: { onLock: () => {} },
             authContext: { onChange: () => {} },
