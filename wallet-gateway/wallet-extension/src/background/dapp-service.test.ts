@@ -6,10 +6,12 @@ import type { JsonRpcRequest } from '@canton-network/core-types'
 import { createProxyService } from '@webext-core/proxy-service'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { sendMessagesFrom } from '@/__tests__/message-sender'
-import { DAPP_RPC_KEY } from '@/shared/service-keys'
-import type { DappDispatcher } from './controllers/dapp/dispatch'
-import { registerDappService, senderOrigin } from './dapp-service'
+
+import { sendMessagesFrom } from '@/__tests__/message-sender.ts'
+import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
+
+import type { DappDispatcher } from './controllers/dapp/dispatch.ts'
+import { registerDappService, senderOrigin } from './dapp-service.ts'
 
 describe('senderOrigin', () => {
     it.each([

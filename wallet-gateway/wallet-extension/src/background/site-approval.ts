@@ -5,10 +5,11 @@ import { providerErrors } from '@canton-network/core-rpc-errors'
 import { jwtExpired } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import { browser } from 'wxt/browser'
-import type { AuthContextChanges, AuthContextStore } from './auth-context'
-import { openWalletUi } from './open-ui'
-import type { ApprovedSiteStore } from './store/approved-sites'
-import { type Vault, VaultLockedError } from './vault'
+
+import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
+import { openWalletUi } from './open-ui.ts'
+import type { ApprovedSiteStore } from './store/approved-sites.ts'
+import { type Vault, VaultLockedError } from './vault/index.ts'
 
 /**
  * How long `connect` waits for the user. Chrome stops a service worker whose

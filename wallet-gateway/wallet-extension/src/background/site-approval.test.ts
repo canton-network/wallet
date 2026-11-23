@@ -13,16 +13,18 @@ import {
     vi,
 } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { inAnHour, jwt } from '@/__tests__/jwt'
+
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+import { inAnHour, jwt } from '@/__tests__/jwt.ts'
+
 import {
     createSiteApprovals,
     currentSessionCheck,
     type SessionCheck,
     type SiteApprovals,
-} from './site-approval'
-import type { ApprovedSiteStore } from './store/approved-sites'
-import { createTestWalletStore } from './store/test-store'
+} from './site-approval.ts'
+import type { ApprovedSiteStore } from './store/approved-sites.ts'
+import { createTestWalletStore } from './store/test-store.ts'
 
 const origin = 'https://dapp.example'
 const windowId = 42
