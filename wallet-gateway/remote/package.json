@@ -101,6 +101,12 @@
                     "build"
                 ]
             },
+            "test": {
+                "inputs": [
+                    "...",
+                    "{workspaceRoot}/wallet-gateway/test/config.json"
+                ]
+            },
             "typecheck": {
                 "options": {
                     "command": "tsc --noEmit && tsc -p tsconfig.frontend.json --noEmit"

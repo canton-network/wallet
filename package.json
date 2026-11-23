@@ -4,6 +4,7 @@
     "type": "module",
     "scripts": {
         "start:all": "pnpm exec pm2 start ecosystem.config.js --env development",
+        "start:e2e": "pnpm exec pm2 start ecosystem.ci.config.js",
         "start:canton": "tsx ./scripts/src/start-canton.ts",
         "start:canton:tls": "tsx ./scripts/src/start-canton.ts --network=mainnet --tls=true",
         "start:localnet": "tsx ./scripts/src/start-localnet.ts start",
