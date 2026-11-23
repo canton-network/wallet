@@ -26,6 +26,7 @@
         "@canton-network/core-token-standard-service": "workspace:",
         "@canton-network/core-token-standard-v2": "workspace:",
         "@canton-network/core-tx-parser": "workspace:",
+        "@canton-network/core-tx-visualizer": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/core-wallet-services": "workspace:",

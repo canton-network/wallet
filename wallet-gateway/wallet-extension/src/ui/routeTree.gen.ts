@@ -17,6 +17,7 @@ import { Route as UnlockedConnectedRouteImport } from './routes/_unlocked/_conne
 import { Route as UnlockedApproveSiteRouteImport } from './routes/_unlocked/approve-site'
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as OnboardingPasswordRouteImport } from './routes/onboarding/password'
+import { Route as UnlockedConnectedApproveTransactionRouteImport } from './routes/_unlocked/_connected/approve-transaction'
 import { Route as UnlockedConnectIndexRouteImport } from './routes/_unlocked/connect/index'
 import { Route as UnlockedConnectedAssetsIndexRouteImport } from './routes/_unlocked/_connected/assets/index'
 import { Route as UnlockedConnectedPartiesIndexRouteImport } from './routes/_unlocked/_connected/parties/index'
@@ -60,6 +61,12 @@ const OnboardingPasswordRoute = OnboardingPasswordRouteImport.update({
   path: '/password',
   getParentRoute: () => OnboardingRoute,
 } as any)
+const UnlockedConnectedApproveTransactionRoute =
+  UnlockedConnectedApproveTransactionRouteImport.update({
+    id: '/approve-transaction',
+    path: '/approve-transaction',
+    getParentRoute: () => UnlockedConnectedRoute,
+  } as any)
 const UnlockedConnectIndexRoute = UnlockedConnectIndexRouteImport.update({
   id: '/connect/',
   path: '/connect/',
@@ -91,6 +98,7 @@ export interface FileRoutesByFullPath {
   '/approve-site': typeof UnlockedApproveSiteRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/approve-transaction': typeof UnlockedConnectedApproveTransactionRoute
   '/connect/': typeof UnlockedConnectIndexRoute
   '/parties/add': typeof UnlockedConnectedPartiesAddRoute
   '/assets/': typeof UnlockedConnectedAssetsIndexRoute
@@ -102,6 +110,7 @@ export interface FileRoutesByTo {
   '/approve-site': typeof UnlockedApproveSiteRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding': typeof OnboardingIndexRoute
+  '/approve-transaction': typeof UnlockedConnectedApproveTransactionRoute
   '/connect': typeof UnlockedConnectIndexRoute
   '/parties/add': typeof UnlockedConnectedPartiesAddRoute
   '/assets': typeof UnlockedConnectedAssetsIndexRoute
@@ -117,6 +126,7 @@ export interface FileRoutesById {
   '/_unlocked/approve-site': typeof UnlockedApproveSiteRoute
   '/onboarding/password': typeof OnboardingPasswordRoute
   '/onboarding/': typeof OnboardingIndexRoute
+  '/_unlocked/_connected/approve-transaction': typeof UnlockedConnectedApproveTransactionRoute
   '/_unlocked/connect/': typeof UnlockedConnectIndexRoute
   '/_unlocked/_connected/parties/add': typeof UnlockedConnectedPartiesAddRoute
   '/_unlocked/_connected/assets/': typeof UnlockedConnectedAssetsIndexRoute
@@ -131,6 +141,7 @@ export interface FileRouteTypes {
     | '/approve-site'
     | '/onboarding/password'
     | '/onboarding/'
+    | '/approve-transaction'
     | '/connect/'
     | '/parties/add'
     | '/assets/'
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/approve-site'
     | '/onboarding/password'
     | '/onboarding'
+    | '/approve-transaction'
     | '/connect'
     | '/parties/add'
     | '/assets'
@@ -156,6 +168,7 @@ export interface FileRouteTypes {
     | '/_unlocked/approve-site'
     | '/onboarding/password'
     | '/onboarding/'
+    | '/_unlocked/_connected/approve-transaction'
     | '/_unlocked/connect/'
     | '/_unlocked/_connected/parties/add'
     | '/_unlocked/_connected/assets/'
@@ -227,6 +240,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OnboardingPasswordRouteImport
       parentRoute: typeof OnboardingRoute
     }
+    '/_unlocked/_connected/approve-transaction': {
+      id: '/_unlocked/_connected/approve-transaction'
+      path: '/approve-transaction'
+      fullPath: '/approve-transaction'
+      preLoaderRoute: typeof UnlockedConnectedApproveTransactionRouteImport
+      parentRoute: typeof UnlockedConnectedRoute
+    }
     '/_unlocked/connect/': {
       id: '/_unlocked/connect/'
       path: '/connect'
@@ -259,12 +279,15 @@ declare module '@tanstack/react-router' {
 }
 
 interface UnlockedConnectedRouteChildren {
+  UnlockedConnectedApproveTransactionRoute: typeof UnlockedConnectedApproveTransactionRoute
   UnlockedConnectedPartiesAddRoute: typeof UnlockedConnectedPartiesAddRoute
   UnlockedConnectedAssetsIndexRoute: typeof UnlockedConnectedAssetsIndexRoute
   UnlockedConnectedPartiesIndexRoute: typeof UnlockedConnectedPartiesIndexRoute
 }
 
 const UnlockedConnectedRouteChildren: UnlockedConnectedRouteChildren = {
+  UnlockedConnectedApproveTransactionRoute:
+    UnlockedConnectedApproveTransactionRoute,
   UnlockedConnectedPartiesAddRoute: UnlockedConnectedPartiesAddRoute,
   UnlockedConnectedAssetsIndexRoute: UnlockedConnectedAssetsIndexRoute,
   UnlockedConnectedPartiesIndexRoute: UnlockedConnectedPartiesIndexRoute,
