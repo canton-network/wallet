@@ -18,9 +18,9 @@ import {
     type TrafficPurchaser_PurchaseCredits,
     type TrafficPurchaserWithDisclosures,
 } from '@canton-network/core-traffic-purchase'
-import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { Numeric, PartyId } from '@canton-network/core-types'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import { Decimal } from 'decimal.js'
 import { z } from 'zod'
 

@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import createClient, { type Client } from 'openapi-fetch'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import { getLogger } from '@logtape/logtape'
+import createClient, { type Client } from 'openapi-fetch'
 
 import type {
     components,
     paths,
-} from './generated-clients/traffic-purchase-v1/traffic-purchase-v1.js'
+} from './generated-clients/traffic-purchase-v1/traffic-purchase-v1.ts'
 
 /** The paymaster's purchaser contract, with the disclosures a purchase needs. */
 export type TrafficPurchaserWithDisclosures =
