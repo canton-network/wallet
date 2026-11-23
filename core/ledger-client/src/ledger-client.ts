@@ -191,7 +191,6 @@ export class LedgerClient {
 
     public async init() {
         if (!this.initialized) {
-            //TODO: parse error response and escalate
             const versionFromClient =
                 await this.currentClient.GET('/v2/version')
 
@@ -199,6 +198,13 @@ export class LedgerClient {
                 data: versionFromClient.data,
                 status: versionFromClient.response.status,
             })
+
+            if (!versionFromClient.response.ok) {
+                throw new Error(
+                    `GET /v2/version failed with HTTP ${versionFromClient.response.status}`,
+                    { cause: versionFromClient.error }
+                )
+            }
 
             this.clientVersion = this.parseSupportedVersions(
                 versionFromClient.data?.version

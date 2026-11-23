@@ -70,6 +70,27 @@ describe('LedgerClient', () => {
             expect(client.getCurrentClientVersion()).toBe('3.6')
             expect(fetchMock).toHaveBeenCalledTimes(2)
         })
+
+        it('reports the HTTP status of a failed version request', async () => {
+            fetchMock.mockResolvedValueOnce(
+                new Response('upstream unavailable', { status: 503 })
+            )
+
+            await expect(createLedgerClient().init()).rejects.toThrow(
+                expect.objectContaining({
+                    message: 'GET /v2/version failed with HTTP 503',
+                    cause: 'upstream unavailable',
+                })
+            )
+        })
+
+        it('reports a successful response without a version', async () => {
+            fetchMock.mockResolvedValueOnce(jsonResponse({}))
+
+            await expect(createLedgerClient().init()).rejects.toThrow(
+                'Client version missing from response'
+            )
+        })
     })
 
     describe('HTTP helpers', () => {
