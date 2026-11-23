@@ -1,19 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-export type { ListHoldingsParams, TokenClient } from './client'
-export { TokenProvider, type TokenProviderProps } from './TokenProvider'
-export type { TokenContextValue } from './TokenContext'
-export { useTokenContext } from './useTokenContext'
-export { tokenQueryKeys } from './query-keys'
-export { holdingsQueryOptions } from './query-options'
+export type { ListHoldingsParams, TokenClient } from './client.ts'
+export { TokenProvider, type TokenProviderProps } from './TokenProvider.tsx'
+export type { TokenContextValue } from './TokenContext.ts'
+export { useTokenContext } from './useTokenContext.ts'
+export { tokenQueryKeys } from './query-keys.ts'
+export { holdingsQueryOptions } from './query-options.ts'
 export {
     basicAccount,
     isBasicAccount,
     mergeHoldings,
     toOwnedHoldings,
     type PortfolioHolding,
-} from './holdings'
+} from './holdings.ts'
 export {
     aggregateHoldings,
     enrichWithInstrumentInfo,
@@ -23,17 +23,17 @@ export {
     type AggregatedHolding,
     type TokenInstrument,
     type TokenInstruments,
-} from './aggregate-holdings'
+} from './aggregate-holdings.ts'
 export {
     useWalletHoldings,
     type WalletHoldingsResult,
-} from './useWalletHoldings'
-export { useAggregatedHoldings } from './useAggregatedHoldings'
+} from './useWalletHoldings.ts'
+export { useAggregatedHoldings } from './useAggregatedHoldings.ts'
 export {
     useAllAccountAssets,
     type PortfolioAssetView,
     type PortfolioAssetWalletBalanceView,
     type PortfolioAssetsResult,
     type TokenWallet,
-} from './useAllAccountAssets'
-export { useInstrumentAvailableBalance } from './useInstrumentAvailableBalance'
+} from './useAllAccountAssets.ts'
+export { useInstrumentAvailableBalance } from './useInstrumentAvailableBalance.ts'

@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { alice, amulet, bob, holding, lockUntil } from './__tests__/fixtures'
+
+import { alice, amulet, bob, holding, lockUntil } from './__tests__/fixtures.ts'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     getInstrumentKey,
     type TokenInstruments,
-} from './aggregate-holdings'
-import { basicAccount } from './holdings'
+} from './aggregate-holdings.ts'
+import { basicAccount } from './holdings.ts'
 
 const now = new Date('2026-06-01T00:00:00.000Z')
 const bank = 'bank::1220'

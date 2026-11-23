@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { alice, v1Contract, v2Contract } from './__tests__/fixtures'
-import { mergeHoldings } from './holdings'
+
+import { alice, v1Contract, v2Contract } from './__tests__/fixtures.ts'
+import { mergeHoldings } from './holdings.ts'
 
 describe('mergeHoldings', () => {
     it('gives v1 holdings the owner basic account', () => {

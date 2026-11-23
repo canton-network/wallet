@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useContext } from 'react'
-import { TokenContext, type TokenContextValue } from './TokenContext'
+
+import { TokenContext, type TokenContextValue } from './TokenContext.ts'
 
 export function useTokenContext(): TokenContextValue {
     const value = useContext(TokenContext)

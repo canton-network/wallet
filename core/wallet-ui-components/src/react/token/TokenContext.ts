@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createContext } from 'react'
-import type { TokenInstruments } from './aggregate-holdings'
-import type { TokenClient } from './client'
+
+import type { TokenInstruments } from './aggregate-holdings.ts'
+import type { TokenClient } from './client.ts'
 
 export interface TokenContextValue {
     client: TokenClient | undefined

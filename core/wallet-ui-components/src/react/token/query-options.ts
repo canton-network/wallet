@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { queryOptions } from '@tanstack/react-query'
-import { logger as reactLogger } from '../logger'
-import type { TokenClient } from './client'
-import { mergeHoldings, toOwnedHoldings } from './holdings'
-import { tokenQueryKeys } from './query-keys'
+
+import { logger as reactLogger } from '../logger.ts'
+import type { TokenClient } from './client.ts'
+import { mergeHoldings, toOwnedHoldings } from './holdings.ts'
+import { tokenQueryKeys } from './query-keys.ts'
 
 const logger = reactLogger.getChild('token')
 

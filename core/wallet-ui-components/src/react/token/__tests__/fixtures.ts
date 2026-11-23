@@ -7,7 +7,8 @@ import type {
     HoldingView as HoldingViewV2,
 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
-import type { PortfolioHolding } from '../holdings'
+
+import type { PortfolioHolding } from '../holdings.ts'
 
 export const alice = 'alice::1220'
 export const bob = 'bob::1220'

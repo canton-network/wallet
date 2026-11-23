@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useMemo, type ReactNode } from 'react'
-import type { TokenInstruments } from './aggregate-holdings'
-import type { TokenClient } from './client'
-import { TokenContext } from './TokenContext'
+
+import type { TokenInstruments } from './aggregate-holdings.ts'
+import type { TokenClient } from './client.ts'
+import { TokenContext } from './TokenContext.ts'
 
 export interface TokenProviderProps {
     client: TokenClient | undefined

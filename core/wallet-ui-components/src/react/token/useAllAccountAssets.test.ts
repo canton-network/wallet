@@ -2,10 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import { alice, amulet, bob, holding } from './__tests__/fixtures'
-import { aggregateHoldings, getInstrumentKey } from './aggregate-holdings'
-import { basicAccount } from './holdings'
-import { toWalletBalances, type TokenWallet } from './useAllAccountAssets'
+
+import { alice, amulet, bob, holding } from './__tests__/fixtures.ts'
+import { aggregateHoldings, getInstrumentKey } from './aggregate-holdings.ts'
+import { basicAccount } from './holdings.ts'
+import { toWalletBalances, type TokenWallet } from './useAllAccountAssets.ts'
 
 const carol = 'carol::1220'
 

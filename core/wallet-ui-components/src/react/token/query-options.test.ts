@@ -3,9 +3,10 @@
 
 import { QueryClient } from '@tanstack/react-query'
 import { describe, expect, it, vi } from 'vitest'
-import { alice, bob, v1Contract, v2Contract } from './__tests__/fixtures'
-import type { TokenClient } from './client'
-import { holdingsQueryOptions } from './query-options'
+
+import { alice, bob, v1Contract, v2Contract } from './__tests__/fixtures.ts'
+import type { TokenClient } from './client.ts'
+import { holdingsQueryOptions } from './query-options.ts'
 
 function clientWith({
     v1 = [],
