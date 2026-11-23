@@ -2,14 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Idp, UserId } from '@canton-network/core-wallet-auth'
-import {
-    hashAccessToken,
-    type MessageRaw,
-    type Network,
-    type Session,
-    type Transaction,
-    type UserLevelRight,
-    type Wallet,
+import type {
+    MessageRaw,
+    Network,
+    Session,
+    Transaction,
+    UserLevelRight,
+    Wallet,
 } from '@canton-network/core-wallet-store'
 import type {
     Memory,
@@ -39,7 +38,8 @@ type MessageRawJson = Omit<MessageRaw, 'createdAt' | 'signedAt'> & {
  * teach `upgradeSnapshot` to bring the old version forward.
  *
  * Version 2: sessions hold the SHA-256 digest of the access token in
- * `accessTokenHash`. Version 1 held the raw token in `accessToken`.
+ * `accessTokenHash`. A version 1 snapshot is upgraded by dropping its
+ * sessions; wallets and config are kept.
  */
 export interface SnapshotV2 {
     version: 2
@@ -63,19 +63,16 @@ export class CorruptSnapshotError extends Error {
     }
 }
 
-// A raw token is a JWT and always contains dots, so a value of this form has
-// already been hashed.
-const SHA256_HEX = /^[0-9a-f]{64}$/
-
 /**
  * Brings an older snapshot up to the current version, so `decodeSnapshot`
  * only has to read one. `upgraded` tells the caller to save the result, which
- * replaces the raw tokens in storage. Anything it doesn't recognise is
- * returned as is, for `decodeSnapshot` to reject.
+ * drops any leftover raw tokens from storage. Anything it doesn't recognise
+ * is returned as is, for `decodeSnapshot` to reject.
  */
-export async function upgradeSnapshot(
-    raw: unknown
-): Promise<{ snapshot: unknown; upgraded: boolean }> {
+export function upgradeSnapshot(raw: unknown): {
+    snapshot: unknown
+    upgraded: boolean
+} {
     if (!isRecord(raw) || raw.version !== 1 || !isRecord(raw.users)) {
         return { snapshot: raw, upgraded: false }
     }
@@ -83,33 +80,9 @@ export async function upgradeSnapshot(
     // real entry instead of changing Object.prototype.
     const users: Record<string, unknown> = Object.create(null)
     for (const [userId, user] of Object.entries(raw.users)) {
-        users[userId] =
-            isRecord(user) && Array.isArray(user.sessions)
-                ? {
-                      ...user,
-                      sessions: await Promise.all(
-                          user.sessions.map(hashSessionToken)
-                      ),
-                  }
-                : user
+        users[userId] = isRecord(user) ? { ...user, sessions: [] } : user
     }
     return { snapshot: { ...raw, version: 2, users }, upgraded: true }
-}
-
-async function hashSessionToken(session: unknown): Promise<unknown> {
-    if (!isRecord(session)) {
-        return session
-    }
-    const { accessToken, accessTokenHash: _ignored, ...rest } = session
-    if (typeof accessToken !== 'string' || !accessToken) {
-        return rest
-    }
-    return {
-        ...rest,
-        accessTokenHash: SHA256_HEX.test(accessToken)
-            ? accessToken
-            : await hashAccessToken(accessToken),
-    }
 }
 
 export function encodeSnapshot(

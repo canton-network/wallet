@@ -97,7 +97,7 @@ describe('createWalletStore', () => {
         vi.restoreAllMocks()
     })
 
-    it('hashes the raw tokens of a version 1 snapshot and saves it before use', async () => {
+    it('drops the sessions of a version 1 snapshot and saves it before use', async () => {
         const vault = await createdVault()
         // Written by a build that stored raw tokens
         const legacy = {
@@ -117,31 +117,16 @@ describe('createWalletStore', () => {
             .defineItem<unknown>('walletStore', { fallback: null })
             .setValue(legacy)
 
-        const store = (await createWalletStore(vault).get()).withAuthContext(
-            CONTEXT
-        )
+        await createWalletStore(vault).get()
 
-        const digest = createHash('sha256')
-            .update(CONTEXT.accessToken)
-            .digest('hex')
         expect(await snapshotIn(vault)).toMatchObject({
             version: 2,
             users: {
                 [CONTEXT.userId]: {
-                    sessions: [
-                        {
-                            id: SESSION.id,
-                            origin: SESSION.origin,
-                            network: SESSION.network,
-                            accessTokenHash: digest,
-                        },
-                    ],
+                    sessions: [],
                 },
             },
         })
-        expect(await store.getSession(CONTEXT.accessToken)).toEqual(
-            expect.objectContaining({ id: SESSION.id })
-        )
     })
 
     it('returns the same data after a worker restart', async () => {

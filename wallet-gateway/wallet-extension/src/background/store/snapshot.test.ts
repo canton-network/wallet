@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { createHash } from 'node:crypto'
-
 import {
     PartyLevelRight,
     UserLevelRight,
@@ -27,7 +25,6 @@ import {
 
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 const NETWORK_ID = 'canton:local-oauth'
-const DIGEST = createHash('sha256').update(CONTEXT.accessToken).digest('hex')
 
 const WALLET: Wallet = {
     primary: true,
@@ -115,7 +112,7 @@ describe('wallet store snapshot', () => {
         expect(memory.get(CONTEXT.userId)?.apiKeys).toEqual(new Map())
     })
 
-    it('upgrades a version 1 snapshot by hashing its raw session tokens', async () => {
+    it('upgrades a version 1 snapshot by dropping its sessions', async () => {
         const { snapshot } = await filledStore()
         const user = snapshot.users[CONTEXT.userId]!
         const legacy = {
@@ -125,40 +122,26 @@ describe('wallet store snapshot', () => {
                 [CONTEXT.userId]: {
                     ...user,
                     sessions: [
-                        // raw token, as version 1 stored it
                         {
                             ...user.sessions[0],
                             accessToken: CONTEXT.accessToken,
-                        },
-                        // already a digest, left alone
-                        {
-                            ...user.sessions[0],
-                            id: 'hashed',
-                            accessToken: DIGEST,
-                        },
-                        {
-                            ...user.sessions[0],
-                            id: 'tokenless',
-                            accessToken: undefined,
                         },
                     ],
                 },
             },
         }
 
-        const { snapshot: upgraded, upgraded: changed } = await upgradeSnapshot(
+        const { snapshot: upgraded, upgraded: changed } = upgradeSnapshot(
             JSON.parse(JSON.stringify(legacy))
         )
 
         expect(changed).toBe(true)
-        expect(
-            (upgraded as SnapshotV2).users[CONTEXT.userId]!.sessions.map(
-                (s) => s.accessTokenHash
-            )
-        ).toEqual([DIGEST, DIGEST, undefined])
-        const { config, memory } = decodeSnapshot(upgraded)
-        const restored = new StoreInternal(config, logger, CONTEXT, memory)
-        expect((await restored.getCurrentNetwork()).id).toBe(NETWORK_ID)
+        const upgradedUser = (upgraded as SnapshotV2).users[CONTEXT.userId]!
+        expect(upgradedUser.sessions).toEqual([])
+        expect(upgradedUser.wallets).toEqual(user.wallets)
+        const { memory } = decodeSnapshot(upgraded)
+        expect(memory.get(CONTEXT.userId)?.sessions.size).toBe(0)
+        expect(memory.get(CONTEXT.userId)?.wallets).toEqual([WALLET])
     })
 
     it('keeps a user whose id is __proto__ when upgrading a version 1 snapshot', async () => {
@@ -183,7 +166,7 @@ describe('wallet store snapshot', () => {
             ]),
         }
 
-        const { snapshot: upgraded, upgraded: changed } = await upgradeSnapshot(
+        const { snapshot: upgraded, upgraded: changed } = upgradeSnapshot(
             JSON.parse(JSON.stringify(legacy))
         )
 
@@ -195,18 +178,17 @@ describe('wallet store snapshot', () => {
                 '__proto__'
             )
         ).toBe(true)
-        expect(upgradedUser?.sessions[0]?.accessTokenHash).toBe(DIGEST)
+        expect(upgradedUser?.sessions).toEqual([])
+        expect(upgradedUser?.wallets).toEqual(user.wallets)
         const { memory } = decodeSnapshot(upgraded)
-        expect(
-            memory.get('__proto__')?.sessions.get(user.sessions[0]!.id)
-                ?.accessTokenHash
-        ).toBe(DIGEST)
+        expect(memory.get('__proto__')?.sessions.size).toBe(0)
+        expect(memory.get('__proto__')?.wallets).toEqual(user.wallets)
     })
 
     it('leaves a current snapshot as it is', async () => {
         const { snapshot } = await filledStore()
 
-        await expect(upgradeSnapshot(snapshot)).resolves.toEqual({
+        expect(upgradeSnapshot(snapshot)).toEqual({
             snapshot,
             upgraded: false,
         })

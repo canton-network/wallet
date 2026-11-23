@@ -8,10 +8,6 @@ import { type Kysely, sql } from 'kysely'
 import type { DB } from '../schema.ts'
 import { isPostgres } from '../utils.ts'
 
-// A raw token is a JWT and always contains dots, so a value of this form has
-// already been hashed. Skipping those keeps the migration safe to re-run.
-const SHA256_HEX = /^[0-9a-f]{64}$/
-
 async function hasColumn(
     db: Kysely<DB>,
     table: string,
@@ -38,136 +34,15 @@ async function hasColumn(
     return res.rows.length > 0
 }
 
-// The signing input is `header.payload` of a JWT. Anything without a
-// readable `exp` counts as expired, the same as at login.
-function isExpired(signingInput: string, nowSeconds: number): boolean {
-    try {
-        const payload = JSON.parse(
-            Buffer.from(signingInput.split('.')[1] ?? '', 'base64url').toString(
-                'utf8'
-            )
-        ) as { exp?: unknown }
-        return typeof payload.exp !== 'number' || payload.exp <= nowSeconds
-    } catch {
-        return true
-    }
-}
-
-// Must match SELF_ISSUED_LOGIN_EXPIRED in core-wallet-services so a
-// status poll after the migration shows the same expired-login error.
-const SELF_ISSUED_LOGIN_EXPIRED =
-    'Self-issued access token expired before login could be completed.'
-
-function sha256Hex(value: string): string {
-    return createHash('sha256').update(value, 'utf8').digest('hex')
-}
-
-// Rebuilds the JWT the same way SelfIssuedTokenService.appendJwtSignature
-// does: the stored signature is standard base64, the JWT uses base64url.
-function reconstructAccessToken(
-    signingInput: string,
-    signature: string | null
-): string | null {
-    if (!signature) {
-        return null
-    }
-    try {
-        const signatureBytes = Buffer.from(signature, 'base64')
-        if (signatureBytes.length === 0) {
-            return null
-        }
-        return `${signingInput}.${signatureBytes.toString('base64url')}`
-    } catch {
-        return null
-    }
-}
-
 // A self-issued message plus its signature is a full access token.
-// Failed logins never use it, so their signatures are cleared. Rows
-// that still have a signature (including awaiting-signature leftovers)
-// are treated like signed requests: deleted if they rebuild a token
-// already stored on an authenticated session, kept only if the login
-// can still finish, or marked failed when that login is open but the
-// token has expired.
+// Signed login messages only last a few minutes, so delete every such
+// row. A login that was running during the upgrade has to be retried.
 async function removeLeftoverSelfIssuedTokens(trx: Kysely<DB>): Promise<void> {
     await trx
-        .updateTable('messagesRaw')
-        .set({ signature: null })
+        .deleteFrom('messagesRaw')
         .where('kind', '=', 'self-issued-token')
-        .where('status', '=', 'failed')
+        .where('signature', 'is not', null)
         .execute()
-
-    const signed = await trx
-        .selectFrom('messagesRaw')
-        .select(['id', 'userId', 'networkId', 'message', 'signature'])
-        .where('kind', '=', 'self-issued-token')
-        .where((eb) =>
-            eb.or([
-                eb('status', '=', 'signed'),
-                eb('signature', 'is not', null),
-            ])
-        )
-        .execute()
-    const sessions = await trx
-        .selectFrom('sessions')
-        .select(['userId', 'network', 'accessTokenHash'])
-        .execute()
-    const unfinished = new Set(
-        sessions
-            .filter((s) => s.accessTokenHash === null)
-            .map((s) => JSON.stringify([s.userId, s.network]))
-    )
-    const authenticatedHashes = new Set(
-        sessions
-            .filter((s) => s.accessTokenHash !== null)
-            .map((s) =>
-                JSON.stringify([s.userId, s.network, s.accessTokenHash])
-            )
-    )
-    const nowSeconds = Math.floor(Date.now() / 1000)
-
-    for (const message of signed) {
-        const token = reconstructAccessToken(message.message, message.signature)
-        const matchesAuthenticatedSession =
-            token !== null &&
-            authenticatedHashes.has(
-                JSON.stringify([
-                    message.userId,
-                    message.networkId,
-                    sha256Hex(token),
-                ])
-            )
-        if (matchesAuthenticatedSession) {
-            await trx
-                .deleteFrom('messagesRaw')
-                .where('id', '=', message.id)
-                .execute()
-            continue
-        }
-
-        const loginOpen = unfinished.has(
-            JSON.stringify([message.userId, message.networkId])
-        )
-        if (loginOpen && !isExpired(message.message, nowSeconds)) {
-            continue
-        }
-        if (loginOpen) {
-            await trx
-                .updateTable('messagesRaw')
-                .set({
-                    status: 'failed',
-                    signature: null,
-                    failureReason: SELF_ISSUED_LOGIN_EXPIRED,
-                })
-                .where('id', '=', message.id)
-                .execute()
-            continue
-        }
-        await trx
-            .deleteFrom('messagesRaw')
-            .where('id', '=', message.id)
-            .execute()
-    }
 }
 
 export async function up(db: Kysely<DB>): Promise<void> {
@@ -179,7 +54,7 @@ export async function up(db: Kysely<DB>): Promise<void> {
         }
         // First run hashes values in access_token and then renames the
         // column. A second run finds the new name and leaves the hashes
-        // alone, including values that were already 64-character hex.
+        // alone.
         if (await hasColumn(trx, 'sessions', 'access_token')) {
             const sessions = await sql<{
                 id: string
@@ -190,7 +65,7 @@ export async function up(db: Kysely<DB>): Promise<void> {
             `.execute(trx)
 
             for (const { id, accessToken } of sessions.rows) {
-                if (accessToken === null || SHA256_HEX.test(accessToken)) {
+                if (accessToken === null) {
                     continue
                 }
                 const accessTokenHash = createHash('sha256')

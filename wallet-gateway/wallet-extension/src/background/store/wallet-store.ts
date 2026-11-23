@@ -82,7 +82,7 @@ export function createWalletStore(
 
     async function load(instance: Instance): Promise<WalletStore> {
         const stored = await item.getValue()
-        const { snapshot, upgraded } = await upgradeSnapshot(stored)
+        const { snapshot, upgraded } = upgradeSnapshot(stored)
         // The vault may have locked while we were reading.
         assertOpen(instance)
         const { config, memory } =

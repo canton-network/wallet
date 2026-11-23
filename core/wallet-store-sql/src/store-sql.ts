@@ -603,7 +603,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             const signingInput = signingInputFromAccessToken(accessToken)
             const candidates = await trx
                 .selectFrom('messagesRaw')
-                .select(['id', 'message', 'signature'])
+                .select(['id', 'message'])
                 .where('userId', '=', userId)
                 .where('networkId', '=', row.network)
                 .where('kind', '=', 'self-issued-token')
@@ -614,17 +614,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     continue
                 }
                 if (message.message === signingInput) {
-                    idsToDelete.add(message.id)
-                    continue
-                }
-                if (!message.signature) {
-                    continue
-                }
-                const reconstructed = await hashReconstructedAccessToken(
-                    message.message,
-                    message.signature
-                )
-                if (reconstructed === tokenHash) {
                     idsToDelete.add(message.id)
                 }
             }

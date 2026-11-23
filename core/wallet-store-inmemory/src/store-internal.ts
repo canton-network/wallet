@@ -407,17 +407,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             }
             if (message.message === signingInput) {
                 storage.messageRaws.delete(id)
-                continue
-            }
-            if (!message.signature) {
-                continue
-            }
-            const reconstructed = await hashReconstructedAccessToken(
-                message.message,
-                message.signature
-            )
-            if (reconstructed === tokenHash) {
-                storage.messageRaws.delete(id)
             }
         }
         this.updateStorage(storage)
