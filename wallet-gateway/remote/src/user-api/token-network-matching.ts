@@ -5,6 +5,17 @@ import type { Idp } from '@canton-network/core-wallet-auth'
 import type { Network } from '@canton-network/core-wallet-store'
 import { decodeJwt, decodeProtectedHeader, type JWTPayload } from 'jose'
 
+import { Env } from '../env.ts'
+
+// Escape hatch for deployments whose IDP issues tokens with an `azp`/`client_id`
+// that differs from the network's configured clientId. Weakens token validation.
+export const DISABLE_CLIENT_ID_CHECK_ENV =
+    'WALLET_GATEWAY_DANGEROUSLY_DISABLE_CLIENT_ID_CHECK'
+
+function isClientIdCheckDisabled(): boolean {
+    return Env.get(DISABLE_CLIENT_ID_CHECK_ENV)?.toLowerCase() === 'true'
+}
+
 function normalizeAudienceClaim(value: JWTPayload['aud']): string[] {
     if (typeof value === 'string') {
         return [value]
@@ -37,7 +48,7 @@ export function assertTokenClaimsMatchNetwork(
     }
 
     // check client ID based on `azp` (Authorized Party) claim or `client_id` claim, only if present.
-    if ('clientId' in network.auth) {
+    if ('clientId' in network.auth && !isClientIdCheckDisabled()) {
         const tokenClientId = tokenClaims.azp || tokenClaims.client_id
         if (tokenClientId && tokenClientId !== network.auth.clientId) {
             throw new Error(
