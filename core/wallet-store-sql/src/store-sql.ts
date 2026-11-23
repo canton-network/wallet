@@ -37,6 +37,7 @@ import {
     hashAccessToken,
     hashReconstructedAccessToken,
     resolveSelfIssuedNetworkByAudiences,
+    signingInputFromAccessToken,
 } from '@canton-network/core-wallet-store'
 import { getLogger } from '@logtape/logtape'
 import Database from 'better-sqlite3'
@@ -599,22 +600,24 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .set({ accessTokenHash: tokenHash })
                 .where('id', '=', sessionId)
                 .execute()
-            const signedMessages = await trx
+            const signingInput = signingInputFromAccessToken(accessToken)
+            const candidates = await trx
                 .selectFrom('messagesRaw')
                 .select(['id', 'message', 'signature'])
                 .where('userId', '=', userId)
                 .where('networkId', '=', row.network)
                 .where('kind', '=', 'self-issued-token')
-                .where((eb) =>
-                    eb.or([
-                        eb('id', '=', signedMessageId),
-                        eb('status', '=', 'signed'),
-                    ])
-                )
                 .execute()
             const idsToDelete = new Set<string>([signedMessageId])
-            for (const message of signedMessages) {
-                if (message.id === signedMessageId || !message.signature) {
+            for (const message of candidates) {
+                if (message.id === signedMessageId) {
+                    continue
+                }
+                if (message.message === signingInput) {
+                    idsToDelete.add(message.id)
+                    continue
+                }
+                if (!message.signature) {
                     continue
                 }
                 const reconstructed = await hashReconstructedAccessToken(
@@ -1183,10 +1186,22 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
         }
         const network = await this.getCurrentNetwork()
-        await this.db
-            .insertInto('messagesRaw')
-            .values(fromMessageRaw(message, userId, network.id))
-            .execute()
+        await this.db.transaction().execute(async (trx) => {
+            if (
+                await this.selfIssuedTokenAlreadyUsed(
+                    trx,
+                    userId,
+                    network.id,
+                    message
+                )
+            ) {
+                return
+            }
+            await trx
+                .insertInto('messagesRaw')
+                .values(fromMessageRaw(message, userId, network.id))
+                .execute()
+        })
     }
 
     async setMessageRawStatus(
@@ -1196,28 +1211,86 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     ): Promise<void> {
         const userId = this.assertConnected()
         const network = await this.getCurrentNetwork()
-        const existing = await this.getMessageRaw(messageId)
-        if (!existing) {
-            throw new Error(`MessageRaw not found with id: ${messageId}`)
-        }
+        await this.db.transaction().execute(async (trx) => {
+            const existing = await trx
+                .selectFrom('messagesRaw')
+                .selectAll()
+                .where((eb) =>
+                    eb.and([
+                        eb('id', '=', messageId),
+                        eb('userId', '=', userId),
+                        eb('networkId', '=', network.id),
+                    ])
+                )
+                .executeTakeFirst()
+            if (!existing) {
+                throw new Error(`MessageRaw not found with id: ${messageId}`)
+            }
 
-        const updated = this.mergeMessageRawStatusUpdate(
-            existing,
-            status,
-            updates
-        )
-
-        await this.db
-            .updateTable('messagesRaw')
-            .set(fromMessageRaw(updated, userId, network.id))
-            .where((eb) =>
-                eb.and([
-                    eb('id', '=', messageId),
-                    eb('userId', '=', userId),
-                    eb('networkId', '=', network.id),
-                ])
+            const updated = this.mergeMessageRawStatusUpdate(
+                toMessageRaw(existing),
+                status,
+                updates
             )
-            .execute()
+            if (
+                await this.selfIssuedTokenAlreadyUsed(
+                    trx,
+                    userId,
+                    network.id,
+                    updated
+                )
+            ) {
+                await trx
+                    .deleteFrom('messagesRaw')
+                    .where((eb) =>
+                        eb.and([
+                            eb('id', '=', messageId),
+                            eb('userId', '=', userId),
+                            eb('networkId', '=', network.id),
+                        ])
+                    )
+                    .execute()
+                return
+            }
+
+            await trx
+                .updateTable('messagesRaw')
+                .set(fromMessageRaw(updated, userId, network.id))
+                .where((eb) =>
+                    eb.and([
+                        eb('id', '=', messageId),
+                        eb('userId', '=', userId),
+                        eb('networkId', '=', network.id),
+                    ])
+                )
+                .execute()
+        })
+    }
+
+    private async selfIssuedTokenAlreadyUsed(
+        db: Kysely<DB>,
+        userId: string,
+        networkId: string,
+        message: MessageRaw
+    ): Promise<boolean> {
+        if (message.kind !== 'self-issued-token' || !message.signature) {
+            return false
+        }
+        const tokenHash = await hashReconstructedAccessToken(
+            message.message,
+            message.signature
+        )
+        if (!tokenHash) {
+            return false
+        }
+        const row = await db
+            .selectFrom('sessions')
+            .select('id')
+            .where('userId', '=', userId)
+            .where('network', '=', networkId)
+            .where('accessTokenHash', '=', tokenHash)
+            .executeTakeFirst()
+        return row !== undefined
     }
 
     async getMessageRaw(messageId: string): Promise<MessageRaw | undefined> {

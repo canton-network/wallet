@@ -728,6 +728,105 @@ implementations.forEach(([name, StoreImpl]) => {
             )
         })
 
+        test('deletes a still-unsigned copy of the upgraded token', async () => {
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+            const signingInput = 'header.payload'
+            const signature = Buffer.from('sig-bytes').toString('base64')
+            const accessToken = SelfIssuedTokenService.appendJwtSignature(
+                signingInput,
+                signature
+            )
+            const signedMessage: MessageRaw = {
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: signingInput,
+                signature,
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            }
+            await store.setMessageRaw(signedMessage)
+            const { signature: _signature, ...unsignedCopy } = signedMessage
+            await store.setMessageRaw({
+                ...unsignedCopy,
+                id: 'pending-copy',
+                status: 'pending',
+            })
+
+            await store.upgradeSelfIssuedLoginSession(
+                'onboarding-session',
+                accessToken,
+                'login-message'
+            )
+
+            await expect(
+                store.getMessageRaw('pending-copy')
+            ).resolves.toBeUndefined()
+        })
+
+        test('drops a late signature whose token is already on a session', async () => {
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: 'network1',
+            })
+            const signingInput = 'header.payload'
+            const signature = Buffer.from('sig-bytes').toString('base64')
+            const accessToken = SelfIssuedTokenService.appendJwtSignature(
+                signingInput,
+                signature
+            )
+            await store.setMessageRaw({
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: signingInput,
+                signature,
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            })
+            await store.upgradeSelfIssuedLoginSession(
+                'onboarding-session',
+                accessToken,
+                'login-message'
+            )
+
+            const connected = (store as StoreInternal).withAuthContext({
+                userId: authContextMock.userId,
+                accessToken,
+            })
+            await connected.setMessageRaw({
+                id: 'late-message',
+                kind: 'self-issued-token',
+                status: 'pending',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: signingInput,
+                origin: null,
+                createdAt: new Date('2026-01-01T00:01:00.000Z'),
+            })
+            await connected.setMessageRawStatus('late-message', 'signed', {
+                signature,
+            })
+            await expect(
+                connected.getMessageRaw('late-message')
+            ).resolves.toBeUndefined()
+            await expect(connected.getSession(accessToken)).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
+        })
+
         test('deletes a tokenless self-issued login session and leaves one that already has an access token', async () => {
             await store.setSession({
                 id: 'tokenless-session',

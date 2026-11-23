@@ -806,6 +806,125 @@ implementations.forEach(([name, StoreImpl]) => {
             )
         })
 
+        test('deletes a still-unsigned copy of the upgraded token', async () => {
+            const loginContext: AuthContext = {
+                userId: authContextMock.userId,
+                accessToken: '',
+                sessionId: 'onboarding-session',
+            }
+            const loginStore = new StoreImpl(db, loginContext)
+            await loginStore.addIdp(idp)
+            await loginStore.addNetwork(network)
+            await loginStore.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: network.id,
+            })
+            const signingInput = 'header.payload'
+            const signature = Buffer.from('sig-bytes').toString('base64')
+            const accessToken = SelfIssuedTokenService.appendJwtSignature(
+                signingInput,
+                signature
+            )
+            const signedMessage: MessageRaw = {
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: loginContext.userId,
+                partyId: 'party-msg',
+                publicKey: 'publicKey',
+                message: signingInput,
+                signature,
+                origin: null,
+                createdAt: new Date('2026-03-01T10:00:00.000Z'),
+            }
+            await loginStore.setMessageRaw(signedMessage)
+            const { signature: _signature, ...unsignedCopy } = signedMessage
+            await loginStore.setMessageRaw({
+                ...unsignedCopy,
+                id: 'pending-copy',
+                status: 'pending',
+            })
+
+            await loginStore.upgradeSelfIssuedLoginSession(
+                'onboarding-session',
+                accessToken,
+                'login-message'
+            )
+
+            const connected = new StoreImpl(db, {
+                userId: loginContext.userId,
+                accessToken,
+            })
+            await expect(
+                connected.getMessageRaw('pending-copy')
+            ).resolves.toBeUndefined()
+        })
+
+        test('drops a late signature whose token is already on a session', async () => {
+            const loginContext: AuthContext = {
+                userId: authContextMock.userId,
+                accessToken: '',
+                sessionId: 'onboarding-session',
+            }
+            const loginStore = new StoreImpl(db, loginContext)
+            await loginStore.addIdp(idp)
+            await loginStore.addNetwork(network)
+            await loginStore.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: network.id,
+            })
+            const signingInput = 'header.payload'
+            const signature = Buffer.from('sig-bytes').toString('base64')
+            const accessToken = SelfIssuedTokenService.appendJwtSignature(
+                signingInput,
+                signature
+            )
+            await loginStore.setMessageRaw({
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: loginContext.userId,
+                partyId: 'party-msg',
+                publicKey: 'publicKey',
+                message: signingInput,
+                signature,
+                origin: null,
+                createdAt: new Date('2026-03-01T10:00:00.000Z'),
+            })
+            await loginStore.upgradeSelfIssuedLoginSession(
+                'onboarding-session',
+                accessToken,
+                'login-message'
+            )
+
+            const connected = new StoreImpl(db, {
+                userId: loginContext.userId,
+                accessToken,
+            })
+            await connected.setMessageRaw({
+                id: 'late-message',
+                kind: 'self-issued-token',
+                status: 'pending',
+                userId: loginContext.userId,
+                partyId: 'party-msg',
+                publicKey: 'publicKey',
+                message: signingInput,
+                origin: null,
+                createdAt: new Date('2026-03-01T10:01:00.000Z'),
+            })
+            await connected.setMessageRawStatus('late-message', 'signed', {
+                signature,
+            })
+            await expect(
+                connected.getMessageRaw('late-message')
+            ).resolves.toBeUndefined()
+            await expect(connected.getSession(accessToken)).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
+        })
+
         test('deletes a tokenless self-issued login session and leaves one that already has an access token', async () => {
             const store = new StoreImpl(db, authContextMock)
             await store.setSession({

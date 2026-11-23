@@ -34,6 +34,7 @@ import {
     hashAccessToken,
     hashReconstructedAccessToken,
     resolveSelfIssuedNetworkByAudiences,
+    signingInputFromAccessToken,
 } from '@canton-network/core-wallet-store'
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import type { Logger } from '@logtape/logtape'
@@ -395,14 +396,20 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             accessTokenHash: tokenHash,
         }
         storage.sessions.set(sessionId, upgraded)
+        const signingInput = signingInputFromAccessToken(accessToken)
         storage.messageRaws.delete(signedMessageId)
         for (const [id, message] of storage.messageRaws) {
             if (
                 id === signedMessageId ||
-                message.kind !== 'self-issued-token' ||
-                message.status !== 'signed' ||
-                !message.signature
+                message.kind !== 'self-issued-token'
             ) {
+                continue
+            }
+            if (message.message === signingInput) {
+                storage.messageRaws.delete(id)
+                continue
+            }
+            if (!message.signature) {
                 continue
             }
             const reconstructed = await hashReconstructedAccessToken(
@@ -763,6 +770,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                 `MessageRaw userId mismatch: expected ${userId}, got ${message.userId}`
             )
         }
+        if (await this.selfIssuedTokenAlreadyUsed(message)) {
+            return
+        }
         const storage = this.getStorage()
         storage.messageRaws.set(message.id, message)
         this.updateStorage(storage)
@@ -784,8 +794,37 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             status,
             updates
         )
+        if (await this.selfIssuedTokenAlreadyUsed(updated)) {
+            storage.messageRaws.delete(messageId)
+            this.updateStorage(storage)
+            return
+        }
         storage.messageRaws.set(messageId, updated)
         this.updateStorage(storage)
+    }
+
+    private async selfIssuedTokenAlreadyUsed(
+        message: MessageRaw
+    ): Promise<boolean> {
+        if (message.kind !== 'self-issued-token' || !message.signature) {
+            return false
+        }
+        const tokenHash = await hashReconstructedAccessToken(
+            message.message,
+            message.signature
+        )
+        if (!tokenHash) {
+            return false
+        }
+        // Don't use getCurrentNetwork: during a self-issued login the
+        // session still has no token, and that lookup would throw.
+        const storage = this.getStorage()
+        for (const session of storage.sessions.values()) {
+            if (session.accessTokenHash === tokenHash) {
+                return true
+            }
+        }
+        return false
     }
 
     async getMessageRaw(messageId: string): Promise<MessageRaw | undefined> {
