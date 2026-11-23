@@ -48,82 +48,63 @@ export function handleSigningProviderError<T extends object>(
 }
 
 export class WalletAllocationService {
-    private readonly kernelAllocator?: KernelWalletAllocator
-
-    private readonly createExternalAllocator: (
+    private readonly createInternalAllocator = (
         signingProviderId: SigningProvider
-    ) => ExternalWalletAllocator
+    ): InternalWalletAllocator => {
+        return new InternalWalletAllocator(
+            this.store,
+            this.logger,
+            this.partyAllocator,
+            signingProviderId
+        )
+    }
 
-    private readonly createInternalAllocator: (
+    private readonly createExternalAllocator = (
         signingProviderId: SigningProvider
-    ) => InternalWalletAllocator
-
-    private getAllocator(signingProviderId: SigningProvider): WalletAllocator {
+    ): WalletAllocator => {
         const driver = this.signingDrivers[signingProviderId]
-        let allocator: WalletAllocator | undefined
 
-        if (driver?.partyMode === PartyMode.INTERNAL) {
-            allocator = this.createInternalAllocator(signingProviderId)
-        } else {
-            if (signingProviderId === SigningProvider.WALLET_KERNEL) {
-                allocator = this.kernelAllocator
-            } else {
-                allocator = this.createExternalAllocator(signingProviderId)
-            }
-        }
-
-        if (!allocator) {
+        if (!driver) {
             throw new Error(
                 `Signing driver for ${signingProviderId} not available`
             )
         }
 
-        return allocator
-    }
-
-    constructor(
-        store: Store,
-        logger: Logger,
-        partyAllocator: PartyAllocationService,
-        private signingDrivers: Partial<
-            Record<SigningProvider, SigningDriverInterface>
-        > = {}
-    ) {
-        this.createExternalAllocator = (signingProviderId: SigningProvider) => {
-            const driver = signingDrivers[signingProviderId]
-
-            if (!driver) {
-                throw new Error(
-                    `Signing driver for ${signingProviderId} not available`
-                )
-            }
-
-            return new ExternalWalletAllocator(
-                store,
-                logger,
-                partyAllocator,
+        if (signingProviderId === SigningProvider.WALLET_KERNEL) {
+            return new KernelWalletAllocator(
+                this.store,
+                this.logger,
+                this.partyAllocator,
                 driver
             )
         }
 
-        this.createInternalAllocator = (signingProviderId: SigningProvider) =>
-            new InternalWalletAllocator(
-                store,
-                logger,
-                partyAllocator,
-                signingProviderId
-            )
-
-        const kernelDriver = signingDrivers[SigningProvider.WALLET_KERNEL]
-        if (kernelDriver) {
-            this.kernelAllocator = new KernelWalletAllocator(
-                store,
-                logger,
-                partyAllocator,
-                kernelDriver
-            )
-        }
+        return new ExternalWalletAllocator(
+            this.store,
+            this.logger,
+            this.partyAllocator,
+            driver
+        )
     }
+
+    private getAllocator(signingProviderId: SigningProvider): WalletAllocator {
+        const driver = this.signingDrivers[signingProviderId]
+        const allocatorFactory =
+            driver?.partyMode === PartyMode.INTERNAL
+                ? this.createInternalAllocator
+                : this.createExternalAllocator
+
+        return allocatorFactory(signingProviderId)
+    }
+
+    constructor(
+        private store: Store,
+        private logger: Logger,
+        private partyAllocator: PartyAllocationService,
+        private signingDrivers: Partial<
+            Record<SigningProvider, SigningDriverInterface>
+        > = {}
+    ) {}
 
     public async createWallet(
         authContext: AuthContext,
@@ -145,15 +126,16 @@ export class WalletAllocationService {
         existingWallet: Wallet,
         signingProviderId: SigningProvider
     ): Promise<void> {
-        const allocator = this.getAllocator(signingProviderId)
-        return allocator.allocateParty(authContext, existingWallet)
+        return this.getAllocator(signingProviderId).allocateParty(
+            authContext,
+            existingWallet
+        )
     }
 
     public async getKeys(
         authContext: AuthContext,
         signingProviderId: SigningProvider
     ) {
-        const allocator = this.getAllocator(signingProviderId)
-        return allocator.getKeys(authContext)
+        return this.getAllocator(signingProviderId).getKeys(authContext)
     }
 }
