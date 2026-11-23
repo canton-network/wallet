@@ -51,6 +51,11 @@ export interface Vault {
      */
     onLock(listener: () => void): void
     /**
+     * Calls `listener` once `create()` or `unlock()` has opened the vault.
+     * If it throws, the error is logged.
+     */
+    onUnlock(listener: () => void): void
+    /**
      * An encrypted item. Values must be JSON-serializable; they are stored,
      * and returned, as they look after `JSON.stringify` and `JSON.parse`.
      */
@@ -111,6 +116,7 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
     let generation = 0
     let publishedStatus: VaultStatus | undefined
     const lockListeners = new Set<() => void>()
+    const unlockListeners = new Set<() => void>()
 
     const ready = restore(generation)
         .catch((error: unknown) => {
@@ -159,6 +165,16 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
                 listener()
             } catch (error) {
                 log.warn('A lock listener failed: {error}', { error })
+            }
+        }
+    }
+
+    function notifyUnlock(): void {
+        for (const listener of unlockListeners) {
+            try {
+                listener()
+            } catch (error) {
+                log.warn('An unlock listener failed: {error}', { error })
             }
         }
     }
@@ -296,7 +312,7 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
                 await vaultItem.setValue(envelope)
                 // The vault exists now, even if a lock() keeps it locked.
                 status = 'locked'
-                await openSession(gen, key, header, doc)
+                if (await openSession(gen, key, header, doc)) notifyUnlock()
                 log.info('Vault created')
             }),
 
@@ -308,6 +324,7 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
                     const doc = await openDocument(key, envelope)
                     if (await openSession(gen, key, headerOf(envelope), doc)) {
                         log.info('Vault unlocked')
+                        notifyUnlock()
                     }
                 },
                 // An unlock that a lock() interrupts must not report success.
@@ -358,6 +375,10 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
 
         onLock: (listener) => {
             lockListeners.add(listener)
+        },
+
+        onUnlock: (listener) => {
+            unlockListeners.add(listener)
         },
 
         defineItem<T>(

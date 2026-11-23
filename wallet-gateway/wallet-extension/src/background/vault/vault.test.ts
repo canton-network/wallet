@@ -190,6 +190,23 @@ describe('vault', () => {
         expect((await startVault()).status()).toBe('locked')
     })
 
+    it('calls onUnlock listeners on create() and unlock(), not on a failed unlock', async () => {
+        const vault = await startVault()
+        const listener = vi.fn()
+        vault.onUnlock(listener)
+
+        await vault.create(PASSWORD)
+        expect(listener).toHaveBeenCalledTimes(1)
+        await vault.lock()
+        await expect(vault.unlock('wrong password 1')).rejects.toThrow(
+            InvalidPasswordError
+        )
+        expect(listener).toHaveBeenCalledTimes(1)
+        await vault.unlock(PASSWORD)
+
+        expect(listener).toHaveBeenCalledTimes(2)
+    })
+
     it('opens only with the new password after a password change', async () => {
         const vault = await createdVault()
         const secret = vault.defineItem('secret', { fallback: '' })
