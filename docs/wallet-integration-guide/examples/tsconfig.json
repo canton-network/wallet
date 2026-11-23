@@ -9,5 +9,49 @@
         "config.ts",
         "snippets.test.ts",
         "vitest.config.ts"
+    ],
+    "references": [
+        {
+            "path": "../../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../../../examples/test-token-v2-registry"
+        },
+        {
+            "path": "../../../examples/test-token-v1-registry"
+        },
+        {
+            "path": "../../../core/wallet-auth"
+        },
+        {
+            "path": "../../../core/types"
+        },
+        {
+            "path": "../../../core/tx-parser"
+        },
+        {
+            "path": "../../../core/tx-hashing"
+        },
+        {
+            "path": "../../../core/token-standard-v2"
+        },
+        {
+            "path": "../../../core/token-standard"
+        },
+        {
+            "path": "../../../core/splice-codegen"
+        },
+        {
+            "path": "../../../core/signing-lib"
+        },
+        {
+            "path": "../../../core/ledger-client-types"
+        },
+        {
+            "path": "../../../core/ledger-client"
+        },
+        {
+            "path": "../../../core/wallet-test-utils"
+        }
     ]
 }

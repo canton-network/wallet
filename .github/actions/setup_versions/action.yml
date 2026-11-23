@@ -29,6 +29,8 @@ outputs:
         value: ${{ steps.affected.outputs.portfolio-matrix || steps.all.outputs.portfolio-matrix }}
     sdk-examples-matrix:
         value: ${{ steps.affected.outputs.sdk-examples-matrix || steps.all.outputs.sdk-examples-matrix }}
+    sdk-package:
+        value: ${{ steps.affected.outputs.sdk-package || steps.all.outputs.sdk-package }}
 runs:
     using: composite
     steps:
