@@ -6,10 +6,10 @@ import { jwtExpired } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
 import { browser, type Browser } from 'wxt/browser'
 
+import { logger } from '@/shared/logger.ts'
 import { siteApprovalPortId } from '@/shared/ports.ts'
 
 import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
-import { openWalletUi } from './open-ui.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
@@ -28,21 +28,30 @@ export type SiteApprovalService = {
     decide(id: string, approved: boolean): Promise<void>
 }
 
+/** The browser tab of the page that sent a dApp request. */
+export interface SiteApprovalTab {
+    tabId: number
+    windowId: number
+}
+
 export interface SiteApprovalRequest {
     /** See `sitePrincipal`. */
     principal: string
     origin: string
     /** The token of the session that asked. */
     accessToken: string
+    /** Where the prompt is shown. Without one, it waits for the timeout. */
+    tab?: SiteApprovalTab
 }
 
 export interface SiteApprovals {
     /**
-     * Opens the approval page for the origin and resolves once the user has
-     * approved it. Rejects with error 4001 when the user rejects, closes the
-     * page (its port disconnects) or doesn't answer in time, and with 4100
-     * when the session isn't current (expired, signed out, another account)
-     * or the vault locks.
+     * Points the toolbar icon of the request's tab at the approval page, and
+     * resolves once the user has approved the origin. Rejects with error 4001
+     * when the user rejects, closes the tab or doesn't answer in time, and
+     * with 4100 when the session isn't current (expired, signed out, another
+     * account) or the vault locks. Closing the page leaves the request
+     * pending.
      * Calls for a principal and origin that is already pending share its
      * answer.
      */
@@ -80,7 +89,7 @@ interface PendingApproval extends SiteApprovalRequest {
     key: string
     promise: Promise<void>
     settle: (error?: Error) => void
-    /** The approval pages that hold a port open for this request. */
+    /** The open approval pages, which close when their port disconnects. */
     ports: Set<Browser.runtime.Port>
     /** Set when the session changed while the user's approval was being saved. */
     stale?: boolean
@@ -91,7 +100,6 @@ export interface SiteApprovalsOptions {
     authContext: AuthContextChanges
     isCurrent: SessionCheck
     sites: ApprovedSiteStore
-    open?: (path: string) => Promise<void>
     timeoutMs?: number
 }
 
@@ -103,28 +111,64 @@ export const sessionEnded = () =>
         message: 'The session that asked for the site approval has ended',
     })
 
-const openInToolbarPopup = (path: string) =>
-    openWalletUi(path, { toolbarPopup: true })
+const DEFAULT_POPUP = 'popup.html'
+
+const approvalPopup = (id: string) =>
+    `${DEFAULT_POPUP}#/approve-site?id=${encodeURIComponent(id)}`
+
+// The tab may have closed in the meantime.
+const ignore = () => {}
+
+/**
+ * Points the tab's toolbar icon at its newest pending prompt, with a badge
+ * counting them, or back at the wallet when there is none. Other tabs keep
+ * the default popup.
+ */
+async function showPrompts(tabId: number, ids: string[]): Promise<void> {
+    const newest = ids.at(-1)
+    await Promise.all([
+        browser.action
+            .setPopup({
+                tabId,
+                popup:
+                    newest === undefined
+                        ? DEFAULT_POPUP
+                        : approvalPopup(newest),
+            })
+            .catch(ignore),
+        browser.action
+            .setBadgeText({ tabId, text: ids.length ? String(ids.length) : '' })
+            .catch(ignore),
+        ids.length
+            ? browser.action
+                  .setBadgeBackgroundColor({ tabId, color: '#d32f2f' })
+                  .catch(ignore)
+            : undefined,
+    ])
+}
 
 /**
  * Keeps the pending site approvals in memory. A service worker restart drops
  * them, along with the dApp requests that wait for them. Must be created
- * synchronously during background start-up, as it adds a port listener.
+ * synchronously during background start-up, as it adds port and tab
+ * listeners.
  *
- * The approval page holds a port open for its request. The background can't
- * close the toolbar popup by window ID, so it disconnects the port and the
- * page closes itself; the popup window fallback works the same way.
+ * A prompt lives on the toolbar icon of the dApp's tab until it settles. The
+ * toolbar popup closes on any click outside it, so closing the page doesn't
+ * reject; the user can click the icon again. An open page holds a port, which
+ * the background disconnects to close the page when it cancels the request.
  */
 export function createSiteApprovals({
     vault,
     authContext,
     isCurrent,
     sites,
-    open = openInToolbarPopup,
     timeoutMs = SITE_APPROVAL_TIMEOUT_MS,
 }: SiteApprovalsOptions): SiteApprovals {
     const byKey = new Map<string, PendingApproval>()
     const byId = new Map<string, PendingApproval>()
+    // The pending prompts of each tab, oldest first.
+    const byTab = new Map<number, PendingApproval[]>()
     // Answered with an approval that is still being saved.
     const saving = new Set<PendingApproval>()
 
@@ -133,10 +177,29 @@ export function createSiteApprovals({
         pending.ports.clear()
     }
 
+    function showTab(tabId: number): Promise<void> {
+        return showPrompts(
+            tabId,
+            (byTab.get(tabId) ?? []).map((pending) => pending.id)
+        )
+    }
+
+    function untrack(pending: PendingApproval): void {
+        if (!pending.tab) return
+        const { tabId } = pending.tab
+        const prompts = byTab.get(tabId)
+        if (!prompts) return
+        const rest = prompts.filter((other) => other !== pending)
+        if (rest.length) byTab.set(tabId, rest)
+        else byTab.delete(tabId)
+        void showTab(tabId)
+    }
+
     function claim(pending: PendingApproval): boolean {
         if (byId.get(pending.id) !== pending) return false
         byId.delete(pending.id)
         byKey.delete(pending.key)
+        untrack(pending)
         return true
     }
 
@@ -186,12 +249,20 @@ export function createSiteApprovals({
             return
         }
         pending.ports.add(port)
-        // After an answer the request is no longer in `byId`, so `finish`
-        // leaves an approval that is being saved alone.
-        port.onDisconnect.addListener(() => {
-            pending.ports.delete(port)
-            finish(pending, rejected('The user closed the approval page'))
-        })
+        port.onDisconnect.addListener(() => pending.ports.delete(port))
+    })
+
+    browser.tabs.onRemoved.addListener((tabId) => {
+        const prompts = byTab.get(tabId)
+        if (!prompts) return
+        // Nothing left to restore on a closed tab.
+        byTab.delete(tabId)
+        for (const pending of prompts) {
+            finish(
+                pending,
+                rejected('The tab that asked for the site was closed')
+            )
+        }
     })
 
     async function undo(pending: PendingApproval): Promise<void> {
@@ -229,15 +300,29 @@ export function createSiteApprovals({
         }
         byKey.set(key, pending)
         byId.set(pending.id, pending)
-
-        open(`/approve-site?id=${encodeURIComponent(pending.id)}`).catch(
-            (error: unknown) =>
-                finish(
-                    pending,
-                    error instanceof Error ? error : new Error(String(error))
-                )
-        )
+        if (request.tab) {
+            prompt(request.tab, pending)
+        } else {
+            logger.warn(
+                'A site approval for {origin} has no tab to prompt in, so it waits for the timeout',
+                { origin: request.origin }
+            )
+        }
         return pending
+    }
+
+    function prompt(
+        { tabId, windowId }: SiteApprovalTab,
+        pending: PendingApproval
+    ) {
+        byTab.set(tabId, [...(byTab.get(tabId) ?? []), pending])
+        void showTab(tabId).then(() => {
+            // Settled in the meantime: the popup is the wallet again.
+            if (byId.get(pending.id) !== pending) return
+            // Without a focused normal window this fails, and the user opens
+            // the prompt from the icon.
+            return browser.action.openPopup({ windowId }).catch(ignore)
+        })
     }
 
     return {

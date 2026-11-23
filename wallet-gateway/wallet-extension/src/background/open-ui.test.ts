@@ -52,45 +52,6 @@ describe('openWalletUi', () => {
         })
     })
 
-    it('opens a route in the toolbar popup, then restores the default', async () => {
-        const setPopup = vi
-            .spyOn(fakeBrowser.action, 'setPopup')
-            .mockResolvedValue(undefined)
-        const openPopup = vi
-            .spyOn(fakeBrowser.action, 'openPopup')
-            .mockImplementation(async () => {
-                expect(setPopup).toHaveBeenLastCalledWith({
-                    popup: 'popup.html#/approve-site?id=1',
-                })
-            })
-        const create = vi.spyOn(fakeBrowser.windows, 'create')
-
-        await openWalletUi('/approve-site?id=1', { toolbarPopup: true })
-
-        expect(openPopup).toHaveBeenCalledTimes(1)
-        expect(setPopup).toHaveBeenLastCalledWith({ popup: 'popup.html' })
-        expect(create).not.toHaveBeenCalled()
-    })
-
-    it('restores the default and opens a window when the toolbar popup fails', async () => {
-        const setPopup = vi
-            .spyOn(fakeBrowser.action, 'setPopup')
-            .mockResolvedValue(undefined)
-        vi.spyOn(fakeBrowser.action, 'openPopup').mockRejectedValue(
-            new Error('Could not find an active browser window.')
-        )
-        const create = vi.spyOn(fakeBrowser.windows, 'create')
-
-        await openWalletUi('/approve-site?id=1', { toolbarPopup: true })
-
-        expect(setPopup).toHaveBeenLastCalledWith({ popup: 'popup.html' })
-        expect(create).toHaveBeenCalledWith(
-            expect.objectContaining({
-                url: 'chrome-extension://test-extension-id/popup.html#/approve-site?id=1',
-            })
-        )
-    })
-
     it('opens other routes in a popup window', async () => {
         const openPopup = vi.spyOn(fakeBrowser.action, 'openPopup')
         const create = vi.spyOn(fakeBrowser.windows, 'create')

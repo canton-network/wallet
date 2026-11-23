@@ -23,8 +23,7 @@ const SITE_APPROVAL_PORT_PREFIX = 'wg-site-approval:'
 
 /**
  * Name of the `runtime.Port` the site approval page holds open for its
- * request. The background rejects the request when the port disconnects, and
- * disconnects it to make the page close.
+ * request. The background disconnects it to make the page close.
  */
 export const siteApprovalPortName = (id: string) =>
     `${SITE_APPROVAL_PORT_PREFIX}${id}`

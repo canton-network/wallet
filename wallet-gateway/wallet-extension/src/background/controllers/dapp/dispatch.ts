@@ -24,13 +24,14 @@ import {
 
 /**
  * The single entry point of the dApp API. It always resolves to a JSON-RPC
- * response. `origin` comes from the browser's sender information, see
- * `registerDappService`.
+ * response. `origin` and `tab` come from the browser's sender information,
+ * see `registerDappService`.
  */
 export interface DappDispatcher {
     request(
         request: JsonRpcRequest,
-        origin: DappRequestContext['origin']
+        origin: DappRequestContext['origin'],
+        tab?: DappRequestContext['tab']
     ): Promise<JsonRpcResponse>
 }
 
@@ -54,7 +55,8 @@ export function createDappDispatcher(
 ): DappDispatcher {
     /** While the vault isn't unlocked, there's no signed-in user. */
     async function requestContext(
-        origin: DappRequestContext['origin']
+        origin: DappRequestContext['origin'],
+        tab: DappRequestContext['tab']
     ): Promise<DappRequestContext> {
         // Wait for the restore, so a request that wakes the background
         // isn't refused while the vault is still unlocking.
@@ -66,7 +68,14 @@ export function createDappDispatcher(
                 const approved =
                     principal !== undefined &&
                     (await deps.sites.isApproved(principal, origin))
-                return { origin, locked: false, auth, principal, approved }
+                return {
+                    origin,
+                    tab,
+                    locked: false,
+                    auth,
+                    principal,
+                    approved,
+                }
             } catch (error) {
                 // A lock() landed after the status check.
                 if (!(error instanceof VaultLockedError)) throw error
@@ -74,6 +83,7 @@ export function createDappDispatcher(
         }
         return {
             origin,
+            tab,
             locked: true,
             auth: undefined,
             principal: undefined,
@@ -92,10 +102,10 @@ export function createDappDispatcher(
     }
 
     return {
-        async request(request, origin) {
+        async request(request, origin, tab) {
             const id = request.id ?? null
             try {
-                const context = await requestContext(origin)
+                const context = await requestContext(origin, tab)
                 const controller = dappController(deps, context)
 
                 // Only the controller's own methods: never `constructor`,
