@@ -13,14 +13,23 @@ import {
 import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
+import type { PageConnection } from './page-presence.ts'
+import type { SiteApprovalTab } from './site-approval.ts'
 import { createTabIcons, type TabIcons } from './tab-icon.ts'
 import { createUnlockRequests, type UnlockRequests } from './unlock-request.ts'
 
-const tab = { tabId: 7, windowId: 3, page: 'document-1' }
+/** A page in tab 7, with a live presence connection. */
+const openPage = (page = 'document-1') => ({
+    tabId: 7,
+    windowId: 3,
+    page,
+    connection: { page, origin: 'https://dapp.example', live: true },
+})
 
 describe('createUnlockRequests', () => {
     let unlockListeners: (() => void)[]
-    let unloadListeners: ((page: string) => void)[]
+    let endListeners: ((connection: PageConnection) => void)[]
+    let tab: SiteApprovalTab & { connection: { live: boolean } }
     // The popup of each tab, as set through `action.setPopup`.
     let popups: Map<number | undefined, string>
     let setPopup: MockInstance<typeof fakeBrowser.action.setPopup>
@@ -34,11 +43,18 @@ describe('createUnlockRequests', () => {
         expect(popups.get(tab.tabId)).toBe('popup.html')
         expect(await badge()).toBe('')
     }
+    const endPage = (
+        page: SiteApprovalTab & { connection: { live: boolean } }
+    ) => {
+        page.connection.live = false
+        endListeners.forEach((listener) => listener(page.connection!))
+    }
 
     beforeEach(() => {
         fakeBrowser.reset()
         unlockListeners = []
-        unloadListeners = []
+        endListeners = []
+        tab = openPage()
         popups = new Map()
         // The fake browser doesn't implement setPopup or openPopup.
         setPopup = vi
@@ -49,13 +65,17 @@ describe('createUnlockRequests', () => {
         openPopup = vi
             .spyOn(fakeBrowser.action, 'openPopup')
             .mockResolvedValue(undefined)
+        // The toolbar popup only opens on the active tab.
+        vi.spyOn(fakeBrowser.tabs, 'get').mockImplementation((async () => ({
+            active: true,
+        })) as unknown as typeof fakeBrowser.tabs.get)
         tabIcons = createTabIcons()
         unlockRequests = createUnlockRequests({
             vault: {
                 onUnlock: (listener) => void unlockListeners.push(listener),
             },
             presence: {
-                onUnload: (listener) => void unloadListeners.push(listener),
+                onEnd: (listener) => void endListeners.push(listener),
             },
             tabIcons,
         })
@@ -97,11 +117,43 @@ describe('createUnlockRequests', () => {
     it('points the tab back at the wallet when the page that asked unloads', async () => {
         await unlockRequests.request(tab)
 
-        unloadListeners.forEach((listener) => listener('document-2'))
+        endPage(openPage('document-2'))
         expect(popups.get(tab.tabId)).toBe('popup.html#/unlock')
-        unloadListeners.forEach((listener) => listener(tab.page))
+        endPage(tab)
 
         await vi.waitFor(expectRestored)
+    })
+
+    it('shows nothing when the page went while the request waited', async () => {
+        endPage(tab)
+
+        await unlockRequests.request(tab)
+
+        expect(setPopup).not.toHaveBeenCalled()
+        expect(openPopup).not.toHaveBeenCalled()
+    })
+
+    it('keeps the icon for the page that asked last when an older one ends', async () => {
+        await unlockRequests.request(tab)
+        const next = openPage('document-2')
+        await unlockRequests.request(next)
+
+        endPage(tab)
+        expect(popups.get(tab.tabId)).toBe('popup.html#/unlock')
+        endPage(next)
+
+        await vi.waitFor(expectRestored)
+    })
+
+    it('leaves the unlock page on the icon when the tab is not the active one', async () => {
+        vi.mocked(fakeBrowser.tabs.get).mockImplementation((async () => ({
+            active: false,
+        })) as unknown as typeof fakeBrowser.tabs.get)
+
+        await unlockRequests.request(tab)
+
+        expect(popups.get(tab.tabId)).toBe('popup.html#/unlock')
+        expect(openPopup).not.toHaveBeenCalled()
     })
 
     it('forgets a closed tab', async () => {

@@ -207,7 +207,12 @@ describe('createDappDispatcher', () => {
         })
         // As before site approval: connect shows the unlock page and reports
         // not connected, without asking about the site.
-        const tab = { tabId: 7, windowId: 3, page: 'document-1' }
+        const tab = {
+            tabId: 7,
+            windowId: 3,
+            page: 'document-1',
+            connection: undefined,
+        }
         await expect(
             locked.request(request('connect'), origin, tab)
         ).resolves.toMatchObject({
@@ -480,7 +485,12 @@ describe('createDappDispatcher', () => {
                     sites.approve(asked.principal, asked.origin)
                 )
 
-                const tab = { tabId: 7, windowId: 3, page: 'document-1' }
+                const tab = {
+                    tabId: 7,
+                    windowId: 3,
+                    page: 'document-1',
+                    connection: undefined,
+                }
 
                 await expect(
                     dispatcher.request(request('connect'), unapproved, tab)

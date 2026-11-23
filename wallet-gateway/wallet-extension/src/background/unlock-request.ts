@@ -5,9 +5,9 @@ import { browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
 
-import type { PagePresence } from './page-presence.ts'
+import type { PageConnection, PagePresence } from './page-presence.ts'
 import type { SiteApprovalTab } from './site-approval.ts'
-import { DEFAULT_POPUP, type TabIcons } from './tab-icon.ts'
+import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
 import type { Vault } from './vault/index.ts'
 
 const UNLOCK_VIEW = { popup: `${DEFAULT_POPUP}#/unlock`, badge: '!' }
@@ -16,14 +16,15 @@ export interface UnlockRequests {
     /**
      * Points the toolbar icon of the tab at the unlock page, with a badge,
      * and tries to open it. The icon goes back to the wallet once the vault
-     * unlocks, the tab closes or the page that asked unloads.
+     * unlocks, the tab closes or the page that asked unloads. Does nothing
+     * once that page has gone.
      */
     request(tab: SiteApprovalTab | undefined): Promise<void>
 }
 
 export interface UnlockRequestsOptions {
     vault: Pick<Vault, 'onUnlock'>
-    presence: PagePresence
+    presence: Pick<PagePresence, 'onEnd'>
     tabIcons: TabIcons
 }
 
@@ -38,7 +39,7 @@ export function createUnlockRequests({
     tabIcons,
 }: UnlockRequestsOptions): UnlockRequests {
     // The page that asked last, by tab.
-    const pages = new Map<number, string>()
+    const pages = new Map<number, PageConnection>()
 
     function end(tabId: number): void {
         pages.delete(tabId)
@@ -49,9 +50,9 @@ export function createUnlockRequests({
         for (const tabId of pages.keys()) end(tabId)
     })
 
-    presence.onUnload((page) => {
+    presence.onEnd((connection) => {
         for (const [tabId, asked] of pages) {
-            if (asked === page) end(tabId)
+            if (asked === connection) end(tabId)
         }
     })
 
@@ -67,14 +68,14 @@ export function createUnlockRequests({
                 )
                 return
             }
-            const { tabId, windowId, page } = tab
-            pages.set(tabId, page)
+            const { tabId, windowId, connection } = tab
+            // Gone while the request waited, so no page would clear the icon.
+            if (!connection?.live) return
+            pages.set(tabId, connection)
             await tabIcons.set(tabId, 'unlock', UNLOCK_VIEW)
             // Unlocked, closed or unloaded in the meantime.
-            if (pages.get(tabId) !== page) return
-            // Without a focused normal window this fails, and the user opens
-            // the unlock page from the icon.
-            await browser.action.openPopup({ windowId }).catch(() => {})
+            if (pages.get(tabId) !== connection) return
+            await openTabPopup(tabId, windowId)
         },
     }
 }

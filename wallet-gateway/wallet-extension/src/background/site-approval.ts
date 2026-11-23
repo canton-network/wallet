@@ -10,9 +10,9 @@ import { logger } from '@/shared/logger.ts'
 import { siteApprovalPortId } from '@/shared/ports.ts'
 
 import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
-import type { PagePresence } from './page-presence.ts'
+import type { PageConnection, PagePresence } from './page-presence.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
-import { DEFAULT_POPUP, type TabIcons } from './tab-icon.ts'
+import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
 import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
 
@@ -36,6 +36,11 @@ export interface SiteApprovalTab {
     windowId: number
     /** The document that sent it: `documentId`, or the tab and frame. */
     page: string
+    /**
+     * The page's presence connection when the request arrived. None, or not
+     * live, means the page has gone.
+     */
+    connection: PageConnection | undefined
 }
 
 export interface SiteApprovalRequest {
@@ -58,7 +63,7 @@ export interface SiteApprovals {
      * account) or the vault locks. Closing the page leaves the request
      * pending.
      * Calls for a principal and origin that is already pending share its
-     * answer.
+     * answer, while the page that asked first is still there.
      */
     request(request: SiteApprovalRequest): Promise<void>
     service: SiteApprovalService
@@ -103,7 +108,7 @@ interface PendingApproval extends SiteApprovalRequest {
 export interface SiteApprovalsOptions {
     vault: Pick<Vault, 'onLock'>
     authContext: AuthContextChanges
-    presence: PagePresence
+    presence: Pick<PagePresence, 'onEnd'>
     tabIcons: TabIcons
     isCurrent: SessionCheck
     sites: ApprovedSiteStore
@@ -113,6 +118,9 @@ export interface SiteApprovalsOptions {
 const rejected = (message: string) =>
     providerErrors.userRejectedRequest({ message })
 
+const pageGone = () =>
+    rejected('The page that asked for the site was closed or reloaded')
+
 export const sessionEnded = () =>
     providerErrors.unauthorized({
         message: 'The session that asked for the site approval has ended',
@@ -121,7 +129,12 @@ export const sessionEnded = () =>
 const approvalPopup = (id: string) =>
     `${DEFAULT_POPUP}#/approve-site?id=${encodeURIComponent(id)}`
 
-const ignore = () => {}
+/** Whether `request` may wait on `pending`'s prompt instead of its own. */
+function joins(pending: PendingApproval, request: SiteApprovalRequest) {
+    return pending.tab
+        ? pending.tab.connection?.live === true
+        : request.tab === undefined
+}
 
 /**
  * Keeps the pending site approvals in memory. A service worker restart drops
@@ -187,7 +200,8 @@ export function createSiteApprovals({
     function claim(pending: PendingApproval): boolean {
         if (byId.get(pending.id) !== pending) return false
         byId.delete(pending.id)
-        byKey.delete(pending.key)
+        // A newer request may have the key, see `joins`.
+        if (byKey.get(pending.key) === pending) byKey.delete(pending.key)
         untrack(pending)
         return true
     }
@@ -256,15 +270,10 @@ export function createSiteApprovals({
 
     // Without this, a reloaded page's `connect` would join the prompt that
     // Chrome hid by resetting the popup, and its older timer.
-    presence.onUnload((page) => {
+    presence.onEnd((connection) => {
         for (const pending of byId.values()) {
-            if (pending.tab?.page === page) {
-                finish(
-                    pending,
-                    rejected(
-                        'The page that asked for the site was closed or reloaded'
-                    )
-                )
+            if (pending.tab?.connection === connection) {
+                finish(pending, pageGone())
             }
         }
     })
@@ -323,9 +332,7 @@ export function createSiteApprovals({
         void showTab(tabId).then(() => {
             // Settled in the meantime: the popup is the wallet again.
             if (byId.get(pending.id) !== pending) return
-            // Without a focused normal window this fails, and the user opens
-            // the prompt from the icon.
-            return browser.action.openPopup({ windowId }).catch(ignore)
+            return openTabPopup(tabId, windowId)
         })
     }
 
@@ -336,12 +343,18 @@ export function createSiteApprovals({
                     message: 'User is not connected',
                 })
             }
+            // The page may have gone while the session was checked. Nothing
+            // awaits between this check and the prompt.
+            if (request.tab && !request.tab.connection?.live) throw pageGone()
             const key = JSON.stringify([request.principal, request.origin])
             const pending = byKey.get(key)
             if (pending && pending.accessToken !== request.accessToken) {
                 finish(pending, sessionEnded())
             }
-            return (byKey.get(key) ?? start(request, key)).promise
+            const shared = byKey.get(key)
+            return (
+                shared && joins(shared, request) ? shared : start(request, key)
+            ).promise
         },
         service: {
             async get(id) {

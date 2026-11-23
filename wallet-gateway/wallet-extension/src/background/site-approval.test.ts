@@ -17,19 +17,21 @@ import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
-import { asPort, fakePort } from '@/__tests__/fake-port.ts'
+import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
 import { inAnHour, jwt } from '@/__tests__/jwt.ts'
 import {
     PAGE_PRESENCE_PORT_NAME,
     siteApprovalPortName,
 } from '@/shared/ports.ts'
 
-import { createPagePresence } from './page-presence.ts'
+import { createPagePresence, type PagePresence } from './page-presence.ts'
 import {
     createSiteApprovals,
     currentSessionCheck,
     type SessionCheck,
+    type SiteApprovalRequest,
     type SiteApprovals,
+    type SiteApprovalTab,
 } from './site-approval.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
@@ -37,7 +39,7 @@ import { createTabIcons } from './tab-icon.ts'
 
 const origin = 'https://dapp.example'
 const tab = { tabId: 7, windowId: 3, page: 'document-1' }
-const alice = { principal: 'alice', origin, accessToken: 'token-a', tab }
+const pageGone = 'The page that asked for the site was closed or reloaded'
 
 describe('createSiteApprovals', () => {
     let lockListeners: (() => void)[]
@@ -51,7 +53,11 @@ describe('createSiteApprovals', () => {
     let setPopup: MockInstance<typeof fakeBrowser.action.setPopup>
     let openPopup: MockInstance<typeof fakeBrowser.action.openPopup>
     let connectListeners: ((port: Browser.runtime.Port) => void)[]
+    let presence: PagePresence
     let approvals: SiteApprovals
+    // The presence port of alice's page, tab 7's document-1.
+    let alicePage: FakePort
+    let alice: SiteApprovalRequest & { tab: SiteApprovalTab }
 
     /** The request ID the tab's toolbar icon points at. */
     const shownId = (tabId = tab.tabId) =>
@@ -95,6 +101,33 @@ describe('createSiteApprovals', () => {
         return port
     }
 
+    /**
+     * Opens the presence port of a page in tab 7, and gives the tab of its
+     * requests, as `registerDappService` would.
+     */
+    const openPage = ({
+        documentId = tab.page as string | undefined,
+        frameId = 0,
+        pageOrigin = origin,
+    } = {}) => {
+        const port = connectPresence({
+            tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
+            documentId,
+            frameId,
+            origin: pageOrigin,
+            url: `${pageOrigin}/`,
+        })
+        const page = documentId ?? JSON.stringify([tab.tabId, frameId])
+        return {
+            port,
+            tab: {
+                ...tab,
+                page,
+                connection: presence.connection(page, pageOrigin),
+            },
+        }
+    }
+
     beforeEach(() => {
         fakeBrowser.reset()
         lockListeners = []
@@ -131,17 +164,30 @@ describe('createSiteApprovals', () => {
             fakeBrowser.runtime.onConnect,
             'addListener'
         ).mockImplementation((listener) => void connectListeners.push(listener))
+        // The toolbar popup only opens on the active tab.
+        vi.spyOn(fakeBrowser.tabs, 'get').mockImplementation((async () => ({
+            active: true,
+        })) as unknown as typeof fakeBrowser.tabs.get)
+        presence = createPagePresence()
         approvals = createSiteApprovals({
             vault: { onLock: (listener) => void lockListeners.push(listener) },
             authContext: {
                 onChange: (listener) => void authListeners.push(listener),
             },
-            presence: createPagePresence(),
+            presence,
             tabIcons: createTabIcons(),
             isCurrent,
             sites,
             timeoutMs: 1000,
         })
+        const page = openPage()
+        alicePage = page.port
+        alice = {
+            principal: 'alice',
+            origin,
+            accessToken: 'token-a',
+            tab: page.tab,
+        }
     })
 
     afterEach(() => {
@@ -296,7 +342,6 @@ describe('createSiteApprovals', () => {
 
     it('keeps the prompt when the tab loads without the page unloading', async () => {
         // Chrome reports `history.pushState` like this.
-        const presence = connectPresence()
         const request = approvals.request(alice)
         const id = await openedId()
 
@@ -308,32 +353,35 @@ describe('createSiteApprovals', () => {
 
         await expect(approvals.service.get(id)).resolves.toEqual({ origin })
         expect(shownId()).toBe(id)
-        expect(presence.disconnect).not.toHaveBeenCalled()
+        expect(alicePage.disconnect).not.toHaveBeenCalled()
         await approvals.service.decide(id, true)
         await expect(request).resolves.toBeUndefined()
     })
 
     it('rejects with 4001 when the page that asked unloads, and starts afresh', async () => {
         vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-        const presence = connectPresence()
         const request = approvals.request(alice)
         const id = await openedId()
-        // Another document in the same tab, e.g. after a reload.
-        const later = { ...tab, page: 'document-2' }
+        // Another document in the same tab, in a frame.
+        const widget = openPage({
+            documentId: 'document-2',
+            frameId: 1,
+            pageOrigin: 'https://widget.example',
+        })
         const elsewhere = approvals.request({
             ...alice,
             origin: 'https://widget.example',
-            tab: later,
+            tab: widget.tab,
         })
         await vi.waitFor(() => expect(openPopup).toHaveBeenCalledTimes(2))
         const laterId = shownId()!
         vi.advanceTimersByTime(600)
 
-        presence.remoteDisconnect()
+        alicePage.remoteDisconnect()
 
         await expect(request).rejects.toMatchObject({
             code: errorCodes.provider.userRejectedRequest,
-            message: 'The page that asked for the site was closed or reloaded',
+            message: pageGone,
         })
         await expect(approvals.service.get(id)).resolves.toBeNull()
         await vi.waitFor(() => expect(shownId()).toBe(laterId))
@@ -344,7 +392,8 @@ describe('createSiteApprovals', () => {
 
         // The reloaded page's connect gets its own prompt and full timeout.
         openPopup.mockClear()
-        const again = approvals.request({ ...alice, tab: later })
+        const reloaded = openPage({ documentId: 'document-3' })
+        const again = approvals.request({ ...alice, tab: reloaded.tab })
         const againId = await openedId()
         expect(againId).not.toBe(id)
         let settled = false
@@ -359,21 +408,14 @@ describe('createSiteApprovals', () => {
     })
 
     it('keys a page by tab and frame without a documentId', async () => {
-        const firefoxTab = { ...tab, page: JSON.stringify([tab.tabId, 0]) }
-        const request = approvals.request({ ...alice, tab: firefoxTab })
+        const top = openPage({ documentId: undefined })
+        const request = approvals.request({ ...alice, tab: top.tab })
         const id = await openedId()
-        const subframe = connectPresence({
-            tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
-            frameId: 2,
-        })
-        const top = connectPresence({
-            tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
-            frameId: 0,
-        })
+        const subframe = openPage({ documentId: undefined, frameId: 2 })
 
-        subframe.remoteDisconnect()
+        subframe.port.remoteDisconnect()
         await expect(approvals.service.get(id)).resolves.toEqual({ origin })
-        top.remoteDisconnect()
+        top.port.remoteDisconnect()
 
         await expect(request).rejects.toMatchObject({
             code: errorCodes.provider.userRejectedRequest,
@@ -395,6 +437,123 @@ describe('createSiteApprovals', () => {
         expect(port.disconnect).toHaveBeenCalled()
         port.remoteDisconnect()
 
+        expect(alice.tab.connection?.live).toBe(true)
+        await approvals.service.decide(id, true)
+        await expect(request).resolves.toBeUndefined()
+    })
+
+    it('prompts for nothing when the page goes while the session is checked', async () => {
+        let checked!: (current: boolean) => void
+        isCurrent.mockImplementationOnce(
+            () => new Promise((resolve) => (checked = resolve))
+        )
+
+        const request = approvals.request(alice)
+        await vi.waitFor(() => expect(checked).toBeDefined())
+        alicePage.remoteDisconnect()
+        checked(true)
+
+        await expect(request).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+            message: pageGone,
+        })
+        expect(setPopup).not.toHaveBeenCalled()
+        expect(openPopup).not.toHaveBeenCalled()
+    })
+
+    it.each([
+        ['with a documentId', 'document-2', origin],
+        ['by tab and frame', undefined, origin],
+        [
+            'by tab and frame, from another origin',
+            undefined,
+            'https://other.example',
+        ],
+    ])(
+        'gives a new page in the same frame (%s) a prompt of its own, whichever event comes first',
+        async (_, documentId, nextOrigin) => {
+            for (const order of ['new page first', 'old page first']) {
+                openPopup.mockClear()
+                const old = documentId
+                    ? openPage()
+                    : openPage({ documentId: undefined })
+                const first = approvals.request({ ...alice, tab: old.tab })
+                const firstId = await openedId()
+
+                if (order === 'old page first') old.port.remoteDisconnect()
+                const next = openPage({ documentId, pageOrigin: nextOrigin })
+
+                await expect(first).rejects.toMatchObject({
+                    code: errorCodes.provider.userRejectedRequest,
+                    message: pageGone,
+                })
+                openPopup.mockClear()
+                const second = approvals.request({
+                    ...alice,
+                    origin: nextOrigin,
+                    tab: next.tab,
+                })
+                const secondId = await openedId()
+                expect(secondId).not.toBe(firstId)
+                // The old page's disconnect comes late, and is ignored.
+                if (order === 'new page first') old.port.remoteDisconnect()
+
+                expect(next.tab.connection?.live).toBe(true)
+                await expect(approvals.service.get(secondId)).resolves.toEqual({
+                    origin: nextOrigin,
+                })
+                expect(shownId()).toBe(secondId)
+                await approvals.service.decide(secondId, true)
+                await expect(second).resolves.toBeUndefined()
+            }
+        }
+    )
+
+    it('binds a request only to a page of its own origin', () => {
+        const old = openPage({ documentId: undefined })
+        openPage({ documentId: undefined, pageOrigin: 'https://other.example' })
+
+        expect(old.tab.connection?.live).toBe(false)
+        expect(presence.connection(old.tab.page, origin)).toBeUndefined()
+    })
+
+    it('does not make a request with a tab wait on a prompt without one', async () => {
+        void approvals.request({ ...alice, tab: undefined }).catch(() => {})
+        const request = approvals.request(alice)
+
+        const id = await openedId()
+        await approvals.service.decide(id, true)
+        await expect(request).resolves.toBeUndefined()
+    })
+
+    it('leaves the prompt on the icon without an openPopup method', async () => {
+        // Older browsers have no action.openPopup.
+        const action = fakeBrowser.action as { openPopup?: unknown }
+        const original = action.openPopup
+        action.openPopup = undefined
+        try {
+            const request = approvals.request(alice)
+            await vi.waitFor(async () => expect(await badge()).toBe('1'))
+            const id = shownId()!
+
+            await approvals.service.decide(id, true)
+            await expect(request).resolves.toBeUndefined()
+        } finally {
+            action.openPopup = original
+        }
+    })
+
+    it('leaves the prompt on the icon when the tab is not the active one', async () => {
+        vi.mocked(fakeBrowser.tabs.get).mockImplementation((async () => ({
+            active: false,
+        })) as unknown as typeof fakeBrowser.tabs.get)
+
+        const request = approvals.request(alice)
+        await vi.waitFor(() => expect(fakeBrowser.tabs.get).toHaveBeenCalled())
+        const id = shownId()!
+
+        expect(openPopup).not.toHaveBeenCalled()
+        expect(await badge()).toBe('1')
         await approvals.service.decide(id, true)
         await expect(request).resolves.toBeUndefined()
     })
@@ -684,7 +843,7 @@ describe('currentSessionCheck', () => {
         const approvals = createSiteApprovals({
             vault: { onLock: () => {} },
             authContext: { onChange: () => {} },
-            presence: { onUnload: () => {} },
+            presence: { onEnd: () => {} },
             tabIcons: createTabIcons(),
             isCurrent: await signedIn(token),
             sites: { approve, isApproved: vi.fn(), revoke: vi.fn() },
@@ -695,7 +854,10 @@ describe('currentSessionCheck', () => {
                 principal: 'alice',
                 origin,
                 accessToken: token,
-                tab,
+                tab: {
+                    ...tab,
+                    connection: { page: tab.page, origin, live: true },
+                },
             })
         ).rejects.toMatchObject({ code: errorCodes.provider.unauthorized })
         expect(setPopup).not.toHaveBeenCalled()
