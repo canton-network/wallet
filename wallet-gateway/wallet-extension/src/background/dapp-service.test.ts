@@ -13,6 +13,7 @@ import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
 import type { DappDispatcher } from './controllers/dapp/dispatch.ts'
 import { registerDappService, senderOrigin, senderTab } from './dapp-service.ts'
+import type { PagePresence } from './page-presence.ts'
 
 describe('senderOrigin', () => {
     it.each([
@@ -66,12 +67,21 @@ describe('registerDappService', () => {
             result: null,
         })),
     }
+    const connection = {
+        page: 'document-1',
+        origin: 'https://dapp.example',
+        live: true,
+    }
+    const presence = {
+        connection: vi.fn<PagePresence['connection']>(() => connection),
+    }
     let remove: () => void
 
     beforeEach(() => {
         fakeBrowser.reset()
         dispatcher.request.mockClear()
-        remove = registerDappService(dispatcher)
+        presence.connection.mockClear()
+        remove = registerDappService(dispatcher, presence)
     })
 
     afterEach(() => {
@@ -98,7 +108,7 @@ describe('registerDappService', () => {
         )
     })
 
-    it("passes the sender's tab, for the site approval prompt", async () => {
+    it("passes the sender's tab and its page's connection, for the site approval prompt", async () => {
         sendMessagesFrom({
             id: fakeBrowser.runtime.id,
             origin: 'https://dapp.example',
@@ -113,7 +123,11 @@ describe('registerDappService', () => {
         expect(dispatcher.request).toHaveBeenCalledWith(
             request,
             'https://dapp.example',
-            { tabId: 7, windowId: 3, page: 'document-1' }
+            { tabId: 7, windowId: 3, page: 'document-1', connection }
+        )
+        expect(presence.connection).toHaveBeenCalledWith(
+            'document-1',
+            'https://dapp.example'
         )
     })
 

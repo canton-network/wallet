@@ -12,6 +12,7 @@ import type { Browser } from 'wxt/browser'
 import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
 import type { DappDispatcher } from './controllers/dapp/dispatch.ts'
+import type { PagePresence } from './page-presence.ts'
 import type { SiteApprovalTab } from './site-approval.ts'
 
 type Sender = Pick<Browser.runtime.MessageSender, 'origin' | 'url'>
@@ -45,7 +46,7 @@ export function senderTab(
     sender:
         | Pick<Browser.runtime.MessageSender, 'documentId' | 'frameId' | 'tab'>
         | undefined
-): SiteApprovalTab | undefined {
+): Omit<SiteApprovalTab, 'connection'> | undefined {
     const tab = sender?.tab
     if (tab?.id === undefined || tab.windowId === undefined) return undefined
     return {
@@ -72,7 +73,8 @@ type ProxyProtocol = Record<string, (call: ProxyCall) => unknown>
  * synchronously during background start-up.
  */
 export function registerDappService(
-    dispatcher: DappDispatcher
+    dispatcher: DappDispatcher,
+    presence: Pick<PagePresence, 'connection'>
 ): RemoveListenerCallback {
     const messenger = defineExtensionMessaging<ProxyProtocol>()
     return messenger.onMessage(
@@ -97,10 +99,16 @@ export function registerDappService(
             if (typeof request !== 'object' || request === null) {
                 throw new Error('Invalid dApp request')
             }
+            const page = senderTab(sender)
             return await dispatcher.request(
                 request as JsonRpcRequest,
                 origin,
-                senderTab(sender)
+                page && {
+                    ...page,
+                    // Taken before any await, so a prompt can tell whether
+                    // the page went while the request waited.
+                    connection: presence.connection(page.page, origin),
+                }
             )
         }
     )

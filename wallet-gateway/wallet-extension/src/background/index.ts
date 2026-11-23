@@ -93,7 +93,8 @@ export function startBackground({
             },
             vault,
             authContext
-        )
+        ),
+        presence
     )
     registerTrustedService(
         USER_RPC_KEY,
