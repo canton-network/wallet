@@ -32,13 +32,12 @@ export interface ApprovedSiteStore {
 }
 
 /**
- * Keeps the approved sites in the vault item `approvedSitesV2`. The old
- * `approvedSites` item was keyed by the token's issuer claim and is ignored.
+ * Keeps the approved sites in the vault item `approvedSites`.
  */
 export function createApprovedSiteStore(
     vault: Pick<Vault, 'defineItem'>
 ): ApprovedSiteStore {
-    const item = vault.defineItem<ApprovedSites>('approvedSitesV2', {
+    const item = vault.defineItem<ApprovedSites>('approvedSites', {
         fallback: {},
     })
     const originsOf = (sites: ApprovedSites, principal: string): string[] => {
