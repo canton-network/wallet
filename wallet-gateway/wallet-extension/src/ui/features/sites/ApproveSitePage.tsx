@@ -41,14 +41,10 @@ export function ApproveSitePage({ id }: { id: string }) {
                             {request.origin}
                         </Typography>
                     </Paper>
-                    <Alert severity="warning">
-                        If you approve, this site can read your parties and call
-                        the ledger with your full rights, on any network you
-                        sign in to. It also receives your ledger access token,
-                        which it can keep using until the token expires, even
-                        after it disconnects. Disconnecting only stops the
-                        wallet from serving the site. Only approve sites you
-                        trust.
+                    <Alert severity="info" sx={{ color: 'text.primary' }}>
+                        This site will see your parties and can use the ledger
+                        as you. It keeps your access token until it expires,
+                        even after it disconnects. Only approve sites you trust.
                     </Alert>
                     {decide.isError && (
                         <Alert severity="error">
