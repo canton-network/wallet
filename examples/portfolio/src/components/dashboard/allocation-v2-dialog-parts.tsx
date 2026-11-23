@@ -5,13 +5,13 @@ import type {
     Account,
     AllocationSpecification,
 } from '@canton-network/core-token-standard-v2'
+import { isBasicAccount } from '@canton-network/core-wallet-ui-components/react/token'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DateTimeText } from '@components/date-time-text'
 import CloseIcon from '@mui/icons-material/Close'
 import { Box, IconButton, Typography } from '@mui/material'
 import { formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
-import { isBasicAccount } from '@canton-network/core-wallet-ui-components/react/token'
 import {
     amountsToLock,
     type InstrumentAmount,
