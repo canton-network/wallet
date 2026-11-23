@@ -953,6 +953,7 @@ describe('SelfIssuedAuthService', () => {
             )
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+            expect(store.setMessageRawStatus).not.toHaveBeenCalled()
         })
 
         it('rejects a regular message', async () => {
@@ -1038,6 +1039,145 @@ describe('SelfIssuedAuthService', () => {
                 { failureReason: 'patch failed', signature: null }
             )
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('clears the signature when session upgrade fails', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet
+                .mockResolvedValueOnce(createWallet({ status: 'allocated' }))
+                .mockResolvedValueOnce(
+                    createWallet({ status: 'allocated', isAuthParty: true })
+                )
+            store.upgradeSelfIssuedLoginSession.mockRejectedValue(
+                new Error(
+                    'duplicate key value violates unique constraint "sessions_unique_access_token_per_network"'
+                )
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow(
+                'duplicate key value violates unique constraint "sessions_unique_access_token_per_network"'
+            )
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                {
+                    failureReason:
+                        'duplicate key value violates unique constraint "sessions_unique_access_token_per_network"',
+                    signature: null,
+                }
+            )
+        })
+
+        it('clears the signature when the wallet public key does not match', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({
+                    status: 'allocated',
+                    publicKey: encodeBase64(new Uint8Array(32).fill(2)),
+                })
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow(
+                "Wallet public key alice::ns doesn't match public key used for signing access token. Refusing to complete login."
+            )
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                {
+                    failureReason:
+                        "Wallet public key alice::ns doesn't match public key used for signing access token. Refusing to complete login.",
+                    signature: null,
+                }
+            )
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('clears the signature when the wallet is not allocated', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'initialized' })
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('Wallet for party alice::ns is not allocated')
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                {
+                    failureReason:
+                        'Wallet for party alice::ns is not allocated',
+                    signature: null,
+                }
+            )
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('keeps the upgrade error when a concurrent login already consumed the message', async () => {
+            store.getMessageRaw
+                .mockResolvedValueOnce(
+                    selfIssuedTokenMessage({ status: 'signed', signature })
+                )
+                .mockResolvedValue(undefined)
+            store.getWallet
+                .mockResolvedValueOnce(createWallet({ status: 'allocated' }))
+                .mockResolvedValueOnce(
+                    createWallet({ status: 'allocated', isAuthParty: true })
+                )
+            store.upgradeSelfIssuedLoginSession.mockRejectedValue(
+                new Error('Self-issued login session not found')
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('Self-issued login session not found')
+            expect(store.setMessageRawStatus).not.toHaveBeenCalled()
+        })
+
+        it('keeps the upgrade error when clearing the signature fails to write', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet
+                .mockResolvedValueOnce(createWallet({ status: 'allocated' }))
+                .mockResolvedValueOnce(
+                    createWallet({ status: 'allocated', isAuthParty: true })
+                )
+            store.upgradeSelfIssuedLoginSession.mockRejectedValue(
+                new Error('Self-issued login session not found')
+            )
+            store.setMessageRawStatus.mockRejectedValue(
+                new Error('store write failed')
+            )
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('Self-issued login session not found')
+            expect(store.setMessageRawStatus).toHaveBeenCalledWith(
+                'login-message',
+                'failed',
+                {
+                    failureReason: 'Self-issued login session not found',
+                    signature: null,
+                }
+            )
+            expect(logger.warn).toHaveBeenCalledWith(
+                {
+                    error: expect.any(Error),
+                    messageId: 'login-message',
+                },
+                'Failed to clear signed self-issued token after login error'
+            )
         })
 
         describe('when the participant probe fails', () => {

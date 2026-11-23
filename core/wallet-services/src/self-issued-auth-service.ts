@@ -314,73 +314,66 @@ export class SelfIssuedAuthService {
     async connectWithSignedAccessToken(
         messageId: string
     ): Promise<SignedAccessTokenConnection> {
-        const { message, wallet } = await this.requireTokenMessage(messageId)
-        if (message.status !== 'signed' || !message.signature) {
-            throw new Error(
-                `Self-issued login request ${messageId} is not signed`
-            )
-        }
-        if (SelfIssuedTokenService.isSigningInputExpired(message.message)) {
-            return this.failLogin(messageId, SELF_ISSUED_LOGIN_EXPIRED)
-        }
-
-        const username = this.session.userId
-        let authPartyWallet: Wallet
         try {
+            const { message, wallet } =
+                await this.requireTokenMessage(messageId)
+            if (message.status !== 'signed' || !message.signature) {
+                throw new Error(
+                    `Self-issued login request ${messageId} is not signed`
+                )
+            }
+            if (SelfIssuedTokenService.isSigningInputExpired(message.message)) {
+                return this.failLogin(messageId, SELF_ISSUED_LOGIN_EXPIRED)
+            }
+
+            const username = this.session.userId
             const existingUser = await this.getExistingUser()
-            authPartyWallet = canUserUseSelfIssuedAuth(existingUser)
+            const authPartyWallet = canUserUseSelfIssuedAuth(existingUser)
                 ? this.requireExistingAuthParty(
                       wallet,
                       existingUser.primaryParty
                   )
                 : await this.setUserAuthParty(username, wallet)
-        } catch (error) {
-            // The signature is already stored. Clear it so a retry can't
-            // rebuild the token from this message.
-            await this.failTokenMessage(
-                messageId,
-                error instanceof Error
-                    ? error.message
-                    : 'Self-issued login could not be completed.'
+
+            const accessToken = SelfIssuedTokenService.appendJwtSignature(
+                message.message,
+                message.signature
             )
+            try {
+                await this.probeLedger(accessToken)
+            } catch (error) {
+                this.logger.warn(
+                    { error },
+                    'Ledger API rejected the self-issued token'
+                )
+                return this.failLogin(messageId, SELF_ISSUED_TOKEN_REJECTED)
+            }
+            const session = await this.store.upgradeSelfIssuedLoginSession(
+                this.session.sessionId,
+                accessToken,
+                messageId
+            )
+
+            this.logger.info(
+                {
+                    username,
+                    partyId: authPartyWallet.partyId,
+                    status: authPartyWallet.status,
+                    signingProviderId: authPartyWallet.signingProviderId,
+                    isAuthParty: authPartyWallet.isAuthParty,
+                },
+                'Established self-issued session'
+            )
+
+            return {
+                status: 'connected',
+                wallet: authPartyWallet,
+                accessToken,
+                session,
+            }
+        } catch (error) {
+            await this.clearSignedTokenAfterError(messageId, error)
             throw error
-        }
-
-        const accessToken = SelfIssuedTokenService.appendJwtSignature(
-            message.message,
-            message.signature
-        )
-        try {
-            await this.probeLedger(accessToken)
-        } catch (error) {
-            this.logger.warn(
-                { error },
-                'Ledger API rejected the self-issued token'
-            )
-            return this.failLogin(messageId, SELF_ISSUED_TOKEN_REJECTED)
-        }
-        const session = await this.store.upgradeSelfIssuedLoginSession(
-            this.session.sessionId,
-            accessToken,
-            messageId
-        )
-
-        this.logger.info(
-            {
-                username,
-                partyId: authPartyWallet.partyId,
-                status: authPartyWallet.status,
-                signingProviderId: authPartyWallet.signingProviderId,
-                isAuthParty: authPartyWallet.isAuthParty,
-            },
-            'Established self-issued session'
-        )
-
-        return {
-            status: 'connected',
-            wallet: authPartyWallet,
-            accessToken,
-            session,
         }
     }
 
@@ -536,6 +529,35 @@ export class SelfIssuedAuthService {
             failureReason,
             signature: null,
         })
+    }
+
+    private async clearSignedTokenAfterError(
+        messageId: string,
+        error: unknown
+    ): Promise<void> {
+        // Clear a leftover signature after a post-signing error. If a
+        // concurrent login already consumed the message, or the store write
+        // fails, keep the original error so cleanup can still be retried.
+        const failureReason =
+            error instanceof Error
+                ? error.message
+                : 'Self-issued login could not be completed.'
+        try {
+            const message = await this.store.getMessageRaw(messageId)
+            if (
+                !message ||
+                message.kind !== 'self-issued-token' ||
+                (message.status !== 'signed' && !message.signature)
+            ) {
+                return
+            }
+            await this.failTokenMessage(messageId, failureReason)
+        } catch (cleanupError) {
+            this.logger.warn(
+                { error: cleanupError, messageId },
+                'Failed to clear signed self-issued token after login error'
+            )
+        }
     }
 
     private async failLogin(
