@@ -12,6 +12,7 @@ import { siteApprovalPortId } from '@/shared/ports.ts'
 import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
 import type { PagePresence } from './page-presence.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
+import { DEFAULT_POPUP, type TabIcons } from './tab-icon.ts'
 import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
 
@@ -103,6 +104,7 @@ export interface SiteApprovalsOptions {
     vault: Pick<Vault, 'onLock'>
     authContext: AuthContextChanges
     presence: PagePresence
+    tabIcons: TabIcons
     isCurrent: SessionCheck
     sites: ApprovedSiteStore
     timeoutMs?: number
@@ -116,41 +118,10 @@ export const sessionEnded = () =>
         message: 'The session that asked for the site approval has ended',
     })
 
-const DEFAULT_POPUP = 'popup.html'
-
 const approvalPopup = (id: string) =>
     `${DEFAULT_POPUP}#/approve-site?id=${encodeURIComponent(id)}`
 
-// The tab may have closed in the meantime.
 const ignore = () => {}
-
-/**
- * Points the tab's toolbar icon at its newest pending prompt, with a badge
- * counting them, or back at the wallet when there is none. Other tabs keep
- * the default popup.
- */
-async function showPrompts(tabId: number, ids: string[]): Promise<void> {
-    const newest = ids.at(-1)
-    await Promise.all([
-        browser.action
-            .setPopup({
-                tabId,
-                popup:
-                    newest === undefined
-                        ? DEFAULT_POPUP
-                        : approvalPopup(newest),
-            })
-            .catch(ignore),
-        browser.action
-            .setBadgeText({ tabId, text: ids.length ? String(ids.length) : '' })
-            .catch(ignore),
-        ids.length
-            ? browser.action
-                  .setBadgeBackgroundColor({ tabId, color: '#d32f2f' })
-                  .catch(ignore)
-            : undefined,
-    ])
-}
 
 /**
  * Keeps the pending site approvals in memory. A service worker restart drops
@@ -168,6 +139,7 @@ export function createSiteApprovals({
     vault,
     authContext,
     presence,
+    tabIcons,
     isCurrent,
     sites,
     timeoutMs = SITE_APPROVAL_TIMEOUT_MS,
@@ -184,10 +156,20 @@ export function createSiteApprovals({
         pending.ports.clear()
     }
 
+    /**
+     * Points the tab's toolbar icon at its newest pending prompt, with a
+     * badge counting them, or gives the icon up when there is none.
+     */
     function showTab(tabId: number): Promise<void> {
-        return showPrompts(
+        const prompts = byTab.get(tabId) ?? []
+        const newest = prompts.at(-1)
+        return tabIcons.set(
             tabId,
-            (byTab.get(tabId) ?? []).map((pending) => pending.id)
+            'approval',
+            newest && {
+                popup: approvalPopup(newest.id),
+                badge: String(prompts.length),
+            }
         )
     }
 
@@ -285,11 +267,6 @@ export function createSiteApprovals({
                 )
             }
         }
-    })
-
-    // Sets the prompt again should anything have cleared it.
-    browser.tabs.onUpdated.addListener((tabId) => {
-        if (byTab.has(tabId)) void showTab(tabId)
     })
 
     async function undo(pending: PendingApproval): Promise<void> {

@@ -32,9 +32,11 @@ import {
     loadAuthedStore,
 } from './store/index.ts'
 import { createRegistryStore } from './store/registries.ts'
+import { createTabIcons } from './tab-icon.ts'
 import { createTokenSdk } from './token/sdk.ts'
 import { createTokenService } from './token/service.ts'
 import { registerTrustedService } from './trusted-service.ts'
+import { createUnlockRequests } from './unlock-request.ts'
 import { registerVaultService } from './vault-service.ts'
 import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
 
@@ -62,13 +64,17 @@ export function startBackground({
     const deps = { getStore, authContext, signingDriver, notificationService }
     const sites = createApprovedSiteStore(vault)
     const isCurrent = currentSessionCheck(getStore, authContext)
+    const presence = createPagePresence()
+    const tabIcons = createTabIcons()
     const siteApprovals = createSiteApprovals({
         vault,
         authContext,
-        presence: createPagePresence(),
+        presence,
+        tabIcons,
         isCurrent,
         sites,
     })
+    const unlockRequests = createUnlockRequests({ vault, presence, tabIcons })
     const sitePorts = createSitePorts(vault, authContext)
 
     registerVaultService(vault)
@@ -81,6 +87,7 @@ export function startBackground({
                 notificationService,
                 sites,
                 siteApprovals,
+                unlockRequests,
                 sitePorts,
                 isCurrent,
             },

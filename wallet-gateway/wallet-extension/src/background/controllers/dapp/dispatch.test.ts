@@ -41,6 +41,7 @@ import { disconnectedStatusEvent } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
 import { createTestWalletStore } from '../../store/test-store.ts'
+import type { UnlockRequests } from '../../unlock-request.ts'
 import { VaultLockedError } from '../../vault/index.ts'
 import type { DappControllerDeps } from './controller.ts'
 import { createDappDispatcher, type DappDispatcher } from './dispatch.ts'
@@ -98,6 +99,7 @@ describe('createDappDispatcher', () => {
     let sites: ReturnType<typeof fakeApprovedSites>
     let deps: DappControllerDeps & {
         siteApprovals: { request: Mock<SiteApprovals['request']> }
+        unlockRequests: { request: Mock<UnlockRequests['request']> }
         sitePorts: {
             send: Mock<SitePorts['send']>
             close: Mock<SitePorts['close']>
@@ -117,6 +119,7 @@ describe('createDappDispatcher', () => {
             notificationService: service,
             sites,
             siteApprovals: { request: vi.fn() },
+            unlockRequests: { request: vi.fn(async () => {}) },
             sitePorts: { send: vi.fn(), close: vi.fn() },
             isCurrent: vi.fn(async () => true),
         }
@@ -204,11 +207,13 @@ describe('createDappDispatcher', () => {
         })
         // As before site approval: connect shows the unlock page and reports
         // not connected, without asking about the site.
+        const tab = { tabId: 7, windowId: 3, page: 'document-1' }
         await expect(
-            locked.request(request('connect'), origin)
+            locked.request(request('connect'), origin, tab)
         ).resolves.toMatchObject({
             result: { isConnected: false, reason: 'Locked' },
         })
+        expect(deps.unlockRequests.request).toHaveBeenCalledWith(tab)
         expect(deps.siteApprovals.request).not.toHaveBeenCalled()
         await expect(
             locked.request(request('listAccounts'), origin)

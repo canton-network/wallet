@@ -33,6 +33,7 @@ import {
 } from './site-approval.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
+import { createTabIcons } from './tab-icon.ts'
 
 const origin = 'https://dapp.example'
 const tab = { tabId: 7, windowId: 3, page: 'document-1' }
@@ -136,6 +137,7 @@ describe('createSiteApprovals', () => {
                 onChange: (listener) => void authListeners.push(listener),
             },
             presence: createPagePresence(),
+            tabIcons: createTabIcons(),
             isCurrent,
             sites,
             timeoutMs: 1000,
@@ -683,6 +685,7 @@ describe('currentSessionCheck', () => {
             vault: { onLock: () => {} },
             authContext: { onChange: () => {} },
             presence: { onUnload: () => {} },
+            tabIcons: createTabIcons(),
             isCurrent: await signedIn(token),
             sites: { approve, isApproved: vi.fn(), revoke: vi.fn() },
         })

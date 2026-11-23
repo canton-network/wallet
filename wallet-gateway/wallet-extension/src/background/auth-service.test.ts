@@ -64,6 +64,7 @@ describe('createAuthService', () => {
             vault: {
                 ready: Promise.resolve(),
                 status: () => vaultStatus,
+                onUnlock: vi.fn(),
                 onLock: vi.fn((listener: () => void) => {
                     // The real vault runs listeners and sets the status in closeNow().
                     lockVault = () => {

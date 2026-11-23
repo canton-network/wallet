@@ -30,7 +30,6 @@ import { enqueueApprovalRequest } from '@/shared/approval-requests.ts'
 import { logger } from '@/shared/logger.ts'
 
 import type { SitePorts } from '../../notifications.ts'
-import { openWalletUi } from '../../open-ui.ts'
 import {
     type SessionCheck,
     type SiteApprovals,
@@ -40,6 +39,7 @@ import {
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
+import type { UnlockRequests } from '../../unlock-request.ts'
 import buildController from './rpc-gen/index.ts'
 import type {
     ConnectResult,
@@ -58,6 +58,7 @@ export interface DappControllerDeps {
     notificationService: INotificationService
     sites: ApprovedSiteStore
     siteApprovals: Pick<SiteApprovals, 'request'>
+    unlockRequests: Pick<UnlockRequests, 'request'>
     sitePorts: Pick<SitePorts, 'send' | 'close'>
     isCurrent: SessionCheck
 }
@@ -92,6 +93,7 @@ export const dappController = (
         notificationService,
         sites,
         siteApprovals,
+        unlockRequests,
         sitePorts,
         isCurrent,
     }: DappControllerDeps,
@@ -138,8 +140,9 @@ export const dappController = (
             logger.info('Dapp connect status: connecting')
 
             if (locked) {
-                // Report "not connected" and show the unlock page.
-                await openWalletUi('/unlock').catch((error: unknown) => {
+                // Report "not connected" and show the unlock page on the
+                // tab's toolbar icon.
+                await unlockRequests.request(tab).catch((error: unknown) => {
                     logger.error('Failed to open the unlock page: {error}', {
                         error,
                     })
