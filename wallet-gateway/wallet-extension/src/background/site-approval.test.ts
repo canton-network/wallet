@@ -273,6 +273,72 @@ describe('createSiteApprovals', () => {
         await expect(request).resolves.toBeUndefined()
     })
 
+    it('rejects with 4001 when the tab loads a new page, and starts afresh', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+        const other = { tabId: 8, windowId: tab.windowId }
+        const request = approvals.request(alice)
+        const id = await openedId()
+        const elsewhere = approvals.request({
+            ...alice,
+            origin: 'https://widget.example',
+            tab: other,
+        })
+        await vi.waitFor(() => expect(shownId(other.tabId)).toBeTruthy())
+        const otherId = shownId(other.tabId)!
+        vi.advanceTimersByTime(600)
+
+        await fakeBrowser.tabs.onUpdated.trigger(
+            tab.tabId,
+            { status: 'loading' },
+            {} as Browser.tabs.Tab
+        )
+
+        await expect(request).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+            message: 'The page that asked for the site changed',
+        })
+        await expect(approvals.service.get(id)).resolves.toBeNull()
+        await expectRestored()
+        await expect(approvals.service.get(otherId)).resolves.toEqual({
+            origin: 'https://widget.example',
+        })
+        await approvals.service.decide(otherId, true)
+        await expect(elsewhere).resolves.toBeUndefined()
+
+        // The reloaded page's connect gets its own prompt and full timeout.
+        openPopup.mockClear()
+        const again = approvals.request(alice)
+        const againId = await openedId()
+        expect(againId).not.toBe(id)
+        let settled = false
+        again.catch(() => {}).finally(() => (settled = true))
+        vi.advanceTimersByTime(999)
+        await Promise.resolve()
+        expect(settled).toBe(false)
+        vi.advanceTimersByTime(1)
+        await expect(again).rejects.toMatchObject({
+            message: 'The site approval timed out',
+        })
+    })
+
+    it('shows the prompt again after an update that loads nothing', async () => {
+        void approvals.request(alice).catch(() => {})
+        const id = await openedId()
+        // As if something had cleared the tab's popup and badge.
+        popups.set(tab.tabId, 'popup.html')
+        await fakeBrowser.action.setBadgeText({ tabId: tab.tabId, text: '' })
+
+        await fakeBrowser.tabs.onUpdated.trigger(
+            tab.tabId,
+            { url: `${origin}/next` },
+            {} as Browser.tabs.Tab
+        )
+
+        await vi.waitFor(() => expect(shownId()).toBe(id))
+        expect(await badge()).toBe('1')
+        await expect(approvals.service.get(id)).resolves.toEqual({ origin })
+    })
+
     it('shows the newest of two prompts on a tab, then the other', async () => {
         const first = approvals.request(alice)
         const firstId = await openedId()

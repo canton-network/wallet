@@ -48,7 +48,8 @@ export interface SiteApprovals {
     /**
      * Points the toolbar icon of the request's tab at the approval page, and
      * resolves once the user has approved the origin. Rejects with error 4001
-     * when the user rejects, closes the tab or doesn't answer in time, and
+     * when the user rejects, closes the tab, the tab loads another page or
+     * the user doesn't answer in time, and
      * with 4100 when the session isn't current (expired, signed out, another
      * account) or the vault locks. Closing the page leaves the request
      * pending.
@@ -252,17 +253,33 @@ export function createSiteApprovals({
         port.onDisconnect.addListener(() => pending.ports.delete(port))
     })
 
-    browser.tabs.onRemoved.addListener((tabId) => {
+    /** Rejects the tab's prompts without redrawing the tab for each one. */
+    function endTab(tabId: number, message: string): boolean {
         const prompts = byTab.get(tabId)
-        if (!prompts) return
-        // Nothing left to restore on a closed tab.
+        if (!prompts) return false
         byTab.delete(tabId)
-        for (const pending of prompts) {
-            finish(
-                pending,
-                rejected('The tab that asked for the site was closed')
-            )
+        for (const pending of prompts) finish(pending, rejected(message))
+        return true
+    }
+
+    // Nothing left to restore on a closed tab.
+    browser.tabs.onRemoved.addListener((tabId) => {
+        endTab(tabId, 'The tab that asked for the site was closed')
+    })
+
+    // Chrome resets a tab's popup and badge when it loads a new document, and
+    // the page that asked is gone, so its prompts end. Without this, the next
+    // page's `connect` would join the hidden prompt and its older timer.
+    browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+        if (changeInfo.status === 'loading') {
+            // Chrome resets the popup itself once the new document commits;
+            // this covers a load that never commits.
+            if (endTab(tabId, 'The page that asked for the site changed')) {
+                void showTab(tabId)
+            }
+            return
         }
+        if (byTab.has(tabId)) void showTab(tabId)
     })
 
     async function undo(pending: PendingApproval): Promise<void> {
