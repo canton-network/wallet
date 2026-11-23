@@ -37,6 +37,7 @@ describe('createJsonRpcProxyHandler', () => {
     let request: Mock<(request: JsonRpcRequest) => Promise<JsonRpcResponse>>
     let sendMessage: Mock<(message: SpliceMessage) => Promise<unknown>>
     let onResponse: Mock
+    let openPresence: Mock<() => void>
     let handle: ReturnType<typeof createJsonRpcProxyHandler>
 
     /** Delivers a `message` event the page posted to itself. */
@@ -48,10 +49,12 @@ describe('createJsonRpcProxyHandler', () => {
         request = vi.fn()
         sendMessage = vi.fn()
         onResponse = vi.fn()
+        openPresence = vi.fn()
         handle = createJsonRpcProxyHandler({
             dispatcher: { request },
             sendMessage,
             notificationRelay: { onResponse },
+            presence: { open: openPresence },
             window: page,
             runtimeId,
         })
@@ -75,6 +78,17 @@ describe('createJsonRpcProxyHandler', () => {
         expect(onResponse).toHaveBeenCalledWith('connect', {
             isConnected: true,
         })
+    })
+
+    it('opens the presence port before relaying a request', async () => {
+        request.mockResolvedValue({ jsonrpc: '2.0', id: 'request-1' })
+
+        await fromPage(requestMessage(connectRequest, runtimeId))
+
+        expect(openPresence).toHaveBeenCalledTimes(1)
+        expect(openPresence.mock.invocationCallOrder[0]).toBeLessThan(
+            request.mock.invocationCallOrder[0]!
+        )
     })
 
     it('handles requests without a target', async () => {
@@ -131,6 +145,7 @@ describe('createJsonRpcProxyHandler', () => {
 
         expect(request).not.toHaveBeenCalled()
         expect(page.postMessage).not.toHaveBeenCalled()
+        expect(openPresence).not.toHaveBeenCalled()
     })
 
     it('ignores messages for another extension', async () => {

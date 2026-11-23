@@ -19,8 +19,12 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
 import { asPort, fakePort } from '@/__tests__/fake-port.ts'
 import { inAnHour, jwt } from '@/__tests__/jwt.ts'
-import { siteApprovalPortName } from '@/shared/ports.ts'
+import {
+    PAGE_PRESENCE_PORT_NAME,
+    siteApprovalPortName,
+} from '@/shared/ports.ts'
 
+import { createPagePresence } from './page-presence.ts'
 import {
     createSiteApprovals,
     currentSessionCheck,
@@ -31,7 +35,7 @@ import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 
 const origin = 'https://dapp.example'
-const tab = { tabId: 7, windowId: 3 }
+const tab = { tabId: 7, windowId: 3, page: 'document-1' }
 const alice = { principal: 'alice', origin, accessToken: 'token-a', tab }
 
 describe('createSiteApprovals', () => {
@@ -72,6 +76,20 @@ describe('createSiteApprovals', () => {
     ) => {
         const port = fakePort(origin, siteApprovalPortName(id))
         port.sender = { id: fakeBrowser.runtime.id, url }
+        connectListeners.forEach((listener) => listener(asPort(port)))
+        return port
+    }
+
+    /** Opens a content script's presence port, from tab 7 by default. */
+    const connectPresence = (
+        sender: Partial<Browser.runtime.MessageSender> = {
+            tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
+            documentId: tab.page,
+            frameId: 0,
+        }
+    ) => {
+        const port = fakePort(origin, PAGE_PRESENCE_PORT_NAME)
+        port.sender = { ...port.sender, ...sender }
         connectListeners.forEach((listener) => listener(asPort(port)))
         return port
     }
@@ -117,6 +135,7 @@ describe('createSiteApprovals', () => {
             authContext: {
                 onChange: (listener) => void authListeners.push(listener),
             },
+            presence: createPagePresence(),
             isCurrent,
             sites,
             timeoutMs: 1000,
@@ -273,41 +292,57 @@ describe('createSiteApprovals', () => {
         await expect(request).resolves.toBeUndefined()
     })
 
-    it('rejects with 4001 when the tab loads a new page, and starts afresh', async () => {
-        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
-        const other = { tabId: 8, windowId: tab.windowId }
+    it('keeps the prompt when the tab loads without the page unloading', async () => {
+        // Chrome reports `history.pushState` like this.
+        const presence = connectPresence()
         const request = approvals.request(alice)
         const id = await openedId()
-        const elsewhere = approvals.request({
-            ...alice,
-            origin: 'https://widget.example',
-            tab: other,
-        })
-        await vi.waitFor(() => expect(shownId(other.tabId)).toBeTruthy())
-        const otherId = shownId(other.tabId)!
-        vi.advanceTimersByTime(600)
 
         await fakeBrowser.tabs.onUpdated.trigger(
             tab.tabId,
-            { status: 'loading' },
+            { status: 'loading', url: `${origin}/route` },
             {} as Browser.tabs.Tab
         )
 
+        await expect(approvals.service.get(id)).resolves.toEqual({ origin })
+        expect(shownId()).toBe(id)
+        expect(presence.disconnect).not.toHaveBeenCalled()
+        await approvals.service.decide(id, true)
+        await expect(request).resolves.toBeUndefined()
+    })
+
+    it('rejects with 4001 when the page that asked unloads, and starts afresh', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+        const presence = connectPresence()
+        const request = approvals.request(alice)
+        const id = await openedId()
+        // Another document in the same tab, e.g. after a reload.
+        const later = { ...tab, page: 'document-2' }
+        const elsewhere = approvals.request({
+            ...alice,
+            origin: 'https://widget.example',
+            tab: later,
+        })
+        await vi.waitFor(() => expect(openPopup).toHaveBeenCalledTimes(2))
+        const laterId = shownId()!
+        vi.advanceTimersByTime(600)
+
+        presence.remoteDisconnect()
+
         await expect(request).rejects.toMatchObject({
             code: errorCodes.provider.userRejectedRequest,
-            message: 'The page that asked for the site changed',
+            message: 'The page that asked for the site was closed or reloaded',
         })
         await expect(approvals.service.get(id)).resolves.toBeNull()
-        await expectRestored()
-        await expect(approvals.service.get(otherId)).resolves.toEqual({
-            origin: 'https://widget.example',
-        })
-        await approvals.service.decide(otherId, true)
+        await vi.waitFor(() => expect(shownId()).toBe(laterId))
+        expect(await badge()).toBe('1')
+        await approvals.service.decide(laterId, true)
         await expect(elsewhere).resolves.toBeUndefined()
+        await expectRestored()
 
         // The reloaded page's connect gets its own prompt and full timeout.
         openPopup.mockClear()
-        const again = approvals.request(alice)
+        const again = approvals.request({ ...alice, tab: later })
         const againId = await openedId()
         expect(againId).not.toBe(id)
         let settled = false
@@ -319,6 +354,47 @@ describe('createSiteApprovals', () => {
         await expect(again).rejects.toMatchObject({
             message: 'The site approval timed out',
         })
+    })
+
+    it('keys a page by tab and frame without a documentId', async () => {
+        const firefoxTab = { ...tab, page: JSON.stringify([tab.tabId, 0]) }
+        const request = approvals.request({ ...alice, tab: firefoxTab })
+        const id = await openedId()
+        const subframe = connectPresence({
+            tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
+            frameId: 2,
+        })
+        const top = connectPresence({
+            tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
+            frameId: 0,
+        })
+
+        subframe.remoteDisconnect()
+        await expect(approvals.service.get(id)).resolves.toEqual({ origin })
+        top.remoteDisconnect()
+
+        await expect(request).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+        })
+        await expectRestored()
+    })
+
+    it('refuses a presence port from an extension page', async () => {
+        const request = approvals.request(alice)
+        const id = await openedId()
+
+        const port = connectPresence({
+            id: fakeBrowser.runtime.id,
+            origin: undefined,
+            url: fakeBrowser.runtime.getURL('/popup.html'),
+            tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
+            documentId: tab.page,
+        })
+        expect(port.disconnect).toHaveBeenCalled()
+        port.remoteDisconnect()
+
+        await approvals.service.decide(id, true)
+        await expect(request).resolves.toBeUndefined()
     })
 
     it('shows the prompt again after an update that loads nothing', async () => {
@@ -606,6 +682,7 @@ describe('currentSessionCheck', () => {
         const approvals = createSiteApprovals({
             vault: { onLock: () => {} },
             authContext: { onChange: () => {} },
+            presence: { onUnload: () => {} },
             isCurrent: await signedIn(token),
             sites: { approve, isApproved: vi.fn(), revoke: vi.fn() },
         })

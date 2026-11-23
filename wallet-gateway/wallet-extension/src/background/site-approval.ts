@@ -10,6 +10,7 @@ import { logger } from '@/shared/logger.ts'
 import { siteApprovalPortId } from '@/shared/ports.ts'
 
 import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
+import type { PagePresence } from './page-presence.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
@@ -32,6 +33,8 @@ export type SiteApprovalService = {
 export interface SiteApprovalTab {
     tabId: number
     windowId: number
+    /** The document that sent it: `documentId`, or the tab and frame. */
+    page: string
 }
 
 export interface SiteApprovalRequest {
@@ -48,7 +51,7 @@ export interface SiteApprovals {
     /**
      * Points the toolbar icon of the request's tab at the approval page, and
      * resolves once the user has approved the origin. Rejects with error 4001
-     * when the user rejects, closes the tab, the tab loads another page or
+     * when the user rejects, closes the tab, the page that asked unloads or
      * the user doesn't answer in time, and
      * with 4100 when the session isn't current (expired, signed out, another
      * account) or the vault locks. Closing the page leaves the request
@@ -99,6 +102,7 @@ interface PendingApproval extends SiteApprovalRequest {
 export interface SiteApprovalsOptions {
     vault: Pick<Vault, 'onLock'>
     authContext: AuthContextChanges
+    presence: PagePresence
     isCurrent: SessionCheck
     sites: ApprovedSiteStore
     timeoutMs?: number
@@ -152,7 +156,8 @@ async function showPrompts(tabId: number, ids: string[]): Promise<void> {
  * Keeps the pending site approvals in memory. A service worker restart drops
  * them, along with the dApp requests that wait for them. Must be created
  * synchronously during background start-up, as it adds port and tab
- * listeners.
+ * listeners. A prompt ends when the page that asked unloads, so a reload's
+ * `connect` asks afresh, while an in-page route change keeps it.
  *
  * A prompt lives on the toolbar icon of the dApp's tab until it settles. The
  * toolbar popup closes on any click outside it, so closing the page doesn't
@@ -162,6 +167,7 @@ async function showPrompts(tabId: number, ids: string[]): Promise<void> {
 export function createSiteApprovals({
     vault,
     authContext,
+    presence,
     isCurrent,
     sites,
     timeoutMs = SITE_APPROVAL_TIMEOUT_MS,
@@ -253,32 +259,36 @@ export function createSiteApprovals({
         port.onDisconnect.addListener(() => pending.ports.delete(port))
     })
 
-    /** Rejects the tab's prompts without redrawing the tab for each one. */
-    function endTab(tabId: number, message: string): boolean {
-        const prompts = byTab.get(tabId)
-        if (!prompts) return false
-        byTab.delete(tabId)
-        for (const pending of prompts) finish(pending, rejected(message))
-        return true
-    }
-
-    // Nothing left to restore on a closed tab.
     browser.tabs.onRemoved.addListener((tabId) => {
-        endTab(tabId, 'The tab that asked for the site was closed')
+        const prompts = byTab.get(tabId)
+        if (!prompts) return
+        // Nothing left to restore on a closed tab.
+        byTab.delete(tabId)
+        for (const pending of prompts) {
+            finish(
+                pending,
+                rejected('The tab that asked for the site was closed')
+            )
+        }
     })
 
-    // Chrome resets a tab's popup and badge when it loads a new document, and
-    // the page that asked is gone, so its prompts end. Without this, the next
-    // page's `connect` would join the hidden prompt and its older timer.
-    browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
-        if (changeInfo.status === 'loading') {
-            // Chrome resets the popup itself once the new document commits;
-            // this covers a load that never commits.
-            if (endTab(tabId, 'The page that asked for the site changed')) {
-                void showTab(tabId)
+    // Without this, a reloaded page's `connect` would join the prompt that
+    // Chrome hid by resetting the popup, and its older timer.
+    presence.onUnload((page) => {
+        for (const pending of byId.values()) {
+            if (pending.tab?.page === page) {
+                finish(
+                    pending,
+                    rejected(
+                        'The page that asked for the site was closed or reloaded'
+                    )
+                )
             }
-            return
         }
+    })
+
+    // Sets the prompt again should anything have cleared it.
+    browser.tabs.onUpdated.addListener((tabId) => {
         if (byTab.has(tabId)) void showTab(tabId)
     })
 

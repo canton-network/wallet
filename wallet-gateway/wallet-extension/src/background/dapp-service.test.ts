@@ -12,7 +12,7 @@ import { sendMessagesFrom } from '@/__tests__/message-sender.ts'
 import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
 import type { DappDispatcher } from './controllers/dapp/dispatch.ts'
-import { registerDappService, senderOrigin } from './dapp-service.ts'
+import { registerDappService, senderOrigin, senderTab } from './dapp-service.ts'
 
 describe('senderOrigin', () => {
     it.each([
@@ -31,6 +31,29 @@ describe('senderOrigin', () => {
         { sender: undefined, expected: undefined },
     ])('$sender gives $expected', ({ sender, expected }) => {
         expect(senderOrigin(sender)).toBe(expected)
+    })
+})
+
+describe('senderTab', () => {
+    const tab = { id: 7, windowId: 3 } as Browser.tabs.Tab
+
+    it('names the page by its documentId', () => {
+        expect(
+            senderTab({ tab, documentId: 'document-1', frameId: 2 })
+        ).toEqual({ tabId: 7, windowId: 3, page: 'document-1' })
+    })
+
+    it('names the page by tab and frame without a documentId', () => {
+        expect(senderTab({ tab, frameId: 2 })?.page).toBe(
+            JSON.stringify([7, 2])
+        )
+        expect(senderTab({ tab, frameId: 0 })?.page).not.toBe(
+            senderTab({ tab, frameId: 2 })?.page
+        )
+    })
+
+    it('has none without a tab', () => {
+        expect(senderTab({ documentId: 'document-1' })).toBeUndefined()
     })
 })
 
@@ -81,6 +104,8 @@ describe('registerDappService', () => {
             origin: 'https://dapp.example',
             url: 'https://dapp.example/page',
             tab: { id: 7, windowId: 3 } as Browser.tabs.Tab,
+            documentId: 'document-1',
+            frameId: 0,
         })
 
         await createProxyService(DAPP_RPC_KEY).request(request)
@@ -88,7 +113,7 @@ describe('registerDappService', () => {
         expect(dispatcher.request).toHaveBeenCalledWith(
             request,
             'https://dapp.example',
-            { tabId: 7, windowId: 3 }
+            { tabId: 7, windowId: 3, page: 'document-1' }
         )
     })
 

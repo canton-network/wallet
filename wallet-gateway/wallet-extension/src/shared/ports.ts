@@ -33,3 +33,10 @@ export const siteApprovalPortId = (name: string) =>
     name.startsWith(SITE_APPROVAL_PORT_PREFIX)
         ? name.slice(SITE_APPROVAL_PORT_PREFIX.length)
         : undefined
+
+/**
+ * Name of the `runtime.Port` the content script holds open while its page is
+ * loaded. The background ends the page's site approval prompts when it
+ * disconnects.
+ */
+export const PAGE_PRESENCE_PORT_NAME = 'wg-page-presence'

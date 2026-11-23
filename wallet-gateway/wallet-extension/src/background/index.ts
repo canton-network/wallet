@@ -23,6 +23,7 @@ import {
     registerNotificationPorts,
 } from './notifications.ts'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui.ts'
+import { createPagePresence } from './page-presence.ts'
 import { createSiteApprovals, currentSessionCheck } from './site-approval.ts'
 import { createApprovedSiteStore } from './store/approved-sites.ts'
 import {
@@ -64,6 +65,7 @@ export function startBackground({
     const siteApprovals = createSiteApprovals({
         vault,
         authContext,
+        presence: createPagePresence(),
         isCurrent,
         sites,
     })
