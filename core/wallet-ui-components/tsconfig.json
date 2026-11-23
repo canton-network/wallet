@@ -4,5 +4,22 @@
         "jsx": "react-jsx",
         "types": []
     },
-    "include": ["src", "*.ts", ".storybook/*.ts"]
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-user-rpc-client"
+        },
+        {
+            "path": "../wallet-store"
+        },
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../tx-visualizer"
+        },
+        {
+            "path": "../rpc-errors"
+        }
+    ]
 }
