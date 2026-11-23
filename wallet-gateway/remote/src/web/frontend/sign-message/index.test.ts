@@ -113,6 +113,30 @@ describe('UserUiSignMessage', () => {
         expect(mockRequest).not.toHaveBeenCalled()
     })
 
+    it('shows an error when the message is not a string', async () => {
+        history.replaceState({}, '', '?messageId=msg-1')
+        mockRequest.mockImplementation(async ({ method }) => {
+            if (method === 'getMessageToSign') {
+                return {
+                    message: {
+                        message: ['hello'],
+                        origin: 'https://dapp.example',
+                        status: 'pending',
+                    },
+                }
+            }
+            return undefined
+        })
+
+        el = await fixture<UserUiSignMessage>(componentFixture)
+
+        await waitUntil(() => el.loadError !== null)
+
+        expect(el.shadowRoot?.textContent).toContain(
+            'Message type is not supported'
+        )
+    })
+
     it('renders the message content after loading', async () => {
         history.replaceState({}, '', '?messageId=msg-1')
         mockRequest.mockImplementation(async ({ method }) => {

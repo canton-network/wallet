@@ -96,11 +96,15 @@ export class UserUiSignMessage extends BaseElement {
                 method: 'getMessageToSign',
                 params: { messageId: this.messageId },
             })
-            this.message = result.message.message
-            this.origin = result.message.origin ?? null
-            this.status = result.message.status
-            this.externalTxId = result.message.externalTxId ?? null
-            this.failureReason = result.message.failureReason ?? null
+            if (typeof result.message.message === 'string') {
+                this.message = result.message.message
+                this.origin = result.message.origin ?? null
+                this.status = result.message.status
+                this.externalTxId = result.message.externalTxId ?? null
+                this.failureReason = result.message.failureReason ?? null
+            } else {
+                this.loadError = 'Message type is not supported.'
+            }
         } catch (err) {
             console.error(err)
             // Most common case: messageId doesn't exist anymore / was deleted

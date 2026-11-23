@@ -26,6 +26,7 @@ import {
 
 import type { KernelInfo } from '../config/Config.ts'
 import { dappController, type DappControllerDeps } from './controller.ts'
+import type { SignMessageParams } from './rpc-gen/typings.ts'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -745,6 +746,63 @@ describe('dappController', () => {
                 controller.signMessage({ message: '' })
             ).rejects.toThrow('Message is required')
         })
+
+        it.each<[string, unknown]>([
+            [
+                'a messageType',
+                {
+                    message: 'hello',
+                    messageType: 'canton-prepared-transaction',
+                },
+            ],
+            [
+                'a messageType with an array',
+                {
+                    message: ['hello'],
+                    messageType: 'canton-topology-transactions',
+                },
+            ],
+            [
+                'an unknown messageType',
+                { message: 'hello', messageType: 'unknown' },
+            ],
+            ['an empty messageType', { message: 'hello', messageType: '' }],
+        ])('rejects %s', async (_, params) => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(
+                controller.signMessage(params as SignMessageParams)
+            ).rejects.toMatchObject({
+                code: -32602,
+                message: expect.stringContaining('Unsupported messageType'),
+            })
+        })
+
+        it.each([[['hello']], [[]]])(
+            'rejects the array %j without a messageType',
+            async (message) => {
+                const store = await createStore(logger, auth)
+                const controller = createController(
+                    store,
+                    notificationService,
+                    logger,
+                    auth
+                )
+
+                await expect(
+                    controller.signMessage({ message })
+                ).rejects.toMatchObject({
+                    code: -32602,
+                    message: expect.stringContaining('must be a single string'),
+                })
+            }
+        )
 
         it('throws when auth context is missing', async () => {
             const store = await createStore(logger, auth)

@@ -139,12 +139,23 @@ export type PackageId = string
  *
  */
 export type PackageIdSelectionPreference = PackageId[]
+export type MessageText = string
+export type MessageEntry = string
+export type MessageSet = MessageEntry[]
 /**
  *
- * The message to sign.
+ * The message to sign. A UTF-8 string without a messageType, one base64 prepared transaction for canton-prepared-transaction, or the base64 topology transactions to sign together for canton-topology-transactions.
  *
  */
-export type Message = string
+export type Message = MessageText | MessageSet
+/**
+ *
+ * The Canton data the message carries. The wallet decodes the message as this type, displays it, signs the hash it computes itself and submits nothing.
+ *
+ */
+export type MessageType =
+    | 'canton-prepared-transaction'
+    | 'canton-topology-transactions'
 export type RequestMethod = 'get' | 'post' | 'patch' | 'put' | 'delete'
 export type Resource = string
 export interface Body {
@@ -561,6 +572,7 @@ export interface PrepareExecuteParams {
  */
 export interface SignMessageParams {
     message: Message
+    messageType?: MessageType
 }
 /**
  *
