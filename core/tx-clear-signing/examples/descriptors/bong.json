@@ -1,0 +1,96 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54",
+            "moduleName": "Canton.Internal.Bong",
+            "entityName": "Bong"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Canton bong (canton-builtin-admin-workflow-ping)"
+    },
+    "display": {
+        "create": {
+            "intent": "Bong",
+            "interpolatedIntent": "Bong {id} from {initiator} to {responder}",
+            "fields": [
+                {
+                    "path": "id",
+                    "label": "Bong ID",
+                    "format": "string"
+                },
+                {
+                    "path": "initiator",
+                    "label": "Initiator",
+                    "format": "party"
+                },
+                {
+                    "path": "validators",
+                    "label": "Validators",
+                    "format": "raw"
+                },
+                {
+                    "path": "responder",
+                    "label": "Responder",
+                    "format": "party"
+                },
+                {
+                    "path": "observers",
+                    "label": "Observers",
+                    "format": "raw"
+                },
+                {
+                    "path": "timeout",
+                    "label": "Timeout",
+                    "format": "dateTime"
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "Ack",
+                "intent": "Acknowledge bong",
+                "interpolatedIntent": "Acknowledge bong {@.contract.id} from {@.contract.initiator}",
+                "fields": [
+                    {
+                        "path": "@.contract.id",
+                        "label": "Bong ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.initiator",
+                        "label": "Initiator",
+                        "format": "party"
+                    }
+                ]
+            },
+            {
+                "choice": "AbortBong",
+                "intent": "Abort bong",
+                "interpolatedIntent": "Abort bong {@.contract.id} as {anyone}",
+                "fields": [
+                    {
+                        "path": "@.contract.id",
+                        "label": "Bong ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "anyone",
+                        "label": "Aborted by",
+                        "format": "party"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "x5gtcX9iHFuQx7VyT3Q5hhGS39XR81vFLMps65G6WaLIGK3abUoPbHhVto2FaBWr3QEDAI+K7DtusxIF+gcgBg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

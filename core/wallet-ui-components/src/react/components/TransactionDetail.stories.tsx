@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
@@ -327,4 +328,197 @@ export const MissingData: Story = {
             ).toHaveLength(6)
         )
     },
+}
+
+const pingTemplate = {
+    packageId:
+        'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54',
+    moduleName: 'Canton.Internal.Ping',
+    entityName: 'Ping',
+}
+
+const factoryTemplate = {
+    packageId:
+        'fb10433a48c24f30076a7aee03a3e314b7ab02fe9a22e2069e3af92d2b6ac88a',
+    moduleName: 'Splice.ExternalPartyAmuletRules',
+    entityName: 'ExternalPartyAmuletRules',
+}
+
+const clearSigning: ClearSigningResult = {
+    complete: false,
+    operations: [
+        {
+            kind: 'create',
+            template: pingTemplate,
+            descriptor: {
+                name: 'Canton ping',
+                publisher: 'Digital Asset',
+                version: '1.0.0',
+                signedBy: ['reference'],
+            },
+            status: 'described',
+            intent: 'Ping "ping-1" from alice::1220aa to bob::1220bb',
+            fields: [
+                { label: 'Ping ID', value: '"ping-1"' },
+                {
+                    label: 'Executors',
+                    value: '["alice::1220aa","bob::1220bb"]',
+                },
+                { label: 'Deadline', value: 'None' },
+                {
+                    label: 'Amount',
+                    error: "format 'number' does not accept text",
+                },
+            ],
+        },
+        {
+            kind: 'exercise',
+            template: pingTemplate,
+            choiceId: 'Archive',
+            status: 'undescribed',
+            intent: 'Exercise Archive on Canton.Internal.Ping:Ping',
+            fields: [],
+        },
+        {
+            kind: 'exercise',
+            template: factoryTemplate,
+            choiceId: 'AllocationFactory_Allocate',
+            interface: {
+                packageId:
+                    '9818a0b5b827109de03a04c8f6151cde9d1e7fe5123dbb2dfeb0e52d7271287c',
+                moduleName: 'Splice.Api.Token.AllocationInstructionV2',
+                entityName: 'AllocationFactory',
+            },
+            descriptor: {
+                name: 'Amulet rules for external parties',
+                publisher: 'Splice',
+                version: '1.0.0',
+                signedBy: ['reference'],
+            },
+            status: 'described',
+            intent: 'Allocate funds for a settlement',
+            fields: [],
+        },
+    ],
+}
+
+export const ClearSigned: Story = {
+    args: { clearSigning },
+    play: async ({ canvasElement, userEvent }) => {
+        for (const text of [
+            'What you are signing',
+            // Text values read from the transaction are quoted, in the intent and in the field
+            'Ping "ping-1" from alice::1220aa to bob::1220bb',
+            '"ping-1"',
+            '["alice::1220aa","bob::1220bb"]',
+            'None',
+            "Cannot display: format 'number' does not accept text",
+            // The undescribed operation's intent is followed by its badge
+            /^Exercise Archive on Canton\.Internal\.Ping:Ping/,
+            'Not described',
+        ]) {
+            await expect(
+                await findByShadowText(canvasElement, text)
+            ).toBeInTheDocument()
+        }
+        await expect(
+            await findByShadowRole(canvasElement, 'alert')
+        ).toHaveTextContent('Parts of this transaction are not described.')
+        await expectAcknowledgementGatesApprove(canvasElement, userEvent)
+    },
+}
+
+export const ClearSignedOperationKinds: Story = {
+    args: { clearSigning },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findAllByShadowText(canvasElement, 'Create')
+        ).toHaveLength(1)
+        await expect(
+            await findAllByShadowText(canvasElement, 'Exercise')
+        ).toHaveLength(2)
+        for (const text of [
+            'Archive',
+            // The choice, then (after a separate "via") the interface it is exercised through
+            /^AllocationFactory_Allocate\s+Splice\.Api\.Token\.AllocationInstructionV2:AllocationFactory$/,
+            'Splice.ExternalPartyAmuletRules:ExternalPartyAmuletRules',
+            factoryTemplate.packageId,
+            // The descriptor's own claim about itself
+            /^Canton ping v1\.0\.0 by\s+Digital Asset$/,
+        ]) {
+            await expect(
+                await findByShadowText(canvasElement, text)
+            ).toBeInTheDocument()
+        }
+        // The undescribed exercise has no descriptor, so it has no "Described by" row.
+        // Both Ping operations show the same package ID.
+        await expect(
+            await findAllByShadowText(canvasElement, 'Described by')
+        ).toHaveLength(2)
+        await expect(
+            await findAllByShadowText(canvasElement, pingTemplate.packageId)
+        ).toHaveLength(2)
+    },
+}
+
+export const WithoutClearSigning: Story = {
+    play: async ({ canvasElement }) => {
+        await findByShadowRole(canvasElement, 'heading', {
+            name: 'Activity Details',
+        })
+        await expect(
+            queryByShadowText(canvasElement, 'What you are signing')
+        ).not.toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Approve' })
+        ).toBeEnabled()
+    },
+}
+
+export const ClearSigningFailed: Story = {
+    args: { clearSigningError: "contract '00ab' occurs 2 times" },
+    play: async ({ canvasElement, userEvent }) => {
+        await expect(
+            await findByShadowRole(canvasElement, 'alert')
+        ).toHaveTextContent(
+            "This transaction could not be described: contract '00ab' occurs 2 times."
+        )
+        await expectAcknowledgementGatesApprove(canvasElement, userEvent)
+    },
+}
+
+export const ClearSignedComplete: Story = {
+    args: {
+        clearSigning: {
+            complete: true,
+            operations: clearSigning.operations.filter(
+                (op) => op.status === 'described'
+            ),
+        },
+    },
+    play: async ({ canvasElement }) => {
+        await expect(
+            queryByShadowRole(canvasElement, 'checkbox')
+        ).not.toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', { name: 'Approve' })
+        ).toBeEnabled()
+    },
+}
+
+/** Approve stays disabled until the user confirms they reviewed the raw transaction. */
+async function expectAcknowledgementGatesApprove(
+    canvasElement: HTMLElement,
+    userEvent: { click: (element: Element) => Promise<void> }
+): Promise<void> {
+    const approve = await findByShadowRole(canvasElement, 'button', {
+        name: 'Approve',
+    })
+    await expect(approve).toBeDisabled()
+    await userEvent.click(
+        await findByShadowRole(canvasElement, 'checkbox', {
+            name: 'I have reviewed the raw transaction and want to approve it anyway',
+        })
+    )
+    await waitFor(() => expect(approve).toBeEnabled())
 }

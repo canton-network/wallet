@@ -27,6 +27,7 @@
         "@canton-network/core-ledger-client": "workspace:",
         "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-tx-hashing": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/core-wallet-dapp-rpc-client": "workspace:",
         "@canton-network/core-wallet-store": "workspace:",

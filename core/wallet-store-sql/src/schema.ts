@@ -18,6 +18,7 @@ import {
     type MessageRaw,
     type MessageRawKind,
     type ApiKey,
+    type ClearSigningDescriptor,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
@@ -142,6 +143,15 @@ interface ApiKeysTable {
     lastUsedAt: string | null
 }
 
+interface ClearSigningDescriptorTable {
+    userId: UserId
+    packageId: string
+    moduleName: string
+    entityName: string
+    descriptor: string
+    createdAt: string
+}
+
 export interface DB {
     migrations: MigrationTable
     idps: IdpTable
@@ -153,6 +163,7 @@ export interface DB {
     messagesRaw: MessageRawTable
     sessions: SessionTable
     apiKeys: ApiKeysTable
+    clearSigningDescriptors: ClearSigningDescriptorTable
 }
 
 export const toIdp = (table: IdpTable): Idp => {
@@ -491,6 +502,25 @@ export const fromApiKey = (table: ApiKeysTable): ApiKey => {
         networkId: table.networkId,
         createdAt: new Date(table.createdAt),
         lastUsedAt: table.lastUsedAt ? new Date(table.lastUsedAt) : undefined,
+    }
+}
+
+export const toClearSigningDescriptor = (
+    table: ClearSigningDescriptorTable
+): string => table.descriptor
+
+export const fromClearSigningDescriptor = (
+    record: ClearSigningDescriptor,
+    userId: UserId,
+    createdAt: string
+): ClearSigningDescriptorTable => {
+    return {
+        userId,
+        packageId: record.packageId,
+        moduleName: record.moduleName,
+        entityName: record.entityName,
+        descriptor: record.descriptor,
+        createdAt,
     }
 }
 

@@ -856,6 +856,11 @@
                             "partyId": {
                                 "title": "partyId",
                                 "type": "string"
+                            },
+                            "preparedTransactionHash": {
+                                "title": "preparedTransactionHash",
+                                "type": "string",
+                                "description": "The hash the user approved, base64-encoded, computed by the client from the prepared transaction it displayed. When given, the transaction is signed only if this equals the hash computed from the stored transaction. When omitted, the stored hash is still checked against the stored transaction."
                             }
                         },
                         "required": ["transactionId", "partyId"]
@@ -1541,6 +1546,110 @@
                             }
                         },
                         "required": ["id"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "$ref": "#/components/schemas/Null"
+                }
+            }
+        },
+        {
+            "name": "listClearSigningDescriptors",
+            "description": "Lists the clear-signing descriptors stored for the current user.",
+            "params": [],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "ListClearSigningDescriptorsResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "descriptors": {
+                            "title": "descriptors",
+                            "type": "array",
+                            "items": {
+                                "title": "ClearSigningDescriptor",
+                                "type": "string",
+                                "description": "A stored descriptor's JSON text, exactly as it was uploaded."
+                            },
+                            "description": "The stored clear-signing descriptors, each as its uploaded JSON text."
+                        }
+                    },
+                    "required": ["descriptors"]
+                }
+            }
+        },
+        {
+            "name": "setClearSigningDescriptor",
+            "description": "Stores a clear-signing descriptor for the current user. The descriptor is JSON text. It must parse without duplicate member names, be valid against the clear-signing schema, and carry at least one signature. Every signature must verify against the public key it contains. A descriptor for the same package, module and entity replaces the stored one.",
+            "params": [
+                {
+                    "name": "params",
+                    "required": true,
+                    "schema": {
+                        "title": "SetClearSigningDescriptorParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "descriptor": {
+                                "title": "ClearSigningDescriptor",
+                                "type": "string",
+                                "description": "The descriptor JSON text. It must parse without duplicate member names, be valid against the clear-signing schema, name a template, and carry signatures that verify against the public keys they contain."
+                            }
+                        },
+                        "required": ["descriptor"]
+                    }
+                }
+            ],
+            "result": {
+                "name": "result",
+                "schema": {
+                    "title": "SetClearSigningDescriptorResult",
+                    "type": "object",
+                    "additionalProperties": false,
+                    "properties": {
+                        "descriptor": {
+                            "title": "ClearSigningDescriptor",
+                            "type": "string",
+                            "description": "The stored descriptor JSON text, exactly as it was uploaded."
+                        }
+                    },
+                    "required": ["descriptor"]
+                }
+            }
+        },
+        {
+            "name": "removeClearSigningDescriptor",
+            "description": "Removes the current user's clear-signing descriptor for one package, module and entity.",
+            "params": [
+                {
+                    "name": "params",
+                    "required": true,
+                    "schema": {
+                        "title": "RemoveClearSigningDescriptorParams",
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "packageId": {
+                                "title": "packageId",
+                                "type": "string",
+                                "description": "Package id of the template the descriptor is bound to."
+                            },
+                            "moduleName": {
+                                "title": "moduleName",
+                                "type": "string",
+                                "description": "Daml module of the template the descriptor is bound to."
+                            },
+                            "entityName": {
+                                "title": "entityName",
+                                "type": "string",
+                                "description": "Daml entity of the template the descriptor is bound to."
+                            }
+                        },
+                        "required": ["packageId", "moduleName", "entityName"]
                     }
                 }
             ],

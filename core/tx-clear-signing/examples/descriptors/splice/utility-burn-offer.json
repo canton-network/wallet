@@ -1,0 +1,131 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "15cf1eaaf35b3736d95bc5c260d3da5507cbd1edc5680f2d55d98de04e34d545",
+            "moduleName": "Utility.Registry.App.V0.Model.Burn",
+            "entityName": "BurnOffer"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Utility registry burn offer"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "BurnOffer_Accept",
+                "intent": "Accept a burn offer",
+                "interpolatedIntent": "Accept a burn of {@.contract.burn.amount} {@.contract.burn.instrumentId.id} held by {@.contract.burn.holder}, reference {@.contract.burn.reference}",
+                "fields": [
+                    {
+                        "path": "@.contract.burn.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.burn.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.burn.instrumentId.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.burn.holder",
+                        "label": "Holder",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.burn.reference",
+                        "label": "Reference",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.burn.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.burn.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "holdingCids",
+                        "label": "Holdings to burn",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "BurnOffer_Reject",
+                "intent": "Reject a burn offer",
+                "interpolatedIntent": "Reject a burn of {@.contract.burn.amount} {@.contract.burn.instrumentId.id} held by {@.contract.burn.holder}, reference {@.contract.burn.reference}: {reason}",
+                "fields": [
+                    {
+                        "path": "@.contract.burn.amount",
+                        "label": "Amount",
+                        "format": "number"
+                    },
+                    {
+                        "path": "@.contract.burn.instrumentId.id",
+                        "label": "Instrument",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.burn.instrumentId.admin",
+                        "label": "Instrument admin",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.burn.holder",
+                        "label": "Holder",
+                        "format": "party"
+                    },
+                    {
+                        "path": "@.contract.burn.reference",
+                        "label": "Reference",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.burn.executeBefore",
+                        "label": "Execute before",
+                        "format": "dateTime"
+                    },
+                    {
+                        "path": "@.contract.burn.meta.values",
+                        "label": "Metadata",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "reason",
+                        "label": "Reason",
+                        "format": "string"
+                    },
+                    {
+                        "path": "extraArgs.context.values",
+                        "label": "Context",
+                        "format": "raw",
+                        "optional": true
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "Lm0OidV+JIimcfSETdBzvJ+YUTJFehjUj/+QGZIvICLHaf0whY1timk0ihIGVECmH+YlSjwPuqKUdo4iTDJ4Bg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

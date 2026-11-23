@@ -45,6 +45,9 @@ import type { GetServerStatus } from './typings.ts'
 import type { GenerateApiKey } from './typings.ts'
 import type { ListApiKeys } from './typings.ts'
 import type { RemoveApiKey } from './typings.ts'
+import type { ListClearSigningDescriptors } from './typings.ts'
+import type { SetClearSigningDescriptor } from './typings.ts'
+import type { RemoveClearSigningDescriptor } from './typings.ts'
 import type { ListSigningProviders } from './typings.ts'
 import type { ListSigningProviderKeys } from './typings.ts'
 import type { GetWallet } from './typings.ts'
@@ -93,6 +96,9 @@ export type Methods = {
     generateApiKey: GenerateApiKey
     listApiKeys: ListApiKeys
     removeApiKey: RemoveApiKey
+    listClearSigningDescriptors: ListClearSigningDescriptors
+    setClearSigningDescriptor: SetClearSigningDescriptor
+    removeClearSigningDescriptor: RemoveClearSigningDescriptor
     listSigningProviders: ListSigningProviders
     listSigningProviderKeys: ListSigningProviderKeys
     getWallet: GetWallet
@@ -145,6 +151,9 @@ function buildController(methods: Methods) {
         generateApiKey: methods.generateApiKey,
         listApiKeys: methods.listApiKeys,
         removeApiKey: methods.removeApiKey,
+        listClearSigningDescriptors: methods.listClearSigningDescriptors,
+        setClearSigningDescriptor: methods.setClearSigningDescriptor,
+        removeClearSigningDescriptor: methods.removeClearSigningDescriptor,
         listSigningProviders: methods.listSigningProviders,
         listSigningProviderKeys: methods.listSigningProviderKeys,
         getWallet: methods.getWallet,

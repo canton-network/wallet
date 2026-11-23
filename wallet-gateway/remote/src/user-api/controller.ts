@@ -13,6 +13,15 @@ import {
 } from '@canton-network/core-rpc-errors'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
 import {
+    assertDescriptorSize,
+    DescriptorError,
+    parseDescriptor,
+    parseJsonStrict,
+    StrictJsonError,
+    verifySignatures,
+    type Descriptor,
+} from '@canton-network/core-tx-clear-signing'
+import {
     assertConnected,
     type AuthContext,
     type AuthAware,
@@ -95,6 +104,10 @@ import type {
     GeneratedApiKey,
     ListApiKeysResult,
     RemoveApiKeyParams,
+    ListClearSigningDescriptorsResult,
+    SetClearSigningDescriptorParams,
+    SetClearSigningDescriptorResult,
+    RemoveClearSigningDescriptorParams,
     ListTransactionsParams,
     ListSigningProvidersResult,
     ChangeSigningProviderParams,
@@ -1468,6 +1481,54 @@ export const userController = ({
         },
         removeApiKey: async (params: RemoveApiKeyParams): Promise<Null> => {
             await store.removeApiKey(params.id)
+            return null
+        },
+        listClearSigningDescriptors:
+            async (): Promise<ListClearSigningDescriptorsResult> => {
+                return {
+                    descriptors: await store.listClearSigningDescriptors(),
+                }
+            },
+        setClearSigningDescriptor: async (
+            params: SetClearSigningDescriptorParams
+        ): Promise<SetClearSigningDescriptorResult> => {
+            // The same steps on the same value as clearSign: the strictly parsed JSON is validated,
+            // and its signatures are checked on that JSON, not on the schema's output.
+            let json: unknown
+            let parsed: Descriptor
+            try {
+                assertDescriptorSize(params.descriptor)
+                json = parseJsonStrict(params.descriptor)
+                parsed = parseDescriptor(json)
+            } catch (error) {
+                if (
+                    !(error instanceof StrictJsonError) &&
+                    !(error instanceof DescriptorError)
+                ) {
+                    throw error
+                }
+                throw rpcErrors.invalidParams({ message: error.message })
+            }
+            const verified = await verifySignatures(json)
+            if (!verified.ok) {
+                throw rpcErrors.invalidParams({
+                    message: verified.problems.join('; '),
+                })
+            }
+            const { packageId, moduleName, entityName } =
+                parsed.context.template
+            await store.setClearSigningDescriptor({
+                packageId,
+                moduleName,
+                entityName,
+                descriptor: params.descriptor,
+            })
+            return { descriptor: params.descriptor }
+        },
+        removeClearSigningDescriptor: async (
+            params: RemoveClearSigningDescriptorParams
+        ): Promise<Null> => {
+            await store.removeClearSigningDescriptor(params)
             return null
         },
         listSigningProviders:

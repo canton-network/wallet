@@ -1,0 +1,46 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "5838793a7f11fbc16159065094823fb662120184ede48922dff092958dae6857",
+            "moduleName": "Splice.Wallet.TransferPreapproval",
+            "entityName": "TransferPreapprovalProposal"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Transfer preapproval proposal"
+    },
+    "display": {
+        "create": {
+            "intent": "Propose a transfer preapproval",
+            "interpolatedIntent": "Propose that {provider} preapproves incoming Amulet transfers to {receiver}",
+            "fields": [
+                {
+                    "path": "receiver",
+                    "label": "Receiver",
+                    "format": "party"
+                },
+                {
+                    "path": "provider",
+                    "label": "Provider",
+                    "format": "party"
+                },
+                {
+                    "path": "expectedDso",
+                    "label": "Expected Amulet administrator",
+                    "format": "party",
+                    "optional": true
+                }
+            ]
+        }
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "5FUYzDuHfswMYCToe6I/6PYCP7nWzDOJ2mdZ7CZb6und/yNZJN24owwp3FD5Q7YbVvyk1ZhfaLu0FpWBDJyTCA==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

@@ -1,0 +1,111 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54",
+            "moduleName": "Canton.Internal.Bong",
+            "entityName": "Merge"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Canton bong merge (canton-builtin-admin-workflow-ping)"
+    },
+    "display": {
+        "create": {
+            "intent": "Merge",
+            "interpolatedIntent": "Merge bong {id} from {initiator} at path {path}",
+            "fields": [
+                {
+                    "path": "id",
+                    "label": "Bong ID",
+                    "format": "string"
+                },
+                {
+                    "path": "initiator",
+                    "label": "Initiator",
+                    "format": "party"
+                },
+                {
+                    "path": "validators",
+                    "label": "Validators",
+                    "format": "raw"
+                },
+                {
+                    "path": "responders",
+                    "label": "Responders",
+                    "format": "raw"
+                },
+                {
+                    "path": "path",
+                    "label": "Path",
+                    "format": "string"
+                },
+                {
+                    "path": "timeout",
+                    "label": "Timeout",
+                    "format": "dateTime"
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "ProcessMerge",
+                "intent": "Process merge",
+                "interpolatedIntent": "Process merge {@.contract.id} path {@.contract.path} as {winner}, collapsing {leftId} and {rightId}",
+                "fields": [
+                    {
+                        "path": "@.contract.id",
+                        "label": "Bong ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "@.contract.path",
+                        "label": "Path",
+                        "format": "string"
+                    },
+                    {
+                        "path": "winner",
+                        "label": "Winner",
+                        "format": "party"
+                    },
+                    {
+                        "path": "leftId",
+                        "label": "Left collapse",
+                        "format": "contractId"
+                    },
+                    {
+                        "path": "rightId",
+                        "label": "Right collapse",
+                        "format": "contractId"
+                    }
+                ]
+            },
+            {
+                "choice": "AbortMerge",
+                "intent": "Abort merge",
+                "interpolatedIntent": "Abort merge {@.contract.id} as {anyone}",
+                "fields": [
+                    {
+                        "path": "@.contract.id",
+                        "label": "Bong ID",
+                        "format": "string"
+                    },
+                    {
+                        "path": "anyone",
+                        "label": "Aborted by",
+                        "format": "party"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "bVJPHB9IM3I6KJyYkxJNcQKQ4d70H9hZhaPASavLy9Q139/sRLxyB3MuyvyxVw2ukUtKWMaiQ3OQNTrQR+zjDw==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

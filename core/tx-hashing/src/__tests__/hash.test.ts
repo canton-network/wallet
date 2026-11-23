@@ -300,4 +300,5 @@ it('exports only the public API', async () =>
         'DEFAULT_LIMITS',
         'TxHashingError',
         'computePreparedTransactionHash',
+        'decodeBase64',
     ]))

@@ -270,6 +270,12 @@ export interface WalletFilter {
 export type TransactionId = string
 /**
  *
+ * The hash of the prepared transaction.
+ *
+ */
+export type PreparedTransactionHash = string
+/**
+ *
  * Limit of transactions to return.
  *
  */
@@ -286,6 +292,30 @@ export type CursorAsString = string
  *
  */
 export type Cursor = CursorAsString
+/**
+ *
+ * The stored descriptor JSON text, exactly as it was uploaded.
+ *
+ */
+export type ClearSigningDescriptor = string
+/**
+ *
+ * Package id of the template the descriptor is bound to.
+ *
+ */
+export type PackageId = string
+/**
+ *
+ * Daml module of the template the descriptor is bound to.
+ *
+ */
+export type ModuleName = string
+/**
+ *
+ * Daml entity of the template the descriptor is bound to.
+ *
+ */
+export type EntityName = string
 /**
  *
  * The public key of the party.
@@ -581,12 +611,6 @@ export type CommandId = string
 export type PreparedTransaction = string
 /**
  *
- * The hash of the prepared transaction.
- *
- */
-export type PreparedTransactionHash = string
-/**
- *
  * Optional payload associated with the transaction.
  *
  */
@@ -687,6 +711,12 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
+ * The stored clear-signing descriptors, each as its uploaded JSON text.
+ *
+ */
+export type Descriptors = ClearSigningDescriptor[]
+/**
+ *
  * The IDs of the available signing providers.
  *
  */
@@ -771,6 +801,7 @@ export interface ListWalletsParams {
 export interface SignParams {
     transactionId: TransactionId
     partyId: PartyId
+    preparedTransactionHash?: PreparedTransactionHash
 }
 export interface SignMessageParams {
     messageId: MessageId
@@ -812,6 +843,14 @@ export interface GenerateApiKeyParams {
 }
 export interface RemoveApiKeyParams {
     id: Id
+}
+export interface SetClearSigningDescriptorParams {
+    descriptor: ClearSigningDescriptor
+}
+export interface RemoveClearSigningDescriptorParams {
+    packageId: PackageId
+    moduleName: ModuleName
+    entityName: EntityName
 }
 export interface ListSigningProviderKeysParams {
     signingProviderId: SigningProviderId
@@ -969,6 +1008,12 @@ export interface GeneratedApiKey {
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
 }
+export interface ListClearSigningDescriptorsResult {
+    descriptors: Descriptors
+}
+export interface SetClearSigningDescriptorResult {
+    descriptor: ClearSigningDescriptor
+}
 export interface ListSigningProvidersResult {
     signingProviders: SigningProviders
 }
@@ -1065,6 +1110,14 @@ export type GenerateApiKey = (
 ) => Promise<GeneratedApiKey>
 export type ListApiKeys = () => Promise<ListApiKeysResult>
 export type RemoveApiKey = (params: RemoveApiKeyParams) => Promise<Null>
+export type ListClearSigningDescriptors =
+    () => Promise<ListClearSigningDescriptorsResult>
+export type SetClearSigningDescriptor = (
+    params: SetClearSigningDescriptorParams
+) => Promise<SetClearSigningDescriptorResult>
+export type RemoveClearSigningDescriptor = (
+    params: RemoveClearSigningDescriptorParams
+) => Promise<Null>
 export type ListSigningProviders = () => Promise<ListSigningProvidersResult>
 export type ListSigningProviderKeys = (
     params: ListSigningProviderKeysParams

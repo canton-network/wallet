@@ -1,0 +1,169 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "0ff9141699e5eb734de1e1a8d11f97233ffd3892d1108872600cb3019fd4a86e",
+            "moduleName": "Splice.DsoRules",
+            "entityName": "DsoRules"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "DSO rules"
+    },
+    "display": {
+        "exercises": [
+            {
+                "choice": "DsoRules_RequestVote",
+                "intent": "Request a DSO vote",
+                "interpolatedIntent": "Request a vote by {requester}: {reason.body}",
+                "fields": [
+                    {
+                        "path": "requester",
+                        "label": "Requester",
+                        "format": "party"
+                    },
+                    {
+                        "path": "reason.body",
+                        "label": "Reason",
+                        "format": "string"
+                    },
+                    {
+                        "path": "reason.url",
+                        "label": "Reason URL",
+                        "format": "string"
+                    },
+                    {
+                        "path": "voteRequestTimeout",
+                        "label": "Voting period",
+                        "format": "duration",
+                        "optional": true
+                    },
+                    {
+                        "path": "targetEffectiveAt",
+                        "label": "Effective at",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "action",
+                        "label": "Votes on",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "DsoRules_SetSynchronizerNodeConfig",
+                "intent": "Update the synchronizer node configuration of an SV",
+                "interpolatedIntent": "Set the node configuration of {sv} on {synchronizerId}",
+                "fields": [
+                    {
+                        "path": "sv",
+                        "label": "SV",
+                        "format": "party"
+                    },
+                    {
+                        "path": "synchronizerId",
+                        "label": "Synchronizer",
+                        "format": "string"
+                    },
+                    {
+                        "path": "newNodeConfig.sequencer.sequencerId",
+                        "label": "Sequencer ID",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.sequencer.url",
+                        "label": "Sequencer URL",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.sequencer.migrationId",
+                        "label": "Sequencer migration",
+                        "format": "number",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.sequencer.availableAfter",
+                        "label": "Sequencer available after",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.legacySequencerConfig.sequencerId",
+                        "label": "Legacy sequencer ID",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.legacySequencerConfig.url",
+                        "label": "Legacy sequencer URL",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.legacySequencerConfig.migrationId",
+                        "label": "Legacy sequencer migration",
+                        "format": "number",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.sequencerIdentity.sequencerId",
+                        "label": "Sequencer identity ID",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.sequencerIdentity.availableAfter",
+                        "label": "Sequencer identity available after",
+                        "format": "dateTime",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.mediator.mediatorId",
+                        "label": "Mediator ID",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.scan.publicUrl",
+                        "label": "Public URL",
+                        "format": "string",
+                        "optional": true
+                    },
+                    {
+                        "path": "newNodeConfig.cometBft.governanceKeys.length",
+                        "label": "Governance keys",
+                        "format": "number"
+                    },
+                    {
+                        "path": "newNodeConfig.cometBft.nodes",
+                        "label": "CometBFT nodes",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "newNodeConfig.physicalSynchronizers",
+                        "label": "Physical synchronizers",
+                        "format": "raw",
+                        "optional": true
+                    },
+                    {
+                        "path": "nodeStateCid",
+                        "label": "Node state",
+                        "format": "contractId"
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "cujOZ3O/sInjCOHWDhfbiFAod6g1Vmm0U5lLl0reNPK5RhnKXaqWKEcsacpsvCvdjjzcNh1mTWKxk0VGgghBBg==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

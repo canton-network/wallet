@@ -1,0 +1,118 @@
+{
+    "$schema": "https://example.org/canton-clear-signing/v1/schema.json",
+    "context": {
+        "template": {
+            "packageId": "c5203dee918350373a993328e345872113bd5f8c8f0f51967014d813e583ae66",
+            "moduleName": "Splice.Amulet",
+            "entityName": "FeaturedAppRight"
+        }
+    },
+    "metadata": {
+        "version": "1.0.0",
+        "publisher": "Blockdaemon",
+        "name": "Featured app right"
+    },
+    "display": {
+        "create": {
+            "intent": "Grant a featured app right",
+            "interpolatedIntent": "Grant {provider} a featured app right from {dso}",
+            "fields": [
+                {
+                    "path": "provider",
+                    "label": "Provider",
+                    "format": "party"
+                },
+                {
+                    "path": "dso",
+                    "label": "DSO",
+                    "format": "party"
+                },
+                {
+                    "path": "appKind",
+                    "label": "App kind",
+                    "format": "raw",
+                    "optional": true
+                },
+                {
+                    "path": "activityWeight",
+                    "label": "Activity weight",
+                    "format": "number",
+                    "optional": true
+                },
+                {
+                    "path": "opsParties",
+                    "label": "Operational parties",
+                    "format": "raw",
+                    "optional": true
+                }
+            ]
+        },
+        "exercises": [
+            {
+                "choice": "FeaturedAppRight_CreateActivityMarker",
+                "interface": {
+                    "moduleName": "Splice.Api.FeaturedAppRightV1",
+                    "entityName": "FeaturedAppRight"
+                },
+                "intent": "Record featured app activity",
+                "interpolatedIntent": "Record activity of {@.contract.provider} for {beneficiaries.length} beneficiaries",
+                "fields": [
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    },
+                    {
+                        "path": "beneficiaries.length",
+                        "label": "Number of beneficiaries",
+                        "format": "number"
+                    },
+                    {
+                        "path": "beneficiaries",
+                        "label": "Beneficiaries",
+                        "format": "raw"
+                    }
+                ]
+            },
+            {
+                "choice": "FeaturedAppRight_CreateActivityMarker",
+                "interface": {
+                    "moduleName": "Splice.Api.FeaturedAppRightV2",
+                    "entityName": "FeaturedAppRight"
+                },
+                "intent": "Record featured app activity",
+                "interpolatedIntent": "Record activity of {@.contract.provider} for {beneficiaries.length} beneficiaries",
+                "fields": [
+                    {
+                        "path": "@.contract.provider",
+                        "label": "Provider",
+                        "format": "party"
+                    },
+                    {
+                        "path": "beneficiaries.length",
+                        "label": "Number of beneficiaries",
+                        "format": "number"
+                    },
+                    {
+                        "path": "beneficiaries",
+                        "label": "Beneficiaries",
+                        "format": "raw"
+                    },
+                    {
+                        "path": "weight",
+                        "label": "Weight",
+                        "format": "number",
+                        "optional": true
+                    }
+                ]
+            }
+        ]
+    },
+    "signatures": [
+        {
+            "scheme": "ed25519",
+            "signature": "GPhWmcE1KSqtKk3mHBADiF+TZv5XYRDg6OAhP35Nr2+YmLaL4o4UN3uh/fEEq+TZvItxTYaA4q1q8gDSUH4aBA==",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

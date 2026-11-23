@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { signWithReferenceKey } from '@canton-network/core-tx-clear-signing/testing'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import {
     TransactionApproveEvent,
@@ -10,12 +11,96 @@ import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { pingCreate, pingCreateHash } from '../__tests__/ping-transaction.ts'
 import {
     createMockUserClient,
     makeTransaction,
     makeWallet,
     mockRequest,
 } from '../__tests__/test-helpers.ts'
+
+// The example Ping descriptor (core/tx-clear-signing/examples/descriptors/ping.json),
+// at the version this page's fixture uses. Stored here so this project does not import a file
+// outside its TypeScript program. Signed with the reference key, which clearSign trusts.
+const pingDescriptor = JSON.stringify(
+    await signWithReferenceKey({
+        $schema: 'https://example.org/canton-clear-signing/v1/schema.json',
+        context: {
+            template: {
+                packageId:
+                    'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54',
+                moduleName: 'Canton.Internal.Ping',
+                entityName: 'Ping',
+            },
+        },
+        metadata: {
+            version: '1.2.0',
+            publisher: 'Blockdaemon',
+            name: 'Canton ping',
+        },
+        display: {
+            create: {
+                intent: 'Ping',
+                interpolatedIntent: 'Ping {id} from {initiator} to {responder}',
+                fields: [
+                    { path: 'id', label: 'Ping ID', format: 'string' },
+                    { path: 'initiator', label: 'Initiator', format: 'party' },
+                    { path: 'responder', label: 'Responder', format: 'party' },
+                ],
+            },
+            exercises: [
+                {
+                    choice: 'Respond',
+                    intent: 'Respond to ping',
+                    interpolatedIntent:
+                        'Respond to ping {@.contract.id} from {@.contract.initiator}',
+                    fields: [
+                        {
+                            path: '@.contract.id',
+                            label: 'Ping ID',
+                            format: 'string',
+                        },
+                        {
+                            path: '@.contract.initiator',
+                            label: 'Initiator',
+                            format: 'party',
+                        },
+                    ],
+                },
+                {
+                    choice: 'AbortPing',
+                    intent: 'Abort ping',
+                    interpolatedIntent:
+                        'Abort ping {@.contract.id} from {@.contract.initiator}, as {anyone}',
+                    fields: [
+                        {
+                            path: '@.contract.id',
+                            label: 'Ping ID',
+                            format: 'string',
+                        },
+                        {
+                            path: '@.contract.initiator',
+                            label: 'Initiator',
+                            format: 'party',
+                        },
+                        {
+                            path: 'anyone',
+                            label: 'Aborted by',
+                            format: 'party',
+                        },
+                    ],
+                },
+            ],
+        },
+    })
+)
+
+// A fetch root decodes and hashes. clearSign reports it as undescribable, because only a create or
+// an exercise root is described. An empty prepared transaction cannot be hashed, which would also
+// disable approval.
+const fetchRoot =
+    'CtsDCgMyLjESATAa0AMKATDCPskDEsYDCgMyLjESQjAwODM2ZmE0NzAxNmQ4OWJmZWRlNjM5NzlhZDA0OTJkZWI3OGQ5Yzc4MDYzNWNiNDhlMTdhYWE5YjRlNGE2OTczOBoiY2FudG9uLWJ1aWx0aW4tYWRtaW4td29ya2Zsb3ctcGluZyJeCkBkZTJjYzJmOTBlYjUyMzQxNGZmNTRlODk5OTUxZGFkZDg3ODlhNGMwN2UwZjcxZjZkNmM5ZWFmNTdkNDEyYTU0EhRDYW50b24uSW50ZXJuYWwuUGluZxoEUGluZypRdjEtMDEtYWxpY2U6OjEyMjBlZTI2MjQxOTA4MzRkZGRmMjhmMTk0Njg1YWNlZThmMDBjYmRlOWVlMGQyMTFkYWUyNzdmNGQ3OTk4ODRmMjg5MlF2MS0wMS1hbGljZTo6MTIyMGVlMjYyNDE5MDgzNGRkZGYyOGYxOTQ2ODVhY2VlOGYwMGNiZGU5ZWUwZDIxMWRhZTI3N2Y0ZDc5OTg4NGYyODk6UXYxLTAxLWFsaWNlOjoxMjIwZWUyNjI0MTkwODM0ZGRkZjI4ZjE5NDY4NWFjZWU4ZjAwY2JkZTllZTBkMjExZGFlMjc3ZjRkNzk5ODg0ZjI4ORL/ARJ5ClF2MS0wMS1hbGljZTo6MTIyMGVlMjYyNDE5MDgzNGRkZGYyOGYxOTQ2ODVhY2VlOGYwMGNiZGU5ZWUwZDIxMWRhZTI3N2Y0ZDc5OTg4NGYyODkSJDUxMjFkMTIwLTNjNTMtNDEwMy04NmFhLTdhM2VhNjZlYzQ2NRpTZ2xvYmFsLWRvbWFpbjo6MTIyMGI5NTM5MWNkMDNlMTE4NzFkNTRlOTBjMjAyNTc1ZDI5ZTc2YzI2NWRkMzg4YjhhZmIwNWFhZDU0ZDY3MGRmYzYqJDhiOTBhNDQ4LTFmZmEtNDA0OS04NTNlLWY4YjRmZTg1M2RjMjCwqJjB5v+UAw=='
+const fetchRootHash = 'E5qahj0hgHMh/gvQzwrmZpXv4BmXbewRLujEFbabegM='
 
 const {
     mockCreateUserClient,
@@ -98,6 +183,9 @@ function mockApproveState(
         if (method === 'deleteTransaction') {
             return undefined
         }
+        if (method === 'listClearSigningDescriptors') {
+            return { descriptors: [pingDescriptor] }
+        }
         return undefined
     })
 }
@@ -133,17 +221,16 @@ describe('UserUiApprove', () => {
             mockApproveState()
             el = await fixture<ApproveUi>(componentFixture)
             await waitUntil(
-                () => el.commandId === 'cmd-1',
-                'transaction loaded'
+                () => el.reviewedHash === pingCreateHash,
+                'hash reviewed'
             )
         })
 
         it('loads transaction details from the URL and renders the detail view', () => {
             expect(el.transactionId).toBe('tx-1')
-            expect(el.txHash).toBe('hash-abc')
-            expect(parsePreparedTransaction).toHaveBeenCalledWith(
-                'prepared-tx-blob'
-            )
+            expect(el.txHash).toBe(pingCreateHash)
+            expect(el.reviewedHash).toBe(pingCreateHash)
+            expect(parsePreparedTransaction).toHaveBeenCalledWith(pingCreate)
             expect(
                 el.shadowRoot?.querySelector('wg-transaction-detail')
             ).not.toBeNull()
@@ -167,6 +254,15 @@ describe('UserUiApprove', () => {
                 { timeout: 3000 }
             )
 
+            // The approval carries the hash computed here from the transaction on screen.
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    method: 'sign',
+                    params: expect.objectContaining({
+                        preparedTransactionHash: pingCreateHash,
+                    }),
+                })
+            )
             expect(showToast).toHaveBeenCalledWith(
                 '',
                 'Activity executed successfully',
@@ -210,12 +306,209 @@ describe('UserUiApprove', () => {
         })
     })
 
+    describe('hash binding', () => {
+        it('disables approval when the transaction does not match its hash', async () => {
+            mockApproveState(
+                makeTransaction({
+                    preparedTransactionHash: btoa('x'.repeat(32)),
+                })
+            )
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.hashMismatch, 'hash checked')
+
+            expect(el.reviewedHash).toBeNull()
+            expect(
+                el.shadowRoot?.querySelector('.alert-danger')?.textContent
+            ).toContain('does not match the hash')
+            const detail = el.shadowRoot?.querySelector(
+                'wg-transaction-detail'
+            ) as (HTMLElement & { updateComplete: Promise<unknown> }) | null
+            await detail?.updateComplete
+            expect(
+                detail?.shadowRoot?.querySelector('button.btn-primary')
+            ).toHaveProperty('disabled', true)
+        })
+    })
+
+    describe('clear signing', () => {
+        it('describes the transaction with the stored descriptors', async () => {
+            mockApproveState(
+                makeTransaction({ preparedTransaction: pingCreate })
+            )
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(
+                () => el.clearSigning !== null,
+                'transaction described'
+            )
+
+            expect(el.clearSigning?.complete).toBe(true)
+            expect(el.clearSigning?.operations[0]?.intent).toMatch(
+                /^Ping "[^"]+" from /
+            )
+            expect(el.clearSigning?.operations[0]).toMatchObject({
+                kind: 'create',
+                template: {
+                    packageId:
+                        'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54',
+                },
+                descriptor: {
+                    name: 'Canton ping',
+                },
+            })
+            const detail = el.shadowRoot?.querySelector(
+                'wg-transaction-detail'
+            ) as
+                | (HTMLElement & {
+                      updateComplete: Promise<unknown>
+                      clearSigning: unknown
+                  })
+                | null
+            await el.updateComplete
+            await detail?.updateComplete
+            expect(detail?.clearSigning).toBe(el.clearSigning)
+            expect(detail?.shadowRoot?.textContent).toContain(
+                'de2cc2f90eb523414ff54e899951dadd8789a4c07e0f71f6d6c9eaf57d412a54'
+            )
+            expect(
+                detail?.shadowRoot?.querySelector('button.btn-primary')
+            ).toHaveProperty('disabled', false)
+        })
+
+        it('shows the intent and fields as clearSign words them', async () => {
+            mockApproveState(
+                makeTransaction({ preparedTransaction: pingCreate })
+            )
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(
+                () => el.clearSigning !== null,
+                'transaction described'
+            )
+            const detail = el.shadowRoot?.querySelector(
+                'wg-transaction-detail'
+            ) as
+                | (HTMLElement & {
+                      updateComplete: Promise<unknown>
+                      clearSigning: unknown
+                  })
+                | null
+            const template = el.clearSigning?.operations[0]?.template
+            if (!detail || !template) throw new Error('nothing rendered')
+            detail.clearSigning = {
+                complete: true,
+                operations: [
+                    {
+                        kind: 'create',
+                        template,
+                        status: 'described',
+                        intent: 'Memo "" was set',
+                        fields: [{ label: 'Memo', value: '""' }],
+                    },
+                ],
+            }
+            await detail.updateComplete
+
+            const root = detail.shadowRoot
+            expect(root?.querySelector('.intent')?.textContent).toContain(
+                'Memo "" was set'
+            )
+            expect(
+                root?.querySelector('.operation-fields dd')?.textContent?.trim()
+            ).toBe('""')
+        })
+
+        it('shows why a transaction cannot be described', async () => {
+            mockApproveState(
+                makeTransaction({
+                    preparedTransaction: fetchRoot,
+                    preparedTransactionHash: fetchRootHash,
+                })
+            )
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(
+                () => el.clearSigning !== null,
+                'transaction described'
+            )
+
+            expect(el.clearSigning?.complete).toBe(false)
+            expect(el.clearSigning?.operations[0]).toMatchObject({
+                kind: 'other',
+                status: 'undescribable',
+            })
+            const detail = el.shadowRoot?.querySelector(
+                'wg-transaction-detail'
+            ) as HTMLElement | null
+            await (detail as { updateComplete?: Promise<unknown> } | null)
+                ?.updateComplete
+            expect(
+                detail?.shadowRoot?.querySelector('.alert-warning')?.textContent
+            ).toContain('not described')
+            const approve =
+                detail?.shadowRoot?.querySelector('button.btn-primary')
+            expect(approve).toHaveProperty('disabled', false)
+        })
+    })
+
+    describe('preview', () => {
+        afterEach(() => {
+            history.replaceState({}, '', window.location.pathname)
+        })
+
+        it('hashes the transaction itself and describes it', async () => {
+            mockRequest.mockImplementation(async ({ method }) => {
+                if (method === 'listClearSigningDescriptors') {
+                    return { descriptors: [pingDescriptor] }
+                }
+                return undefined
+            })
+            history.replaceState(
+                {},
+                '',
+                `#preview=${encodeURIComponent(pingCreate)}`
+            )
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.clearSigning !== null, 'preview described')
+
+            expect(el.status).toBe('preview')
+            expect(el.disabled).toBe(true)
+            expect(el.txHash).toBe(pingCreateHash)
+            expect(el.reviewedHash).toBe(pingCreateHash)
+            expect(el.clearSigning?.complete).toBe(true)
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    method: 'listClearSigningDescriptors',
+                })
+            )
+            expect(mockRequest).not.toHaveBeenCalledWith(
+                expect.objectContaining({ method: 'getTransaction' })
+            )
+            expect(
+                el.shadowRoot?.querySelector('.alert-warning')?.textContent
+            ).toContain('not a transaction to sign')
+        })
+
+        it('describes from the transaction when the fragment also carries a hash', async () => {
+            history.replaceState(
+                {},
+                '',
+                `#preview=${encodeURIComponent(pingCreate)}&hash=${encodeURIComponent(btoa('x'.repeat(32)))}`
+            )
+            el = await fixture<ApproveUi>(componentFixture)
+            await waitUntil(() => el.clearSigning !== null, 'preview described')
+
+            expect(el.txHash).toBe(pingCreateHash)
+            expect(el.hashMismatch).toBe(false)
+        })
+    })
+
     describe('with closeafteraction in the URL', () => {
         beforeEach(async () => {
             history.replaceState({}, '', '?transactionId=tx-1&closeafteraction')
             mockApproveState()
             el = await fixture<ApproveUi>(componentFixture)
-            await vi.waitFor(() => expect(el.commandId).toBe('cmd-1'))
+            await waitUntil(
+                () => el.reviewedHash === pingCreateHash,
+                'hash reviewed'
+            )
         })
 
         it('closes the window after approve when opened from a dApp', async () => {

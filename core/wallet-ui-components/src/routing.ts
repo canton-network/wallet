@@ -20,6 +20,7 @@ export const ALLOWED_ROUTES = [
     '/admin',
     '/approve',
     '/sign-message',
+    '/descriptors',
     '/',
     '/404',
     '/callback',

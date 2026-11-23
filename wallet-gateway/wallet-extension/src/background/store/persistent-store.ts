@@ -71,6 +71,11 @@ const KIND = {
     listApiKeys: 'unsupported',
     getApiKey: 'unsupported',
     removeApiKey: 'unsupported',
+
+    // Descriptors are stored in the remote gateway's database.
+    listClearSigningDescriptors: 'unsupported',
+    setClearSigningDescriptor: 'unsupported',
+    removeClearSigningDescriptor: 'unsupported',
 } as const satisfies Record<keyof Store, 'read' | 'write' | 'unsupported'>
 
 /**
