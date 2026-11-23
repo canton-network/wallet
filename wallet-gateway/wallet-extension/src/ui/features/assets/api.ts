@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import type {
     TokenInstrument,
     TokenInstruments,
     TokenWallet,
 } from '@canton-network/core-wallet-ui-components/react/token'
+import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { queryOptions } from '@tanstack/react-query'
-import type { TokenAsset } from '@/background/token/service'
-import { queryKeys } from '@/ui/lib/query/keys'
-import { getTokenClient } from '@/ui/lib/token-client'
+
+import type { TokenAsset } from '@/background/token/service.ts'
+import { queryKeys } from '@/ui/lib/query/keys.ts'
+import { getTokenClient } from '@/ui/lib/token-client.ts'
 
 /**
  * The registries' instruments, keyed by their admin party. Amounts are shown

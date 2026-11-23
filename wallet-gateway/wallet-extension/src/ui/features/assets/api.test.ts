@@ -3,8 +3,10 @@
 
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { describe, expect, it } from 'vitest'
-import type { TokenAsset } from '@/background/token/service'
-import { toTokenInstruments, toTokenWallets } from './api'
+
+import type { TokenAsset } from '@/background/token/service.ts'
+
+import { toTokenInstruments, toTokenWallets } from './api.ts'
 
 const asset = (admin: string, id: string, symbol: string): TokenAsset => ({
     id,

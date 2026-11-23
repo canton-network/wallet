@@ -3,13 +3,14 @@
 
 import { holdingsQueryOptions } from '@canton-network/core-wallet-ui-components/react/token'
 import { createFileRoute } from '@tanstack/react-router'
+
 import {
     AssetsPage,
     tokenInstrumentsQuery,
     toTokenWallets,
-} from '@/ui/features/assets'
-import { walletsQuery } from '@/ui/features/parties'
-import { getTokenClient } from '@/ui/lib/token-client'
+} from '@/ui/features/assets/index.ts'
+import { walletsQuery } from '@/ui/features/parties/index.ts'
+import { getTokenClient } from '@/ui/lib/token-client.ts'
 
 export const Route = createFileRoute('/_unlocked/_connected/assets/')({
     loader: async ({ context: { queryClient } }) => {

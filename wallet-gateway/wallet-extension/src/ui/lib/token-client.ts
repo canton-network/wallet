@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createProxyService } from '@webext-core/proxy-service'
-import type { TokenService } from '@/background/token/service'
-import { TOKEN_RPC_KEY } from '@/shared/service-keys'
+
+import type { TokenService } from '@/background/token/service.ts'
+import { TOKEN_RPC_KEY } from '@/shared/service-keys.ts'
 
 let client: TokenService | undefined
 

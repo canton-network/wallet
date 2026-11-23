@@ -18,10 +18,12 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { ButtonLink } from '@/ui/components/ButtonLink'
-import { PageLoader } from '@/ui/components/feedback'
-import { walletsQuery } from '@/ui/features/parties'
-import { tokenInstrumentsQuery, toTokenWallets } from './api'
+
+import { ButtonLink } from '@/ui/components/ButtonLink.tsx'
+import { PageLoader } from '@/ui/components/feedback.tsx'
+import { walletsQuery } from '@/ui/features/parties/index.ts'
+
+import { tokenInstrumentsQuery, toTokenWallets } from './api.ts'
 
 export function AssetsPage() {
     const wallets = useQuery(walletsQuery())

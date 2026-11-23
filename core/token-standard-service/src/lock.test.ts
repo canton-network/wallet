@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect } from 'vitest'
-import { checkLock } from './lock.js'
+
+import { checkLock } from './lock.ts'
 
 type Lock = Parameters<typeof checkLock>[0]
 
