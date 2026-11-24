@@ -9,7 +9,7 @@ import { copyTemplate } from './copy-template'
 
 const defaultDirectory = 'my-canton-app'
 
-function dappCommand(framework: 'Lit' | 'React') {
+function dappCommand(framework: 'Lit' | 'React' | 'Vue') {
     const slug = framework.toLowerCase()
     return defineCommand({
         path: [`dapp-${slug}`],
@@ -34,12 +34,8 @@ function dappCommand(framework: 'Lit' | 'React') {
     })
 }
 
-const dappVue = defineCommand({
-    path: ['dapp-vue'],
-    parser: object({}),
-    handler(value) {
-        console.log('vue', value)
-    },
-})
-
-export default [dappCommand('Lit'), dappVue, dappCommand('React')] as const
+export default [
+    dappCommand('Lit'),
+    dappCommand('Vue'),
+    dappCommand('React'),
+] as const

@@ -1,0 +1,23 @@
+{
+    "name": "canton-dapp-vue",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "vite",
+        "build": "vue-tsc --noEmit && vite build",
+        "preview": "vite preview"
+    },
+    "dependencies": {
+        "@canton-network/core-splice-codegen": "workspace:",
+        "@canton-network/dapp-sdk": "^1.10.0",
+        "@walletconnect/sign-client": "^2.26.0",
+        "vue": "^3.5.46"
+    },
+    "devDependencies": {
+        "@vitejs/plugin-vue": "^6.0.11",
+        "typescript": "~6.0.3",
+        "vite": "^8.3.8",
+        "vue-tsc": "^3.3.14"
+    }
+}

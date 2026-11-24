@@ -30,6 +30,7 @@ afterEach(async () => {
 it.each([
     ['lit', 'src/components/connected.ts'],
     ['react', 'src/App.tsx'],
+    ['vue', 'src/App.vue'],
 ])(
     'copies the %s starter into an empty directory relative to the caller',
     async (framework, app) => {
@@ -61,7 +62,7 @@ it.each([
     }
 )
 
-it.each(['dapp-lit', 'dapp-react'])(
+it.each(['dapp-lit', 'dapp-react', 'dapp-vue'])(
     '%s creates my-canton-app when no directory is given non-interactively',
     async (command) => {
         const result = await cli.invoke({ cwd, args: [command] })
@@ -72,7 +73,7 @@ it.each(['dapp-lit', 'dapp-react'])(
     }
 )
 
-it.each(['dapp-lit', 'dapp-react'])(
+it.each(['dapp-lit', 'dapp-react', 'dapp-vue'])(
     '%s refuses a non-empty destination without changing it',
     async (command) => {
         await writeFile(join(cwd, 'index.html'), 'existing')

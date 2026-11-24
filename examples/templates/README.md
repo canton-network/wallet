@@ -24,8 +24,8 @@ pnpm install
 pnpm dev
 ```
 
-Use `dapp-react` instead of `dapp-lit` for the same wallet example in React.
-Both starters prompt for the directory if omitted in a terminal. In
+Use `dapp-react` or `dapp-vue` instead of `dapp-lit` for the same wallet example
+in React or Vue. All three starters prompt for the directory if omitted in a terminal. In
 non-interactive use, they default to `my-canton-app`. The target directory must
 be new or empty.
 
