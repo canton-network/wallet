@@ -113,7 +113,7 @@ const end = performance.now()
 const duration = end - start
 if (duration < 1000) {
     logger.info(
-        `Success! The operation was fast (${duration.toFixed(2)} ms) and fetchOnce status is ${fetchOnceStatus}.`
+        `Success! The operation was fast (${duration.toFixed(2)} ms) and fetchOnce status is ${JSON.stringify(fetchOnceStatus)}.`
     )
 } else {
     logger.warn(
@@ -132,7 +132,7 @@ logger.info({ fetchedPreapprovalStatus }, 'Fetched preapproval status')
 const sentValue = 2000
 
 const [transferCommand, transferDisclosedContracts] =
-    await sdk.token.transfer.create({
+    await sdk.token.v1.transfer.create({
         sender: alice.partyId,
         recipient: bob.partyId,
         amount: sentValue.toString(),
@@ -151,8 +151,8 @@ await sdk.ledger
 
 logger.info({ sentValue }, 'Executed transfer from Alice to Bob with value:')
 
-const aliceUtxos = await sdk.token.utxos.list({ partyId: alice.partyId })
-const bobUtxos = await sdk.token.utxos.list({ partyId: bob.partyId })
+const aliceUtxos = await sdk.token.v1.utxos.list({ partyId: alice.partyId })
+const bobUtxos = await sdk.token.v1.utxos.list({ partyId: bob.partyId })
 
 const partyAmuletValue = (utxos: PrettyContract<HoldingView>[]) =>
     utxos.reduce(
@@ -182,7 +182,7 @@ const end2 = performance.now()
 const duration2 = end2 - start2
 if (duration < 1000) {
     logger.info(
-        `Success! The operation was fast (${duration2.toFixed(2)} ms) and fetchOnce status is ${fetchOnceStatusWithPreapproval}.`
+        `Success! The operation was fast (${duration2.toFixed(2)} ms) and fetchOnce status is ${JSON.stringify(fetchOnceStatusWithPreapproval)}.`
     )
 } else {
     logger.warn(

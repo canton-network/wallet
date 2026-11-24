@@ -344,21 +344,27 @@ describe('Party namespace', () => {
             })
 
             it('should call participant-id endpoint depending on options', () => {
-                const observingParticipantEndpoints = Array(3).fill({
-                    url: new URL('http://example.com'),
-                    tokenProviderConfig: {
-                        method: 'static',
-                        token: '',
-                    },
-                })
+                const observingParticipantEndpoints = Array.from(
+                    { length: 3 },
+                    () => ({
+                        url: new URL('http://example.com'),
+                        tokenProviderConfig: {
+                            method: 'static' as const,
+                            token: '',
+                        },
+                    })
+                )
 
-                const confirmingParticipantEndpoints = Array(2).fill({
-                    url: new URL('http://example.com'),
-                    tokenProviderConfig: {
-                        method: 'static',
-                        token: '',
-                    },
-                })
+                const confirmingParticipantEndpoints = Array.from(
+                    { length: 2 },
+                    () => ({
+                        url: new URL('http://example.com'),
+                        tokenProviderConfig: {
+                            method: 'static' as const,
+                            token: '',
+                        },
+                    })
+                )
 
                 // Mock get participant ID for each endpoint (5 endpoints)
                 ;[

@@ -13,7 +13,7 @@ import {
     type MessageRaw,
     type Network as StoreNetwork,
     PartyLevelRight,
-    type Session,
+    type NewSession,
     type Transaction,
     type Wallet,
 } from '@canton-network/core-wallet-store'
@@ -187,7 +187,7 @@ const adminAuth: AuthContext = {
     accessToken: 'admin-access-token',
 }
 
-const session: Session = {
+const session: NewSession = {
     id: 'session-1',
     origin: 'dapp-1',
     network: 'network1',
@@ -518,7 +518,11 @@ describe('userController', () => {
             })
             await store
                 .withAuthContext(loginAuth)
-                .upgradeSelfIssuedLoginSession(sessionId, 'access-token')
+                .upgradeSelfIssuedLoginSession(
+                    sessionId,
+                    'access-token',
+                    'login-message'
+                )
 
             await createController(store, notificationService, logger, {
                 ...loginAuth,
@@ -532,12 +536,7 @@ describe('userController', () => {
                         accessToken: 'access-token',
                     })
                     .getSession('access-token')
-            ).resolves.toEqual(
-                expect.objectContaining({
-                    id: sessionId,
-                    accessToken: 'access-token',
-                })
-            )
+            ).resolves.toEqual(expect.objectContaining({ id: sessionId }))
         })
     })
 

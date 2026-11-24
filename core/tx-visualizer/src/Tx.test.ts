@@ -136,9 +136,11 @@ test('decode a base 64 encoded topology tx', async () => {
         'partyToKeyMapping'
     ) {
         expect(
+            // oxlint-disable-next-line typescript/no-deprecated -- fixtures use the deprecated Canton topology mapping
             decodedPartyToKeyMapping.mapping?.mapping.partyToKeyMapping
                 .party ===
                 'alice::12205a50eb9b9d64bb30ac4125afa1aeea7bcae51792ac2d174a6132ceec9290d062' &&
+                // oxlint-disable-next-line typescript/no-deprecated -- fixtures use the deprecated Canton topology mapping
                 decodedPartyToKeyMapping.mapping?.mapping.partyToKeyMapping
                     .threshold === 1
         ).toBe(true)
@@ -173,8 +175,8 @@ test('decode a base 64 encoded topology tx', async () => {
         partyToKeyMappingBase64,
         partyToParticipantMappingBase64,
     ]
-    const normalized: Uint8Array<ArrayBufferLike>[] = preparedTxsBase64.map(
-        (tx) => fromBase64(tx)
+    const normalized: Uint8Array[] = preparedTxsBase64.map((tx) =>
+        fromBase64(tx)
     )
 
     const rawHashes = await Promise.all(
@@ -205,6 +207,7 @@ describe('decodeTopologyTransaction', () => {
         if (mapping?.mapping.oneofKind !== 'partyToKeyMapping') {
             throw new Error('not a PartyToKeyMapping')
         }
+        // oxlint-disable-next-line typescript/no-deprecated -- fixtures use the deprecated Canton topology mapping
         return mapping.mapping.partyToKeyMapping.signingKeys[0]
     }
 

@@ -1,8 +1,6 @@
 {
     "extends": "../tsconfig.base.json",
     "compilerOptions": {
-        "module": "nodenext",
-        "moduleResolution": "nodenext",
         "types": ["node"]
     },
     "include": ["src", "../docs/docs-sync.json"]

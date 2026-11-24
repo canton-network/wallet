@@ -10,9 +10,7 @@ import {
 
 export const Route = createFileRoute('/_unlocked/connect/')({
     beforeLoad: async ({ context }) => {
-        const status = await context.queryClient.fetchQuery(
-            connectionStatusQuery()
-        )
+        const status = await context.queryClient.query(connectionStatusQuery())
         if (status === 'connected') {
             throw redirect({ to: '/' })
         }

@@ -1,9 +1,21 @@
 {
     "name": "@canton-network/core-signing-internal",
     "version": "2.5.0",
-    "type": "module",
     "description": "Wallet Gateway driver for offline Ed25519 keypairs",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-internal#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/signing-internal"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
@@ -16,6 +28,9 @@
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
@@ -35,20 +50,5 @@
         "tweetnacl-util": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/signing-internal"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-internal#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

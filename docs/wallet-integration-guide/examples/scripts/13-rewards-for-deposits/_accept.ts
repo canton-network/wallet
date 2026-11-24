@@ -22,7 +22,7 @@ export default async (args: RewardsForDepositsTestScriptParameters) => {
     const [
         acceptTransferInstructionProxyCommand,
         acceptTransferInstructionProxyDisclosedContracts,
-    ] = await sdk.token.transfer.delegatedProxy.commands.accept({
+    ] = await sdk.token.v1.transfer.delegatedProxy.commands.accept({
         proxyCid,
         transferInstructionCid,
         featuredAppRight,

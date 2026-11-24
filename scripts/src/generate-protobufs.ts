@@ -109,7 +109,7 @@ function rewriteImports() {
                 s.replace(/(} from ["']\..+(?<!\.ts))(["'];)$/, '$1.ts$2')
             )
             .join('\n')
-        fs.writeFileSync(`${file}`, updated, 'utf-8')
+        fs.writeFileSync(file, updated, 'utf-8')
     })
 }
 

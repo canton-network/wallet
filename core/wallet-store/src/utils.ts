@@ -51,3 +51,18 @@ export function resolveSelfIssuedNetworkByAudiences(
 
     return matches[0] ?? undefined
 }
+
+/**
+ * Returns the hex-encoded SHA-256 digest of an access token. Stores keep this
+ * digest instead of the raw token, and look sessions up by it. An unsalted
+ * hash is enough because access tokens are signed JWTs with high entropy.
+ */
+export async function hashAccessToken(accessToken: string): Promise<string> {
+    const digest = await globalThis.crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(accessToken)
+    )
+    return Array.from(new Uint8Array(digest), (byte) =>
+        byte.toString(16).padStart(2, '0')
+    ).join('')
+}

@@ -57,10 +57,8 @@ const createPkcePair = async (): Promise<{
     }
 }
 
-const getScopesFromUrl = (): string[] | undefined => {
-    const params = new URLSearchParams(window.location.search)
-    return params.has('scopes') ? params.getAll('scopes') : undefined
-}
+const getScopesFromUrl = (): string[] =>
+    new URLSearchParams(window.location.search).getAll('scopes')
 
 @customElement('user-ui-login')
 export class LoginUI extends BaseElement {

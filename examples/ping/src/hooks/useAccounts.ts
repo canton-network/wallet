@@ -47,6 +47,8 @@ export function useAccounts(connectResult?: sdk.dappAPI.ConnectResult) {
                 console.error('Error requesting wallets:', err)
                 setErrorMsg(err instanceof Error ? err.message : String(err))
             })
+        // connectResult refetches the accounts after every (re)connect
+        // oxlint-disable-next-line react/exhaustive-effect-dependencies
     }, [connected, connectResult, setErrorMsg])
 
     useEffect(() => {

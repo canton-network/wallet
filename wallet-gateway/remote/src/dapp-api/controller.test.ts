@@ -7,7 +7,7 @@ import { NotificationService } from '@canton-network/core-wallet-services'
 import {
     type Network as StoreNetwork,
     PartyLevelRight,
-    type Session,
+    type NewSession,
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
@@ -125,7 +125,7 @@ const auth: AuthContext = {
     accessToken: 'access-token-1',
 }
 
-const session: Session = {
+const session: NewSession = {
     id: 'session-1',
     origin: 'dapp-1',
     network: 'network1',

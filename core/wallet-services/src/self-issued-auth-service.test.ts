@@ -786,7 +786,7 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
         })
@@ -897,7 +897,8 @@ describe('SelfIssuedAuthService', () => {
             expect(probeGet).toHaveBeenCalledWith('/v2/authenticated-user')
             expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledWith(
                 'onboarding-session',
-                accessToken
+                accessToken,
+                'login-message'
             )
             expect(result).toMatchObject({
                 status: 'connected',
@@ -952,6 +953,7 @@ describe('SelfIssuedAuthService', () => {
             )
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+            expect(store.setMessageRawStatus).not.toHaveBeenCalled()
         })
 
         it('rejects a regular message', async () => {
@@ -992,10 +994,26 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(probeGet).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('keeps the signed message on a temporary error so connect can be retried', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            ledgerClient.get.mockRejectedValue(new Error('ledger unavailable'))
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow('ledger unavailable')
+            expect(store.setMessageRawStatus).not.toHaveBeenCalled()
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
         })
 
@@ -1027,7 +1045,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession
@@ -1048,7 +1069,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession

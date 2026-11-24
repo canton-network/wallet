@@ -161,6 +161,8 @@ export default function App() {
                 </DialogTitle>
                 <DialogContent sx={{ p: 0, height: '75vh' }}>
                     {gatewayOpen && (
+                        // The gateway UI needs scripts, forms, storage and popups for login
+                        // oxlint-disable-next-line react/iframe-missing-sandbox
                         <iframe
                             src={gatewayUrl}
                             style={{

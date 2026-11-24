@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { jwtExpired } from '@canton-network/core-wallet-auth'
+import { hashAccessToken } from '@canton-network/core-wallet-store'
 
 import {
     AuthErrorName,
@@ -77,10 +78,11 @@ export function createAuthService({
                 return 'disconnected'
             }
             const store = await getStore()
+            const accessTokenHash = await hashAccessToken(context.accessToken)
             const connected = (await store.listSessions()).some(
                 (session) =>
                     session.origin === EXTENSION_ORIGIN &&
-                    session.accessToken === context.accessToken
+                    session.accessTokenHash === accessTokenHash
             )
             return connected ? 'connected' : 'disconnected'
         },

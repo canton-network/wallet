@@ -53,6 +53,7 @@ class WgLoginForm extends BaseElement {
 
     @property({ type: Boolean }) accessor connecting = false
     @property({ type: String }) accessor backHref = '/'
+    /** Scopes to ask consent for. Undefined or an empty array asks consent for full access */
     @property({ type: Array }) accessor scopes: string[] | undefined = undefined
     @property({ type: String }) accessor origin = ''
 
@@ -287,6 +288,43 @@ class WgLoginForm extends BaseElement {
         this.messageType = null
     }
 
+    private renderScopesConsent() {
+        const origin = html`<strong class="text-break">${this.origin}</strong>`
+        const isScoped = !!this.scopes?.length
+
+        return html`<div class="alert alert-warning">
+            ${
+                isScoped
+                    ? html`<p class="mb-2">
+                              ${origin} requested ledger permissions:
+                          </p>
+                          <wg-scope-list
+                              .scopes=${this.scopes}
+                          ></wg-scope-list>`
+                    : html`<p class="mb-2">
+                          ${origin} requested no specific permissions and will
+                          have full ledger access.
+                      </p>`
+            }
+            <div class="form-check mt-2 mb-0">
+                <input
+                    id="scopes-consent"
+                    class="form-check-input"
+                    type="checkbox"
+                    required
+                    ?disabled=${this.connecting}
+                />
+                <label class="form-check-label" for="scopes-consent"
+                    >${
+                        isScoped
+                            ? 'I allow this dApp to use these permissions'
+                            : 'I allow this dApp full access'
+                    }</label
+                >
+            </div>
+        </div>`
+    }
+
     protected render() {
         const renderAuthSpecificInputs = () => {
             if (
@@ -362,36 +400,7 @@ class WgLoginForm extends BaseElement {
                         <h3 class="h3 mb-0 fw-bold">Wallet Gateway</h3>
                     </div>
 
-                    ${
-                        this.scopes?.length
-                            ? html`<div class="alert alert-warning">
-                                  <p class="mb-2">
-                                      <strong class="text-break"
-                                          >${this.origin}</strong
-                                      >
-                                      requested ledger permissions:
-                                  </p>
-                                  <wg-scope-list
-                                      .scopes=${this.scopes}
-                                  ></wg-scope-list>
-                                  <div class="form-check mt-2 mb-0">
-                                      <input
-                                          id="scopes-consent"
-                                          class="form-check-input"
-                                          type="checkbox"
-                                          required
-                                          ?disabled=${this.connecting}
-                                      />
-                                      <label
-                                          class="form-check-label"
-                                          for="scopes-consent"
-                                          >I allow this dApp to use these
-                                          permissions</label
-                                      >
-                                  </div>
-                              </div>`
-                            : nothing
-                    }
+                    ${this.renderScopesConsent()}
 
                     <label
                         class="form-label fw-semibold text-body mt-3 mb-2"
