@@ -1,10 +1,22 @@
 {
     "name": "@canton-network/core-provider-conformance",
     "version": "1.7.0",
-    "type": "module",
     "description": "Typed conformance test providers and wallet interaction wrappers",
-    "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/provider-conformance#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/provider-conformance"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -17,9 +29,6 @@
             "default": "./dist/index.js"
         }
     },
-    "files": [
-        "dist/**"
-    ],
     "publishConfig": {
         "access": "public"
     },
@@ -39,14 +48,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/provider-conformance"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/provider-conformance#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

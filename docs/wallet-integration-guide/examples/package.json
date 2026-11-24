@@ -3,8 +3,8 @@
     "version": "0.0.0",
     "private": true,
     "description": "Example typescripts to be used in combination with the wallet integration guide.",
-    "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
     "license": "Apache-2.0",
+    "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
     "type": "module",
     "scripts": {
         "build": "tsc -b",
@@ -34,15 +34,6 @@
         "stress-run-02": "tsx ./scripts/stress/02-merge-utxos-delegate.ts | pino-pretty",
         "stress-run-03": "tsx ./scripts/stress/03-acs-cache.ts | pino-pretty"
     },
-    "devDependencies": {
-        "@canton-network/core-wallet-test-utils": "workspace:",
-        "@types/node": "catalog:",
-        "@vitest/coverage-v8": "catalog:",
-        "pino-pretty": "catalog:",
-        "tsx": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:"
-    },
     "dependencies": {
         "@canton-network/core-ledger-client": "workspace:",
         "@canton-network/core-ledger-client-types": "workspace:",
@@ -57,11 +48,20 @@
         "@canton-network/example-test-token-v1-registry": "workspace:^",
         "@canton-network/example-test-token-v2-registry": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
-        "@logtape/logtape": "catalog:",
         "@logtape/adaptor-pino": "catalog:",
+        "@logtape/logtape": "catalog:",
         "bip39": "catalog:",
         "decimal.js": "catalog:",
         "pino": "catalog:",
         "tweetnacl-util": "catalog:"
+    },
+    "devDependencies": {
+        "@canton-network/core-wallet-test-utils": "workspace:",
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "pino-pretty": "catalog:",
+        "tsx": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     }
 }

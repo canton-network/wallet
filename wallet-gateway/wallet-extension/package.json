@@ -1,10 +1,10 @@
 {
     "name": "@canton-network/wallet-extension",
+    "version": "0.0.1",
+    "private": true,
     "description": "A reference extension based wallet implementation",
     "license": "Apache-2.0",
     "author": "Fayi Femi-Balogun <fayimora.femibalogun@digitalasset.com>",
-    "private": true,
-    "version": "0.0.1",
     "type": "module",
     "scripts": {
         "dev": "wxt",
