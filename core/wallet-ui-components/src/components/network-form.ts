@@ -18,11 +18,12 @@ import { AuthEditor, type AuthEditorChangeEvent } from './auth-editor.ts'
 import './auth-editor.ts'
 import './info-tip.ts'
 
-const NETWORKS_AND_IDENTITY_DOCS_URL =
-    'https://docs.canton.network/integrations/wallet-gateway/operate/networks-and-identity'
-const AUTH_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#authentication-methods`
-const ADMIN_AUTH_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#auth-vs-adminauth`
-const SERVICE_ACCOUNT_AUTH_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#service-account-automation-serviceaccountauth`
+/** Docs pages that the info icons of the auth sections link to */
+export interface NetworkFormDocsUrls {
+    auth: string
+    adminAuth: string
+    serviceAccountAuth: string
+}
 
 /**
  * Emitted when the user clicks the Cancel button on the form
@@ -81,6 +82,13 @@ class NetworkForm extends BaseElement {
     /** The identity providers the network can reference */
     @property({ type: Array })
     accessor idps: Idp[] = []
+
+    @property({ attribute: false })
+    accessor docsUrls: NetworkFormDocsUrls = {
+        auth: '',
+        adminAuth: '',
+        serviceAccountAuth: '',
+    }
 
     @state() private accessor _error = ''
     @state() private accessor deleteConfirmation = ''
@@ -452,7 +460,7 @@ class NetworkForm extends BaseElement {
                         Configure user auth
                         <wg-info-tip
                             text="How users log in to this network."
-                            docsUrl=${AUTH_DOCS_URL}
+                            docsUrl=${this.docsUrls.auth}
                         ></wg-info-tip>
                     </h3>
                     <auth-editor
@@ -471,7 +479,7 @@ class NetworkForm extends BaseElement {
                         Configure admin auth
                         <wg-info-tip
                             text="How the Wallet Gateway gets a token for its own tasks, such as syncing parties when a user logs in."
-                            docsUrl=${ADMIN_AUTH_DOCS_URL}
+                            docsUrl=${this.docsUrls.adminAuth}
                         ></wg-info-tip>
                     </h3>
                     <auth-editor
@@ -493,7 +501,7 @@ class NetworkForm extends BaseElement {
                         Configure service account auth
                         <wg-info-tip
                             text="The credentials that API keys use to submit transactions. Without them, API keys don't work on this network."
-                            docsUrl=${SERVICE_ACCOUNT_AUTH_DOCS_URL}
+                            docsUrl=${this.docsUrls.serviceAccountAuth}
                         ></wg-info-tip>
                     </h3>
                     <auth-editor

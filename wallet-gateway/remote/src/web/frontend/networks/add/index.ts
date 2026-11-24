@@ -12,7 +12,11 @@ import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { NETWORKS_INFO, NETWORKS_DOCS_URL } from '../../constants.ts'
+import {
+    NETWORK_FORM_DOCS_URLS,
+    NETWORKS_INFO,
+    NETWORKS_DOCS_URL,
+} from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
@@ -112,6 +116,7 @@ export class UserUiAddNetwork extends BaseElement {
                 <network-form
                     mode="add"
                     .idps=${this.idps}
+                    .docsUrls=${NETWORK_FORM_DOCS_URLS}
                     @network-edit-save=${this.onSave}
                 ></network-form>
             </div>

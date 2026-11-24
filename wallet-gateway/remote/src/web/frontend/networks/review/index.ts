@@ -13,7 +13,11 @@ import type { Idp, Network } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
-import { NETWORKS_INFO, NETWORKS_DOCS_URL } from '../../constants.ts'
+import {
+    NETWORK_FORM_DOCS_URLS,
+    NETWORKS_INFO,
+    NETWORKS_DOCS_URL,
+} from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
@@ -172,6 +176,7 @@ export class UserUiReviewNetwork extends BaseElement {
                     mode="review"
                     .network=${this.network}
                     .idps=${this.idps}
+                    .docsUrls=${NETWORK_FORM_DOCS_URLS}
                     @network-edit-save=${this.onSave}
                     @network-edit-cancel=${this.onCancel}
                     @network-delete=${this.onDelete}

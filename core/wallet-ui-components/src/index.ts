@@ -38,7 +38,7 @@ export * from './windows/wallet-picker.ts'
 export * from './windows/popup.ts'
 
 export * from './date-time.ts'
-export * from './docs.ts'
+export { type DocsPage, docsUrl } from './docs.ts'
 export * from './handle-errors.ts'
 export * from './routing.ts'
 export { chevronLeftIcon } from './icons/index.ts'

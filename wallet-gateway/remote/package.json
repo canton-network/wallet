@@ -113,7 +113,9 @@
             "test": {
                 "inputs": [
                     "...",
-                    "{workspaceRoot}/wallet-gateway/test/config.json"
+                    "{workspaceRoot}/wallet-gateway/test/config.json",
+                    "{workspaceRoot}/docs/**/*.mdx",
+                    "{workspaceRoot}/docs/docs-sync.json"
                 ]
             },
             "typecheck": {

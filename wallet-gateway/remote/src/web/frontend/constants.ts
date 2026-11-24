@@ -1,6 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import {
+    type DocsPage,
+    docsUrl,
+    type NetworkFormDocsUrls,
+} from '@canton-network/core-wallet-ui-components'
 import type { ToastDescriptor } from '@canton-network/core-wallet-ui-components/logic'
 
 export const DEFAULT_PAGE_REDIRECT = '/parties'
@@ -22,20 +27,45 @@ export const TOKEN_EXPIRED_SKEW_MS = 5000
 // UI sets timeout to trigger logout when token expires. It needs capping, because setTimeout stops delaying if timeout exceed ~24 days (unsigned 32bit in ms)
 export const TOKEN_EXPIRATION_TIMEOUT_LIMIT_MS = 24 * 60 * 60 * 1000
 
-const WALLET_GATEWAY_DOCS_URL =
-    'https://docs.canton.network/integrations/wallet-gateway'
-const NETWORKS_AND_IDENTITY_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/networks-and-identity`
-export const NETWORKS_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#networks`
-export const IDENTITY_PROVIDERS_DOCS_URL = `${NETWORKS_AND_IDENTITY_DOCS_URL}#identity-providers`
-export const PARTIES_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/use/party-management`
-export const LOGIN_DOCS_URL = `${PARTIES_DOCS_URL}#log-in`
-export const CREATE_PARTY_DOCS_URL = `${PARTIES_DOCS_URL}#create-a-party`
-export const EDIT_PARTY_DOCS_URL = `${PARTIES_DOCS_URL}#change-the-signing-key-of-a-wallet`
-export const ACTIVITIES_DOCS_URL = `${PARTIES_DOCS_URL}#view-activities`
-export const API_KEYS_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/automation/service-account-automations`
-export const ADMIN_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/configure#administration-page`
-export const SELF_ISSUED_LOGIN_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/operate/self-issued-authentication#wallet-gateway-ui`
-export const APPROVE_DOCS_URL = `${WALLET_GATEWAY_DOCS_URL}/use/approve-and-sign`
+const NETWORKS_AND_IDENTITY_DOCS: DocsPage =
+    'docs/wallet-gateway/operate/networks-and-identity.mdx'
+const PARTIES_DOCS: DocsPage = 'docs/wallet-gateway/use/party-management.mdx'
+
+export const NETWORKS_DOCS_URL = docsUrl(NETWORKS_AND_IDENTITY_DOCS, 'networks')
+export const IDENTITY_PROVIDERS_DOCS_URL = docsUrl(
+    NETWORKS_AND_IDENTITY_DOCS,
+    'identity-providers'
+)
+export const NETWORK_FORM_DOCS_URLS: NetworkFormDocsUrls = {
+    auth: docsUrl(NETWORKS_AND_IDENTITY_DOCS, 'authentication-methods'),
+    adminAuth: docsUrl(NETWORKS_AND_IDENTITY_DOCS, 'auth-vs-adminauth'),
+    serviceAccountAuth: docsUrl(
+        NETWORKS_AND_IDENTITY_DOCS,
+        'service-account-automation-serviceaccountauth'
+    ),
+}
+export const PARTIES_DOCS_URL = docsUrl(PARTIES_DOCS)
+export const LOGIN_DOCS_URL = docsUrl(PARTIES_DOCS, 'log-in')
+export const CREATE_PARTY_DOCS_URL = docsUrl(PARTIES_DOCS, 'create-a-party')
+export const EDIT_PARTY_DOCS_URL = docsUrl(
+    PARTIES_DOCS,
+    'change-the-signing-key-of-a-wallet'
+)
+export const ACTIVITIES_DOCS_URL = docsUrl(PARTIES_DOCS, 'view-activities')
+export const API_KEYS_DOCS_URL = docsUrl(
+    'docs/wallet-gateway/automation/service-account-automations.mdx'
+)
+export const ADMIN_DOCS_URL = docsUrl(
+    'docs/wallet-gateway/operate/configure.mdx',
+    'administration-page'
+)
+export const SELF_ISSUED_LOGIN_DOCS_URL = docsUrl(
+    'docs/wallet-gateway/operate/self-issued-authentication.mdx',
+    'wallet-gateway-ui'
+)
+export const APPROVE_DOCS_URL = docsUrl(
+    'docs/wallet-gateway/use/approve-and-sign.mdx'
+)
 
 export const LOGIN_INFO =
     'Pick the network to log in to. Its identity provider decides how you log in. The Wallet Gateway operator configures which networks you can choose.'

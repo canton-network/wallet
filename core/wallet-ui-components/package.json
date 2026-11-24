@@ -108,6 +108,13 @@
         }
     },
     "nx": {
+        "namedInputs": {
+            "default": [
+                "{projectRoot}/**/*",
+                "sharedGlobals",
+                "{workspaceRoot}/docs/docs-sync.json"
+            ]
+        },
         "targets": {
             "typecheck": {
                 "dependsOn": [
