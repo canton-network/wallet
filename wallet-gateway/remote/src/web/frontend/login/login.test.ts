@@ -234,10 +234,10 @@ describe('LoginUI', () => {
         expect(getLoginForm(dappEl)?.origin).toBe('https://dapp.example')
     })
 
-    it('does not pass scopes when the URL has no scopes query', async () => {
+    it('passes no scopes when the URL has no scopes query', async () => {
         await waitUntil(() => el.networks.length === 1)
 
-        expect(getLoginForm(el)?.scopes).toBeUndefined()
+        expect(getLoginForm(el)?.scopes).toEqual([])
     })
 
     it('redirects after self-signed connect succeeds', async () => {
