@@ -165,6 +165,8 @@ class WgWalletCard extends BaseElement {
                 align-items: center;
                 justify-content: space-between;
                 gap: 0.375rem;
+                /* Fits the status badge, so cards with and without it line up */
+                min-height: 1.25rem;
             }
 
             .link-action {
