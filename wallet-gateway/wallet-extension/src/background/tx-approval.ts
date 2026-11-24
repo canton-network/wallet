@@ -143,6 +143,8 @@ interface Prompt extends TxApprovalRequest {
     state: 'preparing' | 'waiting' | 'deciding'
     outcome: Promise<TxChangedExecutedEvent>
     ended: boolean
+    /** The clean-up of a cancellation, which later cancellations wait for. */
+    cancelling?: Promise<void>
     resolve: (event: TxChangedExecutedEvent) => void
     reject: (error: unknown) => void
     stop: () => void
@@ -344,13 +346,17 @@ export function createTxApprovals({
      * cleaned up by `prompt` or `abort`.
      */
     async function cancel(prompt: Prompt, error: CodedError): Promise<void> {
+        if (prompt.cancelling) return prompt.cancelling
         if (prompt.ended || prompt.state === 'deciding') return
         prompt.reject(error)
         if (prompt.state !== 'waiting') return
         untrack(prompt)
         for (const port of prompt.ports) port.disconnect()
         prompt.ports.clear()
-        await discard(prompt, error).finally(() => release(prompt))
+        prompt.cancelling = discard(prompt, error).finally(() =>
+            release(prompt)
+        )
+        return prompt.cancelling
     }
 
     async function cancelAll(

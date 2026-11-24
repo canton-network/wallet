@@ -589,6 +589,19 @@ describe('createTxApprovals', () => {
         ).resolves.toMatchObject({ id: other.request.transactionId })
     })
 
+    it('resolves a second disconnect only once the failure was reported', async () => {
+        const { request } = await prompt()
+        const failuresOnEnd = () =>
+            approvals.endSite(principal, origin).then(() => failures().length)
+
+        await expect(
+            Promise.all([failuresOnEnd(), failuresOnEnd()])
+        ).resolves.toEqual([1, 1])
+        expect(failures()).toEqual([
+            failedEvent(request, errorCodes.provider.unauthorized),
+        ])
+    })
+
     it('ends with 4100 and signs nothing when approved after the site was revoked', async () => {
         const { request, outcome } = await prompt()
         isApproved.mockResolvedValue(false)
