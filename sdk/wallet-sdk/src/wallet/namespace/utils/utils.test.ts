@@ -242,6 +242,7 @@ describe('hash.preparedTransaction', () => {
     })
 
     it('hashes under V2 through the deprecated preparedTransacation', async () =>
+        // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
         expect((await hash.preparedTransacation(pingTx)).toHex()).toBe(pingHex))
 
     it('rejects duplicate node ids', async () => {

@@ -1,10 +1,22 @@
 {
     "name": "@canton-network/core-splice-codegen",
     "version": "1.9.0",
-    "type": "module",
     "description": "daml codegen js for default packages",
-    "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/splice-codegen#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/splice-codegen"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
@@ -16,6 +28,9 @@
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown",
@@ -37,27 +52,12 @@
         "tsdown": "catalog:",
         "typescript": "catalog:"
     },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/splice-codegen"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/splice-codegen#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
-    },
     "nx": {
         "targets": {
             "typecheck": {
                 "dependsOn": [
                     "^typecheck",
-                    "build"
+                    "dist-types"
                 ]
             },
             "build": {
@@ -67,6 +67,12 @@
                     "{workspaceRoot}/scripts/src/lib/version-config.json",
                     "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
                     "{workspaceRoot}/scripts/src/generate-daml-codegen.ts"
+                ]
+            },
+            "dist-types": {
+                "executor": "nx:noop",
+                "dependsOn": [
+                    "build"
                 ]
             }
         }

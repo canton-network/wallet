@@ -1,10 +1,22 @@
 {
     "name": "@canton-network/example-test-token-v2-registry",
     "version": "1.0.0",
-    "type": "module",
     "description": "Example registry backend app for CIP-0112 token.",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/examples/test-token-v2-registry#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "examples/test-token-v2-registry"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "main": "dist/index.js",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,11 +28,24 @@
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
         "dev": "NODE_ENV=development tsx --watch src/index.ts",
         "clean": "rm -rf dist",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
+    },
+    "dependencies": {
+        "@canton-network/core-splice-codegen": "workspace:",
+        "@canton-network/core-token-standard": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "@canton-network/wallet-sdk": "workspace:^",
+        "cors": "catalog:",
+        "express": "catalog:",
+        "openapi-ts-router": "catalog:",
+        "zod": "catalog:"
     },
     "devDependencies": {
         "@types/cors": "catalog:",
@@ -33,30 +58,5 @@
         "tsx": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "dependencies": {
-        "@canton-network/core-splice-codegen": "workspace:",
-        "@canton-network/core-token-standard": "workspace:",
-        "@canton-network/core-token-standard-v2": "workspace:",
-        "@canton-network/wallet-sdk": "workspace:^",
-        "cors": "catalog:",
-        "express": "catalog:",
-        "openapi-ts-router": "catalog:",
-        "zod": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "examples/test-token-v2-registry"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/examples/test-token-v2-registry#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

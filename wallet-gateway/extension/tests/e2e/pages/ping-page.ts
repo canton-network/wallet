@@ -96,7 +96,7 @@ export class PingPage {
         await expect(async () => {
             const observed = (await events.allTextContents())
                 .map((text) => (JSON.parse(text) as { status: string }).status)
-                .reverse()
+                .toReversed()
             expect(observed).toEqual(statuses)
         }).toPass({ timeout: 15_000 })
     }

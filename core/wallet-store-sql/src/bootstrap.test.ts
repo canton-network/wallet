@@ -226,7 +226,7 @@ describe('upsertIdpsAndNetworks', () => {
                 id: 'session-1',
                 origin: 'http://localhost',
                 network: 'net-1',
-                accessToken: 'token',
+                accessTokenHash: 'token-hash',
                 userId: 'alice',
             })
             .execute()

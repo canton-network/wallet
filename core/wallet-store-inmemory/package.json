@@ -1,10 +1,22 @@
 {
     "name": "@canton-network/core-wallet-store-inmemory",
     "version": "1.21.0",
-    "type": "module",
     "description": "In-memory implementation of the Store API",
-    "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store-inmemory#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-store-inmemory"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -16,6 +28,9 @@
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
@@ -36,20 +51,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/wallet-store-inmemory"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store-inmemory#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

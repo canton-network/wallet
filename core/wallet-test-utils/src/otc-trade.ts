@@ -313,7 +313,7 @@ export class OTCTrade {
         // TODO: check settlementRefId?
         const fetchRelevantAllocations = async () => {
             const allocationContracts =
-                await extendedSDK.token.allocation.pending(this.venue)
+                await extendedSDK.token.v1.allocation.pending(this.venue)
             return allocationContracts.filter((a) => {
                 const { settlement } = a.interfaceViewValue.allocation
                 return settlement.executor === this.venue
@@ -339,7 +339,7 @@ export class OTCTrade {
             relevantAllocations.map(async (a) => {
                 const cid = a.contractId
                 const choiceContext =
-                    await extendedSDK.token.allocation.context.execute({
+                    await extendedSDK.token.v1.allocation.context.execute({
                         allocationCid: cid,
                         registryUrl:
                             localNetStaticConfig.LOCALNET_REGISTRY_API_URL,

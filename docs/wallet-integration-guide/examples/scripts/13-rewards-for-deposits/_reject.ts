@@ -20,7 +20,7 @@ export default async (args: RewardsForDepositsTestScriptParameters) => {
     const [
         rejectTransferInstructionProxyCommand,
         rejectTransferInstructionProxyDisclosedContracts,
-    ] = await sdk.token.transfer.delegatedProxy.commands.reject({
+    ] = await sdk.token.v1.transfer.delegatedProxy.commands.reject({
         proxyCid,
         transferInstructionCid,
         featuredAppRight,
@@ -41,13 +41,13 @@ export default async (args: RewardsForDepositsTestScriptParameters) => {
     childLogger.info('Successfully rejected transfer instruction through proxy')
 
     const aliceUtxos = (
-        await sdk.token.utxos.list({
+        await sdk.token.v1.utxos.list({
             partyId: sender.partyId,
         })
     ).reduce((acc, utxo) => acc + +utxo.interfaceViewValue.amount, 0)
 
     const treasuryUtxos = (
-        await sdk.token.utxos.list({
+        await sdk.token.v1.utxos.list({
             partyId: treasury.partyId,
         })
     ).reduce((acc, utxo) => acc + +utxo.interfaceViewValue.amount, 0)

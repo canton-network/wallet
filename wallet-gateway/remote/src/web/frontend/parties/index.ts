@@ -147,7 +147,7 @@ export class UserUiParties extends BaseElement {
 
         this.wallets = await loadWallets(
             userClient,
-            await stateManager.networkId.get(currentOrigin)
+            stateManager.networkId.get(currentOrigin)
         )
     }
 
