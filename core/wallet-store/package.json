@@ -1,10 +1,22 @@
 {
     "name": "@canton-network/core-wallet-store",
     "version": "1.20.0",
-    "type": "module",
     "description": "The Store API provides persistency for the Wallet Gateway",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-store"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -16,6 +28,9 @@
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
@@ -29,20 +44,5 @@
     "devDependencies": {
         "tsdown": "catalog:",
         "typescript": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/wallet-store"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

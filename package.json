@@ -1,6 +1,10 @@
 {
     "name": "wallet-kernel",
     "private": true,
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git"
+    },
     "type": "module",
     "scripts": {
         "start:all": "pnpm exec pm2 start ecosystem.config.js --env development",
@@ -57,6 +61,10 @@
         "full:up": "pnpm run start:localnet && pnpm run start:all",
         "fetch:all": "pnpm script:fetch:canton && pnpm script:fetch:splice && pnpm script:fetch:localnet"
     },
+    "dependencies": {
+        "@nx/js": "catalog:",
+        "nx": "catalog:"
+    },
     "devDependencies": {
         "@commitlint/config-conventional": "catalog:",
         "@nx/oxlint": "catalog:",
@@ -96,13 +104,5 @@
             "pnpm oxfmt --no-error-on-unmatched-pattern"
         ]
     },
-    "packageManager": "pnpm@12.15.0",
-    "dependencies": {
-        "@nx/js": "catalog:",
-        "nx": "catalog:"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git"
-    }
+    "packageManager": "pnpm@12.23.0"
 }

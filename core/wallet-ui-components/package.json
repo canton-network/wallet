@@ -1,10 +1,23 @@
 {
     "name": "@canton-network/core-wallet-ui-components",
     "version": "1.21.0",
-    "type": "module",
     "description": "Reusable UI components for the Splice wallet",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-ui-components#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-ui-components"
+    },
+    "files": [
+        "dist/**",
+        "themes/**"
+    ],
+    "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -30,12 +43,26 @@
             "default": "./dist/react/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "vite build",
         "build:watch": "vite build --watch & tsc -p tsconfig.lib.json --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist",
         "dev": "storybook dev -p 6006 --no-open"
+    },
+    "dependencies": {
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-tx-visualizer": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-store": "workspace:",
+        "@canton-network/core-wallet-user-rpc-client": "workspace:",
+        "@lit/react": "catalog:",
+        "@logtape/logtape": "catalog:",
+        "bootstrap": "catalog:",
+        "lit": "catalog:"
     },
     "devDependencies": {
         "@mui/icons-material": "catalog:",
@@ -60,17 +87,6 @@
         "vite-plugin-dts": "catalog:",
         "vitest": "catalog:"
     },
-    "dependencies": {
-        "@lit/react": "catalog:",
-        "@canton-network/core-rpc-errors": "workspace:",
-        "@canton-network/core-tx-visualizer": "workspace:",
-        "@canton-network/core-types": "workspace:",
-        "@canton-network/core-wallet-store": "workspace:",
-        "@canton-network/core-wallet-user-rpc-client": "workspace:",
-        "@logtape/logtape": "catalog:",
-        "bootstrap": "catalog:",
-        "lit": "catalog:"
-    },
     "peerDependencies": {
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
@@ -90,22 +106,6 @@
         "react-dom": {
             "optional": true
         }
-    },
-    "files": [
-        "dist/**",
-        "themes/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/wallet-ui-components"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-ui-components#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     },
     "nx": {
         "targets": {
