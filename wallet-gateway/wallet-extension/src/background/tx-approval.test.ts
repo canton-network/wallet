@@ -21,6 +21,7 @@ import {
 } from 'vitest'
 import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
+import { storage } from 'wxt/utils/storage'
 
 import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
 import createPlain from '@/__tests__/fixtures/v3-create-plain.json'
@@ -141,8 +142,7 @@ describe('createTxApprovals', () => {
     const storeTransaction = (
         request: Pick<TxApprovalRequest, 'transactionId' | 'commandId'>,
         status: Transaction['status'] = 'pending',
-        preparedTransactionHash = preparedHash,
-        session = sessionId
+        preparedTransactionHash = preparedHash
     ) =>
         store.setTransaction({
             id: request.transactionId,
@@ -150,7 +150,7 @@ describe('createTxApprovals', () => {
             status,
             preparedTransaction: prepared,
             preparedTransactionHash,
-            payload: { actAs: [party], sessionId: session },
+            payload: { actAs: [party] },
             origin,
         } satisfies Transaction)
 
@@ -164,6 +164,19 @@ describe('createTxApprovals', () => {
     }
 
     const stored = (id: string) => store.getTransaction(id)
+    const recordedSession = (id: string) =>
+        storage.getItem(`session:txSession:${id}`)
+    const failures = () =>
+        events.filter(
+            (event) => (event as { status: string }).status === 'failed'
+        )
+
+    /** Drops this worker's listeners and starts a new one, unlocked. */
+    function restart() {
+        lockListeners = []
+        unlockListeners = []
+        approvals = create()
+    }
 
     const failedEvent = (
         { transactionId, commandId }: TxApprovalRequest,
@@ -462,18 +475,19 @@ describe('createTxApprovals', () => {
             )
         )
         expect(await stored(request.transactionId)).toBeDefined()
+        await vi.waitFor(async () =>
+            expect(await recordedSession(request.transactionId)).toBeNull()
+        )
 
+        // Reported once, even by a new worker.
+        restart()
         locked = false
         unlockListeners.forEach((listener) => listener())
 
         await vi.waitFor(async () =>
             expect(await stored(request.transactionId)).toBeUndefined()
         )
-        expect(
-            events.filter(
-                (event) => (event as { status: string }).status === 'failed'
-            )
-        ).toHaveLength(1)
+        expect(failures()).toHaveLength(1)
     })
 
     it('lets no other ending interrupt a decision', async () => {
@@ -560,18 +574,16 @@ describe('createTxApprovals', () => {
         const { request, outcome } = await prompt()
         const other = await prompt({ origin: 'https://other.example' })
 
-        approvals.endSite(principal, origin)
+        await approvals.endSite(principal, origin)
 
+        expect(await stored(request.transactionId)).toBeUndefined()
+        expect(events).toContainEqual(
+            failedEvent(request, errorCodes.provider.unauthorized)
+        )
         await expect(outcome).rejects.toMatchObject({
             code: errorCodes.provider.unauthorized,
             message: 'The site disconnected',
         })
-        await vi.waitFor(async () =>
-            expect(await stored(request.transactionId)).toBeUndefined()
-        )
-        expect(events).toContainEqual(
-            failedEvent(request, errorCodes.provider.unauthorized)
-        )
         await expect(
             approvals.service.get(other.request.transactionId)
         ).resolves.toMatchObject({ id: other.request.transactionId })
@@ -651,20 +663,21 @@ describe('createTxApprovals', () => {
     })
 
     it('reports a deleted orphan failed to its session, if that is the current one', async () => {
-        const orphan = nextRequest()
-        const ofAnotherSession = nextRequest()
-        await storeTransaction(orphan)
-        await storeTransaction(ofAnotherSession, 'pending', preparedHash, 'old')
+        const orphan = (await prompt()).request
+        const ofAnotherSession = (await prompt({ sessionId: 'old' })).request
 
+        restart()
         unlockListeners.forEach((listener) => listener())
 
         await vi.waitFor(async () =>
             expect(await stored(ofAnotherSession.transactionId)).toBeUndefined()
         )
         expect(await stored(orphan.transactionId)).toBeUndefined()
-        expect(events).toEqual([
+        expect(failures()).toEqual([
             failedEvent(orphan, errorCodes.provider.userRejectedRequest),
         ])
+        expect(await recordedSession(orphan.transactionId)).toBeNull()
+        expect(await recordedSession(ofAnotherSession.transactionId)).toBeNull()
     })
 
     it('keeps an orphan that is signed before its deletion runs', async () => {

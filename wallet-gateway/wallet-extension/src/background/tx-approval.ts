@@ -10,6 +10,7 @@ import {
 } from '@canton-network/core-wallet-services'
 import type { Transaction } from '@canton-network/core-wallet-store'
 import { browser, type Browser } from 'wxt/browser'
+import { storage } from 'wxt/utils/storage'
 
 import { logger } from '@/shared/logger.ts'
 import { txApprovalPortId } from '@/shared/ports.ts'
@@ -111,8 +112,11 @@ export interface TxApprovals {
      * Only its `service.decide` may then sign or delete it.
      */
     hasPrompt(transactionId: string): boolean
-    /** Ends the prompts of a site the principal no longer approves. */
-    endSite(principal: string, origin: string): void
+    /**
+     * Ends the prompts of a site the principal no longer approves. Resolves
+     * once their `failed` events are sent.
+     */
+    endSite(principal: string, origin: string): Promise<void>
     service: TxApprovalService
 }
 
@@ -172,12 +176,44 @@ const approvalPopup = (transactionId: string) =>
 const orphaned = () =>
     rejected('The transaction approval ended when the wallet restarted')
 
-/** The session that asked for a transaction, which `prepareExecute` records. */
-function sessionOf(transaction: Transaction): string | undefined {
-    const sessionId = (
-        transaction.payload as { sessionId?: unknown } | undefined
-    )?.sessionId
+/**
+ * The session that asked for a stored transaction, kept outside its payload,
+ * which dApps and the user API see. Session storage outlives a worker
+ * restart, so the clean-up after one can report the transaction failed to
+ * that session. A prompt that ended while locked forgets it once reported,
+ * so the clean-up at the next unlock doesn't report it again.
+ */
+const sessionKey = (transactionId: string) =>
+    `session:txSession:${transactionId}` as const
+
+async function recordSession(
+    transactionId: string,
+    sessionId: string
+): Promise<void> {
+    try {
+        await storage.setItem(sessionKey(transactionId), sessionId)
+    } catch (error) {
+        logger.error('Failed to record the session of {id}: {error}', {
+            id: transactionId,
+            error,
+        })
+    }
+}
+
+async function recordedSession(
+    transactionId: string
+): Promise<string | undefined> {
+    const sessionId = await storage.getItem<unknown>(sessionKey(transactionId))
     return typeof sessionId === 'string' ? sessionId : undefined
+}
+
+function forgetSession(transactionId: string): Promise<void> {
+    return storage.removeItem(sessionKey(transactionId)).catch((error) => {
+        logger.error('Failed to forget the session of {id}: {error}', {
+            id: transactionId,
+            error,
+        })
+    })
 }
 
 function actingParty(transaction: Transaction): string | undefined {
@@ -224,9 +260,6 @@ export function createTxApprovals({
     const prompts = new Map<string, Prompt>()
     // The waiting prompts of each tab, oldest first.
     const byTab = new Map<number, Prompt[]>()
-    // Transactions reported failed while the vault was locked, which the
-    // clean-up at the next unlock deletes.
-    const reported = new Set<string>()
 
     const storeOf = async (prompt: Prompt): Promise<ExtensionStore> =>
         (await getStore()).withAuthContext(prompt.auth)
@@ -255,10 +288,11 @@ export function createTxApprovals({
         void showTab(tabId)
     }
 
-    function release(prompt: Prompt): void {
-        if (prompts.get(prompt.transactionId) === prompt) {
-            prompts.delete(prompt.transactionId)
-        }
+    /** Ends the reservation of a prompt whose clean-up has finished. */
+    async function release(prompt: Prompt): Promise<void> {
+        if (prompts.get(prompt.transactionId) !== prompt) return
+        prompts.delete(prompt.transactionId)
+        await forgetSession(prompt.transactionId)
     }
 
     function emitFailed(
@@ -288,9 +322,7 @@ export function createTxApprovals({
             const store = await storeOf(prompt)
             await store.removePendingTransaction(prompt.transactionId)
         } catch (cause) {
-            if (cause instanceof VaultLockedError) {
-                if (error) reported.add(prompt.transactionId)
-            } else {
+            if (!(cause instanceof VaultLockedError)) {
                 logger.error('Failed to delete transaction {id}: {cause}', {
                     id: prompt.transactionId,
                     cause,
@@ -311,23 +343,24 @@ export function createTxApprovals({
      * Ends a prompt the user hasn't answered. One still being prepared is
      * cleaned up by `prompt` or `abort`.
      */
-    function cancel(prompt: Prompt, error: CodedError): void {
+    async function cancel(prompt: Prompt, error: CodedError): Promise<void> {
         if (prompt.ended || prompt.state === 'deciding') return
         prompt.reject(error)
         if (prompt.state !== 'waiting') return
         untrack(prompt)
         for (const port of prompt.ports) port.disconnect()
         prompt.ports.clear()
-        void discard(prompt, error).finally(() => release(prompt))
+        await discard(prompt, error).finally(() => release(prompt))
     }
 
-    function cancelAll(
+    async function cancelAll(
         error: () => CodedError,
         matches: (prompt: Prompt) => boolean = () => true
-    ): void {
-        for (const prompt of prompts.values()) {
-            if (matches(prompt)) cancel(prompt, error())
-        }
+    ): Promise<void> {
+        const ending = [...prompts.values()]
+            .filter(matches)
+            .map((prompt) => cancel(prompt, error()))
+        await Promise.all(ending)
     }
 
     /**
@@ -350,8 +383,9 @@ export function createTxApprovals({
                 const { id, commandId, origin } = transaction
                 if (prompts.has(id)) continue
                 if (!(await store.removePendingTransaction(id))) continue
-                if (reported.delete(id)) continue
-                if (session && sessionOf(transaction) === session.id) {
+                const sessionId = await recordedSession(id)
+                await forgetSession(id)
+                if (session && sessionId === session.id) {
                     emitFailed(
                         session.id,
                         commandId,
@@ -373,18 +407,20 @@ export function createTxApprovals({
         if (vault.status() === 'unlocked') return removeOrphans()
     })
 
-    vault.onLock(() =>
-        cancelAll(() =>
-            providerErrors.unauthorized({ message: 'Wallet is locked' })
-        )
+    vault.onLock(
+        () =>
+            void cancelAll(() =>
+                providerErrors.unauthorized({ message: 'Wallet is locked' })
+            )
     )
 
     // Sign-out, another account or a new token.
-    authContext.onChange((context) =>
-        cancelAll(
-            sessionEnded,
-            (prompt) => prompt.auth.accessToken !== context?.accessToken
-        )
+    authContext.onChange(
+        (context) =>
+            void cancelAll(
+                sessionEnded,
+                (prompt) => prompt.auth.accessToken !== context?.accessToken
+            )
     )
 
     browser.runtime.onConnect.addListener((port) => {
@@ -407,29 +443,34 @@ export function createTxApprovals({
     browser.tabs.onRemoved.addListener((tabId) => {
         // Nothing left to restore on a closed tab.
         byTab.delete(tabId)
-        cancelAll(
+        void cancelAll(
             () => rejected('The tab that asked for the transaction was closed'),
             (prompt) => prompt.tab?.tabId === tabId
         )
     })
 
-    presence.onEnd((connection) =>
-        cancelAll(pageGone, (prompt) => prompt.tab?.connection === connection)
+    presence.onEnd(
+        (connection) =>
+            void cancelAll(
+                pageGone,
+                (prompt) => prompt.tab?.connection === connection
+            )
     )
 
     async function show(prompt: Prompt): Promise<void> {
+        await recordSession(prompt.transactionId, prompt.sessionId)
         // The user may have signed out or switched accounts while the
         // transaction was prepared.
         const current = await isCurrent(
             prompt.auth.accessToken,
             prompt.sessionId
         ).catch(() => false)
-        if (!current) cancel(prompt, sessionEnded())
+        if (!current) void cancel(prompt, sessionEnded())
         if (prompt.ended) {
             // Not reported pending yet, so the dApp's request is the only
             // one to tell.
             await discard(prompt, undefined)
-            release(prompt)
+            await release(prompt)
             await prompt.outcome
             return
         }
@@ -546,12 +587,15 @@ export function createTxApprovals({
         outcome.catch(() => {})
         const timer = setTimeout(
             () =>
-                cancel(prompt, rejected('The transaction approval timed out')),
+                void cancel(
+                    prompt,
+                    rejected('The transaction approval timed out')
+                ),
             Math.max(0, receivedAt + timeoutMs - Date.now())
         )
         // A replaced session logs out with the same token.
         const notifier = notificationService.getNotifier(sessionId)
-        const onLogout = () => cancel(prompt, sessionEnded())
+        const onLogout = () => void cancel(prompt, sessionEnded())
         notifier.on(LOGOUT_EVENT, onLogout)
 
         const prompt: Prompt = {
@@ -584,7 +628,7 @@ export function createTxApprovals({
             prompt: () => show(prompt),
             abort(error) {
                 prompt.reject(error)
-                release(prompt)
+                void release(prompt)
             },
         }
     }
@@ -657,7 +701,7 @@ export function createTxApprovals({
                     }
                     prompt.resolve(result)
                 } finally {
-                    release(prompt)
+                    await release(prompt)
                 }
             },
         },

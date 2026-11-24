@@ -249,9 +249,7 @@ export const dappController = (
                 status: 'pending',
                 preparedTransaction: prepared.preparedTransaction,
                 preparedTransactionHash: prepared.preparedTransactionHash,
-                // The session lets a clean-up after a worker restart report
-                // it failed to the session's dApps.
-                payload: { ...params, commandId, actAs, sessionId },
+                payload: { ...params, commandId, actAs },
                 // The requesting page, not the session's login origin.
                 origin,
                 createdAt: new Date(),
@@ -356,7 +354,8 @@ export const dappController = (
             requireAuth()
             if (principal !== undefined) {
                 await sites.revoke(principal, origin)
-                txApprovals.endSite(principal, origin)
+                // Its other tabs get the failures before their ports close.
+                await txApprovals.endSite(principal, origin)
             }
             sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
             return null

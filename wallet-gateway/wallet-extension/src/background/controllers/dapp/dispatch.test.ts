@@ -318,10 +318,28 @@ describe('createDappDispatcher', () => {
 
         it('revokes only this site on disconnect and keeps the session', async () => {
             await sites.approve(principal, 'https://other.example')
+            let finishEnding!: () => void
+            deps.txApprovals.endSite.mockImplementation(async () => {
+                expect(await sites.isApproved(principal, origin)).toBe(false)
+                await new Promise<void>((resolve) => (finishEnding = resolve))
+            })
 
-            await expect(
-                dispatcher.request(request('disconnect'), origin)
-            ).resolves.toEqual({ jsonrpc: '2.0', id: 7, result: null })
+            const disconnected = dispatcher.request(
+                request('disconnect'),
+                origin
+            )
+            await vi.waitFor(() =>
+                expect(deps.txApprovals.endSite).toHaveBeenCalled()
+            )
+            // The site's other tabs still get its transactions' failures.
+            expect(deps.sitePorts.close).not.toHaveBeenCalled()
+            finishEnding()
+
+            await expect(disconnected).resolves.toEqual({
+                jsonrpc: '2.0',
+                id: 7,
+                result: null,
+            })
 
             expect(await sites.isApproved(principal, origin)).toBe(false)
             expect(
@@ -672,15 +690,15 @@ describe('createDappDispatcher', () => {
                 })
                 const [{ transactionId }] =
                     deps.txApprovals.begin.mock.calls[0]!
-                expect(await store.getTransaction(transactionId)).toMatchObject(
-                    {
-                        status: 'pending',
-                        commandId: 'command-1',
-                        preparedTransaction: 'prepared-tx',
-                        payload: expect.objectContaining({ sessionId }),
-                        origin,
-                    }
-                )
+                const stored = await store.getTransaction(transactionId)
+                expect(stored).toMatchObject({
+                    status: 'pending',
+                    commandId: 'command-1',
+                    preparedTransaction: 'prepared-tx',
+                    origin,
+                })
+                // The payload reaches dApps, which must not see the session.
+                expect(stored?.payload).not.toHaveProperty('sessionId')
                 expect(started.prompt).toHaveBeenCalled()
             })
 
