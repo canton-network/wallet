@@ -15,14 +15,15 @@ import { getTokenClient } from '@/ui/lib/token-client.ts'
 export const Route = createFileRoute('/_unlocked/_connected/assets/')({
     loader: async ({ context: { queryClient } }) => {
         const client = getTokenClient()
-        const wallets = await queryClient.ensureQueryData(walletsQuery())
-        // prefetchQuery doesn't throw, so the page shows a failed fetch.
-        await Promise.all([
-            queryClient.prefetchQuery(tokenInstrumentsQuery()),
+        const wallets = await queryClient.query({
+            ...walletsQuery(),
+            staleTime: 'static',
+        })
+        // Let the page show errors from queries warmed by the loader.
+        await Promise.allSettled([
+            queryClient.query(tokenInstrumentsQuery()),
             ...toTokenWallets(wallets).map(({ partyId }) =>
-                queryClient.prefetchQuery(
-                    holdingsQueryOptions({ client, partyId })
-                )
+                queryClient.query(holdingsQueryOptions({ client, partyId }))
             ),
         ])
     },
