@@ -69,7 +69,9 @@ export function startBackground({
     const sites = createApprovedSiteStore(vault)
     const isCurrent = currentSessionCheck(getStore, authContext)
     const presence = createPagePresence()
-    const tabIcons = createTabIcons()
+    const tabIcons = createTabIcons((tabId, held) =>
+        presence.heartbeat(tabId, held)
+    )
     const siteApprovals = createSiteApprovals({
         vault,
         authContext,

@@ -77,6 +77,29 @@ describe('createTabIcons', () => {
         expect(await shown()).toEqual(['popup.html', ''])
     })
 
+    it('reports a tab held from its first prompt until its last one ends or it closes', async () => {
+        const onHeld = vi.fn()
+        const tabIcons = createTabIcons(onHeld)
+        const unlock = { popup: 'popup.html#/unlock', badge: '!' }
+
+        await tabIcons.set(7, 'site', prompt)
+        await tabIcons.set(7, 'unlock', unlock)
+        await tabIcons.set(7, 'site', undefined)
+        expect(onHeld.mock.calls).toEqual([[7, true]])
+        await tabIcons.set(7, 'unlock', undefined)
+        expect(onHeld.mock.calls).toEqual([
+            [7, true],
+            [7, false],
+        ])
+
+        await tabIcons.set(9, 'site', prompt)
+        await fakeBrowser.tabs.onRemoved.trigger(9, {
+            windowId: 1,
+            isWindowClosing: false,
+        })
+        expect(onHeld).toHaveBeenLastCalledWith(9, false)
+    })
+
     it("resets the icons the previous worker left, but not a new request's", async () => {
         // The browser kept these across a worker restart.
         await fakeBrowser.storage.session.set({ overriddenTabs: [7, 9] })
