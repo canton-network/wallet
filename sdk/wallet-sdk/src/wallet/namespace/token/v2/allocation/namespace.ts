@@ -295,6 +295,7 @@ export class AllocationNamespace {
             const view = params.request.interfaceViewValue
             const actors =
                 params.actors ??
+                // oxlint-disable-next-line typescript/no-deprecated -- used by the deprecated accept
                 actorsFor(view.availableActions, 'ARA_Accept', params.partyId)
             if (!actors) {
                 throw new Error(
@@ -303,6 +304,7 @@ export class AllocationNamespace {
             }
 
             const [commands, dc] =
+                // oxlint-disable-next-line typescript/no-deprecated -- used by the deprecated accept
                 await this.service.createAllocationsForRequest({
                     requestCid: params.request.contractId,
                     request: view,

@@ -558,10 +558,12 @@ export class TransactionParser {
                     lockedHoldingsChange: result.lockedHoldingsChange,
                     lockedHoldingsChangeSummaries:
                         result.lockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     lockedHoldingsChangeSummary:
                         result.lockedHoldingsChangeSummary,
                     unlockedHoldingsChangeSummaries:
                         result.unlockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     unlockedHoldingsChangeSummary:
                         result.unlockedHoldingsChangeSummary,
                     transferInstruction: result.transferInstruction,
@@ -658,11 +660,13 @@ export class TransactionParser {
                     label: result.label,
                     lockedHoldingsChange,
                     lockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     lockedHoldingsChangeSummary:
                         lockedHoldingsChangeSummaries[0] ??
                         emptyHoldingsChangeSummary,
                     unlockedHoldingsChange,
                     unlockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     unlockedHoldingsChangeSummary:
                         unlockedHoldingsChangeSummaries[0] ??
                         emptyHoldingsChangeSummary,
@@ -1178,11 +1182,13 @@ export class TransactionParser {
                 }),
                 lockedHoldingsChange,
                 lockedHoldingsChangeSummaries,
+                // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                 lockedHoldingsChangeSummary:
                     lockedHoldingsChangeSummaries[0] ??
                     emptyHoldingsChangeSummary,
                 unlockedHoldingsChange,
                 unlockedHoldingsChangeSummaries,
+                // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                 unlockedHoldingsChangeSummary:
                     unlockedHoldingsChangeSummaries[0] ??
                     emptyHoldingsChangeSummary,

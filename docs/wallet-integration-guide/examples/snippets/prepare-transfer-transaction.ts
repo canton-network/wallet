@@ -12,7 +12,7 @@ export default async function () {
     const receiver = global.EXISTING_PARTY_2
 
     const [transferCommand, disclosedContracts] =
-        await sdk.token.transfer.create({
+        await sdk.token.v1.transfer.create({
             sender,
             recipient: receiver,
             amount: '2000',

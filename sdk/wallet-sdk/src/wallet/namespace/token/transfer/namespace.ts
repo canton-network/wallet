@@ -14,7 +14,6 @@ import type { TokenNamespaceConfig } from '../namespace.ts'
 import { ProxyDelegationNamespace } from './proxyDelegation.ts'
 import type {
     TransferAllocationChoiceParams,
-    TransferParams,
     TransferParamsV1,
 } from './types.ts'
 
@@ -66,7 +65,7 @@ export class TransferNamespace {
 
     /** @deprecated use sdk.token.v2.transfer.create instead */
     async createV2(
-        params: TransferParams
+        params: TransferParamsV1
     ): Promise<PreparedCommand<'ExerciseCommand'>> {
         const assets = parseAssets(
             this.sdkContext.commonCtx,

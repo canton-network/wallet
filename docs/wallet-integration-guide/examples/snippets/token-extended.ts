@@ -16,5 +16,5 @@ export default async function () {
     const partyId = EXISTING_PARTY_1
 
     // Now token namespace is available
-    await extendedSDK.token.utxos.list({ partyId })
+    await extendedSDK.token.v1.utxos.list({ partyId })
 }

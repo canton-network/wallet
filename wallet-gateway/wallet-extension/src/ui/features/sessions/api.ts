@@ -18,7 +18,7 @@ import { getUserClient } from '@/ui/lib/user-client.ts'
 
 /**
  * Whether the extension pages are connected to a network, from the
- * background. Route guards act on it, so `staleTime: 0` makes `fetchQuery`
+ * background. Route guards act on it, so `staleTime: 0` makes `queryClient.query`
  * ask every time.
  */
 export const connectionStatusQuery = () =>

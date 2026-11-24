@@ -106,7 +106,7 @@ logger.info({ fetchedPreapprovalStatus }, 'Fetched preapproval status')
 const sentValue = 2000
 
 const [transferCommand, transferDisclosedContracts] =
-    await sdk.token.transfer.create({
+    await sdk.token.v1.transfer.create({
         sender: alice.partyId,
         recipient: bob.partyId,
         amount: sentValue.toString(),
@@ -125,8 +125,8 @@ await sdk.ledger
 
 logger.info({ sentValue }, 'Executed transfer from Alice to Bob with value:')
 
-const aliceUtxos = await sdk.token.utxos.list({ partyId: alice.partyId })
-const bobUtxos = await sdk.token.utxos.list({ partyId: bob.partyId })
+const aliceUtxos = await sdk.token.v1.utxos.list({ partyId: alice.partyId })
+const bobUtxos = await sdk.token.v1.utxos.list({ partyId: bob.partyId })
 
 const partyAmuletValue = (utxos: PrettyContract<HoldingView>[]) =>
     utxos.reduce(

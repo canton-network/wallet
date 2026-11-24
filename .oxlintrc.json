@@ -68,6 +68,7 @@
         "unicorn/no-array-sort": "off",
         "unicorn/prefer-add-event-listener": "off",
         "unicorn/require-post-message-target-origin": "off",
-        "react/react-in-jsx-scope": "off"
+        "react/react-in-jsx-scope": "off",
+        "typescript/no-deprecated": "error"
     }
 }

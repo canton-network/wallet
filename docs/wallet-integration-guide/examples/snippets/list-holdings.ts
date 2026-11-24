@@ -11,5 +11,5 @@ export default async function () {
 
     const myParty = global.EXISTING_PARTY_1
 
-    await sdk.token.utxos.list({ partyId: myParty })
+    await sdk.token.v1.utxos.list({ partyId: myParty })
 }

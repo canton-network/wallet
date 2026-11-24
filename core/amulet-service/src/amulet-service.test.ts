@@ -37,6 +37,7 @@ describe('AmuletService (Forwarding Layer)', () => {
         })
 
         it('should instantiate AmuletServiceScanProxy when arg1 is a ScanProxyClient', () => {
+            // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated service
             new AmuletService(
                 mockTokenStandard,
                 mockScanProxyClient,

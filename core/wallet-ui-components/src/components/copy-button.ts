@@ -117,6 +117,7 @@ class WgCopyButton extends BaseElement {
 
         document.body.appendChild(input)
         input.select()
+        // oxlint-disable-next-line typescript/no-deprecated -- fallback for contexts without navigator.clipboard
         document.execCommand('copy')
         document.body.removeChild(input)
     }

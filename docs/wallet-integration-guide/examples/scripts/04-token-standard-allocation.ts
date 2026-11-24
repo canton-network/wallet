@@ -254,7 +254,7 @@ if (!otcTradeCid) throw new Error('OTCTrade not found for venue')
 logger.info({ otcTradeCid }, `OtcTrades were found`)
 
 const pendingAllocationRequestsAlice =
-    await sdk.token.allocation.request.pending(sender.partyId)
+    await sdk.token.v1.allocation.request.pending(sender.partyId)
 
 const [allocationRequestAlice] = pendingAllocationRequestsAlice
 if (!allocationRequestAlice) {
@@ -279,7 +279,7 @@ const specAlice = {
 //TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
 
 const [allocateCmdAlice, allocateDisclosedAlice] =
-    await sdk.token.allocation.instruction.create({
+    await sdk.token.v1.allocation.instruction.create({
         allocationSpecification: specAlice,
         asset: amuletAsset,
     })
@@ -295,9 +295,8 @@ await sdk.ledger
 
 logger.info('Alice created Allocation for her TransferLeg')
 
-const pendingAllocationRequestsBob = await sdk.token.allocation.request.pending(
-    recipient.partyId
-)
+const pendingAllocationRequestsBob =
+    await sdk.token.v1.allocation.request.pending(recipient.partyId)
 
 const [allocationRequestBob] = pendingAllocationRequestsBob
 if (!allocationRequestBob) {
@@ -323,7 +322,7 @@ const specBob = {
 //TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
 
 const [allocateCmdBob, allocateDisclosedBlice] =
-    await sdk.token.allocation.instruction.create({
+    await sdk.token.v1.allocation.instruction.create({
         allocationSpecification: specBob,
         asset: amuletAsset,
     })
@@ -341,7 +340,7 @@ logger.info('Bob created Allocation for his TransferLeg')
 
 // Once the legs have been allocated, venue settles the trade triggering transfer of holdings
 
-const allocationsVenue = await sdk.token.allocation.pending(venue.partyId)
+const allocationsVenue = await sdk.token.v1.allocation.pending(venue.partyId)
 
 const settlementRefId = allocationRequestViewAlice.settlement.settlementRef.id
 const relevantAllocations = allocationsVenue.filter(
@@ -358,7 +357,7 @@ if (relevantAllocations.length === 0)
 const allocationEntries = await Promise.all(
     relevantAllocations.map(async (a) => {
         const cid = a.contractId
-        const choiceContext = await sdk.token.allocation.context.execute({
+        const choiceContext = await sdk.token.v1.allocation.context.execute({
             allocationCid: cid,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         })
@@ -417,7 +416,7 @@ logger.info(
     'Venue settled the OTCTrade, holdings are transfered to Alice and Bob'
 )
 
-await sdk.token.utxos
+await sdk.token.v1.utxos
     .list({
         partyId: sender.partyId,
     })
@@ -428,7 +427,7 @@ await sdk.token.utxos
         )
     })
 
-await sdk.token.utxos
+await sdk.token.v1.utxos
     .list({
         partyId: recipient.partyId,
     })

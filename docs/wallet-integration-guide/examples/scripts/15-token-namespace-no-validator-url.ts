@@ -56,7 +56,7 @@ const result = await sdk.ledger
     .sign(senderKeys.privateKey)
     .execute({ partyId: sender.partyId })
 
-const senderUtxos = await sdk.token.utxos.list({ partyId: sender.partyId })
+const senderUtxos = await sdk.token.v1.utxos.list({ partyId: sender.partyId })
 
 const tapTransaction = await sdk.token.transactionsById({
     updateId: result.updateId,
@@ -90,7 +90,7 @@ if (senderAmuletUtxos.length === 0) {
 logger.info('Tap command for Amulet for Sender submitted and UTXO received')
 
 const [transferCommand, transferDisclosedContracts] =
-    await sdk.token.transfer.create({
+    await sdk.token.v1.transfer.create({
         sender: sender.partyId,
         recipient: receiver.partyId,
         instrumentId: 'Amulet',
@@ -114,13 +114,13 @@ logger.info(
     'Submitted transfer command from Sender to Receiver'
 )
 
-const receiverPendingTransfers = await sdk.token.transfer.pending(
+const receiverPendingTransfers = await sdk.token.v1.transfer.pending(
     receiver.partyId
 )
 logger.info(receiverPendingTransfers, 'Receiver pending transfer instructions')
 
 const [acceptCommand, acceptDisclosedContracts] =
-    await sdk.token.transfer.accept({
+    await sdk.token.v1.transfer.accept({
         transferInstructionCid: receiverPendingTransfers[0].contractId,
         registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
     })
@@ -135,7 +135,7 @@ await sdk.ledger
     .execute({ partyId: receiver.partyId })
 logger.info('Receiver accepted the transfer instruction')
 
-const receiverUtxos = await sdk.token.utxos.list({
+const receiverUtxos = await sdk.token.v1.utxos.list({
     partyId: receiver.partyId,
 })
 logger.info(

@@ -11,13 +11,13 @@ export default async function () {
     const myPrivateKey = global.EXISTING_PARTY_2_KEYS.privateKey
     const Reject = true
 
-    const myPendingTransaction = await sdk.token.transfer.pending(myParty)
+    const myPendingTransaction = await sdk.token.v1.transfer.pending(myParty)
 
     const myPendingTransactionCid = myPendingTransaction[0].contractId
     if (Reject) {
         //reject the transaction
         const [rejectTransferCommand, disclosedContracts] =
-            await sdk.token.transfer.reject({
+            await sdk.token.v1.transfer.reject({
                 transferInstructionCid: myPendingTransactionCid,
                 registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
             })
@@ -33,7 +33,7 @@ export default async function () {
     } else {
         //accept the transaction
         const [acceptTransferCommand, disclosedContracts] =
-            await sdk.token.transfer.accept({
+            await sdk.token.v1.transfer.accept({
                 transferInstructionCid: myPendingTransactionCid,
                 registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
             })
