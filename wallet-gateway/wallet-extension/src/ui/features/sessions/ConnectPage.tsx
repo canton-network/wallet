@@ -53,7 +53,7 @@ export function ConnectPage() {
             )}
             <LoginForm
                 displayTopBar={false}
-                networks={loginNetworks}
+                networks={loginNetworks ?? []}
                 idps={idps.data ?? []}
                 loading={networks.isPending || idps.isPending}
                 connecting={connect.isPending}
