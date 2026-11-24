@@ -182,7 +182,7 @@ describe('createAuthService', () => {
                 expect.objectContaining({
                     origin: EXTENSION_ORIGIN,
                     network: localnetId,
-                    accessToken: stored,
+                    accessTokenHash: await hashAccessToken(stored),
                 }),
             ])
             await expect(auth.getStatus()).resolves.toBe('connected')
