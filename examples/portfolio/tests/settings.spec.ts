@@ -229,6 +229,7 @@ test('instrument mapping preserves registry and SDK fields', () => {
             symbol: 'AMT',
             decimals: 10,
             paused: false,
+            // oxlint-disable-next-line typescript/no-deprecated -- required by the token metadata API
             showAccountInputFields: false,
             supportedApis: {
                 'splice-api-token-transfer-instruction-v2': 1,

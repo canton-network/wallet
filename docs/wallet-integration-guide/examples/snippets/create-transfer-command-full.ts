@@ -12,7 +12,7 @@ export default async function () {
     const sender = global.EXISTING_PARTY_1
     const receiver = global.EXISTING_PARTY_2
 
-    await sdk.token.transfer.create({
+    await sdk.token.v1.transfer.create({
         sender,
         recipient: receiver,
         amount: '2000',

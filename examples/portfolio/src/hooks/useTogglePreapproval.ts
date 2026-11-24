@@ -62,12 +62,13 @@ export function useTogglePreapproval({
                 return
             }
 
-            const operator = await queryClient.ensureQueryData(
-                utilityOperatorQueryOptions({
+            const operator = await queryClient.query({
+                ...utilityOperatorQueryOptions({
                     registryPartyId: row.registryPartyId,
                     registryUrl: row.registryUrl,
-                })
-            )
+                }),
+                staleTime: 'static',
+            })
 
             const args = {
                 receiver: primaryParty,

@@ -10,5 +10,5 @@ export default async function () {
     const myParty = global.EXISTING_PARTY_1
 
     //this returns a list of all transfer instructions, you can then accept or reject them
-    await sdk.token.transfer.pending(myParty)
+    await sdk.token.v1.transfer.pending(myParty)
 }

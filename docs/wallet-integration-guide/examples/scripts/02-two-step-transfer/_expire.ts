@@ -13,7 +13,7 @@ export default async (args: TransferTestScriptParameters) => {
     )
 
     const [transferCommand, transferDisclosedContracts] =
-        await sdk.token.transfer.create({
+        await sdk.token.v1.transfer.create({
             sender: sender.partyId,
             recipient: receiver.partyId,
             instrumentId: 'Amulet',
@@ -38,7 +38,7 @@ export default async (args: TransferTestScriptParameters) => {
         'Submitted transfer command from Sender to Receiver'
     )
 
-    const receiverPendingTransfers = await sdk.token.transfer.pending(
+    const receiverPendingTransfers = await sdk.token.v1.transfer.pending(
         receiver.partyId
     )
     logger.info(
@@ -47,7 +47,7 @@ export default async (args: TransferTestScriptParameters) => {
     )
 
     const [acceptCommand, acceptDisclosedContracts] =
-        await sdk.token.transfer.accept({
+        await sdk.token.v1.transfer.accept({
             transferInstructionCid: receiverPendingTransfers[0].contractId,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         })

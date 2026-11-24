@@ -207,7 +207,7 @@ async function beforeEachSetup() {
             .execute({ partyId: global.EXISTING_PARTY_1 })
 
         const [transferCommand, transferDisclosedContracts] =
-            await sdk.token.transfer.create({
+            await sdk.token.v1.transfer.create({
                 sender: global.EXISTING_PARTY_1,
                 recipient: global.EXISTING_PARTY_2,
                 instrumentId: 'Amulet',

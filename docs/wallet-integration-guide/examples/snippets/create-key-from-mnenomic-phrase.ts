@@ -14,7 +14,7 @@ export default async function createCantonKeyFromMnemonic() {
         const seed = await bip39.mnemonicToSeed(mnemonic)
 
         // 3. Derive a 32-byte Private Key (first 32 bytes of the seed)
-        const privateKey = naclUtil.encodeBase64(seed.slice(0, 32))
+        const privateKey = naclUtil.encodeBase64(seed.subarray(0, 32))
         const publicKey = getPublicKeyFromPrivate(privateKey)
 
         console.log('Private Key (bas64):', privateKey)

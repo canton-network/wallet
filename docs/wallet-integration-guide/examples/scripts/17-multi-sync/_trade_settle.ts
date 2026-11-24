@@ -52,11 +52,11 @@ async function cancelAllocationsOnFailure(
     // allocation-v1 API (Amulet from the scan-proxy registry, TestToken from the
     // local TestToken registry).
     const [amuletCancelCtx, testTokenCancelCtx] = await Promise.all([
-        tokenNamespace.allocation.context.cancel({
+        tokenNamespace.v1.allocation.context.cancel({
             allocationCid: amuletAllocationCid,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         }),
-        tokenNamespace.allocation.context.cancel({
+        tokenNamespace.v1.allocation.context.cancel({
             allocationCid: testTokenAllocationCid,
             registryUrl: testTokenRegistryUrl,
         }),
@@ -144,17 +144,19 @@ export async function settleOtcTrade(
     // TestToken registry URL comes from the SDK's configured registries.
     const { registryUrl: testTokenRegistryUrl } =
         await tokenNamespace.find('TestToken')
-    const amuletExecCtx = await tokenNamespace.allocation.context.execute({
+    const amuletExecCtx = await tokenNamespace.v1.allocation.context.execute({
         allocationCid: amuletAllocationCid,
         registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
     })
 
     // Fetch Bob's TestToken execute-transfer choice context from the registry's
     // allocation-v1 API (instead of hard-coding an empty context).
-    const testTokenExecCtx = await tokenNamespace.allocation.context.execute({
-        allocationCid: testTokenAllocationCid,
-        registryUrl: testTokenRegistryUrl,
-    })
+    const testTokenExecCtx = await tokenNamespace.v1.allocation.context.execute(
+        {
+            allocationCid: testTokenAllocationCid,
+            registryUrl: testTokenRegistryUrl,
+        }
+    )
 
     const allocationsWithContext = {
         [legIdAlice]: {

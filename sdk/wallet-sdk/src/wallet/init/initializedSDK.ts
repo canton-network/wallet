@@ -92,7 +92,8 @@ const createNamespace: {
         // that provide validatorUrl. Configurations without it use Scan
         // directly.
         const amuletService = config.validatorUrl
-            ? new AmuletService(
+            ? // oxlint-disable-next-line typescript/no-deprecated -- validator-proxy setups still need it
+              new AmuletService(
                   tokenStandardService,
                   new ScanProxyClient(
                       new ParsedURL(ctx, config.validatorUrl),

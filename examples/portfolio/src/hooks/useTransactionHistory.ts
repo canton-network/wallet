@@ -31,9 +31,10 @@ export const useTransactionHistoryForParty = (
                 throw new Error('Party is unavailable')
             }
 
-            const service = await queryClient.ensureQueryData(
-                transactionHistoryServiceQueryOptions(partyId)
-            )
+            const service = await queryClient.query({
+                ...transactionHistoryServiceQueryOptions(partyId),
+                staleTime: 'static',
+            })
             return service.query(pageParam)
         },
         getNextPageParam: (lastPage: TransactionHistoryResponse) => {

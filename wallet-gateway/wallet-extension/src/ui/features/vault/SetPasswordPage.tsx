@@ -7,7 +7,7 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useNavigate } from '@tanstack/react-router'
-import { type FormEvent, useState } from 'react'
+import { type SubmitEvent, useState } from 'react'
 
 import { passwordProblems } from '@/shared/password-policy.ts'
 import { VaultErrorName } from '@/shared/vault-protocol.ts'
@@ -28,7 +28,7 @@ export function SetPasswordPage() {
     const canSubmit =
         problems.length === 0 && confirm === password && !createVault.isPending
 
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
         if (!canSubmit) return
         setPassword('')

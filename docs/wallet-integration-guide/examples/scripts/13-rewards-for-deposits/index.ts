@@ -118,14 +118,14 @@ await sdk.ledger
 const setupIteration =
     async (): Promise<RewardsForDepositsTestScriptParameters> => {
         const createDelegateProxyCommandResult =
-            await sdk.token.transfer.delegatedProxy.create(treasury.partyId)
+            await sdk.token.v1.transfer.delegatedProxy.create(treasury.partyId)
 
         logger.info({ createDelegateProxyCommandResult })
 
         const amountToSend = 100
 
         const [transferCommand, transferDisclosedContracts] =
-            await sdk.token.transfer.create({
+            await sdk.token.v1.transfer.create({
                 sender: alice.partyId,
                 recipient: treasury.partyId,
                 amount: amountToSend.toString(),
@@ -158,7 +158,7 @@ const setupIteration =
         )
 
         const transferInstructionCid = (
-            await sdk.token.transfer.pending(alice.partyId)
+            await sdk.token.v1.transfer.pending(alice.partyId)
         )[0].contractId
 
         logger.info({ proxyCid, transferInstructionCid })

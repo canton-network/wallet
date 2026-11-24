@@ -43,6 +43,7 @@ export abstract class SDKPlugin<
         /**
          * @deprecated
          */
+        // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
         this.logger = logger
 
         this.ctx = {
