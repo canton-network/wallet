@@ -14,6 +14,8 @@ export const HashPurpose = {
     MultiTopologyTransaction: 55,
 } as const
 
+export type HashPurpose = (typeof HashPurpose)[keyof typeof HashPurpose]
+
 function compare(a: Uint8Array, b: Uint8Array): number {
     for (let i = 0; i < Math.min(a.length, b.length); i++) {
         if (a[i] !== b[i]) return a[i]! - b[i]!
@@ -26,21 +28,26 @@ function compare(a: Uint8Array, b: Uint8Array): number {
  * prefixed with the multihash header for SHA-256.
  */
 export async function computeSha256CantonHash(
-    purpose: number,
+    purpose: HashPurpose,
     bytes: Uint8Array
 ): Promise<Uint8Array> {
     return concat(0x12, 0x20, await sha256(concat(encodeInt32(purpose), bytes)))
 }
 
-/** Combines the hashes of a set of topology transactions, in an order that does not depend on theirs. */
+/**
+ * Combines the hashes of a set of topology transactions, in an order that does not depend on theirs.
+ * A hash given more than once counts once, as Canton signs a set of hashes.
+ */
 export async function computeMultiHashForTopology(
     hashes: Uint8Array[]
 ): Promise<Uint8Array> {
+    const sorted = hashes.toSorted(compare)
+    const unique = sorted.filter(
+        (hash, i) => i === 0 || compare(sorted[i - 1]!, hash) !== 0
+    )
     return concatAll([
-        encodeInt32(hashes.length),
-        ...hashes
-            .toSorted(compare)
-            .flatMap((hash) => [encodeInt32(hash.length), hash]),
+        encodeInt32(unique.length),
+        ...unique.flatMap((hash) => [encodeInt32(hash.length), hash]),
     ])
 }
 

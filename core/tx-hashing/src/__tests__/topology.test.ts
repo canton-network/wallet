@@ -87,6 +87,14 @@ describe('computeMultiHashForTopology', () => {
         )
     })
 
+    it('counts a hash given more than once once', async () => {
+        const hash = Uint8Array.of(1, 2)
+
+        expect(await computeMultiHashForTopology([hash, hash])).toEqual(
+            await computeMultiHashForTopology([hash])
+        )
+    })
+
     it('does not change its input', async () => {
         const hashes = [Uint8Array.of(2), Uint8Array.of(1)]
 
@@ -154,6 +162,14 @@ describe('computeTopologyMultiHash', () => {
             TopologyTransactionSignature: 11,
             MultiTopologyTransaction: 55,
         })
+    })
+
+    it('hashes a transaction given more than once as once', async () => {
+        const [first] = v30.topologyTransactions
+
+        expect(await computeTopologyMultiHash([first!, first!])).toBe(
+            await computeTopologyMultiHash([first!])
+        )
     })
 
     it('refuses an empty set', async () => {
