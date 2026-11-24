@@ -131,6 +131,16 @@ interface SessionTable {
     userId: UserId
 }
 
+interface NetworkConnectionTable {
+    id: string
+    sessionId: string
+    authMethod: string
+    userId: UserId
+    payload: string // json stringified
+    expiresAt: string | null
+    createdAt: string
+}
+
 interface ApiKeysTable {
     id: string
     digest: string
@@ -152,6 +162,7 @@ export interface DB {
     transactions: TransactionTable
     messagesRaw: MessageRawTable
     sessions: SessionTable
+    networkConnections: NetworkConnectionTable
     apiKeys: ApiKeysTable
 }
 
