@@ -103,8 +103,11 @@ export function createPagePresence(): PagePresence {
         }
         const frame = JSON.stringify([tab.tabId, port.sender?.frameId ?? 0])
         // The page before it may not have disconnected yet, and a request of
-        // the new page must not join its prompts.
+        // the new page must not join its prompts. Once forgotten, it would
+        // miss the end of the tab's heartbeat.
+        const replaced = byFrame.get(frame)
         end(frame)
+        if (replaced) send(replaced.port, false)
         const connection = {
             page: tab.page,
             origin,

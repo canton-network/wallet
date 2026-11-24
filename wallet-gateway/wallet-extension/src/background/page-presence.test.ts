@@ -15,12 +15,16 @@ describe('createPagePresence', () => {
     let presence: PagePresence
 
     /** Opens a content script's presence port. */
-    const connect = (tabId: number, frameId: number) => {
+    const connect = (
+        tabId: number,
+        frameId: number,
+        documentId = `document-${tabId}-${frameId}`
+    ) => {
         const port = fakePort(undefined, PAGE_PRESENCE_PORT_NAME)
         port.sender = {
             ...port.sender,
             tab: { id: tabId, windowId: 3 } as Browser.tabs.Tab,
-            documentId: `document-${tabId}-${frameId}`,
+            documentId,
             frameId,
         }
         connectListeners.forEach((listener) => listener(asPort(port)))
@@ -59,5 +63,15 @@ describe('createPagePresence', () => {
         expect(top.postMessage).toHaveBeenLastCalledWith({ heartbeat: false })
         expect(frame.postMessage).toHaveBeenLastCalledWith({ heartbeat: false })
         expect(later.postMessage).not.toHaveBeenCalled()
+    })
+
+    it('stops the heartbeat of a page another one in its frame replaced', () => {
+        const old = connect(7, 0)
+        presence.heartbeat(7, true)
+
+        const next = connect(7, 0, 'document-next')
+
+        expect(old.postMessage).toHaveBeenLastCalledWith({ heartbeat: false })
+        expect(next.postMessage).toHaveBeenLastCalledWith({ heartbeat: true })
     })
 })
