@@ -32,6 +32,10 @@ val synchronizerDir = s"$cantonDir/synchronizer-bootstrap"
 
 logger.info(s"WALLET-KERNEL-BOOTSTRAP")
 
+// TODO not sure if it's the right solution, possibly remove before merging. Without that logs in start:canton console are spammed and unreadable
+// The BFT sequencer orders an empty block every ~500ms and logs each one at INFO
+logging.set_level("com.digitalasset.canton.synchronizer.sequencer.block.bftordering", "WARN")
+
 val keyName = "participant1NameSpaceKey"
 
 participant1.keys.secret.upload_from(s"$cantonDir/participant1.key", Some(keyName))
