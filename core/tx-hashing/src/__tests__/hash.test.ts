@@ -41,6 +41,16 @@ const bytesOf = (message: PreparedTransaction) =>
 
 const [V2_FIXTURE] = liveFixtures(V2)
 
+// The fixture with its byte `at` replaced by `bytes`
+const replaced = (at: number, bytes: readonly number[]) => {
+    const fixture = fromBase64(V2_FIXTURE.base64)
+    return concat(
+        fixture.subarray(0, at),
+        Uint8Array.from(bytes),
+        fixture.subarray(at + 1)
+    )
+}
+
 // An exercise node that ends with field 99, a varint of 1 the bindings do not know
 const WITH_FIELD_99 = bytesOf(
     single({
@@ -154,6 +164,37 @@ const REFUSALS: Refusal[] = [
         call: () => run(Uint8Array.of(0x0a, 0x03, 0x0a, 0x01, 0xff), V2),
         code: 'DECODE_FAILED',
     },
+    // The bindings decode these three to the fixture's transaction
+    ...(
+        [
+            // `transaction`, field 1, with wire type 3 instead of 2
+            [
+                'a field with the wrong wire type',
+                0,
+                [0x0b],
+                'has wire type 3, not 2',
+            ],
+            // The length of `transaction`, 1690, lowered by 2
+            [
+                'a message shorter than its content',
+                1,
+                [0x98],
+                'runs past the end',
+            ],
+            // The tag of `transaction` in 6 bytes
+            [
+                'a tag of 6 bytes',
+                0,
+                [0x8a, 0x80, 0x80, 0x80, 0x80, 0x00],
+                'is not a 32-bit varint',
+            ],
+        ] as const
+    ).map(([what, at, bytes, says]): Refusal => ({
+        title: `rejects ${what}`,
+        call: () => run(replaced(at, bytes), V2),
+        code: 'DECODE_FAILED',
+        says,
+    })),
     {
         title: 'rejects an unknown field inside an exercise node',
         call: () => run(WITH_FIELD_99, V2),

@@ -65,7 +65,7 @@ Its `path`, where known, points into the transaction, such as `transaction.nodes
 
 | Code                          | Refused when                                                                                                                                                                                             |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DECODE_FAILED`               | the input is neither a Uint8Array nor a string, or the bytes or base64 are empty, not canonical or not a `PreparedTransaction`, or a topology transaction is not canonical base64                        |
+| `DECODE_FAILED`               | the input is neither a Uint8Array nor a string, or the bytes or base64 are empty, not canonical or not a `PreparedTransaction` with valid framing, or a topology transaction is not canonical base64     |
 | `UNKNOWN_FIELD`               | a message holds a field number that its definition does not have                                                                                                                                         |
 | `UNSUPPORTED_SCHEME`          | the scheme is neither V2 nor V3                                                                                                                                                                          |
 | `UNSUPPORTED_NODE_VERSION`    | a node is not a `v1` node                                                                                                                                                                                |

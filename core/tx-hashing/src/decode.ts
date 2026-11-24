@@ -5,8 +5,12 @@ import { PreparedTransaction } from '@canton-network/core-ledger-proto'
 
 import { fromBase64 } from './bytes.ts'
 import { TxHashingError } from './errors.ts'
+import { checkFraming } from './framing.ts'
 
-/** Decodes the input, refusing unknown fields: the hash would not cover them */
+/**
+ * Decodes the input, refusing unknown fields, which the hash would not cover,
+ * and framing that strict parsers read differently
+ */
 export function readPreparedTransaction(
     input: Uint8Array | string
 ): PreparedTransaction {
@@ -25,8 +29,9 @@ export function readPreparedTransaction(
 }
 
 function decodeBinary(bytes: Uint8Array): PreparedTransaction {
+    let decoded: PreparedTransaction
     try {
-        return PreparedTransaction.fromBinary(bytes, {
+        decoded = PreparedTransaction.fromBinary(bytes, {
             readUnknownField: rejectUnknownField,
         })
     } catch (error) {
@@ -36,6 +41,8 @@ function decodeBinary(bytes: Uint8Array): PreparedTransaction {
             `input cannot be decoded as a protobuf PreparedTransaction: ${String(error)}`
         )
     }
+    checkFraming(bytes, PreparedTransaction)
+    return decoded
 }
 
 function rejectUnknownField(
