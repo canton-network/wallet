@@ -73,12 +73,18 @@ describe('Test provider wrappers', () => {
             const unused = vi.fn(async () => {
                 throw new Error('Unexpected hook')
             })
-            const action = vi.fn(async (params: { message: string }) => {
-                expect(params.message).toBe('test')
-                calls.push(decision)
-                await nextTask()
-                calls.push('action completed')
-            })
+            const action = vi.fn(
+                async (
+                    params: Parameters<
+                        TestMethods['test_approveSignMessage']
+                    >[0]
+                ) => {
+                    expect(params.message).toBe('test')
+                    calls.push(decision)
+                    await nextTask()
+                    calls.push('action completed')
+                }
+            )
             const hooks: TestMethods = {
                 test_approveConnect: unused,
                 test_rejectConnect: unused,
