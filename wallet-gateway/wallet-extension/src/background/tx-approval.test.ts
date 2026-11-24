@@ -508,7 +508,7 @@ describe('createTxApprovals', () => {
         const decided = approvals.service.decide(request.transactionId, true)
         await vi.advanceTimersByTimeAsync(1000)
         alicePage.remoteDisconnect()
-        fakeBrowser.tabs.onRemoved.trigger(tab.tabId, {
+        const tabRemoved = fakeBrowser.tabs.onRemoved.trigger(tab.tabId, {
             windowId: tab.windowId,
             isWindowClosing: false,
         })
@@ -524,6 +524,7 @@ describe('createTxApprovals', () => {
         finishSigning()
         await decided
         await expect(outcome).resolves.toMatchObject({ status: 'executed' })
+        await tabRemoved
         expect(events).not.toContainEqual(
             expect.objectContaining({ status: 'failed' })
         )

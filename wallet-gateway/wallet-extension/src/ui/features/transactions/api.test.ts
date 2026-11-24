@@ -22,7 +22,7 @@ describe('transactionQuery', () => {
     const load = (id: string) =>
         new QueryClient({
             defaultOptions: { queries: { retry: false } },
-        }).fetchQuery(transactionQuery(id))
+        }).query(transactionQuery(id))
 
     it('shows a transaction that no longer waits as settled', async () => {
         get.mockResolvedValue(null)

@@ -694,6 +694,7 @@ export function createTxApprovals({
                         prompt.reject(refusal)
                         throw refusal
                     }
+                    // oxlint-disable-next-line typescript/no-unnecessary-boolean-literal-compare -- only accept an explicit true across the RPC boundary
                     if (approved !== true) {
                         const error = rejected('Rejected by the user')
                         await discard(prompt, error)

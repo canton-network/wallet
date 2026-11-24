@@ -18,7 +18,7 @@ export const Route = createFileRoute(
     }),
     loaderDeps: ({ search: { id } }) => ({ id }),
     loader: ({ context: { queryClient }, deps: { id } }) =>
-        queryClient.ensureQueryData(transactionQuery(id)),
+        queryClient.query({ ...transactionQuery(id), staleTime: 'static' }),
     // A change of `id` alone runs onStay, not onLeave and onEnter.
     onEnter: ({ search: { id } }) => holdTransactionApproval(id),
     onStay: ({ search: { id } }) => holdTransactionApproval(id),
