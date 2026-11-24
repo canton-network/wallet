@@ -9,7 +9,8 @@ import {
     type PostEndpoint,
     type PrepareSubmissionResponse,
 } from '@canton-network/core-ledger-client'
-import { providerErrors } from '@canton-network/core-rpc-errors'
+import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     assertConnected,
     type AuthContext,
@@ -197,6 +198,17 @@ export const dappController = (
                 throw new Error(
                     'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
                 )
+            }
+            // An external signature is the first acting party's alone,
+            // while the participant executes for all of them.
+            if (
+                new Set(actAs).size > 1 &&
+                wallet.signingProviderId !== SigningProvider.PARTICIPANT
+            ) {
+                throw rpcErrors.invalidParams({
+                    message:
+                        'Multi-party external signing is not supported: a transaction with more than one acting party needs a participant-hosted first party',
+                })
             }
 
             const ledgerClient = ledgerClientFor(network, context.accessToken)

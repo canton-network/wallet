@@ -721,6 +721,78 @@ describe('createDappDispatcher', () => {
                 expect(started.prompt).not.toHaveBeenCalled()
             })
 
+            describe('with more than one acting party', () => {
+                const other: Wallet = {
+                    ...wallet,
+                    primary: false,
+                    partyId: 'other::namespace',
+                    hint: 'other',
+                }
+
+                beforeEach(async () => {
+                    await store.addWallet({ ...other })
+                })
+
+                it('refuses them for an externally signed first party, before preparing', async () => {
+                    deps.txApprovals.begin.mockReturnValue(
+                        approval(new Promise(() => {}))
+                    )
+
+                    await expect(
+                        dispatcher.request(
+                            request('prepareExecute', {
+                                ...params,
+                                actAs: [wallet.partyId, other.partyId],
+                            }),
+                            origin,
+                            tab
+                        )
+                    ).resolves.toMatchObject({
+                        error: {
+                            code: errorCodes.rpc.invalidParams,
+                            message: expect.stringContaining(
+                                'Multi-party external signing is not supported'
+                            ),
+                        },
+                    })
+                    expect(postWithRetry).not.toHaveBeenCalled()
+                })
+
+                it.each([
+                    [
+                        'a participant-hosted first party',
+                        SigningProvider.PARTICIPANT,
+                        [wallet.partyId, other.partyId],
+                    ],
+                    [
+                        'one party named twice',
+                        SigningProvider.WALLET_KERNEL,
+                        [wallet.partyId, wallet.partyId],
+                    ],
+                ])('prepares for %s', async (_, signingProviderId, actAs) => {
+                    await store.updateWallet({
+                        partyId: wallet.partyId,
+                        networkId,
+                        signingProviderId,
+                    })
+                    deps.txApprovals.begin.mockReturnValue(
+                        approval(new Promise(() => {}))
+                    )
+
+                    await expect(
+                        dispatcher.request(
+                            request('prepareExecute', { ...params, actAs }),
+                            origin,
+                            tab
+                        )
+                    ).resolves.toMatchObject({ result: null })
+                    expect(postWithRetry).toHaveBeenCalledWith(
+                        '/v2/interactive-submission/prepare',
+                        expect.objectContaining({ actAs })
+                    )
+                })
+            })
+
             it('waits for the executed transaction in prepareExecuteAndWait', async () => {
                 deps.txApprovals.begin.mockReturnValue(
                     approval(Promise.resolve(executed))
