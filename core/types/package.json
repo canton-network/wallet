@@ -1,10 +1,22 @@
 {
     "name": "@canton-network/core-types",
     "version": "2.5.0",
-    "type": "module",
     "description": "Types and transport-agnostic parsers for data sent across Wallet components.",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/types#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Alex Matson <alex.matson@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/types"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
@@ -17,6 +29,9 @@
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
@@ -34,20 +49,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/types"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/types#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

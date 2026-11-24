@@ -193,8 +193,8 @@ describe('Allocation Instruction', () => {
         })
     })
 
-    it('should return correct context for allocation instruction accept choice', () => {
-        getAllocationInstructionAcceptContext(
+    it('should return correct context for allocation instruction accept choice', async () => {
+        await getAllocationInstructionAcceptContext(
             {} as RequestType<typeof getAllocationInstructionAcceptContext>,
             res,
             next
@@ -203,8 +203,8 @@ describe('Allocation Instruction', () => {
         expect(res.json).toHaveBeenCalledExactlyOnceWith(emptyChoiceContext)
     })
 
-    it('should return correct context for allocation instruction withdraw choice', () => {
-        getAllocationInstructionWithdrawContext(
+    it('should return correct context for allocation instruction withdraw choice', async () => {
+        await getAllocationInstructionWithdrawContext(
             {} as RequestType<typeof getAllocationInstructionWithdrawContext>,
             res,
             next

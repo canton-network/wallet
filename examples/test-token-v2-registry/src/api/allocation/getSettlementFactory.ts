@@ -4,7 +4,7 @@
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import z from 'zod'
+import { z } from 'zod'
 
 import { RegistryState } from '../../common/state.ts'
 import { APIError } from '../common.ts'

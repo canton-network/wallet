@@ -2,7 +2,6 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "exactOptionalPropertyTypes": false,
-        "useDefineForClassFields": false,
         "types": ["node"]
     },
     "exclude": ["src/web/frontend"],

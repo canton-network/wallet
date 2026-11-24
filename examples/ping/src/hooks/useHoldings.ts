@@ -39,9 +39,9 @@ export function useHoldings(
                             registries: [new URL(registryUrl)],
                         },
                     })
-                    const primaryAcc = accounts.find((p) => p.primary === true)!
+                    const primaryAcc = accounts.find((p) => p.primary)!
 
-                    return await wallet.token.utxos.list({
+                    return await wallet.token.v1.utxos.list({
                         partyId: primaryAcc.partyId,
                     })
                 } catch (err) {

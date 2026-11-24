@@ -265,6 +265,7 @@ export const metadata = (fields: Partial<Metadata> = {}): Metadata => ({
     transactionUuid: 'uuid',
     preparationTime: 1n,
     inputContracts: [],
+    // oxlint-disable-next-line typescript/no-deprecated -- required by the generated proto type
     globalKeyMapping: [],
     ...fields,
 })

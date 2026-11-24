@@ -258,7 +258,7 @@ describe('UserUiApprove', () => {
                 })
             )
             el = await fixture<ApproveUi>(componentFixture)
-            await waitUntil(() => el.canSubmit === false)
+            await waitUntil(() => !el.canSubmit)
         })
 
         it('shows read-only warning when primary wallet cannot submit', () => {

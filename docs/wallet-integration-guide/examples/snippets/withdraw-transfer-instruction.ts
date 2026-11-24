@@ -10,12 +10,12 @@ export default async function () {
     const myParty = global.EXISTING_PARTY_1
     const myPrivateKey = global.EXISTING_PARTY_1_KEYS.privateKey
 
-    const myPendingTransaction = await sdk.token.transfer.pending(myParty)
+    const myPendingTransaction = await sdk.token.v1.transfer.pending(myParty)
 
     const myPendingTransactionCid = myPendingTransaction[0].contractId
 
     const [withdrawTransferCommand, disclosedContracts] =
-        await sdk.token.transfer.withdraw({
+        await sdk.token.v1.transfer.withdraw({
             transferInstructionCid: myPendingTransactionCid,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         })
