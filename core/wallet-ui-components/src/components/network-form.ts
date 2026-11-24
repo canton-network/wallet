@@ -265,7 +265,7 @@ class NetworkForm extends BaseElement {
                 <div class="form-fields d-flex flex-column">
                     <div class="field-group d-flex flex-column">
                         <label class="form-label field-label mb-0">
-                            Network Id <span class="required">*</span>
+                            Network ID <span class="required">*</span>
                         </label>
                         <input
                             class="form-control field-control"
@@ -319,7 +319,7 @@ class NetworkForm extends BaseElement {
 
                     <div class="field-group d-flex flex-column">
                         <label class="form-label field-label mb-0">
-                            Synchronizer Id
+                            Synchronizer ID
                         </label>
                         <input
                             class="form-control field-control"
@@ -341,7 +341,7 @@ class NetworkForm extends BaseElement {
 
                     <div class="field-group d-flex flex-column">
                         <label class="form-label field-label mb-0">
-                            Identity Provider Id
+                            Identity provider ID
                             <span class="required">*</span>
                         </label>
                         <input
@@ -359,7 +359,7 @@ class NetworkForm extends BaseElement {
 
                     <div class="field-group d-flex flex-column">
                         <label class="form-label field-label mb-0">
-                            Ledger API Base Url
+                            Ledger API base URL
                             <span class="required">*</span>
                         </label>
                         <input

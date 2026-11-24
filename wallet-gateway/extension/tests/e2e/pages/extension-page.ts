@@ -42,11 +42,11 @@ export class ExtensionPage {
             this.page.getByRole('heading', { name: 'Create a new party' })
         ).toBeVisible()
 
-        await this.page.getByLabel('Party ID Hint').fill(partyHint)
+        await this.page.getByLabel('Party hint').fill(partyHint)
         await this.page
-            .getByLabel('Signing Provider')
+            .getByLabel('Signing provider')
             .selectOption('wallet-kernel')
-        await this.page.getByLabel('Set as primary wallet').check()
+        await this.page.getByLabel('Set as primary party').check()
         await this.page.getByRole('button', { name: 'Create party' }).click()
 
         await this.page.waitForURL(/\/parties\.html(?:\?.*)?$/, {

@@ -7,6 +7,7 @@ import { customElement, property } from 'lit/decorators.js'
 
 import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
+import { IDP_TYPE_LABELS } from './idp-type.ts'
 import './copy-button.ts'
 
 /** Emitted when the user clicks an IDP card to review it */
@@ -163,7 +164,9 @@ class IdpCard extends BaseElement {
                 <div class="meta">
                     <div class="meta-row">
                         <p class="meta-title">Type</p>
-                        <p class="meta-value">${this.idp.type}</p>
+                        <p class="meta-value">
+                            ${IDP_TYPE_LABELS[this.idp.type]}
+                        </p>
                     </div>
 
                     ${

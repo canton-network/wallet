@@ -102,7 +102,7 @@ class WgWalletCreateForm extends WgWalletForm {
         return html`
             <div class="field-group d-flex flex-column">
                 <label for="party-id-hint" class="form-label field-label mb-0">
-                    Party ID Hint <span class="required">*</span>
+                    Party hint <span class="required">*</span>
                 </label>
                 <input
                     .value=${this.partyHint}
@@ -111,9 +111,13 @@ class WgWalletCreateForm extends WgWalletForm {
                     class="form-control field-control"
                     id="party-id-hint"
                     type="text"
-                    placeholder="Enter the name of your wallet?"
+                    placeholder="e.g. alice"
+                    aria-describedby="party-id-hint-help"
                     required
                 />
+                <p id="party-id-hint-help" class="form-text mt-0 mb-0">
+                    The start of the party ID, for example alice::1220…
+                </p>
             </div>
 
             <div class="field-group d-flex flex-column">
@@ -121,7 +125,7 @@ class WgWalletCreateForm extends WgWalletForm {
                     for="signing-provider-id"
                     class="form-label field-label mb-0"
                 >
-                    Signing Provider <span class="required">*</span>
+                    Signing provider <span class="required">*</span>
                 </label>
                 <div class="select-wrap">
                     <select
@@ -233,7 +237,7 @@ class WgWalletCreateForm extends WgWalletForm {
                               <label
                                   for="primary"
                                   class="form-check-label primary-label"
-                                  >Set as primary wallet</label
+                                  >Set as primary party</label
                               >
                           </div>
                       `

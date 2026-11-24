@@ -262,11 +262,11 @@ export class WalletGateway {
             const form = popup.locator(
                 'wg-wallet-create-form, [data-testid="wallet-create-form"]'
             )
-            await expect(form.getByLabel('Party ID Hint')).toBeVisible()
-            await expect(form.getByLabel('Signing Provider')).toBeVisible()
-            await form.getByLabel('Party ID Hint').fill(args.partyHint)
+            await expect(form.getByLabel('Party hint')).toBeVisible()
+            await expect(form.getByLabel('Signing provider')).toBeVisible()
+            await form.getByLabel('Party hint').fill(args.partyHint)
             await form
-                .getByLabel('Signing Provider')
+                .getByLabel('Signing provider')
                 .selectOption(args.signingProvider)
             await form.locator('button[type="submit"]').click()
 
@@ -440,12 +440,12 @@ export class WalletGateway {
             await (
                 await this.page()
             )
-                .getByLabel('Party ID Hint')
+                .getByLabel('Party hint')
                 .fill(args.partyHint)
             await (
                 await this.page()
             )
-                .getByLabel('Signing Provider')
+                .getByLabel('Signing provider')
                 .selectOption(args.signingProvider)
             if (args.signingProvider === 'fireblocks') {
                 if (!args.vaultName) {
@@ -464,7 +464,7 @@ export class WalletGateway {
                 await (
                     await this.page()
                 )
-                    .getByRole('checkbox', { name: 'Set as primary wallet' })
+                    .getByRole('checkbox', { name: 'Set as primary party' })
                     .check()
             }
             await (
@@ -1015,19 +1015,19 @@ export class WalletGateway {
     private async fillNetworkForm(network: NetworkFormInput): Promise<void> {
         const popup = await this.page()
 
-        await this.fillNetworkFormField('Network Id', network.id)
+        await this.fillNetworkFormField('Network ID', network.id)
         await this.fillNetworkFormField('Name', network.name)
         await this.fillNetworkFormField('Description', network.description)
         await this.fillNetworkFormField(
-            'Synchronizer Id',
+            'Synchronizer ID',
             network.synchronizerId
         )
         await this.fillNetworkFormField(
-            'Identity Provider Id',
+            'Identity provider ID',
             network.identityProviderId
         )
         await this.fillNetworkFormField(
-            'Ledger API Base Url',
+            'Ledger API base URL',
             network.ledgerApi
         )
 
@@ -1054,7 +1054,7 @@ export class WalletGateway {
         // so locate the input via the field group that contains the label text.
         // The React form's labels are associated, so it is found by its label.
         // Either way the first match in the page is the network's own field,
-        // ahead of the auth editors' (e.g. "Identity Provider Id Override").
+        // ahead of the auth editors' (e.g. "Identity provider ID override").
         const input = popup
             .locator(
                 `network-form .field-group:has(> label:has-text("${label}")) input`

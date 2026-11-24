@@ -164,7 +164,7 @@ export const CopyDappApiUrl: Story = {
             `Copy dApp API URL: ${dappApiUrl}`
         )
         await expect(copy).toHaveAccessibleDescription(dappApiUrl)
-        await expect(copy).toHaveTextContent('Dapp API URL')
+        await expect(copy).toHaveTextContent('dApp API URL')
         await waitFor(() => expect(copy).toBeVisible())
 
         await userEvent.click(copy)

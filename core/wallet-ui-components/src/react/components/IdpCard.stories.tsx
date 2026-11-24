@@ -54,7 +54,7 @@ export const Default: Story = {
             await findByShadowText(canvasElement, 'Type')
         ).toBeInTheDocument()
         await expect(
-            await findByShadowText(canvasElement, 'oauth')
+            await findByShadowText(canvasElement, 'OIDC')
         ).toBeInTheDocument()
         await expect(
             await findByShadowText(canvasElement, 'Issuer')
@@ -99,7 +99,7 @@ export const SelfSigned: Story = {
     args: { idp: selfSignedIdp },
     play: async ({ canvasElement }) => {
         await expect(
-            await findByShadowText(canvasElement, 'self_signed')
+            await findByShadowText(canvasElement, 'Self-signed')
         ).toBeInTheDocument()
         await expect(
             await findByShadowText(canvasElement, selfSignedIdp.issuer)
@@ -131,7 +131,7 @@ export const SelfIssued: Story = {
     args: { idp: selfIssuedIdp },
     play: async ({ canvasElement }) => {
         await expect(
-            await findByShadowText(canvasElement, 'self_issued')
+            await findByShadowText(canvasElement, 'Self-issued')
         ).toBeInTheDocument()
         await expect(
             queryByShadowText(canvasElement, 'Issuer')
