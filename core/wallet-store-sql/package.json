@@ -1,10 +1,22 @@
 {
     "name": "@canton-network/core-wallet-store-sql",
     "version": "2.5.0",
-    "type": "module",
     "description": "SQL implementation of the Store API",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store-sql#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-store-sql"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.js",
     "module": "dist/index.js",
@@ -16,6 +28,9 @@
             "import": "./dist/index.js",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
@@ -46,21 +61,6 @@
         "tsx": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/wallet-store-sql"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-store-sql#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     },
     "nx": {
         "targets": {

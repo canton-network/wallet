@@ -1,9 +1,21 @@
 {
     "name": "@canton-network/core-token-standard",
     "version": "1.19.0",
-    "type": "module",
     "description": "daml codegen js for core token standard",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/token-standard"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
@@ -15,6 +27,9 @@
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown",
@@ -33,21 +48,6 @@
         "rolldown": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/token-standard"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     },
     "nx": {
         "targets": {
