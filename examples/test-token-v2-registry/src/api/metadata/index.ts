@@ -4,7 +4,7 @@
 import type { OffLedger } from '@canton-network/core-token-standard'
 import { Router } from 'express'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z from 'zod'
+import { z } from 'zod'
 
 import { getInstrument } from './getInstrument.ts'
 import { getRegistryInfo } from './getRegistryInfo.ts'

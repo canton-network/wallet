@@ -282,7 +282,7 @@ describe('UserApp', () => {
             const layout = el.shadowRoot?.querySelector(
                 'app-layout'
             ) as HTMLElement & { networkConnected: boolean }
-            return layout?.networkConnected === true
+            return layout?.networkConnected
         })
 
         const layout = el.shadowRoot?.querySelector(
@@ -307,7 +307,7 @@ describe('UserApp', () => {
             const layout = el.shadowRoot?.querySelector(
                 'app-layout'
             ) as HTMLElement & { isAdmin: boolean }
-            return layout?.isAdmin === true
+            return layout?.isAdmin
         })
     })
 

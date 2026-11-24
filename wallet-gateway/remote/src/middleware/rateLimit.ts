@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Request } from 'express'
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
+import { ipKeyGenerator, rateLimit } from 'express-rate-limit'
 
 export function ipRateLimitKeyGenerator(req: Request): string {
     return `ip:${ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown')}`

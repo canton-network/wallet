@@ -27,9 +27,7 @@ export class PartyNamespace {
      *
      * @deprecated use sdk.utils.hash.topologyTransaction
      */
-    public async hashTopologyTx(
-        preparedTransactions: Uint8Array<ArrayBufferLike>[] | string[]
-    ) {
+    public async hashTopologyTx(preparedTransactions: Uint8Array[] | string[]) {
         return await this.utils.hash.topologyTransaction(preparedTransactions)
     }
 

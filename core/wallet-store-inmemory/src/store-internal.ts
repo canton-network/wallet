@@ -183,7 +183,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {
         const wallets = await this.getWallets()
-        return wallets.find((w) => w.primary === true)
+        return wallets.find((w) => w.primary)
     }
 
     async setPrimaryWallet(partyId: PartyId): Promise<void> {

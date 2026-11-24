@@ -3,7 +3,7 @@
 
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
-import z from 'zod'
+import { z } from 'zod'
 
 import { APIError } from '../common.ts'
 import { getTransferFactoryContext } from './getTransferFactoryContext.ts'
