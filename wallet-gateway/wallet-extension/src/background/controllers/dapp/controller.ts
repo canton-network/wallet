@@ -49,6 +49,13 @@ import type {
     Wallet,
 } from './rpc-gen/typings.ts'
 
+/**
+ * How long a disconnect waits for the site's prompts to report their
+ * failure before it closes the site's ports anyway, which would otherwise
+ * keep receiving wallet events.
+ */
+export const END_SITE_TIMEOUT_MS = 2000
+
 export interface DappControllerDeps {
     /** The wallet store, not yet scoped to a user. */
     getStore: () => Promise<WalletStore>
@@ -352,12 +359,24 @@ export const dappController = (
         // make while locked or signed out.
         disconnect: async () => {
             requireAuth()
-            if (principal !== undefined) {
-                await sites.revoke(principal, origin)
-                // Its other tabs get the failures before their ports close.
-                await txApprovals.endSite(principal, origin)
+            if (principal === undefined) {
+                sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+                return null
             }
-            sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+            await sites.revoke(principal, origin)
+            let timer: ReturnType<typeof setTimeout> | undefined
+            try {
+                // Its other tabs get the failures before their ports close.
+                await Promise.race([
+                    txApprovals.endSite(principal, origin),
+                    new Promise<void>((resolve) => {
+                        timer = setTimeout(resolve, END_SITE_TIMEOUT_MS)
+                    }),
+                ])
+            } finally {
+                clearTimeout(timer)
+                sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+            }
             return null
         },
         isConnected: async () => {

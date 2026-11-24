@@ -45,7 +45,7 @@ import { createTestWalletStore } from '../../store/test-store.ts'
 import type { TxApprovals } from '../../tx-approval.ts'
 import type { UnlockRequests } from '../../unlock-request.ts'
 import { VaultLockedError } from '../../vault/index.ts'
-import type { DappControllerDeps } from './controller.ts'
+import { type DappControllerDeps, END_SITE_TIMEOUT_MS } from './controller.ts'
 import { createDappDispatcher, type DappDispatcher } from './dispatch.ts'
 
 const origin = 'https://dapp.example'
@@ -362,6 +362,45 @@ describe('createDappDispatcher', () => {
             ).resolves.toMatchObject({
                 error: { code: errorCodes.provider.unauthorized },
             })
+        })
+
+        it("closes the site's ports on disconnect when ending its prompts fails", async () => {
+            deps.txApprovals.endSite.mockRejectedValue(new Error('boom'))
+
+            await dispatcher.request(request('disconnect'), origin)
+
+            expect(await sites.isApproved(principal, origin)).toBe(false)
+            expect(deps.sitePorts.close).toHaveBeenCalledWith(
+                origin,
+                disconnectedStatusEvent('disconnect')
+            )
+        })
+
+        it("closes the site's ports on disconnect once ending its prompts takes too long", async () => {
+            let endingStarted!: () => void
+            const started = new Promise<void>((resolve) => {
+                endingStarted = resolve
+            })
+            deps.txApprovals.endSite.mockImplementation(() => {
+                endingStarted()
+                return new Promise(() => {})
+            })
+            vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+            const disconnected = dispatcher.request(
+                request('disconnect'),
+                origin
+            )
+            await started
+            await vi.advanceTimersByTimeAsync(END_SITE_TIMEOUT_MS - 1)
+            expect(deps.sitePorts.close).not.toHaveBeenCalled()
+            await vi.advanceTimersByTimeAsync(1)
+
+            await expect(disconnected).resolves.toMatchObject({ result: null })
+            expect(deps.sitePorts.close).toHaveBeenCalledWith(
+                origin,
+                disconnectedStatusEvent('disconnect')
+            )
         })
 
         describe('ledgerApi', () => {
