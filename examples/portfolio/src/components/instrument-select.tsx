@@ -12,7 +12,7 @@ import {
     Select,
     Typography,
 } from '@mui/material'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import { useMemo } from 'react'
 
 import type { SelectableInstrument } from './transfer-types.ts'

@@ -24,9 +24,7 @@ function clientWith({
 }
 
 const fetchHoldings = (client: TokenClient) =>
-    new QueryClient().fetchQuery(
-        holdingsQueryOptions({ client, partyId: alice })
-    )
+    new QueryClient().query(holdingsQueryOptions({ client, partyId: alice }))
 
 describe('holdingsQueryOptions', () => {
     it('lists v1 and v2 holdings, locked ones included, and keeps the owned ones', async () => {

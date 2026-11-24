@@ -38,7 +38,7 @@ import {
     netAmounts,
     type InstrumentAmount,
 } from '@utils/v2-allocation-items'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import { useMemo, useState, type ReactNode } from 'react'
 
 import { LegList, LockedAmounts } from './allocation-v2-dialog-parts.tsx'

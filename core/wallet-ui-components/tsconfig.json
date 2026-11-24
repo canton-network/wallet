@@ -20,6 +20,18 @@
         },
         {
             "path": "../rpc-errors"
+        },
+        {
+            "path": "../tx-parser"
+        },
+        {
+            "path": "../token-standard-v2"
+        },
+        {
+            "path": "../token-standard-service"
+        },
+        {
+            "path": "../token-standard"
         }
     ]
 }

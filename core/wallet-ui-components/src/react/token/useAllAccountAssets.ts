@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useQueries } from '@tanstack/react-query'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 import { useCallback, useMemo } from 'react'
 
 import {

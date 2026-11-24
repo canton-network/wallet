@@ -3,7 +3,7 @@
 
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type { Account } from '@canton-network/core-token-standard-v2'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 
 import { isBasicAccount, type PortfolioHolding } from './holdings.ts'
 
