@@ -69,7 +69,7 @@ export function createCLI(
             const executed = await umzug.executed()
 
             // Rollback all executed migrations in reverse order
-            for (const migration of executed.reverse()) {
+            for (const migration of executed.toReversed()) {
                 await umzug.down({ to: migration.name })
             }
 

@@ -15,7 +15,7 @@ import {
     getConsoleSink,
 } from '@logtape/logtape'
 import pino, { type Logger } from 'pino'
-import z from 'zod'
+import { z } from 'zod'
 
 import { rawConfigSchema } from './config/Config.ts'
 import { ConfigUtils } from './config/ConfigUtils.ts'

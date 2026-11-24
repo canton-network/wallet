@@ -27,6 +27,8 @@ export function useStatus(): {
 
     useEffect(() => {
         void status()
+        // only on mount
+        // oxlint-disable-next-line react/exhaustive-effect-dependencies
     }, [])
 
     useEffect(() => {

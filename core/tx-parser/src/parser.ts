@@ -20,7 +20,7 @@ import {
     type HoldingView as HoldingViewV2,
 } from '@canton-network/core-token-standard-v2'
 import type { PartyId } from '@canton-network/core-types'
-import BigNumber from 'bignumber.js'
+import { BigNumber } from 'bignumber.js'
 
 import {
     BurnedMetaKey,
@@ -174,7 +174,7 @@ export class TransactionParser {
 
     async parseTransaction(): Promise<Transaction> {
         const tx = this.transaction
-        const events = await this.parseEvents([...(tx.events || [])].reverse())
+        const events = await this.parseEvents((tx.events || []).toReversed())
         return {
             updateId: tx.updateId,
             offset: tx.offset,
@@ -185,7 +185,7 @@ export class TransactionParser {
     }
 
     async parseTransferObjects(): Promise<TransferObject[]> {
-        const eventsStack = [...(this.transaction.events || [])].reverse()
+        const eventsStack = (this.transaction.events || []).toReversed()
         const results = await this.fetchTransferObjectChoice(eventsStack)
         return results
     }

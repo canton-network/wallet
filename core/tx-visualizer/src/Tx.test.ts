@@ -173,8 +173,8 @@ test('decode a base 64 encoded topology tx', async () => {
         partyToKeyMappingBase64,
         partyToParticipantMappingBase64,
     ]
-    const normalized: Uint8Array<ArrayBufferLike>[] = preparedTxsBase64.map(
-        (tx) => fromBase64(tx)
+    const normalized: Uint8Array[] = preparedTxsBase64.map((tx) =>
+        fromBase64(tx)
     )
 
     const rawHashes = await Promise.all(

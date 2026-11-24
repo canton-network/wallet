@@ -4,8 +4,6 @@
 import type { PartyId } from '@canton-network/core-types'
 
 export class PingService {
-    constructor() {}
-
     public create(
         parties: { initiator: PartyId; responder: PartyId; id?: string }[]
     ) {

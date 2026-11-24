@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Kysely, sql } from 'kysely'
-import pg from 'pg'
+import { Pool } from 'pg'
 import { afterEach, beforeEach, describe } from 'vitest'
 
 import { migrator } from '../../migrator.ts'
@@ -36,7 +36,7 @@ function requireEnv(key: string): string {
     return v
 }
 
-const adminPool = (): pg.Pool => new pg.Pool(pgConnection())
+const adminPool = (): Pool => new Pool(pgConnection())
 
 async function createPgDatabase(name: string): Promise<void> {
     const pool = adminPool()

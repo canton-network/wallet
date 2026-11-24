@@ -16,7 +16,7 @@ import { transactionHistoryServiceQueryOptions } from './query-options.ts'
 
 export const useTransactionHistoryForParty = (
     partyId: string | undefined
-): UseInfiniteQueryResult<InfiniteData<TransactionHistoryResponse>, Error> => {
+): UseInfiniteQueryResult<InfiniteData<TransactionHistoryResponse>> => {
     const queryClient = useQueryClient()
     const { status } = useConnection()
     const isConnected = status?.connection?.isConnected ?? false

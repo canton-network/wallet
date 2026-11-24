@@ -44,7 +44,7 @@ import {
     SqliteDialect,
     sql,
 } from 'kysely'
-import pg from 'pg'
+import { Pool } from 'pg'
 
 import {
     type DB,
@@ -205,7 +205,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {
         const wallets = await this.getWallets()
-        return wallets.find((w) => w.primary === true)
+        return wallets.find((w) => w.primary)
     }
 
     async setPrimaryWallet(partyId: PartyId): Promise<void> {
@@ -219,7 +219,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
         }
 
-        const primary = wallets.find((w) => w.primary === true)
+        const primary = wallets.find((w) => w.primary)
 
         await this.db.transaction().execute(async (trx) => {
             if (primary) {
@@ -1305,7 +1305,7 @@ export const connection = (config: StoreConfig) => {
         case 'postgres':
             return new Kysely<DB>({
                 dialect: new PostgresDialect({
-                    pool: new pg.Pool(config.connection),
+                    pool: new Pool(config.connection),
                 }),
                 plugins: [new CamelCasePlugin()],
             })
