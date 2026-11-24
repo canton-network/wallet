@@ -141,7 +141,8 @@ describe('createTxApprovals', () => {
     const storeTransaction = (
         request: Pick<TxApprovalRequest, 'transactionId' | 'commandId'>,
         status: Transaction['status'] = 'pending',
-        preparedTransactionHash = preparedHash
+        preparedTransactionHash = preparedHash,
+        session = sessionId
     ) =>
         store.setTransaction({
             id: request.transactionId,
@@ -149,7 +150,7 @@ describe('createTxApprovals', () => {
             status,
             preparedTransaction: prepared,
             preparedTransactionHash,
-            payload: { actAs: [party] },
+            payload: { actAs: [party], sessionId: session },
             origin,
         } satisfies Transaction)
 
@@ -201,7 +202,7 @@ describe('createTxApprovals', () => {
         })
     }
 
-    beforeEach(() => {
+    beforeEach(async () => {
         fakeBrowser.reset()
         counter = 0
         lockListeners = []
@@ -223,6 +224,12 @@ describe('createTxApprovals', () => {
         walletStore = createTestWalletStore()
         locked = false
         store = walletStore.withAuthContext(alice)
+        await store.setSession({
+            id: sessionId,
+            origin: 'browserext',
+            network: 'canton:local',
+            accessToken: alice.accessToken,
+        })
         events = []
         notifier().on('txChanged', (event) => events.push(event))
         popups = new Map()
@@ -462,6 +469,11 @@ describe('createTxApprovals', () => {
         await vi.waitFor(async () =>
             expect(await stored(request.transactionId)).toBeUndefined()
         )
+        expect(
+            events.filter(
+                (event) => (event as { status: string }).status === 'failed'
+            )
+        ).toHaveLength(1)
     })
 
     it('lets no other ending interrupt a decision', async () => {
@@ -636,9 +648,23 @@ describe('createTxApprovals', () => {
         await vi.waitFor(async () =>
             expect(await stored(restarted.transactionId)).toBeUndefined()
         )
-        expect(events).not.toContainEqual(
-            expect.objectContaining({ status: 'failed' })
+    })
+
+    it('reports a deleted orphan failed to its session, if that is the current one', async () => {
+        const orphan = nextRequest()
+        const ofAnotherSession = nextRequest()
+        await storeTransaction(orphan)
+        await storeTransaction(ofAnotherSession, 'pending', preparedHash, 'old')
+
+        unlockListeners.forEach((listener) => listener())
+
+        await vi.waitFor(async () =>
+            expect(await stored(ofAnotherSession.transactionId)).toBeUndefined()
         )
+        expect(await stored(orphan.transactionId)).toBeUndefined()
+        expect(events).toEqual([
+            failedEvent(orphan, errorCodes.provider.userRejectedRequest),
+        ])
     })
 
     it('keeps an orphan that is signed before its deletion runs', async () => {

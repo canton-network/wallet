@@ -164,10 +164,11 @@ export const dappController = (
 
         const commandId = params.commandId || crypto.randomUUID()
         const transactionId = crypto.randomUUID()
+        const sessionId = session.id
         const approval = txApprovals.begin({
             transactionId,
             commandId,
-            sessionId: session.id,
+            sessionId,
             auth: context,
             principal,
             origin,
@@ -248,7 +249,9 @@ export const dappController = (
                 status: 'pending',
                 preparedTransaction: prepared.preparedTransaction,
                 preparedTransactionHash: prepared.preparedTransactionHash,
-                payload: { ...params, commandId, actAs },
+                // The session lets a clean-up after a worker restart report
+                // it failed to the session's dApps.
+                payload: { ...params, commandId, actAs, sessionId },
                 // The requesting page, not the session's login origin.
                 origin,
                 createdAt: new Date(),

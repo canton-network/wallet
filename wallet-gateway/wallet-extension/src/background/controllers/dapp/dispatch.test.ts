@@ -677,6 +677,7 @@ describe('createDappDispatcher', () => {
                         status: 'pending',
                         commandId: 'command-1',
                         preparedTransaction: 'prepared-tx',
+                        payload: expect.objectContaining({ sessionId }),
                         origin,
                     }
                 )

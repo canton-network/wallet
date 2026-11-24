@@ -169,6 +169,17 @@ const notWaiting = () =>
 const approvalPopup = (transactionId: string) =>
     `${DEFAULT_POPUP}#/approve-transaction?id=${encodeURIComponent(transactionId)}`
 
+const orphaned = () =>
+    rejected('The transaction approval ended when the wallet restarted')
+
+/** The session that asked for a transaction, which `prepareExecute` records. */
+function sessionOf(transaction: Transaction): string | undefined {
+    const sessionId = (
+        transaction.payload as { sessionId?: unknown } | undefined
+    )?.sessionId
+    return typeof sessionId === 'string' ? sessionId : undefined
+}
+
 function actingParty(transaction: Transaction): string | undefined {
     const actAs = (transaction.payload as { actAs?: unknown } | undefined)
         ?.actAs
@@ -213,6 +224,9 @@ export function createTxApprovals({
     const prompts = new Map<string, Prompt>()
     // The waiting prompts of each tab, oldest first.
     const byTab = new Map<number, Prompt[]>()
+    // Transactions reported failed while the vault was locked, which the
+    // clean-up at the next unlock deletes.
+    const reported = new Set<string>()
 
     const storeOf = async (prompt: Prompt): Promise<ExtensionStore> =>
         (await getStore()).withAuthContext(prompt.auth)
@@ -247,12 +261,17 @@ export function createTxApprovals({
         }
     }
 
-    function emitFailed(prompt: Prompt, error: CodedError): void {
-        notificationService.getNotifier(prompt.sessionId).emit('txChanged', {
+    function emitFailed(
+        sessionId: string,
+        commandId: string,
+        site: TxChangedSite,
+        error: CodedError
+    ): void {
+        notificationService.getNotifier(sessionId).emit('txChanged', {
             status: 'failed',
-            commandId: prompt.commandId,
+            commandId,
             error: { code: error.code, message: error.message },
-            ...siteOf(prompt),
+            ...site,
         } satisfies TxChangedFailedEvent & TxChangedSite)
     }
 
@@ -269,14 +288,23 @@ export function createTxApprovals({
             const store = await storeOf(prompt)
             await store.removePendingTransaction(prompt.transactionId)
         } catch (cause) {
-            if (!(cause instanceof VaultLockedError)) {
+            if (cause instanceof VaultLockedError) {
+                if (error) reported.add(prompt.transactionId)
+            } else {
                 logger.error('Failed to delete transaction {id}: {cause}', {
                     id: prompt.transactionId,
                     cause,
                 })
             }
         }
-        if (error) emitFailed(prompt, error)
+        if (error) {
+            emitFailed(
+                prompt.sessionId,
+                prompt.commandId,
+                siteOf(prompt),
+                error
+            )
+        }
     }
 
     /**
@@ -305,19 +333,32 @@ export function createTxApprovals({
     /**
      * Deletes the pending transactions no prompt is in progress for: their
      * prompt ended while the vault was locked, or with a worker that has
-     * since stopped. Signed ones are left.
+     * since stopped. Signed ones are left. Reports those of the current
+     * session failed, as its dApps may still wait for them.
      */
     async function removeOrphans(): Promise<void> {
         try {
             const context = await authContext.load()
             if (!context) return
             const store = (await getStore()).withAuthContext(context)
+            const session = await store.getSession(context.accessToken)
             const orphans = (await store.listAllPendingTransactions()).filter(
                 ({ id, status }) => status === 'pending' && !prompts.has(id)
             )
             // A later one may be signed while an earlier one is deleted.
-            for (const { id } of orphans) {
-                if (!prompts.has(id)) await store.removePendingTransaction(id)
+            for (const transaction of orphans) {
+                const { id, commandId, origin } = transaction
+                if (prompts.has(id)) continue
+                if (!(await store.removePendingTransaction(id))) continue
+                if (reported.delete(id)) continue
+                if (session && sessionOf(transaction) === session.id) {
+                    emitFailed(
+                        session.id,
+                        commandId,
+                        { id, origin },
+                        orphaned()
+                    )
+                }
             }
         } catch (error) {
             if (error instanceof VaultLockedError) return
