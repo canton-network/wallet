@@ -345,7 +345,8 @@ export class SelfIssuedAuthService {
         }
         const session = await this.store.upgradeSelfIssuedLoginSession(
             this.session.sessionId,
-            accessToken
+            accessToken,
+            messageId
         )
 
         this.logger.info(
@@ -514,8 +515,10 @@ export class SelfIssuedAuthService {
         messageId: string,
         failureReason: string
     ): Promise<void> {
+        // A failed login never uses the signed token, so drop the signature
         await this.store.setMessageRawStatus(messageId, 'failed', {
             failureReason,
+            signature: null,
         })
     }
 

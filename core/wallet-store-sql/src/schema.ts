@@ -127,7 +127,7 @@ interface SessionTable {
     id: string
     origin: string
     network: string
-    accessToken: string | null
+    accessTokenHash: string | null
     userId: UserId
 }
 
@@ -272,7 +272,9 @@ export const toSession = (table: SessionTable): Session => {
         id: table.id,
         network: table.network,
         origin: table.origin,
-        ...(table.accessToken ? { accessToken: table.accessToken } : {}),
+        ...(table.accessTokenHash
+            ? { accessTokenHash: table.accessTokenHash }
+            : {}),
         userId: table.userId,
     }
 }

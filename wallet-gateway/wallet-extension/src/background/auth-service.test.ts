@@ -4,6 +4,7 @@
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { NotificationService } from '@canton-network/core-wallet-services'
+import { hashAccessToken } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 
@@ -116,7 +117,7 @@ describe('createAuthService', () => {
             expect.objectContaining({
                 origin: EXTENSION_ORIGIN,
                 network: networkId,
-                accessToken: token,
+                accessTokenHash: await hashAccessToken(token),
             }),
         ])
         await expect(auth.getStatus()).resolves.toBe('connected')
@@ -225,7 +226,11 @@ describe('createAuthService', () => {
         ])
         expect(
             await (await loadAuthedStore(store, authContext)).listSessions()
-        ).toEqual([expect.objectContaining({ accessToken: tokenB })])
+        ).toEqual([
+            expect.objectContaining({
+                accessTokenHash: await hashAccessToken(tokenB),
+            }),
+        ])
         await expect(auth.getStatus()).resolves.toBe('connected')
     })
 })

@@ -19,7 +19,8 @@ import {
     CorruptSnapshotError,
     decodeSnapshot,
     encodeSnapshot,
-    type SnapshotV1,
+    type SnapshotV2,
+    upgradeSnapshot,
 } from './snapshot.ts'
 
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
@@ -75,7 +76,7 @@ async function filledStore() {
 
     const snapshot = JSON.parse(
         JSON.stringify(encodeSnapshot(config, memory))
-    ) as SnapshotV1
+    ) as SnapshotV2
     return { store, snapshot }
 }
 
@@ -111,17 +112,99 @@ describe('wallet store snapshot', () => {
         expect(memory.get(CONTEXT.userId)?.apiKeys).toEqual(new Map())
     })
 
+    it('upgrades a version 1 snapshot by dropping its sessions', async () => {
+        const { snapshot } = await filledStore()
+        const user = snapshot.users[CONTEXT.userId]!
+        const legacy = {
+            ...snapshot,
+            version: 1,
+            users: {
+                [CONTEXT.userId]: {
+                    ...user,
+                    sessions: [
+                        {
+                            ...user.sessions[0],
+                            accessToken: CONTEXT.accessToken,
+                        },
+                    ],
+                },
+            },
+        }
+
+        const { snapshot: upgraded, upgraded: changed } = upgradeSnapshot(
+            JSON.parse(JSON.stringify(legacy))
+        )
+
+        expect(changed).toBe(true)
+        const upgradedUser = (upgraded as SnapshotV2).users[CONTEXT.userId]!
+        expect(upgradedUser.sessions).toEqual([])
+        expect(upgradedUser.wallets).toEqual(user.wallets)
+        const { memory } = decodeSnapshot(upgraded)
+        expect(memory.get(CONTEXT.userId)?.sessions.size).toBe(0)
+        expect(memory.get(CONTEXT.userId)?.wallets).toEqual([WALLET])
+    })
+
+    it('keeps a user whose id is __proto__ when upgrading a version 1 snapshot', async () => {
+        const { snapshot } = await filledStore()
+        const user = snapshot.users[CONTEXT.userId]!
+        const legacy = {
+            version: 1,
+            config: snapshot.config,
+            users: Object.fromEntries([
+                [
+                    '__proto__',
+                    {
+                        ...user,
+                        sessions: [
+                            {
+                                ...user.sessions[0],
+                                accessToken: CONTEXT.accessToken,
+                            },
+                        ],
+                    },
+                ],
+            ]),
+        }
+
+        const { snapshot: upgraded, upgraded: changed } = upgradeSnapshot(
+            JSON.parse(JSON.stringify(legacy))
+        )
+
+        expect(changed).toBe(true)
+        const upgradedUser = (upgraded as SnapshotV2).users['__proto__']
+        expect(
+            Object.prototype.hasOwnProperty.call(
+                (upgraded as SnapshotV2).users,
+                '__proto__'
+            )
+        ).toBe(true)
+        expect(upgradedUser?.sessions).toEqual([])
+        expect(upgradedUser?.wallets).toEqual(user.wallets)
+        const { memory } = decodeSnapshot(upgraded)
+        expect(memory.get('__proto__')?.sessions.size).toBe(0)
+        expect(memory.get('__proto__')?.wallets).toEqual(user.wallets)
+    })
+
+    it('leaves a current snapshot as it is', async () => {
+        const { snapshot } = await filledStore()
+
+        expect(upgradeSnapshot(snapshot)).toEqual({
+            snapshot,
+            upgraded: false,
+        })
+    })
+
     it('rejects an unknown version', async () => {
         const { snapshot } = await filledStore()
 
-        expect(() => decodeSnapshot({ ...snapshot, version: 2 })).toThrow(
+        expect(() => decodeSnapshot({ ...snapshot, version: 3 })).toThrow(
             CorruptSnapshotError
         )
     })
 
     it('rejects a snapshot without users', async () => {
         const { snapshot } = await filledStore()
-        const withoutUsers: Partial<SnapshotV1> = { ...snapshot }
+        const withoutUsers: Partial<SnapshotV2> = { ...snapshot }
         delete withoutUsers.users
 
         expect(() => decodeSnapshot(withoutUsers)).toThrow(CorruptSnapshotError)
