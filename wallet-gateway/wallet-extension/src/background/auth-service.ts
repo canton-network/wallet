@@ -19,7 +19,7 @@ import {
     signInWithAuthorizationCode,
     type AuthorizationCodeParams,
 } from './oauth.ts'
-import { isTrustedSender } from './vault-service.ts'
+import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
 
 const log = logger.getChild('auth')
