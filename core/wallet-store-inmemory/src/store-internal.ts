@@ -32,9 +32,7 @@ import type {
 import {
     assertUniqueSelfIssuedAudience,
     hashAccessToken,
-    hashReconstructedAccessToken,
     resolveSelfIssuedNetworkByAudiences,
-    signingInputFromAccessToken,
 } from '@canton-network/core-wallet-store'
 import type { CurrentNetworkWalletFilter } from '@canton-network/core-wallet-store'
 import type { Logger } from '@logtape/logtape'
@@ -396,19 +394,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             accessTokenHash: tokenHash,
         }
         storage.sessions.set(sessionId, upgraded)
-        const signingInput = signingInputFromAccessToken(accessToken)
         storage.messageRaws.delete(signedMessageId)
-        for (const [id, message] of storage.messageRaws) {
-            if (
-                id === signedMessageId ||
-                message.kind !== 'self-issued-token'
-            ) {
-                continue
-            }
-            if (message.message === signingInput) {
-                storage.messageRaws.delete(id)
-            }
-        }
         this.updateStorage(storage)
         return upgraded
     }
@@ -759,13 +745,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                 `MessageRaw userId mismatch: expected ${userId}, got ${message.userId}`
             )
         }
-        const tokenHash = await this.selfIssuedTokenHash(message)
-        // Hash first, then check and write with no further await, so a
-        // concurrent upgrade cannot sneak a signature back in.
         const storage = this.getStorage()
-        if (this.hasAuthenticatedTokenHash(storage, tokenHash)) {
-            return
-        }
         storage.messageRaws.set(message.id, message)
         this.updateStorage(storage)
     }
@@ -776,7 +756,8 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         updates: MessageRawStatusUpdate = {}
     ): Promise<void> {
         this.assertConnected()
-        const existing = this.getStorage().messageRaws.get(messageId)
+        const storage = this.getStorage()
+        const existing = storage.messageRaws.get(messageId)
         if (!existing) {
             throw new Error(`MessageRaw not found with id: ${messageId}`)
         }
@@ -785,45 +766,8 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             status,
             updates
         )
-        const tokenHash = await this.selfIssuedTokenHash(updated)
-        const storage = this.getStorage()
-        // If the message was cancelled or consumed while hashing, leave
-        // it gone. Regular messages skip the await, so this is a no-gap
-        // write.
-        if (!storage.messageRaws.has(messageId)) {
-            return
-        }
-        if (this.hasAuthenticatedTokenHash(storage, tokenHash)) {
-            storage.messageRaws.delete(messageId)
-            this.updateStorage(storage)
-            return
-        }
         storage.messageRaws.set(messageId, updated)
         this.updateStorage(storage)
-    }
-
-    private async selfIssuedTokenHash(
-        message: MessageRaw
-    ): Promise<string | undefined> {
-        if (message.kind !== 'self-issued-token' || !message.signature) {
-            return undefined
-        }
-        return hashReconstructedAccessToken(message.message, message.signature)
-    }
-
-    private hasAuthenticatedTokenHash(
-        storage: UserStorage,
-        tokenHash: string | undefined
-    ): boolean {
-        if (!tokenHash) {
-            return false
-        }
-        for (const session of storage.sessions.values()) {
-            if (session.accessTokenHash === tokenHash) {
-                return true
-            }
-        }
-        return false
     }
 
     async getMessageRaw(messageId: string): Promise<MessageRaw | undefined> {

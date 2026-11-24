@@ -47,6 +47,8 @@ export class SelfIssuedTokenService {
             exp: now + claims.ttlSeconds,
             iss: claims.partyId,
             sub: claims.partyId,
+            // Unique per token, so two tokens never share a payload
+            jti: crypto.randomUUID(),
             'daml.com': {
                 syn: claims.synchronizerId,
                 usr: claims.username,
