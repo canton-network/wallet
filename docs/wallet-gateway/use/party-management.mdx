@@ -61,16 +61,17 @@ signing provider.
 
 1. Navigate to the **Parties** list
 2. Choose **+ New** 
-3. Provide the **Party ID** (or hint) for the wallet.
-4. Select the **network** the wallet belongs to.
-5. Select the **signing provider** that will hold the key and sign transactions for this
+3. Provide the **Party hint**. It becomes the start of the party ID, for example `alice::1220…`.
+4. Select the **signing provider** that will hold the key and sign transactions for this
    wallet. See [Signing providers](../operate/signing-providers.mdx).
 
 <img src="images/addWallet.png" alt="add a new party" style={{ display: 'block', margin: '0 auto', maxWidth: '50%', height: 'auto' }} />
 
 
-6. Optionally mark it as your **primary** wallet.
-7. Choose **Create party**
+5. Optionally choose **Set as primary party**.
+6. Choose **Create party**
+
+The party is created on the network you're logged in to.
 
 Each wallet is tied to exactly one network and one signing provider, so you can keep different
 parties on different networks or custody providers side by side in the same Wallet Gateway.
@@ -133,9 +134,9 @@ gateway, see [Changing wallet providers](#changing-wallet-providers).
 
 1. Open the **Parties** page and find the party card.
 2. Choose **Edit** on the card. This opens the **Edit party** page.
-3. Under **Signing Provider**, select the provider that holds the delegated key.
+3. Under **Signing provider**, select the provider that holds the delegated key.
    **Participant** can't be selected as a target.
-4. Under **Public Key**, select the delegated key. The list shows the keys of the selected
+4. Under **Public key**, select the delegated key. The list shows the keys of the selected
    provider.
 5. Choose **Edit** to save. You return to **Parties**, and a confirmation is shown.
 

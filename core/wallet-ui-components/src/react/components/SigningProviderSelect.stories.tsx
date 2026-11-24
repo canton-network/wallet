@@ -24,7 +24,7 @@ type Story = StoryObj<typeof meta>
 export const Default: Story = {
     play: async ({ args, canvas, userEvent }) => {
         const select = canvas.getByRole('combobox', {
-            name: /^Signing Provider/,
+            name: /^Signing provider/,
         })
         await expect(select).toBeRequired()
         await expect(select).toHaveValue('')
@@ -42,7 +42,7 @@ export const Selected: Story = {
     args: { value: 'fireblocks' },
     play: async ({ canvas }) => {
         await expect(
-            canvas.getByRole('combobox', { name: /^Signing Provider/ })
+            canvas.getByRole('combobox', { name: /^Signing provider/ })
         ).toHaveValue('fireblocks')
     },
 }
@@ -63,7 +63,7 @@ export const Controlled: Story = {
     },
     play: async ({ canvas, userEvent }) => {
         const select = canvas.getByRole('combobox', {
-            name: /^Signing Provider/,
+            name: /^Signing provider/,
         })
         await userEvent.selectOptions(select, 'participant')
         await expect(select).toHaveValue('participant')
@@ -75,7 +75,7 @@ export const Loading: Story = {
     args: { signingProviders: undefined },
     play: async ({ canvas }) => {
         await expect(
-            canvas.getByRole('combobox', { name: /^Signing Provider/ })
+            canvas.getByRole('combobox', { name: /^Signing provider/ })
         ).toBeDisabled()
         await expect(
             canvas.getByRole('option', { name: 'Loading signing providers...' })
@@ -87,7 +87,7 @@ export const NoProviders: Story = {
     args: { signingProviders: [] },
     play: async ({ canvas }) => {
         await expect(
-            canvas.getByRole('combobox', { name: /^Signing Provider/ })
+            canvas.getByRole('combobox', { name: /^Signing provider/ })
         ).toBeDisabled()
         await expect(
             canvas.getByRole('option', {
@@ -101,7 +101,7 @@ export const Disabled: Story = {
     args: { disabled: true },
     play: async ({ canvas }) => {
         await expect(
-            canvas.getByRole('combobox', { name: /^Signing Provider/ })
+            canvas.getByRole('combobox', { name: /^Signing provider/ })
         ).toBeDisabled()
     },
 }

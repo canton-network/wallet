@@ -121,7 +121,7 @@ class WgWalletEditForm extends WgWalletForm {
                     for="signing-provider-id"
                     class="form-label field-label mb-0"
                 >
-                    Signing Provider <span class="required">*</span>
+                    Signing provider <span class="required">*</span>
                 </label>
                 <div class="select-wrap">
                     <select
@@ -169,7 +169,7 @@ class WgWalletEditForm extends WgWalletForm {
 
             <div class="field-group d-flex flex-column">
                 <label for="public-key-id" class="form-label field-label mb-0">
-                    Public Key <span class="required">*</span>
+                    Public key <span class="required">*</span>
                 </label>
                 <div class="select-wrap">
                     <select

@@ -384,7 +384,7 @@ class AppHeader extends BaseElement {
                             }
                             @click=${this.copyDappApiUrl}
                         >
-                            <span>Dapp API URL</span>
+                            <span>dApp API URL</span>
                             <span class="menu-item-icon" aria-hidden="true"
                                 >${clipboardIcon}</span
                             >

@@ -35,10 +35,10 @@ export default meta
 type Story = StoryObj<typeof meta>
 
 const findSigningProvider = (canvasElement: HTMLElement) =>
-    findByShadowRole(canvasElement, 'combobox', { name: /^Signing Provider/ })
+    findByShadowRole(canvasElement, 'combobox', { name: /^Signing provider/ })
 
 const findPublicKey = (canvasElement: HTMLElement) =>
-    findByShadowRole(canvasElement, 'combobox', { name: /^Public Key/ })
+    findByShadowRole(canvasElement, 'combobox', { name: /^Public key/ })
 
 export const Default: Story = {
     play: async ({ args, canvasElement, userEvent }) => {
