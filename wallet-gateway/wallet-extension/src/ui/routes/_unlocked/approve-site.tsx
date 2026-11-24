@@ -16,7 +16,7 @@ export const Route = createFileRoute('/_unlocked/approve-site')({
     }),
     loaderDeps: ({ search: { id } }) => ({ id }),
     loader: ({ context: { queryClient }, deps: { id } }) =>
-        queryClient.ensureQueryData(siteApprovalQuery(id)),
+        queryClient.query({ ...siteApprovalQuery(id), staleTime: 'static' }),
     // A change of `id` alone runs onStay, not onLeave and onEnter.
     onEnter: ({ search: { id } }) => holdSiteApproval(id),
     onStay: ({ search: { id } }) => holdSiteApproval(id),

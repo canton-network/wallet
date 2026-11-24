@@ -366,6 +366,7 @@ export function createSiteApprovals({
                 if (!pending || !claim(pending)) {
                     throw new Error('This request is no longer pending')
                 }
+                // oxlint-disable-next-line typescript/no-unnecessary-boolean-literal-compare -- only accept an explicit true across the RPC boundary
                 if (approved !== true) {
                     pending.settle(rejected('The user rejected the site'))
                     return
