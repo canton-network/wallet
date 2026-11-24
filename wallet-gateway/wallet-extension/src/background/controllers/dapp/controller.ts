@@ -35,7 +35,7 @@ import { type SiteApprovals, sessionEnded } from '../../site-approval.ts'
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
-import type { TxApprovals } from '../../tx-approval.ts'
+import { HASHING_SCHEME, type TxApprovals } from '../../tx-approval.ts'
 import type { UnlockRequests } from '../../unlock-request.ts'
 import buildController from './rpc-gen/index.ts'
 import type {
@@ -231,7 +231,7 @@ export const dappController = (
                         actAs,
                         synchronizerId,
                         params,
-                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                        hashingSchemeVersion: HASHING_SCHEME,
                     })
                 )
 

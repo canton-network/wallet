@@ -23,6 +23,7 @@ import type { Browser } from 'wxt/browser'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
+import createPlain from '@/__tests__/fixtures/v3-create-plain.json'
 import { PAGE_PRESENCE_PORT_NAME, txApprovalPortName } from '@/shared/ports.ts'
 
 import type { TransactionSubmitter } from './controllers/user/transactions.ts'
@@ -47,6 +48,11 @@ const tab = { tabId: 7, windowId: 3, page: 'document-1' }
 const alice = { userId: 'alice', accessToken: 'token-a' }
 const sessionId = 'session-a'
 const party = 'alice::1220'
+// A transaction a participant prepared, and its hash as the JSON API sends it.
+const prepared = createPlain.preparedTransaction
+const preparedHash = Buffer.from(createPlain.expected.hash, 'hex').toString(
+    'base64'
+)
 const executed = { updateId: 'update-1', completionOffset: 42 }
 const signature = {
     status: 'signed' as const,
@@ -130,14 +136,15 @@ describe('createTxApprovals', () => {
     /** Stores a pending transaction, as `prepareExecute` does. */
     const storeTransaction = (
         request: Pick<TxApprovalRequest, 'transactionId' | 'commandId'>,
-        status: Transaction['status'] = 'pending'
+        status: Transaction['status'] = 'pending',
+        preparedTransactionHash = preparedHash
     ) =>
         store.setTransaction({
             id: request.transactionId,
             commandId: request.commandId,
             status,
-            preparedTransaction: 'prepared',
-            preparedTransactionHash: 'hash',
+            preparedTransaction: prepared,
+            preparedTransactionHash,
             payload: { actAs: [party] },
             origin,
         } satisfies Transaction)
@@ -297,6 +304,27 @@ describe('createTxApprovals', () => {
             failedEvent(request, errorCodes.provider.userRejectedRequest)
         )
         expect(sign).not.toHaveBeenCalled()
+    })
+
+    it('signs nothing, deletes it and rejects with -32003 when it does not match its hash', async () => {
+        const request = nextRequest()
+        const approval = approvals.begin(request)
+        await storeTransaction(request, 'pending', 'another-hash')
+        await approval.prompt()
+
+        await expect(
+            approvals.service.decide(request.transactionId, true)
+        ).rejects.toMatchObject({ code: errorCodes.rpc.transactionRejected })
+
+        await expect(approval.outcome).rejects.toMatchObject({
+            code: errorCodes.rpc.transactionRejected,
+            message: expect.stringContaining('does not match its hash'),
+        })
+        expect(sign).not.toHaveBeenCalled()
+        expect(await stored(request.transactionId)).toBeUndefined()
+        expect(events).toContainEqual(
+            failedEvent(request, errorCodes.rpc.transactionRejected)
+        )
     })
 
     it('rejects with the failure when the ledger rejects it', async () => {

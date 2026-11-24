@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
+import { hashPreparedTransaction } from '@canton-network/core-tx-visualizer'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
     type INotificationService,
@@ -37,6 +38,9 @@ import { type Vault, VaultLockedError } from './vault/index.ts'
  */
 export const TX_APPROVAL_TIMEOUT_MS = 4 * 60 * 1000
 
+/** The hashing scheme `prepareExecute` asks the ledger to prepare with. */
+export const HASHING_SCHEME = 'HASHING_SCHEME_VERSION_V3'
+
 export interface TxApprovalRequest {
     transactionId: string
     commandId: string
@@ -55,7 +59,8 @@ export interface TxApproval {
      * Resolves with the `executed` event, or rejects with the error the
      * prompt ended with: 4001 when the user rejects, it times out, the tab
      * closes or the page that asked unloads, 4100 when the vault locks or
-     * the session ends, -32003 when the ledger or signing rejects it, and
+     * the session ends, -32003 when the ledger or signing rejects it or it
+     * doesn't match its hash, and
      * -32603 when the outcome of an approved transaction is unknown.
      */
     outcome: Promise<TxChangedExecutedEvent>
@@ -431,7 +436,21 @@ export function createTxApprovals({
             const store = await storeOf(prompt)
             const transaction = await store.getTransaction(transactionId)
             const partyId = transaction && actingParty(transaction)
-            if (!partyId) throw new Error('The transaction has no acting party')
+            if (!transaction || !partyId) {
+                throw new Error('The transaction has no acting party')
+            }
+            // Signing covers the hash only, so it must be the hash of the
+            // transaction the user saw.
+            const hash = await hashPreparedTransaction(
+                transaction.preparedTransaction,
+                'base64',
+                { hashingScheme: HASHING_SCHEME }
+            )
+            if (hash !== transaction.preparedTransactionHash) {
+                throw new Error(
+                    'The prepared transaction does not match its hash, so it was not signed'
+                )
+            }
             const params = { transactionId, partyId }
             const signed = await submitter.sign(store, auth, sessionId, params)
             if (signed.status !== 'signed') {
