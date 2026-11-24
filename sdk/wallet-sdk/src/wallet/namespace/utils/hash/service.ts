@@ -65,13 +65,24 @@ export class HashNamespace {
     }
 
     /**
+     * Computes the multi-hash that one signature over a set of topology transactions is made on.
      *
-     * @param preparedTransactions list of prepared topology transactions
-     * @returns a multihash combining all of the topology txs
+     * @param preparedTransactions - The topology transactions, in base64 as the Ledger API returns them or as bytes
+     * @returns The multi-hash in base64
+     * @throws {SDKError} `BadRequest`, with the `TxHashingError` as `context.originalError`, when the set is empty or a transaction is not canonical base64
      */
     public async topologyTransaction(
         preparedTransactions: Uint8Array[] | string[]
     ) {
-        return await computeTopologyMultiHash(preparedTransactions)
+        try {
+            return await computeTopologyMultiHash(preparedTransactions)
+        } catch (error) {
+            if (!(error instanceof TxHashingError)) throw error
+            this.ctx.error.throw({
+                type: 'BadRequest',
+                message: `topology transactions refused: ${error.code}: ${error.message}`,
+                originalError: error,
+            })
+        }
     }
 }
