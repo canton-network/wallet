@@ -25,6 +25,7 @@ import type { TransactionSubmitter } from './controllers/user/transactions.ts'
 import type { TxChangedSite } from './notifications.ts'
 import type { PagePresence, RequestTab } from './page-presence.ts'
 import type { SessionCheck } from './session-check.ts'
+import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import type { ExtensionStore, WalletStore } from './store/index.ts'
 import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
 import { isTrustedSender } from './trusted-service.ts'
@@ -48,6 +49,8 @@ export interface TxApprovalRequest {
     sessionId: string
     /** The user who asked, whose store holds the transaction. */
     auth: AuthContext
+    /** Who approved the site, see `sitePrincipal`. */
+    principal: string
     origin: string
     tab: RequestTab | undefined
     /** When the dApp's request arrived, from which the timeout counts. */
@@ -58,8 +61,8 @@ export interface TxApproval {
     /**
      * Resolves with the `executed` event, or rejects with the error the
      * prompt ended with: 4001 when the user rejects, it times out, the tab
-     * closes or the page that asked unloads, 4100 when the vault locks or
-     * the session ends, -32003 when the ledger or signing rejects it or it
+     * closes or the page that asked unloads, 4100 when the vault locks, the
+     * session ends or the site disconnects, -32003 when the ledger or signing rejects it or it
      * doesn't match its hash, and
      * -32603 when the outcome of an approved transaction is unknown.
      */
@@ -108,6 +111,8 @@ export interface TxApprovals {
      * Only its `service.decide` may then sign or delete it.
      */
     hasPrompt(transactionId: string): boolean
+    /** Ends the prompts of a site the principal no longer approves. */
+    endSite(principal: string, origin: string): void
     service: TxApprovalService
 }
 
@@ -117,6 +122,7 @@ export interface TxApprovalsOptions {
     presence: Pick<PagePresence, 'onEnd'>
     tabIcons: TabIcons
     isCurrent: SessionCheck
+    sites: Pick<ApprovedSiteStore, 'isApproved'>
     notificationService: INotificationService
     /** The wallet store, not yet scoped to a user. */
     getStore: () => Promise<WalletStore>
@@ -153,6 +159,9 @@ const sessionEnded = () =>
     providerErrors.unauthorized({
         message: 'The session that asked for the transaction has ended',
     })
+
+const siteDisconnected = () =>
+    providerErrors.unauthorized({ message: 'The site disconnected' })
 
 const notWaiting = () =>
     new Error('This transaction is no longer waiting for approval')
@@ -193,6 +202,7 @@ export function createTxApprovals({
     presence,
     tabIcons,
     isCurrent,
+    sites,
     notificationService,
     getStore,
     submitter,
@@ -541,6 +551,12 @@ export function createTxApprovals({
     return {
         begin,
         hasPrompt: (transactionId) => prompts.has(transactionId),
+        endSite: (principal, origin) =>
+            cancelAll(
+                siteDisconnected,
+                (prompt) =>
+                    prompt.principal === principal && prompt.origin === origin
+            ),
         service: {
             async get(id) {
                 const prompt = prompts.get(id)
@@ -572,16 +588,20 @@ export function createTxApprovals({
                 prompt.stop()
                 untrack(prompt)
                 try {
-                    if (
-                        !(await isCurrent(
-                            prompt.auth.accessToken,
-                            prompt.sessionId
-                        ).catch(() => false))
-                    ) {
-                        const error = sessionEnded()
-                        await discard(prompt, error)
-                        prompt.reject(error)
-                        throw error
+                    const refusal = !(await isCurrent(
+                        prompt.auth.accessToken,
+                        prompt.sessionId
+                    ).catch(() => false))
+                        ? sessionEnded()
+                        : !(await sites
+                                .isApproved(prompt.principal, prompt.origin)
+                                .catch(() => false))
+                          ? siteDisconnected()
+                          : undefined
+                    if (refusal) {
+                        await discard(prompt, refusal)
+                        prompt.reject(refusal)
+                        throw refusal
                     }
                     if (approved !== true) {
                         const error = rejected('Rejected by the user')

@@ -55,7 +55,7 @@ export interface DappControllerDeps {
     sites: ApprovedSiteStore
     siteApprovals: Pick<SiteApprovals, 'request'>
     unlockRequests: Pick<UnlockRequests, 'request'>
-    txApprovals: Pick<TxApprovals, 'begin'>
+    txApprovals: Pick<TxApprovals, 'begin' | 'endSite'>
     sitePorts: Pick<SitePorts, 'send' | 'close'>
     isCurrent: SessionCheck
 }
@@ -155,6 +155,12 @@ export const dappController = (
         if (!session) {
             throw new Error('No active session found')
         }
+        // Only an approved site gets here, and approval needs a principal.
+        if (principal === undefined) {
+            throw providerErrors.unauthorized({
+                message: 'The user has not approved this site',
+            })
+        }
 
         const commandId = params.commandId || crypto.randomUUID()
         const transactionId = crypto.randomUUID()
@@ -163,6 +169,7 @@ export const dappController = (
             commandId,
             sessionId: session.id,
             auth: context,
+            principal,
             origin,
             tab,
             receivedAt,
@@ -344,7 +351,10 @@ export const dappController = (
         // make while locked or signed out.
         disconnect: async () => {
             requireAuth()
-            if (principal !== undefined) await sites.revoke(principal, origin)
+            if (principal !== undefined) {
+                await sites.revoke(principal, origin)
+                txApprovals.endSite(principal, origin)
+            }
             sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
             return null
         },

@@ -102,7 +102,10 @@ describe('createDappDispatcher', () => {
     let deps: DappControllerDeps & {
         siteApprovals: { request: Mock<SiteApprovals['request']> }
         unlockRequests: { request: Mock<UnlockRequests['request']> }
-        txApprovals: { begin: Mock<TxApprovals['begin']> }
+        txApprovals: {
+            begin: Mock<TxApprovals['begin']>
+            endSite: Mock<TxApprovals['endSite']>
+        }
         sitePorts: {
             send: Mock<SitePorts['send']>
             close: Mock<SitePorts['close']>
@@ -122,7 +125,7 @@ describe('createDappDispatcher', () => {
             sites,
             siteApprovals: { request: vi.fn() },
             unlockRequests: { request: vi.fn(async () => {}) },
-            txApprovals: { begin: vi.fn() },
+            txApprovals: { begin: vi.fn(), endSite: vi.fn() },
             sitePorts: { send: vi.fn(), close: vi.fn() },
             isCurrent: vi.fn(async () => true),
         }
@@ -329,6 +332,10 @@ describe('createDappDispatcher', () => {
                 disconnectedStatusEvent('disconnect')
             )
             expect(deps.sitePorts.close).toHaveBeenCalledTimes(1)
+            expect(deps.txApprovals.endSite).toHaveBeenCalledWith(
+                principal,
+                origin
+            )
             expect(await store.getSession(authContext.accessToken)).toEqual(
                 expect.objectContaining({ id: sessionId })
             )
@@ -658,6 +665,7 @@ describe('createDappDispatcher', () => {
                     commandId: 'command-1',
                     sessionId,
                     auth: authContext,
+                    principal,
                     origin,
                     tab,
                     receivedAt: expect.any(Number),

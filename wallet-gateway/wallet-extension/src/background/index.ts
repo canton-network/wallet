@@ -85,6 +85,7 @@ export function startBackground({
         presence,
         tabIcons,
         isCurrent,
+        sites,
         notificationService,
         getStore: () => walletStore.get(),
         submitter: transactionSubmitter(deps),

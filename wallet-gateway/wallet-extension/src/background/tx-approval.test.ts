@@ -33,6 +33,7 @@ import {
     type RequestTab,
 } from './page-presence.ts'
 import type { SessionCheck } from './session-check.ts'
+import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import type { WalletStore } from './store/index.ts'
 import { createTestWalletStore } from './store/test-store.ts'
 import { createTabIcons } from './tab-icon.ts'
@@ -47,6 +48,7 @@ const origin = 'https://dapp.example'
 const tab = { tabId: 7, windowId: 3, page: 'document-1' }
 const alice = { userId: 'alice', accessToken: 'token-a' }
 const sessionId = 'session-a'
+const principal = JSON.stringify(['idp', alice.userId])
 const party = 'alice::1220'
 // A transaction a participant prepared, and its hash as the JSON API sends it.
 const prepared = createPlain.preparedTransaction
@@ -66,6 +68,7 @@ describe('createTxApprovals', () => {
     let unlockListeners: (() => void)[]
     let authListeners: ((context: AuthContext | undefined) => void)[]
     let isCurrent: Mock<SessionCheck>
+    let isApproved: Mock<ApprovedSiteStore['isApproved']>
     let sign: Mock<TransactionSubmitter['sign']>
     let execute: Mock<TransactionSubmitter['execute']>
     let notificationService: NotificationService
@@ -126,6 +129,7 @@ describe('createTxApprovals', () => {
             commandId: `command-${counter}`,
             sessionId,
             auth: alice,
+            principal,
             origin,
             tab: pageTab,
             receivedAt: Date.now(),
@@ -186,6 +190,7 @@ describe('createTxApprovals', () => {
             presence,
             tabIcons: createTabIcons(),
             isCurrent,
+            sites: { isApproved },
             notificationService,
             getStore: async () => {
                 if (locked) throw new VaultLockedError()
@@ -203,6 +208,7 @@ describe('createTxApprovals', () => {
         unlockListeners = []
         authListeners = []
         isCurrent = vi.fn(async () => true)
+        isApproved = vi.fn(async () => true)
         sign = vi.fn(async (store, _context, _session, { transactionId }) => {
             await store.setTransactionSigned(transactionId, new Date())
             return signature
@@ -537,6 +543,43 @@ describe('createTxApprovals', () => {
             expect(await stored(request.transactionId)).toBeUndefined()
         }
     )
+
+    it("ends the site's prompts with 4100 when it disconnects", async () => {
+        const { request, outcome } = await prompt()
+        const other = await prompt({ origin: 'https://other.example' })
+
+        approvals.endSite(principal, origin)
+
+        await expect(outcome).rejects.toMatchObject({
+            code: errorCodes.provider.unauthorized,
+            message: 'The site disconnected',
+        })
+        await vi.waitFor(async () =>
+            expect(await stored(request.transactionId)).toBeUndefined()
+        )
+        expect(events).toContainEqual(
+            failedEvent(request, errorCodes.provider.unauthorized)
+        )
+        await expect(
+            approvals.service.get(other.request.transactionId)
+        ).resolves.toMatchObject({ id: other.request.transactionId })
+    })
+
+    it('ends with 4100 and signs nothing when approved after the site was revoked', async () => {
+        const { request, outcome } = await prompt()
+        isApproved.mockResolvedValue(false)
+
+        await expect(
+            approvals.service.decide(request.transactionId, true)
+        ).rejects.toMatchObject({ code: errorCodes.provider.unauthorized })
+
+        expect(isApproved).toHaveBeenLastCalledWith(principal, origin)
+        await expect(outcome).rejects.toMatchObject({
+            code: errorCodes.provider.unauthorized,
+        })
+        expect(sign).not.toHaveBeenCalled()
+        expect(await stored(request.transactionId)).toBeUndefined()
+    })
 
     it('refuses a second request with the same command ID, even from a page that has gone', async () => {
         const first = await prompt({ commandId: 'command-x' })
