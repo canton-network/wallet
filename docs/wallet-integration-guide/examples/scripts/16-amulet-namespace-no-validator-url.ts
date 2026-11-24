@@ -113,7 +113,7 @@ const end = performance.now()
 const duration = end - start
 if (duration < 1000) {
     logger.info(
-        `Success! The operation was fast (${duration.toFixed(2)} ms) and fetchOnce status is ${fetchOnceStatus}.`
+        `Success! The operation was fast (${duration.toFixed(2)} ms) and fetchOnce status is ${JSON.stringify(fetchOnceStatus)}.`
     )
 } else {
     logger.warn(
@@ -182,7 +182,7 @@ const end2 = performance.now()
 const duration2 = end2 - start2
 if (duration < 1000) {
     logger.info(
-        `Success! The operation was fast (${duration2.toFixed(2)} ms) and fetchOnce status is ${fetchOnceStatusWithPreapproval}.`
+        `Success! The operation was fast (${duration2.toFixed(2)} ms) and fetchOnce status is ${JSON.stringify(fetchOnceStatusWithPreapproval)}.`
     )
 } else {
     logger.warn(

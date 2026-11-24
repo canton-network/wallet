@@ -80,7 +80,7 @@ onlineLogger.info(
 
 const senderParty = await senderPartyPrepared.execute(senderSignedTopologyTx)
 
-onlineLogger.info(`Created sender party: ${senderParty}`)
+onlineLogger.info(`Created sender party: ${senderParty.partyId}`)
 
 offlineLogger.info(
     '===================== OFFLINE GENERATE KEYS RECEIVER ====================='
@@ -136,7 +136,7 @@ const receiverParty = await receiverPartyPrepared.execute(
     receiverSignedTopologyTx
 )
 
-onlineLogger.info(`Created receiver party: ${receiverParty}`)
+onlineLogger.info(`Created receiver party: ${receiverParty.partyId}`)
 
 // Configure amulet namespace for online sdk
 

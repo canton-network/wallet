@@ -66,7 +66,9 @@ const totalSum = await batchTap(
     aliceKeys.privateKey,
     logger
 )
-logger.info(`All taps successfully parsed with totalTapped: ${totalSum}`)
+logger.info(
+    `All taps successfully parsed with totalTapped: ${totalSum.toString()}`
+)
 
 const batchMergingUtility = await sdk.token.utxos.delegatedMerge.setup()
 

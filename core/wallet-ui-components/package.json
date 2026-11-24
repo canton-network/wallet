@@ -112,6 +112,12 @@
             "typecheck": {
                 "dependsOn": [
                     "^typecheck",
+                    "dist-types"
+                ]
+            },
+            "dist-types": {
+                "executor": "nx:noop",
+                "dependsOn": [
                     "build"
                 ]
             }

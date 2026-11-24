@@ -67,7 +67,7 @@ async function cancelAllocationsOnFailure(
             _1: amuletAllocationCid,
             _2: {
                 context: {
-                    ...(amuletCancelCtx.choiceContextData ?? {}),
+                    ...amuletCancelCtx.choiceContextData,
                     values:
                         (amuletCancelCtx.choiceContextData?.values as Record<
                             string,
@@ -81,7 +81,7 @@ async function cancelAllocationsOnFailure(
             _1: testTokenAllocationCid,
             _2: {
                 context: {
-                    ...(testTokenCancelCtx.choiceContextData ?? {}),
+                    ...testTokenCancelCtx.choiceContextData,
                     values:
                         (testTokenCancelCtx.choiceContextData?.values as Record<
                             string,
@@ -161,7 +161,7 @@ export async function settleOtcTrade(
             _1: amuletAllocationCid,
             _2: {
                 context: {
-                    ...(amuletExecCtx.choiceContextData ?? {}),
+                    ...amuletExecCtx.choiceContextData,
                     values:
                         (amuletExecCtx.choiceContextData?.values as Record<
                             string,
@@ -175,7 +175,7 @@ export async function settleOtcTrade(
             _1: testTokenAllocationCid,
             _2: {
                 context: {
-                    ...(testTokenExecCtx.choiceContextData ?? {}),
+                    ...testTokenExecCtx.choiceContextData,
                     values:
                         (testTokenExecCtx.choiceContextData?.values as Record<
                             string,
