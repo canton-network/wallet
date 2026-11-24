@@ -12,4 +12,7 @@ await runProgram({
         name: 'template-create',
         brief: message`Create wallet-specific app from starter templates.`,
     },
+}).catch((error: unknown) => {
+    console.error(error instanceof Error ? error.message : error)
+    process.exitCode = 1
 })

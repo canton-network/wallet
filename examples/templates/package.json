@@ -13,6 +13,7 @@
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
     "devDependencies": {
+        "@optique/testing": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
         "playwright": "catalog:",
@@ -24,6 +25,7 @@
     "dependencies": {
         "@optique/core": "catalog:",
         "@optique/clack": "catalog:",
+        "@optique/discover": "catalog:",
         "@optique/run": "catalog:",
         "@optique/man": "catalog:"
     },
@@ -41,7 +43,9 @@
     },
     "files": [
         "dist/**",
-        "src/templates/**"
+        "src/templates/**",
+        "!src/templates/**/dist/**",
+        "!src/templates/**/node_modules/**"
     ],
     "createConfig": {
         "templates": [

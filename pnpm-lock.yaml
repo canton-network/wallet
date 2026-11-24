@@ -278,6 +278,9 @@ catalogs:
     '@optique/run':
       specifier: ^1.3.6
       version: 1.3.6
+    '@optique/testing':
+      specifier: ^1.3.6
+      version: 1.4.0
     '@playwright/test':
       specifier: ^1.65.0
       version: 1.65.0
@@ -619,6 +622,8 @@ overrides:
   node-forge@<=1.4.0: ^1.4.1
   undici@>=7.0.0 <7.30.1: ^7.30.1
   uuid@<11.1.1: ^11.1.1
+
+packageExtensionsChecksum: sha256-Hp4RjQrrolQsfLkD3kWLnYVivRYayLLuCn2hSUe1gsE=
 
 importers:
 
@@ -2605,6 +2610,9 @@ importers:
       '@optique/core':
         specifier: 'catalog:'
         version: 1.3.6
+      '@optique/discover':
+        specifier: 'catalog:'
+        version: 1.3.6
       '@optique/man':
         specifier: 'catalog:'
         version: 1.3.6
@@ -2612,6 +2620,9 @@ importers:
         specifier: 'catalog:'
         version: 1.3.6
     devDependencies:
+      '@optique/testing':
+        specifier: 'catalog:'
+        version: 1.4.0
       '@vitest/browser-playwright':
         specifier: 'catalog:'
         version: 5.0.5(@vitest/browser@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(playwright@1.65.0)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
@@ -2649,6 +2660,40 @@ importers:
         specifier: ^3.3.3
         version: 3.3.3
     devDependencies:
+      typescript:
+        specifier: ~7.0.2
+        version: 7.0.2
+      vite:
+        specifier: ^8.3.8
+        version: 8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
+
+  examples/templates/src/templates/dapp/react:
+    dependencies:
+      '@canton-network/core-splice-codegen':
+        specifier: 'workspace:'
+        version: link:../../../../../../core/splice-codegen
+      '@canton-network/dapp-sdk':
+        specifier: ^1.10.0
+        version: 1.10.0(@mui/icons-material@9.5.0(@mui/material@9.5.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.1)(supports-color@10.2.2))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@types/react@19.3.0)(react@19.3.1))(@mui/material@9.5.0(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1)(supports-color@10.2.2))(@emotion/styled@11.14.1(@emotion/react@11.14.0(@types/react@19.3.0)(react@19.3.1)(supports-color@10.2.2))(@types/react@19.3.0)(react@19.3.1)(supports-color@10.2.2))(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@popperjs/core@2.11.8)(@types/react@19.3.0)(@walletconnect/sign-client@2.26.0(typescript@7.0.2)(zod@4.6.7))(@walletconnect/types@2.26.0)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@10.2.2)
+      '@walletconnect/sign-client':
+        specifier: ^2.26.0
+        version: 2.26.0(typescript@7.0.2)(zod@4.6.7)
+      react:
+        specifier: ^19.3.1
+        version: 19.3.1
+      react-dom:
+        specifier: ^19.3.1
+        version: 19.3.1(react@19.3.1)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.3.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.3.0
+        version: 19.3.0(@types/react@19.3.0)
+      '@vitejs/plugin-react':
+        specifier: ^6.1.2
+        version: 6.2.1(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       typescript:
         specifier: ~7.0.2
         version: 7.0.2
@@ -5528,8 +5573,17 @@ packages:
     resolution: {integrity: sha512-BXVuVyxP9bg8FbyvBYrSHisnAeG3XTf1xcuUjAWgDWKfzZssMGbSrMdiv4tA+BK3+CrSo6no+uHWpiHh4HMKeg==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
+  '@optique/core@1.4.0':
+    resolution: {integrity: sha512-ERjwixdopjgnHDX/E+nC/549QXWjWr7hnerw0v9+jdtYZBE9wq7uiPraE82ZDa0jLFECxO9umPz2wwaPG09z/g==}
+    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
+
   '@optique/discover@1.3.6':
     resolution: {integrity: sha512-22VPHFYpUHHp1Eq2DeczrT9lGpbi4nnygBqDAA2d2kkbgidfe++phbaWK2FP4evmqffJOYINeKpsvVbFMhJ3Xg==}
+    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
+    hasBin: true
+
+  '@optique/discover@1.4.0':
+    resolution: {integrity: sha512-MW/wGDqVgBdmddcBD2xvqKfqVeaxxWqMPg1Y1ZpL65epmgVoakEG2FF6QEq6TtlfP5WPWt7200X/xlqOIEhGJg==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     hasBin: true
 
@@ -5554,6 +5608,14 @@ packages:
 
   '@optique/run@1.3.6':
     resolution: {integrity: sha512-uxlHO8vG/5ni1V+t+jdmYqiyYYY5uOevO/6U866oBpnlOxOGn2ZWIlPpDXAU3e5GRu4VecbeXoNff18yRDGoQw==}
+    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
+
+  '@optique/run@1.4.0':
+    resolution: {integrity: sha512-jJzUP2B4meOVwpqAuWTskHiul/9gq2nhkWcltmOxJWJAaAvezXSLMc1/4q34LvakedKgERbByJn1d0MYe/Ft4A==}
+    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
+
+  '@optique/testing@1.4.0':
+    resolution: {integrity: sha512-rT7pCmcKnW2r3e7vh3D29IUcnyOY3Z8+ajvKoYwtsDdLXPQynHQ1v5+NQqTPaPs0dJdRA/Cz9/eAVuMzCcVA2A==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
   '@oxc-parser/binding-android-arm-eabi@0.120.0':
@@ -14873,6 +14935,7 @@ snapshots:
   '@open-rpc/generator@2.1.1(@types/node@25.9.9)':
     dependencies:
       '@iarna/toml': 2.2.5
+      '@open-rpc/schema-utils-js': 2.2.1
       '@open-rpc/typings': 1.13.0
       commander: 7.2.0
       fs-extra: 11.4.1
@@ -14983,10 +15046,17 @@ snapshots:
 
   '@optique/core@1.3.6': {}
 
+  '@optique/core@1.4.0': {}
+
   '@optique/discover@1.3.6':
     dependencies:
       '@optique/core': 1.3.6
       '@optique/run': 1.3.6
+
+  '@optique/discover@1.4.0':
+    dependencies:
+      '@optique/core': 1.4.0
+      '@optique/run': 1.4.0
 
   '@optique/logtape@1.3.6(@logtape/logtape@2.4.2)':
     dependencies:
@@ -15005,6 +15075,16 @@ snapshots:
   '@optique/run@1.3.6':
     dependencies:
       '@optique/core': 1.3.6
+
+  '@optique/run@1.4.0':
+    dependencies:
+      '@optique/core': 1.4.0
+
+  '@optique/testing@1.4.0':
+    dependencies:
+      '@optique/core': 1.4.0
+      '@optique/discover': 1.4.0
+      '@optique/run': 1.4.0
 
   '@oxc-parser/binding-android-arm-eabi@0.120.0':
     optional: true

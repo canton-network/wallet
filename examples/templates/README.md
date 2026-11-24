@@ -15,20 +15,27 @@ vp create @canton-network:TEMPLATE --directory DIRECTORY
 pnpm create vite-plus @canton-network:TEMPLATE --directory DIRECTORY
 ```
 
-For example, `pnpm create @canton-network dapp-lit my-dapp`.
+For example, to copy the Lit starter and run it:
 
-In a terminal, a missing `TEMPLATE` or `DIRECTORY` is prompted for. Otherwise
-(for example in CI) `TEMPLATE` is required and `DIRECTORY` defaults to
-`my-canton-app`. The target directory must be new or empty. Next steps are
-printed in the syntax of the package manager that ran the command.
+```bash
+pnpm create @canton-network dapp-lit my-dapp
+cd my-dapp
+pnpm install
+pnpm dev
+```
+
+Use `dapp-react` instead of `dapp-lit` for the same wallet example in React.
+Both starters prompt for the directory if omitted in a terminal. In
+non-interactive use, they default to `my-canton-app`. The target directory must
+be new or empty.
 
 With npm, flags need a `--` separator: `npm create @canton-network -- --help`.
 
 ## Adding a template
 
 1. Add the template directory under `src/templates/`, e.g. `src/templates/dapp/lit`.
-   Name dotfiles that npm strips on publish with an underscore (`_gitignore`,
-   `_npmrc`, `_yarnrc.yml`); they are renamed when the template is copied.
+   Name the starter's `.gitignore` file `_gitignore` so npm includes it when
+   publishing. The CLI restores its name when copying.
 2. Register it in `createConfig.templates` in `package.json`:
 
     ```json
@@ -39,6 +46,8 @@ With npm, flags need a `--` separator: `npm create @canton-network -- --help`.
     }
     ```
 
-Templates are copied as-is, without variable substitution, for both the
-package-manager and Vite+ entry points. Only bundled `./` templates work with
-the package-manager entry point.
+3. Wire the corresponding command in `src/cli/` for the package-manager entry
+   point. Vite+ reads `createConfig.templates` directly.
+
+The starters are copied without variable substitution. Build output and
+installed dependencies are not copied.
