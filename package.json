@@ -96,7 +96,7 @@
             "pnpm oxfmt --no-error-on-unmatched-pattern"
         ]
     },
-    "packageManager": "pnpm@12.15.0",
+    "packageManager": "pnpm@12.23.0",
     "dependencies": {
         "@nx/js": "catalog:",
         "nx": "catalog:"
