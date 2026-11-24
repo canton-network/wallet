@@ -20,7 +20,7 @@ src/
 │   │   └── user/     user API: one module per area (sessions.ts, wallets.ts, …) and rpc-gen/
 │   ├── vault/        the encrypted vault: crypto, envelope format, the lock/unlock coordinator and requireUnlocked
 │   ├── store/        the wallet store: the holder that keeps it in the vault, the snapshot format, the default config and the registries item
-│   ├── token/        the token service: sdk.ts builds and caches the wallet SDK, service.ts is what the pages call
+│   ├── token/        the token service: sdk.ts builds the wallet SDK, service.ts is what the pages call
 │   ├── vault-service.ts  vault messages for the extension pages
 │   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
@@ -80,7 +80,7 @@ The wallet store holds the networks, IdPs, parties, sessions and transactions. I
 
 The background builds the wallet SDK (`@canton-network/wallet-sdk`) for the signed-in user and the current network, and the pages call it through `TOKEN_RPC_KEY`, so the access token never leaves the background. The service has the SDK's nesting but only a few read methods: `token.assets()`, `token.v1.utxos.list()` and `token.v2.utxos.list()`. It never hands out the SDK itself, which also has the ledger, party and keys APIs. Every method needs a signed-in user, and a method that takes a `partyId` rejects a party that isn't one of the user's wallets.
 
-- `token/sdk.ts` keeps one SDK, keyed by network ID, access token and registry URLs. It builds it on first use and drops it on lock. A network without a `synchronizerId` defaults to the connected synchronizer with the alias `global`, or the first one.
+- `token/sdk.ts` builds the SDK for every call, from the current network, access token and registry URLs. A network without a `synchronizerId` defaults to the connected synchronizer with the alias `global`, or the first one.
 - The SDK is built with `registryAuth: 'none'`. Without it the SDK sends the user's ledger token to every registry.
 - Registry URLs come from the vault item `registries` (`store/registries.ts`). A new vault starts with `http://scan.localhost:4000` for `canton:localnet`.
 - Results have to survive runtime messaging, which turns a `URL` into a string and a `Date` into an ISO string. `token.assets()` returns `registryUrl` as a string.

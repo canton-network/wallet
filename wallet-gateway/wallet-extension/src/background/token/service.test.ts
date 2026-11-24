@@ -8,7 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import type { AuthContextStore } from '../auth-context.ts'
 import type { RegistryStore } from '../store/registries.ts'
 import { createTestWalletStore } from '../store/test-store.ts'
-import type { TokenSdk, TokenSdkCache } from './sdk.ts'
+import type { TokenSdk, TokenSdkConfig } from './sdk.ts'
 import { createTokenService } from './service.ts'
 
 const networkId = 'canton:localnet'
@@ -48,7 +48,9 @@ function fakeSdk() {
 
 describe('createTokenService', () => {
     let sdk: ReturnType<typeof fakeSdk>
-    let sdkCache: { get: ReturnType<typeof vi.fn<TokenSdkCache['get']>> }
+    let createSdk: ReturnType<
+        typeof vi.fn<(config: TokenSdkConfig) => Promise<TokenSdk>>
+    >
     let registries: RegistryStore
     let authContext: Pick<AuthContextStore, 'load'>
 
@@ -60,7 +62,7 @@ describe('createTokenService', () => {
                 authContext,
                 getStore: async () => store,
                 registries,
-                sdkCache,
+                createSdk,
             }),
         }
     }
@@ -79,11 +81,7 @@ describe('createTokenService', () => {
 
     beforeEach(() => {
         sdk = fakeSdk()
-        sdkCache = {
-            get: vi.fn<TokenSdkCache['get']>(
-                async () => sdk as unknown as TokenSdk
-            ),
-        }
+        createSdk = vi.fn(async () => sdk as unknown as TokenSdk)
         registries = {
             forNetwork: async (id) => (id === networkId ? registryUrls : []),
         }
@@ -99,7 +97,7 @@ describe('createTokenService', () => {
         await expect(
             tokenService.token.v2.utxos.list({ partyId: 'mallory::1220' })
         ).rejects.toThrow('does not belong to user')
-        expect(sdkCache.get).not.toHaveBeenCalled()
+        expect(createSdk).not.toHaveBeenCalled()
     })
 
     it.each([
@@ -117,7 +115,7 @@ describe('createTokenService', () => {
         await expect(
             tokenService.token.v2.utxos.list(params as never)
         ).rejects.toThrow('A partyId is required')
-        expect(sdkCache.get).not.toHaveBeenCalled()
+        expect(createSdk).not.toHaveBeenCalled()
     })
 
     it('lists the holdings of one of the user’s wallets', async () => {
@@ -150,7 +148,7 @@ describe('createTokenService', () => {
         await tokenService.token.v1.utxos.list({ partyId: wallet.partyId })
 
         expect(loads).toBe(1)
-        expect(sdkCache.get).toHaveBeenCalledWith(
+        expect(createSdk).toHaveBeenCalledWith(
             expect.objectContaining({ accessToken: context.accessToken })
         )
     })
@@ -178,7 +176,7 @@ describe('createTokenService', () => {
         await expect(
             tokenService.token.v1.utxos.list({ partyId: wallet.partyId })
         ).rejects.toThrow('Not signed in')
-        expect(sdkCache.get).not.toHaveBeenCalled()
+        expect(createSdk).not.toHaveBeenCalled()
     })
 
     it('returns asset registry URLs as strings', async () => {
@@ -199,7 +197,7 @@ describe('createTokenService', () => {
 
         await tokenService.token.assets()
 
-        expect(sdkCache.get).toHaveBeenCalledWith({
+        expect(createSdk).toHaveBeenCalledWith({
             network: expect.objectContaining({ id: networkId }),
             accessToken: context.accessToken,
             registries: registryUrls,

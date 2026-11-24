@@ -28,7 +28,7 @@ import {
     loadAuthedStore,
 } from './store/index.ts'
 import { createRegistryStore } from './store/registries.ts'
-import { createTokenSdkCache } from './token/sdk.ts'
+import { createTokenSdk } from './token/sdk.ts'
 import { createTokenService } from './token/service.ts'
 import { registerVaultService } from './vault-service.ts'
 import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
@@ -76,7 +76,7 @@ export function startBackground({
                 getStore,
                 authContext,
                 registries: createRegistryStore(vault),
-                sdkCache: createTokenSdkCache({ vault }),
+                createSdk: createTokenSdk,
             })
         )
     )

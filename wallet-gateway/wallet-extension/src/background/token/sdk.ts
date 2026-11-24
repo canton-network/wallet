@@ -11,8 +11,6 @@ import {
     type SDKOptions,
 } from '@canton-network/wallet-sdk'
 
-import type { Vault } from '../vault/index.ts'
-
 /** The wallet SDK with its `token` namespace. */
 export type TokenSdk = SDKInterface<'token'>
 
@@ -56,47 +54,4 @@ export async function createTokenSdk({
             registryAuth: 'none',
         },
     })
-}
-
-export interface TokenSdkCache {
-    /** The SDK for `config`, built on first use and reused while it matches. */
-    get(config: TokenSdkConfig): Promise<TokenSdk>
-}
-
-/**
- * Keeps one SDK, keyed by network id, access token and registry URLs. A
- * different key builds a new one. Concurrent callers share a build, a failed
- * build isn't kept, and a lock drops the SDK.
- *
- * Tests pass a fake `createSdk`.
- */
-export function createTokenSdkCache({
-    vault,
-    createSdk = createTokenSdk,
-}: {
-    vault: Pick<Vault, 'onLock'>
-    createSdk?: (config: TokenSdkConfig) => Promise<TokenSdk>
-}): TokenSdkCache {
-    let cached: { key: string; sdk: Promise<TokenSdk> } | undefined
-    vault.onLock(() => {
-        cached = undefined
-    })
-
-    return {
-        get(config) {
-            const key = JSON.stringify([
-                config.network.id,
-                config.accessToken,
-                config.registries,
-            ])
-            if (cached?.key === key) return cached.sdk
-
-            const entry = { key, sdk: createSdk(config) }
-            cached = entry
-            entry.sdk.catch(() => {
-                if (cached === entry) cached = undefined
-            })
-            return entry.sdk
-        },
-    }
 }

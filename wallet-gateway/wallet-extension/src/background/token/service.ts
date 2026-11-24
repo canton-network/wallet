@@ -8,7 +8,7 @@ import type { AssetBody } from '@canton-network/wallet-sdk'
 
 import type { AuthContextStore } from '../auth-context.ts'
 import type { RegistryStore } from '../store/registries.ts'
-import type { TokenSdk, TokenSdkCache } from './sdk.ts'
+import type { TokenSdk, TokenSdkConfig } from './sdk.ts'
 
 /** An asset as the pages receive it: messaging turns a `URL` into a string. */
 export type TokenAsset = Omit<AssetBody, 'registryUrl'> & {
@@ -52,7 +52,8 @@ export interface TokenServiceDeps {
     authContext: Pick<AuthContextStore, 'load'>
     getStore: () => Promise<Store>
     registries: RegistryStore
-    sdkCache: TokenSdkCache
+    /** `createTokenSdk`. Tests pass a fake. */
+    createSdk: (config: TokenSdkConfig) => Promise<TokenSdk>
 }
 
 /**
@@ -68,7 +69,7 @@ export function createTokenService({
     authContext,
     getStore,
     registries,
-    sdkCache,
+    createSdk,
 }: TokenServiceDeps): TokenService {
     /**
      * The SDK for `user` and its current network. Callers load the user once
@@ -77,7 +78,7 @@ export function createTokenService({
      */
     async function sdkFor({ context, store }: SignedIn): Promise<TokenSdk> {
         const network = await store.getCurrentNetwork()
-        return sdkCache.get({
+        return createSdk({
             network,
             accessToken: context.accessToken,
             registries: await registries.forNetwork(network.id),
