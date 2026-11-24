@@ -3291,6 +3291,9 @@ importers:
       '@canton-network/core-ledger-client':
         specifier: 'workspace:'
         version: link:../../core/ledger-client
+      '@canton-network/core-ledger-client-types':
+        specifier: 'workspace:'
+        version: link:../../core/ledger-client-types
       '@canton-network/core-rpc-errors':
         specifier: 'workspace:'
         version: link:../../core/rpc-errors
@@ -3321,6 +3324,9 @@ importers:
       '@canton-network/core-wallet-user-rpc-client':
         specifier: 'workspace:'
         version: link:../../core/wallet-user-rpc-client
+      '@canton-network/wallet-sdk':
+        specifier: workspace:^
+        version: link:../../sdk/wallet-sdk
       '@emotion/react':
         specifier: 'catalog:'
         version: 11.14.0(@types/react@19.3.0)(react@19.3.1)(supports-color@10.2.2)
