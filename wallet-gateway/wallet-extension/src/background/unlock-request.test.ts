@@ -15,6 +15,7 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import type { PageConnection } from './page-presence.ts'
 import type { RequestTab } from './page-presence.ts'
+import { SITE_APPROVAL_TIMEOUT_MS } from './site-approval.ts'
 import { createTabIcons, type TabIcons } from './tab-icon.ts'
 import { createUnlockRequests, type UnlockRequests } from './unlock-request.ts'
 
@@ -80,6 +81,7 @@ describe('createUnlockRequests', () => {
     })
 
     afterEach(() => {
+        vi.useRealTimers()
         vi.restoreAllMocks()
     })
 
@@ -120,6 +122,17 @@ describe('createUnlockRequests', () => {
         endPage(tab)
 
         await vi.waitFor(expectRestored)
+    })
+
+    it('points the tab back at the wallet when the request times out', async () => {
+        vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+        await unlockRequests.request(tab)
+
+        await vi.advanceTimersByTimeAsync(SITE_APPROVAL_TIMEOUT_MS - 1)
+        expect(popups.get(tab.tabId)).toBe('popup.html#/unlock')
+        await vi.advanceTimersByTimeAsync(1)
+
+        await expectRestored()
     })
 
     it('shows nothing when the page went while the request waited', async () => {
