@@ -65,6 +65,19 @@ describe('outgoingTransfers', () => {
 })
 
 describe('canWithdraw', () => {
+    it('lets the sender withdraw a v1 transfer to itself', () => {
+        expect(
+            canWithdraw(alice, {
+                contractId: 'self-v1',
+                version: 'v1',
+                instrumentId: amulet,
+                amount: '5',
+                receiver: alice,
+                ...times,
+            })
+        ).toBe(true)
+    })
+
     it('refuses a v2 transfer that doesn’t offer the sender a withdrawal', () => {
         const transfer = (availableActions: unknown[]): OutgoingTransfer => ({
             contractId: 'sent-v2',

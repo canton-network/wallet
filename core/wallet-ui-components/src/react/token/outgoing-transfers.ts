@@ -68,6 +68,9 @@ export function canWithdraw(
     partyId: string,
     transfer: OutgoingTransfer
 ): boolean {
+    // The sender can always withdraw a v1 transfer. The shared rule would
+    // offer a self-transfer's sender Accept and Reject instead.
+    if (transfer.version === 'v1') return true
     return getTransferActions({
         currentPartyId: partyId,
         versions: [transfer.version],
