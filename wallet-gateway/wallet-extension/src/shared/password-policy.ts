@@ -10,7 +10,7 @@ export function passwordProblems(password: string): string[] {
     // TODO: add a real policy for password length, complexity, etc.
     const problems: string[] = []
     // Count code points, not UTF-16 units.
-    if ([...password].length < 6) {
+    if (Array.from(password).length < 6) {
         problems.push('Use at least 6 characters.')
     }
     if (!/\d/.test(password)) {

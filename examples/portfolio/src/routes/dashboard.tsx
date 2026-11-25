@@ -27,7 +27,6 @@ import {
     useMatchRoute,
     type LinkComponentProps,
 } from '@tanstack/react-router'
-import type { RegisteredRouter } from '@tanstack/router-core'
 import { useMemo, type ReactNode } from 'react'
 
 const SIDEBAR_WIDTH = (theme: Theme) =>
@@ -235,7 +234,7 @@ type SidebarLinkProps = {
     children: ReactNode
     endAdornment?: ReactNode
     tooltip?: string
-} & LinkComponentProps<'a', RegisteredRouter>
+} & LinkComponentProps
 
 function SidebarLink({
     active,

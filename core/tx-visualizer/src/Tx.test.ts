@@ -9,6 +9,10 @@ import {
     v30_topology,
     v31_topology,
 } from '@canton-network/core-ledger-proto'
+import {
+    computeMultiHashForTopology,
+    computeSha256CantonHash,
+} from '@canton-network/core-tx-hashing'
 import camelcaseKeys from 'camelcase-keys'
 import { expect, test, it, describe } from 'vitest'
 
@@ -16,10 +20,6 @@ import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
 import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
 import generateTopology372 from './__tests__/fixtures/generate-topology-3.7.2.json'
 import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
-import {
-    computeMultiHashForTopology,
-    computeSha256CantonHash,
-} from './hashing_scheme_v2.ts'
 import {
     type DecodeOptions,
     decodePreparedTransaction,
@@ -136,9 +136,11 @@ test('decode a base 64 encoded topology tx', async () => {
         'partyToKeyMapping'
     ) {
         expect(
+            // oxlint-disable-next-line typescript/no-deprecated -- fixtures use the deprecated Canton topology mapping
             decodedPartyToKeyMapping.mapping?.mapping.partyToKeyMapping
                 .party ===
                 'alice::12205a50eb9b9d64bb30ac4125afa1aeea7bcae51792ac2d174a6132ceec9290d062' &&
+                // oxlint-disable-next-line typescript/no-deprecated -- fixtures use the deprecated Canton topology mapping
                 decodedPartyToKeyMapping.mapping?.mapping.partyToKeyMapping
                     .threshold === 1
         ).toBe(true)
@@ -173,8 +175,8 @@ test('decode a base 64 encoded topology tx', async () => {
         partyToKeyMappingBase64,
         partyToParticipantMappingBase64,
     ]
-    const normalized: Uint8Array<ArrayBufferLike>[] = preparedTxsBase64.map(
-        (tx) => fromBase64(tx)
+    const normalized: Uint8Array[] = preparedTxsBase64.map((tx) =>
+        fromBase64(tx)
     )
 
     const rawHashes = await Promise.all(
@@ -205,6 +207,7 @@ describe('decodeTopologyTransaction', () => {
         if (mapping?.mapping.oneofKind !== 'partyToKeyMapping') {
             throw new Error('not a PartyToKeyMapping')
         }
+        // oxlint-disable-next-line typescript/no-deprecated -- fixtures use the deprecated Canton topology mapping
         return mapping.mapping.partyToKeyMapping.signingKeys[0]
     }
 

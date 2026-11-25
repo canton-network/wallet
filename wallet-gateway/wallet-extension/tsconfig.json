@@ -1,11 +1,13 @@
 {
     "extends": "./.wxt/tsconfig.json",
     "compilerOptions": {
-        "allowImportingTsExtensions": true,
         "jsx": "react-jsx",
         "customConditions": ["@canton-network/source"]
     },
     "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
         {
             "path": "../../core/wallet-user-rpc-client"
         },
@@ -35,6 +37,9 @@
         },
         {
             "path": "../../core/rpc-errors"
+        },
+        {
+            "path": "../../core/ledger-client-types"
         },
         {
             "path": "../../core/ledger-client"

@@ -7,11 +7,6 @@ export class SDKError<OriginalErrorContext = undefined> extends Error {
     constructor(public context: SDKErrorContext<OriginalErrorContext>) {
         const { message, ...rest } = context
         super(message, rest)
-
-        // Capture stack trace, excluding constructor call from stack
-        if (Error.captureStackTrace) {
-            Error.captureStackTrace(this, this.constructor)
-        }
     }
 
     public toJSON() {

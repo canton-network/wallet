@@ -12,7 +12,7 @@ import { queryKeys } from '@/ui/lib/query/keys.ts'
 
 /**
  * The vault status, from the background. `staleTime: 0` makes
- * `fetchQuery` ask the background every time, so route guards never act on a
+ * `queryClient.query` ask the background every time, so route guards never act on a
  * cached status.
  */
 export const vaultStatusQuery = () =>

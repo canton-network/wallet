@@ -1,5 +1,4 @@
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
-import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 
 import { assertV2 } from '../utils/assert.ts'
 import type { TransferTestScriptParameters } from './types.ts'

@@ -73,7 +73,7 @@ describe('utxos namespace', () => {
     let mockSubmit: Mock
     beforeEach(() => {
         vi.resetAllMocks()
-        utxos = new TokenNamespace(config).utxos
+        utxos = new TokenNamespace(config).v1.utxos
         delegatedMerge = utxos.delegatedMerge
 
         mockSubmit = vi.fn().mockResolvedValue({
@@ -343,7 +343,7 @@ describe('delegated utxos merge namespace without validatorParty', () => {
             } as any,
             registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
             tokenStandardService: mockTokenStandard as unknown as any,
-        }).utxos
+        }).v1.utxos
         delegatedMerge = utxos.delegatedMerge
 
         mockSubmit = vi.fn().mockResolvedValue({

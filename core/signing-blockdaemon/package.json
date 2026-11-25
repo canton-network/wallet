@@ -1,9 +1,21 @@
 {
     "name": "@canton-network/core-signing-blockdaemon",
     "version": "1.19.0",
-    "type": "module",
     "description": "Wallet Gateway signing driver for Blockdaemon",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-blockdaemon#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/signing-blockdaemon"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
@@ -17,13 +29,15 @@
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-signing-lib": "workspace:",
-        "@canton-network/core-wallet-auth": "workspace:"
+        "@canton-network/core-signing-lib": "workspace:"
     },
     "devDependencies": {
         "@types/node": "catalog:",
@@ -31,20 +45,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/signing-blockdaemon"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-blockdaemon#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

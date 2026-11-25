@@ -580,7 +580,8 @@ export const expectHistoryRow = async (
         const rows = await table.getByRole('row').allInnerTexts()
         console.error(error)
         throw new Error(
-            `No history row ${expected.activity} ${expected.amount} ${expected.counterpartyHint}; Rows shows: \n${rows.map((r: string) => `${r.replace(/\s+/g, ' ')}`).join('\n')}`
+            `No history row ${expected.activity} ${expected.amount} ${expected.counterpartyHint}; Rows shows: \n${rows.map((r: string) => r.replace(/\s+/g, ' ')).join('\n')}`,
+            { cause: error }
         )
     }
 

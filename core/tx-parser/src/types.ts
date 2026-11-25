@@ -215,11 +215,13 @@ const renderTransactionEvent = (e: TokenStandardEvent): any => {
         lockedHoldingsChangeSummaries,
         // Deprecated
         lockedHoldingsChangeSummary: renderHoldingsChangeSummary(
+            // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
             e.lockedHoldingsChangeSummary
         ),
         unlockedHoldingsChangeSummaries,
         // Deprecated
         unlockedHoldingsChangeSummary: renderHoldingsChangeSummary(
+            // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
             e.unlockedHoldingsChangeSummary
         ),
     }

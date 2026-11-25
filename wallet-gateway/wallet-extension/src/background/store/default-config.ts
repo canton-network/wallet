@@ -4,7 +4,8 @@
 import type { StoreInternalConfig } from '@canton-network/core-wallet-store-inmemory'
 
 /**
- * The local network and mock IdP that a new vault starts with. This is a
+ * The networks and IdPs that a new vault starts with: the local network
+ * with the mock OAuth IdP, and LocalNet with self-signed tokens. This is a
  * function so each store gets its own copy, because `StoreInternal` edits
  * these arrays in place.
  */
@@ -17,6 +18,11 @@ export function defaultConfig(): StoreInternalConfig {
                 issuer: 'http://127.0.0.1:8889',
                 configUrl:
                     'http://127.0.0.1:8889/.well-known/openid-configuration',
+            },
+            {
+                id: 'idp-self-signed',
+                type: 'self_signed',
+                issuer: 'unsafe-auth',
             },
         ],
         networks: [
@@ -52,6 +58,31 @@ export function defaultConfig(): StoreInternalConfig {
                 },
                 ledgerApi: {
                     baseUrl: 'http://127.0.0.1:5003',
+                },
+            },
+            {
+                id: 'canton:localnet',
+                name: 'LocalNet',
+                description: 'LocalNet configuration',
+                identityProviderId: 'idp-self-signed',
+                auth: {
+                    method: 'self_signed',
+                    issuer: 'self-signed',
+                    audience: 'https://canton.network.global',
+                    scope: 'openid daml_ledger_api offline_access',
+                    clientId: 'ledger-api-user',
+                    clientSecret: 'unsafe',
+                },
+                adminAuth: {
+                    method: 'self_signed',
+                    issuer: 'self-signed',
+                    scope: 'openid daml_ledger_api offline_access',
+                    audience: 'https://canton.network.global',
+                    clientId: 'ledger-api-user',
+                    clientSecret: 'unsafe',
+                },
+                ledgerApi: {
+                    baseUrl: 'http://localhost:2975',
                 },
             },
         ],

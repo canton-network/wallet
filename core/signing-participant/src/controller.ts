@@ -17,13 +17,13 @@ import {
     type SignTransactionResult,
     type SubscribeTransactionsResult,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 export class ParticipantSigningDriver implements SigningDriverInterface {
     public partyMode = PartyMode.INTERNAL
     public signingProvider = SigningProvider.PARTICIPANT
+    public requiredClaims = []
 
-    public controller = (_userId: AuthContext['userId'] | undefined) =>
+    public controller = () =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams

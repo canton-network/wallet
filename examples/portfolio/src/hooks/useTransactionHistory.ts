@@ -16,7 +16,7 @@ import { transactionHistoryServiceQueryOptions } from './query-options.ts'
 
 export const useTransactionHistoryForParty = (
     partyId: string | undefined
-): UseInfiniteQueryResult<InfiniteData<TransactionHistoryResponse>, Error> => {
+): UseInfiniteQueryResult<InfiniteData<TransactionHistoryResponse>> => {
     const queryClient = useQueryClient()
     const { status } = useConnection()
     const isConnected = status?.connection?.isConnected ?? false
@@ -31,9 +31,10 @@ export const useTransactionHistoryForParty = (
                 throw new Error('Party is unavailable')
             }
 
-            const service = await queryClient.ensureQueryData(
-                transactionHistoryServiceQueryOptions(partyId)
-            )
+            const service = await queryClient.query({
+                ...transactionHistoryServiceQueryOptions(partyId),
+                staleTime: 'static',
+            })
             return service.query(pageParam)
         },
         getNextPageParam: (lastPage: TransactionHistoryResponse) => {

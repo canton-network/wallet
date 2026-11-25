@@ -44,7 +44,8 @@ export const sessions = ({
         // setSession replaces the origin's authenticated sessions; look
         // them up first so their notification ports can be closed.
         const replacedSessions = (await store.listSessions()).filter(
-            (session) => session.origin === params.origin && session.accessToken
+            (session) =>
+                session.origin === params.origin && session.accessTokenHash
         )
 
         await store.setSession({

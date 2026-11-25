@@ -7,14 +7,11 @@ import {
 } from '@canton-network/core-ledger-proto'
 import {
     computePreparedTransactionHash,
+    computeTopologyMultiHash,
     type HashingScheme,
     type HashOptions,
     TxHashingError,
 } from '@canton-network/core-tx-hashing'
-import {
-    computeMultiHashForTopology,
-    computeSha256CantonHash,
-} from '@canton-network/core-tx-visualizer'
 
 import type { OfflineSDKContext } from '../../../sdk.ts'
 import { Converter } from './converter.ts'
@@ -68,31 +65,24 @@ export class HashNamespace {
     }
 
     /**
+     * Computes the multi-hash that one signature over a set of topology transactions is made on.
      *
-     * @param preparedTransactions list of prepared topology transactions
-     * @returns a multihash combining all of the topology txs
+     * @param preparedTransactions - The topology transactions, in base64 as the Ledger API returns them or as bytes
+     * @returns The multi-hash in base64
+     * @throws {SDKError} `BadRequest`, with the `TxHashingError` as `context.originalError`, when the set is empty or a transaction is not canonical base64
      */
     public async topologyTransaction(
-        preparedTransactions: Uint8Array<ArrayBufferLike>[] | string[]
+        preparedTransactions: Uint8Array[] | string[]
     ) {
-        let normalized: Uint8Array<ArrayBufferLike>[]
-        if (typeof preparedTransactions[0] === 'string') {
-            normalized = (preparedTransactions as string[]).map((tx) =>
-                Buffer.from(tx, 'base64')
-            )
-        } else {
-            normalized = preparedTransactions as Uint8Array<ArrayBufferLike>[]
+        try {
+            return await computeTopologyMultiHash(preparedTransactions)
+        } catch (error) {
+            if (!(error instanceof TxHashingError)) throw error
+            this.ctx.error.throw({
+                type: 'BadRequest',
+                message: `topology transactions refused: ${error.code}: ${error.message}`,
+                originalError: error,
+            })
         }
-
-        // Prepending the hash purpose for TopologyTransactionSignature and MultiTopologyTransaction
-        // https://github.com/hyperledger-labs/splice/blob/53738545af6d0714bddff54c3309ecf2fe6d1881/canton/community/base/src/main/scala/com/digitalasset/canton/crypto/HashPurpose.scala#L47
-        const rawHashes = await Promise.all(
-            normalized.map((tx) => computeSha256CantonHash(11, tx))
-        )
-        const combinedHashes = await computeMultiHashForTopology(rawHashes)
-
-        const computedHash = await computeSha256CantonHash(55, combinedHashes)
-
-        return Buffer.from(computedHash).toString('base64')
     }
 }

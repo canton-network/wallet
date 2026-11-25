@@ -87,7 +87,8 @@ export function useAllocationRequestV2Actions() {
                     await submitViaProvider(prepared, party)
                 } catch (error) {
                     throw Error(
-                        `Allocation ${i + 1} of ${allocate.length} failed. ${(error as Error).message}.`
+                        `Allocation ${i + 1} of ${allocate.length} failed. ${(error as Error).message}.`,
+                        { cause: error }
                     )
                 }
             }
@@ -105,7 +106,8 @@ export function useAllocationRequestV2Actions() {
                 await submitViaProvider(acceptCommand, party)
             } catch (error) {
                 throw Error(
-                    `Allocations were created, but accepting the request failed. Accept again to retry. ${(error as Error).message}.`
+                    `Allocations were created, but accepting the request failed. Accept again to retry. ${(error as Error).message}.`,
+                    { cause: error }
                 )
             }
 

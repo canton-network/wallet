@@ -8,13 +8,13 @@ export const partiesUtxos = async (args: {
 }) => {
     const { token, sender, treasury } = args
     const senderUtxos = (
-        await token.utxos.list({
+        await token.v1.utxos.list({
             partyId: sender.partyId,
         })
     ).reduce((acc, utxo) => acc + +utxo.interfaceViewValue.amount, 0)
 
     const treasuryUtxos = (
-        await token.utxos.list({
+        await token.v1.utxos.list({
             partyId: treasury.partyId,
         })
     ).reduce((acc, utxo) => acc + +utxo.interfaceViewValue.amount, 0)

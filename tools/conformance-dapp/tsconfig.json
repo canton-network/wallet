@@ -3,8 +3,7 @@
     "compilerOptions": {
         "jsx": "react-jsx",
         "types": ["node", "vite/client"],
-        "erasableSyntaxOnly": true,
-        "resolveJsonModule": true
+        "erasableSyntaxOnly": true
     },
     "include": ["src", "package.json"],
     "references": [
