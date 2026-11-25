@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { errorCodes } from '@canton-network/core-rpc-errors'
 import { PageHeader } from '@canton-network/core-wallet-ui-components/react'
 import {
     getInstrumentKey,
@@ -28,6 +27,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Decimal } from 'decimal.js'
 import { type SubmitEvent, useMemo, useRef, useState } from 'react'
 
+import { isNotSubmitted } from '@/shared/transfer-errors.ts'
 import { ButtonLink } from '@/ui/components/ButtonLink.tsx'
 import { PageLoader } from '@/ui/components/feedback.tsx'
 import {
@@ -46,11 +46,6 @@ function toLocalInput(date: Date): string {
 
 function isPast(date: Date): boolean {
     return date.getTime() <= Date.now()
-}
-
-/** The token service's code for a signed transaction that didn't execute. */
-function isUnknownOutcome(error: Error): boolean {
-    return (error as { code?: unknown }).code === errorCodes.rpc.internal
 }
 
 /** What the party can send: the transfer is from its basic account. */
@@ -112,6 +107,46 @@ export function SendPage() {
         'form'
     )
     const [unknownReason, setUnknownReason] = useState('')
+    // Kept here, not in the review step: a wallets query error unmounts the
+    // step, and it must not come back with a fresh claim while the transfer
+    // is in flight.
+    const createTransfer = useCreateTransfer()
+    const queryClient = useQueryClient()
+    // Claimed on the click, before the pending state renders.
+    const claimed = useRef(false)
+
+    const confirm = ({ form, instrument, expiry }: ReviewedTransfer) => {
+        if (claimed.current) return
+        claimed.current = true
+        createTransfer.mutate(
+            {
+                sender: form.sender,
+                receiver: form.receiver,
+                instrumentId: instrument.instrumentId,
+                amount: form.amount,
+                expiry,
+                memo: form.memo || undefined,
+                tokenStandardVersion: form.version,
+            },
+            {
+                onSuccess: () => setStep('sent'),
+                onError: (error) => {
+                    if (isNotSubmitted(error)) {
+                        claimed.current = false
+                        return
+                    }
+                    void queryClient.invalidateQueries({
+                        queryKey: tokenQueryKeys.holdings.all,
+                    })
+                    void queryClient.invalidateQueries({
+                        queryKey: tokenQueryKeys.pendingTransfers.all,
+                    })
+                    setUnknownReason(error.message)
+                    setStep('unknown')
+                },
+            }
+        )
+    }
 
     return (
         <>
@@ -142,10 +177,9 @@ export function SendPage() {
             ) : step === 'unknown' ? (
                 <Stack spacing={2}>
                     <Alert severity="warning">
-                        The transfer may have gone through: it was signed, but
-                        its outcome is unknown. {unknownReason} Check your
-                        outgoing transfers and your assets before you send it
-                        again.
+                        We couldn't confirm whether the transfer went through.{' '}
+                        {unknownReason} Check your outgoing transfers and your
+                        assets before you send it again.
                     </Alert>
                     <ButtonLink to="/transfers" variant="outlined">
                         Outgoing transfers
@@ -157,18 +191,17 @@ export function SendPage() {
             ) : step === 'review' && draft ? (
                 <Review
                     transfer={draft}
+                    isPending={createTransfer.isPending}
+                    error={createTransfer.error}
                     onBack={() => setStep('form')}
-                    onSent={() => setStep('sent')}
-                    onUnknownOutcome={(reason) => {
-                        setUnknownReason(reason)
-                        setStep('unknown')
-                    }}
+                    onConfirm={() => confirm(draft)}
                 />
             ) : (
                 <TransferForm
                     wallets={tokenWallets}
                     initial={draft}
                     onReview={(transfer) => {
+                        createTransfer.reset()
                         setDraft(transfer)
                         setStep('review')
                     }}
@@ -304,8 +337,10 @@ function TransferForm({
                         </Button>
                     }
                 >
-                    Couldn't load the registries' instruments, so no asset can
-                    be sent. {registry.error.message}
+                    {registry.data
+                        ? "Couldn't refresh the registries' instruments, so the assets use the ones loaded before."
+                        : "Couldn't load the registries' instruments, so no asset can be sent."}{' '}
+                    {registry.error.message}
                 </Alert>
             )}
             <TextField
@@ -394,52 +429,19 @@ function TransferForm({
 
 function Review({
     transfer: { form, instrument, expiry },
+    isPending,
+    error,
     onBack,
-    onSent,
-    onUnknownOutcome,
+    onConfirm,
 }: {
     transfer: ReviewedTransfer
+    isPending: boolean
+    /** A failure after which nothing was submitted. */
+    error: Error | null
     onBack: () => void
-    onSent: () => void
-    onUnknownOutcome: (reason: string) => void
+    onConfirm: () => void
 }) {
-    const createTransfer = useCreateTransfer()
-    const queryClient = useQueryClient()
     const { name, symbol } = instrument.instrument!
-    // Claimed on the click, before the pending state renders.
-    const claimed = useRef(false)
-
-    const confirm = () => {
-        if (claimed.current) return
-        claimed.current = true
-        createTransfer.mutate(
-            {
-                sender: form.sender,
-                receiver: form.receiver,
-                instrumentId: instrument.instrumentId,
-                amount: form.amount,
-                expiry,
-                memo: form.memo || undefined,
-                tokenStandardVersion: form.version,
-            },
-            {
-                onSuccess: onSent,
-                onError: (error) => {
-                    if (!isUnknownOutcome(error)) {
-                        claimed.current = false
-                        return
-                    }
-                    void queryClient.invalidateQueries({
-                        queryKey: tokenQueryKeys.holdings.all,
-                    })
-                    void queryClient.invalidateQueries({
-                        queryKey: tokenQueryKeys.pendingTransfers.all,
-                    })
-                    onUnknownOutcome(error.message)
-                },
-            }
-        )
-    }
 
     const rows: [string, string][] = [
         ['From', form.sender],
@@ -471,20 +473,20 @@ function Review({
                     ))}
                 </Stack>
             </Paper>
-            {createTransfer.isError && (
+            {error && (
                 <Alert severity="error">
                     The transfer didn't go through, so you can try again.{' '}
-                    {createTransfer.error.message}
+                    {error.message}
                 </Alert>
             )}
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'end' }}>
-                <Button onClick={onBack} disabled={createTransfer.isPending}>
+                <Button onClick={onBack} disabled={isPending}>
                     Back
                 </Button>
                 <Button
                     variant="contained"
-                    onClick={confirm}
-                    loading={createTransfer.isPending}
+                    onClick={onConfirm}
+                    loading={isPending}
                 >
                     Confirm and send
                 </Button>

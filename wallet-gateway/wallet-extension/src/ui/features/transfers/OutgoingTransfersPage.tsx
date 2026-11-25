@@ -96,6 +96,11 @@ function Transfers({ partyId }: { partyId: string }) {
             `Couldn't load the token standard ${version} transfers. ${error.message}`
     )
 
+    const loaded = (['v1', 'v2'] as const).filter(
+        (version) =>
+            !outgoing.failures.some((failure) => failure.version === version)
+    )
+
     if (outgoing.isError) {
         return (
             <Alert severity="error" action={retry}>
@@ -114,7 +119,9 @@ function Transfers({ partyId }: { partyId: string }) {
             )}
             {outgoing.transfers.length === 0 && (
                 <Alert severity="info">
-                    No transfers wait for their receiver.
+                    {failures.length === 0
+                        ? 'No transfers wait for their receiver.'
+                        : `No token standard ${loaded.join(' or ')} transfers wait for their receiver.`}
                 </Alert>
             )}
             {outgoing.transfers.map((transfer) => (
