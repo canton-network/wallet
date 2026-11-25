@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { expect, type Locator, type Page, test } from '@playwright/test'
 import {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
-import type { TokenStandardVersion } from '../src/types/instruments'
+import { expect, type Locator, type Page, test } from '@playwright/test'
 import type { Request } from '@playwright/test'
+
+import type { TokenStandardVersion } from '../src/types/instruments.ts'
 
 const BASE_URL = 'http://localhost:8081'
 
@@ -579,7 +580,8 @@ export const expectHistoryRow = async (
         const rows = await table.getByRole('row').allInnerTexts()
         console.error(error)
         throw new Error(
-            `No history row ${expected.activity} ${expected.amount} ${expected.counterpartyHint}; Rows shows: \n${rows.map((r: string) => `${r.replace(/\s+/g, ' ')}`).join('\n')}`
+            `No history row ${expected.activity} ${expected.amount} ${expected.counterpartyHint}; Rows shows: \n${rows.map((r: string) => r.replace(/\s+/g, ' ')).join('\n')}`,
+            { cause: error }
         )
     }
 

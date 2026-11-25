@@ -5,17 +5,25 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
 import type { Logger } from 'pino'
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest'
-import { signingProvidersConfigSchema } from './config/Config.js'
-import { registerSigningProviders } from './signing-providers-registration.js'
-import { ServerNotices } from './notices/server-notices.js'
 
-const providerConstructors = vi.hoisted(() => ({
-    bitgo: vi.fn(),
-    blockdaemon: vi.fn(),
-    dfns: vi.fn(),
-    fireblocks: vi.fn(),
-    securosys: vi.fn(),
-}))
+import { signingProvidersConfigSchema } from './config/Config.ts'
+import { ServerNotices } from './notices/server-notices.ts'
+import { registerSigningProviders } from './signing-providers-registration.ts'
+
+const providerConstructors = vi.hoisted(() => {
+    const mockDriver = (signingProvider: string) =>
+        vi.fn(function (this: { signingProvider: string }) {
+            this.signingProvider = signingProvider
+        })
+
+    return {
+        bitgo: mockDriver('bitgo'),
+        blockdaemon: mockDriver('blockdaemon'),
+        dfns: mockDriver('dfns'),
+        fireblocks: mockDriver('fireblocks'),
+        securosys: mockDriver('securosys'),
+    }
+})
 
 vi.mock('@canton-network/core-signing-bitgo', () => ({
     default: providerConstructors.bitgo,

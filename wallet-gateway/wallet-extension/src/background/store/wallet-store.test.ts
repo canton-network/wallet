@@ -1,24 +1,28 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { createHash } from 'node:crypto'
+
 import type {
-    Session,
+    NewSession,
     Transaction,
     Wallet,
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { createVault, type Vault, VaultLockedError } from '../vault'
-import { loadAuthedStore } from './index'
-import { createWalletStore } from './wallet-store'
+
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+
+import { createVault, type Vault, VaultLockedError } from '../vault/index.ts'
+import { loadAuthedStore } from './index.ts'
+import { createWalletStore } from './wallet-store.ts'
 
 const PASSWORD = 'first password 1'
 const CONTEXT = { userId: 'alice', accessToken: 'alice-token' }
 const NETWORK_ID = 'canton:local-oauth'
 
 // The store finds the current network through the session with this token.
-const SESSION: Session = {
+const SESSION: NewSession = {
     id: 'session-1',
     origin: 'popup',
     network: NETWORK_ID,
@@ -93,6 +97,38 @@ describe('createWalletStore', () => {
         vi.restoreAllMocks()
     })
 
+    it('drops the sessions of a version 1 snapshot and saves it before use', async () => {
+        const vault = await createdVault()
+        // Written by a build that stored raw tokens
+        const legacy = {
+            version: 1,
+            config: { idps: [], networks: [] },
+            users: {
+                [CONTEXT.userId]: {
+                    wallets: [],
+                    sessions: [SESSION],
+                    transactions: [],
+                    messageRaws: [],
+                    userRightsByNetwork: {},
+                },
+            },
+        }
+        await vault
+            .defineItem<unknown>('walletStore', { fallback: null })
+            .setValue(legacy)
+
+        await createWalletStore(vault).get()
+
+        expect(await snapshotIn(vault)).toMatchObject({
+            version: 2,
+            users: {
+                [CONTEXT.userId]: {
+                    sessions: [],
+                },
+            },
+        })
+    })
+
     it('returns the same data after a worker restart', async () => {
         const vault = await createdVault()
         const store = (await createWalletStore(vault).get()).withAuthContext(
@@ -110,7 +146,13 @@ describe('createWalletStore', () => {
         ).withAuthContext(CONTEXT)
 
         expect(await reread.getSession(CONTEXT.accessToken)).toEqual({
-            ...SESSION,
+            id: SESSION.id,
+            origin: SESSION.origin,
+            network: SESSION.network,
+            // The store keeps only the SHA-256 digest of the token
+            accessTokenHash: createHash('sha256')
+                .update(CONTEXT.accessToken)
+                .digest('hex'),
             userId: CONTEXT.userId,
         })
         expect(await reread.getWallets()).toEqual([wallet()])
@@ -120,14 +162,16 @@ describe('createWalletStore', () => {
         expect(read).toEqual(transaction())
     })
 
-    it('starts a new vault with the local network and the mock IdP', async () => {
+    it('starts a new vault with the seeded networks and IdPs', async () => {
         const store = await createWalletStore(await createdVault()).get()
 
         expect((await store.listNetworks()).map(({ id }) => id)).toEqual([
             NETWORK_ID,
+            'canton:localnet',
         ])
         expect((await store.listIdps()).map(({ id }) => id)).toEqual([
             'idp-mock-oauth',
+            'idp-self-signed',
         ])
     })
 

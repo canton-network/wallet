@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi, type Mock } from 'vitest'
+import type { Wallet } from '@canton-network/core-wallet-store'
 import {
     NetworkDeleteEvent,
     NetworkEditSaveEvent,
@@ -13,7 +13,7 @@ import type {
     Transaction,
     ApiKey,
 } from '@canton-network/core-wallet-user-rpc-client'
-import type { Wallet } from '@canton-network/core-wallet-store'
+import { vi, type Mock } from 'vitest'
 
 export const mockRequest: Mock = vi.fn()
 
@@ -183,11 +183,14 @@ export function mockNetworksPageFlow(
 
 export function mockApiKeysPageFlow(
     apiKeys: ApiKey[],
-    options: { isAdmin?: boolean } = {}
+    options: { isAdmin?: boolean; apiKeysSupported?: boolean } = {}
 ): void {
     mockRequest.mockImplementation(async ({ method }) => {
         if (method === 'listApiKeys') {
-            return { apiKeys }
+            return {
+                apiKeys,
+                apiKeysSupported: options.apiKeysSupported ?? true,
+            }
         }
         if (method === 'listSessions') {
             return { sessions: [] }

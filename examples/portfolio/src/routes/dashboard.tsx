@@ -1,4 +1,9 @@
-import { useMemo, type ReactNode } from 'react'
+import { PrimaryBadge } from '@components/dashboard/primary-badge'
+import { CountBadge } from '@components/ui/count-badge'
+import { PillButton } from '@components/ui/PillButton'
+import { useConnection } from '@contexts/ConnectionContext'
+import { useAccounts } from '@hooks/useAccounts'
+import { useOffers } from '@hooks/useOffers'
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
 import DashboardIcon from '@mui/icons-material/Dashboard'
 import HelpOutlineOutlinedIcon from '@mui/icons-material/HelpOutlineOutlined'
@@ -22,13 +27,7 @@ import {
     useMatchRoute,
     type LinkComponentProps,
 } from '@tanstack/react-router'
-import type { RegisteredRouter } from '@tanstack/router-core'
-import { PrimaryBadge } from '@components/dashboard/primary-badge'
-import { CountBadge } from '@components/ui/count-badge'
-import { PillButton } from '@components/ui/PillButton'
-import { useConnection } from '@contexts/ConnectionContext'
-import { useAccounts } from '@hooks/useAccounts'
-import { useOffers } from '@hooks/useOffers'
+import { useMemo, type ReactNode } from 'react'
 
 const SIDEBAR_WIDTH = (theme: Theme) =>
     `clamp(${theme.spacing(25)}, 18vw, ${theme.spacing(35)})`
@@ -235,7 +234,7 @@ type SidebarLinkProps = {
     children: ReactNode
     endAdornment?: ReactNode
     tooltip?: string
-} & LinkComponentProps<'a', RegisteredRouter>
+} & LinkComponentProps
 
 function SidebarLink({
     active,

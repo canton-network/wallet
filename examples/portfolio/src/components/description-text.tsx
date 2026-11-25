@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Box, Typography } from '@mui/material'
-import type { SxProps, Theme } from '@mui/material/styles'
 import { CopyIconButton } from '@components/ui/CopyIconButton'
 import { normalizeSx } from '@components/ui/utils'
 import { formatCharacterCount } from '@components/utils'
+import { Box, Typography } from '@mui/material'
+import type { SxProps, Theme } from '@mui/material/styles'
 
 interface DescriptionMetaProps {
     value: string

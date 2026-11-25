@@ -30,7 +30,7 @@ export const exercisePongCommand = (contractId: string) => {
                 ExerciseCommand: {
                     templateId: templateId,
                     choice: 'Respond',
-                    contractId: `${contractId}`,
+                    contractId: contractId,
                     choiceArgument: {},
                 },
             },

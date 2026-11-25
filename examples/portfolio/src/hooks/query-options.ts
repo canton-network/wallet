@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { queryOptions, type QueryClient } from '@tanstack/react-query'
-import * as dappSdk from '@canton-network/dapp-sdk'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
-import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
-import { queryKeys } from './query-keys'
-import { useWalletSdk, type WalletSdk } from './useWalletSdk'
-import type { PreapprovalRow } from '../types/preapprovals'
+import * as dappSdk from '@canton-network/dapp-sdk'
 import { logger } from '@lib/logger'
 import { TransactionHistoryService } from '@services/transaction-history-service'
+import { queryOptions, type QueryClient } from '@tanstack/react-query'
 import { mergeHoldings, toOwnedHoldings } from '@utils/holdings'
+
+import { usePortfolioConfig } from '../contexts/PortfolioConfigContext.tsx'
+import type { PreapprovalRow } from '../types/preapprovals.ts'
+import { queryKeys } from './query-keys.ts'
+import { useWalletSdk, type WalletSdk } from './useWalletSdk.ts'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -241,12 +242,13 @@ export const preapprovalStatusQueryOptions = ({
             // lookup. Resolving it here means a failed operator fetch surfaces
             // through this query's error state (and its retry), rather than
             // leaving the row stuck on "Checking...".
-            const operator = await queryClient.ensureQueryData(
-                utilityOperatorQueryOptions({
+            const operator = await queryClient.query({
+                ...utilityOperatorQueryOptions({
                     registryPartyId: row.registryPartyId,
                     registryUrl: row.registryUrl,
-                })
-            )
+                }),
+                staleTime: 'static',
+            })
 
             return await sdk.utilities.preapprovalTransfer.fetchQuick({
                 receiver: party,

@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// Disabled unused vars rule to allow for future implementations
-/* oxlint-disable no-unused-vars */
 import {
     buildController,
     PartyMode,
@@ -10,7 +8,6 @@ import {
     SigningProvider,
     type SignMessageResult,
 } from '@canton-network/core-signing-lib'
-
 import type {
     SignMessageParams,
     SignTransactionParams,
@@ -28,12 +25,13 @@ import type {
     SubscribeTransactionsResult,
     SetConfigurationResult,
     Transaction,
+    ClaimsFor,
 } from '@canton-network/core-signing-lib'
-import type { FireblocksApiKeyInfo } from './fireblocks.js'
-import { FireblocksHandler } from './fireblocks.js'
 import _ from 'lodash'
 import { z } from 'zod'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
+
+import type { FireblocksApiKeyInfo } from './fireblocks.ts'
+import { FireblocksHandler } from './fireblocks.ts'
 
 export interface FireblocksConfig {
     defaultKeyInfo?: FireblocksApiKeyInfo
@@ -82,7 +80,7 @@ function toHex(base64String?: string): string | undefined {
     return base64String && Buffer.from(base64String, 'base64').toString('hex')
 }
 
-export default class FireblocksSigningDriver implements SigningDriverInterface {
+export default class FireblocksSigningDriver implements SigningDriverInterface<'sub'> {
     private fireblocks: FireblocksHandler
     private config: FireblocksConfig
 
@@ -92,7 +90,9 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
     }
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.FIREBLOCKS
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public requiredClaims = ['sub'] as const
+
+    public controller = ({ sub }: ClaimsFor<'sub'>) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -107,7 +107,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                         : params.keyIdentifier
 
                     const tx = await this.fireblocks.signTransaction(
-                        userId,
+                        sub,
                         toHex(params.txHash),
                         hexKeyIdentifier,
                         `Signing transaction with public key ${hexKeyIdentifier.publicKey}`,
@@ -156,7 +156,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     ).toString('hex')
                     const publicKey = toHex(params.keyIdentifier.publicKey)
                     const tx = await this.fireblocks.signTransaction(
-                        userId,
+                        sub,
                         messageHex,
                         { publicKey },
                         `Signing message with public key ${publicKey}`,
@@ -185,7 +185,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                 params: GetTransactionParams
             ): Promise<GetTransactionResult> => {
                 const tx = await this.fireblocks.getTransaction(
-                    userId,
+                    sub,
                     params.txId
                 )
                 if (tx) {
@@ -215,7 +215,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
                     const txIds = new Set(params.txIds)
                     const publicKeys = new Set(params.publicKeys)
                     for await (const tx of this.fireblocks.getTransactions(
-                        userId
+                        sub
                     )) {
                         if (
                             txIds.has(tx.txId) ||
@@ -254,7 +254,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
 
             getKeys: async (): Promise<GetKeysResult> => {
                 try {
-                    const keys = await this.fireblocks.getPublicKeys(userId)
+                    const keys = await this.fireblocks.getPublicKeys(sub)
                     return {
                         keys: keys.map((k) => ({
                             id: k.derivationPath.join('-'),
@@ -327,7 +327,7 @@ export default class FireblocksSigningDriver implements SigningDriverInterface {
             //  when the controller is not running in a server context
             // v8 ignore next -- @preserve
             subscribeTransactions: async (
-                params: SubscribeTransactionsParams
+                _params: SubscribeTransactionsParams
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),
         })

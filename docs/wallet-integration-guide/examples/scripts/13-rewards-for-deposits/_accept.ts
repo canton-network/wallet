@@ -1,5 +1,5 @@
-import type { RewardsForDepositsTestScriptParameters } from './types.js'
-import { partiesUtxos } from './utils.js'
+import type { RewardsForDepositsTestScriptParameters } from './types.ts'
+import { partiesUtxos } from './utils.ts'
 
 export default async (args: RewardsForDepositsTestScriptParameters) => {
     const {
@@ -22,7 +22,7 @@ export default async (args: RewardsForDepositsTestScriptParameters) => {
     const [
         acceptTransferInstructionProxyCommand,
         acceptTransferInstructionProxyDisclosedContracts,
-    ] = await sdk.token.transfer.delegatedProxy.commands.accept({
+    ] = await sdk.token.v1.transfer.delegatedProxy.commands.accept({
         proxyCid,
         transferInstructionCid,
         featuredAppRight,

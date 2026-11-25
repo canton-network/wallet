@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync } from 'node:fs'
+
 import { describe, expect, test } from 'vitest'
-import { ConfigUtils } from './ConfigUtils.js'
+
 import {
     configSchema,
     rawConfigSchema,
     signingProvidersConfigSchema,
-} from './Config.js'
+} from './Config.ts'
+import { ConfigUtils } from './ConfigUtils.ts'
 
 test('config from json file', async () => {
     const resp = ConfigUtils.loadConfigFile('../test/config.json').config

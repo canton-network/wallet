@@ -1,23 +1,35 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-/* oxlint-disable typescript/no-explicit-any */
 import {
-    ensureInterfaceViewIsPresent,
-    getInterfaceView,
-    getKnownInterfaceView,
-    getMetaKeyValue,
-    hasInterface,
-    mergeMetas,
-    removeParsedMetaKeys,
-} from './utils.js'
+    EventFilterBySetup,
+    type LedgerCommonSchemas,
+} from '@canton-network/core-ledger-client-types'
+import type {
+    Ops,
+    AbstractLedgerProvider,
+} from '@canton-network/core-provider-ledger'
+import {
+    HOLDING_INTERFACE_ID,
+    type HoldingView,
+    type Lock,
+    TRANSFER_INSTRUCTION_INTERFACE_ID,
+} from '@canton-network/core-token-standard'
+import {
+    HOLDING_INTERFACE_ID_V2,
+    type HoldingView as HoldingViewV2,
+} from '@canton-network/core-token-standard-v2'
+import type { PartyId } from '@canton-network/core-types'
+import { BigNumber } from 'bignumber.js'
+
 import {
     BurnedMetaKey,
     matchInterfaceIds,
     ReasonMetaKey,
     SenderMetaKey,
     TxKindMetaKey,
-} from './constants.js'
+} from './constants.ts'
+import { InstrumentMap } from './instrumentmap.ts'
 import type {
     Holding as HoldingWithContractId,
     HoldingsChangeSummary,
@@ -30,29 +42,17 @@ import type {
     TransferInstructionCurrentTag,
     TransferObject,
     Holding,
-} from './types.js'
-import { InstrumentMap } from './instrumentmap.js'
-
+} from './types.ts'
+/* oxlint-disable typescript/no-explicit-any */
 import {
-    EventFilterBySetup,
-    type LedgerCommonSchemas,
-} from '@canton-network/core-ledger-client-types'
-import BigNumber from 'bignumber.js'
-import type { PartyId } from '@canton-network/core-types'
-import {
-    HOLDING_INTERFACE_ID,
-    type HoldingView,
-    type Lock,
-    TRANSFER_INSTRUCTION_INTERFACE_ID,
-} from '@canton-network/core-token-standard'
-import {
-    HOLDING_INTERFACE_ID_V2,
-    type HoldingView as HoldingViewV2,
-} from '@canton-network/core-token-standard-v2'
-import type {
-    Ops,
-    AbstractLedgerProvider,
-} from '@canton-network/core-provider-ledger'
+    ensureInterfaceViewIsPresent,
+    getInterfaceView,
+    getKnownInterfaceView,
+    getMetaKeyValue,
+    hasInterface,
+    mergeMetas,
+    removeParsedMetaKeys,
+} from './utils.ts'
 import {
     deriveV2Label,
     holdingCidsOf,
@@ -62,7 +62,7 @@ import {
     sameAccount,
     toHolding,
     type V2LabelDetails,
-} from './v2-events.js'
+} from './v2-events.ts'
 
 type ArchivedEvent = LedgerCommonSchemas['ArchivedEvent']
 type CreatedEvent = LedgerCommonSchemas['CreatedEvent']
@@ -174,7 +174,7 @@ export class TransactionParser {
 
     async parseTransaction(): Promise<Transaction> {
         const tx = this.transaction
-        const events = await this.parseEvents([...(tx.events || [])].reverse())
+        const events = await this.parseEvents((tx.events || []).toReversed())
         return {
             updateId: tx.updateId,
             offset: tx.offset,
@@ -185,7 +185,7 @@ export class TransactionParser {
     }
 
     async parseTransferObjects(): Promise<TransferObject[]> {
-        const eventsStack = [...(this.transaction.events || [])].reverse()
+        const eventsStack = (this.transaction.events || []).toReversed()
         const results = await this.fetchTransferObjectChoice(eventsStack)
         return results
     }
@@ -558,10 +558,12 @@ export class TransactionParser {
                     lockedHoldingsChange: result.lockedHoldingsChange,
                     lockedHoldingsChangeSummaries:
                         result.lockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     lockedHoldingsChangeSummary:
                         result.lockedHoldingsChangeSummary,
                     unlockedHoldingsChangeSummaries:
                         result.unlockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     unlockedHoldingsChangeSummary:
                         result.unlockedHoldingsChangeSummary,
                     transferInstruction: result.transferInstruction,
@@ -658,11 +660,13 @@ export class TransactionParser {
                     label: result.label,
                     lockedHoldingsChange,
                     lockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     lockedHoldingsChangeSummary:
                         lockedHoldingsChangeSummaries[0] ??
                         emptyHoldingsChangeSummary,
                     unlockedHoldingsChange,
                     unlockedHoldingsChangeSummaries,
+                    // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                     unlockedHoldingsChangeSummary:
                         unlockedHoldingsChangeSummaries[0] ??
                         emptyHoldingsChangeSummary,
@@ -1178,11 +1182,13 @@ export class TransactionParser {
                 }),
                 lockedHoldingsChange,
                 lockedHoldingsChangeSummaries,
+                // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                 lockedHoldingsChangeSummary:
                     lockedHoldingsChangeSummaries[0] ??
                     emptyHoldingsChangeSummary,
                 unlockedHoldingsChange,
                 unlockedHoldingsChangeSummaries,
+                // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
                 unlockedHoldingsChangeSummary:
                     unlockedHoldingsChangeSummaries[0] ??
                     emptyHoldingsChangeSummary,

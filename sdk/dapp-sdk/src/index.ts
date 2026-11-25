@@ -3,19 +3,18 @@
 
 // Import global Window augmentation for `window.canton`
 import '@canton-network/core-provider-dapp'
-
-import './version.js'
-export { SDK_VERSION } from './version.js'
+import './version.ts'
+export { SDK_VERSION } from './version.ts'
 
 // ── Asset exports (icons for wallet adapters) ──
-export { CANTON_LOGO_PNG, WALLET_GATEWAY_ICON } from './assets'
+export { CANTON_LOGO_PNG, WALLET_GATEWAY_ICON } from './assets.ts'
 
 // ── Client API (primary) ──
-export { DappClient } from './client'
-export type { DappClientOptions } from './client'
+export { DappClient } from './client.ts'
+export type { DappClientOptions } from './client.ts'
 
 // ── Adapter types and concrete adapters ──
-export * from './adapter/index'
+export * from './adapter/index.ts'
 
 // ── Core DiscoveryClient for advanced use ──
 export { DiscoveryClient } from '@canton-network/core-wallet-discovery'
@@ -25,7 +24,7 @@ export type {
 } from '@canton-network/core-wallet-discovery'
 
 // ── Error types ──
-export * from './error'
+export * from './error.ts'
 
 // ── Commonly used RPC types ──
 export * as dappAPI from '@canton-network/core-wallet-dapp-rpc-client'
@@ -52,6 +51,7 @@ export {
     DappSDK,
     sdk as dappSDK,
     init,
+    // oxlint-disable-next-line typescript/no-deprecated -- still part of the public API
     connect,
     disconnect,
     isConnected,
@@ -70,4 +70,4 @@ export {
     removeOnAccountsChanged,
     removeOnConnected,
     removeOnTxChanged,
-} from './sdk'
+} from './sdk.ts'

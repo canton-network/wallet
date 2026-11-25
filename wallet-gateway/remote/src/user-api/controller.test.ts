@@ -1,33 +1,34 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { pino, type Logger } from 'pino'
-import { sink } from 'pino-test'
 import { errorCodes } from '@canton-network/core-rpc-errors'
-import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
-import {
-    type MessageRaw,
-    type Network as StoreNetwork,
-    PartyLevelRight,
-    type Session,
-    type Transaction,
-    type Wallet,
-} from '@canton-network/core-wallet-store'
-import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { KernelInfo } from '../config/Config.js'
+import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
     NotificationService,
     SELF_ISSUED_LOGIN_EXPIRED,
     SignMessageService,
 } from '@canton-network/core-wallet-services'
-import { userController } from './controller.js'
-import type { ConfigManagedIds } from '../config/ConfigUtils.js'
-import { ServerStatusService } from '../notices/server-status-service.js'
-import { ServerNotices } from '../notices/server-notices.js'
-import { GATEWAY_VERSION } from '../version.js'
+import {
+    type MessageRaw,
+    type Network as StoreNetwork,
+    PartyLevelRight,
+    type NewSession,
+    type Transaction,
+    type Wallet,
+} from '@canton-network/core-wallet-store'
+import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { getLogger } from '@logtape/logtape'
+import { pino, type Logger } from 'pino'
+import { sink } from 'pino-test'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { KernelInfo } from '../config/Config.ts'
+import type { ConfigManagedIds } from '../config/ConfigUtils.ts'
+import { ServerNotices } from '../notices/server-notices.ts'
+import { ServerStatusService } from '../notices/server-status-service.ts'
+import { GATEWAY_VERSION } from '../version.ts'
+import { userController } from './controller.ts'
 
 const ledgerMocks = vi.hoisted(() => ({
     get: vi.fn(),
@@ -121,19 +122,19 @@ vi.mock('@canton-network/core-wallet-services', async (importOriginal) => {
     }
 })
 
-vi.mock('../ledger/wallet-allocation/wallet-allocation-service.js', () => ({
+vi.mock('../ledger/wallet-allocation/wallet-allocation-service.ts', () => ({
     WalletAllocationService: vi.fn(function WalletAllocationServiceMock() {
         return walletAllocationMocks
     }),
 }))
 
-vi.mock('../ledger/wallet-sync-service.js', () => ({
+vi.mock('../ledger/wallet-sync-service.ts', () => ({
     WalletSyncService: vi.fn(function WalletSyncServiceMock() {
         return walletSyncMocks
     }),
 }))
 
-vi.mock('../ledger/party-allocation-service.js', () => ({
+vi.mock('../ledger/party-allocation-service.ts', () => ({
     PartyAllocationService: vi.fn(),
 }))
 
@@ -186,7 +187,7 @@ const adminAuth: AuthContext = {
     accessToken: 'admin-access-token',
 }
 
-const session: Session = {
+const session: NewSession = {
     id: 'session-1',
     origin: 'dapp-1',
     network: 'network1',
@@ -517,7 +518,11 @@ describe('userController', () => {
             })
             await store
                 .withAuthContext(loginAuth)
-                .upgradeSelfIssuedLoginSession(sessionId, 'access-token')
+                .upgradeSelfIssuedLoginSession(
+                    sessionId,
+                    'access-token',
+                    'login-message'
+                )
 
             await createController(store, notificationService, logger, {
                 ...loginAuth,
@@ -531,12 +536,7 @@ describe('userController', () => {
                         accessToken: 'access-token',
                     })
                     .getSession('access-token')
-            ).resolves.toEqual(
-                expect.objectContaining({
-                    id: sessionId,
-                    accessToken: 'access-token',
-                })
-            )
+            ).resolves.toEqual(expect.objectContaining({ id: sessionId }))
         })
     })
 
@@ -2844,6 +2844,56 @@ describe('userController', () => {
 
             await expect(controller.isWalletSyncNeeded()).rejects.toThrow()
             expect(walletSyncMocks.isWalletSyncNeeded).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('API keys', () => {
+        const serviceAccountAuth = {
+            method: 'client_credentials',
+            identityProviderId: idp.id,
+            clientId: 'sa-cid',
+            clientSecret: 'sa-secret',
+            audience: 'sa-aud',
+            scope: 'sa-scope',
+        } as const
+
+        it('reports that a network without service account auth does not support API keys', async () => {
+            const store = await createStore(logger, auth)
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            await expect(controller.listApiKeys()).resolves.toEqual({
+                apiKeys: [],
+                apiKeysSupported: false,
+            })
+            await expect(
+                controller.generateApiKey({ name: 'ci' })
+            ).rejects.toThrow(/no service account auth configured/)
+        })
+
+        it('generates API keys on a network with service account auth', async () => {
+            const store = await createStore(logger, auth)
+            vi.spyOn(store, 'getCurrentNetwork').mockResolvedValue({
+                ...storeNetwork,
+                serviceAccountAuth,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                auth
+            )
+
+            const generated = await controller.generateApiKey({ name: 'ci' })
+
+            await expect(controller.listApiKeys()).resolves.toMatchObject({
+                apiKeys: [{ id: generated.id, name: 'ci' }],
+                apiKeysSupported: true,
+            })
         })
     })
 })

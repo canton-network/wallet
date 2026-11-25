@@ -1,10 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { spawnSync } from 'child_process'
+
 import { input, select } from '@inquirer/prompts'
+
 import {
     error,
     success,
@@ -13,7 +15,7 @@ import {
     getArgValue,
     type Network,
     type SupportedVersions,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 async function getNetworkInput(): Promise<Network> {
     const networkArg = getArgValue('network')

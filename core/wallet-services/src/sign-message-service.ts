@@ -1,17 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { errorCodes } from '@canton-network/core-rpc-errors'
+import {
+    isRpcError,
+    SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
+    type SigningProvider,
+} from '@canton-network/core-signing-lib'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { MessageSignatureEvent } from '@canton-network/core-wallet-dapp-rpc-client'
 import type {
     MessageRaw,
     MessageRawKind,
     Store,
 } from '@canton-network/core-wallet-store'
-import {
-    isRpcError,
-    SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type {
     GetMessageToSignResult,
     GetSignMessageStatusResult,
@@ -19,10 +21,10 @@ import type {
     MessageRaw as MessageToSign,
     SignMessageResult,
 } from '@canton-network/core-wallet-user-rpc-client'
-import type { MessageSignatureEvent } from '@canton-network/core-wallet-dapp-rpc-client'
-import { errorCodes } from '@canton-network/core-rpc-errors'
-import type { SigningDrivers } from './types.js'
-import type { Notifier } from './notification/index.js'
+
+import type { Notifier } from './notification/index.ts'
+import type { SigningDrivers } from './types.ts'
+import { getSigningController } from './utils.ts'
 
 export class SignMessageService {
     constructor(
@@ -193,10 +195,11 @@ export class SignMessageService {
             )
         }
 
-        const driver =
-            this.signingDrivers[
-                wallet.signingProviderId as SigningProvider
-            ]?.controller(userId)
+        const driver = getSigningController(
+            this.signingDrivers[wallet.signingProviderId as SigningProvider],
+            authContext
+        )
+
         if (!driver) {
             return await emitFailedAndPersist(
                 errorCodes.rpc.resourceUnavailable,
@@ -318,19 +321,10 @@ export class SignMessageService {
         if (!signingProvider) {
             throw new Error(`No driver found for provider ${provider}`)
         }
-        if (provider === SigningProvider.BLOCKDAEMON && !authContext.email) {
-            throw new Error(
-                'Invalid auth context (missing email) for SigningProvider BlockDaemon'
-            )
-        }
 
-        const controllerId =
-            provider === SigningProvider.BLOCKDAEMON
-                ? authContext.email
-                : authContext.userId
-        const signingDriver = signingProvider.controller(controllerId)
+        const signingDriver = getSigningController(signingProvider, authContext)
+
         const signingResult = await signingDriver.getTransaction({
-            userId: controllerId,
             txId: message.externalTxId,
         })
         if (isRpcError(signingResult)) {

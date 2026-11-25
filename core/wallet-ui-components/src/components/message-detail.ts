@@ -3,14 +3,15 @@
 
 import { html, css, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import './back-link.js'
-import './copy-button.js'
-import { BaseElement } from '../internal/base-element.js'
+
+import './back-link.ts'
+import './copy-button.ts'
+import { renderCopyableValue } from '../internal/activity-render.ts'
 import {
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
-} from '../internal/activity-utils.js'
-import { renderCopyableValue } from '../internal/activity-render.js'
+} from '../internal/activity-utils.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 /** Emitted when the user clicks the "Approve" button */
 export class MessageApproveEvent extends Event {

@@ -1,11 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi } from 'vitest'
-import { TransferServiceV2 } from './transfer-service.js'
-import type { CoreService } from '../core-service.js'
-import { TokenStandardService } from '../token-standard-service.js'
-import { EMPTY_META } from '../types.js'
 import {
     type Account,
     type TransferFactory_Transfer as TransferFactory_TransferV2,
@@ -13,6 +8,12 @@ import {
     TRANSFER_FACTORY_INTERFACE_ID_V2,
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
+import { describe, it, expect, vi } from 'vitest'
+
+import type { CoreService } from '../core-service.ts'
+import { TokenStandardService } from '../token-standard-service.ts'
+import { EMPTY_META } from '../types.ts'
+import { TransferServiceV2 } from './transfer-service.ts'
 
 type ChoiceContextV2 =
     OffLedgerV2.TransferInstructionV2.components['schemas']['ChoiceContext']

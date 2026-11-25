@@ -3,7 +3,8 @@
 
 import { openWalletPicker } from '@canton-network/core-wallet-test-utils'
 import type { Locator, Page } from '@playwright/test'
-import { expect } from '../fixtures.js'
+
+import { expect } from '../fixtures.ts'
 
 const CANTON_WALLET_GATEWAY_ID = 'browser:ext:canton-wallet'
 
@@ -95,7 +96,7 @@ export class PingPage {
         await expect(async () => {
             const observed = (await events.allTextContents())
                 .map((text) => (JSON.parse(text) as { status: string }).status)
-                .reverse()
+                .toReversed()
             expect(observed).toEqual(statuses)
         }).toPass({ timeout: 15_000 })
     }

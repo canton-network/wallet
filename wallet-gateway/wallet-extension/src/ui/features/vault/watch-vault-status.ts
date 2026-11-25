@@ -3,7 +3,8 @@
 
 import type { QueryClient } from '@tanstack/react-query'
 import type { AnyRouter } from '@tanstack/react-router'
-import { vaultStatusItem } from '@/shared/storage'
+
+import { vaultStatusItem } from '@/shared/storage.ts'
 
 /**
  * Keeps a page in step with the vault when another page or the background

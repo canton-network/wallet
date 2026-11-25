@@ -1,6 +1,6 @@
-import { Chip, type ChipProps } from '@mui/material'
-import { portfolioColors } from '@lib/theme'
 import { normalizeSx } from '@components/ui/utils'
+import { portfolioColors } from '@lib/theme'
+import { Chip, type ChipProps } from '@mui/material'
 
 type PrimaryBadgeProps = Omit<ChipProps, 'label' | 'size'>
 

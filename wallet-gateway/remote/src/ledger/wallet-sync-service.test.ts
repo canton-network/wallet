@@ -1,26 +1,24 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { pino, type Logger } from 'pino'
-import { sink } from 'pino-test'
+import type { LedgerClient } from '@canton-network/core-ledger-client'
+import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import {
     SigningProvider,
     type SigningDriverInterface,
     type GetKeysResult,
 } from '@canton-network/core-signing-lib'
-import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { ParticipantSigningDriver } from '@canton-network/core-signing-participant'
 import {
     StoreSql,
     connection,
     migrator,
 } from '@canton-network/core-signing-store-sql'
+import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import type {
     AccessTokenProvider,
     AuthContext,
 } from '@canton-network/core-wallet-auth'
-import type { LedgerClient } from '@canton-network/core-ledger-client'
 import {
     type Wallet,
     type Network,
@@ -30,10 +28,13 @@ import {
     type WalletStatus,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
-import { WalletSyncService } from './wallet-sync-service.js'
-import { PartyAllocationService } from './party-allocation-service.js'
 import { getLogger } from '@logtape/logtape'
+import { pino, type Logger } from 'pino'
+import { sink } from 'pino-test'
+import { vi, describe, it, expect, beforeEach, afterEach } from 'vitest'
+
+import { PartyAllocationService } from './party-allocation-service.ts'
+import { WalletSyncService } from './wallet-sync-service.ts'
 
 type LedgerGet = (path: string, ...rest: unknown[]) => Promise<unknown>
 
@@ -173,7 +174,9 @@ describe('WalletSyncService - resolveSigningProvider', () => {
         const internalDriver = service['signingDrivers'][
             SigningProvider.WALLET_KERNEL
         ] as InternalSigningDriver
-        const controller = internalDriver.controller(authContext.userId)
+        const controller = internalDriver.controller({
+            sub: authContext.userId,
+        })
         const key = await controller.createKey({ name: 'test-key' })
 
         if ('error' in key) {
@@ -213,6 +216,7 @@ describe('WalletSyncService - resolveSigningProvider', () => {
         )
 
         const mockFireblocksDriver = {
+            requiredClaims: ['sub'],
             controller: vi.fn().mockReturnValue({
                 getKeys: vi
                     .fn<() => Promise<GetKeysResult>>()
@@ -1053,7 +1057,7 @@ describe('WalletSyncService - multi-network features', () => {
                 new StoreSql(db, authContext)
             )
             const key = await internalDriver
-                .controller(authContext.userId)
+                .controller({ sub: authContext.userId })
                 .createKey({ name: 'test-key' })
             if ('error' in key) {
                 throw new Error(
@@ -1169,6 +1173,7 @@ describe('WalletSyncService - multi-network features', () => {
                 keys: [],
             }))
             const driver = {
+                requiredClaims: ['sub'],
                 controller: () => ({ getKeys }),
             } as unknown as SigningDriverInterface
             const keyService = new WalletSyncService(
@@ -1730,6 +1735,7 @@ describe('WalletSyncService - multi-network features', () => {
                 mockLogger,
                 {
                     [SigningProvider.WALLET_KERNEL]: {
+                        requiredClaims: ['sub'],
                         controller: () => ({ getKeys }),
                     },
                 } as never,

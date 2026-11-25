@@ -1,20 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { errorCodes } from '@canton-network/core-rpc-errors'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type {
     MessageRaw,
     Store,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import {
-    SigningProvider,
-    type SigningDriverInterface,
-} from '@canton-network/core-signing-lib'
-import type { Notifier } from './notification/index.js'
-import { SignMessageService } from './sign-message-service.js'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import type { Notifier } from './notification/index.ts'
+import { SignMessageService } from './sign-message-service.ts'
 
 const authContext: AuthContext = {
     userId: 'user-1',
@@ -67,8 +68,10 @@ const pendingTokenMessage: MessageRaw = {
 function createDriver(options: {
     signMessage?: ReturnType<typeof vi.fn>
     getTransaction?: ReturnType<typeof vi.fn>
+    requiredClaims?: string[]
 }): SigningDriverInterface & { controller: ReturnType<typeof vi.fn> } {
     return {
+        requiredClaims: options.requiredClaims ?? ['sub'],
         controller: vi.fn().mockReturnValue({
             signMessage: options.signMessage ?? vi.fn(),
             getTransaction: options.getTransaction ?? vi.fn(),
@@ -568,9 +571,9 @@ describe('SignMessageService', () => {
                     'regular'
                 )
 
-                expect(driver.controller).toHaveBeenCalledWith(
-                    authContext.userId
-                )
+                expect(driver.controller).toHaveBeenCalledWith({
+                    sub: authContext.userId,
+                })
                 expect(signMessage).toHaveBeenCalledWith({
                     message: 'Sign this',
                     keyIdentifier: { publicKey: dfnsWallet.publicKey },
@@ -863,9 +866,10 @@ describe('SignMessageService', () => {
                 'regular'
             )
 
-            expect(driver.controller).toHaveBeenCalledWith(authContext.userId)
+            expect(driver.controller).toHaveBeenCalledWith({
+                sub: authContext.userId,
+            })
             expect(getTransaction).toHaveBeenCalledWith({
-                userId: authContext.userId,
                 txId: 'dfns-sig-1',
             })
             expect(result).toEqual({

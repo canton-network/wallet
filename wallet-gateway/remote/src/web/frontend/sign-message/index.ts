@@ -1,21 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html, nothing } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
 import {
     BaseElement,
     handleErrorToast,
     toRelHref,
 } from '@canton-network/core-wallet-ui-components'
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
-import { stateManager } from '../state-manager'
-import '../index'
-import { ACTIVITIES_PAGE_REDIRECT } from '../constants'
-import { showToast } from '../utils'
 import type { GetSignMessageStatusResult } from '@canton-network/core-wallet-user-rpc-client'
-import { detectCurrentOrigin } from '../listeners.js'
+import { html, nothing } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
+
+import { ACTIVITIES_PAGE_REDIRECT } from '../constants.ts'
+import { detectCurrentOrigin } from '../listeners.ts'
+import '../index.ts'
+import { setLocationHref } from '../navigation.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
 
 const POLL_INTERVAL_MS = 3000
 

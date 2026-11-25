@@ -1,6 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type {
+    DisclosedContract,
+    ExerciseCommand,
+} from '@canton-network/core-token-standard-service'
 import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
     ALLOCATION_INTERFACE_ID_V2,
@@ -12,11 +16,12 @@ import {
     decodeAvailableActions,
     actionAvailability,
 } from '@canton-network/core-token-standard-v2'
-import type { TokenNamespaceConfig } from '../../namespace'
-import type { PartyId } from '@canton-network/core-types'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
-import type { PreparedCommand } from '../../../transactions/types.js'
-import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.js'
+import type { PartyId } from '@canton-network/core-types'
+
+import type { PreparedCommand } from '../../../transactions/types.ts'
+import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../../namespace.ts'
 import {
     actorsFor,
     sameSettlement,
@@ -29,11 +34,7 @@ import {
     type AllocationScanParams,
     type PreparedCommands,
     type SettlementFactoryParams,
-} from './types'
-import type {
-    DisclosedContract,
-    ExerciseCommand,
-} from '@canton-network/core-token-standard-service'
+} from './types.ts'
 
 const toPrepared = ([cmd, dcs]: [
     ExerciseCommand,
@@ -294,6 +295,7 @@ export class AllocationNamespace {
             const view = params.request.interfaceViewValue
             const actors =
                 params.actors ??
+                // oxlint-disable-next-line typescript/no-deprecated -- used by the deprecated accept
                 actorsFor(view.availableActions, 'ARA_Accept', params.partyId)
             if (!actors) {
                 throw new Error(
@@ -302,6 +304,7 @@ export class AllocationNamespace {
             }
 
             const [commands, dc] =
+                // oxlint-disable-next-line typescript/no-deprecated -- used by the deprecated accept
                 await this.service.createAllocationsForRequest({
                     requestCid: params.request.contractId,
                     request: view,

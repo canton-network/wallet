@@ -5,11 +5,10 @@ import {
     PartyLevelRight,
     UserLevelRight,
 } from '@canton-network/core-wallet-store'
-import { expect, test } from 'vitest'
 import { type Kysely, sql } from 'kysely'
+import { expect, test } from 'vitest'
 
-import type { DB } from '../../../schema'
-
+import type { DB } from '../../../schema.ts'
 import {
     columnNames,
     forEachDialect,
@@ -18,13 +17,13 @@ import {
     migrateUpToBefore,
     primaryKeyColumns,
     tableExists,
-} from '../helpers'
-import { insertIdp, insertNetwork } from '../seeds/001-init'
-import { insertWallet } from '../seeds/005-add-wallet-disabled-reason'
+} from '../helpers.ts'
+import { insertIdp, insertNetwork } from '../seeds/001-init.ts'
+import { insertWallet } from '../seeds/005-add-wallet-disabled-reason.ts'
 import {
     insertUserPartyRight,
     insertUserRight,
-} from '../seeds/009-add-wallet-rights-columns'
+} from '../seeds/009-add-wallet-rights-columns.ts'
 
 const TARGET = 9
 

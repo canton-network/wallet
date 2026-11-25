@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
+
 import {
     encryptString,
     decryptString,
     destroyTokenKey,
-} from './access-token-utils'
+} from './access-token-utils.ts'
 
 describe('access token utils', () => {
     beforeEach(async () => {

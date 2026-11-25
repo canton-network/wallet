@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { FullConfig } from '@playwright/test'
 import { ensureLedgerUsers } from '@canton-network/core-wallet-test-utils'
-import { fundValidatorOperator } from './fund-validator'
+import type { FullConfig } from '@playwright/test'
+
+import { fundValidatorOperator } from './fund-validator.ts'
 import {
     GATEWAY_URL,
     LOCALNET_CLIENT_ID,
@@ -11,7 +12,7 @@ import {
     LOCALNET_LEDGER_API_URL,
     LOCALNET_NETWORK_ID,
     gatewayUserForWorker,
-} from './utils'
+} from './utils.ts'
 
 /**
  * Runs once before any worker starts. Two things the suite needs:

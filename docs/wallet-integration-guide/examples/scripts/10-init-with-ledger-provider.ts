@@ -1,19 +1,19 @@
+import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
+import { signTransactionHash } from '@canton-network/core-signing-lib'
+import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import {
     localNetStaticConfig,
     SDK,
     LedgerProvider,
 } from '@canton-network/wallet-sdk'
-import { signTransactionHash } from '@canton-network/core-signing-lib'
+
+import { configureLogging } from './utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
-import type { LedgerTypes } from '@canton-network/core-ledger-client-types'
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 const authTokenProvider = new AuthTokenProvider(TOKEN_PROVIDER_CONFIG_DEFAULT)
@@ -133,7 +133,7 @@ await sdk.ledger
     .sign(senderKeys.privateKey)
     .execute({ partyId: sender.partyId })
 
-const senderUtxos = await sdk.token.utxos.list({ partyId: sender.partyId })
+const senderUtxos = await sdk.token.v1.utxos.list({ partyId: sender.partyId })
 
 const senderAmuletUtxos = senderUtxos.filter((utxo) => {
     return (

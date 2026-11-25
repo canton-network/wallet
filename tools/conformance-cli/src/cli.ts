@@ -2,8 +2,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { runPassed } from '@canton-network/tool-conformance-dapp'
 import { Command } from 'commander'
-import { loadCommandOptions } from './cli-config.ts'
+
 import {
     readArtifact,
     readSignature,
@@ -11,8 +12,8 @@ import {
     verifyArtifactSignature,
     writeSignature,
 } from './artifact.ts'
+import { loadCommandOptions } from './cli-config.ts'
 import { runHarness, serveApp } from './harness.ts'
-import { runPassed } from '@canton-network/tool-conformance-dapp'
 
 const program = new Command()
     .name('conformance-cli')

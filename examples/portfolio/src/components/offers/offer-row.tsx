@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { KeyboardEvent } from 'react'
-import { Box, Chip, type SxProps, type Theme } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import type {
     AllocationActionItem,
@@ -11,6 +9,16 @@ import type {
     AllocationV2ActionItem,
     TransferActionItem,
 } from '@components/types'
+import type {
+    OfferItem,
+    OfferStatus,
+    TransferOfferItem,
+} from '@hooks/useOffers'
+import { Box, Chip, type SxProps, type Theme } from '@mui/material'
+import { formatAmount } from '@utils/decimal'
+import { netAmounts } from '@utils/v2-allocation-items'
+import type { KeyboardEvent } from 'react'
+
 import {
     OfferDescriptionBlock,
     OfferDetailBlock,
@@ -19,14 +27,7 @@ import {
     OfferPartyBlock,
     OfferRowGrid,
     OfferRowShell,
-} from './offer-row-layout'
-import type {
-    OfferItem,
-    OfferStatus,
-    TransferOfferItem,
-} from '@hooks/useOffers'
-import { formatAmount } from '@utils/decimal'
-import { netAmounts } from '@utils/v2-allocation-items'
+} from './offer-row-layout.tsx'
 
 interface OfferRowProps {
     offer: OfferItem

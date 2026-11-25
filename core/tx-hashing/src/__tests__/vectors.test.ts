@@ -2,20 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
-import type { TxHashingErrorCode } from '../errors.js'
+
+import type { TxHashingErrorCode } from '../errors.ts'
 import {
     computePreparedTransactionHash,
     DEFAULT_LIMITS,
     type HashingScheme,
-} from '../index.js'
-import { toHex } from './helpers/hex.js'
+} from '../index.ts'
+import { toHex } from './helpers/hex.ts'
 import {
     loadVectors,
     V2,
     V3,
+    V4,
     vectorFiles,
     type Vector,
-} from './helpers/load-vectors.js'
+} from './helpers/load-vectors.ts'
 
 // Fails to compile when a code is added to or removed from the union
 const ERROR_CODES: Record<TxHashingErrorCode, true> = {
@@ -43,6 +45,7 @@ const ERROR_CODES: Record<TxHashingErrorCode, true> = {
 const KIND_OF_FOLDER: Record<string, Vector['kind']> = {
     v2: 'accepted',
     v3: 'accepted',
+    v4: 'accepted',
     'held-out': 'held-out',
     mutation: 'mutation',
     reject: 'reject',
@@ -102,7 +105,8 @@ describe('the corpus', () => {
             expect(v.kind, path).toBe(KIND_OF_FOLDER[folder])
             expect(v.id, path).toBe(ids[i])
             expect(v.scheme, path).toBeTypeOf('string')
-            if (v.kind !== 'reject') expect([V2, V3], path).toContain(v.scheme)
+            if (v.kind !== 'reject')
+                expect([V2, V3, V4], path).toContain(v.scheme)
             expect(isCanonicalBase64(v.preparedTransaction), path).toBe(true)
             if (v.kind === 'reject') {
                 expect(Object.keys(v.expected), path).toEqual(['error'])

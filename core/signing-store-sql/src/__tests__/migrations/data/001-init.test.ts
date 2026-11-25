@@ -10,12 +10,12 @@ import {
     migrateUpThrough,
     primaryKeyColumns,
     tableExists,
-} from '../helpers.js'
+} from '../helpers.ts'
 import {
     insertSigningDriverConfig,
     insertSigningKey,
     insertSigningTransaction,
-} from '../seeds/001-init.js'
+} from '../seeds/001-init.ts'
 
 const TARGET = 1
 

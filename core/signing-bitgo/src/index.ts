@@ -23,9 +23,9 @@ import {
     type SubscribeTransactionsResult,
     type Transaction,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { z } from 'zod'
-import { BitGoHandler, type BitGoConfig } from './bitgo.js'
+
+import { BitGoHandler, type BitGoConfig } from './bitgo.ts'
 
 const BitGoConfigUpdateSchema = z.object({
     accessToken: z.string().min(1).optional(),
@@ -34,7 +34,18 @@ const BitGoConfigUpdateSchema = z.object({
     coin: z.string().min(1).optional(),
 })
 
-export { BitGoHandler, type BitGoConfig } from './bitgo.js'
+export { BitGoHandler, type BitGoConfig } from './bitgo.ts'
+
+function purposeToMessageStandardType(
+    purpose?: 'topology'
+): string | undefined {
+    switch (purpose) {
+        case 'topology':
+            return 'CANTON_SIGN_TOPOLOGY'
+        default:
+            return undefined
+    }
+}
 
 export default class BitGoSigningDriver implements SigningDriverInterface {
     private handler: BitGoHandler
@@ -45,10 +56,11 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
         this.handler = new BitGoHandler(config)
     }
 
+    public requiredClaims = []
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.BITGO
 
-    public controller = (_userId: AuthContext['userId'] | undefined) =>
+    public controller = () =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -76,8 +88,9 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
                         tx: params.tx,
                         txHash: params.txHash,
                         walletId,
-                        messageStandardType: params.extraParams
-                            ?.messageStandardType as string | undefined,
+                        messageStandardType: purposeToMessageStandardType(
+                            params.extraParams?.txPurpose
+                        ),
                     })
                     return {
                         txId: result.txId,

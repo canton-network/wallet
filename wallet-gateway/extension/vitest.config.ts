@@ -2,9 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { resolve } from 'path'
+
 import { defineConfig, defineProject } from 'vitest/config'
 import { WxtVitest } from 'wxt/testing/vitest-plugin'
-import { standardDecorators } from '../../vite.decorators.js'
+
+import { standardDecorators } from '../../vite.decorators.ts'
 import { coverage } from '../../vitest.base.ts'
 
 export default defineConfig({

@@ -1,7 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo, useState, type ReactNode } from 'react'
+import type { PartyId } from '@canton-network/core-types'
+import { CopyableIdentifier } from '@components/copyable-identifier'
+import { DateTimeText } from '@components/date-time-text'
+import type {
+    AllocationActionItem,
+    AllocationRequestV2ActionItem,
+    TransferLegWithAllocation,
+} from '@components/types'
+import { PillButton } from '@components/ui/PillButton'
+import { isReceiverOfLeg, isSenderOfLeg } from '@components/utils'
+import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
+import type { AcceptProgress } from '@hooks/useAllocationRequestV2Actions'
+import CloseIcon from '@mui/icons-material/Close'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
 import {
     Alert,
     Box,
@@ -12,35 +26,22 @@ import {
     IconButton,
     Typography,
 } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined'
-import Decimal from 'decimal.js'
-import { CopyableIdentifier } from '@components/copyable-identifier'
-import type {
-    AllocationActionItem,
-    AllocationRequestV2ActionItem,
-    TransferLegWithAllocation,
-} from '@components/types'
-import { PillButton } from '@components/ui/PillButton'
-import { isReceiverOfLeg, isSenderOfLeg } from '@components/utils'
-import { useAggregatedHoldings } from '@hooks/useAggregatedHoldings'
 import {
     getInstrumentKey,
     type AggregatedHolding,
 } from '@utils/aggregate-holdings'
-import { formatAmount } from '@utils/decimal'
 import { formatDistanceToNow } from '@utils/date-format'
-import { DateTimeText } from '@components/date-time-text'
-import type { AcceptProgress } from '@hooks/useAllocationRequestV2Actions'
-import type { PartyId } from '@canton-network/core-types'
+import { formatAmount } from '@utils/decimal'
 import {
     earliest,
     getAllocationRequestActions,
     netAmounts,
     type InstrumentAmount,
 } from '@utils/v2-allocation-items'
-import { LegList, LockedAmounts } from './allocation-v2-dialog-parts'
+import { Decimal } from 'decimal.js'
+import { useMemo, useState, type ReactNode } from 'react'
+
+import { LegList, LockedAmounts } from './allocation-v2-dialog-parts.tsx'
 
 interface AllocationActionDialogContentProps {
     item: AllocationActionItem

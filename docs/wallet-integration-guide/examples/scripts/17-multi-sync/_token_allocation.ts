@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Logger } from 'pino'
-import type { MultiSyncSetup } from './_setup.js'
 import { TestToken } from '@canton-network/core-splice-codegen'
-import { pollUntilFound } from './_poll.js'
+import type { Logger } from 'pino'
+
+import { pollUntilFound } from './_poll.ts'
+import type { MultiSyncSetup } from './_setup.ts'
 
 export async function allocateTokenForBob(
     setup: MultiSyncSetup,

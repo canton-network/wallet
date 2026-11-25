@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Kysely } from 'kysely'
-import { StoreSql } from './store-sql.js'
 import {
     assertUniqueSelfIssuedAudience,
     type BootstrapConfig,
 } from '@canton-network/core-wallet-store'
-import { fromIdp, fromNetwork, toNetwork, type DB } from './schema'
+import type { Kysely } from 'kysely'
+
+import { fromIdp, fromNetwork, toNetwork, type DB } from './schema.ts'
+import { StoreSql } from './store-sql.ts'
 
 export async function bootstrap(
     db: Kysely<DB>,

@@ -1,6 +1,7 @@
-import type { TransferTestScriptParameters } from './types.js'
-import { assertV2 } from '../utils/assert.js'
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+
+import { assertV2 } from '../utils/assert.ts'
+import type { TransferTestScriptParameters } from './types.ts'
 
 export default async (args: TransferTestScriptParameters) => {
     const {
@@ -62,7 +63,7 @@ export default async (args: TransferTestScriptParameters) => {
         .execute({ partyId: receiver.partyId })
     logger.info('Receiver accepted the transfer instruction')
 
-    const receiverUtxos = await sdk.token.utxos.list({
+    const receiverUtxos = await sdk.token.v1.utxos.list({
         partyId: receiver.partyId,
     })
     logger.info(

@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { ConnectPage, connectionStatusQuery } from '@/ui/features/sessions'
+
+import {
+    ConnectPage,
+    connectionStatusQuery,
+} from '@/ui/features/sessions/index.ts'
 
 export const Route = createFileRoute('/_unlocked/connect/')({
     beforeLoad: async ({ context }) => {
-        const status = await context.queryClient.fetchQuery(
-            connectionStatusQuery()
-        )
+        const status = await context.queryClient.query(connectionStatusQuery())
         if (status === 'connected') {
             throw redirect({ to: '/' })
         }

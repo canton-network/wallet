@@ -1,19 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { NotificationService } from '@canton-network/core-wallet-services'
+import { hashAccessToken } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
-import type { AuthContextStore } from './auth-context'
-import { createAuthService } from './auth-service'
-import type { AuthorizationCodeParams } from './oauth'
-import { AuthErrorName, EXTENSION_ORIGIN } from '@/shared/auth-protocol'
-import { logger } from '@/shared/logger'
-import { VaultErrorName, type VaultStatus } from '@/shared/vault-protocol'
-import { loadAuthedStore, type WalletStore } from './store'
-import { defaultConfig } from './store/default-config'
+
+import { AuthErrorName, EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
+import { logger } from '@/shared/logger.ts'
+import { VaultErrorName, type VaultStatus } from '@/shared/vault-protocol.ts'
+
+import type { AuthContextStore } from './auth-context.ts'
+import { createAuthService } from './auth-service.ts'
+import type { AuthorizationCodeParams } from './oauth.ts'
+import { defaultConfig } from './store/default-config.ts'
+import { loadAuthedStore, type WalletStore } from './store/index.ts'
 
 const networkId = 'canton:local-oauth'
 
@@ -114,7 +117,7 @@ describe('createAuthService', () => {
             expect.objectContaining({
                 origin: EXTENSION_ORIGIN,
                 network: networkId,
-                accessToken: token,
+                accessTokenHash: await hashAccessToken(token),
             }),
         ])
         await expect(auth.getStatus()).resolves.toBe('connected')
@@ -147,6 +150,73 @@ describe('createAuthService', () => {
             name: AuthErrorName.UnsupportedAuthMethod,
         })
         expect(signIn).not.toHaveBeenCalled()
+    })
+
+    describe('self-signed networks', () => {
+        const localnetId = 'canton:localnet'
+
+        it('connects with a token signed for the entered client id', async () => {
+            const auth = service()
+            await auth.connect(localnetId, {
+                clientId: 'alice',
+                clientSecret: 'unsafe',
+            })
+
+            expect(signIn).not.toHaveBeenCalled()
+            const [[stored]] = authContext.store.mock.calls as [[string]]
+            const claims = JSON.parse(atob(stored.split('.')[1]!))
+            expect(claims).toMatchObject({
+                sub: 'alice',
+                iss: 'unsafe-auth',
+                aud: 'https://canton.network.global',
+            })
+            await expect(authContext.load()).resolves.toMatchObject({
+                userId: 'alice',
+                accessToken: stored,
+            })
+
+            const sessions = await (
+                await loadAuthedStore(store, authContext)
+            ).listSessions()
+            expect(sessions).toEqual([
+                expect.objectContaining({
+                    origin: EXTENSION_ORIGIN,
+                    network: localnetId,
+                    accessTokenHash: await hashAccessToken(stored),
+                }),
+            ])
+            await expect(auth.getStatus()).resolves.toBe('connected')
+        })
+
+        it('rejects a wrong client secret and keeps the auth context', async () => {
+            const previous = { userId: 'user-1', accessToken: token }
+            authContext = memoryAuthContext(previous)
+            const auth = service()
+
+            await expect(
+                auth.connect(localnetId, {
+                    clientId: 'alice',
+                    clientSecret: 'wrong',
+                })
+            ).rejects.toMatchObject({ name: AuthErrorName.InvalidCredentials })
+            expect(authContext.store).not.toHaveBeenCalled()
+            await expect(authContext.load()).resolves.toEqual(previous)
+        })
+
+        it('rejects an identity provider that is not self_signed', async () => {
+            const config = defaultConfig()
+            config.networks.find(
+                (network) => network.id === localnetId
+            )!.identityProviderId = 'idp-mock-oauth'
+            const auth = service(config)
+
+            await expect(
+                auth.connect(localnetId, { clientSecret: 'unsafe' })
+            ).rejects.toMatchObject({
+                name: AuthErrorName.UnsupportedAuthMethod,
+            })
+            expect(authContext.store).not.toHaveBeenCalled()
+        })
     })
 
     it('rejects while the vault is locked', async () => {
@@ -223,7 +293,11 @@ describe('createAuthService', () => {
         ])
         expect(
             await (await loadAuthedStore(store, authContext)).listSessions()
-        ).toEqual([expect.objectContaining({ accessToken: tokenB })])
+        ).toEqual([
+            expect.objectContaining({
+                accessTokenHash: await hashAccessToken(tokenB),
+            }),
+        ])
         await expect(auth.getStatus()).resolves.toBe('connected')
     })
 })

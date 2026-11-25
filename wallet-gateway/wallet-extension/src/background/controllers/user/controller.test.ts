@@ -23,12 +23,14 @@ import {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { createWalletStore, loadAuthedStore } from '../../store'
-import { createVaultSigningStore } from '../../store/signing-store'
-import { createTestWalletStore } from '../../store/test-store'
-import { createVault, type Vault, VaultLockedError } from '../../vault'
-import { userController } from '.'
+
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+
+import { createWalletStore, loadAuthedStore } from '../../store/index.ts'
+import { createVaultSigningStore } from '../../store/signing-store.ts'
+import { createTestWalletStore } from '../../store/test-store.ts'
+import { createVault, type Vault, VaultLockedError } from '../../vault/index.ts'
+import { userController } from './index.ts'
 
 const networkId = 'canton:local-oauth'
 const authContext = { userId: 'user-1', accessToken: 'token-1' }
@@ -127,6 +129,9 @@ describe('userController transactions', () => {
     let signingStore: SigningDriverStore
     let controller: ReturnType<typeof userController>
     let postWithRetry: ReturnType<typeof vi.spyOn>
+    // postWithRetry receives a factory that builds a fresh body per attempt
+    const resolvePostBody = (call: unknown[]): unknown =>
+        typeof call[1] === 'function' ? call[1]() : call[1]
     let sessionSink: { send: ReturnType<typeof vi.fn>; close: () => void }
     let otherSessionSink: { send: ReturnType<typeof vi.fn>; close: () => void }
 
@@ -226,29 +231,7 @@ describe('userController transactions', () => {
         )
         expect(postWithRetry).toHaveBeenCalledWith(
             '/v2/interactive-submission/executeAndWait',
-            {
-                userId: authContext.userId,
-                preparedTransaction: pendingTransaction.preparedTransaction,
-                hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-                submissionId: expect.any(String),
-                deduplicationPeriod: { Empty: {} },
-                partySignatures: {
-                    signatures: [
-                        {
-                            party: wallet.partyId,
-                            signatures: [
-                                {
-                                    signature,
-                                    signedBy: wallet.namespace,
-                                    format: 'SIGNATURE_FORMAT_CONCAT',
-                                    signingAlgorithmSpec:
-                                        'SIGNING_ALGORITHM_SPEC_ED25519',
-                                },
-                            ],
-                        },
-                    ],
-                },
-            },
+            expect.any(Function),
             expect.objectContaining({
                 retries: 20,
                 delayMs: 3000,
@@ -258,6 +241,29 @@ describe('userController transactions', () => {
                 ]),
             })
         )
+        expect(resolvePostBody(postWithRetry.mock.calls[0]!)).toEqual({
+            userId: authContext.userId,
+            preparedTransaction: pendingTransaction.preparedTransaction,
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            submissionId: expect.any(String),
+            deduplicationPeriod: { Empty: {} },
+            partySignatures: {
+                signatures: [
+                    {
+                        party: wallet.partyId,
+                        signatures: [
+                            {
+                                signature,
+                                signedBy: wallet.namespace,
+                                format: 'SIGNATURE_FORMAT_CONCAT',
+                                signingAlgorithmSpec:
+                                    'SIGNING_ALGORITHM_SPEC_ED25519',
+                            },
+                        ],
+                    },
+                ],
+            },
+        })
         expect(await store.getTransaction(pendingTransaction.id)).toMatchObject(
             { status: 'executed', payload: ledgerResult, externalTxId }
         )
@@ -324,17 +330,14 @@ describe('userController transactions', () => {
             ledgerResult
         )
 
-        const requests = postWithRetry.mock.calls as [
-            string,
-            {
-                submissionId: string
-                partySignatures: {
-                    signatures: [{ signatures: [{ signature: string }] }]
-                }
-            },
-        ][]
+        const requests = postWithRetry.mock.calls.map(resolvePostBody) as {
+            submissionId: string
+            partySignatures: {
+                signatures: [{ signatures: [{ signature: string }] }]
+            }
+        }[]
         expect(
-            requests.map(([, request]) => ({
+            requests.map((request) => ({
                 submissionId: request.submissionId,
                 signature:
                     request.partySignatures.signatures[0].signatures[0]
@@ -370,7 +373,7 @@ describe('userController transactions', () => {
 
         await controller.execute(params)
 
-        const request = postWithRetry.mock.calls[0]![1] as {
+        const request = resolvePostBody(postWithRetry.mock.calls[0]!) as {
             partySignatures: {
                 signatures: [{ signatures: [{ signature: string }] }]
             }

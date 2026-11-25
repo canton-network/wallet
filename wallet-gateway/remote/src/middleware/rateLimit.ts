@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import type { Request } from 'express'
+import { ipKeyGenerator, rateLimit } from 'express-rate-limit'
 
 export function ipRateLimitKeyGenerator(req: Request): string {
     return `ip:${ipKeyGenerator(req.ip || req.socket.remoteAddress || 'unknown')}`
@@ -20,7 +20,7 @@ export function rateLimitKeyGenerator(req: Request): string {
 export function rateLimiter(requestRateLimit: number) {
     return rateLimit({
         windowMs: 1 * 60 * 1000, // 1 minute
-        max: requestRateLimit, // limit each IP to requestRateLimit requests per windowMs
+        limit: requestRateLimit, // limit each IP to requestRateLimit requests per windowMs
         keyGenerator: rateLimitKeyGenerator,
         standardHeaders: true,
         legacyHeaders: false,
@@ -30,7 +30,7 @@ export function rateLimiter(requestRateLimit: number) {
 export function preAuthIpRateLimiter(requestRateLimit: number) {
     return rateLimit({
         windowMs: 1 * 60 * 1000,
-        max: requestRateLimit,
+        limit: requestRateLimit,
         keyGenerator: ipRateLimitKeyGenerator,
         // Apply only if JWT middleware has not attached an authenticated context at end of request.
         skipSuccessfulRequests: true,
@@ -43,7 +43,7 @@ export function preAuthIpRateLimiter(requestRateLimit: number) {
 export function authenticatedRateLimiter(requestRateLimit: number) {
     return rateLimit({
         windowMs: 1 * 60 * 1000,
-        max: requestRateLimit,
+        limit: requestRateLimit,
         keyGenerator: rateLimitKeyGenerator,
         // Apply only after JWT middleware has attached an authenticated context.
         skip: (req) => !req.authContext?.userId,

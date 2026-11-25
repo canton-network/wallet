@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+
 import {
     walletHandler,
     subscribe,
@@ -14,7 +15,7 @@ import {
     type PendingRequest,
     type SessionInfo,
     type NetworkInfo,
-} from '../walletkit'
+} from '../walletkit/index.ts'
 
 interface Wallet {
     partyId: string

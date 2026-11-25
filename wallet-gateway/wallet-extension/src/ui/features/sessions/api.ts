@@ -7,17 +7,19 @@ import {
     useMutation,
     useQueryClient,
 } from '@tanstack/react-query'
+
 import {
     authMessenger,
     type ConnectionStatus,
+    type ConnectRequest,
     EXTENSION_ORIGIN,
-} from '@/shared/auth-protocol'
-import { queryKeys } from '@/ui/lib/query/keys'
-import { getUserClient } from '@/ui/lib/user-client'
+} from '@/shared/auth-protocol.ts'
+import { queryKeys } from '@/ui/lib/query/keys.ts'
+import { getUserClient } from '@/ui/lib/user-client.ts'
 
 /**
  * Whether the extension pages are connected to a network, from the
- * background. Route guards act on it, so `staleTime: 0` makes `fetchQuery`
+ * background. Route guards act on it, so `staleTime: 0` makes `queryClient.query`
  * ask every time.
  */
 export const connectionStatusQuery = () =>
@@ -52,13 +54,14 @@ export const currentSessionQuery = () =>
 
 /**
  * Signs in to the network's identity provider and connects the extension
- * pages to it. The background keeps the token.
+ * pages to it. `clientId` and `clientSecret` are for `self_signed` networks.
+ * The background keeps the token.
  */
 export function useConnect() {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: (networkId: string) =>
-            authMessenger.sendMessage('auth.connect', { networkId }),
+        mutationFn: (data: ConnectRequest) =>
+            authMessenger.sendMessage('auth.connect', data),
         onSuccess: async () => {
             queryClient.setQueryData<ConnectionStatus>(
                 queryKeys.sessions.status(),

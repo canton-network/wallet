@@ -1,11 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Command, Option } from '@commander-js/extra-typings'
 import { execFileSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { getRepoRoot, SUPPORTED_VERSIONS, type Network } from './lib/utils.js'
+
+import { Command, Option } from '@commander-js/extra-typings'
+
+import { getRepoRoot, SUPPORTED_VERSIONS, type Network } from './lib/utils.ts'
 
 const rootDir = getRepoRoot()
 const LOCALNET_DIR = path.join(rootDir, '.localnet/docker-compose/localnet')

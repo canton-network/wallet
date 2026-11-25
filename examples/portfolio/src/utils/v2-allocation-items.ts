@@ -20,7 +20,7 @@ import type {
     AllocationInstructionV2ActionItem,
     ActionItem,
 } from '@components/types'
-import Decimal from 'decimal.js'
+import { Decimal } from 'decimal.js'
 
 export const ownsAuthorizer = (
     spec: AllocationSpecification,
@@ -308,7 +308,9 @@ export function isSpecCovered(
 ): boolean {
     const legKey = (s: AllocationSpecification) =>
         JSON.stringify(
-            s.transferLegSides.map((l) => [l.transferLegId, l.side]).sort()
+            s.transferLegSides
+                .map((l) => JSON.stringify([l.transferLegId, l.side]))
+                .sort()
         )
     return existing.some(
         (e) =>

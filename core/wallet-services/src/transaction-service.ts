@@ -9,12 +9,6 @@ import {
     type Types,
 } from '@canton-network/core-ledger-client'
 import { errorCodes } from '@canton-network/core-rpc-errors'
-import type {
-    Store,
-    Transaction,
-    Wallet,
-    Network,
-} from '@canton-network/core-wallet-store'
 import {
     type Error as SigningError,
     type GetTransactionResult,
@@ -23,14 +17,10 @@ import {
     type Methods as SigningController,
     type SignTransactionParams,
 } from '@canton-network/core-signing-lib'
-import type { SigningDrivers, HASHING_SCHEME_VERSION } from './types.js'
-import type { Notifier } from './notification/index.js'
-import type {
-    ExecuteParams,
-    ExecuteResult,
-    SignParams,
-    SignResult,
-} from '@canton-network/core-wallet-user-rpc-client'
+import {
+    type AuthContext,
+    AuthTokenProvider,
+} from '@canton-network/core-wallet-auth'
 import type {
     TxChangedExecutedEvent,
     TxChangedFailedEvent,
@@ -38,12 +28,27 @@ import type {
     TxChangedSignedEvent,
     UserId,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { ledgerPrepareParams, type PrepareParams } from './utils.js'
-import {
-    type AuthContext,
-    AuthTokenProvider,
-} from '@canton-network/core-wallet-auth'
+import type {
+    Store,
+    Transaction,
+    Wallet,
+    Network,
+} from '@canton-network/core-wallet-store'
+import type {
+    ExecuteParams,
+    ExecuteResult,
+    SignParams,
+    SignResult,
+} from '@canton-network/core-wallet-user-rpc-client'
 import { getLogger } from '@logtape/logtape'
+
+import type { Notifier } from './notification/index.ts'
+import type { SigningDrivers, HASHING_SCHEME_VERSION } from './types.ts'
+import {
+    getSigningController,
+    ledgerPrepareParams,
+    type PrepareParams,
+} from './utils.ts'
 
 export type SignAndExecuteResult = SignResult | ExecuteResult
 
@@ -81,8 +86,9 @@ export class TransactionService {
         signParams: SignParams
     ): Promise<SignResult> {
         const signingProvider = wallet.signingProviderId as SigningProvider
-        const driver = this.signingDrivers[signingProvider]?.controller(
-            authContext.userId
+        const driver = getSigningController(
+            this.signingDrivers[signingProvider],
+            authContext
         )
         if (!driver) {
             throw new Error(`No driver found for ${signingProvider}`)
@@ -98,12 +104,11 @@ export class TransactionService {
             keyIdentifier: {
                 publicKey: wallet.publicKey,
             },
+            internalTxId: crypto
+                .randomUUID()
+                .replace(/-/g, '')
+                .substring(0, 16),
         }
-
-        const internalTxId = crypto
-            .randomUUID()
-            .replace(/-/g, '')
-            .substring(0, 16)
 
         /**
          * The ultimate goal is that every signing driver is indistinguishable,
@@ -118,32 +123,14 @@ export class TransactionService {
             case SigningProvider.DFNS:
             case SigningProvider.BITGO:
             case SigningProvider.SECUROSYS:
-            case SigningProvider.FIREBLOCKS: {
+            case SigningProvider.FIREBLOCKS:
+            case SigningProvider.BLOCKDAEMON: {
                 return this.signWithDriver(
                     driver,
                     signingProvider,
                     wallet,
                     tx,
                     baseSignParams
-                )
-            }
-            case SigningProvider.BLOCKDAEMON: {
-                if (!authContext.email) {
-                    throw new Error(
-                        'Email is required for Blockdaemon wallet allocation'
-                    )
-                }
-
-                const blockdaemonDriver = this.signingDrivers[
-                    SigningProvider.BLOCKDAEMON
-                ]?.controller(authContext.email)
-
-                return this.signWithDriver(
-                    blockdaemonDriver!, // we checked the driver existence above, so this is safe
-                    signingProvider,
-                    wallet,
-                    tx,
-                    { ...baseSignParams, internalTxId }
                 )
             }
             default:
@@ -329,23 +316,9 @@ export class TransactionService {
             throw new Error(`No driver found for provider ${provider}`)
         }
 
-        if (provider === SigningProvider.BLOCKDAEMON && !authContext.email) {
-            throw new Error(
-                'Invalid auth context (missing email) for SigningProvider BlockDaemon'
-            )
-        }
+        const driver = getSigningController(signingProvider, authContext)
 
-        const controllerId =
-            provider === SigningProvider.BLOCKDAEMON
-                ? authContext.email
-                : authContext.userId
-
-        const driver = signingProvider.controller(controllerId)
-        const args =
-            provider === SigningProvider.SECUROSYS
-                ? { txId: externalTxId }
-                : { userId: controllerId, txId: externalTxId }
-
+        const args = { txId: externalTxId }
         return driver.getTransaction(args).then(handleSigningError)
     }
 
@@ -616,11 +589,10 @@ export class TransactionService {
 
             rawSignature = signingResult.signature
         } else if (wallet.signingProviderId === SigningProvider.WALLET_KERNEL) {
-            const driver =
-                this.signingDrivers[SigningProvider.WALLET_KERNEL]?.controller(
-                    userId
-                )
-
+            const driver = getSigningController(
+                this.signingDrivers[SigningProvider.WALLET_KERNEL],
+                authContext
+            )
             if (!driver) {
                 throw new Error(`Wallet kernel signing driver not available`)
             }
@@ -648,17 +620,16 @@ export class TransactionService {
 
         let result: TxChangedExecutedEvent['payload']
         try {
-            const submissionId = crypto.randomUUID()
-            this.logger.info('Executing transaction with submissionId', {
-                submissionId,
-                transactionId: transaction.id,
-                commandId: transaction.commandId,
-                externalTxId: transaction.externalTxId,
-            })
+            const buildExecuteAndWaitParams = () => {
+                const submissionId = crypto.randomUUID()
+                this.logger.info('Executing transaction with submissionId', {
+                    submissionId,
+                    transactionId: transaction.id,
+                    commandId: transaction.commandId,
+                    externalTxId: transaction.externalTxId,
+                })
 
-            result = await ledgerClient.postWithRetry(
-                '/v2/interactive-submission/executeAndWait',
-                {
+                return {
                     userId,
                     preparedTransaction: transaction.preparedTransaction,
                     hashingSchemeVersion: this.hashingSchemeVersion,
@@ -682,7 +653,12 @@ export class TransactionService {
                             },
                         ],
                     },
-                } as Types['JsExecuteSubmissionAndWaitRequest'],
+                } satisfies Types['JsExecuteSubmissionAndWaitRequest']
+            }
+
+            result = await ledgerClient.postWithRetry(
+                '/v2/interactive-submission/executeAndWait',
+                buildExecuteAndWaitParams,
                 { ...defaultRetryableOptions, retries: 20 }
             )
         } catch (err) {

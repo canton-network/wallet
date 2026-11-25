@@ -1,42 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { browser, type Browser } from 'wxt/browser'
-import { logger } from '@/shared/logger'
-import { vaultMessenger } from '@/shared/vault-protocol'
-import type { Vault } from './vault'
+import { logger } from '@/shared/logger.ts'
+import { vaultMessenger } from '@/shared/vault-protocol.ts'
 
-/** The extension pages that may use the vault service. */
-const TRUSTED_PAGES = new Set(['/popup.html', '/app.html'])
+import { isTrustedSender, type Sender } from './trusted-service.ts'
+import type { Vault } from './vault/index.ts'
 
 const log = logger.getChild('vault')
-
-type Sender = Pick<Browser.runtime.MessageSender, 'id' | 'url'>
-
-/**
- * Whether a message comes from the extension's popup or app page. Content
- * scripts share the extension's ID, so the URL decides; its hash and query
- * don't matter. `sender.tab` doesn't help, since app.html opens in a tab.
- */
-export function isTrustedSender(sender: Sender): boolean {
-    if (sender.id !== browser.runtime.id || sender.url === undefined) {
-        return false
-    }
-    let url: URL
-    try {
-        url = new URL(sender.url)
-    } catch {
-        return false
-    }
-    // Compare protocol and host, not `origin`: the URL standard gives
-    // non-web schemes an opaque origin ("null"), which every such URL shares.
-    const extension = new URL(browser.runtime.getURL('/'))
-    return (
-        url.protocol === extension.protocol &&
-        url.host === extension.host &&
-        TRUSTED_PAGES.has(url.pathname)
-    )
-}
 
 /**
  * Answers the vault messages of the extension pages. Must be called

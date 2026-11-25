@@ -10,18 +10,7 @@
  * (e.g. `sdk.connect()`, `sdk.status()`).
  */
 
-import {
-    DiscoveryClient,
-    type ProviderAdapter,
-    type WalletPickerEntry,
-    type WalletPickerFn,
-} from '@canton-network/core-wallet-discovery'
-import {
-    notifyWalletPickerConnected,
-    notifyWalletPickerError,
-    pickWallet,
-    waitForWalletPickerRetrySelection,
-} from '@canton-network/core-wallet-ui-components'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     EventListener,
     Provider,
@@ -41,19 +30,31 @@ import type {
     SignMessageParams,
     SignMessageResult,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import { providerErrors } from '@canton-network/core-rpc-errors'
-import { DappClient } from './client'
-import { ExtensionAdapter } from './adapter/extension-adapter'
+import {
+    DiscoveryClient,
+    type ProviderAdapter,
+    type WalletPickerEntry,
+    type WalletPickerFn,
+} from '@canton-network/core-wallet-discovery'
+import {
+    notifyWalletPickerConnected,
+    notifyWalletPickerError,
+    pickWallet,
+    waitForWalletPickerRetrySelection,
+} from '@canton-network/core-wallet-ui-components'
+
+import { ExtensionAdapter } from './adapter/extension-adapter.ts'
 import {
     RemoteAdapter,
     type RemoteAdapterConfig,
-} from './adapter/remote-adapter'
-import * as storage from './storage'
-import { clearAllLocalState } from './util'
+} from './adapter/remote-adapter.ts'
+import { requestAnnouncedProviders } from './announce-discovery.ts'
+import { CANTON_LOGO_PNG } from './assets.ts'
+import { DappClient } from './client.ts'
 import defaultGatewayList from './gateways.json'
+import * as storage from './storage.ts'
+import { clearAllLocalState } from './util.ts'
 import defaultExtensionsList from './wallets.json'
-import { CANTON_LOGO_PNG } from './assets'
-import { requestAnnouncedProviders } from './announce-discovery'
 
 export interface DappSDKConnectOptions<
     TDefaultAdapter extends ProviderAdapter = ProviderAdapter,

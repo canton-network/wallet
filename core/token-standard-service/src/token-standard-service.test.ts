@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi } from 'vitest'
-import { TokenStandardService } from './token-standard-service.js'
-import { CoreService } from './core-service.js'
-import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { HoldingView } from '@canton-network/core-token-standard'
+import type { PrettyContract } from '@canton-network/core-tx-parser'
 import { Decimal } from 'decimal.js'
-import rawTransactions from './__tests__/data/mock/txs.json'
+import { describe, it, expect, vi } from 'vitest'
+
 import prettyTransactions from './__tests__/data/expected/txs.json'
+import rawTransactions from './__tests__/data/mock/txs.json'
+import { CoreService } from './core-service.ts'
+import { TokenStandardService } from './token-standard-service.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 const { mockAcsState, mockParseTransaction } = vi.hoisted(() => ({

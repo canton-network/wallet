@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import { decodeJwt } from 'jose'
 import { z } from 'zod'
-import { IdpUnavailableError, type AuthContext } from './auth-service.js'
-import { providerErrors } from '@canton-network/core-rpc-errors'
+
+import { IdpUnavailableError, type AuthContext } from './auth-service.ts'
 
 export function assertIsConnected(
     authContext: AuthContext | undefined

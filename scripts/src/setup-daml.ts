@@ -5,8 +5,8 @@
  * Installs DPM and fetches the localnet DARs if they are missing, so DAML codegen tasks can run in parallel.
  */
 
-import { installDPM } from './install-dpm.js'
-import { ensureLocalnetDars } from './lib/daml-codegen.js'
+import { installDPM } from './install-dpm.ts'
+import { ensureLocalnetDars } from './lib/daml-codegen.ts'
 
 async function main() {
     await installDPM()

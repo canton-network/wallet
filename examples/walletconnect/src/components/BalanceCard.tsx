@@ -1,6 +1,6 @@
-import { Box, Typography, Chip, Button } from '@mui/material'
 import StarIcon from '@mui/icons-material/Star'
 import StarBorderIcon from '@mui/icons-material/StarBorder'
+import { Box, Typography, Chip, Button } from '@mui/material'
 
 interface Wallet {
     partyId: string

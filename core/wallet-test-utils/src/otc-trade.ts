@@ -4,6 +4,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
+
 import type { PartyId } from '@canton-network/core-types'
 import {
     SDK,
@@ -12,7 +13,8 @@ import {
     localNetStaticConfig,
 } from '@canton-network/wallet-sdk'
 import { getLogger } from '@logtape/logtape'
-import { localNetGlobalSynchronizer } from './localnet.js'
+
+import { localNetGlobalSynchronizer } from './localnet.ts'
 
 // This example needs uploaded .dar for splice-token-test-trading-app
 // It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script
@@ -311,7 +313,7 @@ export class OTCTrade {
         // TODO: check settlementRefId?
         const fetchRelevantAllocations = async () => {
             const allocationContracts =
-                await extendedSDK.token.allocation.pending(this.venue)
+                await extendedSDK.token.v1.allocation.pending(this.venue)
             return allocationContracts.filter((a) => {
                 const { settlement } = a.interfaceViewValue.allocation
                 return settlement.executor === this.venue
@@ -337,7 +339,7 @@ export class OTCTrade {
             relevantAllocations.map(async (a) => {
                 const cid = a.contractId
                 const choiceContext =
-                    await extendedSDK.token.allocation.context.execute({
+                    await extendedSDK.token.v1.allocation.context.execute({
                         allocationCid: cid,
                         registryUrl:
                             localNetStaticConfig.LOCALNET_REGISTRY_API_URL,

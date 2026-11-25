@@ -1,6 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { ACSReader, type AcsOptions } from '@canton-network/core-acs-reader'
+import type {
+    AbstractLedgerProvider,
+    Ops,
+} from '@canton-network/core-provider-ledger'
 import {
     TokenStandardClient,
     HOLDING_INTERFACE_ID,
@@ -13,8 +18,6 @@ import {
     HOLDING_INTERFACE_ID_V2,
     isSameAccount,
 } from '@canton-network/core-token-standard-v2'
-import type { PartyId } from '@canton-network/core-types'
-import { ACSReader, type AcsOptions } from '@canton-network/core-acs-reader'
 import {
     ensureInterfaceViewIsPresent,
     TransactionParser,
@@ -26,12 +29,12 @@ import {
     type TransferObject,
     type JsActiveContract,
 } from '@canton-network/core-tx-parser'
+import type { PartyId } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import type {
-    AbstractLedgerProvider,
-    Ops,
-} from '@canton-network/core-provider-ledger'
+import { getLogger } from '@logtape/logtape'
 import { Decimal } from 'decimal.js'
+
+import { isApiVersion, TokenStandardService } from './token-standard-service.ts'
 import type {
     ApiVersion,
     GenericTokenStandardClient,
@@ -42,9 +45,7 @@ import type {
     JsTransaction,
     OffsetCheckpointUpdate,
     TransactionUpdate,
-} from './types.js'
-import { isApiVersion, TokenStandardService } from './token-standard-service.js'
-import { getLogger } from '@logtape/logtape'
+} from './types.ts'
 
 export class CoreService {
     private logger = getLogger([

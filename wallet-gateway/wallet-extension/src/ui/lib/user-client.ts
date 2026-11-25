@@ -3,7 +3,8 @@
 
 import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 import { createProxyService } from '@webext-core/proxy-service'
-import { USER_RPC_KEY } from '@/shared/service-keys'
+
+import { USER_RPC_KEY } from '@/shared/service-keys.ts'
 
 type UserRpcService = Record<string, (params: unknown) => Promise<unknown>>
 

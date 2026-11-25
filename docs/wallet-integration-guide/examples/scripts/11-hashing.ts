@@ -1,11 +1,11 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({
@@ -47,7 +47,7 @@ await preparedTapCommand
     .sign(senderKeys.privateKey)
     .execute({ partyId: sender.partyId })
 
-const calculatedTxHash = await sdk.utils.hash.preparedTransacation(
+const calculatedTxHash = await sdk.utils.hash.preparedTransaction(
     preparedTapCommandResponse.preparedTransaction
 )
 const hex = calculatedTxHash.toHex()

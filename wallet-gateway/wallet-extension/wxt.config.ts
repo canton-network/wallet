@@ -3,7 +3,9 @@
 
 import { tanstackRouter } from '@tanstack/router-plugin/vite'
 import { defineConfig } from 'wxt'
-import { WALLET_NAME } from './src/shared/brand'
+
+import { workspaceSources } from '../../vite.source.ts'
+import { WALLET_NAME } from './src/shared/brand.ts'
 
 // See https://wxt.dev/api/config.html
 export default defineConfig({
@@ -24,6 +26,7 @@ export default defineConfig({
             }),
         ],
     },
+    vite: () => ({ plugins: [workspaceSources()] }),
     manifestVersion: 3,
     manifest: ({ browser, mode }) => ({
         name: WALLET_NAME,

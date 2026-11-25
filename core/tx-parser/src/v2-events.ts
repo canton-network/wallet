@@ -10,10 +10,11 @@ import {
     type HoldingView as HoldingViewV2,
     HOLDING_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
-import { matchInterfaceIds, ReasonMetaKey } from './constants.js'
-import type { Holding, Label, TokenStandardChoice } from './types.js'
-import BigNumber from 'bignumber.js'
-import { getMetaKeyValue } from './utils.js'
+import { BigNumber } from 'bignumber.js'
+
+import { matchInterfaceIds, ReasonMetaKey } from './constants.ts'
+import type { Holding, Label, TokenStandardChoice } from './types.ts'
+import { getMetaKeyValue } from './utils.ts'
 
 //ownerless accounts for mints and burns from CIP-112
 export const MINT_ACCOUNT_ID = 'cip-112/mint'

@@ -1,14 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import { generateKeyPairSync, sign } from 'node:crypto'
+
 import { validateStrict } from 'ctrf'
-import {
-    validateReport,
-    verifyMessageSignature,
-    verifyReportSignature,
-} from './validation.ts'
+import { describe, expect, it } from 'vitest'
+
 import {
     reportHash,
     signReport,
@@ -17,6 +14,11 @@ import {
     serializeReport,
     type Report,
 } from './report.ts'
+import {
+    validateReport,
+    verifyMessageSignature,
+    verifyReportSignature,
+} from './validation.ts'
 
 function report(): Report {
     return {

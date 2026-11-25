@@ -3,13 +3,14 @@
 
 import type { PartyId } from '@canton-network/core-types'
 import type { PreparedCommand } from '@canton-network/wallet-sdk'
-import { useQueryClient, useMutation } from '@tanstack/react-query'
-import { submitViaProvider } from '@lib/submit'
-import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
-import { useWalletSdk } from './useWalletSdk'
-import { invalidateAllocationQueries } from './query-keys'
 import type { AllocationV2ActionItem } from '@components/types'
+import { submitViaProvider } from '@lib/submit'
+import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { getAllocationActions } from '@utils/v2-allocation-items'
+
+import { invalidateAllocationQueries } from './query-keys.ts'
+import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export const useWithdrawAllocationV2 = () => {
     const { sdk } = useWalletSdk()
