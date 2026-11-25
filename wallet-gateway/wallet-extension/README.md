@@ -87,13 +87,13 @@ The wallet store holds the networks, IdPs, parties, sessions and transactions. I
 
 ### Token service
 
-The background builds the wallet SDK (`@canton-network/wallet-sdk`) for the signed-in user and the current network, and the pages call it through `TOKEN_RPC_KEY`, so the access token never leaves the background. The service has the SDK's nesting but only a few methods: `token.assets()`, `token.instruments()`, `token.v1/v2.utxos.list()`, `token.v1/v2.transfer.pending()`, `token.transfer.create()` and `token.transfer.withdraw()`. It never hands out the SDK itself, which also has the ledger, party and keys APIs. Every method needs a signed-in user, and a method that takes a `partyId` rejects a party that isn't one of the user's wallets.
+The background builds the wallet SDK (`@canton-network/wallet-sdk`) for the signed-in user and the current network, and the pages call it through `TOKEN_RPC_KEY`, so the access token never leaves the background. The service has the SDK's nesting but only a few methods: `token.instruments()`, `token.v1/v2.utxos.list()`, `token.v1/v2.transfer.pending()`, `token.transfer.create()` and `token.transfer.withdraw()`. It never hands out the SDK itself, which also has the ledger, party and keys APIs. Every method needs a signed-in user, and a method that takes a `partyId` rejects a party that isn't one of the user's wallets.
 
 - `token/sdk.ts` builds the SDK for every call, from the current network, access token and registry URLs. A network without a `synchronizerId` defaults to the connected synchronizer with the alias `global`, or the first one.
 - The SDK is built with `registryAuth: 'none'`. Without it the SDK sends the user's ledger token to every registry.
 - Registry URLs come from the vault item `registries` (`store/registries.ts`). A new vault starts with `http://scan.localhost:4000` for `canton:localnet`.
-- Results have to survive runtime messaging, which turns a `URL` into a string and a `Date` into an ISO string. `token.assets()` returns `registryUrl` as a string.
-- The send page and the outgoing-transfers page (`ui/features/transfers/`) call `token.transfer.create()` and `token.transfer.withdraw()`. The page's confirm step is the approval, so the background prepares, signs and executes the transaction in the user's session without a prompt.
+- Results have to survive runtime messaging, which turns a `URL` into a string and a `Date` into an ISO string. `token.instruments()` returns `registryUrl` as a string.
+- The send page and the outgoing-transfers page (`ui/features/transfers/`) call `token.transfer.create()` and `token.transfer.withdraw()`. The page's confirm step is the approval, so the background prepares, signs and executes the transaction in the user's session without a prompt. A transfer that was signed but didn't execute rejects with code -32603, as its outcome is unknown.
 
 ### Site approval
 

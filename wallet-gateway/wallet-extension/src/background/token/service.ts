@@ -1,8 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { rpcErrors } from '@canton-network/core-rpc-errors'
 import type { PartyId } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { hashAccessToken } from '@canton-network/core-wallet-store'
 import {
     type CreateTransferParams,
     type RegistryInstrument,
@@ -22,11 +24,6 @@ import { prepareTransaction } from '../transactions/prepare.ts'
 import { submitTransaction } from '../transactions/submit.ts'
 import { registryInstruments } from './instruments.ts'
 import type { TokenSdk, TokenSdkConfig } from './sdk.ts'
-
-/** An asset as the pages receive it: messaging turns a `URL` into a string. */
-export type TokenAsset = Omit<AssetBody, 'registryUrl'> & {
-    registryUrl: string
-}
 
 /** The SDK's holdings parameters, without `continueUntilCompletion`. */
 export type ListHoldingsParams = {
@@ -51,12 +48,13 @@ type PendingTransfers<V extends 'v1' | 'v2'> = Awaited<
  */
 export type TokenService = {
     token: {
-        assets(): Promise<TokenAsset[]>
         /** The instruments of the current network's registries. */
         instruments(): Promise<RegistryInstrument[]>
         /**
          * The extension page's review step is the approval: these prepare,
-         * sign and execute in one call, and resolve once executed.
+         * sign and execute in one call, and resolve once executed. They
+         * reject with an `Error`; a -32603 error code means the transaction
+         * was signed and may have executed.
          */
         transfer: {
             create(params: CreateTransferParams): Promise<void>
@@ -99,6 +97,25 @@ export interface TokenServiceDeps {
 interface SignedIn {
     context: AuthContext
     store: ExtensionStore
+}
+
+// Messaging sends a rejection that is no `Error` as `{}`, and the page's
+// promise resolves with it, as if the transfer had executed.
+function toError(cause: unknown): Error {
+    if (cause instanceof Error) return cause
+    return new Error(
+        typeof cause === 'string' && cause !== ''
+            ? cause
+            : 'The transfer failed without an error message'
+    )
+}
+
+async function rejectingWithError(write: () => Promise<void>): Promise<void> {
+    try {
+        await write()
+    } catch (cause) {
+        throw toError(cause)
+    }
 }
 
 export function createTokenService({
@@ -164,19 +181,29 @@ export function createTokenService({
         return asset
     }
 
+    /** The extension's session for the user's token. */
+    async function extensionSession({ context, store }: SignedIn) {
+        const accessTokenHash = await hashAccessToken(context.accessToken)
+        const session = (await store.listSessions()).find(
+            (candidate) =>
+                candidate.origin === EXTENSION_ORIGIN &&
+                candidate.accessTokenHash === accessTokenHash
+        )
+        if (!session) throw new Error('The extension is not connected')
+        return session
+    }
+
     /**
      * Prepares, signs and executes a command as `partyId`, in the
      * extension's session.
      */
     async function submit(
-        { context, store }: SignedIn,
+        user: SignedIn,
         partyId: PartyId,
         [command, disclosedContracts]: PreparedCommand
     ): Promise<void> {
-        const session = await store.getSession(context.accessToken)
-        if (session?.origin !== EXTENSION_ORIGIN) {
-            throw new Error('The extension is not connected')
-        }
+        const { context, store } = user
+        const session = await extensionSession(user)
         const transactionId = crypto.randomUUID()
         const commandId = crypto.randomUUID()
         await prepareTransaction(store, context, {
@@ -197,11 +224,25 @@ export function createTokenService({
                 sessionId: session.id,
                 transactionId,
             })
-        } catch (error) {
+        } catch (cause) {
+            const message = toError(cause).message
             // Unsigned, it can't reach the ledger. A signed one is kept, as
-            // its outcome is unknown.
-            await store.removePendingTransaction(transactionId).catch(() => {})
-            throw error
+            // its outcome is unknown, unless the ledger reported it failed.
+            const removed = await store
+                .removePendingTransaction(transactionId)
+                .catch(() => false)
+            const status = removed
+                ? 'pending'
+                : await store
+                      .getTransaction(transactionId)
+                      .then((transaction) => transaction?.status)
+                      .catch(() => undefined)
+            if (status === 'pending' || status === 'failed') {
+                throw rpcErrors.transactionRejected({ message })
+            }
+            throw rpcErrors.internal({
+                message: `The outcome of the transaction is unknown: ${message}`,
+            })
         }
     }
 
@@ -219,16 +260,64 @@ export function createTokenService({
         offset,
     })
 
+    async function create({
+        sender,
+        receiver,
+        instrumentId,
+        amount,
+        expiry,
+        memo,
+        tokenStandardVersion,
+    }: CreateTransferParams): Promise<void> {
+        const user = await ownerOf(sender)
+        const expirationDate = new Date(expiry)
+        if (Number.isNaN(expirationDate.getTime())) {
+            throw new Error('The expiry is not a valid date')
+        }
+        const sdk = await sdkFor(user)
+        const asset = await findAsset(sdk, instrumentId)
+        const { used } = resolveTransferVersion(asset, tokenStandardVersion)
+        const params = {
+            sender,
+            recipient: receiver,
+            amount,
+            instrumentId: asset.id,
+            registryUrl: asset.registryUrl,
+            expirationDate,
+            memo,
+        }
+        const command =
+            used === 'v2'
+                ? await sdk.token.v2.transfer.create(params)
+                : await sdk.token.v1.transfer.create(params)
+        await submit(user, sender, command)
+    }
+
+    async function withdraw({
+        partyId,
+        contractId,
+        instrumentId,
+        version,
+    }: TransferChoiceParams): Promise<void> {
+        const user = await ownerOf(partyId)
+        const sdk = await sdkFor(user)
+        const { registryUrl } = await findAsset(sdk, instrumentId)
+        const command =
+            version === 'v2'
+                ? await sdk.token.v2.transfer.withdraw(
+                      contractId,
+                      [partyId],
+                      registryUrl
+                  )
+                : await sdk.token.v1.transfer.withdraw({
+                      transferInstructionCid: contractId,
+                      registryUrl,
+                  })
+        await submit(user, partyId, command)
+    }
+
     return {
         token: {
-            async assets() {
-                const sdk = await sdkFor(await signedIn())
-                const assets = await sdk.token.assets()
-                return assets.map((asset) => ({
-                    ...asset,
-                    registryUrl: asset.registryUrl.toString(),
-                }))
-            },
             async instruments() {
                 const { store } = await signedIn()
                 const network = await store.getCurrentNetwork()
@@ -237,58 +326,9 @@ export function createTokenService({
                 return lists.flat()
             },
             transfer: {
-                async create({
-                    sender,
-                    receiver,
-                    instrumentId,
-                    amount,
-                    expiry,
-                    memo,
-                    tokenStandardVersion,
-                }) {
-                    const user = await ownerOf(sender)
-                    const expirationDate = new Date(expiry)
-                    if (Number.isNaN(expirationDate.getTime())) {
-                        throw new Error('The expiry is not a valid date')
-                    }
-                    const sdk = await sdkFor(user)
-                    const asset = await findAsset(sdk, instrumentId)
-                    const { used } = resolveTransferVersion(
-                        asset,
-                        tokenStandardVersion
-                    )
-                    const params = {
-                        sender,
-                        recipient: receiver,
-                        amount,
-                        instrumentId: asset.id,
-                        registryUrl: asset.registryUrl,
-                        expirationDate,
-                        memo,
-                    }
-                    const command =
-                        used === 'v2'
-                            ? await sdk.token.v2.transfer.create(params)
-                            : await sdk.token.v1.transfer.create(params)
-                    await submit(user, sender, command)
-                },
-                async withdraw({ partyId, contractId, instrumentId, version }) {
-                    const user = await ownerOf(partyId)
-                    const sdk = await sdkFor(user)
-                    const { registryUrl } = await findAsset(sdk, instrumentId)
-                    const command =
-                        version === 'v2'
-                            ? await sdk.token.v2.transfer.withdraw(
-                                  contractId,
-                                  [partyId],
-                                  registryUrl
-                              )
-                            : await sdk.token.v1.transfer.withdraw({
-                                  transferInstructionCid: contractId,
-                                  registryUrl,
-                              })
-                    await submit(user, partyId, command)
-                },
+                create: (params) => rejectingWithError(() => create(params)),
+                withdraw: (params) =>
+                    rejectingWithError(() => withdraw(params)),
             },
             v1: {
                 utxos: {

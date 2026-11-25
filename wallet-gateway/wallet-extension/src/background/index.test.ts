@@ -119,7 +119,7 @@ describe('startBackground', () => {
         sendMessagesFrom(appPageSender())
         const token = createProxyService(TOKEN_RPC_KEY)
 
-        await expect(token.token.assets()).rejects.toMatchObject({
+        await expect(token.token.instruments()).rejects.toMatchObject({
             name: VaultErrorName.Locked,
         })
         await vault.create('abcde1')
@@ -138,7 +138,7 @@ describe('startBackground', () => {
             createProxyService(USER_RPC_KEY).listNetworks()
         ).rejects.toThrow('is only for the extension pages')
         await expect(
-            createProxyService(TOKEN_RPC_KEY).token.assets()
+            createProxyService(TOKEN_RPC_KEY).token.instruments()
         ).rejects.toThrow('is only for the extension pages')
         await expect(
             createProxyService(DAPP_RPC_KEY).request({

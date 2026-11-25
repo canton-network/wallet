@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Wallet } from '@canton-network/core-wallet-store'
 import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
@@ -99,6 +100,12 @@ describe('createTokenService', () => {
 
     async function signedIn() {
         const tokenService = service()
+        await store.setSession({
+            id: 'dapp-session',
+            origin: 'https://dapp.example',
+            network: networkId,
+            accessToken: context.accessToken,
+        })
         await store.setSession({
             id: 'session-1',
             origin: EXTENSION_ORIGIN,
@@ -233,7 +240,7 @@ describe('createTokenService', () => {
         authContext = { load: async () => undefined }
         const tokenService = service()
 
-        await expect(tokenService.token.assets()).rejects.toThrow(
+        await expect(tokenService.token.instruments()).rejects.toThrow(
             'Not signed in'
         )
         await expect(
@@ -242,23 +249,10 @@ describe('createTokenService', () => {
         expect(createSdk).not.toHaveBeenCalled()
     })
 
-    it('returns asset registry URLs as strings', async () => {
-        const tokenService = await signedIn()
-
-        const assets = await tokenService.token.assets()
-
-        expect(assets).toEqual([
-            expect.objectContaining({
-                id: 'Amulet',
-                registryUrl: 'http://scan.localhost:4000/',
-            }),
-        ])
-    })
-
     it('builds the SDK for the current network, its registries and the user’s token', async () => {
         const tokenService = await signedIn()
 
-        await tokenService.token.assets()
+        await tokenService.token.v1.utxos.list({ partyId: wallet.partyId })
 
         expect(createSdk).toHaveBeenCalledWith({
             network: expect.objectContaining({ id: networkId }),
@@ -322,6 +316,34 @@ describe('createTokenService', () => {
                     origin: EXTENSION_ORIGIN,
                 })
             )
+        })
+
+        it('rejects with an Error when the registry rejects with nothing', async () => {
+            sdk.token.assets.mockRejectedValue(undefined)
+            const tokenService = await signedIn()
+
+            await expect(
+                tokenService.token.transfer.create(transferParams)
+            ).rejects.toBeInstanceOf(Error)
+        })
+
+        it('tells a signed transfer whose outcome is unknown from a failed one', async () => {
+            const tokenService = await signedIn()
+
+            sign.mockRejectedValueOnce(new Error('signer unavailable'))
+            await expect(
+                tokenService.token.transfer.create(transferParams)
+            ).rejects.toMatchObject({
+                code: errorCodes.rpc.transactionRejected,
+            })
+
+            execute.mockRejectedValueOnce(new Error('connection lost'))
+            await expect(
+                tokenService.token.transfer.create(transferParams)
+            ).rejects.toMatchObject({
+                code: errorCodes.rpc.internal,
+                message: expect.stringContaining('outcome'),
+            })
         })
     })
 
