@@ -7,24 +7,16 @@ import {
     isValidPostEndpoint,
     LedgerClient,
     type PostEndpoint,
-    type PrepareSubmissionResponse,
 } from '@canton-network/core-ledger-client'
-import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
-import { SigningProvider } from '@canton-network/core-signing-lib'
+import { providerErrors } from '@canton-network/core-rpc-errors'
 import {
     assertConnected,
     type AuthContext,
     AuthTokenProvider,
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
-import {
-    ledgerPrepareParams,
-    networkStatus,
-} from '@canton-network/core-wallet-services'
-import type {
-    Network as StoreNetwork,
-    Transaction,
-} from '@canton-network/core-wallet-store'
+import { networkStatus } from '@canton-network/core-wallet-services'
+import type { Network as StoreNetwork } from '@canton-network/core-wallet-store'
 
 import { logger } from '@/shared/logger.ts'
 
@@ -35,7 +27,8 @@ import { type SiteApprovals, sessionEnded } from '../../site-approval.ts'
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
-import { HASHING_SCHEME, type TxApprovals } from '../../tx-approval.ts'
+import { prepareTransaction } from '../../transactions/prepare.ts'
+import type { TxApprovals } from '../../tx-approval.ts'
 import type { UnlockRequests } from '../../unlock-request.ts'
 import buildController from './rpc-gen/index.ts'
 import type {
@@ -183,89 +176,13 @@ export const dappController = (
             receivedAt,
         })
 
-        async function prepare() {
-            const primaryWallet = await store.getPrimaryWallet()
-            const wallets = await store.getWallets()
-            const network = await store.getCurrentNetwork()
-
-            let actAs = params.actAs ? [...params.actAs] : []
-            if (actAs.length === 0) {
-                if (!primaryWallet) {
-                    throw new Error(
-                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
-                    )
-                }
-                actAs = [primaryWallet.partyId]
-            }
-
-            for (const party of actAs) {
-                if (!wallets.some((wallet) => wallet.partyId === party)) {
-                    throw new Error(
-                        `Acting party ${party} does not belong to user`
-                    )
-                }
-            }
-
-            const wallet = wallets.find(
-                (candidate) => candidate.partyId === actAs[0]
-            )
-            if (!wallet) {
-                throw new Error(
-                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
-                )
-            }
-            // An external signature is the first acting party's alone,
-            // while the participant executes for all of them.
-            if (
-                new Set(actAs).size > 1 &&
-                wallet.signingProviderId !== SigningProvider.PARTICIPANT
-            ) {
-                throw rpcErrors.invalidParams({
-                    message:
-                        'Multi-party external signing is not supported: a transaction with more than one acting party needs a participant-hosted first party',
-                })
-            }
-
-            const ledgerClient = ledgerClientFor(network, context.accessToken)
-            const synchronizerId =
-                network.synchronizerId ??
-                (await ledgerClient.getSynchronizerId())
-
-            logger.info('prepareExecute: Submitting request to ledger', {
-                transactionId,
-                commandId,
-                actAs,
-            })
-
-            const prepared: PrepareSubmissionResponse =
-                await ledgerClient.postWithRetry(
-                    '/v2/interactive-submission/prepare',
-                    ledgerPrepareParams({
-                        userId: context.userId,
-                        commandId,
-                        actAs,
-                        synchronizerId,
-                        params,
-                        hashingSchemeVersion: HASHING_SCHEME,
-                    })
-                )
-
-            const transaction: Transaction = {
-                id: transactionId,
-                commandId,
-                status: 'pending',
-                preparedTransaction: prepared.preparedTransaction,
-                preparedTransactionHash: prepared.preparedTransactionHash,
-                payload: { ...params, commandId, actAs },
-                // The requesting page, not the session's login origin.
-                origin,
-                createdAt: new Date(),
-            }
-
-            await store.setTransaction(transaction)
-        }
-
-        const prompted = prepare().then(
+        const prompted = prepareTransaction(store, context, {
+            transactionId,
+            commandId,
+            // The requesting page, not the session's login origin.
+            origin,
+            params,
+        }).then(
             async () => {
                 await approval.prompt()
                 logger.info(

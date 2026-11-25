@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
-import { hashPreparedTransaction } from '@canton-network/core-tx-visualizer'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
     type INotificationService,
@@ -18,7 +17,6 @@ import { txApprovalPortId } from '@/shared/ports.ts'
 import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
 import type {
     TxChangedExecutedEvent,
-    TxChangedExecutedPayload,
     TxChangedFailedEvent,
     TxChangedPendingEvent,
 } from './controllers/dapp/rpc-gen/typings.ts'
@@ -29,6 +27,7 @@ import type { SessionCheck } from './session-check.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import type { ExtensionStore, WalletStore } from './store/index.ts'
 import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
+import { actingParty, submitTransaction } from './transactions/submit.ts'
 import { isTrustedSender } from './trusted-service.ts'
 import { type Vault, VaultLockedError } from './vault/index.ts'
 
@@ -39,9 +38,6 @@ import { type Vault, VaultLockedError } from './vault/index.ts'
  * this stays under that.
  */
 export const TX_APPROVAL_TIMEOUT_MS = 4 * 60 * 1000
-
-/** The hashing scheme `prepareExecute` asks the ledger to prepare with. */
-export const HASHING_SCHEME = 'HASHING_SCHEME_VERSION_V3'
 
 export interface TxApprovalRequest {
     transactionId: string
@@ -216,14 +212,6 @@ function forgetSession(transactionId: string): Promise<void> {
             error,
         })
     })
-}
-
-function actingParty(transaction: Transaction): string | undefined {
-    const actAs = (transaction.payload as { actAs?: unknown } | undefined)
-        ?.actAs
-    return Array.isArray(actAs) && typeof actAs[0] === 'string'
-        ? actAs[0]
-        : undefined
 }
 
 const siteOf = ({ transactionId, origin }: Prompt): TxChangedSite => ({
@@ -531,37 +519,12 @@ export function createTxApprovals({
     ): Promise<TxChangedExecutedEvent | CodedError> {
         const { transactionId, auth, sessionId } = prompt
         try {
-            const store = await storeOf(prompt)
-            const transaction = await store.getTransaction(transactionId)
-            const partyId = transaction && actingParty(transaction)
-            if (!transaction || !partyId) {
-                throw new Error('The transaction has no acting party')
-            }
-            // Signing covers the hash only, so it must be the hash of the
-            // transaction the user saw.
-            const hash = await hashPreparedTransaction(
-                transaction.preparedTransaction,
-                'base64',
-                { hashingScheme: HASHING_SCHEME }
-            )
-            if (hash !== transaction.preparedTransactionHash) {
-                throw new Error(
-                    'The prepared transaction does not match its hash, so it was not signed'
-                )
-            }
-            const params = { transactionId, partyId }
-            const signed = await submitter.sign(store, auth, sessionId, params)
-            if (signed.status !== 'signed') {
-                throw new Error(`Signing returned status ${signed.status}`)
-            }
-            // The transaction service returns the payload of its `executed`
-            // event, under a looser type.
-            const payload = (await submitter.execute(
-                store,
+            const payload = await submitTransaction(submitter, {
+                store: await storeOf(prompt),
                 auth,
                 sessionId,
-                params
-            )) as TxChangedExecutedPayload
+                transactionId,
+            })
             return { status: 'executed', commandId: prompt.commandId, payload }
         } catch (cause) {
             return failureOf(prompt, cause)
