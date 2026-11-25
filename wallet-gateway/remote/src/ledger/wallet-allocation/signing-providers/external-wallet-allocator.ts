@@ -71,7 +71,7 @@ export class ExternalWalletAllocator implements WalletAllocator {
         authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false,
-        keyName?: KeyName | undefined
+        keyName?: KeyName
     ): Promise<Wallet> {
         const driver = getSigningController(this.signingDriver, authContext)
 
@@ -105,8 +105,8 @@ export class ExternalWalletAllocator implements WalletAllocator {
             .signTransaction({
                 tx: Buffer.from(txPayload).toString('base64'),
                 txHash: transactions.multiHash,
-                txPurpose: 'topology',
                 keyIdentifier: { id: key.id, publicKey: key.publicKey },
+                extraParams: { txPurpose: 'topology' }, // TODO: #3049
                 internalTxId,
             })
             .then(handleSigningProviderError)

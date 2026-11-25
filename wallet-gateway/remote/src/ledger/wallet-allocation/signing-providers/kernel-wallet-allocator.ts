@@ -56,7 +56,7 @@ export class KernelWalletAllocator implements WalletAllocator {
                     .signTransaction({
                         tx: '',
                         txHash: hash,
-                        txPurpose: 'topology',
+                        extraParams: { txPurpose: 'topology' },
                         keyIdentifier: {
                             publicKey: key.publicKey,
                         },
@@ -100,7 +100,7 @@ export class KernelWalletAllocator implements WalletAllocator {
                 .signTransaction({
                     tx: '',
                     txHash: hash,
-                    txPurpose: 'topology',
+                    extraParams: { txPurpose: 'topology' },
                     keyIdentifier: { publicKey: existingWallet.publicKey },
                 })
                 .then(handleSigningProviderError)

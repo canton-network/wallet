@@ -200,7 +200,7 @@ describe('BitGoSigningDriver', () => {
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
-                    txPurpose: 'topology',
+                    extraParams: { txPurpose: 'topology' },
                     keyIdentifier: { id: WALLET_ID },
                 })
             expect(handlerMock.signTransaction).toHaveBeenCalledWith(

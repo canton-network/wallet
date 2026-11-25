@@ -22,7 +22,6 @@ import {
     type SubscribeTransactionsParams,
     type SubscribeTransactionsResult,
     type Transaction,
-    type TxPurpose,
 } from '@canton-network/core-signing-lib'
 import { z } from 'zod'
 
@@ -37,7 +36,9 @@ const BitGoConfigUpdateSchema = z.object({
 
 export { BitGoHandler, type BitGoConfig } from './bitgo.ts'
 
-function purposeToMessageStandardType(purpose?: TxPurpose): string | undefined {
+function purposeToMessageStandardType(
+    purpose?: 'topology'
+): string | undefined {
     switch (purpose) {
         case 'topology':
             return 'CANTON_SIGN_TOPOLOGY'
@@ -88,7 +89,7 @@ export default class BitGoSigningDriver implements SigningDriverInterface {
                         txHash: params.txHash,
                         walletId,
                         messageStandardType: purposeToMessageStandardType(
-                            params.txPurpose
+                            params.extraParams?.txPurpose
                         ),
                     })
                     return {
