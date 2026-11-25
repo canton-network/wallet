@@ -142,8 +142,7 @@ driver treats like any other failed call (see below): the Wallet Gateway reports
 ### `requestedBy`
 
 `createKey` and `signTransaction` carry `requestedBy`, the ID of the Wallet Gateway user the call
-is made for, when the Wallet Gateway knows it. It is meant for the signing API's audit trail and
-is not authenticated.
+is made for. It is meant for the signing API's audit trail and is not authenticated.
 
 ## License
 
