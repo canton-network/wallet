@@ -37,6 +37,16 @@ export async function sha256(
     return new Uint8Array(digest)
 }
 
+export function toBase64(bytes: Uint8Array): string {
+    return btoa(String.fromCharCode(...bytes))
+}
+
+export function toHex(bytes: Uint8Array): string {
+    let hex = ''
+    for (const byte of bytes) hex += byte.toString(16).padStart(2, '0')
+    return hex
+}
+
 const BASE64_ALPHABET =
     'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/'
 const SEXTET = new Int8Array(128).fill(-1)

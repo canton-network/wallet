@@ -319,4 +319,5 @@ it('exports only the public API', async () =>
         'computePreparedTransactionHash',
         'computeSha256CantonHash',
         'computeTopologyMultiHash',
+        'hashPreparedTransaction',
     ]))

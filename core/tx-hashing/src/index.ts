@@ -9,6 +9,10 @@ export {
 } from './hash.ts'
 export { DEFAULT_LIMITS, type TraversalLimits } from './limits.ts'
 export {
+    hashPreparedTransaction,
+    type HashPreparedTransactionOptions,
+} from './prepared-transaction.ts'
+export {
     computeMultiHashForTopology,
     computeSha256CantonHash,
     computeTopologyMultiHash,
