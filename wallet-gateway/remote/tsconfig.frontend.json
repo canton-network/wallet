@@ -4,5 +4,5 @@
         "types": [],
         "composite": true
     },
-    "include": ["src/web/frontend"]
+    "include": ["src/web/frontend", "../../docs/docs-sync.json"]
 }

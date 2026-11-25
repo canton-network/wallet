@@ -7,7 +7,10 @@ import { customElement, property } from 'lit/decorators.js'
 
 import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
+import { IDP_TYPE_LABELS } from './idp-type.ts'
 import './copy-button.ts'
+import './tooltip.ts'
+import './readonly-badge.ts'
 
 /** Emitted when the user clicks an IDP card to review it */
 export class IdpCardReviewEvent extends Event {
@@ -71,11 +74,6 @@ class IdpCard extends BaseElement {
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
                 color: var(--wg-text);
-            }
-
-            .badge-config {
-                background: var(--wg-badge-bg);
-                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -151,11 +149,9 @@ class IdpCard extends BaseElement {
                     <p class="card-title">${this.idp.id}</p>
                     ${
                         this.configManaged
-                            ? html`<span
-                                  class="wg-badge badge-config"
-                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
-                                  >CONFIG FILE</span
-                              >`
+                            ? html`<wg-readonly-badge
+                                  section="idps"
+                              ></wg-readonly-badge>`
                             : ''
                     }
                 </div>
@@ -163,7 +159,9 @@ class IdpCard extends BaseElement {
                 <div class="meta">
                     <div class="meta-row">
                         <p class="meta-title">Type</p>
-                        <p class="meta-value">${this.idp.type}</p>
+                        <p class="meta-value">
+                            ${IDP_TYPE_LABELS[this.idp.type]}
+                        </p>
                     </div>
 
                     ${
@@ -171,11 +169,12 @@ class IdpCard extends BaseElement {
                             ? html`
                                   <div class="meta-row meta-row--copy">
                                       <p class="meta-title">Issuer</p>
-                                      <p
-                                          class="meta-value"
-                                          title=${this.idp.issuer}
-                                      >
-                                          ${this.idp.issuer}
+                                      <p class="meta-value">
+                                          <wg-tooltip
+                                              truncate
+                                              .text=${this.idp.issuer}
+                                              >${this.idp.issuer}</wg-tooltip
+                                          >
                                       </p>
                                       <wg-copy-button
                                           .value=${this.idp.issuer}
@@ -190,11 +189,12 @@ class IdpCard extends BaseElement {
                             ? html`
                                   <div class="meta-row meta-row--copy">
                                       <p class="meta-title">Config URL</p>
-                                      <p
-                                          class="meta-value"
-                                          title=${this.idp.configUrl}
-                                      >
-                                          ${this.idp.configUrl}
+                                      <p class="meta-value">
+                                          <wg-tooltip
+                                              truncate
+                                              .text=${this.idp.configUrl}
+                                              >${this.idp.configUrl}</wg-tooltip
+                                          >
                                       </p>
                                       <wg-copy-button
                                           .value=${this.idp.configUrl}

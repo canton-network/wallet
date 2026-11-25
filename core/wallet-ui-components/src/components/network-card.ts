@@ -8,6 +8,8 @@ import { customElement, property } from 'lit/decorators.js'
 import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
 import './copy-button.ts'
+import './tooltip.ts'
+import './readonly-badge.ts'
 
 /** Emitted when the user clicks a network card to review it */
 export class NetworkCardReviewEvent extends Event {
@@ -88,11 +90,6 @@ class NetworkCard extends BaseElement {
                 letter-spacing: 0.04em;
                 background: rgba(var(--wg-success-rgb), 0.14);
                 color: var(--wg-success);
-            }
-
-            .badge-config {
-                background: var(--wg-badge-bg);
-                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -183,11 +180,9 @@ class NetworkCard extends BaseElement {
                     }
                     ${
                         this.configManaged
-                            ? html`<span
-                                  class="wg-badge badge-config"
-                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
-                                  >CONFIG FILE</span
-                              >`
+                            ? html`<wg-readonly-badge
+                                  section="networks"
+                              ></wg-readonly-badge>`
                             : ''
                     }
                 </div>
@@ -225,8 +220,10 @@ class NetworkCard extends BaseElement {
                             ? html`
                                   <div class="meta-row meta-row--copy">
                                       <p class="meta-title">Synchronizer</p>
-                                      <p class="meta-value" title=${syncId}>
-                                          ${syncId}
+                                      <p class="meta-value">
+                                          <wg-tooltip truncate .text=${syncId}
+                                              >${syncId}</wg-tooltip
+                                          >
                                       </p>
                                       <wg-copy-button
                                           .value=${syncId}
@@ -243,11 +240,12 @@ class NetworkCard extends BaseElement {
                                       <p class="meta-title">
                                           Identity provider
                                       </p>
-                                      <p
-                                          class="meta-value"
-                                          title=${this.network.identityProviderId}
-                                      >
-                                          ${this.network.identityProviderId}
+                                      <p class="meta-value">
+                                          <wg-tooltip
+                                              truncate
+                                              .text=${this.network.identityProviderId}
+                                              >${this.network.identityProviderId}</wg-tooltip
+                                          >
                                       </p>
                                   </div>
                               `

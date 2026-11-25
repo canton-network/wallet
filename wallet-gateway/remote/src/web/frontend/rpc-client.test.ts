@@ -86,6 +86,7 @@ vi.mock('./state-manager.ts', () => ({
     },
 }))
 vi.mock('@canton-network/core-wallet-ui-components', () => ({
+    docsUrl: () => '',
     getCurrentRoute: mockGetCurrentRoute,
     toRelHref: mockToRelHref,
     toRelPath: (path: string) => path,

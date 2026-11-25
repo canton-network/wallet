@@ -13,6 +13,7 @@ import { customElement, property, state } from 'lit/decorators.js'
 
 import { chevronDownIcon } from '../icons/index.ts'
 import { BaseElement } from '../internal/base-element.ts'
+import './tooltip.ts'
 
 export type AuthMethod =
     | 'authorization_code'
@@ -262,7 +263,7 @@ class AuthEditor extends BaseElement {
 
         if ('clientId' in auth) {
             rows.splice(1, 0, {
-                key: 'Client Id',
+                key: 'Client ID',
                 value: auth.clientId ?? '',
             })
         }
@@ -279,7 +280,7 @@ class AuthEditor extends BaseElement {
 
         if (auth.method === 'client_credentials' && auth.identityProviderId) {
             rows.push({
-                key: 'Identity Provider Id',
+                key: 'Identity provider ID',
                 value: auth.identityProviderId,
             })
         }
@@ -472,7 +473,7 @@ class AuthEditor extends BaseElement {
     ) {
         return html` <div class="field-group d-flex flex-column">
             <label class="form-label field-label mb-0">
-                Client Id <span class="required">*</span>
+                Client ID <span class="required">*</span>
             </label>
             <input
                 class="form-control field-control"
@@ -527,7 +528,7 @@ class AuthEditor extends BaseElement {
     _renderIdentityProviderIdInput(authObj: ClientCredentialsAuth) {
         return html` <div class="field-group d-flex flex-column">
             <label class="form-label field-label mb-0">
-                Identity Provider Id Override
+                Identity provider ID override
             </label>
             <input
                 class="form-control field-control"
@@ -738,11 +739,10 @@ class AuthEditor extends BaseElement {
                                     <dt class="auth-summary-label">
                                         ${row.key}
                                     </dt>
-                                    <dd
-                                        class="auth-summary-value"
-                                        title=${row.value}
-                                    >
-                                        ${row.value}
+                                    <dd class="auth-summary-value">
+                                        <wg-tooltip truncate .text=${row.value}
+                                            >${row.value}</wg-tooltip
+                                        >
                                     </dd>
                                 </div>
                             `

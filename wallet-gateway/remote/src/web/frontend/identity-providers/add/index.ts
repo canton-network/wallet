@@ -11,6 +11,11 @@ import {
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import {
+    CHANGE_STATUS_PARAM,
+    IDENTITY_PROVIDERS_DOCS_URL,
+    IDENTITY_PROVIDERS_INFO,
+} from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
@@ -28,14 +33,6 @@ export class UserUiAddIdp extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: var(--wg-space-4);
-                gap: var(--wg-space-3);
             }
 
             .form-wrap {
@@ -61,7 +58,9 @@ export class UserUiAddIdp extends BaseElement {
                 params: { idp: e.idp },
             })
 
-            setLocationHref(toRelPath('/identity-providers/'))
+            setLocationHref(
+                `${toRelPath('/identity-providers/')}?${CHANGE_STATUS_PARAM}=added`
+            )
         } catch (error) {
             this.loading = false
             handleErrorToast(error)
@@ -70,10 +69,13 @@ export class UserUiAddIdp extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Add a new identity provider</h1>
+            <wg-page-header
+                heading="Add identity provider"
+                .info=${IDENTITY_PROVIDERS_INFO}
+                .docsUrl=${IDENTITY_PROVIDERS_DOCS_URL}
+            >
                 <wg-back-link @click=${this.navigateBack}></wg-back-link>
-            </div>
+            </wg-page-header>
 
             <div class="form-wrap">
                 <idp-form mode="add" @idp-form-save=${this.onSave}></idp-form>

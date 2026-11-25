@@ -8,6 +8,7 @@ import {
     handleErrorToast,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
+import type { ToastDescriptor } from '@canton-network/core-wallet-ui-components/logic'
 import type {
     PublicNetwork,
     Session,
@@ -15,11 +16,35 @@ import type {
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import {
+    NETWORKS_INFO,
+    NETWORKS_DOCS_URL,
+    type ChangeStatus,
+} from '../constants.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import { setLocationHref } from '../navigation.ts'
 import '../index.ts'
 import { createUserClient } from '../rpc-client.ts'
 import { stateManager } from '../state-manager.ts'
+import { showChangeToast } from '../utils.ts'
+
+const CHANGE_TOASTS: Record<ChangeStatus, ToastDescriptor> = {
+    added: {
+        title: 'Network added',
+        message: 'The network was added.',
+        type: 'success',
+    },
+    saved: {
+        title: 'Network saved',
+        message: 'Your changes were saved.',
+        type: 'success',
+    },
+    deleted: {
+        title: 'Network deleted',
+        message: 'The network was deleted.',
+        type: 'success',
+    },
+}
 
 @customElement('user-ui-networks')
 export class UserUiNetworks extends BaseElement {
@@ -38,14 +63,6 @@ export class UserUiNetworks extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
             }
 
             .network-list {
@@ -73,6 +90,7 @@ export class UserUiNetworks extends BaseElement {
 
     async connectedCallback(): Promise<void> {
         super.connectedCallback()
+        showChangeToast(CHANGE_TOASTS)
         await this.loadData()
     }
 
@@ -122,9 +140,11 @@ export class UserUiNetworks extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Networks</h1>
-
+            <wg-page-header
+                heading="Networks"
+                .info=${NETWORKS_INFO}
+                .docsUrl=${NETWORKS_DOCS_URL}
+            >
                 ${
                     this.isAdmin
                         ? html`
@@ -142,16 +162,8 @@ export class UserUiNetworks extends BaseElement {
                           `
                         : ''
                 }
-            </div>
+            </wg-page-header>
 
-            ${
-                this.configManagedIds.length > 0
-                    ? html`<p class="text-body-secondary">
-                          Entries marked CONFIG FILE are managed by the Wallet
-                          Gateway config file and are read-only.
-                      </p>`
-                    : ''
-            }
             ${
                 this.networks.length === 0
                     ? html`<p class="mb-0 text-body-secondary">

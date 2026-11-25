@@ -4,7 +4,7 @@
         "jsx": "react-jsx",
         "types": []
     },
-    "include": ["src"],
+    "include": ["src", "../../docs/docs-sync.json"],
     "references": [
         {
             "path": "../wallet-user-rpc-client"

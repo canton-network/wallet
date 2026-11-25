@@ -28,6 +28,8 @@ import { showToast } from '../utils.ts'
 export abstract class UserUiAddOrEditParty extends BaseElement {
     protected abstract get form(): TemplateResult
     protected abstract pageTitle: string
+    protected abstract pageInfo: string
+    protected abstract docsUrl: string
     protected abstract get showToast(): boolean
 
     @state() protected accessor submitting = false
@@ -120,7 +122,11 @@ export abstract class UserUiAddOrEditParty extends BaseElement {
 
     protected render() {
         return html`
-            <wg-page-header heading=${this.pageTitle}>
+            <wg-page-header
+                heading=${this.pageTitle}
+                .info=${this.pageInfo}
+                .docsUrl=${this.docsUrl}
+            >
                 <wg-back-link @click=${this.navigateBack}></wg-back-link>
             </wg-page-header>
 

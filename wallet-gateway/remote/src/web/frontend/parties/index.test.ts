@@ -111,6 +111,16 @@ describe('UserUiParties', () => {
         expect(await getCards(el)).toHaveLength(2)
     })
 
+    it('shows an empty state instead of the list when there are no parties', async () => {
+        mockListWalletsFlow([])
+        const empty = await fixture<UserUiParties>(componentFixture)
+
+        await waitUntil(() => empty.wallets?.length === 0, 'wallets loaded')
+
+        expect(empty.shadowRoot?.querySelector('wg-wallet-list')).toBeNull()
+        expect(empty.shadowRoot?.textContent).toContain('No parties yet.')
+    })
+
     it('navigates to add party page when New is clicked', async () => {
         await waitUntil(() => el.client !== null)
 
@@ -382,7 +392,7 @@ describe('UserUiParties', () => {
             await waitUntil(() => callsOf('listWallets').length > walletLoads)
             expect(callsOf('syncWallets')).toHaveLength(1)
             expect(showToast).toHaveBeenCalledWith(
-                'Wallet Sync Complete',
+                'Parties refreshed',
                 'Added: 1, Updated: 0, Disabled: 0.',
                 'success'
             )

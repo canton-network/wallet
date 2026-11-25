@@ -316,15 +316,16 @@ export const Selecting: Story = {
 }
 
 export const LongPartyId: Story = {
-    play: async ({ canvasElement }) => {
+    play: async ({ canvasElement, userEvent }) => {
         const shown = `${partyId.slice(0, 10)}...${partyId.slice(-10)}`
         // Shortened, with the full ID on hover
         await expect(
-            await findByShadowText(canvasElement, shown)
-        ).toHaveAttribute('title', partyId)
-        await expect(
             queryByShadowText(canvasElement, partyId)
         ).not.toBeInTheDocument()
+        await userEvent.hover(await findByShadowText(canvasElement, shown))
+        await expect(
+            await findByShadowRole(canvasElement, 'tooltip')
+        ).toHaveTextContent(partyId)
     },
 }
 
@@ -361,6 +362,11 @@ export const WithPermissions: Story = {
     play: async ({ canvasElement }) => {
         await expect(
             await findByShadowText(canvasElement, 'Permissions')
+        ).toBeVisible()
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'About permissions',
+            })
         ).toBeVisible()
         const actAs = await findByShadowText(canvasElement, 'CanActAs')
         const readAs = await findByShadowText(canvasElement, 'CanReadAs')

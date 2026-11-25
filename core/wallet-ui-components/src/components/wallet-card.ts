@@ -5,9 +5,12 @@ import { PartyLevelRight, type Wallet } from '@canton-network/core-wallet-store'
 import { css, html, nothing } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 
+import { docsSiteUrl } from '../docs.ts'
 import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
 import './copy-button.ts'
+import './info-tip.ts'
+import './tooltip.ts'
 
 export class WalletSetPrimaryEvent extends Event {
     constructor(public wallet: Wallet) {
@@ -32,6 +35,11 @@ export class WalletCardSelectEvent extends Event {
         super('wallet-select', { bubbles: true, composed: true })
     }
 }
+
+const PERMISSIONS_DOCS_URL = docsSiteUrl(
+    '/appdev/deep-dives/authorization',
+    'access-tokens-and-rights'
+)
 
 export
 @customElement('wg-wallet-card')
@@ -148,6 +156,12 @@ class WgWalletCard extends BaseElement {
                 white-space: normal;
             }
 
+            .party-id-text {
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+            }
+
             .party-id-value {
                 max-width: min(15rem, 100%);
             }
@@ -165,6 +179,8 @@ class WgWalletCard extends BaseElement {
                 align-items: center;
                 justify-content: space-between;
                 gap: 0.375rem;
+                /* Fits the status badge, so cards with and without it line up */
+                min-height: 1.25rem;
             }
 
             .link-action {
@@ -245,8 +261,10 @@ class WgWalletCard extends BaseElement {
                     }
                 >
                     <p class="meta-title">Party hint</p>
-                    <p class="meta-value" title=${this.wallet.hint || '-'}>
-                        ${this.wallet.hint || '-'}
+                    <p class="meta-value">
+                        <wg-tooltip truncate .text=${this.wallet.hint || '-'}
+                            >${this.wallet.hint || '-'}</wg-tooltip
+                        >
                     </p>
                     ${
                         this.wallet.hint
@@ -262,11 +280,12 @@ class WgWalletCard extends BaseElement {
 
                 <div class="meta-row meta-row--copy">
                     <p class="meta-title">Party ID</p>
-                    <p
-                        class="meta-value party-id-value"
-                        title=${this.wallet.partyId}
-                    >
-                        ${excerptedPartyId}
+                    <p class="meta-value party-id-value">
+                        <wg-tooltip .text=${this.wallet.partyId}
+                            ><span class="party-id-text"
+                                >${excerptedPartyId}</span
+                            ></wg-tooltip
+                        >
                     </p>
                     <wg-copy-button
                         .value=${this.wallet.partyId}
@@ -276,11 +295,12 @@ class WgWalletCard extends BaseElement {
 
                 <div class="meta-row">
                     <p class="meta-title">Signing provider</p>
-                    <p
-                        class="meta-value"
-                        title=${this.wallet.signingProviderId}
-                    >
-                        ${this.wallet.signingProviderId}
+                    <p class="meta-value">
+                        <wg-tooltip
+                            truncate
+                            .text=${this.wallet.signingProviderId}
+                            >${this.wallet.signingProviderId}</wg-tooltip
+                        >
                     </p>
                 </div>
 
@@ -301,9 +321,12 @@ class WgWalletCard extends BaseElement {
                                               ? 'meta-value meta-value-wrap'
                                               : 'meta-value'
                                       }
-                                      title=${this.wallet.reason}
                                   >
-                                      ${this.wallet.reason}
+                                      <wg-tooltip
+                                          truncate
+                                          .text=${this.wallet.reason}
+                                          >${this.wallet.reason}</wg-tooltip
+                                      >
                                   </p>
                               </div>
                           `
@@ -313,7 +336,14 @@ class WgWalletCard extends BaseElement {
                     this.wallet.rights?.length
                         ? html`
                               <div class="meta-row">
-                                  <p class="meta-title">Permissions</p>
+                                  <p class="meta-title">
+                                      Permissions
+                                      <wg-info-tip
+                                          label="About permissions"
+                                          text="Your ledger rights for this party."
+                                          .docsUrl=${PERMISSIONS_DOCS_URL}
+                                      ></wg-info-tip>
+                                  </p>
                                   <p class="meta-value meta-value--badges">
                                       ${this.renderRightsBadges()}
                                   </p>

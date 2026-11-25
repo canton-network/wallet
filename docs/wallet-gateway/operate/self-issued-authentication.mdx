@@ -41,11 +41,11 @@ To use self-issued token auth configure a network with following properties:
 
 `auth.audience` is the participant id alone, with no `https://daml.com/jwt/aud/participant/` prefix.
 
-`network.identityProviderId` on the network points at an IdP whose `type` is `self_issued`. That IdP object is only `id` and `type`.
+`network.identityProviderId` on the network points at an IDP whose `type` is `self_issued`. That IDP object is only `id` and `type`.
 
 `adminAuth.method` `client_credentials`, or for development only `self_signed`.
 
-`adminAuth.identityProviderId` is id of IdP with type `oauth` in case of method `client_credentials` or type `self_signed` in case of method `self_signed`. That optional field allows overriding using default network IdP for `adminAuth`.
+`adminAuth.identityProviderId` is id of IDP with type `oauth` in case of method `client_credentials` or type `self_signed` in case of method `self_signed`. That optional field allows overriding using default network IDP for `adminAuth`.
 
 ```json
 {

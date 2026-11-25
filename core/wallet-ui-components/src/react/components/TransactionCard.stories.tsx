@@ -51,10 +51,16 @@ export const Default: Story = {
         await expect(
             await findByShadowText(canvasElement, '100.0 CC')
         ).toBeInTheDocument()
-        // Shown in the viewer's locale and time zone (pinned in vitest.config.ts), with UTC as tooltip
-        await expect(
+        // Shown in the viewer's locale and time zone (pinned in vitest.config.ts), with UTC in a tooltip
+        await userEvent.hover(
             await findByShadowText(canvasElement, '06/01/2025, 02:34 PM GMT+2')
-        ).toHaveAttribute('title', '2025-06-01 12:34:56 UTC')
+        )
+        await expect(
+            await findByShadowRole(canvasElement, 'tooltip')
+        ).toHaveTextContent('2025-06-01 12:34:56 UTC')
+        await userEvent.unhover(
+            await findByShadowText(canvasElement, '06/01/2025, 02:34 PM GMT+2')
+        )
         await expect(
             await findByShadowText(canvasElement, 'pending')
         ).toBeInTheDocument()
@@ -178,13 +184,14 @@ export const LongIds: Story = {
             </div>
         ),
     ],
-    play: async ({ args, canvasElement }) => {
+    play: async ({ args, canvasElement, userEvent }) => {
         // Truncated visually, with the full ID on hover; labels stay in full
-        const commandId = await findByShadowText(canvasElement, args.commandId!)
-        await expect(commandId).toHaveAttribute('title', args.commandId)
-        await expect(commandId.scrollWidth).toBeGreaterThan(
-            commandId.clientWidth
+        await userEvent.hover(
+            await findByShadowText(canvasElement, args.commandId!)
         )
+        await expect(
+            await findByShadowRole(canvasElement, 'tooltip')
+        ).toHaveTextContent(args.commandId!)
         const label = await findByShadowText(
             canvasElement,
             'External transaction ID'

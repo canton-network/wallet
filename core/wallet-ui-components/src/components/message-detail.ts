@@ -7,6 +7,7 @@ import { customElement, property } from 'lit/decorators.js'
 import './back-link.ts'
 import './copy-button.ts'
 import { renderCopyableValue } from '../internal/activity-render.ts'
+import './page-header.ts'
 import {
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
@@ -42,6 +43,11 @@ class WgMessageDetail extends BaseElement {
 
     @property() accessor backHref = ''
 
+    /** Explains the page next to its heading */
+    @property() accessor info = ''
+
+    @property() accessor docsUrl = ''
+
     @property({ type: Boolean }) accessor isApproving = false
 
     @property({ type: Boolean }) accessor isDeleting = false
@@ -58,18 +64,6 @@ class WgMessageDetail extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                gap: var(--wg-space-3);
-                margin-bottom: var(--wg-space-4);
-            }
-
-            .page-title {
-                color: var(--wg-text);
             }
 
             .detail-grid {
@@ -205,8 +199,11 @@ class WgMessageDetail extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="page-title h4 fw-semibold mb-0">Message Details</h1>
+            <wg-page-header
+                heading="Message Details"
+                .info=${this.info}
+                .docsUrl=${this.docsUrl}
+            >
                 ${
                     this.backHref
                         ? html`<wg-back-link
@@ -214,7 +211,7 @@ class WgMessageDetail extends BaseElement {
                           ></wg-back-link>`
                         : nothing
                 }
-            </div>
+            </wg-page-header>
 
             <div class="detail-grid">
                 ${this.renderInlineField(

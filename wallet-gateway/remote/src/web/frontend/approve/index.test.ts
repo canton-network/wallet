@@ -5,6 +5,7 @@ import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import {
     TransactionApproveEvent,
     TransactionDeleteEvent,
+    type WgTransactionDetail,
 } from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
@@ -64,6 +65,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     }
 })
 
+import { APPROVE_DOCS_URL, APPROVE_INFO } from '../constants.ts'
 import './index.ts'
 import type { ApproveUi } from './index.ts'
 
@@ -405,6 +407,18 @@ describe('UserUiApprove', () => {
                 (call) => call[0]?.method === 'getTransaction'
             )
         ).toHaveLength(transactionLoadsBeforeRemoval)
+    })
+
+    it('explains the page and links to the docs', async () => {
+        mockApproveState()
+        el = await fixture<ApproveUi>(componentFixture)
+        await waitUntil(() => el.commandId === 'cmd-1')
+
+        const detail = el.shadowRoot!.querySelector<WgTransactionDetail>(
+            'wg-transaction-detail'
+        )!
+        expect(detail.info).toBe(APPROVE_INFO)
+        expect(detail.docsUrl).toBe(APPROVE_DOCS_URL)
     })
 
     it('does not delete when reject confirmation is cancelled', async () => {

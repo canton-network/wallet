@@ -25,6 +25,12 @@ export const cardStyles = css`
         box-shadow: var(--wg-shadow-md);
     }
 
+    /* Read-only cards can't be opened, so don't highlight them */
+    .wg-card.readonly:hover {
+        border-color: var(--wg-border);
+        box-shadow: var(--wg-shadow-sm);
+    }
+
     .wg-badge {
         display: inline-flex;
         align-items: center;

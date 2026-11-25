@@ -360,7 +360,7 @@ describe('UserApp', () => {
         )
         expect(showToast).toHaveBeenCalledWith(
             'Copied',
-            'Dapp API URL copied to clipboard.',
+            'dApp API URL copied to clipboard.',
             'success'
         )
     })

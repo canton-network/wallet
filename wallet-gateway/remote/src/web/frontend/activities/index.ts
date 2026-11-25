@@ -16,6 +16,7 @@ import type { Transaction } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import { ACTIVITIES_DOCS_URL } from '../constants.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import '../index.ts'
 import { setLocationHref } from '../navigation.ts'
@@ -64,10 +65,6 @@ export class UserUiActivities extends BaseElement {
                 opacity: 0.5;
             }
 
-            .page-header {
-                margin-bottom: var(--wg-space-4);
-            }
-
             .pagination-wrap {
                 margin-top: var(--wg-space-8);
                 display: flex;
@@ -78,9 +75,11 @@ export class UserUiActivities extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0 text-body">Activities</h1>
-            </div>
+            <wg-page-header
+                heading="Activities"
+                info="Transactions for your parties and their status. Open one to see its details."
+                .docsUrl=${ACTIVITIES_DOCS_URL}
+            ></wg-page-header>
 
             ${
                 this.loading && !this.transactions.length

@@ -3,6 +3,7 @@
 
 import {
     WalletCreateEvent,
+    type WgPageHeader,
     type WgWalletCreateForm,
 } from '@canton-network/core-wallet-ui-components'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
@@ -57,6 +58,7 @@ import './index.ts'
 import type { Key } from '@canton-network/core-signing-lib'
 import { WALLET_STATUS_CODE } from '@canton-network/core-wallet-ui-components/logic'
 
+import { CREATE_PARTY_DOCS_URL } from '../../constants.ts'
 import type { UserUiAddParty } from './index.ts'
 
 type MockRequestHandler = (request: {
@@ -131,6 +133,15 @@ describe('UserUiAddParty', () => {
                 ?.shadowRoot?.querySelector('h1')?.textContent
         ).toBe('Create a new party')
         expect(getCreateForm(el)).not.toBeNull()
+    })
+
+    it('links the header info icon to the create party docs', async () => {
+        const el = await renderElement()
+        const header =
+            el.shadowRoot?.querySelector<WgPageHeader>('wg-page-header')
+
+        expect(header?.info).toBeTruthy()
+        expect(header?.docsUrl).toBe(CREATE_PARTY_DOCS_URL)
     })
 
     it('loads signing providers and passes the loading state to the form', async () => {

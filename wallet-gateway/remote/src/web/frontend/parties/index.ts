@@ -25,6 +25,7 @@ import type UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import { PARTIES_DOCS_URL } from '../constants.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import '../index.ts'
 import { setLocationHref } from '../navigation.ts'
@@ -83,7 +84,11 @@ export class UserUiParties extends BaseElement {
         }
 
         return html`
-            <wg-page-header heading="Parties">
+            <wg-page-header
+                heading="Parties"
+                info="A party is your identity on the Canton ledger. Its signing provider holds its key and signs for it. dApps get your primary party by default."
+                .docsUrl=${PARTIES_DOCS_URL}
+            >
                 <wg-wallets-sync
                     slot="title-suffix"
                     ?syncNeeded=${this.syncNeeded}
@@ -101,14 +106,21 @@ export class UserUiParties extends BaseElement {
                 </button>
             </wg-page-header>
 
-            <wg-wallet-list
-                .wallets=${this.wallets}
-                ?loading=${this.loading}
-                nonEditableSigningProviderId=${SigningProvider.PARTICIPANT}
-                @wallet-allocate=${this._onAllocateParty}
-                @wallet-edit=${this._onWalletEdit}
-                @wallet-set-primary=${this._onSetPrimary}
-            ></wg-wallet-list>
+            ${
+                this.wallets?.length === 0
+                    ? html`<p class="mb-0 text-body-secondary">
+                          No parties yet. Create one with New, or refresh the
+                          list if the party already exists on the ledger.
+                      </p>`
+                    : html`<wg-wallet-list
+                          .wallets=${this.wallets}
+                          ?loading=${this.loading}
+                          nonEditableSigningProviderId=${SigningProvider.PARTICIPANT}
+                          @wallet-allocate=${this._onAllocateParty}
+                          @wallet-edit=${this._onWalletEdit}
+                          @wallet-set-primary=${this._onSetPrimary}
+                      ></wg-wallet-list>`
+            }
         `
     }
 

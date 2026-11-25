@@ -5,7 +5,6 @@ import {
     BaseElement,
     type IdpFormSaveEvent,
     type IdpFormDeleteEvent,
-    chevronLeftIcon,
     handleErrorToast,
     toRelHref,
     toRelPath,
@@ -14,6 +13,11 @@ import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import {
+    CHANGE_STATUS_PARAM,
+    IDENTITY_PROVIDERS_DOCS_URL,
+    IDENTITY_PROVIDERS_INFO,
+} from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
@@ -24,6 +28,7 @@ import { stateManager } from '../../state-manager.ts'
 export class UserUiReviewIdp extends BaseElement {
     @state() accessor idp: Idp | null = null
     @state() accessor loading = true
+    @state() private accessor usedByNetworks: string[] = []
 
     static styles = [
         BaseElement.styles,
@@ -32,14 +37,6 @@ export class UserUiReviewIdp extends BaseElement {
                 display: block;
                 max-width: 900px;
                 margin: 0 auto;
-            }
-
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: var(--wg-space-4);
-                gap: var(--wg-space-3);
             }
 
             .form-wrap {
@@ -67,7 +64,10 @@ export class UserUiReviewIdp extends BaseElement {
             const userClient = await createUserClient(
                 await stateManager.accessToken.get(currentOrigin)
             )
-            const result = await userClient.request({ method: 'listIdps' })
+            const [result, networksResult] = await Promise.all([
+                userClient.request({ method: 'listIdps' }),
+                userClient.request({ method: 'listNetworks' }),
+            ])
 
             const found = result.idps.find((i: Idp) => i.id === idpId)
             if (!found) {
@@ -79,6 +79,9 @@ export class UserUiReviewIdp extends BaseElement {
             }
 
             this.idp = found
+            this.usedByNetworks = networksResult.networks
+                .filter((network) => network.identityProviderId === idpId)
+                .map((network) => network.name)
         } catch (error) {
             handleErrorToast(error)
             this.navigateBack()
@@ -102,7 +105,9 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { idp: e.idp },
             })
 
-            setLocationHref(toRelPath('/identity-providers/'))
+            setLocationHref(
+                `${toRelPath('/identity-providers/')}?${CHANGE_STATUS_PARAM}=saved`
+            )
         } catch (error) {
             handleErrorToast(error)
         }
@@ -121,7 +126,9 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { identityProviderId: e.idp.id },
             })
 
-            setLocationHref(toRelPath('/identity-providers/'))
+            setLocationHref(
+                `${toRelPath('/identity-providers/')}?${CHANGE_STATUS_PARAM}=deleted`
+            )
         } catch (error) {
             handleErrorToast(error)
         }
@@ -143,22 +150,19 @@ export class UserUiReviewIdp extends BaseElement {
         }
 
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Review Identity Provider</h1>
-                <button
-                    class="btn btn-link btn-sm text-body text-decoration-none p-0 d-inline-flex align-items-center gap-1"
-                    type="button"
-                    @click=${this.navigateBack}
-                >
-                    ${chevronLeftIcon}
-                    <span>Back</span>
-                </button>
-            </div>
+            <wg-page-header
+                heading="Edit identity provider"
+                .info=${IDENTITY_PROVIDERS_INFO}
+                .docsUrl=${IDENTITY_PROVIDERS_DOCS_URL}
+            >
+                <wg-back-link @click=${this.navigateBack}></wg-back-link>
+            </wg-page-header>
 
             <div class="form-wrap">
                 <idp-form
                     mode="review"
                     .idp=${this.idp}
+                    .usedByNetworks=${this.usedByNetworks}
                     @idp-form-save=${this.onSave}
                     @idp-form-cancel=${this.onCancel}
                     @idp-form-delete=${this.onDelete}

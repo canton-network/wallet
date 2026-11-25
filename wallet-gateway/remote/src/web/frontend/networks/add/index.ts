@@ -4,14 +4,20 @@
 import {
     BaseElement,
     type NetworkEditSaveEvent,
-    chevronLeftIcon,
     handleErrorToast,
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
+import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import {
+    CHANGE_STATUS_PARAM,
+    NETWORK_FORM_DOCS_URLS,
+    NETWORKS_DOCS_URL,
+    NETWORKS_INFO,
+} from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
@@ -21,6 +27,7 @@ import { stateManager } from '../../state-manager.ts'
 @customElement('user-ui-add-network')
 export class UserUiAddNetwork extends BaseElement {
     @state() accessor loading = false
+    @state() private accessor idps: Idp[] = []
 
     static styles = [
         BaseElement.styles,
@@ -31,19 +38,24 @@ export class UserUiAddNetwork extends BaseElement {
                 margin: 0 auto;
             }
 
-            .page-header {
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                margin-bottom: var(--wg-space-4);
-                gap: var(--wg-space-3);
-            }
-
             .form-wrap {
                 width: 100%;
             }
         `,
     ]
+
+    async connectedCallback(): Promise<void> {
+        super.connectedCallback()
+        try {
+            const currentOrigin = await detectCurrentOrigin()
+            const userClient = await createUserClient(
+                await stateManager.accessToken.get(currentOrigin)
+            )
+            this.idps = (await userClient.request({ method: 'listIdps' })).idps
+        } catch (error) {
+            handleErrorToast(error)
+        }
+    }
 
     private navigateBack() {
         setLocationHref(toRelHref('/networks'))
@@ -78,7 +90,9 @@ export class UserUiAddNetwork extends BaseElement {
                 },
             })
 
-            setLocationHref(toRelPath('/networks/'))
+            setLocationHref(
+                `${toRelPath('/networks/')}?${CHANGE_STATUS_PARAM}=added`
+            )
         } catch (error) {
             this.loading = false
             handleErrorToast(error)
@@ -87,21 +101,19 @@ export class UserUiAddNetwork extends BaseElement {
 
     protected render() {
         return html`
-            <div class="page-header">
-                <h1 class="h4 fw-semibold mb-0">Add a new network</h1>
-                <button
-                    class="btn btn-link btn-sm text-body text-decoration-none p-0 d-inline-flex align-items-center gap-1"
-                    type="button"
-                    @click=${this.navigateBack}
-                >
-                    ${chevronLeftIcon}
-                    <span>Back</span>
-                </button>
-            </div>
+            <wg-page-header
+                heading="Add network"
+                .info=${NETWORKS_INFO}
+                .docsUrl=${NETWORKS_DOCS_URL}
+            >
+                <wg-back-link @click=${this.navigateBack}></wg-back-link>
+            </wg-page-header>
 
             <div class="form-wrap">
                 <network-form
                     mode="add"
+                    .idps=${this.idps}
+                    .docsUrls=${NETWORK_FORM_DOCS_URLS}
                     @network-edit-save=${this.onSave}
                 ></network-form>
             </div>

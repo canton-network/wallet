@@ -4,9 +4,7 @@
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { css, html, nothing, type TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { ifDefined } from 'lit/directives/if-defined.js'
 
-import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 import {
     getActivityAmount,
     getActivityStatusBadgeClass,
@@ -15,6 +13,8 @@ import {
 } from '../internal/activity-utils.ts'
 import { BaseElement } from '../internal/base-element.ts'
 import { cardStyles } from '../styles/card.ts'
+import './timestamp.ts'
+import './tooltip.ts'
 
 /** Emitted when the user clicks an activity card */
 export class TransactionCardReviewEvent extends Event {
@@ -108,13 +108,6 @@ class WgTransactionCard extends BaseElement {
                 max-width: 100%;
             }
 
-            .truncate {
-                display: block;
-                overflow: hidden;
-                text-overflow: ellipsis;
-                white-space: nowrap;
-            }
-
             .status-value {
                 overflow: visible;
                 white-space: normal;
@@ -126,24 +119,25 @@ class WgTransactionCard extends BaseElement {
         label: string,
         value: string | TemplateResult,
         options: {
-            title?: string | undefined
             truncate?: boolean
             valueClass?: string
         } = {}
     ) {
-        const valueClasses = [
-            'value',
-            options.valueClass,
-            options.truncate ? 'truncate' : '',
-        ]
+        const valueClasses = ['value', options.valueClass]
             .filter(Boolean)
             .join(' ')
 
         return html`
             <div class="field">
                 <span class="label">${label}</span>
-                <span class=${valueClasses} title=${ifDefined(options.title)}
-                    >${value}</span
+                <span class=${valueClasses}
+                    >${
+                        options.truncate && typeof value === 'string'
+                            ? html`<wg-tooltip truncate .text=${value}
+                                  >${value}</wg-tooltip
+                              >`
+                            : value
+                    }</span
                 >
             </div>
         `
@@ -162,7 +156,6 @@ class WgTransactionCard extends BaseElement {
     protected render() {
         const activityType = getActivityType(this.parsed)
         const amount = getActivityAmount(this.parsed)
-        const createdAt = formatDateTime(this.createdAt)
 
         return html`
             <button
@@ -173,7 +166,6 @@ class WgTransactionCard extends BaseElement {
             >
                 <div class="field-list">
                     ${this.renderFieldRow('Command ID', this.commandId, {
-                        title: this.commandId,
                         truncate: true,
                     })}
                     ${
@@ -182,7 +174,6 @@ class WgTransactionCard extends BaseElement {
                                   'External transaction ID',
                                   this.externalTxId,
                                   {
-                                      title: this.externalTxId,
                                       truncate: true,
                                   }
                               )
@@ -208,22 +199,20 @@ class WgTransactionCard extends BaseElement {
                             ? this.renderFieldRow(
                                   'Failure reason',
                                   this.failureReason,
-                                  {
-                                      title: this.failureReason,
-                                  }
+                                  {}
                               )
                             : nothing
                     }
                     ${this.renderFieldRow('Action type', activityType, {
-                        title: activityType,
                         truncate: true,
                     })}
-                    ${this.renderFieldRow('Created at', createdAt, {
-                        title: formatUtcDateTime(this.createdAt),
-                        truncate: true,
-                    })}
+                    ${this.renderFieldRow(
+                        'Created at',
+                        html`<wg-timestamp
+                            .value=${this.createdAt}
+                        ></wg-timestamp>`
+                    )}
                     ${this.renderFieldRow('Amount', amount, {
-                        title: amount,
                         truncate: true,
                     })}
                 </div>
