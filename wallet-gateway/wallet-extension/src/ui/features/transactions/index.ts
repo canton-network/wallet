@@ -7,3 +7,4 @@ export {
     transactionQuery,
 } from './api.ts'
 export { ApproveTransactionPage } from './ApproveTransactionPage.tsx'
+export { TransactionReview } from './TransactionReview.tsx'
