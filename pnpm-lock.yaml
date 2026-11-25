@@ -261,26 +261,26 @@ catalogs:
       specifier: ^3.0.1
       version: 3.0.1
     '@optique/clack':
-      specifier: ^1.3.6
-      version: 1.3.6
+      specifier: ~1.3.7
+      version: 1.3.7
     '@optique/core':
-      specifier: ^1.3.6
-      version: 1.3.6
+      specifier: ~1.3.7
+      version: 1.3.7
     '@optique/discover':
-      specifier: ^1.3.6
-      version: 1.3.6
+      specifier: ~1.3.7
+      version: 1.3.7
     '@optique/logtape':
-      specifier: ^1.3.6
-      version: 1.3.6
+      specifier: ~1.3.7
+      version: 1.3.7
     '@optique/man':
-      specifier: ^1.3.6
-      version: 1.3.6
+      specifier: ~1.3.7
+      version: 1.3.7
     '@optique/run':
-      specifier: ^1.3.6
-      version: 1.3.6
+      specifier: ~1.3.7
+      version: 1.3.7
     '@optique/testing':
-      specifier: ^1.3.6
-      version: 1.4.0
+      specifier: ~1.3.7
+      version: 1.3.7
     '@playwright/test':
       specifier: ^1.65.0
       version: 1.65.0
@@ -637,16 +637,16 @@ importers:
         version: 24.0.5(@babel/traverse@7.29.12(supports-color@10.2.2))(@swc/core@1.16.22(@swc/helpers@0.5.23))(nx@24.0.5(@swc/core@1.16.22(@swc/helpers@0.5.23)))(supports-color@10.2.2)
       '@optique/clack':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/discover':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/logtape':
         specifier: 'catalog:'
-        version: 1.3.6(@logtape/logtape@2.4.2)
+        version: 1.3.7(@logtape/logtape@2.4.2)
       '@optique/man':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       nx:
         specifier: 'catalog:'
         version: 24.0.5(@swc/core@1.16.22(@swc/helpers@0.5.23))
@@ -752,26 +752,29 @@ importers:
         version: 2.4.2
       '@optique/clack':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/core':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/discover':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/logtape':
         specifier: 'catalog:'
-        version: 1.3.6(@logtape/logtape@2.4.2)
+        version: 1.3.7(@logtape/logtape@2.4.2)
       '@optique/man':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/run':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       fs-extra:
         specifier: 'catalog:'
         version: 11.4.1
     devDependencies:
+      '@optique/testing':
+        specifier: 'catalog:'
+        version: 1.3.7
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.9
@@ -2609,23 +2612,23 @@ importers:
     dependencies:
       '@optique/clack':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/core':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/discover':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/man':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
       '@optique/run':
         specifier: 'catalog:'
-        version: 1.3.6
+        version: 1.3.7
     devDependencies:
       '@optique/testing':
         specifier: 'catalog:'
-        version: 1.4.0
+        version: 1.3.7
       '@vitest/browser-playwright':
         specifier: 'catalog:'
         version: 5.0.5(@vitest/browser@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(playwright@1.65.0)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
@@ -5596,30 +5599,21 @@ packages:
   '@open-wc/testing-helpers@3.0.1':
     resolution: {integrity: sha512-hyNysSatbgT2FNxHJsS3rGKcLEo6+HwDFu1UQL6jcSQUabp/tj3PyX7UnXL3H5YGv0lJArdYLSnvjLnjn3O2fw==}
 
-  '@optique/clack@1.3.6':
-    resolution: {integrity: sha512-iKCzQyjkLZmaVqxDTQlBG5emNmn8ON7UPKPycPnzQpj2g2Vf9b+4aq0GTBD1nrN5FGh5INmbmXh/6cH7xsefOw==}
+  '@optique/clack@1.3.7':
+    resolution: {integrity: sha512-PyYi83CgpfIyPlZbvrEOX1HhfPvq9FAZz2afBh9GkHFCjRFyFd7WHDlQvSbLS3L9MtDNozSDMBq0hbH0na8h+Q==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.12.0'}
 
-  '@optique/core@1.3.6':
-    resolution: {integrity: sha512-BXVuVyxP9bg8FbyvBYrSHisnAeG3XTf1xcuUjAWgDWKfzZssMGbSrMdiv4tA+BK3+CrSo6no+uHWpiHh4HMKeg==}
+  '@optique/core@1.3.7':
+    resolution: {integrity: sha512-pD/17kPw/UQfFwNNFtyCG0S79dSutqiJSr13w6vwFcjWV6tckFwmKpJFAG2leSJHPX+hNOaI9cxF0xsCdTSoIg==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
-  '@optique/core@1.4.0':
-    resolution: {integrity: sha512-ERjwixdopjgnHDX/E+nC/549QXWjWr7hnerw0v9+jdtYZBE9wq7uiPraE82ZDa0jLFECxO9umPz2wwaPG09z/g==}
-    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
-
-  '@optique/discover@1.3.6':
-    resolution: {integrity: sha512-22VPHFYpUHHp1Eq2DeczrT9lGpbi4nnygBqDAA2d2kkbgidfe++phbaWK2FP4evmqffJOYINeKpsvVbFMhJ3Xg==}
+  '@optique/discover@1.3.7':
+    resolution: {integrity: sha512-UKcZE5VKT3NqRPpa1JaaZ8Ksi2E1yu/hKrPzPLe9BY8VZ/3judxz2jojNRrQRY6XDHMCDPT1Dv9a7wfvHfg7xQ==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     hasBin: true
 
-  '@optique/discover@1.4.0':
-    resolution: {integrity: sha512-MW/wGDqVgBdmddcBD2xvqKfqVeaxxWqMPg1Y1ZpL65epmgVoakEG2FF6QEq6TtlfP5WPWt7200X/xlqOIEhGJg==}
-    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
-    hasBin: true
-
-  '@optique/logtape@1.3.6':
-    resolution: {integrity: sha512-w9GgBMdwbIcoUIftPvX1iWFo6xwuw0uBzA3F1KWEl2apHxFEexWWfiwT1PJLmAq9yjiJx/Atqhnx4n+qo/h4Nw==}
+  '@optique/logtape@1.3.7':
+    resolution: {integrity: sha512-wyljxu7+Q4/FMP5eVA+eAgpFaeD0dvTAQC9cmvFnaFaUJWj4SZ4DpY9bwwsf7qFan1eAEPRToFpBjbY41g+vNA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     peerDependencies:
       '@logtape/file': ^2.2.2
@@ -5628,25 +5622,21 @@ packages:
       '@logtape/file':
         optional: true
 
-  '@optique/man@1.3.6':
-    resolution: {integrity: sha512-4Eti8KXCkjAB1hH5GNpJGXJOo3akUAT+pn2a74vvLBvSKti5hkVtVKl+xpb26QJfDuyjHOypZCvOLREi8SY/pQ==}
+  '@optique/man@1.3.7':
+    resolution: {integrity: sha512-OYBqAqiGSS/CXD3KjQnTVAi3earGUXfQeiSF/qwqNn6w10gXB6v+5lwdUK4ZDl8Ihtvfjid6mZqYrCdMDzwHDw==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
     hasBin: true
 
-  '@optique/prompt@1.3.6':
-    resolution: {integrity: sha512-a+YNcm5gR983kOm6xcpDrvygvTcaDVklkLSonV6b+XWZJxSTykbRHqQ6Ynytt9wa414vY0hF9RFC2crwimTr/g==}
+  '@optique/prompt@1.3.7':
+    resolution: {integrity: sha512-Ib9elxHiksv6iaHSZMDzx3zVycZfn/yTq4frnvpShW3WSKUe8Y+M6qzxMfASIAEYuRbrPojNRVWBbaAIg+hpQw==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
-  '@optique/run@1.3.6':
-    resolution: {integrity: sha512-uxlHO8vG/5ni1V+t+jdmYqiyYYY5uOevO/6U866oBpnlOxOGn2ZWIlPpDXAU3e5GRu4VecbeXoNff18yRDGoQw==}
+  '@optique/run@1.3.7':
+    resolution: {integrity: sha512-5SlZffjwAqg2vZ+R+V9QZXpGDhdiKiIF/mUeQDAGgLNIb53G5XqcH0TCdJUDGMMGXlLVIuRWdoNY7oLg4uXihA==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
-  '@optique/run@1.4.0':
-    resolution: {integrity: sha512-jJzUP2B4meOVwpqAuWTskHiul/9gq2nhkWcltmOxJWJAaAvezXSLMc1/4q34LvakedKgERbByJn1d0MYe/Ft4A==}
-    engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
-
-  '@optique/testing@1.4.0':
-    resolution: {integrity: sha512-rT7pCmcKnW2r3e7vh3D29IUcnyOY3Z8+ajvKoYwtsDdLXPQynHQ1v5+NQqTPaPs0dJdRA/Cz9/eAVuMzCcVA2A==}
+  '@optique/testing@1.3.7':
+    resolution: {integrity: sha512-rTGLr9VyJ5LzDeYtsk1RrC0kiGooBpWRH5bKWjfWr5lebS3BAMZe2xQo1LSjQ2TS2GWGnD7KPhxzEAgOfuaF4g==}
     engines: {bun: '>=1.2.0', deno: '>=2.3.0', node: '>=20.0.0'}
 
   '@oxc-parser/binding-android-arm-eabi@0.120.0':
@@ -13624,7 +13614,7 @@ snapshots:
     dependencies:
       '@clack/core': 1.4.3
       fast-string-width: 3.0.2
-      fast-wrap-ansi: 0.2.0
+      fast-wrap-ansi: 0.2.2
       sisteransi: 1.0.5
 
   '@commander-js/extra-typings@15.0.0(commander@15.0.0)':
@@ -15157,53 +15147,42 @@ snapshots:
       lit: 3.3.3
       lit-html: 3.3.3
 
-  '@optique/clack@1.3.6':
+  '@optique/clack@1.3.7':
     dependencies:
       '@clack/prompts': 1.7.0
-      '@optique/core': 1.3.6
-      '@optique/prompt': 1.3.6
+      '@optique/core': 1.3.7
+      '@optique/prompt': 1.3.7
 
-  '@optique/core@1.3.6': {}
+  '@optique/core@1.3.7': {}
 
-  '@optique/core@1.4.0': {}
-
-  '@optique/discover@1.3.6':
+  '@optique/discover@1.3.7':
     dependencies:
-      '@optique/core': 1.3.6
-      '@optique/run': 1.3.6
+      '@optique/core': 1.3.7
+      '@optique/run': 1.3.7
 
-  '@optique/discover@1.4.0':
-    dependencies:
-      '@optique/core': 1.4.0
-      '@optique/run': 1.4.0
-
-  '@optique/logtape@1.3.6(@logtape/logtape@2.4.2)':
+  '@optique/logtape@1.3.7(@logtape/logtape@2.4.2)':
     dependencies:
       '@logtape/logtape': 2.4.2
-      '@optique/core': 1.3.6
+      '@optique/core': 1.3.7
 
-  '@optique/man@1.3.6':
+  '@optique/man@1.3.7':
     dependencies:
-      '@optique/core': 1.3.6
-      '@optique/run': 1.3.6
+      '@optique/core': 1.3.7
+      '@optique/run': 1.3.7
 
-  '@optique/prompt@1.3.6':
+  '@optique/prompt@1.3.7':
     dependencies:
-      '@optique/core': 1.3.6
+      '@optique/core': 1.3.7
 
-  '@optique/run@1.3.6':
+  '@optique/run@1.3.7':
     dependencies:
-      '@optique/core': 1.3.6
+      '@optique/core': 1.3.7
 
-  '@optique/run@1.4.0':
+  '@optique/testing@1.3.7':
     dependencies:
-      '@optique/core': 1.4.0
-
-  '@optique/testing@1.4.0':
-    dependencies:
-      '@optique/core': 1.4.0
-      '@optique/discover': 1.4.0
-      '@optique/run': 1.4.0
+      '@optique/core': 1.3.7
+      '@optique/discover': 1.3.7
+      '@optique/run': 1.3.7
 
   '@oxc-parser/binding-android-arm-eabi@0.120.0':
     optional: true

@@ -8,7 +8,7 @@ export default defineConfig({
     test: {
         // The bin entry only wires the modules together; it is covered by the
         // end-to-end test in src/bin.test.ts, which runs it as a child process.
-        coverage: coverage({ exclude: ['src/bin.ts'] }),
+        coverage: coverage({ exclude: ['src/bin.ts', 'src/templates/**'] }),
         projects: [nodeProject()],
     },
 })

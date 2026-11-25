@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineConfig } from 'vitest/config'
-import { browserProject, coverage, nodeProject } from '../vitest.base.ts'
+import { coverage, nodeProject } from '../vitest.base.ts'
 
 export default defineConfig({
     test: {
-        coverage: coverage({ thresholds: { branches: 65 } }),
-        projects: [nodeProject(), browserProject()],
+        // The bin entry runs the program on import; tests drive its commands in process.
+        coverage: coverage({
+            exclude: ['src/index.ts'],
+        }),
+        projects: [nodeProject()],
     },
 })

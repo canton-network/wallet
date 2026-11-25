@@ -20,10 +20,10 @@ export async function copyTemplate(templatePath: string, directory: string) {
     }
 
     for (const name of await readdir(template)) {
-        const isFileToHide = filesToHide.find(
+        const hiddenName = filesToHide.find(
             (filename) => name === `_${filename}`
         )
-        const output = isFileToHide ? `.${name}` : name
+        const output = hiddenName ? `.${hiddenName}` : name
         await cp(join(template, name), join(directory, output), {
             recursive: true,
             force: false,
