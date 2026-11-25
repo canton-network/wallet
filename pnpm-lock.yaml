@@ -3306,6 +3306,18 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../../core/signing-lib
+      '@canton-network/core-token-standard':
+        specifier: 'workspace:'
+        version: link:../../core/token-standard
+      '@canton-network/core-token-standard-service':
+        specifier: 'workspace:'
+        version: link:../../core/token-standard-service
+      '@canton-network/core-token-standard-v2':
+        specifier: 'workspace:'
+        version: link:../../core/token-standard-v2
+      '@canton-network/core-tx-parser':
+        specifier: 'workspace:'
+        version: link:../../core/tx-parser
       '@canton-network/core-types':
         specifier: 'workspace:'
         version: link:../../core/types
@@ -3360,6 +3372,9 @@ importers:
       '@webext-core/proxy-service':
         specifier: 'catalog:'
         version: 3.0.3(@webext-core/messaging@4.0.2)
+      decimal.js:
+        specifier: 'catalog:'
+        version: 10.6.0
       react:
         specifier: 'catalog:'
         version: 19.3.1

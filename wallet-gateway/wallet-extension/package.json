@@ -22,6 +22,10 @@
         "@canton-network/core-rpc-errors": "workspace:",
         "@canton-network/core-signing-internal": "workspace:",
         "@canton-network/core-signing-lib": "workspace:",
+        "@canton-network/core-token-standard": "workspace:",
+        "@canton-network/core-token-standard-service": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "@canton-network/core-tx-parser": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/core-wallet-services": "workspace:",
@@ -40,6 +44,7 @@
         "@tanstack/react-router": "catalog:",
         "@webext-core/messaging": "catalog:",
         "@webext-core/proxy-service": "catalog:",
+        "decimal.js": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:"
     },
