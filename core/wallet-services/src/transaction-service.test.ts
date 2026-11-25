@@ -122,8 +122,10 @@ function walletWithProvider(signingProviderId: SigningProvider): Wallet {
 function createDriver(options: {
     signTransaction?: ReturnType<typeof vi.fn>
     getTransaction?: ReturnType<typeof vi.fn>
+    requiredClaims?: string[]
 }): SigningDriverInterface {
     return {
+        requiredClaims: options.requiredClaims ?? [],
         controller: vi.fn().mockReturnValue({
             signTransaction:
                 options.signTransaction ??
@@ -296,6 +298,7 @@ describe('TransactionService', () => {
                     tx: pendingTransaction.preparedTransaction,
                     txHash: pendingTransaction.preparedTransactionHash,
                     keyIdentifier: { publicKey: wallet.publicKey },
+                    internalTxId: expect.any(String),
                 })
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
                     pendingTransaction.id,
@@ -377,7 +380,9 @@ describe('TransactionService', () => {
                 const service = createService(
                     createStore(),
                     {
-                        [SigningProvider.BLOCKDAEMON]: createDriver({}),
+                        [SigningProvider.BLOCKDAEMON]: createDriver({
+                            requiredClaims: ['email'],
+                        }),
                     },
                     notifier
                 )
@@ -385,7 +390,7 @@ describe('TransactionService', () => {
                 await expect(
                     service.sign(authContext, blockdaemonWallet, signParams)
                 ).rejects.toThrow(
-                    'Email is required for Blockdaemon wallet allocation'
+                    'Required claim email is not present in auth context'
                 )
             })
 
@@ -400,6 +405,7 @@ describe('TransactionService', () => {
                     {
                         [SigningProvider.BLOCKDAEMON]: createDriver({
                             signTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -442,6 +448,7 @@ describe('TransactionService', () => {
                     {
                         [SigningProvider.BLOCKDAEMON]: createDriver({
                             getTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -454,7 +461,6 @@ describe('TransactionService', () => {
                 )
 
                 expect(getTransaction).toHaveBeenCalledWith({
-                    userId: authContextWithEmail.email,
                     txId: 'external-tx-1',
                 })
 
@@ -483,6 +489,7 @@ describe('TransactionService', () => {
                     {
                         [SigningProvider.BLOCKDAEMON]: createDriver({
                             getTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -621,6 +628,7 @@ describe('TransactionService', () => {
                     tx: pendingTransaction.preparedTransaction,
                     txHash: pendingTransaction.preparedTransactionHash,
                     keyIdentifier: { publicKey: wallet.publicKey },
+                    internalTxId: expect.any(String),
                 })
                 expect(store.setTransactionStatus).toHaveBeenCalledWith(
                     pendingTransaction.id,
@@ -676,7 +684,10 @@ describe('TransactionService', () => {
                     status: 'pending',
                     txId: 'dsrv-tx-1',
                 })
-                const driver = createDriver({ signTransaction })
+                const driver = createDriver({
+                    signTransaction,
+                    requiredClaims: ['sub'],
+                })
                 const store = createStore()
                 const service = createService(
                     store,
@@ -690,9 +701,9 @@ describe('TransactionService', () => {
                     signParams
                 )
 
-                expect(driver.controller).toHaveBeenCalledWith(
-                    authContext.userId
-                )
+                expect(driver.controller).toHaveBeenCalledWith({
+                    sub: authContext.userId,
+                })
                 expect(signTransaction).toHaveBeenCalledWith({
                     tx: pendingTransaction.preparedTransaction,
                     txHash: pendingTransaction.preparedTransactionHash,
@@ -722,7 +733,10 @@ describe('TransactionService', () => {
                     txId: 'dsrv-tx-1',
                     signature: 'dsrv-signature',
                 })
-                const driver = createDriver({ getTransaction })
+                const driver = createDriver({
+                    getTransaction,
+                    requiredClaims: ['sub'],
+                })
                 const store = createStore(awaitingTransaction)
                 const service = createService(
                     store,
@@ -736,11 +750,10 @@ describe('TransactionService', () => {
                     pendingTransaction.id
                 )
 
-                expect(driver.controller).toHaveBeenCalledWith(
-                    authContext.userId
-                )
+                expect(driver.controller).toHaveBeenCalledWith({
+                    sub: authContext.userId,
+                })
                 expect(getTransaction).toHaveBeenCalledWith({
-                    userId: authContext.userId,
                     txId: 'external-tx-1',
                 })
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
@@ -1502,6 +1515,7 @@ describe('TransactionService', () => {
                     {
                         [signingProviderId]: createDriver({
                             getTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -1522,7 +1536,7 @@ describe('TransactionService', () => {
                         network
                     )
                 ).rejects.toThrow(
-                    'Invalid auth context (missing email) for SigningProvider BlockDaemon'
+                    'Required claim email is not present in auth context'
                 )
             })
 

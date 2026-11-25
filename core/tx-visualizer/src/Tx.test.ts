@@ -9,6 +9,10 @@ import {
     v30_topology,
     v31_topology,
 } from '@canton-network/core-ledger-proto'
+import {
+    computeMultiHashForTopology,
+    computeSha256CantonHash,
+} from '@canton-network/core-tx-hashing'
 import camelcaseKeys from 'camelcase-keys'
 import { expect, test, it, describe } from 'vitest'
 
@@ -16,10 +20,6 @@ import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
 import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
 import generateTopology372 from './__tests__/fixtures/generate-topology-3.7.2.json'
 import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
-import {
-    computeMultiHashForTopology,
-    computeSha256CantonHash,
-} from './hashing_scheme_v2.ts'
 import {
     type DecodeOptions,
     decodePreparedTransaction,

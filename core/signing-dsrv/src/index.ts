@@ -3,6 +3,7 @@
 
 import {
     buildController,
+    type ClaimsFor,
     type CreateKeyParams,
     type CreateKeyResult,
     type Error as RpcError,
@@ -25,7 +26,6 @@ import {
     type SubscribeTransactionsResult,
     type Transaction,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 import {
     type DsrvApiError,
@@ -101,7 +101,7 @@ function toKey(key: Key): Key {
     return { id: key.id, name: key.name, publicKey: key.publicKey }
 }
 
-export default class DsrvSigningDriver implements SigningDriverInterface {
+export default class DsrvSigningDriver implements SigningDriverInterface<'sub'> {
     private client: DsrvSigningApiClient
 
     constructor(config: DsrvConfig) {
@@ -112,12 +112,13 @@ export default class DsrvSigningDriver implements SigningDriverInterface {
     }
 
     public partyMode = PartyMode.EXTERNAL
+    public requiredClaims = ['sub'] as const
     public signingProvider = SigningProvider.DSRV
 
-    public controller = (userId: AuthContext['userId'] | undefined) => {
+    public controller = ({ sub }: ClaimsFor<'sub'>) => {
         // The Wallet Gateway user is sent along for the signing API's audit
         // trail. It is not a credential.
-        const requestedBy = userId ? { requestedBy: userId } : {}
+        const requestedBy = { requestedBy: sub }
 
         return buildController({
             createKey: async (

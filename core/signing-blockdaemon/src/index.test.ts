@@ -36,6 +36,7 @@ describe('BlockdaemonSigningDriver', () => {
         apiKey: 'test-api-key',
     }
     const userId = 'test-user-id'
+    const claims = { email: userId }
 
     let driver: BlockdaemonSigningDriver
     let mockClient: Mocked<SigningAPIClient>
@@ -89,7 +90,7 @@ describe('BlockdaemonSigningDriver', () => {
         )
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .signTransaction(signParams)
 
         expect(mockClient.signTransaction).toHaveBeenCalledWith({
@@ -123,7 +124,7 @@ describe('BlockdaemonSigningDriver', () => {
         mockClient.createKey.mockResolvedValue(mockResponse as Key)
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .createKey(createKeyParams)
 
         expect(mockClient.createKey).toHaveBeenCalledWith({
@@ -146,7 +147,7 @@ describe('BlockdaemonSigningDriver', () => {
             status: 'signed',
         } as Transaction)
 
-        await driver.controller(userId).getTransaction(getTransactionParams)
+        await driver.controller(claims).getTransaction(getTransactionParams)
 
         expect(mockClient.getTransaction).toHaveBeenCalledWith({
             txId: getTransactionParams.txId,
@@ -160,7 +161,7 @@ describe('BlockdaemonSigningDriver', () => {
         } as Transaction)
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransaction({ txId: 'tx-1' })
 
         expect(result).toEqual({
@@ -179,7 +180,7 @@ describe('BlockdaemonSigningDriver', () => {
         } as Transaction)
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransaction({ txId: 'tx-1' })
 
         expect(result).toEqual({
@@ -227,7 +228,7 @@ describe('BlockdaemonSigningDriver', () => {
             } as Transaction)
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransaction({ txId: 'tx-1' })
 
             expect(result).toMatchObject({ status, failureReason })
@@ -242,7 +243,7 @@ describe('BlockdaemonSigningDriver', () => {
         } as Transaction)
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransaction({ txId: 'tx-1' })
 
         expect(result).not.toHaveProperty('failureReason')
@@ -274,7 +275,7 @@ describe('BlockdaemonSigningDriver', () => {
         )
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransactions(getTransactionsParams)
 
         expect(mockClient.getTransactions).toHaveBeenCalledWith({
@@ -309,7 +310,7 @@ describe('BlockdaemonSigningDriver', () => {
 
         mockClient.getKeys.mockResolvedValue(mockResponse as Key[])
 
-        const result = await driver.controller(userId).getKeys()
+        const result = await driver.controller(claims).getKeys()
 
         expect(mockClient.getKeys).toHaveBeenCalled()
 
@@ -324,7 +325,7 @@ describe('BlockdaemonSigningDriver', () => {
     })
 
     test('signTransaction returns key_not_found when publicKey is missing', async () => {
-        const result = await driver.controller(userId).signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { id: 'keyIdentifier.id is not implemented yet' },
@@ -341,7 +342,7 @@ describe('BlockdaemonSigningDriver', () => {
     test('signTransaction returns signing_error when the client throws', async () => {
         mockClient.signTransaction.mockRejectedValue(new Error('sign failed'))
 
-        const result = await driver.controller(userId).signTransaction({
+        const result = await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { publicKey: 'pk' },
@@ -359,7 +360,7 @@ describe('BlockdaemonSigningDriver', () => {
             status: 'pending',
         } as Transaction)
 
-        await driver.controller(userId).signTransaction({
+        await driver.controller(claims).signTransaction({
             tx: 'tx',
             txHash: 'hash',
             keyIdentifier: { publicKey: 'pk' },
@@ -377,7 +378,7 @@ describe('BlockdaemonSigningDriver', () => {
         mockClient.getTransaction.mockRejectedValue(new Error('not found'))
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .getTransaction({ txId: 'missing' })
 
         expect(result).toEqual({
@@ -391,7 +392,7 @@ describe('BlockdaemonSigningDriver', () => {
             { txId: 'tx-1', status: 'signed' },
         ] as Transaction[])
 
-        const result = await driver.controller(userId).getTransactions({
+        const result = await driver.controller(claims).getTransactions({
             txIds: ['tx-1'],
         })
 
@@ -409,7 +410,7 @@ describe('BlockdaemonSigningDriver', () => {
             },
         ] as Transaction[])
 
-        const result = await driver.controller(userId).getTransactions({
+        const result = await driver.controller(claims).getTransactions({
             publicKeys: ['pk-1'],
         })
 
@@ -426,7 +427,7 @@ describe('BlockdaemonSigningDriver', () => {
     })
 
     test('getTransactions returns bad_arguments when filters are missing', async () => {
-        const result = await driver.controller(userId).getTransactions({})
+        const result = await driver.controller(claims).getTransactions({})
 
         expect(result).toEqual({
             error: 'bad_arguments',
@@ -438,7 +439,7 @@ describe('BlockdaemonSigningDriver', () => {
     test('getTransactions returns fetch_error when the client throws', async () => {
         mockClient.getTransactions.mockRejectedValue(new Error('fetch failed'))
 
-        const result = await driver.controller(userId).getTransactions({
+        const result = await driver.controller(claims).getTransactions({
             txIds: ['tx-1'],
         })
 
@@ -451,7 +452,7 @@ describe('BlockdaemonSigningDriver', () => {
     test('getKeys returns fetch_error when the client throws', async () => {
         mockClient.getKeys.mockRejectedValue(new Error('keys failed'))
 
-        const result = await driver.controller(userId).getKeys()
+        const result = await driver.controller(claims).getKeys()
 
         expect(result).toEqual({
             error: 'fetch_error',
@@ -463,7 +464,7 @@ describe('BlockdaemonSigningDriver', () => {
         mockClient.createKey.mockRejectedValue(new Error('create failed'))
 
         const result = await driver
-            .controller(userId)
+            .controller(claims)
             .createKey({ name: 'new-key' })
 
         expect(result).toEqual({
@@ -473,7 +474,7 @@ describe('BlockdaemonSigningDriver', () => {
     })
 
     test('getConfiguration masks sensitive fields', async () => {
-        const result = await driver.controller(userId).getConfiguration()
+        const result = await driver.controller(claims).getConfiguration()
 
         expect(result).toEqual({
             BaseURL: 'http://localhost:3000',
@@ -489,7 +490,7 @@ describe('BlockdaemonSigningDriver', () => {
             CAIP2: 'canton:devnet',
         })
 
-        const result = await driver.controller(userId).getConfiguration()
+        const result = await driver.controller(claims).getConfiguration()
 
         expect(result.ApiKey).toBeUndefined()
         expect(result.MasterKey).toBeUndefined()
@@ -503,7 +504,7 @@ describe('BlockdaemonSigningDriver', () => {
             Caip2: 'canton:mainnet' as const,
         }
 
-        const result = await driver.controller(userId).setConfiguration(params)
+        const result = await driver.controller(claims).setConfiguration(params)
 
         expect(mockClient.setConfiguration).toHaveBeenCalledWith({
             BaseURL: 'https://api.example',

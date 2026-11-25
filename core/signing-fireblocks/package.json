@@ -39,7 +39,6 @@
     },
     "dependencies": {
         "@canton-network/core-signing-lib": "workspace:",
-        "@canton-network/core-wallet-auth": "workspace:",
         "@fireblocks/ts-sdk": "catalog:",
         "@logtape/logtape": "catalog:",
         "lodash": "catalog:",

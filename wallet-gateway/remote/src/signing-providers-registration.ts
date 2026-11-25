@@ -9,7 +9,10 @@ import DfnsSigningProvider from '@canton-network/core-signing-dfns'
 import DsrvSigningProvider from '@canton-network/core-signing-dsrv'
 import FireblocksSigningProvider from '@canton-network/core-signing-fireblocks'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
-import { SigningProvider } from '@canton-network/core-signing-lib'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import { ParticipantSigningDriver } from '@canton-network/core-signing-participant'
 import SecurosysSigningProvider, {
     type TsbSignatureAlgorithm,
@@ -292,6 +295,10 @@ function buildDrivers(
 ): SigningDrivers {
     const drivers: SigningDrivers = {}
 
+    const register = (driver: SigningDriverInterface) => {
+        drivers[driver.signingProvider] = driver
+    }
+
     const reportUnavailable = (provider: UnavailableProvider) => {
         const messages = UNAVAILABLE_PROVIDER_MESSAGES[provider]
         if (explicit) {
@@ -306,16 +313,14 @@ function buildDrivers(
     }
 
     if (selected.participant) {
-        drivers[SigningProvider.PARTICIPANT] = new ParticipantSigningDriver()
+        register(new ParticipantSigningDriver())
     }
 
     if (selected.walletKernel) {
         if (!signingStore) {
             reportUnavailable('walletKernel')
         } else {
-            drivers[SigningProvider.WALLET_KERNEL] = new InternalSigningDriver(
-                signingStore
-            )
+            register(new InternalSigningDriver(signingStore))
         }
     }
 
@@ -325,12 +330,13 @@ function buildDrivers(
                 apiKey: secrets.fireblocksApiKey,
                 apiSecret: secrets.fireblocksApiSecret,
             }
-            drivers[SigningProvider.FIREBLOCKS] = new FireblocksSigningProvider(
-                {
+
+            register(
+                new FireblocksSigningProvider({
                     defaultKeyInfo: keyInfo,
                     userApiKeys: new Map([['user', keyInfo]]),
                     apiPath: settings.fireblocksApiPath,
-                }
+                })
             )
         } else {
             reportUnavailable('fireblocks')
@@ -339,12 +345,13 @@ function buildDrivers(
 
     if (selected.blockdaemon) {
         if (secrets.blockdaemonApiKey) {
-            drivers[SigningProvider.BLOCKDAEMON] =
+            register(
                 new BlockdaemonSigningProvider({
                     baseUrl: settings.blockdaemonBaseUrl,
                     apiKey: secrets.blockdaemonApiKey,
                     caip2: settings.blockdaemonCaip2,
                 })
+            )
         } else {
             reportUnavailable('blockdaemon')
         }
@@ -352,29 +359,32 @@ function buildDrivers(
 
     if (selected.securosys) {
         if (settings.securosysBaseUrl) {
-            drivers[SigningProvider.SECUROSYS] = new SecurosysSigningProvider({
-                baseUrl: settings.securosysBaseUrl,
-                ...(secrets.securosysKeyManagementApiKey && {
-                    keyManagementApiKey: secrets.securosysKeyManagementApiKey,
-                }),
-                ...(secrets.securosysKeyOperationApiKey && {
-                    keyOperationApiKey: secrets.securosysKeyOperationApiKey,
-                }),
-                ...(secrets.securosysBearerToken && {
-                    bearerToken: secrets.securosysBearerToken,
-                }),
-                ...(settings.securosysMtlsP12Path && {
-                    mtlsP12Path: settings.securosysMtlsP12Path,
-                }),
-                ...(secrets.securosysMtlsP12Password && {
-                    mtlsP12Password: secrets.securosysMtlsP12Password,
-                }),
-                ...(secrets.securosysKeyPassword && {
-                    keyPassword: secrets.securosysKeyPassword,
-                }),
-                signatureAlgorithm:
-                    settings.securosysSignatureAlgorithm as TsbSignatureAlgorithm,
-            })
+            register(
+                new SecurosysSigningProvider({
+                    baseUrl: settings.securosysBaseUrl,
+                    ...(secrets.securosysKeyManagementApiKey && {
+                        keyManagementApiKey:
+                            secrets.securosysKeyManagementApiKey,
+                    }),
+                    ...(secrets.securosysKeyOperationApiKey && {
+                        keyOperationApiKey: secrets.securosysKeyOperationApiKey,
+                    }),
+                    ...(secrets.securosysBearerToken && {
+                        bearerToken: secrets.securosysBearerToken,
+                    }),
+                    ...(settings.securosysMtlsP12Path && {
+                        mtlsP12Path: settings.securosysMtlsP12Path,
+                    }),
+                    ...(secrets.securosysMtlsP12Password && {
+                        mtlsP12Password: secrets.securosysMtlsP12Password,
+                    }),
+                    ...(secrets.securosysKeyPassword && {
+                        keyPassword: secrets.securosysKeyPassword,
+                    }),
+                    signatureAlgorithm:
+                        settings.securosysSignatureAlgorithm as TsbSignatureAlgorithm,
+                })
+            )
         } else {
             reportUnavailable('securosys')
         }
@@ -387,15 +397,17 @@ function buildDrivers(
             secrets.dfnsPrivateKey &&
             secrets.dfnsAuthToken
         ) {
-            drivers[SigningProvider.DFNS] = new DfnsSigningProvider({
-                orgId: settings.dfnsOrgId,
-                baseUrl: settings.dfnsBaseUrl,
-                credentials: {
-                    credId: settings.dfnsCredId,
-                    privateKey: secrets.dfnsPrivateKey,
-                    authToken: secrets.dfnsAuthToken,
-                },
-            })
+            register(
+                new DfnsSigningProvider({
+                    orgId: settings.dfnsOrgId,
+                    baseUrl: settings.dfnsBaseUrl,
+                    credentials: {
+                        credId: settings.dfnsCredId,
+                        privateKey: secrets.dfnsPrivateKey,
+                        authToken: secrets.dfnsAuthToken,
+                    },
+                })
+            )
         } else {
             reportUnavailable('dfns')
         }
@@ -425,10 +437,12 @@ function buildDrivers(
 
     if (selected.dsrv) {
         if (settings.dsrvBaseUrl && secrets.dsrvBearerToken) {
-            drivers[SigningProvider.DSRV] = new DsrvSigningProvider({
-                baseUrl: settings.dsrvBaseUrl,
-                bearerToken: secrets.dsrvBearerToken,
-            })
+            register(
+                new DsrvSigningProvider({
+                    baseUrl: settings.dsrvBaseUrl,
+                    bearerToken: secrets.dsrvBearerToken,
+                })
+            )
         } else {
             reportUnavailable('dsrv')
         }

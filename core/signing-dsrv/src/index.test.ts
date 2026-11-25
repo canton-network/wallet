@@ -8,6 +8,7 @@ import DsrvSigningDriver from './index.ts'
 
 const BASE_URL = 'http://signing.example'
 const userId = 'user-1'
+const claims = { sub: userId }
 
 const jsonResponse = (body: unknown, status = 200) =>
     new Response(JSON.stringify(body), {
@@ -54,7 +55,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .createKey({ name: 'alice' })
 
             expect(lastRequest()).toEqual({
@@ -68,23 +69,13 @@ describe('DsrvSigningDriver', () => {
             })
         })
 
-        test('omits requestedBy without a user', async () => {
-            fetchMock.mockResolvedValue(
-                jsonResponse({ id: 'key-1', name: 'alice', publicKey: 'pk-1' })
-            )
-
-            await driver.controller(undefined).createKey({ name: 'alice' })
-
-            expect(lastRequest().body).toEqual({ name: 'alice' })
-        })
-
         test('returns create_key_error when the request fails', async () => {
             fetchMock.mockResolvedValue(
                 new Response('unavailable', { status: 503 })
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .createKey({ name: 'alice' })
 
             expect(result).toEqual({
@@ -106,7 +97,7 @@ describe('DsrvSigningDriver', () => {
                 })
             )
 
-            const result = await driver.controller(userId).getKeys()
+            const result = await driver.controller(claims).getKeys()
 
             expect(lastRequest()).toEqual({
                 url: `${BASE_URL}/api/signing/getKeys`,
@@ -123,7 +114,7 @@ describe('DsrvSigningDriver', () => {
         test('returns fetch_error when the request fails', async () => {
             fetchMock.mockRejectedValue(new Error('connection refused'))
 
-            const result = await driver.controller(userId).getKeys()
+            const result = await driver.controller(claims).getKeys()
 
             expect(result).toEqual({
                 error: 'fetch_error',
@@ -146,7 +137,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .signTransaction(signParams)
 
             expect(lastRequest()).toEqual({
@@ -161,17 +152,18 @@ describe('DsrvSigningDriver', () => {
                 jsonResponse({ txId: 'dsrv-tx-1', status: 'pending' })
             )
 
-            await driver.controller(undefined).signTransaction({
+            await driver.controller(claims).signTransaction({
                 tx: 'prepared-tx',
                 txHash: 'tx-hash',
                 keyIdentifier: { publicKey: 'pk-1' },
-                extraParams: { ignored: true },
+                extraParams: { txPurpose: 'topology' },
             })
 
             expect(lastRequest().body).toEqual({
                 tx: 'prepared-tx',
                 txHash: 'tx-hash',
                 keyIdentifier: { publicKey: 'pk-1' },
+                requestedBy: userId,
             })
         })
 
@@ -184,7 +176,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .signTransaction(signParams)
 
             expect(result).toEqual({
@@ -197,7 +189,7 @@ describe('DsrvSigningDriver', () => {
             fetchMock.mockResolvedValue(jsonResponse({ error: 'halted' }))
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .signTransaction(signParams)
 
             expect(result).toEqual({
@@ -212,7 +204,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .signTransaction(signParams)
 
             expect(result).toEqual({
@@ -236,7 +228,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransaction({ userId, txId: 'dsrv-tx-1' })
 
             expect(lastRequest()).toEqual({
@@ -258,7 +250,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransaction({ userId, txId: 'dsrv-tx-1' })
 
             expect(result).toEqual({ txId: 'dsrv-tx-1', status: 'pending' })
@@ -284,7 +276,7 @@ describe('DsrvSigningDriver', () => {
                 )
 
                 const result = await driver
-                    .controller(userId)
+                    .controller(claims)
                     .getTransaction({ userId, txId: 'dsrv-tx-1' })
 
                 expect(result).toEqual({
@@ -302,7 +294,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransaction({ txId: 'dsrv-tx-1' })
 
             expect(result).toEqual({ txId: 'dsrv-tx-1', status: 'pending' })
@@ -317,7 +309,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransaction({ txId: 'missing' })
 
             expect(result).toEqual({
@@ -330,7 +322,7 @@ describe('DsrvSigningDriver', () => {
             fetchMock.mockRejectedValue(new Error('connection refused'))
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransaction({ txId: 'dsrv-tx-1' })
 
             expect(result).toEqual({
@@ -351,7 +343,7 @@ describe('DsrvSigningDriver', () => {
                 })
             )
 
-            const result = await driver.controller(userId).getTransactions({
+            const result = await driver.controller(claims).getTransactions({
                 txIds: ['dsrv-tx-1', 'dsrv-tx-2'],
                 publicKeys: ['pk-1'],
             })
@@ -379,7 +371,7 @@ describe('DsrvSigningDriver', () => {
             fetchMock.mockResolvedValue(jsonResponse({}))
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransactions({ publicKeys: ['pk-1'] })
 
             expect(lastRequest().body).toEqual({ publicKeys: ['pk-1'] })
@@ -387,7 +379,7 @@ describe('DsrvSigningDriver', () => {
         })
 
         test('returns bad_arguments without filters', async () => {
-            const result = await driver.controller(userId).getTransactions({})
+            const result = await driver.controller(claims).getTransactions({})
 
             expect(result).toEqual({
                 error: 'bad_arguments',
@@ -406,7 +398,7 @@ describe('DsrvSigningDriver', () => {
             )
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransactions({ txIds: [] })
 
             expect(result).toEqual({
@@ -419,7 +411,7 @@ describe('DsrvSigningDriver', () => {
             fetchMock.mockRejectedValue(new Error('connection refused'))
 
             const result = await driver
-                .controller(userId)
+                .controller(claims)
                 .getTransactions({ txIds: ['dsrv-tx-1'] })
 
             expect(result).toEqual({
@@ -430,7 +422,7 @@ describe('DsrvSigningDriver', () => {
     })
 
     test('signMessage is not allowed', async () => {
-        const result = await driver.controller(userId).signMessage({
+        const result = await driver.controller(claims).signMessage({
             message: 'hello',
             keyIdentifier: { publicKey: 'pk-1' },
         })
@@ -445,14 +437,14 @@ describe('DsrvSigningDriver', () => {
 
     describe('configuration', () => {
         test('getConfiguration returns the base URL', async () => {
-            expect(await driver.controller(userId).getConfiguration()).toEqual({
+            expect(await driver.controller(claims).getConfiguration()).toEqual({
                 baseUrl: BASE_URL,
                 bearerToken: '***HIDDEN***',
             })
         })
 
         test('setConfiguration changes the base URL used for requests', async () => {
-            const controller = driver.controller(userId)
+            const controller = driver.controller(claims)
 
             expect(
                 await controller.setConfiguration({
@@ -473,7 +465,7 @@ describe('DsrvSigningDriver', () => {
         test('setConfiguration ignores other settings', async () => {
             expect(
                 await driver
-                    .controller(userId)
+                    .controller(claims)
                     .setConfiguration({ apiKey: 'ignored' })
             ).toEqual({ baseUrl: BASE_URL, bearerToken: '***HIDDEN***' })
         })
@@ -487,7 +479,7 @@ describe('DsrvSigningDriver', () => {
             const withToken = new DsrvSigningDriver({
                 baseUrl: BASE_URL,
                 bearerToken: 'gw-token',
-            }).controller(userId)
+            }).controller(claims)
             fetchMock.mockImplementation(async () =>
                 jsonResponse({ txId: 'dsrv-tx-1', status: 'pending' })
             )
@@ -514,7 +506,7 @@ describe('DsrvSigningDriver', () => {
             const controller = new DsrvSigningDriver({
                 baseUrl: BASE_URL,
                 bearerToken: 'gw-token',
-            }).controller(userId)
+            }).controller(claims)
 
             expect(await controller.getConfiguration()).toEqual({
                 baseUrl: BASE_URL,
@@ -537,7 +529,7 @@ describe('DsrvSigningDriver', () => {
                 baseUrl: BASE_URL,
                 bearerToken: 'wrong-token',
             })
-                .controller(userId)
+                .controller(claims)
                 .signTransaction({
                     tx: 'tx',
                     txHash: 'hash',
