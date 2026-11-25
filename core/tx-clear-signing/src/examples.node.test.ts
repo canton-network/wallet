@@ -12,20 +12,21 @@ import {
     describeShowcase,
     intents as showcaseIntents,
 } from '../examples/showcase.ts'
+import { choiceOf, isComplete } from './__tests__/helpers.ts'
 
 describe('standalone examples', () => {
     it('describes the builtin ping create', async () => {
         const result = await describePing()
-        expect(result.complete).toBe(true)
+        expect(isComplete(result)).toBe(true)
         expect(result.operations).toHaveLength(1)
         expect(result.operations[0]?.intent).toBe(pingIntent)
     })
 
     it('describes the two-leg allocation', async () => {
         const result = await describeAllocation()
-        expect(result.complete).toBe(true)
+        expect(isComplete(result)).toBe(true)
         expect(result.operations).toHaveLength(1)
-        expect(result.operations[0]?.choiceId).toBe(
+        expect(choiceOf(result.operations[0])).toBe(
             'AllocationFactory_Allocate'
         )
         expect(result.operations[0]?.intent).toBe(allocationIntent)
@@ -33,8 +34,8 @@ describe('standalone examples', () => {
 
     it('describes the three-root amulet showcase', async () => {
         const result = await describeShowcase()
-        expect(result.complete).toBe(true)
-        expect(result.operations.map((op) => op.choiceId)).toEqual([
+        expect(isComplete(result)).toBe(true)
+        expect(result.operations.map(choiceOf)).toEqual([
             'TransferFactory_Transfer',
             'AllocationFactory_Allocate',
             'Allocation_Withdraw',

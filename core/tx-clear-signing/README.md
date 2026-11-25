@@ -2,6 +2,8 @@
 
 Describes a Canton prepared transaction in words, before it is signed. `clearSign` takes the prepared-transaction bytes, the hash the user is asked to approve, and any number of clear-signing descriptors. It returns one operation per root node, in root order. A descriptor can word a create or an exercise. Every other root is still returned.
 
+This package implements `ClearSigner`, the interface of [@canton-network/core-tx-clear-signing-lib](../tx-clear-signing-lib/README.md). That package defines the types of the request, the result and the errors, and the meta-schema of the descriptor. This README describes how this implementation behaves, including the choices the interface leaves to an implementation: which signatures it trusts, and what it checks beyond the schema.
+
 A descriptor is one JSON document bound to one Daml template, by package ID, module and entity. It has a stable sentence, an optional sentence with placeholders, and typed fields. The format is the v1 Canton Clear Signing Descriptor, modelled on ERC-7730, and is described under [The descriptor document](#the-descriptor-document).
 
 ## Example descriptors
@@ -61,7 +63,7 @@ Other Splice roots:
 
 ## The descriptor document
 
-A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example.
+A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](../tx-clear-signing-lib/canton-clear-signing-v1.schema.json), in `@canton-network/core-tx-clear-signing-lib`, is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example.
 
 A descriptor must be I-JSON (RFC 7493): no duplicate member names on any level, well-formed Unicode, and numbers an IEEE 754 double represents, so integers are limited to 53 bits. A processor must reject a descriptor that is not, and `clearSign` does. No Unicode normalization is mandated: a processor must not normalize, or decode and re-encode, in a way that changes code points.
 
@@ -103,8 +105,8 @@ At least one of the two must be present. A create root whose descriptor has no `
 An operation, whether `create` or `exercise`, has:
 
 - `intent`, required. The sentence used when `interpolatedIntent` is absent. It cannot contain `{` or `}`, so it cannot contain a placeholder.
-- `interpolatedIntent`, optional. The same kind of sentence with `{path}` placeholders. Each placeholder is the `path` of a field of this same operation, and is replaced by that field's formatted value. `{{` and `}}` are a literal brace. When this field is absent, `clearSign` shows `intent`. When it is present and a placeholder cannot be filled, the sentence is "The descriptor does not match this transaction." and the status is `fallback`.
-- `fields`, optional. The ordered rows that accompany the sentence. Omitting it means the operation shows a sentence and no rows. Each row is resolved from the prepared transaction and rendered with its `format`. A path that is missing, or a value the format refuses, gives that row an error. When the field is a placeholder in `interpolatedIntent`, the status is `fallback`. When it is not, the status stays `described` and `complete` is false.
+- `interpolatedIntent`, optional. The same kind of sentence with `{path}` placeholders. Each placeholder is the `path` of a field of this same operation, and is replaced by that field's formatted value. `{{` and `}}` are a literal brace. When this field is absent, `clearSign` shows `intent`. When it is present and a placeholder cannot be filled, the sentence is "The descriptor does not match this transaction." and the status is `unfilled`.
+- `fields`, optional. The ordered rows that accompany the sentence. Omitting it means the operation shows a sentence and no rows. Each row is resolved from the prepared transaction and rendered with its `format`. A path that is missing, or a value the format refuses, gives that row an error. When the field is a placeholder in `interpolatedIntent`, the status is `unfilled`. When it is not, the status stays `described` and the description is not complete.
 
 An exercise entry has those three, plus:
 
@@ -254,19 +256,19 @@ This implementation ships with a fixed private key in [src/testing/reference-key
 import { clearSign } from '@canton-network/core-tx-clear-signing'
 
 // Both strings are base64, as /v2/interactive-submission/prepare returns them.
-// descriptors is any number of descriptor documents.
-const { complete, operations } = await clearSign(
+// descriptors is any number of descriptor documents, as JSON text.
+const { operations } = await clearSign({
     preparedTransaction,
+    preparedTransactionHash,
     descriptors,
-    preparedTransactionHash
-)
+})
 ```
 
-The arguments are described under [Input](#input) and the result under [Output](#output).
+The request is described under [Input](#input), the result under [Output](#output), and the errors under [Errors](#errors). The types are those of `@canton-network/core-tx-clear-signing-lib`: `ClearSignRequest`, `ClearSigningResult`, `OperationDescription` and `ClearSigningError`.
 
 The package exports:
 
-- describing: `clearSign`, `HashMismatchError`, and the type `ClearSigningResult`;
+- describing: `clearSign`, `clearSigner`, the `ClearSigner` that wraps it, and `ClearSignError`, the error `clearSign` rejects with;
 - descriptors: `parseDescriptorText`, `parseDescriptor`, `DescriptorError`, `readDescriptorTemplate`, and the type `Descriptor`, the parsed document;
 - strict JSON: `parseJsonStrict`, `StrictJsonError`, `canonicalize`, `CanonicalizeError`;
 - signatures: `signDescriptor`, `signingMessage`, `verifySignatures`, and the types `DescriptorSignature`, `SignatureVerification` and `TrustedKey`;
@@ -306,19 +308,19 @@ pnpm exec tsx core/tx-clear-signing/examples/sign-descriptors.ts
 
 ## Input
 
-`clearSign(tx, descriptors, expectedHash)`.
+`clearSign({ preparedTransaction, preparedTransactionHash, descriptors })`.
 
 ### The transaction
 
-`tx` is the prepared transaction, base64, as `/v2/interactive-submission/prepare` returns `preparedTransaction`. The bytes are a protobuf `PreparedTransaction`.
+`preparedTransaction` is the prepared transaction, base64, as `/v2/interactive-submission/prepare` returns `preparedTransaction`. The bytes are a protobuf `PreparedTransaction`.
 
-The hasher refuses a message that contains a field number its definition does not have. That error is a `TxHashingError` with code `UNKNOWN_FIELD`, thrown before any sentence is produced. Decoding the bytes after the hash matches refuses the same fields. The codes the hasher can throw are listed in [the tx-hashing README](../tx-hashing/README.md).
+The hasher refuses a message that contains a field number its definition does not have. That error is a `TxHashingError` with code `UNKNOWN_FIELD`. `clearSign` rejects with `HASH_UNVERIFIABLE`, carrying it as `cause`, before any sentence is produced. Decoding the bytes after the hash matches refuses the same fields. The codes the hasher can throw are listed in [the tx-hashing README](../tx-hashing/README.md).
 
-A transaction with no `transaction` message, or with no roots, is refused by the hasher. A create, exercise, fetch, or query-by-key root whose template ID is missing throws while the roots are read, and no operation is returned.
+A transaction with no `transaction` message, or with no roots, is refused by the hasher. A create, exercise, fetch, or query-by-key root whose template ID is missing is `MALFORMED_TRANSACTION`, thrown while the roots are read, and no operation is returned.
 
 ### The descriptors
 
-`descriptors` is any number of JSON texts, valid or not. A text is parsed when it names a root.
+`descriptors` is any number of JSON texts, valid or not. A text is parsed when it names a root. They are texts and not parsed documents because a descriptor is signed as text, and a duplicate member name is only visible there.
 
 Each text is parsed strictly first. A duplicate member name, a lone surrogate, or text that is not JSON leaves a bound root `invalid`. `reason` is that problem. `JSON.parse` is used only to find which root the bad text would have bound to. A text that cannot be read, or that names no root, is ignored.
 
@@ -332,75 +334,47 @@ A second document for the same three strings replaces that binding. The root is 
 
 ### The hash
 
-`expectedHash` is the hash the user is asked to approve: base64 of the 32-byte digest.
+`preparedTransactionHash` is the hash the user is asked to approve: base64 of the 32-byte digest.
 
-[src/hash.ts](src/hash.ts) hashes the bytes with `@canton-network/core-tx-hashing` under scheme V3, then under scheme V2. A digest that equals `expectedHash` selects that scheme. V2 runs when the V3 digest differs. When both schemes can hash the transaction, the digests differ, so the hash the caller passes selects one of them.
+[src/hash.ts](src/hash.ts) hashes the bytes with `@canton-network/core-tx-hashing` under scheme V3, then under scheme V2. A digest that equals `preparedTransactionHash` selects that scheme. V2 runs when the V3 digest differs. When both schemes can hash the transaction, the digests differ, so the hash the caller passes selects one of them.
 
-When both schemes produce a digest and neither equals `expectedHash`, `clearSign` throws `HashMismatchError`. The message is `prepared transaction does not hash to '<expectedHash>'`.
+When both schemes produce a digest and neither equals `preparedTransactionHash`, `clearSign` rejects with `HASH_MISMATCH`. The message is `prepared transaction does not hash to '<preparedTransactionHash>'`.
 
-When a scheme refuses the transaction, that error is thrown and the later scheme is not tried. V3 runs first, so a refusal from V3 ends the call. A transaction that V3 can hash and V2 refuses, such as one with a contract key, throws V2's `TxHashingError` with code `FIELD_NOT_COVERED_BY_SCHEME` when the V3 digest differs from `expectedHash`.
+When a scheme refuses the transaction, `clearSign` rejects with `HASH_UNVERIFIABLE` and the later scheme is not tried. The hasher's own `TxHashingError` is the `cause`. V3 runs first, so a refusal from V3 ends the call. A transaction that V3 can hash and V2 refuses, such as one with a contract key, is `HASH_UNVERIFIABLE` with `cause` code `FIELD_NOT_COVERED_BY_SCHEME` when the V3 digest differs from `preparedTransactionHash`.
+
+## Errors
+
+`clearSign` rejects with a `ClearSignError`. Its `code` is one of the interface's `ClearSigningErrorCode`s:
+
+| `code`                  | When                                                                                                              |
+| ----------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `HASH_MISMATCH`         | Neither scheme's digest equals `preparedTransactionHash`.                                                         |
+| `HASH_UNVERIFIABLE`     | A hashing scheme refuses the transaction. `cause` is the hasher's `TxHashingError`.                               |
+| `MALFORMED_TRANSACTION` | The hash matched and the bytes cannot be read: unknown fields, no `transaction`, or a root without a template ID. |
+
+With the first two, no description is produced, and the transaction must not be approved on the strength of one. With the third, the hash is confirmed and only the description is missing. Every other problem is reported per root, in the result.
 
 ## Output
 
 The result is one sentence and its rows for each root, in root order. Values are rendered as Formats describes, in the sentence and in the row. A `Text` is a JSON string literal, so the value stays distinct from the descriptor's own words.
 
-```typescript
-interface ClearSigningResult {
-    /** True when every root is `described` and every field has a value. */
-    complete: boolean
-    /** One entry per root node, in order. */
-    operations: OperationDescription[]
-}
+The types are the interface's, in [@canton-network/core-tx-clear-signing-lib](../tx-clear-signing-lib/README.md). `ClearSigningResult` is `{ operations: OperationDescription[] }`. An operation is a create, an exercise or another root, told apart by `kind`. `choiceId` and `interface` exist only on an exercise. The result has no completeness flag: it is complete when every operation is `described` and no row has an `error`.
 
-interface OperationDescription {
-    kind: 'create' | 'exercise' | 'other'
-    /** Absent when the root is not a create or an exercise and carries no template. */
-    template?: { packageId: string; moduleName: string; entityName: string }
-    /** The exercised choice. */
-    choiceId?: string
-    /** The interface the choice is exercised through, when the node has one. */
-    interface?: { packageId: string; moduleName: string; entityName: string }
-    status:
-        | 'described'
-        | 'fallback'
-        | 'undescribed'
-        | 'unverified'
-        | 'invalid'
-        | 'undescribable'
-    reason?: string
-    /** The bound descriptor's claim about itself, and the trusted keys that signed it. */
-    descriptor?: {
-        name: string
-        publisher: string
-        version: string
-        url?: string
-        /** Names from the trusted list, one per signature, in signature order. */
-        signedBy: string[]
-    }
-    /** The sentence. Text values from the transaction are JSON-quoted. */
-    intent: string
-    fields: (
-        | { label: string; value: string }
-        | { label: string; error: string }
-    )[]
-}
-```
-
-`kind`, `template`, `choiceId` and `interface` are read from the transaction. A descriptor does not change which action is reported. Their strings, the generic intent built from them, and a `reason` that quotes the transaction are escaped as transaction values are, so a bidirectional or invisible character in a choice or module name is shown as `\u{...}`. The descriptor is bound with the unescaped names.
+`kind`, `template`, and for an exercise `choiceId` and `interface`, are read from the transaction. A descriptor does not change which action is reported. Their strings, the generic intent built from them, and a `reason` that quotes the transaction are escaped as transaction values are, so a bidirectional or invisible character in a choice or module name is shown as `\u{...}`. The descriptor is bound with the unescaped names.
 
 `template` is present on a create, an exercise, a fetch, and a query-by-key. It is absent on a rollback, on a root id that has no node, and on a node whose type is unset.
 
-`descriptor` is set when a valid descriptor is bound to the template: a `described` root, a `fallback`, an `undescribed` root whose descriptor has no matching entry, and an `undescribable` exercise whose contract cannot be read. It is absent when no descriptor binds, and when the bound document is `invalid`. `name`, `publisher` and `version` are the descriptor's claim about itself. `url` is present when the descriptor has one.
+`descriptor` is set when a valid descriptor is bound to the template: a `described` root, an `unfilled` root, an `undescribed` root whose descriptor has no matching entry, and an `undescribable` exercise whose contract cannot be read. It is absent when no descriptor binds, and when the bound document is `invalid`. `name`, `publisher` and `version` are the descriptor's own metadata, and `url` is present when the descriptor has one. The signature covers them, so a verified descriptor's `publisher` is the one it was signed with. Whether the signing key belongs to that publisher is for the trusted-key list, as [Verification](#verification) describes.
 
-`fields` is empty for `undescribed`, `invalid`, and `undescribable`. For `described` and `fallback` there is one row per field, in the order the descriptor lists them. A resolved row is `{ label, value }`. A failed row is `{ label, error }`. `label` is the field's label, or its path when the label is omitted.
+`fields` is empty for `undescribed`, `invalid`, and `undescribable`. For `described` and `unfilled` there is one row per field, in the order the descriptor lists them. A resolved row is `{ label, value }`. A failed row is `{ label, error }`. `label` is the field's label, or its path when the label is omitted.
 
-`complete` is true when every operation is `described` and every row has a `value`. A field error on a `described` operation makes `complete` false, and `clearSign` still returns the result.
+A field error on a `described` operation leaves the status `described`, and `clearSign` still returns the result.
 
 ### `described`
 
 `intent` is `interpolatedIntent` with each `{path}` replaced by that field's value. When `interpolatedIntent` is absent, `intent` is the stable sentence, and the fields are still resolved. A field error that is not a placeholder leaves the status `described`.
 
-### `fallback`
+### `unfilled`
 
 A placeholder's field has no value. `intent` is `The descriptor does not match this transaction.` `reason` names each failed placeholder, in order, as `placeholder '{path}' failed: <the field's error>`, joined with `; `. A placeholder whose path has no field is `placeholder '{path}' failed: has no field`. The rows still list what resolved and what failed.
 
@@ -428,7 +402,7 @@ An exercise whose contract cannot be read keeps the generic exercise sentence. `
 - `contract '<contractId>' is neither an input contract nor created by the transaction`
 - `contract '<contractId>' is '<packageName:module:entity>', not '<packageName:module:entity>'`
 
-`clearSign` throws while checking the hash, and while reading a transaction whose shape it cannot read. A returned result is the description of every root, whether or not `complete` is true.
+`clearSign` rejects while checking the hash, and while reading a transaction whose shape it cannot read, as [Errors](#errors) lists. A returned result is the description of every root, complete or not.
 
 ## From the screen to the signature
 
@@ -440,13 +414,13 @@ The remote gateway's `/approve` page, [wallet-gateway/remote/src/web/frontend/ap
 
 An upload on `/descriptors` sends the file text unchanged. The gateway keeps it only when the text parses strictly, the document is valid against the schema, and every signature verifies against the public key it contains. The signatures are checked on the strictly parsed JSON, as `clearSign` checks them. Deleting a stored descriptor reads its template leniently (`readDescriptorTemplate`), so a row that a later version of the parser rejects can still be deleted. Its card shows the parse error and a Delete button.
 
-"What you are signing" renders `operations`. Each operation shows its `intent` and its rows. When `complete` is false, the section warns "Parts of this transaction are not described. Review the transaction JSON before approving." Below the operations is a checkbox, "I have reviewed the raw transaction and want to approve it anyway". Approve is disabled until it is ticked. It is cleared whenever the description changes. The same page shows the decoded transaction.
+"What you are signing" renders `operations`. Each operation shows its `intent` and its rows. When the description is not complete, the section warns "Parts of this transaction are not described. Review the transaction JSON before approving." Below the operations is a checkbox, "I have reviewed the raw transaction and want to approve it anyway". Approve is disabled until it is ticked. It is cleared whenever the description changes. The same page shows the decoded transaction.
 
-When `clearSign` throws `HashMismatchError`, or the hasher throws, approval is disabled. The page says "The transaction shown does not match the hash that would be signed. Approval is disabled."
+When `clearSign` rejects with `HASH_MISMATCH` or `HASH_UNVERIFIABLE`, approval is disabled. The page says "The transaction shown does not match the hash that would be signed. Approval is disabled."
 
-A root whose descriptor is `unverified` or `invalid` keeps the generic sentence. `complete` is false, so the page warns that parts of the transaction are not described, and Approve waits for the checkbox. The untrusted wording is not shown.
+A root whose descriptor is `unverified` or `invalid` keeps the generic sentence. The description is not complete, so the page warns that parts of the transaction are not described, and Approve waits for the checkbox. The untrusted wording is not shown.
 
-When the hash matches and a later read of the transaction throws, the section reports that the transaction could not be described, quotes the error, and tells the user to review the transaction JSON. Approve waits for the same checkbox.
+When the hash matches and a later read of the transaction rejects with `MALFORMED_TRANSACTION`, the section reports that the transaction could not be described, quotes the error, and tells the user to review the transaction JSON. Approve waits for the same checkbox.
 
 Approve submits the hash `clearSign` accepted. That is the stored hash.
 

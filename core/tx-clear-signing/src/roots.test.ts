@@ -9,7 +9,7 @@ import {
 } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
 
-import { rootNodes } from './roots.ts'
+import { decode, rootNodes } from './roots.ts'
 
 const templateId: Identifier = {
     packageId: 'ab',
@@ -115,5 +115,34 @@ describe('rootNodes', () => {
         expect(empty).toEqual([
             { nodeId: '0', kind: 'other', nodeType: 'empty' },
         ])
+    })
+})
+
+describe('malformed transactions', () => {
+    it('refuses bytes that are not a prepared transaction', () => {
+        // Field 1 is a length-delimited message that claims more bytes than follow.
+        const truncated = btoa(String.fromCharCode(0x0a, 0x7f))
+        expect(() => decode(truncated)).toThrow(
+            expect.objectContaining({ code: 'MALFORMED_TRANSACTION' })
+        )
+    })
+
+    it('refuses a transaction with no transaction', () => {
+        expect(() => rootNodes(PreparedTransaction.create({}))).toThrow(
+            expect.objectContaining({ code: 'MALFORMED_TRANSACTION' })
+        )
+    })
+
+    it('refuses a fetch root without a template ID', () => {
+        const tx = rooted({
+            oneofKind: 'fetch',
+            fetch: Fetch.create({}),
+        })
+        expect(() => rootNodes(tx)).toThrow(
+            expect.objectContaining({
+                code: 'MALFORMED_TRANSACTION',
+                message: "node '0' has no template ID",
+            })
+        )
     })
 })

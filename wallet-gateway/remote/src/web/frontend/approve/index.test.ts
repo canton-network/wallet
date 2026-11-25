@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing-lib'
 import { signWithReferenceKey } from '@canton-network/core-tx-clear-signing/testing'
 import { PartyLevelRight } from '@canton-network/core-wallet-store'
 import {
@@ -18,6 +19,17 @@ import {
     makeWallet,
     mockRequest,
 } from '../__tests__/test-helpers.ts'
+
+// True when every operation is `described` and no field has an `error`.
+function isComplete(result: ClearSigningResult | null | undefined): boolean {
+    return (
+        result?.operations.every(
+            (op) =>
+                op.status === 'described' &&
+                op.fields.every((f) => 'value' in f)
+        ) ?? false
+    )
+}
 
 // The example Ping descriptor (core/tx-clear-signing/examples/descriptors/ping.json),
 // at the version this page's fixture uses. Stored here so this project does not import a file
@@ -341,7 +353,7 @@ describe('UserUiApprove', () => {
                 'transaction described'
             )
 
-            expect(el.clearSigning?.complete).toBe(true)
+            expect(isComplete(el.clearSigning)).toBe(true)
             expect(el.clearSigning?.operations[0]?.intent).toMatch(
                 /^Ping "[^"]+" from /
             )
@@ -394,7 +406,6 @@ describe('UserUiApprove', () => {
             const template = el.clearSigning?.operations[0]?.template
             if (!detail || !template) throw new Error('nothing rendered')
             detail.clearSigning = {
-                complete: true,
                 operations: [
                     {
                         kind: 'create',
@@ -429,7 +440,7 @@ describe('UserUiApprove', () => {
                 'transaction described'
             )
 
-            expect(el.clearSigning?.complete).toBe(false)
+            expect(isComplete(el.clearSigning)).toBe(false)
             expect(el.clearSigning?.operations[0]).toMatchObject({
                 kind: 'other',
                 status: 'undescribable',
@@ -444,6 +455,14 @@ describe('UserUiApprove', () => {
             ).toContain('not described')
             const approve =
                 detail?.shadowRoot?.querySelector('button.btn-primary')
+            expect(approve).toHaveProperty('disabled', true)
+
+            const acknowledgement = detail?.shadowRoot?.querySelector(
+                '#acknowledge-undescribed'
+            ) as HTMLInputElement | null
+            acknowledgement?.click()
+            await (detail as { updateComplete?: Promise<unknown> } | null)
+                ?.updateComplete
             expect(approve).toHaveProperty('disabled', false)
         })
     })
@@ -472,7 +491,7 @@ describe('UserUiApprove', () => {
             expect(el.disabled).toBe(true)
             expect(el.txHash).toBe(pingCreateHash)
             expect(el.reviewedHash).toBe(pingCreateHash)
-            expect(el.clearSigning?.complete).toBe(true)
+            expect(isComplete(el.clearSigning)).toBe(true)
             expect(mockRequest).toHaveBeenCalledWith(
                 expect.objectContaining({
                     method: 'listClearSigningDescriptors',

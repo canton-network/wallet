@@ -2,12 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export { canonicalize, CanonicalizeError } from './canonical-json.ts'
-export {
-    clearSign,
-    HashMismatchError,
-    readDescriptorTemplate,
-    type ClearSigningResult,
-} from './clear-sign.ts'
+export { clearSign, clearSigner, readDescriptorTemplate } from './clear-sign.ts'
+export { ClearSignError } from './errors.ts'
 export {
     DescriptorError,
     parseDescriptor,

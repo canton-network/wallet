@@ -10,7 +10,7 @@ import {
     parseDescriptorText,
 } from './descriptor.ts'
 
-// The examples of canton-clear-signing-v1.schema.json. The parser must agree with the schema on every one.
+// The examples of the meta-schema in core-tx-clear-signing-lib. The parser must agree with the schema on every one.
 // No type argument: see core/tx-hashing/src/__tests__/helpers/load-vectors.ts.
 const valid = {
     ...import.meta.glob('../examples/descriptors/*.json', {

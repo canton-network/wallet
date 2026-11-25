@@ -6,6 +6,14 @@ import type {
     Metadata,
     Value,
 } from '@canton-network/core-ledger-proto'
+import type {
+    ClearSigner,
+    ClearSigningResult,
+    ClearSignRequest,
+    DescribedField,
+    OperationDescription,
+    TemplateRef,
+} from '@canton-network/core-tx-clear-signing-lib'
 
 import {
     DescriptorError,
@@ -15,6 +23,7 @@ import {
     type Field,
     type Operation,
 } from './descriptor.ts'
+import { ClearSignError } from './errors.ts'
 import {
     FormatError,
     formatValue,
@@ -42,7 +51,6 @@ import {
     templateRef,
     type ContractSet,
     type RootNode,
-    type TemplateRef,
 } from './roots.ts'
 import { verifySignatures } from './signature.ts'
 import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
@@ -50,78 +58,6 @@ import { TRUSTED_KEYS } from './trusted-keys.ts'
 
 /** Shown when an interpolated intent cannot be filled from the transaction. */
 export const MISMATCH_INTENT = 'The descriptor does not match this transaction.'
-
-/** A field as shown to the user: its formatted value, or why it cannot be shown. */
-export type DescribedField =
-    | { label: string; value: string }
-    | { label: string; error: string }
-
-/**
- * How one root node of a prepared transaction is shown.
- *
- * `kind`, `template`, `choiceId` and `interface` are read from the transaction, so a descriptor
- * cannot change what the user is told is being done. `fields` and `descriptor` come from the
- * descriptor bound to `template`. `intent` does too, except when interpolation fails: then it says
- * the descriptor does not match the transaction.
- */
-export interface OperationDescription {
-    kind: 'create' | 'exercise' | 'other'
-    /** Absent for a root that is not a create or an exercise and carries no template. */
-    template?: TemplateRef
-    /** The exercised choice. */
-    choiceId?: string
-    /** The interface the choice is exercised through, if any. */
-    interface?: TemplateRef
-    /**
-     * - `described`: `intent` is the descriptor's interpolated intent, or its stable intent when it
-     *   has no interpolated one.
-     * - `fallback`: a placeholder's field could not be shown, so `intent` says the descriptor does
-     *   not match the transaction. `reason` names the placeholder.
-     * - `undescribed`: no descriptor words the node, so `intent` is generic.
-     * - `unverified`: a signature on the bound descriptor does not verify against a trusted key, or
-     *   there is no signature, so `intent` is generic and `reason` says why. The wording is not shown.
-     * - `invalid`: the descriptor bound to the node is not valid, or there is more than one, so
-     *   `intent` is generic and `reason` says why.
-     * - `undescribable`: the node cannot be read, so `intent` is generic and `reason` says why.
-     */
-    status:
-        | 'described'
-        | 'fallback'
-        | 'undescribed'
-        | 'unverified'
-        | 'invalid'
-        | 'undescribable'
-    reason?: string
-    /**
-     * The bound descriptor's claim about itself, and the trusted keys that signed it. Present only
-     * when every signature verified against the trusted list.
-     */
-    descriptor?: {
-        name: string
-        publisher: string
-        version: string
-        url?: string
-        /** Names from the trusted list, one per signature, in signature order. */
-        signedBy: string[]
-    }
-    /** The sentence the user reads. Text values from the transaction are JSON-quoted. */
-    intent: string
-    fields: DescribedField[]
-}
-
-export interface ClearSigningResult {
-    /** True when every root is `described` and every field has a value. */
-    complete: boolean
-    /** One entry per root node, in order. */
-    operations: OperationDescription[]
-}
-
-export class HashMismatchError extends Error {
-    constructor(expectedHash: string) {
-        super(`prepared transaction does not hash to '${expectedHash}'`)
-        this.name = 'HashMismatchError'
-    }
-}
 
 /**
  * Describes each root node of a prepared transaction with the descriptor bound to its template.
@@ -133,20 +69,21 @@ export class HashMismatchError extends Error {
  * `unverified` and its wording is not shown. The description is only as trustworthy as its binding
  * to what is signed, so the transaction is described only when it hashes to `expectedHash`.
  *
- * @param tx - the prepared transaction, base64-encoded
- * @param descriptors - clear-signing descriptors as JSON text; any number, valid or not
- * @param expectedHash - the hash the user is asked to approve, base64-encoded
- * @throws HashMismatchError when the transaction does not hash to `expectedHash`
- * @throws Error when the transaction cannot be hashed or is malformed
+ * @throws ClearSignError `HASH_MISMATCH` when the transaction does not hash to
+ * `preparedTransactionHash`, `HASH_UNVERIFIABLE` when it cannot be hashed, and
+ * `MALFORMED_TRANSACTION` when it hashes and cannot be read
  */
-export async function clearSign(
-    tx: string,
-    descriptors: readonly string[],
-    expectedHash: string
-): Promise<ClearSigningResult> {
+export async function clearSign({
+    preparedTransaction: tx,
+    preparedTransactionHash: expectedHash,
+    descriptors,
+}: ClearSignRequest): Promise<ClearSigningResult> {
     const matches = await hashesTo(tx, expectedHash)
     if (!matches) {
-        throw new HashMismatchError(expectedHash)
+        throw new ClearSignError(
+            'HASH_MISMATCH',
+            `prepared transaction does not hash to '${expectedHash}'`
+        )
     }
     const prepared = decode(tx)
     const roots = rootNodes(prepared)
@@ -155,19 +92,18 @@ export async function clearSign(
     const operations = roots.map((node) =>
         describeNode(node, contracts, bindings, prepared.metadata)
     )
-    const complete = operations.every(
-        (op) =>
-            op.status === 'described' && op.fields.every((f) => 'value' in f)
-    )
-    return { complete, operations }
+    return { operations }
 }
+
+/** The implementation of the clear-signing interface. */
+export const clearSigner: ClearSigner = { clearSign }
 
 /**
  * A descriptor bound to a root template: verified, unverified, or why it cannot be parsed.
  * Two descriptors for one template are `problems`, which the root reports as `invalid`.
  */
 type Binding =
-    | { descriptor: Descriptor; signers: readonly string[] }
+    | { descriptor: Descriptor }
     | { unverified: readonly string[] }
     | { problems: readonly string[] }
 
@@ -229,7 +165,7 @@ async function bind(json: unknown): Promise<Binding> {
     const verified = await verifySignatures(json, TRUSTED_KEYS)
     if (!verified.ok) return { unverified: verified.problems }
     try {
-        return { descriptor: parseDescriptor(json), signers: verified.signers }
+        return { descriptor: parseDescriptor(json) }
     } catch (err) {
         if (!(err instanceof DescriptorError)) throw err
         return { problems: err.problems }
@@ -260,10 +196,15 @@ function nonEmpty(value: unknown): string | undefined {
     return typeof value === 'string' && value !== '' ? value : undefined
 }
 
-type Header = Pick<
-    OperationDescription,
-    'kind' | 'template' | 'choiceId' | 'interface'
->
+type Header =
+    | { kind: 'create'; template: TemplateRef }
+    | {
+          kind: 'exercise'
+          template: TemplateRef
+          choiceId: string
+          interface?: TemplateRef
+      }
+    | { kind: 'other'; template?: TemplateRef }
 
 function describeNode(
     node: RootNode,
@@ -302,10 +243,10 @@ function describeNode(
             reason: sanitize(binding.problems.join('; ')),
         }
     }
-    const { descriptor, signers } = binding
+    const { descriptor } = binding
     const described = {
         ...generic,
-        descriptor: descriptorInfo(descriptor, signers),
+        descriptor: descriptorInfo(descriptor),
     }
     const operation =
         node.kind === 'create'
@@ -313,7 +254,7 @@ function describeNode(
             : exerciseEntry(
                   descriptor.display.exercises,
                   node.exercise.choiceId,
-                  header.interface
+                  header.kind === 'exercise' ? header.interface : undefined
               )
     if (!operation) {
         return { ...described, status: 'undescribed' }
@@ -358,13 +299,28 @@ function nodeHeader(node: RootNode): Header {
 
 /** The header with each name escaped as `sanitize` escapes a value from the transaction. */
 function shownHeader(header: Header): Header {
-    return {
-        kind: header.kind,
-        ...(header.template && { template: shownTemplate(header.template) }),
-        ...(header.choiceId !== undefined && {
-            choiceId: sanitize(header.choiceId),
-        }),
-        ...(header.interface && { interface: shownTemplate(header.interface) }),
+    switch (header.kind) {
+        case 'create':
+            return {
+                kind: 'create',
+                template: shownTemplate(header.template),
+            }
+        case 'exercise':
+            return {
+                kind: 'exercise',
+                template: shownTemplate(header.template),
+                choiceId: sanitize(header.choiceId),
+                ...(header.interface && {
+                    interface: shownTemplate(header.interface),
+                }),
+            }
+        case 'other':
+            return {
+                kind: 'other',
+                ...(header.template && {
+                    template: shownTemplate(header.template),
+                }),
+            }
     }
 }
 
@@ -392,17 +348,15 @@ function typeName(id: Identifier | undefined): string {
     return `${id?.moduleName}:${id?.entityName}`
 }
 
-function descriptorInfo(
-    { metadata }: Descriptor,
-    signers: readonly string[]
-): NonNullable<OperationDescription['descriptor']> {
+function descriptorInfo({
+    metadata,
+}: Descriptor): NonNullable<OperationDescription['descriptor']> {
     const { name, publisher, version, url } = metadata
     return {
         name,
         publisher,
         version,
         ...(url !== undefined && { url }),
-        signedBy: [...signers],
     }
 }
 
@@ -538,7 +492,7 @@ function describeOperation(
     const intent = interpolate(op.interpolatedIntent, byPath)
     if (intent === undefined) {
         return {
-            status: 'fallback',
+            status: 'unfilled',
             intent: MISMATCH_INTENT,
             reason: sanitize(mismatchReason(op.interpolatedIntent, byPath)),
             fields,

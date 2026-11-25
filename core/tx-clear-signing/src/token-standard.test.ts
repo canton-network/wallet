@@ -14,11 +14,11 @@
 // cannot read, and the choices on AmuletRules itself are not a root of any capture here.
 
 import type { Identifier } from '@canton-network/core-ledger-proto'
+import type { OperationDescription } from '@canton-network/core-tx-clear-signing-lib'
 import { describe, expect, it } from 'vitest'
 
-import { described } from './__tests__/helpers.ts'
+import { choiceOf, described, isComplete } from './__tests__/helpers.ts'
 import { captured, rebind, spliceDescriptors } from './__tests__/splice.ts'
-import type { OperationDescription } from './clear-sign.ts'
 import { parseDescriptorText, type Descriptor } from './descriptor.ts'
 import { decode } from './roots.ts'
 
@@ -87,7 +87,7 @@ async function describeComplete(
     const op = result.operations[0]!
     expect(op.status).toBe('described')
     expect(op.fields.filter((f) => 'error' in f)).toEqual([])
-    expect(result.complete).toBe(true)
+    expect(isComplete(result)).toBe(true)
     seen.push(op)
     return op
 }
@@ -243,7 +243,11 @@ describe('reference descriptors', () => {
         ])
         const covered = new Set(
             seen.map((op) =>
-                key(op.template!, op.choiceId ?? 'create', op.interface)
+                key(
+                    op.template!,
+                    choiceOf(op) ?? 'create',
+                    op.kind === 'exercise' ? op.interface : undefined
+                )
             )
         )
         // No prepared transaction exists for these. Accepting or rejecting an external-party

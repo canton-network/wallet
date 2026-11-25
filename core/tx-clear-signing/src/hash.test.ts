@@ -52,8 +52,8 @@ describe('hashesTo', () => {
             ])
         )
         await expect(hashesTo(tx, btoa('x'.repeat(32)))).rejects.toMatchObject({
-            name: 'TxHashingError',
-            code: 'UNKNOWN_FIELD',
+            code: 'HASH_UNVERIFIABLE',
+            cause: { name: 'TxHashingError', code: 'UNKNOWN_FIELD' },
         })
     })
 })

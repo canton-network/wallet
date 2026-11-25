@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing'
+import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing-lib'
 import { fixture } from '@open-wc/testing-helpers'
 import { html, type LitElement } from 'lit'
 import { afterEach, describe, expect, it } from 'vitest'
@@ -19,12 +19,10 @@ const operation: OperationDescription = {
 }
 
 const complete: ClearSigningResult = {
-    complete: true,
     operations: [operation],
 }
 
 const incomplete: ClearSigningResult = {
-    complete: false,
     operations: [{ ...operation, status: 'undescribed' }],
 }
 

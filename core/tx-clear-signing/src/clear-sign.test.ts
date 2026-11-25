@@ -20,10 +20,12 @@ import nestedCreates from './__tests__/fixtures/v2-exercise-nested-creates.json'
 import maps from './__tests__/fixtures/v2-maps.json'
 import variantEnum from './__tests__/fixtures/v2-variant-enum.json'
 import {
+    choiceOf,
     described,
     encode,
     hashEither,
     intentText,
+    isComplete,
     rootNodeType,
     shown,
     OTHER,
@@ -31,7 +33,7 @@ import {
     VECTOR_PACKAGE,
     vectorDescriptor,
 } from './__tests__/helpers.ts'
-import { HashMismatchError, MISMATCH_INTENT, clearSign } from './clear-sign.ts'
+import { MISMATCH_INTENT, clearSign } from './clear-sign.ts'
 import {
     DescriptorError,
     parseDescriptor,
@@ -40,8 +42,6 @@ import {
 import { decode } from './roots.ts'
 import { signDescriptor } from './signature.ts'
 import { signWithReferenceKey } from './testing/reference-key.ts'
-import { REFERENCE_SIGNER } from './trusted-keys.ts'
-
 const ping = parseDescriptor(pingJson)
 const ALICE =
     'v1-01-alice::1220ee2624190834dddf28f194685acee8f00cbde9ee0d211dae277f4d799884f289'
@@ -50,7 +50,6 @@ const PING_DESCRIPTOR = {
     name: 'Canton ping',
     publisher: 'Blockdaemon',
     version: '1.0.0',
-    signedBy: [REFERENCE_SIGNER],
 }
 
 const NO_ARGUMENT: Value = {
@@ -121,15 +120,21 @@ describe('clearSign', () => {
                 metadata: { synchronizerId: 'sync::participant' },
             })
         )
-        await expect(described(tx, [])).rejects.toThrow(
-            'prepared transaction has no transaction'
-        )
+        await expect(
+            clearSign({
+                preparedTransaction: tx,
+                descriptors: [],
+                preparedTransactionHash: 'bm90LWEgaGFzaA==',
+            })
+        ).rejects.toMatchObject({
+            code: 'HASH_UNVERIFIABLE',
+            cause: { code: 'MISSING_FIELD' },
+        })
     })
 
     it('describes a Ping create', async () => {
         const result = await described(builtinPingCreate, [ping])
         expect(result).toEqual({
-            complete: true,
             operations: [
                 {
                     kind: 'create',
@@ -488,9 +493,9 @@ describe('clearSign', () => {
             encode(exercisePing('AbortPing', argument)),
             [ping]
         )
-        expect(result.complete).toBe(false)
+        expect(isComplete(result)).toBe(false)
         expect(result.operations[0]).toMatchObject({
-            status: 'fallback',
+            status: 'unfilled',
             intent: MISMATCH_INTENT,
             reason: "placeholder '{anyone}' failed: 'anyone' is None",
             fields: [
@@ -517,7 +522,7 @@ describe('clearSign', () => {
             throw new Error('fixture has no input contract')
         }
         input.v1.templateId.packageId = '0'.repeat(64)
-        expect((await described(encode(tx), [ping])).complete).toBe(true)
+        expect(isComplete(await described(encode(tx), [ping]))).toBe(true)
     })
 
     it('rejects an exercise on a contract that is not an input contract', async () => {
@@ -555,7 +560,7 @@ describe('clearSign', () => {
         const result = await described(createAndExercise.preparedTransaction, [
             plain,
         ])
-        expect(result.complete).toBe(true)
+        expect(isComplete(result)).toBe(true)
         expect(result.operations.map(intentText)).toEqual([
             `Create a plain contract for ${OWNER}`,
             `Check the contract of ${OWNER}`,
@@ -715,9 +720,9 @@ describe('clearSign', () => {
         const result = await described(variantEnum.preparedTransaction, [
             variants,
         ])
-        expect(result.complete).toBe(false)
+        expect(isComplete(result)).toBe(false)
         expect(result.operations[0]).toMatchObject({
-            status: 'fallback',
+            status: 'unfilled',
             intent: MISMATCH_INTENT,
             reason: "placeholder '{colors.Red}' failed: 'Red' applied to list",
             fields: [
@@ -763,7 +768,7 @@ describe('clearSign', () => {
         })
         const broken = {} as Descriptor
         const result = await described(builtinPingCreate, [other, broken, ping])
-        expect(result.complete).toBe(true)
+        expect(isComplete(result)).toBe(true)
         expect(result.operations).toHaveLength(1)
     })
 
@@ -791,7 +796,7 @@ describe('clearSign', () => {
         const tx = encode(exercisePing(`Respond${RLO}`))
         const [op] = (await described(tx, [])).operations
         expect(op?.status).toBe('undescribed')
-        expect(op?.choiceId).toBe('Respond\\u{202e}')
+        expect(choiceOf(op)).toBe('Respond\\u{202e}')
         expect(op?.intent).toContain('Respond\\u{202e}')
         expect(JSON.stringify(op)).not.toContain(RLO)
     })
@@ -833,7 +838,11 @@ describe('clearSign', () => {
         const { signatures: _removed, ...unsigned } = pingJson
         const hash = await hashEither(builtinPingCreate)
         const [op] = (
-            await clearSign(builtinPingCreate, [JSON.stringify(unsigned)], hash)
+            await clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [JSON.stringify(unsigned)],
+                preparedTransactionHash: hash,
+            })
         ).operations
         expect(op).toMatchObject({
             status: 'unverified',
@@ -853,7 +862,11 @@ describe('clearSign', () => {
             await crypto.subtle.exportKey('jwk', pair.privateKey)
         )
         const [untrusted] = (
-            await clearSign(builtinPingCreate, [JSON.stringify(foreign)], hash)
+            await clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [JSON.stringify(foreign)],
+                preparedTransactionHash: hash,
+            })
         ).operations
         expect(untrusted).toMatchObject({
             status: 'unverified',
@@ -866,11 +879,11 @@ describe('clearSign', () => {
         const deep = '['.repeat(1_000_000) + ']'.repeat(1_000_000)
         const text = `{"context":{"template":${JSON.stringify(ping.context.template)}},"deep":${deep}}`
         const [op] = (
-            await clearSign(
-                builtinPingCreate,
-                [text],
-                await hashEither(builtinPingCreate)
-            )
+            await clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [text],
+                preparedTransactionHash: await hashEither(builtinPingCreate),
+            })
         ).operations
         expect(op).toMatchObject({
             status: 'invalid',
@@ -885,11 +898,11 @@ describe('clearSign', () => {
         const key = JSON.stringify(`bad${rlo}name`)
         const text = `{"context":{"template":${JSON.stringify(ping.context.template)}},${key}:1,${key}:2}`
         const [op] = (
-            await clearSign(
-                builtinPingCreate,
-                [text],
-                await hashEither(builtinPingCreate)
-            )
+            await clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [text],
+                preparedTransactionHash: await hashEither(builtinPingCreate),
+            })
         ).operations
         expect(op?.status).toBe('invalid')
         expect(op?.reason).toContain('\\u{202e}')
@@ -910,11 +923,11 @@ describe('clearSign', () => {
         // A copy: `signatures[0]` is the entry already stored on `ping`.
         signatures[0] = { ...entry, [`note${rlo}`]: 'x' }
         const [op] = (
-            await clearSign(
-                builtinPingCreate,
-                [JSON.stringify(signed)],
-                await hashEither(builtinPingCreate)
-            )
+            await clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [JSON.stringify(signed)],
+                preparedTransactionHash: await hashEither(builtinPingCreate),
+            })
         ).operations
         expect(op?.status).toBe('unverified')
         expect(op?.reason).toContain('\\u{202e}')
@@ -925,11 +938,11 @@ describe('clearSign', () => {
         const template = JSON.stringify(ping.context.template)
         const text = `{"context":{"template":${template}},"context":{"template":${template}},"metadata":{"version":"1.0.0","publisher":"t","name":"n"},"display":{"create":{"intent":"Ping"}}}`
         const [op] = (
-            await clearSign(
-                builtinPingCreate,
-                [text],
-                await hashEither(builtinPingCreate)
-            )
+            await clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [text],
+                preparedTransactionHash: await hashEither(builtinPingCreate),
+            })
         ).operations
         expect(op).toMatchObject({
             status: 'invalid',
@@ -943,23 +956,26 @@ describe('clearSign', () => {
     it('ignores a duplicate-key descriptor that binds to no root', async () => {
         const other =
             '{"context":{"template":{"packageId":"aa","moduleName":"M","entityName":"Other"}},"context":{"template":{"packageId":"aa","moduleName":"M","entityName":"Other"}}}'
-        const result = await clearSign(
-            builtinPingCreate,
-            [other, JSON.stringify(await signWithReferenceKey(ping))],
-            await hashEither(builtinPingCreate)
-        )
-        expect(result.complete).toBe(true)
+        const result = await clearSign({
+            preparedTransaction: builtinPingCreate,
+            descriptors: [
+                other,
+                JSON.stringify(await signWithReferenceKey(ping)),
+            ],
+            preparedTransactionHash: await hashEither(builtinPingCreate),
+        })
+        expect(isComplete(result)).toBe(true)
     })
 
     it('reports an unsigned malformed descriptor as unverified', async () => {
         const { signatures: _removed, ...unsigned } = pingJson
         const hash = await hashEither(builtinPingCreate)
         const [op] = (
-            await clearSign(
-                builtinPingCreate,
-                [JSON.stringify({ ...unsigned, display: {} })],
-                hash
-            )
+            await clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [JSON.stringify({ ...unsigned, display: {} })],
+                preparedTransactionHash: hash,
+            })
         ).operations
         expect(op).toMatchObject({
             status: 'unverified',
@@ -978,32 +994,32 @@ describe('clearSign', () => {
             },
             signatures: [],
         }
-        const result = await clearSign(
-            builtinPingCreate,
-            [
+        const result = await clearSign({
+            preparedTransaction: builtinPingCreate,
+            descriptors: [
                 JSON.stringify(other),
                 JSON.stringify(await signWithReferenceKey(ping)),
             ],
-            await hashEither(builtinPingCreate)
-        )
-        expect(result.complete).toBe(true)
+            preparedTransactionHash: await hashEither(builtinPingCreate),
+        })
+        expect(isComplete(result)).toBe(true)
     })
 
     it('checks the prepared-transaction hash before the signatures', async () => {
         const { signatures: _removed, ...unsigned } = pingJson
         await expect(
-            clearSign(
-                builtinPingCreate,
-                [JSON.stringify(unsigned)],
-                'bm90LWEgaGFzaA=='
-            )
-        ).rejects.toThrow(HashMismatchError)
+            clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [JSON.stringify(unsigned)],
+                preparedTransactionHash: 'bm90LWEgaGFzaA==',
+            })
+        ).rejects.toMatchObject({ code: 'HASH_MISMATCH' })
     })
 
     it('reports an invalid descriptor on the root it binds to', async () => {
         const invalid = { ...pingJson, display: {} } as unknown as Descriptor
         const result = await described(builtinPingCreate, [invalid])
-        expect(result.complete).toBe(false)
+        expect(isComplete(result)).toBe(false)
         expect(result.operations[0]).toMatchObject({
             status: 'invalid',
             fields: [],
@@ -1029,12 +1045,12 @@ describe('clearSign', () => {
 
     it('rejects a transaction that does not have the expected hash', async () => {
         await expect(
-            clearSign(
-                builtinPingCreate,
-                [JSON.stringify(ping)],
-                'bm90LWEgaGFzaA=='
-            )
-        ).rejects.toThrow(HashMismatchError)
+            clearSign({
+                preparedTransaction: builtinPingCreate,
+                descriptors: [JSON.stringify(ping)],
+                preparedTransactionHash: 'bm90LWEgaGFzaA==',
+            })
+        ).rejects.toMatchObject({ code: 'HASH_MISMATCH' })
     })
 
     it('reads container fields of an exercise', async () => {
@@ -1144,8 +1160,15 @@ describe('clearSign', () => {
         tx.transaction!.nodeSeeds = []
         const unseeded = encode(tx)
         await expect(
-            clearSign(unseeded, [JSON.stringify(ping)], 'bm90LWEgaGFzaA==')
-        ).rejects.toThrow(/has no seed/)
+            clearSign({
+                preparedTransaction: unseeded,
+                descriptors: [JSON.stringify(ping)],
+                preparedTransactionHash: 'bm90LWEgaGFzaA==',
+            })
+        ).rejects.toMatchObject({
+            code: 'HASH_UNVERIFIABLE',
+            message: expect.stringMatching(/has no seed/),
+        })
     })
 })
 
@@ -1184,7 +1207,7 @@ describe('optional fields', () => {
             { label: 'Missing', value: 'None' },
         ])
         expect(intentText(op)).toBe('It is 7; missing is None')
-        expect(result.complete).toBe(true)
+        expect(isComplete(result)).toBe(true)
     })
 
     it('fails an optional whose format does not accept the value', async () => {
@@ -1198,7 +1221,7 @@ describe('optional fields', () => {
         expect(shown(result.operations[0]?.fields[0])).toBe(
             "format 'string' does not accept int64"
         )
-        expect(result.complete).toBe(false)
+        expect(isComplete(result)).toBe(false)
     })
 
     it('fails a missing field that is not marked optional, and falls back', async () => {
@@ -1207,7 +1230,7 @@ describe('optional fields', () => {
             'It is {values.missingValue}'
         )
         const [op] = result.operations
-        expect(op?.status).toBe('fallback')
+        expect(op?.status).toBe('unfilled')
         expect(op?.intent).toBe(MISMATCH_INTENT)
         expect(op?.reason).toBe(
             "placeholder '{values.missingValue}' failed: 'missingValue' is not in the transaction"
@@ -1215,7 +1238,7 @@ describe('optional fields', () => {
         expect(shown(op?.fields[0])).toBe(
             "'missingValue' is not in the transaction"
         )
-        expect(result.complete).toBe(false)
+        expect(isComplete(result)).toBe(false)
     })
 
     it('shows an enum by its table entry', async () => {

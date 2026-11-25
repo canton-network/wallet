@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing'
+import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing-lib'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import type { Meta, StoryObj } from '@storybook/react-vite'
 import {
@@ -345,7 +345,6 @@ const factoryTemplate = {
 }
 
 const clearSigning: ClearSigningResult = {
-    complete: false,
     operations: [
         {
             kind: 'create',
@@ -354,7 +353,6 @@ const clearSigning: ClearSigningResult = {
                 name: 'Canton ping',
                 publisher: 'Digital Asset',
                 version: '1.0.0',
-                signedBy: ['reference'],
             },
             status: 'described',
             intent: 'Ping "ping-1" from alice::1220aa to bob::1220bb',
@@ -393,7 +391,6 @@ const clearSigning: ClearSigningResult = {
                 name: 'Amulet rules for external parties',
                 publisher: 'Splice',
                 version: '1.0.0',
-                signedBy: ['reference'],
             },
             status: 'described',
             intent: 'Allocate funds for a settlement',
@@ -490,7 +487,6 @@ export const ClearSigningFailed: Story = {
 export const ClearSignedComplete: Story = {
     args: {
         clearSigning: {
-            complete: true,
             operations: clearSigning.operations.filter(
                 (op) => op.status === 'described'
             ),

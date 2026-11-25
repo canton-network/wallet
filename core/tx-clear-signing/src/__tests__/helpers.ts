@@ -10,15 +10,15 @@ import {
     type Identifier,
     type Rollback,
 } from '@canton-network/core-ledger-proto'
+import type {
+    ClearSigningResult,
+    DescribedField,
+    OperationDescription,
+} from '@canton-network/core-tx-clear-signing-lib'
 import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
 
 import { toBase64 } from '../bytes.ts'
-import {
-    clearSign,
-    type ClearSigningResult,
-    type DescribedField,
-    type OperationDescription,
-} from '../clear-sign.ts'
+import { clearSign } from '../clear-sign.ts'
 import { type Descriptor, parseDescriptor } from '../descriptor.ts'
 import { signWithReferenceKey } from '../testing/reference-key.ts'
 
@@ -107,11 +107,11 @@ export async function described(
     descriptors: readonly unknown[]
 ): Promise<ClearSigningResult> {
     const signed = await Promise.all(descriptors.map(attest))
-    return clearSign(
-        tx,
-        signed.map((value) => JSON.stringify(value)),
-        await hashEither(tx)
-    )
+    return clearSign({
+        preparedTransaction: tx,
+        descriptors: signed.map((value) => JSON.stringify(value)),
+        preparedTransactionHash: await hashEither(tx),
+    })
 }
 
 async function attest(json: unknown): Promise<unknown> {
@@ -121,6 +121,24 @@ async function attest(json: unknown): Promise<unknown> {
     const copy = { ...(json as Record<string, unknown>) }
     delete copy.signatures
     return signWithReferenceKey(copy)
+}
+
+/** True when every operation is `described` and no field has an `error`. */
+export function isComplete({ operations }: ClearSigningResult): boolean {
+    return operations.every(
+        (op) =>
+            op.status === 'described' && op.fields.every((f) => 'value' in f)
+    )
+}
+
+/** The exercised choice, or undefined for a root that is not an exercise. */
+export function choiceOf(op: OperationDescription | undefined) {
+    return op?.kind === 'exercise' ? op.choiceId : undefined
+}
+
+/** The interface an exercise goes through, or undefined. */
+export function interfaceOf(op: OperationDescription | undefined) {
+    return op?.kind === 'exercise' ? op.interface : undefined
 }
 
 /** The intent of an operation, for assertions on its wording. */

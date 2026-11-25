@@ -42,6 +42,7 @@
     },
     "dependencies": {
         "@canton-network/core-ledger-proto": "workspace:",
+        "@canton-network/core-tx-clear-signing-lib": "workspace:",
         "@canton-network/core-tx-hashing": "workspace:",
         "zod": "catalog:"
     },

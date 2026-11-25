@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import schema from '@canton-network/core-tx-clear-signing-lib/canton-clear-signing-v1.schema.json'
 import addFormats from 'ajv-formats'
 import Ajv2020 from 'ajv/dist/2020.js'
 import { describe, expect, it } from 'vitest'
 
-import schema from '../canton-clear-signing-v1.schema.json'
 import ping from '../examples/descriptors/ping.json'
 import {
     CREATE_PATH_PATTERN,

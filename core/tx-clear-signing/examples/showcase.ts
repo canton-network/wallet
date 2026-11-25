@@ -44,7 +44,11 @@ export const intents = [
 const descriptors = [externalPartyAmuletRules, amuletAllocationV2]
 
 export function describeShowcase() {
-    return clearSign(preparedTransaction, descriptors, preparedTransactionHash)
+    return clearSign({
+        preparedTransaction: preparedTransaction,
+        descriptors: descriptors,
+        preparedTransactionHash: preparedTransactionHash,
+    })
 }
 
 async function run(): Promise<void> {

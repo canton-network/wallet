@@ -29,7 +29,7 @@ export interface DescriptorSignature {
 
 /** A public key `clearSign` accepts, matched on scheme and key bytes. */
 export interface TrustedKey {
-    /** Shown as `signedBy` when a signature from this key verifies. */
+    /** Listed in `signers` when a signature from this key verifies. */
     name: string
     scheme: 'ed25519'
     /** Standard base64 of the 32-byte Ed25519 public key. */

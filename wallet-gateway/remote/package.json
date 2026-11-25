@@ -48,6 +48,7 @@
         "@canton-network/core-signing-securosys": "workspace:",
         "@canton-network/core-signing-store-sql": "workspace:",
         "@canton-network/core-tx-clear-signing": "workspace:",
+        "@canton-network/core-tx-clear-signing-lib": "workspace:",
         "@canton-network/core-tx-hashing": "workspace:",
         "@canton-network/core-tx-visualizer": "workspace:",
         "@canton-network/core-types": "workspace:",

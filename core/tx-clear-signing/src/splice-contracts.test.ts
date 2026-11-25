@@ -6,11 +6,18 @@
 // wallet shows, including the fields that fail.
 
 import { HashingSchemeVersion } from '@canton-network/core-ledger-proto'
+import type { OperationDescription } from '@canton-network/core-tx-clear-signing-lib'
 import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
 import { describe, expect, it } from 'vitest'
 
 import v1Allocate from './__tests__/fixtures/token-standard/amulet-v1-allocation-factory-allocate.json'
-import { described, intentText, shown } from './__tests__/helpers.ts'
+import {
+    described,
+    intentText,
+    interfaceOf,
+    isComplete,
+    shown,
+} from './__tests__/helpers.ts'
 import {
     ALICE,
     BOB,
@@ -20,7 +27,6 @@ import {
     spliceDescriptors,
 } from './__tests__/splice.ts'
 import { toBase64 } from './bytes.ts'
-import type { OperationDescription } from './clear-sign.ts'
 
 async function describeOne(
     preparedTransaction: string
@@ -85,7 +91,7 @@ describe('governance locks', () => {
     it('describes a captured V1 reject through the interface', async () => {
         const op = await describeCaptured('gl-transfer-reject-v1')
         expect(op.status).toBe('described')
-        expect(op.interface?.entityName).toBe('TransferInstruction')
+        expect(interfaceOf(op)?.entityName).toBe('TransferInstruction')
         expect(intentText(op)).toBe(
             `Reject 100.0000000000 of governance locks from ${BOB}`
         )
@@ -99,7 +105,7 @@ describe('V1 and V2 AllocationFactory_Allocate each have their own entry', () =>
         ).preparedTransaction
         const op = await describeOne(tx)
         expect(op.status).toBe('described')
-        expect(op.interface?.moduleName).toBe(
+        expect(interfaceOf(op)?.moduleName).toBe(
             'Splice.Api.Token.AllocationInstructionV2'
         )
         expect(fields(op)).toMatchObject({
@@ -107,20 +113,20 @@ describe('V1 and V2 AllocationFactory_Allocate each have their own entry', () =>
                 'DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f',
             'Number of legs': '2',
         })
-        expect((await describedSplice(tx)).complete).toBe(true)
+        expect(isComplete(await describedSplice(tx))).toBe(true)
     })
 
     it('describes V1', async () => {
         const tx = v1Allocate.preparedTransaction
         const op = await describeOne(tx)
         expect(op.status).toBe('described')
-        expect(op.interface?.moduleName).toBe(
+        expect(interfaceOf(op)?.moduleName).toBe(
             'Splice.Api.Token.AllocationInstructionV1'
         )
         expect(intentText(op)).toBe(
             'Allocate 0.5000000000 "Amulet" from bd::12204044bc8587a97c1da8a888665308e8bfad109ab90df2bc3a5c8dac66a7a4d3d2 to bd::1220acd26e930ff71796387a4706db7f348faa085c3e0a58a6df050a4395b3323e49 for settlement "capture-v1-allocate", executed by bd::12204044bc8587a97c1da8a888665308e8bfad109ab90df2bc3a5c8dac66a7a4d3d2'
         )
-        expect((await describedSplice(tx)).complete).toBe(true)
+        expect(isComplete(await describedSplice(tx))).toBe(true)
     })
 })
 
@@ -253,9 +259,8 @@ describe('wallet and apps', () => {
         const marked: string[] = []
         for (const id of capturedIds) {
             const fixture = captured(id)
-            const { operations, complete } = await describedSplice(
-                fixture.preparedTransaction
-            )
+            const result = await describedSplice(fixture.preparedTransaction)
+            const { operations } = result
             expect(operations, id).toHaveLength(1)
             const op = operations[0]!
             if (fixture.undescribable !== undefined) {
@@ -267,7 +272,7 @@ describe('wallet and apps', () => {
             expect(op.status, `${id}: ${op.reason ?? op.intent}`).toBe(
                 'described'
             )
-            expect(complete, id).toBe(true)
+            expect(isComplete(result), id).toBe(true)
             intents[id] = op.intent
         }
         expect(marked).toEqual([])

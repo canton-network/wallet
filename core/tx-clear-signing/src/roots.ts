@@ -8,15 +8,10 @@ import {
     type Identifier,
     type Value,
 } from '@canton-network/core-ledger-proto'
+import type { TemplateRef } from '@canton-network/core-tx-clear-signing-lib'
 
 import { fromBase64 } from './bytes.ts'
-
-/** The identity of a Daml template, which a descriptor binds to exactly. */
-export interface TemplateRef {
-    packageId: string
-    moduleName: string
-    entityName: string
-}
+import { ClearSignError, causeMessage } from './errors.ts'
 
 export type RootNode =
     | { nodeId: string; kind: 'create'; create: Create }
@@ -39,32 +34,35 @@ export interface ContractSet {
     duplicateIds: ReadonlySet<string>
 }
 
-class TransactionShapeError extends Error {
-    constructor(message: string) {
-        super(message)
-        this.name = 'TransactionShapeError'
-    }
+function malformed(message: string, cause?: unknown): ClearSignError {
+    return new ClearSignError('MALFORMED_TRANSACTION', message, cause)
 }
 
 // Unknown fields could carry content the user is never shown, so decoding refuses them.
+/** @throws ClearSignError `MALFORMED_TRANSACTION` when the bytes are not a prepared transaction. */
 export function decode(tx: string): PreparedTransaction {
-    return PreparedTransaction.fromBinary(fromBase64(tx), {
-        readUnknownField: 'throw',
-    })
+    try {
+        return PreparedTransaction.fromBinary(fromBase64(tx), {
+            readUnknownField: 'throw',
+        })
+    } catch (err) {
+        throw malformed(
+            `cannot read the prepared transaction: ${causeMessage(err)}`,
+            err
+        )
+    }
 }
 
 /**
  * The root nodes of the transaction, in order. A root that is not a create or an exercise is
  * returned as `other`, so one such root does not stop the others being described.
  *
- * @throws TransactionShapeError when the transaction has no tree
+ * @throws ClearSignError `MALFORMED_TRANSACTION` when the transaction has no tree
  */
 export function rootNodes(tx: PreparedTransaction): RootNode[] {
     const transaction = tx.transaction
     if (!transaction) {
-        throw new TransactionShapeError(
-            'prepared transaction has no transaction'
-        )
+        throw malformed('prepared transaction has no transaction')
     }
     return transaction.roots.map((nodeId): RootNode => {
         const versioned = transaction.nodes.find(
@@ -112,7 +110,7 @@ export function templateRef(
     nodeId: string
 ): TemplateRef {
     if (!id) {
-        throw new TransactionShapeError(`node '${nodeId}' has no template ID`)
+        throw malformed(`node '${nodeId}' has no template ID`)
     }
     return {
         packageId: id.packageId,

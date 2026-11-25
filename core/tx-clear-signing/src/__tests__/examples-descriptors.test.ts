@@ -13,7 +13,7 @@ import {
 import { REFERENCE_SIGNER, TRUSTED_KEYS } from '../trusted-keys.ts'
 import { builtinPingCreate } from './fixtures/ping.ts'
 import allocateOnLocalNet from './fixtures/token-standard/amulet-v2-allocation-factory-allocate.json'
-import { hashEither, intentText, shown } from './helpers.ts'
+import { hashEither, intentText, isComplete, shown } from './helpers.ts'
 
 /** splice-amulet 0.1.25, which the example ExternalPartyAmuletRules descriptor is bound to. */
 const AMULET_0_1_25 =
@@ -41,7 +41,11 @@ function exampleDescriptors(): Descriptor[] {
 }
 
 async function described(tx: string) {
-    return clearSign(tx, Object.values(descriptorFiles), await hashEither(tx))
+    return clearSign({
+        preparedTransaction: tx,
+        descriptors: Object.values(descriptorFiles),
+        preparedTransactionHash: await hashEither(tx),
+    })
 }
 
 const pingPackageId =
@@ -71,14 +75,14 @@ describe('example descriptors', () => {
             moduleName: 'Canton.Internal.Ping',
             entityName: 'Ping',
         })
-        expect((await described(builtinPingCreate)).complete).toBe(true)
+        expect(isComplete(await described(builtinPingCreate))).toBe(true)
     })
 
     it('describes a captured allocation on the package the example is bound to', async () => {
         const result = await described(allocateOnLocalNet.preparedTransaction)
         const op = result.operations[0]
 
-        expect(result.complete).toBe(true)
+        expect(isComplete(result)).toBe(true)
         expect(result.operations).toHaveLength(1)
         expect(op).toMatchObject({
             kind: 'exercise',

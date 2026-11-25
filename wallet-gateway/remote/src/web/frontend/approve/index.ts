@@ -1,15 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    clearSign,
-    HashMismatchError,
-    type ClearSigningResult,
-} from '@canton-network/core-tx-clear-signing'
-import {
-    computePreparedTransactionHash,
-    TxHashingError,
-} from '@canton-network/core-tx-hashing'
+import { clearSign } from '@canton-network/core-tx-clear-signing'
+import type {
+    ClearSigningErrorCode,
+    ClearSigningResult,
+} from '@canton-network/core-tx-clear-signing-lib'
+import { computePreparedTransactionHash } from '@canton-network/core-tx-hashing'
 import {
     type ParsedTransactionInfo,
     parsePreparedTransaction,
@@ -392,11 +389,11 @@ export class ApproveUi extends BaseElement {
             console.error('Failed to load clear-signing descriptors:', error)
         }
         try {
-            this.clearSigning = await clearSign(
-                this.tx,
+            this.clearSigning = await clearSign({
+                preparedTransaction: this.tx,
+                preparedTransactionHash: claimedHash,
                 descriptors,
-                claimedHash
-            )
+            })
             this.clearSigningError = null
             this.reviewedHash = claimedHash
             this.hashMismatch = false
@@ -404,10 +401,7 @@ export class ApproveUi extends BaseElement {
         } catch (error) {
             console.error('Error describing prepared transaction:', error)
             this.clearSigning = null
-            const hashFailed =
-                error instanceof HashMismatchError ||
-                error instanceof TxHashingError
-            if (hashFailed) {
+            if (isHashFailure(error)) {
                 this.reviewedHash = null
                 this.hashMismatch = true
                 this.clearSigningError = null
@@ -487,6 +481,17 @@ export class ApproveUi extends BaseElement {
             ></wg-transaction-detail>
         `
     }
+}
+
+const HASH_FAILURES: readonly ClearSigningErrorCode[] = [
+    'HASH_MISMATCH',
+    'HASH_UNVERIFIABLE',
+]
+
+/** True when `clearSign` could not tie the description to the hash that would be signed. */
+function isHashFailure(error: unknown): boolean {
+    const code = (error as { code?: unknown } | null)?.code
+    return HASH_FAILURES.some((failure) => failure === code)
 }
 
 /**

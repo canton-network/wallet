@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { ClearSigningResult } from '@canton-network/core-tx-clear-signing'
+import type {
+    ClearSigningResult,
+    TemplateRef,
+} from '@canton-network/core-tx-clear-signing-lib'
 import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { html, css, nothing, type PropertyValues } from 'lit'
 
@@ -21,13 +24,12 @@ import { BaseElement } from '../internal/base-element.ts'
 
 type OperationDescription = ClearSigningResult['operations'][number]
 type DescribedField = OperationDescription['fields'][number]
-type TemplateRef = NonNullable<OperationDescription['template']>
 
 const OPERATION_STATUS_LABELS: Record<
     Exclude<OperationDescription['status'], 'described'>,
     string
 > = {
-    fallback: 'Partly described',
+    unfilled: 'Partly described',
     undescribed: 'Not described',
     unverified: 'Unverified descriptor',
     invalid: 'Invalid descriptor',
@@ -383,7 +385,7 @@ class WgTransactionDetail extends BaseElement {
     private get needsAcknowledgement(): boolean {
         if (this.status !== 'pending') return false
         if (this.clearSigningError) return true
-        return this.clearSigning !== null && !this.clearSigning.complete
+        return this.clearSigning !== null && !isComplete(this.clearSigning)
     }
 
     protected willUpdate(changed: PropertyValues<this>): void {
@@ -498,7 +500,7 @@ class WgTransactionDetail extends BaseElement {
                     What you are signing
                 </h2>
                 ${
-                    result.complete
+                    isComplete(result)
                         ? nothing
                         : html`<div
                               class="alert alert-warning small mb-0"
@@ -735,16 +737,24 @@ function typeName({ moduleName, entityName }: TemplateRef): string {
     return `${moduleName}:${entityName}`
 }
 
+/** True when every operation is `described` and no field has an `error`. */
+function isComplete({ operations }: ClearSigningResult): boolean {
+    return operations.every(
+        (op) =>
+            op.status === 'described' && op.fields.every((f) => 'value' in f)
+    )
+}
+
 // What the transaction itself says it does (kind, choice, template), so an operation is identified
 // even when its descriptor words it vaguely or is missing. The descriptor's own claim is kept apart.
 function renderOperationOrigin(op: OperationDescription) {
-    const { choiceId, descriptor, template } = op
+    const { descriptor, template } = op
     return html`<dl class="operation-origin">
         ${
-            op.kind === 'exercise' && choiceId !== undefined
+            op.kind === 'exercise'
                 ? html`<dt class="label">Choice</dt>
                       <dd class="identifier">
-                          ${choiceId}${
+                          ${op.choiceId}${
                               op.interface
                                   ? html` <span class="text-body-secondary"
                                             >via</span

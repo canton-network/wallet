@@ -20,8 +20,8 @@ import {
 } from './signature.ts'
 import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 
-// The patterns are those of canton-clear-signing-v1.schema.json. The conformance test runs the
-// schema and this parser on the same examples.
+// The patterns are those of the meta-schema in core-tx-clear-signing-lib. The conformance test runs
+// the schema and this parser on the same examples.
 const SCHEMA_ID = 'https://example.org/canton-clear-signing/v1/schema.json'
 
 const NAME = '[A-Za-z_][A-Za-z0-9_]*'

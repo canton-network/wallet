@@ -31,11 +31,11 @@ export const intent =
     'Allocate funds at DSO::1220d47f58e3c504e3d6eb0d726e6497eb74645b2fecf5433b629851b5090dee9b8f for settlement "capture-multileg" of 2 legs, authorized by bd::12208b49abc71749ee44211bcb838fc85700420f6e90e6557947ee2a3babd5d7f7fd. Committed: cannot be withdrawn before the settlement deadline'
 
 export function describeAllocation() {
-    return clearSign(
-        preparedTransaction,
-        [externalPartyAmuletRules],
-        preparedTransactionHash
-    )
+    return clearSign({
+        preparedTransaction: preparedTransaction,
+        descriptors: [externalPartyAmuletRules],
+        preparedTransactionHash: preparedTransactionHash,
+    })
 }
 
 async function run(): Promise<void> {
