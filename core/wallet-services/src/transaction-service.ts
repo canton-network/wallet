@@ -124,7 +124,8 @@ export class TransactionService {
             case SigningProvider.BITGO:
             case SigningProvider.SECUROSYS:
             case SigningProvider.FIREBLOCKS:
-            case SigningProvider.BLOCKDAEMON: {
+            case SigningProvider.BLOCKDAEMON:
+            case SigningProvider.DSRV: {
                 return this.signWithDriver(
                     driver,
                     signingProvider,

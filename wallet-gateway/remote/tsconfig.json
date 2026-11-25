@@ -49,6 +49,9 @@
             "path": "../../core/signing-fireblocks"
         },
         {
+            "path": "../../core/signing-dsrv"
+        },
+        {
             "path": "../../core/signing-dfns"
         },
         {

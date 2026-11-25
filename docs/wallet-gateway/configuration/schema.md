@@ -515,6 +515,22 @@ npx @canton-network/wallet-gateway-remote@latest --config-schema
                             "type": "string"
                         }
                     }
+                },
+                "dsrv": {
+                    "description": "Include this object to opt in DSRV. Requires baseUrl. The bearer token is read from the environment variable named by bearerTokenEnv and sent as Authorization: Bearer; it identifies the calling Wallet Gateway, not the user or the request. Not available in legacy discovery mode.",
+                    "type": "object",
+                    "properties": {
+                        "baseUrl": {
+                            "type": "string",
+                            "description": "DSRV signing API base URL. Requests go to {baseUrl}/api/signing/{operation}."
+                        },
+                        "bearerTokenEnv": {
+                            "default": "DSRV_SIGNING_API_TOKEN",
+                            "description": "Name of the environment variable that holds the DSRV signing API bearer token. The secret value stays in the environment and is never stored in the config file.",
+                            "type": "string"
+                        }
+                    },
+                    "required": ["baseUrl"]
                 }
             },
             "description": "Explicit signing provider configuration. When omitted, the Wallet Gateway uses legacy discovery: every provider is available if its required environment variables are set. When present, only listed providers are registered; non-secret settings come from this object, and secrets are read from environment variables named by the *Env fields."
