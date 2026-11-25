@@ -3,4 +3,5 @@
 
 export * from './Store.ts'
 export * from './config/schema.ts'
+export * from './network-connection.ts'
 export * from './utils.ts'

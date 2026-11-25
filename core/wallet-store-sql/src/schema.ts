@@ -18,6 +18,8 @@ import {
     type MessageRaw,
     type MessageRawKind,
     type ApiKey,
+    type NetworkConnection,
+    networkConnectionAuthSchema,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
@@ -287,6 +289,28 @@ export const toSession = (table: SessionTable): Session => {
             ? { accessTokenHash: table.accessTokenHash }
             : {}),
         userId: table.userId,
+    }
+}
+
+export const toNetworkConnection = (
+    table: NetworkConnectionTable
+): NetworkConnection => {
+    const auth = networkConnectionAuthSchema.parse({
+        authMethod: table.authMethod,
+        payload:
+            typeof table.payload === 'string'
+                ? JSON.parse(table.payload)
+                : table.payload,
+    })
+    return {
+        ...auth,
+        id: table.id,
+        sessionId: table.sessionId,
+        userId: table.userId,
+        createdAt: new Date(table.createdAt),
+        ...(table.expiresAt !== null && {
+            expiresAt: new Date(table.expiresAt),
+        }),
     }
 }
 

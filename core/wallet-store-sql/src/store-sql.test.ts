@@ -13,6 +13,7 @@ import {
     type MessageRaw,
     type Network,
     PartyLevelRight,
+    type NetworkConnectionInput,
     type NewSession,
     type Transaction,
     UserLevelRight,
@@ -91,6 +92,11 @@ const selfIssuedNetwork = (id: string, audience: string): Network => ({
         scope: 'daml_ledger_api',
     },
 })
+
+const pendingConnection: NetworkConnectionInput = {
+    authMethod: 'self_issued',
+    payload: { state: 'pending', scopes: ['ledger:read'] },
+}
 
 function addTx(id: string, createdAt: Date | undefined) {
     const initial: Transaction = {
@@ -761,6 +767,212 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(store.getSession('kept-token')).resolves.toEqual(
                 expect.objectContaining({ id: 'logged-in-session' })
             )
+        })
+
+        test('saves a network connection together with its session', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.setSession(
+                {
+                    id: 'onboarding-session',
+                    origin: 'https://example.com',
+                    network: 'network1',
+                },
+                pendingConnection
+            )
+
+            await expect(
+                store.getNetworkConnection('onboarding-session')
+            ).resolves.toEqual({
+                ...pendingConnection,
+                id: expect.any(String),
+                sessionId: 'onboarding-session',
+                userId: authContextMock.userId,
+                createdAt: expect.any(Date),
+            })
+            await expect(
+                new StoreImpl(db, {
+                    userId: 'other-user',
+                    accessToken: 'other-token',
+                }).getNetworkConnection('onboarding-session')
+            ).resolves.toBeUndefined()
+        })
+
+        test('keeps neither the session nor its network connection when saving the connection fails', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            const unserializable = {
+                authMethod: 'self_issued',
+                payload: { state: 'pending', scopes: [1n] },
+            } as unknown as NetworkConnectionInput
+
+            await expect(
+                store.setSession(
+                    {
+                        id: 'onboarding-session',
+                        origin: 'https://example.com',
+                        network: 'network1',
+                    },
+                    unserializable
+                )
+            ).rejects.toThrow()
+            await expect(store.listSessions()).resolves.toEqual([])
+        })
+
+        test('updates the payload and expiry of a network connection', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.setSession(
+                {
+                    id: 'onboarding-session',
+                    origin: 'https://example.com',
+                    network: 'network1',
+                },
+                pendingConnection
+            )
+            const { id } =
+                (await store.getNetworkConnection('onboarding-session'))!
+            const expiresAt = new Date('2026-11-24T10:10:00.000Z')
+
+            await store.updateNetworkConnection(id, {
+                authMethod: 'self_issued',
+                payload: {
+                    state: 'pending',
+                    scopes: ['ledger:read'],
+                    signingMessageId: 'login-message',
+                },
+                expiresAt,
+            })
+            await expect(
+                store.getNetworkConnection('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    payload: {
+                        state: 'pending',
+                        scopes: ['ledger:read'],
+                        signingMessageId: 'login-message',
+                    },
+                    expiresAt,
+                })
+            )
+
+            await store.updateNetworkConnection(id, {
+                authMethod: 'self_issued',
+                payload: { state: 'ready', scopes: ['ledger:read'] },
+            })
+            await expect(
+                store.getNetworkConnection('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    payload: { state: 'ready', scopes: ['ledger:read'] },
+                    expiresAt,
+                })
+            )
+        })
+
+        test('refuses to update a network connection of another user', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.setSession(
+                {
+                    id: 'onboarding-session',
+                    origin: 'https://example.com',
+                    network: 'network1',
+                },
+                pendingConnection
+            )
+            const { id } =
+                (await store.getNetworkConnection('onboarding-session'))!
+
+            await expect(
+                new StoreImpl(db, {
+                    userId: 'other-user',
+                    accessToken: 'other-token',
+                }).updateNetworkConnection(id, {
+                    authMethod: 'self_issued',
+                    payload: { state: 'ready', scopes: [] },
+                })
+            ).rejects.toThrow(`Network connection not found with id: ${id}`)
+            await expect(
+                store.getNetworkConnection('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    payload: pendingConnection.payload,
+                })
+            )
+        })
+
+        test('deletes network connections together with their sessions', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            const session = (id: string, origin: string, token?: string) => ({
+                id,
+                origin,
+                network: 'network1',
+                ...(token && { accessToken: token }),
+            })
+            await store.setSession(
+                session('tokenless', 'https://a.example'),
+                pendingConnection
+            )
+            await store.setSession(
+                session('removed', 'https://b.example', 'removed-token'),
+                pendingConnection
+            )
+            await store.setSession(
+                session('replaced', 'https://c.example', 'replaced-token'),
+                pendingConnection
+            )
+            await store.setSession(
+                session('upgraded-away', 'https://d.example', 'old-token'),
+                pendingConnection
+            )
+            await store.setSession(
+                session('upgraded', 'https://d.example'),
+                pendingConnection
+            )
+
+            await store.removeSelfIssuedLoginSession('tokenless')
+            await store.removeSession('removed-token')
+            await store.setSession(
+                session('replacement', 'https://c.example', 'new-token')
+            )
+            await store.upgradeSelfIssuedLoginSession(
+                'upgraded',
+                'upgraded-token',
+                'login-message'
+            )
+
+            for (const sessionId of [
+                'tokenless',
+                'removed',
+                'replaced',
+                'upgraded-away',
+            ]) {
+                await expect(
+                    store.getNetworkConnection(sessionId)
+                ).resolves.toBeUndefined()
+            }
+            await expect(
+                store.getNetworkConnection('upgraded')
+            ).resolves.toEqual(
+                expect.objectContaining({ sessionId: 'upgraded' })
+            )
+        })
+
+        test('refuses to read a network connection with an invalid payload', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.setSession(
+                {
+                    id: 'onboarding-session',
+                    origin: 'https://example.com',
+                    network: 'network1',
+                },
+                pendingConnection
+            )
+            await db
+                .updateTable('networkConnections')
+                .set({ payload: JSON.stringify({ state: 'pending' }) })
+                .execute()
+
+            await expect(
+                store.getNetworkConnection('onboarding-session')
+            ).rejects.toThrow()
         })
 
         test('should add, list, get, update, and remove networks', async () => {
