@@ -94,6 +94,16 @@ const networkSelect = (canvasElement: HTMLElement) =>
 const connectButton = (canvasElement: HTMLElement) =>
     findByShadowRole(canvasElement, 'button', { name: 'Connect' })
 
+/** Gives the scopes consent, which the form always requires, and clicks Connect */
+const connect = async (
+    canvasElement: HTMLElement,
+    userEvent: { click: (el: Element) => Promise<void> }
+) => {
+    const consent = await findByShadowRole(canvasElement, 'checkbox')
+    if (!(consent as HTMLInputElement).checked) await userEvent.click(consent)
+    await userEvent.click(await connectButton(canvasElement))
+}
+
 /** Selects a network by its visible name */
 const chooseNetwork = async (
     canvasElement: HTMLElement,
@@ -135,8 +145,13 @@ export const Default: Story = {
         await expect(
             queryByShadowLabelText(canvasElement, 'Client ID')
         ).not.toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'checkbox', {
+                name: 'I allow this dApp full access',
+            })
+        ).toBeRequired()
 
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
         await expect(args.onLoginConnect).toHaveBeenCalledOnce()
         const event = connectEvent(args.onLoginConnect)
         await expect(event.selectedNetwork).toEqual(oauthNetwork)
@@ -144,6 +159,50 @@ export const Default: Story = {
         await expect(event.clientId).toBeUndefined()
         await expect(event.clientSecret).toBeUndefined()
         await expect(event.username).toBeUndefined()
+    },
+}
+
+export const FullAccessConsent: Story = {
+    args: { scopes: [], origin: 'https://dapp.example' },
+    play: async ({ args, canvasElement, userEvent }) => {
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                /requested no specific permissions/
+            )
+        ).toBeInTheDocument()
+
+        // Connecting needs the consent
+        await userEvent.click(await connectButton(canvasElement))
+        await expect(args.onLoginConnect).not.toHaveBeenCalled()
+
+        await userEvent.click(
+            await findByShadowRole(canvasElement, 'checkbox', {
+                name: 'I allow this dApp full access',
+            })
+        )
+        await userEvent.click(await connectButton(canvasElement))
+        await expect(args.onLoginConnect).toHaveBeenCalledOnce()
+    },
+}
+
+export const ScopedConsent: Story = {
+    args: {
+        scopes: ['ledger:read', 'users:self'],
+        origin: 'https://dapp.example',
+    },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(canvasElement, 'ledger:read')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'users:self')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'checkbox', {
+                name: 'I allow this dApp to use these permissions',
+            })
+        ).toBeRequired()
     },
 }
 
@@ -164,7 +223,7 @@ export const SelfSigned: Story = {
         ).not.toBeInTheDocument()
 
         await userEvent.type(secret, 'network-secret')
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
 
         await expect(args.onLoginConnect).toHaveBeenCalledOnce()
         const event = connectEvent(args.onLoginConnect)
@@ -184,7 +243,7 @@ export const SelfSignedWithOtherClientId: Story = {
         await userEvent.tripleClick(clientId)
         await userEvent.keyboard('{Backspace}')
         await userEvent.type(clientId, 'other-client')
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
 
         const event = connectEvent(args.onLoginConnect)
         await expect(event.clientId).toBe('other-client')
@@ -199,7 +258,7 @@ export const SelfSignedWithEmptyClientId: Story = {
         // userEvent.clear can't focus inputs inside shadow roots
         await userEvent.tripleClick(clientId)
         await userEvent.keyboard('{Backspace}')
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
 
         // An empty client ID falls back to the network's
         const event = connectEvent(args.onLoginConnect)
@@ -222,6 +281,7 @@ export const SelfIssued: Story = {
         ).not.toBeInTheDocument()
 
         // Surrounding whitespace is trimmed, and Enter submits
+        await userEvent.click(await findByShadowRole(canvasElement, 'checkbox'))
         await userEvent.type(username, '  alice  {Enter}')
         await expect(args.onLoginConnect).toHaveBeenCalledOnce()
         const event = connectEvent(args.onLoginConnect)
@@ -236,7 +296,7 @@ export const SelfIssued: Story = {
 export const SelfIssuedRequiresUsername: Story = {
     play: async ({ args, canvasElement, userEvent }) => {
         await chooseNetwork(canvasElement, userEvent, 'Self-issued Network')
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
 
         // The browser blocks submitting an empty required field
         await expect(args.onLoginConnect).not.toHaveBeenCalled()
@@ -264,7 +324,7 @@ export const SelfIssuedOnboarding: Story = {
         ).not.toBeInTheDocument()
 
         await userEvent.type(username, 'alice')
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
 
         const event = connectEvent(args.onLoginConnect)
         await expect(event.username).toBe('alice')
@@ -289,7 +349,7 @@ export const SkipsClientCredentialsNetworks: Story = {
             })
         ).toBeDisabled()
 
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
         const event = connectEvent(args.onLoginConnect)
         await expect(event.selectedNetwork).toEqual(oauthNetwork)
         await expect(event.selectedIdp).toEqual(oauthIdp)
@@ -332,7 +392,7 @@ export const ChoosingNoNetwork: Story = {
 export const MisconfiguredIdentityProvider: Story = {
     args: { networks: [misconfiguredNetwork, oauthNetwork] },
     play: async ({ args, canvasElement, userEvent }) => {
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
 
         const alert = await findByShadowRole(canvasElement, 'alert')
         await expect(alert).toHaveTextContent(
@@ -375,7 +435,7 @@ export const IdentityProvidersArriveLate: Story = {
     },
     play: async ({ args, canvasElement, userEvent }) => {
         // No identity provider yet: connecting is a misconfiguration
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
         await expect(
             await findByShadowRole(canvasElement, 'alert')
         ).toHaveTextContent('Identity provider misconfigured')
@@ -385,7 +445,7 @@ export const IdentityProvidersArriveLate: Story = {
                 name: 'Load idps',
             })
         )
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
         await expect(args.onLoginConnect).toHaveBeenCalledOnce()
         await expect(connectEvent(args.onLoginConnect).selectedIdp).toEqual(
             oauthIdp
@@ -531,7 +591,7 @@ export const KeepsSelectionAcrossRefetch: Story = {
         await expect(
             await findByShadowText(canvasElement, 'Selected: OAuth Network')
         ).toBeInTheDocument()
-        await userEvent.click(await connectButton(canvasElement))
+        await connect(canvasElement, userEvent)
         await expect(connectEvent(args.onLoginConnect).selectedNetwork).toEqual(
             oauthNetwork
         )
