@@ -12,7 +12,11 @@ export { TokenProvider, type TokenProviderProps } from './TokenProvider.tsx'
 export type { TokenContextValue } from './TokenContext.ts'
 export { useTokenContext } from './useTokenContext.ts'
 export { tokenQueryKeys } from './query-keys.ts'
-export { holdingsQueryOptions } from './query-options.ts'
+export {
+    holdingsQueryOptions,
+    pendingTransfersQueryOptions,
+    pendingTransfersV2QueryOptions,
+} from './query-options.ts'
 export {
     basicAccount,
     isBasicAccount,
@@ -49,3 +53,22 @@ export {
     resolveTransferVersion,
     type TransferVersionResult,
 } from './transfer-version.ts'
+export { transferAmountError } from './transfer-amount.ts'
+export {
+    outgoingTransfers,
+    type OutgoingTransfer,
+} from './outgoing-transfers.ts'
+export {
+    useOutgoingTransfers,
+    type OutgoingTransfersResult,
+} from './useOutgoingTransfers.ts'
+export {
+    useCreateTransfer,
+    type CreateTransferArgs,
+} from './useCreateTransfer.ts'
+export {
+    transferActionVersion,
+    useExerciseTransfer,
+    type ExerciseTransferArgs,
+    type TransferInstructionChoice,
+} from './useExerciseTransfer.ts'

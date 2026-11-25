@@ -5,10 +5,9 @@ import {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
+import type { TokenStandardVersion } from '@canton-network/core-wallet-ui-components/react/token'
 import { expect, type Locator, type Page, test } from '@playwright/test'
 import type { Request } from '@playwright/test'
-
-import type { TokenStandardVersion } from '../src/types/instruments.ts'
 
 const BASE_URL = 'http://localhost:8081'
 

@@ -3,6 +3,10 @@
 
 import type { PartyId } from '@canton-network/core-types'
 import {
+    transferActionVersion,
+    useExerciseTransfer,
+} from '@canton-network/core-wallet-ui-components/react/token'
+import {
     AllocationActionDialogContent,
     AllocationRequestV2DialogContent,
 } from '@components/dashboard/allocation-action-dialog-content'
@@ -19,10 +23,6 @@ import type {
 } from '@components/types'
 import { useAllocationRequestV2Actions } from '@hooks/useAllocationRequestV2Actions'
 import { useCreateAllocation } from '@hooks/useCreateAllocation'
-import {
-    transferActionVersion,
-    useExerciseTransfer,
-} from '@hooks/useExerciseTransfer'
 import { useWithdrawAllocation } from '@hooks/useWithdrawAllocation'
 import { useWithdrawAllocationV2 } from '@hooks/useWithdrawAllocationV2'
 import { Dialog, DialogContent, Typography } from '@mui/material'

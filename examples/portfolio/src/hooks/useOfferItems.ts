@@ -8,6 +8,11 @@ import type {
 } from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
+import {
+    pendingTransfersQueryOptions,
+    pendingTransfersV2QueryOptions,
+    useTokenContext,
+} from '@canton-network/core-wallet-ui-components/react/token'
 import type {
     ActionItem,
     AllocationActionItem,
@@ -28,8 +33,6 @@ import {
     useAllocationRequestsV2QueryOptions,
     useAllocationsQueryOptions,
     useAllocationsV2QueryOptions,
-    usePendingTransfersQueryOptions,
-    usePendingTransfersV2QueryOptions,
 } from './query-options.ts'
 import { usePrimaryAccount } from './useAccounts.ts'
 
@@ -69,13 +72,14 @@ function compareOfferItemsByExpiry(left: ActionItem, right: ActionItem) {
 
 export function useOfferItems(): OfferItemsResult {
     const primaryParty = usePrimaryAccount()?.partyId
+    const { client } = useTokenContext()
 
     // Offers combine transfers (v1 and v2), v1 allocation requests, and v2 allocation requests, allocations, and instructions
     const pendingTransfers = useQuery(
-        usePendingTransfersQueryOptions(primaryParty)
+        pendingTransfersQueryOptions({ client, partyId: primaryParty })
     )
     const pendingTransfersV2 = useQuery(
-        usePendingTransfersV2QueryOptions(primaryParty)
+        pendingTransfersV2QueryOptions({ client, partyId: primaryParty })
     )
 
     const allocationRequests = useQuery(

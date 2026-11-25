@@ -29,6 +29,14 @@ const fetchAllInstruments = async (url: string): Promise<Instrument[]> => {
     return collected
 }
 
+export const fetchRegistryInstruments = async (
+    admin: PartyId,
+    registryUrl: string
+): Promise<RegistryInstrument[]> =>
+    (await fetchAllInstruments(registryUrl)).map((instrument) =>
+        toRegistryInstrument({ instrument, admin, registryUrl })
+    )
+
 export const useInstruments = (): TokenInstruments => {
     const registryUrls = useRegistryUrls()
     const entries = useMemo(
@@ -39,14 +47,7 @@ export const useInstruments = (): TokenInstruments => {
     const queries = useQueries({
         queries: entries.map(([party, url]) => ({
             queryKey: queryKeys.instruments.forRegistry(party, url),
-            queryFn: async () =>
-                (await fetchAllInstruments(url)).map((instrument) =>
-                    toRegistryInstrument({
-                        instrument,
-                        admin: party,
-                        registryUrl: url,
-                    })
-                ),
+            queryFn: () => fetchRegistryInstruments(party, url),
             staleTime: Infinity,
         })),
     })

@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useCreateTransfer } from '@hooks/useCreateTransfer'
+import { useCreateTransfer } from '@canton-network/core-wallet-ui-components/react/token'
 import { Dialog } from '@mui/material'
 import { useCallback, useState } from 'react'
 

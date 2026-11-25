@@ -29,5 +29,3 @@ export const toRegistryInstrument = ({
         supportedApis: instrument.supportedApis,
     }),
 })
-
-export type TokenStandardVersion = 'v1' | 'v2'
