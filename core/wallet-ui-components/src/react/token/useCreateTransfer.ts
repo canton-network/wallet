@@ -27,6 +27,9 @@ export const useCreateTransfer = () => {
             if (!client) {
                 throw new Error('The token client is not ready')
             }
+            if (!client.token.transfer.create) {
+                throw new Error('The token client does not create transfers')
+            }
             await client.token.transfer.create({
                 ...args,
                 expiry: expiry.toISOString(),

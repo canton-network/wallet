@@ -262,12 +262,23 @@ describe('createTokenService', () => {
         })
     })
 
-    describe('transfer.create', () => {
+    /** Prepares the transfer and submits it, as the send page does. */
+    async function send(
+        tokenService: ReturnType<typeof service>,
+        params = transferParams
+    ): Promise<string> {
+        const { transactionId } =
+            await tokenService.token.transfer.prepare(params)
+        await tokenService.token.transfer.submit(transactionId)
+        return transactionId
+    }
+
+    describe('transfer.prepare and transfer.submit', () => {
         it('falls back to v1 when the registry has no v2 transfers', async () => {
             sdk = fakeSdk(['v1'])
             const tokenService = await signedIn()
 
-            await tokenService.token.transfer.create(transferParams)
+            await tokenService.token.transfer.prepare(transferParams)
 
             expect(sdk.token.v1.transfer.create).toHaveBeenCalledWith(
                 expect.objectContaining({
@@ -284,7 +295,7 @@ describe('createTokenService', () => {
             const tokenService = await signedIn()
 
             await expect(
-                tokenService.token.transfer.create({
+                tokenService.token.transfer.prepare({
                     ...transferParams,
                     sender: 'mallory::1220',
                 })
@@ -293,18 +304,35 @@ describe('createTokenService', () => {
             expect(prepare).not.toHaveBeenCalled()
         })
 
-        it('signs and executes the transfer in the extension’s session', async () => {
+        it('prepares the transfer for review, then signs and executes it in the extension’s session', async () => {
             const tokenService = await signedIn()
 
-            await tokenService.token.transfer.create(transferParams)
+            const prepared =
+                await tokenService.token.transfer.prepare(transferParams)
 
             expect(prepare).toHaveBeenCalledWith(
                 '/v2/interactive-submission/prepare',
                 expect.objectContaining({ actAs: [wallet.partyId] })
             )
+            expect(prepared).toEqual({
+                transactionId: expect.any(String),
+                commandId: expect.any(String),
+                preparedTransaction: createPlain.preparedTransaction,
+                preparedTransactionHash: expect.any(String),
+                createdAt: expect.any(String),
+                partyId: wallet.partyId,
+            })
+            expect(sign).not.toHaveBeenCalled()
+
+            await tokenService.token.transfer.submit(prepared.transactionId)
+
             const [, , sessionId, { transactionId, partyId }] =
                 sign.mock.calls[0]!
-            expect([sessionId, partyId]).toEqual(['session-1', wallet.partyId])
+            expect([transactionId, sessionId, partyId]).toEqual([
+                prepared.transactionId,
+                'session-1',
+                wallet.partyId,
+            ])
             expect(execute).toHaveBeenCalledWith(
                 expect.anything(),
                 context,
@@ -317,6 +345,82 @@ describe('createTokenService', () => {
                     origin: EXTENSION_ORIGIN,
                 })
             )
+        })
+
+        it.each([
+            ['a dApp’s pending transaction', 'dapp-tx'],
+            ['an unknown id', 'unknown-tx'],
+        ])('refuses to submit %s', async (_, transactionId) => {
+            const tokenService = await signedIn()
+            await store.setTransaction({
+                id: 'dapp-tx',
+                commandId: 'dapp-command',
+                status: 'pending',
+                preparedTransaction: createPlain.preparedTransaction,
+                preparedTransactionHash: 'hash',
+                payload: { actAs: [wallet.partyId] },
+                origin: 'https://dapp.example',
+                createdAt: new Date(),
+            })
+            const before = await store.getTransaction('dapp-tx')
+
+            const error = await tokenService.token.transfer
+                .submit(transactionId)
+                .catch((cause: unknown) => cause)
+
+            expect(isNotSubmitted(error)).toBe(true)
+            await expect(store.getTransaction('dapp-tx')).resolves.toEqual(
+                before
+            )
+            expect(sign).not.toHaveBeenCalled()
+            expect(execute).not.toHaveBeenCalled()
+        })
+
+        it('removes a review past its deadline instead of signing it', async () => {
+            const tokenService = await signedIn()
+            const { transactionId } =
+                await tokenService.token.transfer.prepare(transferParams)
+            const transaction = (await store.getTransaction(transactionId))!
+            await store.setTransaction({
+                ...transaction,
+                createdAt: new Date(Date.now() - 5 * 60 * 1000),
+            })
+
+            const error = await tokenService.token.transfer
+                .submit(transactionId)
+                .catch((cause: unknown) => cause)
+
+            expect(isNotSubmitted(error)).toBe(true)
+            expect(error).toMatchObject({
+                message: expect.stringContaining('expired'),
+            })
+            await expect(
+                store.getTransaction(transactionId)
+            ).resolves.toBeUndefined()
+            expect(sign).not.toHaveBeenCalled()
+        })
+
+        it('is safe to submit again', async () => {
+            const tokenService = await signedIn()
+            const { transactionId } =
+                await tokenService.token.transfer.prepare(transferParams)
+            await store.setTransactionSigned(transactionId, new Date())
+
+            // Signed, its reply lost: executed again, not signed again.
+            await tokenService.token.transfer.submit(transactionId)
+            expect(sign).not.toHaveBeenCalled()
+            expect(execute).toHaveBeenCalledWith(
+                expect.anything(),
+                context,
+                'session-1',
+                { transactionId, partyId: wallet.partyId }
+            )
+
+            // Executed: nothing reaches the ledger.
+            execute.mockClear()
+            await tokenService.token.transfer.submit(transactionId)
+            expect(sign).not.toHaveBeenCalled()
+            expect(execute).not.toHaveBeenCalled()
         })
 
         it('refuses when the extension’s session is on another network than the wallet’s', async () => {
@@ -342,7 +446,7 @@ describe('createTokenService', () => {
             })
 
             const error = await tokenService.token.transfer
-                .create(transferParams)
+                .prepare(transferParams)
                 .catch((cause: unknown) => cause)
             expect(error).toMatchObject({
                 message: expect.stringContaining(
@@ -356,18 +460,22 @@ describe('createTokenService', () => {
 
         it('stays on the checked network when a reconnect moves the extension’s session', async () => {
             const tokenService = service()
-            await store.setSession({
-                id: 'session-1',
-                origin: EXTENSION_ORIGIN,
-                network: networkId,
-                accessToken: context.accessToken,
-            })
-            await store.setSession({
-                id: 'dapp-session',
-                origin: 'https://dapp.example',
-                network: 'canton:local-oauth',
-                accessToken: context.accessToken,
-            })
+            const extensionSession = (id: string) =>
+                store.setSession({
+                    id,
+                    origin: EXTENSION_ORIGIN,
+                    network: networkId,
+                    accessToken: context.accessToken,
+                })
+            const dappSession = () =>
+                store.setSession({
+                    id: 'dapp-session',
+                    origin: 'https://dapp.example',
+                    network: 'canton:local-oauth',
+                    accessToken: context.accessToken,
+                })
+            await extensionSession('session-1')
+            await dappSession()
             await store.addWallet({ ...wallet })
             await store.addWallet({
                 ...wallet,
@@ -376,22 +484,28 @@ describe('createTokenService', () => {
             // Reconnecting replaces the session, which moves it behind the
             // dApp's, so the store now takes the dApp's network.
             createSdk.mockImplementationOnce(async () => {
-                await store.setSession({
-                    id: 'session-2',
-                    origin: EXTENSION_ORIGIN,
-                    network: networkId,
-                    accessToken: context.accessToken,
-                })
+                await extensionSession('session-2')
                 return sdk as unknown as TokenSdk
             })
 
-            await tokenService.token.transfer.create(transferParams)
+            const { transactionId } =
+                await tokenService.token.transfer.prepare(transferParams)
 
             expect(
                 prepare.mock.contexts.map(
                     (client) => (client as LedgerClient).baseUrl.href
                 )
             ).toEqual(['http://localhost:2975/'])
+
+            // The dApp reconnects, and then the extension again, while the
+            // transfer is signed.
+            await dappSession()
+            sign.mockImplementationOnce(async (signStore, ...rest) => {
+                await extensionSession('session-3')
+                return sign.getMockImplementation()!(signStore, ...rest)
+            })
+            await tokenService.token.transfer.submit(transactionId)
+
             const [signStore] = sign.mock.calls[0]!
             const [executeStore] = execute.mock.calls[0]!
             for (const used of [signStore, executeStore]) {
@@ -412,7 +526,7 @@ describe('createTokenService', () => {
             })
 
             const error = await tokenService.token.transfer
-                .create(transferParams)
+                .prepare(transferParams)
                 .catch((cause: unknown) => cause)
 
             expect(error).toMatchObject({
@@ -441,7 +555,7 @@ describe('createTokenService', () => {
                 const tokenService = await signedIn()
 
                 const error = await tokenService.token.transfer
-                    .create(transferParams)
+                    .prepare(transferParams)
                     .catch((rejection: unknown) => rejection)
                 expect(error).toBeInstanceOf(Error)
                 expect(error).toMatchObject({ message })
@@ -452,17 +566,13 @@ describe('createTokenService', () => {
             const tokenService = await signedIn()
 
             sign.mockRejectedValueOnce(new Error('signer unavailable'))
-            await expect(
-                tokenService.token.transfer.create(transferParams)
-            ).rejects.toMatchObject({
+            await expect(send(tokenService)).rejects.toMatchObject({
                 code: errorCodes.rpc.transactionRejected,
                 data: NOT_SUBMITTED,
             })
 
             execute.mockRejectedValueOnce(new Error('connection lost'))
-            await expect(
-                tokenService.token.transfer.create(transferParams)
-            ).rejects.toMatchObject({
+            await expect(send(tokenService)).rejects.toMatchObject({
                 code: errorCodes.rpc.internal,
                 message: expect.stringContaining('outcome'),
             })
@@ -481,9 +591,7 @@ describe('createTokenService', () => {
                     )
                 }
             )
-            await expect(
-                tokenService.token.transfer.create(transferParams)
-            ).rejects.toMatchObject({
+            await expect(send(tokenService)).rejects.toMatchObject({
                 code: errorCodes.rpc.internal,
                 message: expect.stringContaining('outcome'),
             })

@@ -51,7 +51,9 @@ export interface TokenClient {
     token: {
         instruments(): Promise<RegistryInstrument[]>
         transfer: {
-            create(params: CreateTransferParams): Promise<void>
+            // Optional: the extension prepares a transfer for its review,
+            // and submits it apart.
+            create?(params: CreateTransferParams): Promise<void>
             withdraw(params: TransferChoiceParams): Promise<void>
             // Optional until the extension supports incoming transfers.
             accept?(params: TransferChoiceParams): Promise<void>

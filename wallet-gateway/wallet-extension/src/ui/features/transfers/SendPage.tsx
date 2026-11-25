@@ -7,7 +7,6 @@ import {
     tokenQueryKeys,
     transferAmountError,
     useAggregatedHoldings,
-    useCreateTransfer,
     type AggregatedHolding,
     type TokenStandardVersion,
     type TokenWallet,
@@ -25,8 +24,10 @@ import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Decimal } from 'decimal.js'
-import { type SubmitEvent, useMemo, useRef, useState } from 'react'
+import { type SubmitEvent, useEffect, useMemo, useRef, useState } from 'react'
 
+import type { PreparedTransfer } from '@/background/token/service.ts'
+import { EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
 import { isNotSubmitted } from '@/shared/transfer-errors.ts'
 import { ButtonLink } from '@/ui/components/ButtonLink.tsx'
 import { PageLoader } from '@/ui/components/feedback.tsx'
@@ -35,6 +36,13 @@ import {
     toTokenWallets,
 } from '@/ui/features/assets/index.ts'
 import { walletsQuery } from '@/ui/features/parties/index.ts'
+import { TransactionReview } from '@/ui/features/transactions/index.ts'
+
+import {
+    discardTransfer,
+    usePrepareTransfer,
+    useSubmitTransfer,
+} from './api.ts'
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -103,49 +111,91 @@ export function SendPage() {
         [wallets.data]
     )
     const [draft, setDraft] = useState<ReviewedTransfer>()
+    const [prepared, setPrepared] = useState<PreparedTransfer>()
     const [step, setStep] = useState<'form' | 'review' | 'sent' | 'unknown'>(
         'form'
     )
     const [unknownReason, setUnknownReason] = useState('')
+    // A failure after which nothing was submitted, shown on the form.
+    const [notSent, setNotSent] = useState<Error>()
     // Kept here, not in the review step: a wallets query error unmounts the
     // step, and it must not come back with a fresh claim while the transfer
     // is in flight.
-    const createTransfer = useCreateTransfer()
+    const prepareTransfer = usePrepareTransfer()
+    const submitTransfer = useSubmitTransfer()
     const queryClient = useQueryClient()
     // Claimed on the click, before the pending state renders.
     const claimed = useRef(false)
+    // The review the user hasn't answered, discarded if they leave. Once
+    // confirmed it is left alone: a discard could remove it while it is
+    // being signed.
+    const openReview = useRef<string>(undefined)
 
-    const confirm = ({ form, instrument, expiry }: ReviewedTransfer) => {
-        if (claimed.current) return
-        claimed.current = true
-        createTransfer.mutate(
+    useEffect(
+        () => () => {
+            if (openReview.current) discardTransfer(openReview.current)
+        },
+        []
+    )
+
+    const review = (transfer: ReviewedTransfer) => {
+        const { form, instrument, expiry } = transfer
+        setDraft(transfer)
+        setNotSent(undefined)
+        submitTransfer.reset()
+        prepareTransfer.mutate(
             {
                 sender: form.sender,
                 receiver: form.receiver,
                 instrumentId: instrument.instrumentId,
                 amount: form.amount,
-                expiry,
+                expiry: expiry.toISOString(),
                 memo: form.memo || undefined,
                 tokenStandardVersion: form.version,
             },
             {
-                onSuccess: () => setStep('sent'),
-                onError: (error) => {
-                    if (isNotSubmitted(error)) {
-                        claimed.current = false
-                        return
-                    }
-                    void queryClient.invalidateQueries({
-                        queryKey: tokenQueryKeys.holdings.all,
-                    })
-                    void queryClient.invalidateQueries({
-                        queryKey: tokenQueryKeys.pendingTransfers.all,
-                    })
-                    setUnknownReason(error.message)
-                    setStep('unknown')
+                onSuccess: (transaction) => {
+                    openReview.current = transaction.transactionId
+                    setPrepared(transaction)
+                    setStep('review')
                 },
             }
         )
+    }
+
+    const reject = (transactionId: string) => {
+        openReview.current = undefined
+        discardTransfer(transactionId)
+        setPrepared(undefined)
+        setStep('form')
+    }
+
+    const confirm = (transactionId: string) => {
+        if (claimed.current) return
+        claimed.current = true
+        openReview.current = undefined
+        submitTransfer.mutate(transactionId, {
+            onSuccess: () => setStep('sent'),
+            onError: (error) => {
+                if (isNotSubmitted(error)) {
+                    setNotSent(error)
+                    setPrepared(undefined)
+                    setStep('form')
+                    return
+                }
+                void queryClient.invalidateQueries({
+                    queryKey: tokenQueryKeys.holdings.all,
+                })
+                void queryClient.invalidateQueries({
+                    queryKey: tokenQueryKeys.pendingTransfers.all,
+                })
+                setUnknownReason(error.message)
+                setStep('unknown')
+            },
+            onSettled: () => {
+                claimed.current = false
+            },
+        })
     }
 
     return (
@@ -174,7 +224,7 @@ export function SendPage() {
                         Outgoing transfers
                     </ButtonLink>
                 </Stack>
-            ) : step === 'unknown' ? (
+            ) : step === 'unknown' && prepared ? (
                 <Stack spacing={2}>
                     <Alert severity="warning">
                         We couldn't confirm whether the transfer went through.{' '}
@@ -187,24 +237,33 @@ export function SendPage() {
                     <ButtonLink to="/assets" variant="outlined">
                         Assets
                     </ButtonLink>
+                    <Button
+                        variant="contained"
+                        loading={submitTransfer.isPending}
+                        onClick={() => confirm(prepared.transactionId)}
+                    >
+                        Check again
+                    </Button>
+                    <TransactionReview
+                        transaction={{ ...prepared, origin: EXTENSION_ORIGIN }}
+                    />
                 </Stack>
-            ) : step === 'review' && draft ? (
+            ) : step === 'review' && draft && prepared ? (
                 <Review
                     transfer={draft}
-                    isPending={createTransfer.isPending}
-                    error={createTransfer.error}
-                    onBack={() => setStep('form')}
-                    onConfirm={() => confirm(draft)}
+                    prepared={prepared}
+                    isSubmitting={submitTransfer.isPending}
+                    onConfirm={() => confirm(prepared.transactionId)}
+                    onReject={() => reject(prepared.transactionId)}
                 />
+            ) : prepareTransfer.isPending ? (
+                <PageLoader />
             ) : (
                 <TransferForm
                     wallets={tokenWallets}
                     initial={draft}
-                    onReview={(transfer) => {
-                        createTransfer.reset()
-                        setDraft(transfer)
-                        setStep('review')
-                    }}
+                    error={prepareTransfer.error ?? notSent}
+                    onReview={review}
                 />
             )}
         </>
@@ -214,10 +273,13 @@ export function SendPage() {
 function TransferForm({
     wallets,
     initial,
+    error,
     onReview,
 }: {
     wallets: TokenWallet[]
     initial: ReviewedTransfer | undefined
+    /** A failure after which nothing was submitted. */
+    error: Error | null | undefined
     onReview: (transfer: ReviewedTransfer) => void
 }) {
     const [form, setForm] = useState<SendForm>(
@@ -420,6 +482,12 @@ function TransferForm({
                     label="v2, if the registry supports it"
                 />
             </RadioGroup>
+            {error && (
+                <Alert severity="error">
+                    The transfer wasn't sent, so you can review it again.{' '}
+                    {error.message}
+                </Alert>
+            )}
             <Button type="submit" variant="contained">
                 Review
             </Button>
@@ -429,17 +497,16 @@ function TransferForm({
 
 function Review({
     transfer: { form, instrument, expiry },
-    isPending,
-    error,
-    onBack,
+    prepared,
+    isSubmitting,
     onConfirm,
+    onReject,
 }: {
     transfer: ReviewedTransfer
-    isPending: boolean
-    /** A failure after which nothing was submitted. */
-    error: Error | null
-    onBack: () => void
+    prepared: PreparedTransfer
+    isSubmitting: boolean
     onConfirm: () => void
+    onReject: () => void
 }) {
     const { name, symbol } = instrument.instrument!
 
@@ -473,24 +540,20 @@ function Review({
                     ))}
                 </Stack>
             </Paper>
-            {error && (
-                <Alert severity="error">
-                    The transfer didn't go through, so you can try again.{' '}
-                    {error.message}
-                </Alert>
-            )}
-            <Stack direction="row" spacing={1} sx={{ justifyContent: 'end' }}>
-                <Button onClick={onBack} disabled={isPending}>
-                    Back
-                </Button>
-                <Button
-                    variant="contained"
-                    onClick={onConfirm}
-                    loading={isPending}
-                >
-                    Confirm and send
-                </Button>
-            </Stack>
+            <Alert severity="info" sx={{ color: 'text.primary' }}>
+                Approving signs this transaction as the sender and submits it to
+                the ledger.
+            </Alert>
+            <TransactionReview
+                transaction={{ ...prepared, origin: EXTENSION_ORIGIN }}
+                actions={{
+                    isApproving: isSubmitting,
+                    isRejecting: false,
+                    disabled: isSubmitting,
+                    onApprove: onConfirm,
+                    onReject,
+                }}
+            />
         </Stack>
     )
 }

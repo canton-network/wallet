@@ -8,6 +8,7 @@ import {
     type CurrentNetworkWalletFilter,
     hashAccessToken,
     type Network,
+    type Transaction,
 } from '@canton-network/core-wallet-store'
 import {
     type CreateTransferParams,
@@ -26,7 +27,8 @@ import type { TransactionSubmitter } from '../controllers/user/transactions.ts'
 import type { ExtensionStore, WalletStore } from '../store/index.ts'
 import type { RegistryStore } from '../store/registries.ts'
 import { prepareTransaction } from '../transactions/prepare.ts'
-import { submitTransaction } from '../transactions/submit.ts'
+import { actingParty, submitTransaction } from '../transactions/submit.ts'
+import { TX_APPROVAL_TIMEOUT_MS } from '../tx-approval.ts'
 import { registryInstruments } from './instruments.ts'
 import type { TokenSdk, TokenSdkConfig } from './sdk.ts'
 
@@ -46,6 +48,23 @@ type PendingTransfers<V extends 'v1' | 'v2'> = Awaited<
     ReturnType<TokenSdk['token'][V]['transfer']['pending']>
 >
 
+/** A transfer prepared on the ledger and stored, waiting for the user. */
+export interface PreparedTransfer {
+    transactionId: string
+    commandId: string
+    preparedTransaction: string
+    preparedTransactionHash: string
+    /** An ISO 8601 date. */
+    createdAt: string
+    partyId: PartyId
+}
+
+/**
+ * How long a prepared transfer waits for the user, as long as a dApp's
+ * transaction does.
+ */
+const REVIEW_TIMEOUT_MS = TX_APPROVAL_TIMEOUT_MS
+
 /**
  * The token API for the extension pages, with the SDK's nesting. The SDK
  * itself stays in the background: it also has the ledger, party and keys
@@ -56,14 +75,26 @@ export type TokenService = {
         /** The instruments of the current network's registries. */
         instruments(): Promise<RegistryInstrument[]>
         /**
-         * The extension page's review step is the approval: these prepare,
-         * sign and execute in one call, and resolve once executed. They
-         * reject with an `Error`. Only an error that `isNotSubmitted`
-         * accepts means the transaction can't have executed.
+         * The extension page's review is the approval, so no prompt opens.
+         * The writes reject with an `Error`. Only an error that
+         * `isNotSubmitted` accepts means the transaction can't have
+         * executed.
          */
         transfer: {
-            create(params: CreateTransferParams): Promise<void>
-            /** v2 acts as `partyId` alone; `actors` is ignored. */
+            /** Prepares the transfer for the page's review, before signing. */
+            prepare(params: CreateTransferParams): Promise<PreparedTransfer>
+            /**
+             * Signs and executes the prepared transfer, and resolves once
+             * executed. Safe to repeat: a signed one is executed again
+             * without signing, an executed one resolves.
+             */
+            submit(transactionId: string): Promise<void>
+            /** Removes the prepared transfer, unless it is signed. */
+            discard(transactionId: string): Promise<void>
+            /**
+             * Prepares, signs and executes in one call. v2 acts as `partyId`
+             * alone; `actors` is ignored.
+             */
             withdraw(params: TransferChoiceParams): Promise<void>
         }
         v1: {
@@ -222,7 +253,10 @@ export function createTokenService({
      * network.
      */
     async function writerFor(partyId: unknown): Promise<Writer> {
-        const user = await signedIn()
+        return writerOf(await signedIn(), partyId)
+    }
+
+    async function writerOf(user: SignedIn, partyId: unknown): Promise<Writer> {
         const session = await extensionSession(user)
         // The store takes the network, and so the wallets and the ledger,
         // from the first session with the user's token, which can be
@@ -299,7 +333,7 @@ export function createTokenService({
      * Prepares a command as `partyId` and stores it as pending. Returns the
      * transaction's id.
      */
-    async function prepare(
+    async function prepareCommand(
         writer: Writer,
         partyId: PartyId,
         [command, disclosedContracts]: PreparedCommand
@@ -323,18 +357,32 @@ export function createTokenService({
     }
 
     /** Signs and executes a prepared transaction in the extension's session. */
-    async function submit(
+    async function signAndExecute(
         writer: Writer,
         transactionId: string
     ): Promise<void> {
         const { context, store, sessionId } = writer
-        try {
-            await submitTransaction(connected(writer), {
+        await settle(writer, transactionId, () =>
+            submitTransaction(connected(writer), {
                 store,
                 auth: context,
                 sessionId,
                 transactionId,
             })
+        )
+    }
+
+    /**
+     * Runs a step that may sign or execute, and tells a failure after which
+     * the transaction can't have executed from one whose outcome is unknown.
+     */
+    async function settle(
+        { store }: Writer,
+        transactionId: string,
+        step: () => Promise<unknown>
+    ): Promise<void> {
+        try {
+            await step()
         } catch (cause) {
             const message = toError(cause).message
             // Unsigned, it can't reach the ledger. Once signed, even a
@@ -380,7 +428,23 @@ export function createTokenService({
         offset,
     })
 
-    async function create({
+    const isExpired = ({ createdAt }: Transaction) =>
+        !createdAt || Date.now() - createdAt.getTime() >= REVIEW_TIMEOUT_MS
+
+    /** Removes the user's prepared transfers the user left unanswered. */
+    async function removeExpiredReviews({ store }: Writer): Promise<void> {
+        const expired = (await store.listAllPendingTransactions()).filter(
+            (transaction) =>
+                transaction.origin === EXTENSION_ORIGIN &&
+                transaction.status === 'pending' &&
+                isExpired(transaction)
+        )
+        for (const { id } of expired) {
+            await store.removePendingTransaction(id)
+        }
+    }
+
+    function prepare({
         sender,
         receiver,
         instrumentId,
@@ -388,9 +452,10 @@ export function createTokenService({
         expiry,
         memo,
         tokenStandardVersion,
-    }: CreateTransferParams): Promise<void> {
-        const [writer, transactionId] = await beforeSigning(async () => {
+    }: CreateTransferParams): Promise<PreparedTransfer> {
+        return beforeSigning(async () => {
             const writer = await writerFor(sender)
+            await removeExpiredReviews(writer)
             const expirationDate = new Date(expiry)
             if (Number.isNaN(expirationDate.getTime())) {
                 throw new Error('The expiry is not a valid date')
@@ -411,9 +476,87 @@ export function createTokenService({
                 used === 'v2'
                     ? await sdk.token.v2.transfer.create(params)
                     : await sdk.token.v1.transfer.create(params)
-            return [writer, await prepare(writer, sender, command)] as const
+            const transactionId = await prepareCommand(writer, sender, command)
+            const transaction = await writer.store.getTransaction(transactionId)
+            if (!transaction?.createdAt) {
+                throw new Error('The prepared transfer was not stored')
+            }
+            return {
+                transactionId,
+                commandId: transaction.commandId,
+                preparedTransaction: transaction.preparedTransaction,
+                preparedTransactionHash: transaction.preparedTransactionHash,
+                createdAt: transaction.createdAt.toISOString(),
+                partyId: sender,
+            }
         })
-        await submit(writer, transactionId)
+    }
+
+    /**
+     * The extension's transaction `transactionId` of the signed-in user,
+     * with a writer for its acting party.
+     */
+    async function reviewed(
+        transactionId: unknown
+    ): Promise<[Writer, Transaction]> {
+        const user = await signedIn()
+        const transaction =
+            typeof transactionId === 'string' && transactionId !== ''
+                ? await user.store.getTransaction(transactionId)
+                : undefined
+        if (transaction?.origin !== EXTENSION_ORIGIN) {
+            throw new Error('There is no prepared transfer with this id')
+        }
+        return [await writerOf(user, actingParty(transaction)), transaction]
+    }
+
+    async function submit(transactionId: string): Promise<void> {
+        const [writer, transaction] = await beforeSigning(async () => {
+            const [writer, transaction] = await reviewed(transactionId)
+            if (transaction.status === 'pending' && isExpired(transaction)) {
+                await writer.store.removePendingTransaction(transaction.id)
+                throw new Error(
+                    'The review expired. Review the transfer again.'
+                )
+            }
+            return [writer, transaction] as const
+        })
+        const { id, status } = transaction
+        switch (status) {
+            case 'pending':
+                return signAndExecute(writer, id)
+            // The ledger deduplicates by command id, and an already accepted
+            // command is recorded as executed.
+            case 'signed': {
+                const { context, store, sessionId } = writer
+                const partyId = actingParty(transaction)!
+                return settle(writer, id, () =>
+                    connected(writer).execute(store, context, sessionId, {
+                        transactionId: id,
+                        partyId,
+                    })
+                )
+            }
+            case 'executed':
+                return
+            case 'failed':
+                throw rpcErrors.internal({
+                    message: `The outcome of the transaction is unknown: ${transaction.failureReason ?? 'it failed without a reason'}`,
+                })
+            case 'awaiting-signature':
+                throw rpcErrors.internal({
+                    message:
+                        'The outcome of the transaction is unknown: it is waiting for its signature',
+                })
+        }
+    }
+
+    async function discard(transactionId: string): Promise<void> {
+        const { store } = await signedIn()
+        if (typeof transactionId !== 'string' || transactionId === '') return
+        const transaction = await store.getTransaction(transactionId)
+        if (transaction?.origin !== EXTENSION_ORIGIN) return
+        await store.removePendingTransaction(transactionId)
     }
 
     async function withdraw({
@@ -437,9 +580,12 @@ export function createTokenService({
                           transferInstructionCid: contractId,
                           registryUrl,
                       })
-            return [writer, await prepare(writer, partyId, command)] as const
+            return [
+                writer,
+                await prepareCommand(writer, partyId, command),
+            ] as const
         })
-        await submit(writer, transactionId)
+        await signAndExecute(writer, transactionId)
     }
 
     return {
@@ -452,7 +598,9 @@ export function createTokenService({
                 return lists.flat()
             },
             transfer: {
-                create,
+                prepare,
+                submit,
+                discard,
                 withdraw,
             },
             v1: {
