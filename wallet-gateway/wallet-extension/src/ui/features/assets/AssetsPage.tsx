@@ -8,6 +8,7 @@ import {
     type PortfolioAssetView,
 } from '@canton-network/core-wallet-ui-components/react/token'
 import ArrowBack from '@mui/icons-material/ArrowBack'
+import Send from '@mui/icons-material/Send'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -43,6 +44,12 @@ export function AssetsPage() {
                     startIcon={<ArrowBack />}
                 >
                     Parties
+                </ButtonLink>
+                <ButtonLink to="/assets/send" size="small" startIcon={<Send />}>
+                    Send
+                </ButtonLink>
+                <ButtonLink to="/transfers" size="small">
+                    Outgoing
                 </ButtonLink>
             </PageHeader>
 
