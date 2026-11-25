@@ -13,7 +13,7 @@ export default async function () {
         throw Error('Prepared tx not found')
     }
 
-    const calculatedTxHash = await sdk.utils.hash.preparedTransacation(
+    const calculatedTxHash = await sdk.utils.hash.preparedTransaction(
         transaction.preparedTransaction
     )
     const hex = calculatedTxHash.toHex()

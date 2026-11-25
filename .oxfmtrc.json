@@ -5,7 +5,6 @@
     "semi": false,
     "singleQuote": true,
     "printWidth": 80,
-    "sortPackageJson": false,
     "ignorePatterns": [
         "api-specs/ledger-api",
         "**/routeTree.gen.ts",

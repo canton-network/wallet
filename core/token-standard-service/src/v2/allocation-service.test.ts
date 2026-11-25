@@ -688,6 +688,7 @@ describe('AllocationService', () => {
             const registry = vi.fn().mockResolvedValue(registryUrl)
 
             const [commands, disclosed] =
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 await service.createAllocationsForRequest({
                     requestCid: 'request-cid',
                     request: makeRequest([specA, specB]),
@@ -725,6 +726,7 @@ describe('AllocationService', () => {
 
             const spec = makeAllocationSpec({ admin: 'custom-admin::123' })
 
+            // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
             await service.createAllocationsForRequest({
                 requestCid: 'request-cid',
                 request: makeRequest([spec]),
@@ -754,6 +756,7 @@ describe('AllocationService', () => {
                 authorizer: makeAccount({ owner: '' }),
             })
 
+            // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
             const [commands] = await service.createAllocationsForRequest({
                 requestCid: 'request-cid',
                 request: makeRequest([spec]),
@@ -786,6 +789,7 @@ describe('AllocationService', () => {
                 authorizer: makeAccount({ owner: 'bob::owner' }),
             })
 
+            // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
             const [commands] = await service.createAllocationsForRequest({
                 requestCid: 'request-cid',
                 request: makeRequest([specA, specB]),
@@ -815,6 +819,7 @@ describe('AllocationService', () => {
             })
 
             await expect(
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 service.createAllocationsForRequest({
                     requestCid: 'request-cid',
                     request: makeRequest([spec]),

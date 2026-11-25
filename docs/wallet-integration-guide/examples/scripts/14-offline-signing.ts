@@ -80,7 +80,7 @@ onlineLogger.info(
 
 const senderParty = await senderPartyPrepared.execute(senderSignedTopologyTx)
 
-onlineLogger.info(`Created sender party: ${senderParty}`)
+onlineLogger.info(`Created sender party: ${senderParty.partyId}`)
 
 offlineLogger.info(
     '===================== OFFLINE GENERATE KEYS RECEIVER ====================='
@@ -136,7 +136,7 @@ const receiverParty = await receiverPartyPrepared.execute(
     receiverSignedTopologyTx
 )
 
-onlineLogger.info(`Created receiver party: ${receiverParty}`)
+onlineLogger.info(`Created receiver party: ${receiverParty.partyId}`)
 
 // Configure amulet namespace for online sdk
 
@@ -162,7 +162,7 @@ onlineLogger.info(
 offlineLogger.info(
     '===================== OFFLINE TAP SIGNING AND HASH RECOMPUTATION ====================='
 )
-const calculatedTxHash = await offlineSdk.utils.hash.preparedTransacation(
+const calculatedTxHash = await offlineSdk.utils.hash.preparedTransaction(
     preparedTapCommandResponse.preparedTransaction
 )
 
@@ -197,7 +197,7 @@ onlineLogger.info(
 )
 
 const [transferCommand, transferDisclosedContracts] =
-    await onlineSDK.token.transfer.create({
+    await onlineSDK.token.v1.transfer.create({
         sender: senderParty.partyId,
         recipient: receiverParty.partyId,
         instrumentId: 'Amulet',
@@ -222,7 +222,7 @@ onlineLogger.info(
 )
 
 const calculatedCreateTransferHash =
-    await offlineSdk.utils.hash.preparedTransacation(
+    await offlineSdk.utils.hash.preparedTransaction(
         preparedTransferResponse.preparedTransaction
     )
 
@@ -261,7 +261,7 @@ onlineLogger.info(
     '===================== ONLINE ACCEPT TRANSFER (PREPARE) ====================='
 )
 
-const pendingOffers = await onlineSDK.token.transfer.pending(
+const pendingOffers = await onlineSDK.token.v1.transfer.pending(
     receiverParty.partyId
 )
 
@@ -276,7 +276,7 @@ onlineLogger.info(`Found pending offer: ${pendingOffers[0].contractId}`)
 const pendingOffer = pendingOffers[0]
 
 const [acceptTransferCommand, transferDisclosedContractsAccept] =
-    await onlineSDK.token.transfer.accept({
+    await onlineSDK.token.v1.transfer.accept({
         transferInstructionCid: pendingOffer.contractId,
         registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
     })
@@ -298,7 +298,7 @@ offlineLogger.info(
 )
 
 const calculatedAcceptTransferHash =
-    await offlineSdk.utils.hash.preparedTransacation(
+    await offlineSdk.utils.hash.preparedTransaction(
         preparedTransferAcceptResponse.preparedTransaction
     )
 

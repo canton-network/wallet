@@ -1,10 +1,22 @@
 {
-    "author": "Rukmini Basu <rukmini.base@digitalasset.com>",
     "name": "@canton-network/core-token-standard-v2",
-    "version": "1.6.0",
-    "type": "module",
+    "version": "1.7.0",
     "description": "daml codegen js for core token standard v2",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard-v2#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "author": "Rukmini Basu <rukmini.base@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/token-standard-v2"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
@@ -16,9 +28,11 @@
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown",
-        "dev": "tsdown --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
@@ -35,19 +49,29 @@
         "tsdown": "catalog:",
         "typescript": "catalog:"
     },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/token-standard-v2"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard-v2#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "nx": {
+        "targets": {
+            "typecheck": {
+                "dependsOn": [
+                    "^typecheck",
+                    "dist-types"
+                ]
+            },
+            "build": {
+                "inputs": [
+                    "production",
+                    "^production",
+                    "{workspaceRoot}/scripts/src/lib/version-config.json",
+                    "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
+                    "{workspaceRoot}/scripts/src/generate-token-standard.ts"
+                ]
+            },
+            "dist-types": {
+                "executor": "nx:noop",
+                "dependsOn": [
+                    "build"
+                ]
+            }
+        }
     }
 }

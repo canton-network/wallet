@@ -1,22 +1,13 @@
 {
     "name": "@canton-network/scripts",
-    "private": true,
     "version": "0.0.0",
+    "private": true,
     "description": "Various scripts for the Wallet Gateway Project.",
-    "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
     "license": "Apache-2.0",
+    "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
     "type": "module",
     "scripts": {
         "clean": "tsc -b --clean"
-    },
-    "devDependencies": {
-        "@types/node": "catalog:",
-        "@types/tar-fs": "catalog:",
-        "js-yaml": "catalog:",
-        "openapi-typescript": "catalog:",
-        "tar-fs": "catalog:",
-        "tsx": "catalog:",
-        "typescript": "catalog:"
     },
     "dependencies": {
         "@commander-js/extra-typings": "catalog:",
@@ -29,6 +20,15 @@
         "jsonc-parser": "catalog:",
         "pm2": "catalog:",
         "yoctocolors": "catalog:"
+    },
+    "devDependencies": {
+        "@types/node": "catalog:",
+        "@types/tar-fs": "catalog:",
+        "js-yaml": "catalog:",
+        "openapi-typescript": "catalog:",
+        "tar-fs": "catalog:",
+        "tsx": "catalog:",
+        "typescript": "catalog:"
     },
     "nx": {
         "targets": {

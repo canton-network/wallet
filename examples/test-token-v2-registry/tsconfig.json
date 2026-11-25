@@ -1,7 +1,21 @@
 {
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
-        "noUncheckedIndexedAccess": true,
-        "noImplicitAny": true
-    }
+        "noUncheckedIndexedAccess": true
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../../core/token-standard-v2"
+        },
+        {
+            "path": "../../core/token-standard"
+        },
+        {
+            "path": "../../core/splice-codegen"
+        }
+    ]
 }

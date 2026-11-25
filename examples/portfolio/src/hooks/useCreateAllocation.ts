@@ -36,7 +36,7 @@ export const useCreateAllocation = () => {
             }
 
             const preparedCommand =
-                await sdk.token.allocation.instruction.create({
+                await sdk.token.v1.allocation.instruction.create({
                     allocationSpecification: args.allocationSpecification,
                     asset,
                 })

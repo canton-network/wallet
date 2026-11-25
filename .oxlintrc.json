@@ -1,6 +1,9 @@
 {
     "$schema": "./node_modules/oxlint/configuration_schema.json",
     "plugins": ["unicorn", "typescript", "oxc", "import"],
+    "options": {
+        "typeAware": true
+    },
     "jsPlugins": [
         {
             "name": "header",
@@ -8,7 +11,8 @@
         }
     ],
     "categories": {
-        "correctness": "error"
+        "correctness": "error",
+        "suspicious": "error"
     },
     "ignorePatterns": [
         "**/_proto",
@@ -17,8 +21,7 @@
         "core/rpc-generator/templates",
         "core/wallet-user-rpc-client",
         "core/wallet-dapp-rpc-client",
-        "core/wallet-dapp-remote-rpc-client",
-        "docs/wallet-integration-guide/examples"
+        "core/wallet-dapp-remote-rpc-client"
     ],
     "rules": {
         "header/header": [
@@ -46,6 +49,26 @@
             { "ignorePackages": true, "checkTypeImports": true, "js": "never" }
         ],
         "typescript/no-import-type-side-effects": "error",
-        "typescript/no-explicit-any": "error"
+        "typescript/no-explicit-any": "error",
+        "typescript/unbound-method": "off",
+        "typescript/consistent-return": "off",
+        "typescript/no-extraneous-class": "off",
+        "typescript/no-unnecessary-type-assertion": "off",
+        "typescript/no-unnecessary-type-conversion": "off",
+        "typescript/no-unnecessary-type-parameters": "off",
+        "typescript/no-unsafe-enum-assignment": "off",
+        "typescript/no-unsafe-enum-comparison": "off",
+        "typescript/no-unsafe-type-assertion": "off",
+        "import/no-unassigned-import": "off",
+        "no-new": "off",
+        "no-shadow": "off",
+        "no-useless-concat": "off",
+        "no-underscore-dangle": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "unicorn/no-array-sort": "off",
+        "unicorn/prefer-add-event-listener": "off",
+        "unicorn/require-post-message-target-origin": "off",
+        "react/react-in-jsx-scope": "off",
+        "typescript/no-deprecated": "error"
     }
 }

@@ -4,8 +4,10 @@
 import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 
+import { workspaceSources } from '../../vite.source.ts'
+
 export default defineConfig({
-    plugins: [react()],
+    plugins: [react(), workspaceSources()],
     server: {
         port: 8082,
     },

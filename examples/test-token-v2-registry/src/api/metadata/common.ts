@@ -26,6 +26,7 @@ export const instruments: OffLedger.MetadataV1.components['schemas']['Instrument
             decimals: 2,
             supportedApis,
             paused: false,
+            // oxlint-disable-next-line typescript/no-deprecated -- required by the token metadata API
             showAccountInputFields: false,
         },
     ]

@@ -65,6 +65,31 @@ describe('self-issued token service', () => {
         expect(token.split('.')).toHaveLength(3)
     })
 
+    it('gives each token a unique jti so identical claims never sign the same payload', async () => {
+        const claims = {
+            audience: 'participant-aud',
+            scope: 'daml_ledger_api',
+            partyId: 'alice::ns',
+            username: 'alice',
+            synchronizerId: 'global-domain::fingerprint',
+            ttlSeconds: 60,
+        }
+        const first = await SelfIssuedTokenService.prepareForSigning(
+            publicKey,
+            claims
+        )
+        const second = await SelfIssuedTokenService.prepareForSigning(
+            publicKey,
+            claims
+        )
+
+        const firstJti = decodeJwt(`${first}.sig`).jti
+        const secondJti = decodeJwt(`${second}.sig`).jti
+        expect(firstJti).toEqual(expect.any(String))
+        expect(firstJti).not.toBe(secondJti)
+        expect(first).not.toBe(second)
+    })
+
     describe('isSigningInputExpired', () => {
         const encode = (value: unknown) =>
             base64url.encode(new TextEncoder().encode(JSON.stringify(value)))

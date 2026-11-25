@@ -94,13 +94,13 @@ await sdk.ledger
 
 logger.info(`buy member traffic for sender (${alice.partyId}) party completed`)
 
-const utxos = await sdk.token.utxos.list({ partyId: alice.partyId })
+const utxos = await sdk.token.v1.utxos.list({ partyId: alice.partyId })
 logger.info(utxos, 'alice utxos')
 
 const sentValue = 2000
 
 const [transferCommand, transferDisclosedContracts] =
-    await sdk.token.transfer.create({
+    await sdk.token.v1.transfer.create({
         sender: alice.partyId,
         recipient: bob.partyId,
         amount: sentValue.toString(),

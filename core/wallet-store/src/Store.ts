@@ -94,9 +94,25 @@ export interface Session {
     id: string
     origin: string
     network: string
-    /** Absent only while self-issued onboarding is in progress. */
-    accessToken?: string
+    /**
+     * SHA-256 digest of the access token (see hashAccessToken). Stores keep
+     * and return only this digest, so a session read back from a store can't
+     * be used as a credential.
+     * Absent only while self-issued onboarding is in progress.
+     */
+    accessTokenHash?: string
     userId?: string
+}
+
+/**
+ * What setSession takes: the raw token, which the store hashes.
+ * accessTokenHash is forbidden so a session read back from a store can't be
+ * passed in and hashed twice. userId is set by the store from the
+ * authenticated context.
+ */
+export type NewSession = Omit<Session, 'accessTokenHash' | 'userId'> & {
+    accessToken?: string
+    accessTokenHash?: never
 }
 
 export interface Transaction {
@@ -147,7 +163,8 @@ export interface MessageRaw {
 
 export interface MessageRawStatusUpdate {
     signedAt?: Date
-    signature?: string
+    /** null clears the stored signature. */
+    signature?: string | null
     externalTxId?: string
     failureReason?: string
 }
@@ -198,7 +215,7 @@ export interface Store {
     // Session methods
     /**
      * getSession is keyed by the accessToken, which is unique per session. It retrieves the session associated with the provided accessToken.
-     * @param accessToken The access token associated with the session to retrieve.
+     * @param accessToken The raw access token associated with the session to retrieve; the store hashes it before the lookup.
      * @returns A Promise that resolves to the Session object if found, or undefined if no session exists for the given accessToken.
      */
     getSession(accessToken: string): Promise<Session | undefined>
@@ -209,7 +226,7 @@ export interface Store {
      */
     listSessions(): Promise<Array<Session>>
 
-    setSession(session: Session): Promise<void>
+    setSession(session: NewSession): Promise<void>
 
     /**
      * removeSession is keyed by the accessToken, which is unique per session. It removes the session associated with the provided accessToken.
@@ -231,10 +248,13 @@ export interface Store {
     /**
      * Sets the access token on the authenticated user's tokenless self-issued login session,
      * keeping its id, and removes the user's other sessions for the same origin.
+     * In the same write it deletes the signed message the token was built from,
+     * so the raw token isn't left behind.
      */
     upgradeSelfIssuedLoginSession(
         sessionId: string,
-        accessToken: string
+        accessToken: string,
+        signedMessageId: string
     ): Promise<Session>
 
     // IDP methods

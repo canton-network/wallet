@@ -242,12 +242,13 @@ export const preapprovalStatusQueryOptions = ({
             // lookup. Resolving it here means a failed operator fetch surfaces
             // through this query's error state (and its retry), rather than
             // leaving the row stuck on "Checking...".
-            const operator = await queryClient.ensureQueryData(
-                utilityOperatorQueryOptions({
+            const operator = await queryClient.query({
+                ...utilityOperatorQueryOptions({
                     registryPartyId: row.registryPartyId,
                     registryUrl: row.registryUrl,
-                })
-            )
+                }),
+                staleTime: 'static',
+            })
 
             return await sdk.utilities.preapprovalTransfer.fetchQuick({
                 receiver: party,

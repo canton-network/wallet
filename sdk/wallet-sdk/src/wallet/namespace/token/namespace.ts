@@ -24,13 +24,6 @@ export type TokenNamespaceConfig = {
 }
 
 export class TokenNamespace {
-    /**@deprecated Use `sdk.token.v1.transfer`. Same behavior, the unversioned namespace will be removed in a future release. */
-    public readonly transfer: TransferNamespace
-    /**@deprecated Use `sdk.token.v1.allocation`. Same behavior, the unversioned namespace will be removed in a future release. */
-    public readonly allocation: AllocationNamespace
-    /**@deprecated Use `sdk.token.v1.utxos`. Same behavior, the unversioned namespace will be removed in a future release. */
-    public readonly utxos: UtxoNamespace
-
     public readonly v1: {
         readonly transfer: TransferNamespace
         readonly allocation: AllocationNamespace
@@ -38,15 +31,28 @@ export class TokenNamespace {
     }
     public readonly v2: TokenV2Namespace
     constructor(private readonly tokenContext: TokenNamespaceConfig) {
-        this.allocation = new AllocationNamespace(tokenContext)
-        this.transfer = new TransferNamespace(tokenContext)
-        this.utxos = new UtxoNamespace(tokenContext, this.transfer)
+        const transfer = new TransferNamespace(tokenContext)
         this.v1 = {
-            transfer: this.transfer,
-            allocation: this.allocation,
-            utxos: this.utxos,
+            transfer,
+            allocation: new AllocationNamespace(tokenContext),
+            utxos: new UtxoNamespace(tokenContext, transfer),
         }
         this.v2 = new TokenV2Namespace(tokenContext)
+    }
+
+    /**@deprecated Use `sdk.token.v1.transfer`. Same behavior, the unversioned namespace will be removed in a future release. */
+    get transfer(): TransferNamespace {
+        return this.v1.transfer
+    }
+
+    /**@deprecated Use `sdk.token.v1.allocation`. Same behavior, the unversioned namespace will be removed in a future release. */
+    get allocation(): AllocationNamespace {
+        return this.v1.allocation
+    }
+
+    /**@deprecated Use `sdk.token.v1.utxos`. Same behavior, the unversioned namespace will be removed in a future release. */
+    get utxos(): UtxoNamespace {
+        return this.v1.utxos
     }
     /**
      * Lists all holdings for a specified party

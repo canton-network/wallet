@@ -63,7 +63,7 @@ export default async (args: TransferTestScriptParameters) => {
         .execute({ partyId: receiver.partyId })
     logger.info('Receiver accepted the transfer instruction')
 
-    const receiverUtxos = await sdk.token.utxos.list({
+    const receiverUtxos = await sdk.token.v1.utxos.list({
         partyId: receiver.partyId,
     })
     logger.info(

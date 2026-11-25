@@ -64,7 +64,7 @@ export function getCurrentRoute(pathname: string): AllowedRoute | null {
     }
 
     for (const route of NON_ROOT_ROUTES) {
-        if (normalizedPath === route || normalizedPath.endsWith(`${route}`)) {
+        if (normalizedPath === route || normalizedPath.endsWith(route)) {
             return route
         }
     }

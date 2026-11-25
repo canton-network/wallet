@@ -8,7 +8,7 @@ The browser extension Wallet for Chrome and Firefox.
 
 The extension's source code is written in TypeScript and built with `WXT`.
 
-Run `pnpm build` to run the build once, or `pnpm dev` to keep WXT watching for changes. (Note that this runs automatically with `pnpm start:all` from the root script).
+Run `pnpm build` to run the build once, or `pnpm dev` to keep WXT watching for changes.
 
 # Developing
 

@@ -1,8 +1,8 @@
 # @canton-network/core-tx-hashing
 
-Computes the hash of a Canton prepared transaction under hashing schemes V2 and V3. The validator returns this hash with the prepared transaction only for convenience: a wallet that does not trust the validator computes it from the bytes, compares, and signs its own.
+Computes the hash of a Canton prepared transaction under hashing schemes V2 and V3, and the multi-hash of a set of topology transactions. The validator returns this hash with the prepared transaction only for convenience: a wallet that does not trust the validator computes it from the bytes, compares, and signs its own.
 
-`@canton-network/wallet-sdk` (`sdk.utils.hash.preparedTransaction`) and `@canton-network/core-tx-visualizer` (`hashPreparedTransaction`) hash with this package.
+`@canton-network/wallet-sdk` (`sdk.utils.hash.preparedTransaction`, `sdk.utils.hash.topologyTransaction`) and `@canton-network/core-tx-visualizer` (`hashPreparedTransaction`) hash with this package.
 
 ## Installation
 
@@ -44,6 +44,19 @@ Display the transaction as `@canton-network/core-ledger-proto` decodes it, direc
 
 `metadata.globalKeyMapping` and `metadata.inputContracts[i].eventBlob` are accepted, but no scheme hashes them, so do not show their content as signed.
 
+## Topology transactions
+
+`computeTopologyMultiHash(topologyTxs)` computes the multi-hash that a signature over a set of topology transactions is made on. It takes the transactions in base64 as the Ledger API returns them, or as bytes, and resolves to the multi-hash in base64. Each transaction is hashed over its `UntypedVersionedMessage` wrapper, not over the message inside it.
+
+```typescript
+import { computeTopologyMultiHash } from '@canton-network/core-tx-hashing'
+
+const multiHash = await computeTopologyMultiHash(
+    generateTopologyResponse.topologyTransactions
+)
+// compare with generateTopologyResponse.multiHash, then sign it
+```
+
 ## Errors
 
 Every refusal rejects the promise with a `TxHashingError`, whose `code` is one of the codes below.
@@ -52,7 +65,7 @@ Its `path`, where known, points into the transaction, such as `transaction.nodes
 
 | Code                          | Refused when                                                                                                                                                                                             |
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `DECODE_FAILED`               | the input is neither a Uint8Array nor a string, or the bytes or base64 are empty, not canonical or not a `PreparedTransaction`                                                                           |
+| `DECODE_FAILED`               | the input is neither a Uint8Array nor a string, or the bytes or base64 are empty, not canonical or not a `PreparedTransaction`, or a topology transaction is not canonical base64                        |
 | `UNKNOWN_FIELD`               | a message holds a field number that its definition does not have                                                                                                                                         |
 | `UNSUPPORTED_SCHEME`          | the scheme is neither V2 nor V3                                                                                                                                                                          |
 | `UNSUPPORTED_NODE_VERSION`    | a node is not a `v1` node                                                                                                                                                                                |
@@ -70,7 +83,7 @@ Its `path`, where known, points into the transaction, such as `transaction.nodes
 | `NODE_LIMIT_EXCEEDED`         | the transaction has more nodes than `maxNodes`                                                                                                                                                           |
 | `DEPTH_LIMIT_EXCEEDED`        | nodes nest deeper than `maxNodeDepth`, or a value deeper than `maxValueDepth`                                                                                                                            |
 | `INVALID_HEX`                 | a contract id is not lower case hex of even length                                                                                                                                                       |
-| `INVALID_VALUE`               | a value is not valid, such as a seed that is not 32 bytes or a time outside 0001-01-01 to 9999-12-31, or a limit option is not valid                                                                     |
+| `INVALID_VALUE`               | a value is not valid, such as a seed that is not 32 bytes or a time outside 0001-01-01 to 9999-12-31, or a limit option is not valid, or no topology transactions are given                              |
 
 ## Limits
 

@@ -221,7 +221,7 @@ export class LedgerNamespace {
          * returns the createdEvent and synchronizerId
          */
         read: async (options: AcsRequestOptions) => {
-            return (await this.acs.readRaw(options))
+            return (await this.acsReader.raw.read(options))
 
                 .filter(
                     (acs) =>

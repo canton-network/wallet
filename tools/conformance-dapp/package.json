@@ -1,19 +1,35 @@
 {
     "name": "@canton-network/tool-conformance-dapp",
     "version": "1.4.0",
-    "type": "module",
     "description": "Browser CIP-103 conformance dApp, suite, and report helpers",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/tools/conformance-dapp#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "tools/conformance-dapp"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         },
         "./app": "./dist/index.html"
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "vite build && vite build --config vite.lib.config.ts && tsc -p tsconfig.lib.json",
@@ -44,20 +60,5 @@
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "tools/conformance-dapp"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/tools/conformance-dapp#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

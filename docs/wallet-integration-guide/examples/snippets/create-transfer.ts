@@ -14,7 +14,7 @@ export default async function () {
     const senderPrivateKey = global.EXISTING_PARTY_1_KEYS.privateKey
 
     const [transferCommand, transferDisclosedContracts] =
-        await sdk.token.transfer.create({
+        await sdk.token.v1.transfer.create({
             sender,
             recipient: receiver,
             amount: '2000',

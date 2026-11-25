@@ -10,7 +10,7 @@ import {
     type HoldingView as HoldingViewV2,
     HOLDING_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
-import BigNumber from 'bignumber.js'
+import { BigNumber } from 'bignumber.js'
 
 import { matchInterfaceIds, ReasonMetaKey } from './constants.ts'
 import type { Holding, Label, TokenStandardChoice } from './types.ts'
