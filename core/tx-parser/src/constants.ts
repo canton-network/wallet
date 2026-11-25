@@ -71,10 +71,27 @@ export const V2TokenStandardTransactionInterfaces = [
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
 ]
 
-export const CombinedTokenStandardTransactionInterfaces = [
-    ...TokenStandardTransactionInterfaces,
-    ...V2TokenStandardTransactionInterfaces,
-]
+export const TOKEN_STANDARD_INTERFACES_BY_VERSION = {
+    v1: TokenStandardTransactionInterfaces,
+    v2: V2TokenStandardTransactionInterfaces,
+} as const satisfies Record<string, readonly string[]>
+
+export type TokenStandardVersion =
+    keyof typeof TOKEN_STANDARD_INTERFACES_BY_VERSION
+
+export const ALL_TOKEN_STANDARD_VERSIONS = Object.keys(
+    TOKEN_STANDARD_INTERFACES_BY_VERSION
+) as TokenStandardVersion[]
+
+export function getTokenStandardInterfaces(
+    versions: readonly TokenStandardVersion[] = ALL_TOKEN_STANDARD_VERSIONS
+): string[] {
+    if (versions.length === 0) {
+        throw new Error('At least one token standard version must be specified')
+    }
+    const ids = versions.flatMap((v) => TOKEN_STANDARD_INTERFACES_BY_VERSION[v])
+    return [...new Set(ids)]
+}
 
 const SpliceMetaKeyPrefix = 'splice.lfdecentralizedtrust.org/'
 export const TxKindMetaKey = `${SpliceMetaKeyPrefix}tx-kind`
