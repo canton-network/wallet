@@ -16,7 +16,7 @@ import { encodeRepeated, encodeString, encodeTime } from './encoding.ts'
 import { TxHashingError } from './errors.ts'
 import type { Forest } from './forest.ts'
 
-// Code shared by hashing schemes V2 and V3. Neither hashes
+// Code shared by hashing schemes V2, V3 and V4. None hashes
 // metadata.globalKeyMapping (deprecated, left empty by the participant) or
 // metadata.inputContracts[i].eventBlob, so a signature does not cover them.
 
