@@ -2413,9 +2413,6 @@ importers:
 
   examples/ping:
     dependencies:
-      '@canton-network/core-splice-codegen':
-        specifier: 'workspace:'
-        version: link:../../core/splice-codegen
       '@canton-network/core-tx-visualizer':
         specifier: 'workspace:'
         version: link:../../core/tx-visualizer

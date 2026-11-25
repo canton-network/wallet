@@ -5,6 +5,8 @@ import type { WrappedCommand } from '@canton-network/core-ledger-client-types'
 import type { HoldingView as HoldingViewV1 } from '@canton-network/core-token-standard'
 import type { HoldingView as HoldingViewV2 } from '@canton-network/core-token-standard-v2'
 import type { SDKInterface } from '@canton-network/wallet-sdk'
+import { readFileSync } from 'fs'
+import path from 'path'
 
 type RequiredHoldingViewProps<
     HoldingView extends HoldingViewV1 | HoldingViewV2,
@@ -30,11 +32,7 @@ export const vetDarFactory =
         sdk: SDKInterface,
         synchronizerId?: Parameters<SDKInterface['ledger']['dar']['upload']>[2]
     ) => {
-        const [{ readFileSync }, { join }] = await Promise.all([
-            import('node:fs'),
-            import('node:path'),
-        ])
-        const darFile = join(import.meta.dirname, pathToDar)
+        const darFile = path.join(import.meta.dirname, pathToDar)
         const darBytes = readFileSync(darFile)
 
         await sdk.ledger.dar.upload(darBytes, packageId, synchronizerId, true)
