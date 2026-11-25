@@ -5,6 +5,7 @@ import { rpcErrors } from '@canton-network/core-rpc-errors'
 import type { PartyId } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import {
+    type CurrentNetworkWalletFilter,
     hashAccessToken,
     type Network,
 } from '@canton-network/core-wallet-store'
@@ -127,6 +128,34 @@ function toError(cause: unknown): Error {
     return new Error('The transfer failed without an error message')
 }
 
+/**
+ * `store`, kept on `network`. The store takes the network from the first
+ * session with the user's token, and a reconnect moves a session to the
+ * end, so it can change while a write runs.
+ */
+function onNetwork(store: ExtensionStore, network: Network): ExtensionStore {
+    const wallets = (filter?: CurrentNetworkWalletFilter) =>
+        store.getAllWallets({ ...filter, networkIds: [network.id] })
+    const pinned: Partial<ExtensionStore> = {
+        getCurrentNetwork: async () => network,
+        getWallets: wallets,
+        getWallet: async (partyId) =>
+            (await wallets()).find((wallet) => wallet.partyId === partyId) ??
+            null,
+        getPrimaryWallet: async () =>
+            (await wallets()).find((wallet) => wallet.primary),
+    }
+    return new Proxy(store, {
+        get(target, key) {
+            if (Object.hasOwn(pinned, key)) {
+                return pinned[key as keyof ExtensionStore]
+            }
+            const value: unknown = Reflect.get(target, key, target)
+            return typeof value === 'function' ? value.bind(target) : value
+        },
+    })
+}
+
 /** Runs a step before signing: if it fails, nothing can have executed. */
 async function beforeSigning<T>(step: () => Promise<T>): Promise<T> {
     try {
@@ -189,7 +218,8 @@ export function createTokenService({
 
     /**
      * The signed-in user, in the extension's session, once `partyId` is one
-     * of their wallets on that session's network.
+     * of their wallets on that session's network. Its store stays on that
+     * network.
      */
     async function writerFor(partyId: unknown): Promise<Writer> {
         const user = await signedIn()
@@ -203,8 +233,14 @@ export function createTokenService({
                 `The extension is connected to ${session.network}, but the wallet would use ${network.id}`
             )
         }
-        await assertOwner(user, partyId)
-        return { ...user, sessionId: session.id, network }
+        const writer = {
+            ...user,
+            store: onNetwork(user.store, network),
+            sessionId: session.id,
+            network,
+        }
+        await assertOwner(writer, partyId)
+        return writer
     }
 
     async function sdkForParty(partyId: unknown): Promise<TokenSdk> {
@@ -283,20 +319,13 @@ export function createTokenService({
             })
         } catch (cause) {
             const message = toError(cause).message
-            // Unsigned, it can't reach the ledger. A signed one is kept, as
-            // its outcome is unknown, unless the ledger reported it failed.
+            // Unsigned, it can't reach the ledger. Once signed, even a
+            // `failed` row is no proof: the ledger's timeout waiting for
+            // the completion is recorded as `failed` too.
             const removed = await store
                 .removePendingTransaction(transactionId)
                 .catch(() => false)
-            const status = removed
-                ? 'pending'
-                : await store
-                      .getTransaction(transactionId)
-                      .then((transaction) => transaction?.status)
-                      .catch(() => undefined)
-            if (status === 'pending' || status === 'failed') {
-                throw notSubmittedError(message)
-            }
+            if (removed) throw notSubmittedError(message)
             throw rpcErrors.internal({
                 message: `The outcome of the transaction is unknown: ${message}`,
             })

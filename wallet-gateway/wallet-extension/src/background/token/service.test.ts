@@ -354,6 +354,56 @@ describe('createTokenService', () => {
             expect(prepare).not.toHaveBeenCalled()
         })
 
+        it('stays on the checked network when a reconnect moves the extension’s session', async () => {
+            const tokenService = service()
+            await store.setSession({
+                id: 'session-1',
+                origin: EXTENSION_ORIGIN,
+                network: networkId,
+                accessToken: context.accessToken,
+            })
+            await store.setSession({
+                id: 'dapp-session',
+                origin: 'https://dapp.example',
+                network: 'canton:local-oauth',
+                accessToken: context.accessToken,
+            })
+            await store.addWallet({ ...wallet })
+            await store.addWallet({
+                ...wallet,
+                networkId: 'canton:local-oauth',
+            })
+            // Reconnecting replaces the session, which moves it behind the
+            // dApp's, so the store now takes the dApp's network.
+            createSdk.mockImplementationOnce(async () => {
+                await store.setSession({
+                    id: 'session-2',
+                    origin: EXTENSION_ORIGIN,
+                    network: networkId,
+                    accessToken: context.accessToken,
+                })
+                return sdk as unknown as TokenSdk
+            })
+
+            await tokenService.token.transfer.create(transferParams)
+
+            expect(
+                prepare.mock.contexts.map(
+                    (client) => (client as LedgerClient).baseUrl.href
+                )
+            ).toEqual(['http://localhost:2975/'])
+            const [signStore] = sign.mock.calls[0]!
+            const [executeStore] = execute.mock.calls[0]!
+            for (const used of [signStore, executeStore]) {
+                await expect(used.getCurrentNetwork()).resolves.toMatchObject({
+                    id: networkId,
+                })
+                await expect(used.getWallets()).resolves.toEqual([
+                    expect.objectContaining({ networkId }),
+                ])
+            }
+        })
+
         it.each([
             [
                 'nothing',
@@ -391,6 +441,27 @@ describe('createTokenService', () => {
             })
 
             execute.mockRejectedValueOnce(new Error('connection lost'))
+            await expect(
+                tokenService.token.transfer.create(transferParams)
+            ).rejects.toMatchObject({
+                code: errorCodes.rpc.internal,
+                message: expect.stringContaining('outcome'),
+            })
+
+            // The transaction service records the ledger's structured
+            // timeout as a rejection.
+            execute.mockImplementationOnce(
+                async (executeStore, _context, _session, { transactionId }) => {
+                    await executeStore.setTransactionStatus(
+                        transactionId,
+                        'failed',
+                        { failureReason: 'REQUEST_TIMEOUT: timed out' }
+                    )
+                    throw new Error(
+                        'Ledger rejected submission REQUEST_TIMEOUT: timed out'
+                    )
+                }
+            )
             await expect(
                 tokenService.token.transfer.create(transferParams)
             ).rejects.toMatchObject({
