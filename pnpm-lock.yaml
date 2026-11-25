@@ -1239,6 +1239,9 @@ importers:
       '@canton-network/core-signing-lib':
         specifier: 'workspace:'
         version: link:../signing-lib
+      '@logtape/logtape':
+        specifier: 'catalog:'
+        version: 2.4.2
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

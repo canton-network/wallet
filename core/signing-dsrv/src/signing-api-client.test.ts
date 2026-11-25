@@ -3,7 +3,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { DsrvSigningApiClient } from './signing-api-client.ts'
+import { DsrvHttpError, DsrvSigningApiClient } from './signing-api-client.ts'
 
 describe('DsrvSigningApiClient', () => {
     let fetchMock: ReturnType<typeof vi.fn>
@@ -194,6 +194,88 @@ describe('DsrvSigningApiClient', () => {
 
         await expect(client.getKeys()).rejects.toThrow(
             'DSRV signing API getKeys failed (500): Internal Server Error'
+        )
+    })
+
+    it('shows users the reason from the error body, not the body itself', async () => {
+        fetchMock.mockResolvedValue(
+            new Response(
+                '{"error":{"code":"UNAUTHORIZED","message":"missing or invalid bearer token","upstream":{"code":"x"}}}',
+                { status: 401, statusText: 'Unauthorized' }
+            )
+        )
+
+        const client = new DsrvSigningApiClient(
+            'http://signing.example',
+            'wrong-token'
+        )
+
+        const error = (await client
+            .getKeys()
+            .catch((e: unknown) => e)) as DsrvHttpError
+        expect(error).toBeInstanceOf(DsrvHttpError)
+        expect(error.userMessage).toBe(
+            'DSRV signing API getKeys failed (401): missing or invalid bearer token'
+        )
+        expect(error.message).toContain('"upstream"')
+    })
+
+    it.each([
+        ['a body that is not JSON', 'invalid token'],
+        ['a JSON body without an error message', '{"error":"down"}'],
+        ['an empty error message', '{"error":{"message":""}}'],
+    ])('shows users the status text for %s', async (_name, body) => {
+        fetchMock.mockResolvedValue(
+            new Response(body, { status: 502, statusText: 'Bad Gateway' })
+        )
+
+        const client = new DsrvSigningApiClient(
+            'http://signing.example',
+            'gw-token'
+        )
+
+        const error = (await client
+            .getKeys()
+            .catch((e: unknown) => e)) as DsrvHttpError
+        expect(error.userMessage).toBe(
+            'DSRV signing API getKeys failed (502): Bad Gateway'
+        )
+    })
+
+    it('shows users only the status when there is no reason', async () => {
+        fetchMock.mockResolvedValue(
+            new Response('x'.repeat(1000), { status: 500 })
+        )
+
+        const client = new DsrvSigningApiClient(
+            'http://signing.example',
+            'gw-token'
+        )
+
+        const error = (await client
+            .getKeys()
+            .catch((e: unknown) => e)) as DsrvHttpError
+        expect(error.userMessage).toBe('DSRV signing API getKeys failed (500)')
+    })
+
+    it('cuts a long reason', async () => {
+        fetchMock.mockResolvedValue(
+            new Response(
+                JSON.stringify({ error: { message: 'y'.repeat(1000) } }),
+                { status: 500 }
+            )
+        )
+
+        const client = new DsrvSigningApiClient(
+            'http://signing.example',
+            'gw-token'
+        )
+
+        const error = (await client
+            .getKeys()
+            .catch((e: unknown) => e)) as DsrvHttpError
+        expect(error.userMessage).toBe(
+            `DSRV signing API getKeys failed (500): ${'y'.repeat(300)}`
         )
     })
 

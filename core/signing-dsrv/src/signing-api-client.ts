@@ -56,8 +56,59 @@ export interface GetTransactionsRequest {
 export type DsrvApiError = Pick<RpcError, 'error'> &
     Partial<Pick<RpcError, 'error_description'>>
 
-// Error bodies are cut to this length before they become error messages
+// Error bodies and reasons are cut to this length before they become error
+// messages
 const MAX_ERROR_BODY_LENGTH = 300
+
+/**
+ * A call the signing API answered with an HTTP error status. `message`
+ * carries the response body and is meant for the log. `userMessage` holds only
+ * the status and the reason the signing API gave, and is what users and dApps
+ * get to see.
+ */
+export class DsrvHttpError extends Error {
+    readonly userMessage: string
+
+    constructor(
+        operation: DsrvSigningOperation,
+        status: number,
+        statusText: string,
+        body: string
+    ) {
+        const prefix = `DSRV signing API ${operation} failed (${status})`
+        super(
+            `${prefix}: ${body.slice(0, MAX_ERROR_BODY_LENGTH) || statusText}`
+        )
+        this.name = 'DsrvHttpError'
+        const reason = (errorMessage(body) ?? statusText).slice(
+            0,
+            MAX_ERROR_BODY_LENGTH
+        )
+        this.userMessage = reason ? `${prefix}: ${reason}` : prefix
+    }
+}
+
+/** The signing API reports errors as `{ error: { code, message } }` */
+function errorMessage(body: string): string | undefined {
+    try {
+        const parsed: unknown = JSON.parse(body)
+        if (
+            typeof parsed === 'object' &&
+            parsed !== null &&
+            'error' in parsed &&
+            typeof parsed.error === 'object' &&
+            parsed.error !== null &&
+            'message' in parsed.error &&
+            typeof parsed.error.message === 'string' &&
+            parsed.error.message
+        ) {
+            return parsed.error.message
+        }
+    } catch {
+        // not JSON
+    }
+    return undefined
+}
 
 const stripTrailingSlash = (url: string) =>
     url.endsWith('/') ? url.slice(0, -1) : url
@@ -142,12 +193,11 @@ export class DsrvSigningApiClient {
         )
 
         if (!response.ok) {
-            const errorText = (await response.text()).slice(
-                0,
-                MAX_ERROR_BODY_LENGTH
-            )
-            throw new Error(
-                `DSRV signing API ${operation} failed (${response.status}): ${errorText || response.statusText}`
+            throw new DsrvHttpError(
+                operation,
+                response.status,
+                response.statusText,
+                await response.text()
             )
         }
 

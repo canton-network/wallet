@@ -129,7 +129,10 @@ driver treats like any other failed call (see below): the Wallet Gateway reports
     the error code as description.
 
 - Any other HTTP status fails the call. The driver then returns its own error
-  (`create_key_error`, `fetch_error` or `signing_error`, depending on the operation) with the status and up to 300 characters of the response body.
+  (`create_key_error`, `fetch_error` or `signing_error`, depending on the operation). Its
+  description holds the status and the `message` of an error body of the form
+  `{ "error": { "code": "...", "message": "..." } }`, or the HTTP status text when the body
+  has no such message. The response body itself is only written to the log.
 - If the signing API cannot be reached, the driver returns the same error with the connection
   error as description.
 - A `signed` transaction without a `signature` is passed to the Wallet Gateway as `pending`.

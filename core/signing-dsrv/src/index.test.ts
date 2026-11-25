@@ -80,8 +80,7 @@ describe('DsrvSigningDriver', () => {
 
             expect(result).toEqual({
                 error: 'create_key_error',
-                error_description:
-                    'DSRV signing API createKey failed (503): unavailable',
+                error_description: 'DSRV signing API createKey failed (503)',
             })
         })
     })
@@ -522,7 +521,15 @@ describe('DsrvSigningDriver', () => {
 
         test('a 401 from the signing API becomes the operation error', async () => {
             fetchMock.mockResolvedValue(
-                new Response('invalid token', { status: 401 })
+                jsonResponse(
+                    {
+                        error: {
+                            code: 'UNAUTHORIZED',
+                            message: 'missing or invalid bearer token',
+                        },
+                    },
+                    401
+                )
             )
 
             const result = await new DsrvSigningDriver({
@@ -539,7 +546,7 @@ describe('DsrvSigningDriver', () => {
             expect(result).toEqual({
                 error: 'signing_error',
                 error_description:
-                    'DSRV signing API signTransaction failed (401): invalid token',
+                    'DSRV signing API signTransaction failed (401): missing or invalid bearer token',
             })
         })
     })

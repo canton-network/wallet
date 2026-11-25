@@ -26,13 +26,16 @@ import {
     type SubscribeTransactionsResult,
     type Transaction,
 } from '@canton-network/core-signing-lib'
+import { getLogger } from '@logtape/logtape'
 
 import {
     type DsrvApiError,
+    DsrvHttpError,
     DsrvSigningApiClient,
 } from './signing-api-client.ts'
 
 export {
+    DsrvHttpError,
     DsrvSigningApiClient,
     type CreateKeyRequest,
     type DsrvApiError,
@@ -42,6 +45,8 @@ export {
     type GetTransactionsRequest,
     type SignTransactionRequest,
 } from './signing-api-client.ts'
+
+const logger = getLogger(['core', 'signing-dsrv', 'DsrvSigningDriver'])
 
 export interface DsrvConfig {
     /** Base URL of the DSRV signing API, called at `{baseUrl}/api/signing/{operation}` */
@@ -97,6 +102,15 @@ function toTransaction(tx: Transaction): Transaction {
     }
 }
 
+// The message of a failed signing API call carries the raw response body,
+// which only goes to the log
+function errorDescription(error: unknown): string {
+    logger.error('DSRV signing API request failed', { error })
+    return error instanceof DsrvHttpError
+        ? error.userMessage
+        : (error as Error).message
+}
+
 function toKey(key: Key): Key {
     return { id: key.id, name: key.name, publicKey: key.publicKey }
 }
@@ -135,7 +149,7 @@ export default class DsrvSigningDriver implements SigningDriverInterface<'sub'> 
                 } catch (error) {
                     return {
                         error: 'create_key_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -149,7 +163,7 @@ export default class DsrvSigningDriver implements SigningDriverInterface<'sub'> 
                 } catch (error) {
                     return {
                         error: 'fetch_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -173,7 +187,7 @@ export default class DsrvSigningDriver implements SigningDriverInterface<'sub'> 
                 } catch (error) {
                     return {
                         error: 'signing_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -191,7 +205,7 @@ export default class DsrvSigningDriver implements SigningDriverInterface<'sub'> 
                 } catch (error) {
                     return {
                         error: 'fetch_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -223,7 +237,7 @@ export default class DsrvSigningDriver implements SigningDriverInterface<'sub'> 
                 } catch (error) {
                     return {
                         error: 'fetch_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
