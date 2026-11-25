@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { fromBase64 } from '../bytes.ts'
+import { fromBase64, toHex } from '../bytes.ts'
 import { TxHashingError } from '../errors.ts'
 import {
     computeMultiHashForTopology,
@@ -13,7 +13,6 @@ import {
 } from '../topology.ts'
 import generateTopology372 from './fixtures/generate-topology-3.7.2.json'
 import decentralizedParty from './fixtures/topology-decentralized-party.json'
-import { toHex } from './helpers/hex.ts'
 
 const { v30, v31 } = generateTopology372
 

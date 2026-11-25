@@ -4,6 +4,7 @@
 import type { Value } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
 
+import { toHex } from '../bytes.ts'
 import {
     encodeBool,
     encodeBytes,
@@ -37,7 +38,6 @@ import {
     unit,
     variant,
 } from './helpers/builders.ts'
-import { toHex } from './helpers/hex.ts'
 import { hx, rejection } from './helpers/matchers.ts'
 
 // The byte vectors for numbers, strings, hex, identifiers and values were produced by running

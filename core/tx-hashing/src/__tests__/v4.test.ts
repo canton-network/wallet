@@ -7,7 +7,7 @@ import type {
 } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
 
-import { concat, sha256 } from '../bytes.ts'
+import { concat, sha256, toHex } from '../bytes.ts'
 import { encodeInt32, encodeString } from '../encoding.ts'
 import { DEFAULT_LIMITS } from '../limits.ts'
 import type { Scheme } from '../scheme.ts'
@@ -34,7 +34,6 @@ import {
     unit,
     withInputContract,
 } from './helpers/builders.ts'
-import { toHex } from './helpers/hex.ts'
 import { rejection } from './helpers/matchers.ts'
 
 // Expected bytes and hashes come from Canton 3.6.4's v4/NodeHashTest.scala

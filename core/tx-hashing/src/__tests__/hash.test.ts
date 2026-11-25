@@ -8,7 +8,7 @@ import {
 } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
 
-import { concat, fromBase64 } from '../bytes.ts'
+import { concat, fromBase64, toHex } from '../bytes.ts'
 import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
 import {
     computePreparedTransactionHash,
@@ -25,7 +25,6 @@ import {
     single,
     tx,
 } from './helpers/builders.ts'
-import { toHex } from './helpers/hex.ts'
 import { liveFixtures } from './helpers/live-fixtures.ts'
 import { V2, V3 } from './helpers/load-vectors.ts'
 

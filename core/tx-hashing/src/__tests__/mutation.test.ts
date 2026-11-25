@@ -4,10 +4,9 @@
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
 import { expect, it } from 'vitest'
 
-import { fromBase64 } from '../bytes.ts'
+import { fromBase64, toHex } from '../bytes.ts'
 import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
 import { computePreparedTransactionHash } from '../index.ts'
-import { toHex } from './helpers/hex.ts'
 import { liveFixtures } from './helpers/live-fixtures.ts'
 import { loadVectors, V2, V3, V4 } from './helpers/load-vectors.ts'
 import { changedBytes, changedText, changedTime } from './helpers/one-byte.ts'

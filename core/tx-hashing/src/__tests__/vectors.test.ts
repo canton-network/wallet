@@ -3,13 +3,13 @@
 
 import { describe, expect, it } from 'vitest'
 
+import { toHex } from '../bytes.ts'
 import type { TxHashingErrorCode } from '../errors.ts'
 import {
     computePreparedTransactionHash,
     DEFAULT_LIMITS,
     type HashingScheme,
 } from '../index.ts'
-import { toHex } from './helpers/hex.ts'
 import {
     loadVectors,
     V2,
