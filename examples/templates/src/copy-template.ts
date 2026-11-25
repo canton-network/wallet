@@ -7,6 +7,8 @@ import { basename, dirname, join } from 'node:path'
 
 const ignored = new Set(['node_modules', 'dist', '.DS_Store'])
 
+const filesToHide = ['gitignore'] as const
+
 export async function copyTemplate(templatePath: string, directory: string) {
     const manifest = findPackageJSON(import.meta.url)
     if (!manifest)
@@ -18,7 +20,10 @@ export async function copyTemplate(templatePath: string, directory: string) {
     }
 
     for (const name of await readdir(template)) {
-        const output = name === '_gitignore' ? '.gitignore' : name
+        const isFileToHide = filesToHide.find(
+            (filename) => name === `_${filename}`
+        )
+        const output = isFileToHide ? `.${name}` : name
         await cp(join(template, name), join(directory, output), {
             recursive: true,
             force: false,
