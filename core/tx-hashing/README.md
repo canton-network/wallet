@@ -38,7 +38,7 @@ if (btoa(String.fromCharCode(...hash)) !== response.preparedTransactionHash) {
 - `scheme`: `HashingSchemeVersion.V2`, `.V3` or `.V4` of `@canton-network/core-ledger-proto`, or the JSON API names `'HASHING_SCHEME_VERSION_V2'`, `'HASHING_SCHEME_VERSION_V3'` and `'HASHING_SCHEME_VERSION_V4'`.
 - `options.limits`: see [Limits](#limits).
 
-`hashPreparedTransaction(preparedTransaction, format?, options?)` resolves to the same hash as a string, `'base64'` by default or `'hex'`. It also takes a `PreparedTransaction` that `@canton-network/core-ledger-proto` decoded, the scheme as `options.hashingScheme` (V2 by default), and `options.readUnknownField: false` to drop unknown fields of a base64 input instead of refusing them.
+`hashPreparedTransaction(preparedTransaction, options?)` resolves to the same hash as a `Converter`, to read with `toBase64()` or `toHex()`. It also takes a `PreparedTransaction` that `@canton-network/core-ledger-proto` decoded, the scheme as `options.hashingScheme` (V2 by default), and `options.readUnknownField: false` to drop unknown fields of a base64 input instead of refusing them. `sdk.utils.hash.preparedTransaction` of `@canton-network/wallet-sdk` hashes with it.
 
 The [wallet integration guide example](../../docs/wallet-integration-guide/examples/snippets/verify-transaction-hash.ts) runs the same check with the Wallet SDK, from prepare to execute.
 

@@ -311,6 +311,7 @@ describe('computePreparedTransactionHash', () => {
 
 it('exports only the public API', async () =>
     expect(Object.keys(await import('../index.ts')).sort()).toEqual([
+        'Converter',
         'DEFAULT_LIMITS',
         'HashPurpose',
         'TxHashingError',

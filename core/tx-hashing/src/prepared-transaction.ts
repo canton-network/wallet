@@ -6,7 +6,8 @@ import {
     PreparedTransaction,
 } from '@canton-network/core-ledger-proto'
 
-import { fromBase64, toBase64, toHex } from './bytes.ts'
+import { fromBase64 } from './bytes.ts'
+import { Converter } from './converter.ts'
 import {
     computePreparedTransactionHash,
     type HashingScheme,
@@ -28,37 +29,30 @@ export interface HashPreparedTransactionOptions extends HashOptions {
  * With `readUnknownField: false`, unknown fields are dropped before hashing instead of refused.
  *
  * @param preparedTransaction - The prepared transaction to hash, decoded or in base64
- * @param format - The format of the output hash (base64 or hex)
  * @param options - The hashing scheme, the limits and how to read unknown fields
- * @returns The computed hash in the specified format
+ * @returns The hash, to read in base64 or hex
  * @throws {@link TxHashingError} For every refusal of the hash; the README lists the codes
  */
 export async function hashPreparedTransaction(
     preparedTransaction: string | PreparedTransaction,
-    format: 'base64' | 'hex' = 'base64',
     options?: HashPreparedTransactionOptions
-): Promise<string> {
-    const preparedTx =
-        typeof preparedTransaction === 'string'
-            ? PreparedTransaction.fromBinary(
-                  fromBase64(preparedTransaction),
-                  options?.readUnknownField === undefined
-                      ? undefined
-                      : { readUnknownField: options.readUnknownField }
-              )
-            : preparedTransaction
-
+): Promise<Converter> {
     // Bytes, so fields that this package's own bindings lack are refused
+    const input =
+        typeof preparedTransaction !== 'string'
+            ? PreparedTransaction.toBinary(preparedTransaction)
+            : options?.readUnknownField === undefined
+              ? preparedTransaction
+              : PreparedTransaction.toBinary(
+                    PreparedTransaction.fromBinary(
+                        fromBase64(preparedTransaction),
+                        { readUnknownField: options.readUnknownField }
+                    )
+                )
     const hash = await computePreparedTransactionHash(
-        PreparedTransaction.toBinary(preparedTx),
+        input,
         options?.hashingScheme ?? HashingSchemeVersion.V2,
         { limits: options?.limits }
     )
-
-    switch (format) {
-        case 'base64':
-            return toBase64(hash)
-        case 'hex':
-            return toHex(hash)
-    }
+    return new Converter(hash)
 }
