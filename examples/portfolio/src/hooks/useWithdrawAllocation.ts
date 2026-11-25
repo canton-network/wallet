@@ -35,7 +35,7 @@ export const useWithdrawAllocation = () => {
                 throw new Error('Wallet SDK is not ready')
             }
 
-            const preparedCommand = (await sdk.token.allocation.withdraw({
+            const preparedCommand = (await sdk.token.v1.allocation.withdraw({
                 allocationCid: args.contractId,
                 asset,
             })) as PreparedCommand

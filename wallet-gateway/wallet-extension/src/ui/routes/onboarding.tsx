@@ -7,7 +7,7 @@ import { vaultStatusQuery } from '@/ui/features/vault/index.ts'
 
 export const Route = createFileRoute('/onboarding')({
     beforeLoad: async ({ context }) => {
-        const status = await context.queryClient.fetchQuery(vaultStatusQuery())
+        const status = await context.queryClient.query(vaultStatusQuery())
         if (status !== 'uninitialized') {
             throw redirect({ to: '/' })
         }

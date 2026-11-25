@@ -6,14 +6,7 @@ import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
-import {
-    describe,
-    it,
-    vi,
-    beforeEach,
-    expect,
-    type MockedFunction,
-} from 'vitest'
+import { describe, it, vi, beforeEach, expect } from 'vitest'
 
 import * as mock from '../../../../__tests__/mocks.ts'
 import { ParsedURL } from '../../../utils/url.ts'
@@ -485,12 +478,14 @@ describe('allocation namespace', () => {
                     ['mock-contract'],
                 ])
 
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 const [commands, dc] = await allocation.request.accept({
                     request: requestContract,
                     actors: ['alice::abc'],
                     partyId: 'alice::abc',
                 } as any)
 
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 expect(actorsFor).not.toHaveBeenCalled()
                 expect(spy).toHaveBeenCalledExactlyOnceWith(
                     expect.objectContaining({
@@ -518,11 +513,11 @@ describe('allocation namespace', () => {
             })
 
             it('derives actors via actorsFor when none are given, and throws if none are found', async () => {
-                ;(
-                    actorsFor as MockedFunction<typeof actorsFor>
-                ).mockReturnValue(undefined)
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
+                vi.mocked(actorsFor).mockReturnValue(undefined)
 
                 await expect(
+                    // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                     allocation.request.accept({
                         request: requestContract,
                         partyId: 'alice::abc',
@@ -531,6 +526,7 @@ describe('allocation namespace', () => {
                     'alice::abc cannot accept allocation request request-cid'
                 )
 
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 expect(actorsFor).toHaveBeenCalledWith(
                     requestContract.interfaceViewValue.availableActions,
                     'ARA_Accept',
@@ -551,6 +547,7 @@ describe('allocation namespace', () => {
                 )
 
                 await expect(
+                    // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                     allocation.request.accept({
                         request: requestContract,
                         actors: ['alice::abc'],

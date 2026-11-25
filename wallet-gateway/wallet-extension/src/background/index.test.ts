@@ -6,8 +6,13 @@ import { createProxyService } from '@webext-core/proxy-service'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
+import { appPageSender, sendMessagesFrom } from '@/__tests__/message-sender.ts'
 import { authMessenger } from '@/shared/auth-protocol.ts'
-import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys.ts'
+import {
+    DAPP_RPC_KEY,
+    TOKEN_RPC_KEY,
+    USER_RPC_KEY,
+} from '@/shared/service-keys.ts'
 import { VaultErrorName, vaultMessenger } from '@/shared/vault-protocol.ts'
 
 import { startBackground } from './index.ts'
@@ -45,8 +50,8 @@ describe('startBackground', () => {
             1
         )
         // The vault service, the auth service, the dApp dispatcher, the user
-        // controller and the open-UI handler
-        expect(onMessage).toHaveBeenCalledTimes(5)
+        // controller, the token service and the open-UI handler
+        expect(onMessage).toHaveBeenCalledTimes(6)
         expect(onInstalled).toHaveBeenCalledTimes(1)
     })
 
@@ -83,6 +88,7 @@ describe('startBackground', () => {
     it('answers user API requests from the extension pages', async () => {
         const vault = createVault({ iterations: 1000 })
         startBackground({ vault })
+        sendMessagesFrom(appPageSender())
         const user = createProxyService(USER_RPC_KEY)
 
         await expect(user.listNetworks()).rejects.toMatchObject({
@@ -95,7 +101,48 @@ describe('startBackground', () => {
                     id: 'canton:local-oauth',
                     name: 'Local (OAuth IDP)',
                 }),
+                expect.objectContaining({
+                    id: 'canton:localnet',
+                    name: 'LocalNet',
+                }),
             ],
         })
+    })
+
+    it('answers token requests only while unlocked and signed in', async () => {
+        const vault = createVault({ iterations: 1000 })
+        startBackground({ vault })
+        sendMessagesFrom(appPageSender())
+        const token = createProxyService(TOKEN_RPC_KEY)
+
+        await expect(token.token.assets()).rejects.toMatchObject({
+            name: VaultErrorName.Locked,
+        })
+        await vault.create('abcde1')
+        await expect(
+            token.token.v1.utxos.list({ partyId: 'alice::1220' })
+        ).rejects.toThrow('Not signed in')
+    })
+    it('answers only the dApp dispatcher from the content script', async () => {
+        const vault = createVault({ iterations: 1000 })
+        startBackground({ vault })
+        await vault.create('abcde1')
+        sendMessagesFrom({
+            id: fakeBrowser.runtime.id,
+            url: 'https://dapp.example/',
+        })
+
+        await expect(
+            createProxyService(USER_RPC_KEY).listNetworks()
+        ).rejects.toThrow('is only for the extension pages')
+        await expect(
+            createProxyService(TOKEN_RPC_KEY).token.assets()
+        ).rejects.toThrow('is only for the extension pages')
+        await expect(
+            createProxyService(DAPP_RPC_KEY).request(
+                { jsonrpc: '2.0', id: 1, method: 'isConnected' },
+                'https://dapp.example'
+            )
+        ).resolves.toMatchObject({ id: 1, result: { isConnected: false } })
     })
 })

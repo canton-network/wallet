@@ -29,12 +29,12 @@ export default async (
     })
 
     const createDelegateProxyCommandResult =
-        await sdk.token.transfer.delegatedProxy.create(treasury.partyId)
+        await sdk.token.v1.transfer.delegatedProxy.create(treasury.partyId)
 
     logger.info({ createDelegateProxyCommandResult })
 
     const [transferCommand, transferDisclosedContracts] =
-        await sdk.token.transfer.create({
+        await sdk.token.v1.transfer.create({
             sender: treasury.partyId,
             recipient: sender.partyId,
             amount: '100',
@@ -67,13 +67,13 @@ export default async (
     )
 
     const transferInstructionCid = (
-        await sdk.token.transfer.pending(treasury.partyId)
+        await sdk.token.v1.transfer.pending(treasury.partyId)
     )[0].contractId
 
     const [
         withdrawTransferInstructionProxyCommand,
         withdrawTransferInstructionProxyDisclosedContracts,
-    ] = await sdk.token.transfer.delegatedProxy.commands.withdraw({
+    ] = await sdk.token.v1.transfer.delegatedProxy.commands.withdraw({
         proxyCid,
         transferInstructionCid,
         featuredAppRight,

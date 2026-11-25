@@ -1,8 +1,10 @@
 {
     "name": "@canton-network/api-specs",
-    "private": true,
     "version": "0.0.0",
+    "private": true,
     "description": "Wallet Gateway API specifications",
+    "license": "Apache-2.0",
+    "author": "Marc Juchli <marc.juchli@digitalasset.com>",
     "type": "module",
     "scripts": {
         "dapp-mock-server": "open-rpc-mock-server -d openrpc-dapp-api.json",
@@ -10,8 +12,6 @@
         "user-mock-server": "open-rpc-mock-server -d openrpc-user-api.json",
         "signing-mock-server": "open-rpc-mock-server -d openrpc-signing-api.json"
     },
-    "author": "Marc Juchli <marc.juchli@digitalasset.com>",
-    "license": "Apache-2.0",
     "dependencies": {
         "@open-rpc/mock-server": "catalog:"
     }

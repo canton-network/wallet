@@ -8,9 +8,7 @@ import { connectionStatusQuery } from '@/ui/features/sessions/index.ts'
 /** The pages that need a network. Sends the user to /connect without one. */
 export const Route = createFileRoute('/_unlocked/_connected')({
     beforeLoad: async ({ context }) => {
-        const status = await context.queryClient.fetchQuery(
-            connectionStatusQuery()
-        )
+        const status = await context.queryClient.query(connectionStatusQuery())
         if (status !== 'connected') {
             throw redirect({ to: '/connect' })
         }

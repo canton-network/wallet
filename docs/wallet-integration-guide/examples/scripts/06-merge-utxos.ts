@@ -46,14 +46,14 @@ const tapPromises = tapIndices.map(async () => {
 
 await Promise.all(tapPromises)
 
-const utxosAlice = await sdk.token.utxos.list({
+const utxosAlice = await sdk.token.v1.utxos.list({
     partyId: alice.partyId,
 })
 
 logger.info(`number of unlocked utxos for alice ${utxosAlice.length}`)
 
 const [mergeUtxoCommands, mergedDisclosedContracts] =
-    await sdk.token.utxos.merge({
+    await sdk.token.v1.utxos.merge({
         partyId: alice.partyId,
     })
 
@@ -70,7 +70,7 @@ const mergePromises = mergeUtxoCommands.map((mergeCommand) => {
 
 await Promise.all(mergePromises)
 
-const utxosAliceMerged = await sdk.token.utxos.list({
+const utxosAliceMerged = await sdk.token.v1.utxos.list({
     partyId: alice.partyId,
 })
 

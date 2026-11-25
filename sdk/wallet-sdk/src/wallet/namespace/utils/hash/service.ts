@@ -73,15 +73,15 @@ export class HashNamespace {
      * @returns a multihash combining all of the topology txs
      */
     public async topologyTransaction(
-        preparedTransactions: Uint8Array<ArrayBufferLike>[] | string[]
+        preparedTransactions: Uint8Array[] | string[]
     ) {
-        let normalized: Uint8Array<ArrayBufferLike>[]
+        let normalized: Uint8Array[]
         if (typeof preparedTransactions[0] === 'string') {
             normalized = (preparedTransactions as string[]).map((tx) =>
                 Buffer.from(tx, 'base64')
             )
         } else {
-            normalized = preparedTransactions as Uint8Array<ArrayBufferLike>[]
+            normalized = preparedTransactions as Uint8Array[]
         }
 
         // Prepending the hash purpose for TopologyTransactionSignature and MultiTopologyTransaction

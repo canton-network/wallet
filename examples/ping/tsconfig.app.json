@@ -2,16 +2,31 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "exactOptionalPropertyTypes": false,
-        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-        "lib": ["ES2020", "DOM"],
-        "moduleDetection": "force",
         "jsx": "react-jsx",
-        "types": ["node"],
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true
+        "types": ["node"]
     },
-    "include": ["src"]
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../../sdk/dapp-sdk"
+        },
+        {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/tx-visualizer"
+        },
+        {
+            "path": "../../core/wallet-test-utils"
+        },
+        {
+            "path": "../../core/rpc-errors"
+        }
+    ]
 }

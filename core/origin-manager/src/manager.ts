@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { SpliceMessageHandshake, WalletEvent } from '@canton-network/core-types'
-import z from 'zod'
+import { z } from 'zod'
 
 type OriginManagerConstructor = {
     readonly userHandshakeCallback?: (event: MessageEvent) => void

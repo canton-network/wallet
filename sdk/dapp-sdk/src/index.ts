@@ -51,6 +51,7 @@ export {
     DappSDK,
     sdk as dappSDK,
     init,
+    // oxlint-disable-next-line typescript/no-deprecated -- still part of the public API
     connect,
     disconnect,
     isConnected,

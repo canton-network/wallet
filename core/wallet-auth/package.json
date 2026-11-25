@@ -1,36 +1,42 @@
 {
     "name": "@canton-network/core-wallet-auth",
-    "version": "2.4.0",
-    "type": "module",
+    "version": "2.5.0",
     "description": "Provides authentication middleware and user management for the Wallet Gateway",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-auth#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-auth"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
-    },
-    "devDependencies": {
-        "@vitest/browser-playwright": "catalog:",
-        "@vitest/coverage-v8": "catalog:",
-        "@logtape/testing": "catalog:",
-        "playwright": "catalog:",
-        "tsdown": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:"
     },
     "dependencies": {
         "@canton-network/core-rpc-errors": "workspace:",
@@ -39,19 +45,13 @@
         "typescript-lru-cache": "catalog:",
         "zod": "catalog:"
     },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/wallet-auth"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-auth#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "devDependencies": {
+        "@logtape/testing": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     }
 }

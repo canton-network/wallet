@@ -3,7 +3,7 @@
 
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { signTransactionHash } from '@canton-network/core-signing-lib'
-import { it, describe, beforeEach, vi, expect } from 'vitest'
+import { it, describe, beforeEach, vi, expect, onTestFinished } from 'vitest'
 
 import * as mock from '../../__tests__/mocks.ts'
 import {
@@ -344,21 +344,27 @@ describe('Party namespace', () => {
             })
 
             it('should call participant-id endpoint depending on options', () => {
-                const observingParticipantEndpoints = Array(3).fill({
-                    url: new URL('http://example.com'),
-                    tokenProviderConfig: {
-                        method: 'static',
-                        token: '',
-                    },
-                })
+                const observingParticipantEndpoints = Array.from(
+                    { length: 3 },
+                    () => ({
+                        url: new URL('http://example.com'),
+                        tokenProviderConfig: {
+                            method: 'static' as const,
+                            token: '',
+                        },
+                    })
+                )
 
-                const confirmingParticipantEndpoints = Array(2).fill({
-                    url: new URL('http://example.com'),
-                    tokenProviderConfig: {
-                        method: 'static',
-                        token: '',
-                    },
-                })
+                const confirmingParticipantEndpoints = Array.from(
+                    { length: 2 },
+                    () => ({
+                        url: new URL('http://example.com'),
+                        tokenProviderConfig: {
+                            method: 'static' as const,
+                            token: '',
+                        },
+                    })
+                )
 
                 // Mock get participant ID for each endpoint (5 endpoints)
                 ;[
@@ -755,6 +761,62 @@ describe('Party namespace', () => {
                 await expect(
                     signedParty.execute({ expectHeavyLoad: true })
                 ).rejects.toThrow('Invalid party data')
+            })
+
+            it('should register the party on additional synchronizers with the hint of its party id', async () => {
+                // No partyHint in the options: create() picked a random one
+                const party = {
+                    ...partyTransaction,
+                    partyId: 'generated-hint::fingerprint',
+                }
+                ledgerProvider.request.mockImplementation(
+                    async ({ params }) => {
+                        switch (params.resource) {
+                            case '/v2/parties/external/generate-topology':
+                                return {
+                                    ...partyTransaction,
+                                    partyId: `${params.body.partyHint}::fingerprint`,
+                                }
+                            case '/v2/state/connected-synchronizers':
+                                return { connectedSynchronizers: [] }
+                            case '/v2/parties/{party}':
+                                return { partyDetails: [] }
+                            default:
+                                return {}
+                        }
+                    }
+                )
+                onTestFinished(() => {
+                    ledgerProvider.request.mockReset()
+                    ledgerProvider.request.mockResolvedValue(undefined)
+                })
+
+                await new SignedPartyCreationService(
+                    ctx,
+                    Promise.resolve({ party, signature: 'signature' }),
+                    {
+                        synchronizerId: 'synchronizer-a',
+                        additionalSynchronizerIds: ['synchronizer-b'],
+                    },
+                    'publicKey',
+                    'privateKey'
+                ).execute({ grantUserRights: false })
+
+                const generateTopologyBodies = ledgerProvider.request.mock.calls
+                    .map(([request]) => request.params)
+                    .filter(
+                        (params) =>
+                            params.resource ===
+                            '/v2/parties/external/generate-topology'
+                    )
+                    .map((params) => params.body)
+
+                expect(generateTopologyBodies).toEqual([
+                    expect.objectContaining({
+                        synchronizer: 'synchronizer-b',
+                        partyHint: 'generated-hint',
+                    }),
+                ])
             })
         })
     })

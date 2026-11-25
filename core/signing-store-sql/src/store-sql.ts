@@ -22,7 +22,7 @@ import {
     sql,
     PostgresDialect,
 } from 'kysely'
-import pg from 'pg'
+import { Pool } from 'pg'
 
 import {
     type DB,
@@ -345,7 +345,7 @@ export const connection = (config: StoreConfig) => {
                 dialect: new PostgresDialect({
                     // Pass through all pg connection options (e.g. `ssl`)
                     // The schema intentionally allows extra postgres driver properties.
-                    pool: new pg.Pool(config.connection),
+                    pool: new Pool(config.connection),
                 }),
                 plugins: [new CamelCasePlugin()],
             })

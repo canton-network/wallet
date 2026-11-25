@@ -3,5 +3,14 @@
     "compilerOptions": {
         "exactOptionalPropertyTypes": false,
         "types": ["node"]
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-auth"
+        },
+        {
+            "path": "../signing-lib"
+        }
+    ]
 }

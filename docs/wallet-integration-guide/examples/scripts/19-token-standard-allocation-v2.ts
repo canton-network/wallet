@@ -161,7 +161,7 @@ await sdk.ledger
     .execute({ partyId: admin.partyId })
 
 // Wait for the holding to be synced before attempting transfer
-const result = await poll('admin holdings to be available', async () => {
+await poll('admin holdings to be available', async () => {
     const holdings = await sdk.token.v2.utxos.list({
         partyId: admin.partyId,
     })
@@ -489,7 +489,7 @@ for (const leg of tradeLegs) {
 
     assertV2(
         actualAmount.equals(legAmount),
-        `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount}, expected ${legAmount}`
+        `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount.toString()}, expected ${legAmount.toString()}`
     )
 }
 

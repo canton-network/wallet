@@ -1,7 +1,36 @@
 {
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
-        "resolveJsonModule": true,
         "types": ["node"]
-    }
+    },
+    "include": ["src", "src/**/*.json", "package.json"],
+    "references": [
+        {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
+            "path": "../../core/wallet-discovery"
+        },
+        {
+            "path": "../../core/wallet-dapp-rpc-client"
+        },
+        {
+            "path": "../../core/wallet-dapp-remote-rpc-client"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/splice-provider"
+        },
+        {
+            "path": "../../core/rpc-transport"
+        },
+        {
+            "path": "../../core/rpc-errors"
+        },
+        {
+            "path": "../../core/provider-dapp"
+        }
+    ]
 }

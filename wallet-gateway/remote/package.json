@@ -1,19 +1,34 @@
 {
     "name": "@canton-network/wallet-gateway-remote",
-    "version": "1.14.0",
-    "type": "module",
+    "version": "1.15.0",
     "description": "A server-side Wallet Gateway implementation over HTTP",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/wallet-gateway/remote#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Alex Matson <alex.matson@digitalasset.com>",
-    "main": "dist/index.js",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "wallet-gateway/remote"
+    },
     "bin": {
         "wallet-gateway": "dist/index.js",
         "wallet-gateway-remote": "dist/index.js"
     },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
+    "main": "dist/index.js",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "vite build && tsc -p tsconfig.lib.json",
         "clean": "rm -rf ./dist && rm -f ./*.sqlite",
-        "dev": "NODE_ENV=development tsx watch --exclude 'vite.config.ts.timestamp-*.mjs' src/index.ts -c ../test/config.json",
+        "dev": "NODE_ENV=development tsx watch --conditions=@canton-network/source --exclude 'vite.config.ts.timestamp-*.mjs' src/index.ts -c ../test/config.json",
         "start": "pnpm node dist/index.js -c ../test/config.json",
         "debug": "pnpm node --inspect-brk dist/index.js -c ../test/config.json",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
@@ -27,12 +42,6 @@
         "signing-db:migrate:down": "tsx ./src/index -c ../test/config.json signing-db down",
         "signing-db:migrate:status": "tsx ./src/index -c ../test/config.json signing-db status",
         "signing-db:migrate:reset": "tsx ./src/index -c ../test/config.json signing-db reset"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
     },
     "dependencies": {
         "@canton-network/core-ledger-client": "workspace:",
@@ -102,20 +111,17 @@
                     "build"
                 ]
             },
+            "test": {
+                "inputs": [
+                    "...",
+                    "{workspaceRoot}/wallet-gateway/test/config.json"
+                ]
+            },
             "typecheck": {
                 "options": {
                     "command": "tsc --noEmit && tsc -p tsconfig.frontend.json --noEmit"
                 }
             }
         }
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "wallet-gateway/remote"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/wallet-gateway/remote#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

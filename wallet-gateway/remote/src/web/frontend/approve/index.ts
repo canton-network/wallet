@@ -120,7 +120,7 @@ export class ApproveUi extends BaseElement {
             method: 'listWallets',
             params: {},
         })
-        const primaryWallet = wallets.find((w) => w.primary === true)
+        const primaryWallet = wallets.find((w) => w.primary)
         this.partyId = primaryWallet?.partyId || ''
         const rights = primaryWallet?.rights
         const submitCapable = !!(

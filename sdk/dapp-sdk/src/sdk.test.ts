@@ -614,6 +614,7 @@ describe('DappSDK', () => {
             })
 
             await expect(
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 sdk.connect({ defaultAdapters: [adapter] })
             ).resolves.toEqual(connectedResult())
         })

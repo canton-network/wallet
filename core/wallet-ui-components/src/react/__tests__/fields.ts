@@ -25,5 +25,5 @@ export const fillField = async (
         initialSelectionStart: 0,
         initialSelectionEnd: (field as HTMLInputElement).value.length,
     })
-    fireEvent.change(field)
+    await fireEvent.change(field)
 }
