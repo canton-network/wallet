@@ -66,6 +66,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 vi.mock('./navigation.ts', () => ({ setLocationHref }))
 vi.mock('./rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
+    createUserClientWithoutAutoLogout: mockCreateUserClient,
     attemptRemoveSession: mockAttemptRemoveSession,
     markSessionVerified: mockMarkSessionVerified,
 }))

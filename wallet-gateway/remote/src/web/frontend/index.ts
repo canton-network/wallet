@@ -28,6 +28,7 @@ import { setLocationHref } from './navigation.ts'
 import {
     attemptRemoveSession,
     createUserClient,
+    createUserClientWithoutAutoLogout,
     markSessionVerified,
 } from './rpc-client.ts'
 import './listeners.ts'
@@ -230,7 +231,8 @@ const isUnavailable = (error: unknown): boolean =>
     error.code === errorCodes.rpc.resourceUnavailable
 
 const getSessionId = async (token: string): Promise<string | undefined> => {
-    const userClient = await createUserClient(token)
+    // The caller handles a session the gateway doesn't know
+    const userClient = await createUserClientWithoutAutoLogout(token)
     const sessions = await userClient
         .request({ method: 'listSessions' })
         .catch((error: unknown) => {

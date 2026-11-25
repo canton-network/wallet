@@ -8,6 +8,7 @@ import { LOGIN_PAGE_REDIRECT } from './constants.ts'
 import {
     attemptRemoveSession,
     createUserClient,
+    createUserClientWithoutAutoLogout,
     markSessionVerified,
     resetRpcClientCachesForTests,
 } from './rpc-client.ts'
@@ -175,6 +176,27 @@ describe('rpc-client', () => {
             expect.any(URL),
             'logout-token'
         )
+    })
+
+    it('leaves a 401 to the caller of createUserClientWithoutAutoLogout', async () => {
+        fetchMock.mockResolvedValue(
+            new Response(JSON.stringify({}), { status: 200 })
+        )
+        await createUserClientWithoutAutoLogout('session-token')
+        const transport = MockUserApiClient.lastTransport as {
+            handleErrorResponse: (response: Response) => Promise<never>
+        }
+
+        await expect(
+            transport.handleErrorResponse(
+                new Response('Unauthorized', { status: 401 })
+            )
+        ).rejects.toBeDefined()
+        // Gives a logout, if one was started, the time to run
+        await new Promise((resolve) => setTimeout(resolve, 50))
+
+        expect(mockClearAuthState).not.toHaveBeenCalled()
+        expect(mockSetLocationHref).not.toHaveBeenCalled()
     })
 
     describe('401 auto logout', () => {

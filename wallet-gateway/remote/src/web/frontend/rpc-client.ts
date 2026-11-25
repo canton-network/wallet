@@ -56,16 +56,18 @@ export const markSessionVerified = (): void => {
     sessionVerified = true
 }
 
+/** A user API client that leaves a 401 to the caller instead of logging out */
+export const createUserClientWithoutAutoLogout = async (
+    token: string
+): Promise<UserApiClient> =>
+    new UserApiClient(new HttpTransport(await getUserApiPath(), token))
+
 export const attemptRemoveSession = async (
     accessToken: string
 ): Promise<void> => {
     try {
-        const userApiPath = await getUserApiPath()
-        // Use HttpTransport directly (not HttpTransportWithAuthInterceptor)
-        // to avoid infinite loops if removeSession itself returns 401
-        const userApiClient = new UserApiClient(
-            new HttpTransport(userApiPath, accessToken)
-        )
+        const userApiClient =
+            await createUserClientWithoutAutoLogout(accessToken)
         await userApiClient.request({ method: 'removeSession' })
     } catch (error) {
         // If removeSession fails that's okay
