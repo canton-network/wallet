@@ -2,40 +2,25 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { defineCommand } from '@optique/discover'
-import { argument, message, object } from '@optique/core'
-import { prompt } from '@optique/clack'
-import { path } from '@optique/run/valueparser'
-import { copyTemplate } from './copy-template'
+import { object } from '@optique/core'
+import {
+    createDapp,
+    dappDirectory,
+    dappTemplateNames,
+    dappTemplates,
+    type DappTemplate,
+} from './parser'
 
-const defaultDirectory = 'my-canton-app'
-
-function dappCommand(framework: 'Lit' | 'React' | 'Vue') {
-    const slug = framework.toLowerCase()
+function dappCommand(template: DappTemplate) {
+    const name = `${dappTemplateNames[template]} dApp`
     return defineCommand({
-        path: [`dapp-${slug}`],
-        parser: object({
-            directory: prompt(
-                argument(path({ metavar: 'DIRECTORY' }), {
-                    description: message`A new or empty directory for the ${framework} dApp.`,
-                }),
-                {
-                    type: 'text',
-                    message: `Where should the ${framework} dApp be created?`,
-                    initialValue: defaultDirectory,
-                    when: () => process.stdin.isTTY && process.stdout.isTTY,
-                    otherwise: defaultDirectory,
-                }
-            ),
-        }),
+        path: [`dapp-${template}`],
+        parser: object({ directory: dappDirectory(name) }),
         async handler({ directory }) {
-            await copyTemplate(`dapp/${slug}`, directory)
-            console.log(`Created the ${framework} dApp in ${directory}.`)
+            await createDapp(template, directory)
+            console.log(`Created the ${name} in ${directory}.`)
         },
     })
 }
 
-export default [
-    dappCommand('Lit'),
-    dappCommand('Vue'),
-    dappCommand('React'),
-] as const
+export default dappTemplates.map(dappCommand)

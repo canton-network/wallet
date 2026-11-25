@@ -31,6 +31,21 @@ be new or empty.
 
 With npm, flags need a `--` separator: `npm create @canton-network -- --help`.
 
+## Reusing the CLI in other tools
+
+The package also exports its [Optique](https://optique.dev/) parsers and the
+copy step, so other CLIs offer the same arguments and prompts. The Wallet CLI
+(`wallet dapp create`) is built this way:
+
+```ts
+import { createDapp, dappDirectory, dappTemplate } from '@canton-network/create'
+import { object } from '@optique/core'
+
+const parser = object({ template: dappTemplate, directory: dappDirectory() })
+// ...
+await createDapp(value.template, value.directory)
+```
+
 ## Adding a template
 
 1. Add the template directory under `src/templates/`, e.g. `src/templates/dapp/lit`.
@@ -46,8 +61,11 @@ With npm, flags need a `--` separator: `npm create @canton-network -- --help`.
     }
     ```
 
-3. Wire the corresponding command in `src/cli/` for the package-manager entry
-   point. Vite+ reads `createConfig.templates` directly.
+3. For a dApp starter, add its directory name to `dappTemplates` in
+   `src/dapp.ts`. This adds the `dapp-<name>` command and the
+   `wallet dapp create --template <name>` choice. Wire any other kind of
+   template as a command in `src/cli/`. Vite+ reads `createConfig.templates`
+   directly.
 
 The starters are copied without variable substitution. Build output and
 installed dependencies are not copied.

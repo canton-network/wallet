@@ -7,8 +7,8 @@ import { coverage, nodeProject } from '../../vitest.base.ts'
 export default defineConfig({
     test: {
         // The bin entry only wires the modules together; it is covered by the
-        // end-to-end test in src/index.test.ts, which runs it as a child process.
-        coverage: coverage({ exclude: ['src/index.ts'] }),
+        // end-to-end test in src/bin.test.ts, which runs it as a child process.
+        coverage: coverage({ exclude: ['src/bin.ts'] }),
         projects: [nodeProject()],
     },
 })

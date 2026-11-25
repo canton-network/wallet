@@ -15,7 +15,7 @@ import { createCliRunner } from '@optique/testing/cli'
 import { afterEach, beforeEach, expect, it } from 'vitest'
 
 const cli = createCliRunner({
-    entrypoint: new URL('./index.ts', import.meta.url),
+    entrypoint: new URL('./bin.ts', import.meta.url),
     runtimeArgs: ['--import', import.meta.resolve('tsx')],
 })
 let cwd: string

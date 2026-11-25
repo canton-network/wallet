@@ -6,6 +6,8 @@ import { base } from '../../tsdown.base.ts'
 
 export default defineConfig({
     ...base,
+    // `bin.ts` runs the CLI on import, so the library lives in a separate entry.
+    entry: ['src/index.ts', 'src/bin.ts'],
     format: ['esm'],
     platform: 'node',
     target: 'es2022',

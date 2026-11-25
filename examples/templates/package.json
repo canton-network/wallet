@@ -5,7 +5,15 @@
     "description": "Starter templates",
     "license": "Apache-2.0",
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
-    "bin": "./dist/index.js",
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
+    "bin": "./dist/bin.js",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "default": "./dist/index.js"
+        }
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
         "dev": "NODE_ENV=development tsx --watch src/index.ts",

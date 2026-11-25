@@ -1,39 +1,33 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { choice, merge, message, object, option } from '@optique/core'
-import { prompt } from '@optique/clack'
+import {
+    createDapp,
+    dappDirectory,
+    dappTemplate,
+    dappTemplateNames,
+} from '@canton-network/create'
+import { merge, message, object } from '@optique/core'
 import { defineCommand } from '@optique/discover'
 import { logger, loggingParser } from '../../../logger'
-import { path } from '@optique/run'
-
-const availableTemplates = ['vue', 'react', 'lit'] as const
 
 export default defineCommand({
     path: ['dapp', 'create'],
     parser: merge(
-        object({
-            output: prompt(option('--out', path()), {
-                type: 'text',
-                message: `Output path (${process.cwd()}):`,
-            }),
-            template: prompt(option('--template', choice(availableTemplates)), {
-                type: 'select',
-                message: 'Choose template (currently unused):',
-                options: availableTemplates,
-            }),
-        }),
+        object({ template: dappTemplate, directory: dappDirectory() }),
         loggingParser
     ),
     metadata: {
         brief: message`Create dApp UI template.`,
     },
-    async handler(value) {
-        logger.debug('Creating dApp template')
+    async handler({ template, directory }) {
+        logger.debug(`Creating ${template} dApp template`)
 
         try {
-            // TODO: perform the main magic here
-            logger.info(`Created dApp in ${value.output}`)
+            await createDapp(template, directory)
+            logger.info(
+                `Created the ${dappTemplateNames[template]} dApp in ${directory}`
+            )
         } catch (error) {
             logger.error(
                 `Failed to create dApp: ${error instanceof Error ? error.message : String(error)}`

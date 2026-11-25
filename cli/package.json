@@ -15,6 +15,7 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
+        "@canton-network/create": "workspace:^",
         "@optique/core": "catalog:",
         "@optique/run": "catalog:",
         "@optique/man": "catalog:",

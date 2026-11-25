@@ -744,6 +744,9 @@ importers:
 
   cli:
     dependencies:
+      '@canton-network/create':
+        specifier: workspace:^
+        version: link:../examples/templates
       '@logtape/logtape':
         specifier: 'catalog:'
         version: 2.4.2
@@ -774,7 +777,7 @@ importers:
         version: 25.9.9
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -814,7 +817,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -851,7 +854,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -888,7 +891,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -903,7 +906,7 @@ importers:
         version: 25.9.9
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -946,7 +949,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -974,7 +977,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1005,7 +1008,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1030,7 +1033,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1058,7 +1061,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1098,7 +1101,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1129,7 +1132,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1148,7 +1151,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1195,7 +1198,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1226,7 +1229,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1251,7 +1254,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1294,7 +1297,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1334,7 +1337,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1362,7 +1365,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       tweetnacl:
         specifier: 'catalog:'
         version: 1.0.3
@@ -1399,7 +1402,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1424,7 +1427,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1452,7 +1455,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1504,7 +1507,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -1532,7 +1535,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -1569,7 +1572,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1609,7 +1612,7 @@ importers:
         version: 1.3.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1631,7 +1634,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1665,7 +1668,7 @@ importers:
         version: 1.3.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1717,7 +1720,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1751,7 +1754,7 @@ importers:
         version: 1.3.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1776,7 +1779,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.21.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.21.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1822,7 +1825,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1856,7 +1859,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1884,7 +1887,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1924,7 +1927,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -1943,7 +1946,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typedoc:
         specifier: 'catalog:'
         version: 0.28.20(@typescript/typescript6@6.0.2)
@@ -1962,7 +1965,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typedoc:
         specifier: 'catalog:'
         version: 0.28.20(@typescript/typescript6@6.0.2)
@@ -1993,7 +1996,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -2045,7 +2048,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -2064,7 +2067,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -2098,7 +2101,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -2153,7 +2156,7 @@ importers:
         version: 5.0.5(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))(vitest@5.0.5)
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -2205,7 +2208,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -2299,7 +2302,7 @@ importers:
         version: 8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
       vite-plugin-dts:
         specifier: 'catalog:'
-        version: 5.1.2(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+        version: 5.1.2(@typescript/typescript6@6.0.2)(@vue/language-core@3.3.14)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
       vitest:
         specifier: 'catalog:'
         version: 5.0.5(@types/node@25.9.9)(@vitest/browser-playwright@5.0.5)(@vitest/browser@5.0.5)(@vitest/coverage-v8@5.0.5)(@vitest/ui@5.0.5)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -2315,7 +2318,7 @@ importers:
     devDependencies:
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typedoc:
         specifier: 'catalog:'
         version: 0.28.20(@typescript/typescript6@6.0.2)
@@ -2634,7 +2637,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -2773,7 +2776,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -2831,7 +2834,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       tsx:
         specifier: 'catalog:'
         version: 4.23.15
@@ -3021,7 +3024,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -3109,7 +3112,7 @@ importers:
         version: 1.65.0
       tsdown:
         specifier: 'catalog:'
-        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15)
+        version: 0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
       typescript:
         specifier: 'catalog:'
         version: '@typescript/typescript6@6.0.2'
@@ -3531,13 +3534,13 @@ importers:
     devDependencies:
       '@tanstack/react-devtools':
         specifier: 'catalog:'
-        version: 0.10.14(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(csstype@3.2.3)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(solid-js@1.9.18)
+        version: 0.10.14(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(csstype@3.2.4)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(solid-js@1.9.18)
       '@tanstack/react-query-devtools':
         specifier: 'catalog:'
-        version: 5.107.1(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(csstype@3.2.3)(react@19.3.1)
+        version: 5.107.1(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(csstype@3.2.4)(react@19.3.1)
       '@tanstack/react-router-devtools':
         specifier: 'catalog:'
-        version: 1.167.3(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/router-core@1.171.39)(csstype@3.2.3)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+        version: 1.167.3(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/router-core@1.171.39)(csstype@3.2.4)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@tanstack/router-plugin':
         specifier: 'catalog:'
         version: 1.168.48(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.8(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
@@ -16346,6 +16349,15 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
+  '@tanstack/devtools-ui@0.7.2(csstype@3.2.4)(solid-js@1.9.18)':
+    dependencies:
+      clsx: 2.1.1
+      dayjs: 1.11.23
+      goober: 2.1.19(csstype@3.2.4)
+      solid-js: 1.9.18
+    transitivePeerDependencies:
+      - csstype
+
   '@tanstack/devtools-vite@0.8.6(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))':
     dependencies:
       '@tanstack/devtools-bundler-core': 0.1.4(@emnapi/core@2.0.0-beta.2)(@emnapi/runtime@2.0.0-beta.2)
@@ -16371,6 +16383,24 @@ snapshots:
       '@tanstack/devtools-ui': 0.7.2(csstype@3.2.3)(solid-js@1.9.18)
       clsx: 2.1.1
       goober: 2.1.19(csstype@3.2.3)
+      solid-js: 1.9.18
+    transitivePeerDependencies:
+      - bufferutil
+      - csstype
+      - utf-8-validate
+
+  '@tanstack/devtools@0.16.0(csstype@3.2.4)(solid-js@1.9.18)':
+    dependencies:
+      '@neodrag/core': 3.0.0-next.11
+      '@neodrag/solid': 3.0.0-next.11(@neodrag/core@3.0.0-next.11)(solid-js@1.9.18)
+      '@solid-primitives/event-listener': 2.4.6(solid-js@1.9.18)
+      '@solid-primitives/keyboard': 1.3.7(solid-js@1.9.18)
+      '@solid-primitives/resize-observer': 2.2.0(solid-js@1.9.18)
+      '@tanstack/devtools-client': 0.0.8
+      '@tanstack/devtools-event-bus': 0.4.3
+      '@tanstack/devtools-ui': 0.7.2(csstype@3.2.4)(solid-js@1.9.18)
+      clsx: 2.1.1
+      goober: 2.1.19(csstype@3.2.4)
       solid-js: 1.9.18
     transitivePeerDependencies:
       - bufferutil
@@ -16410,9 +16440,39 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
+  '@tanstack/query-devtools@5.107.1(csstype@3.2.4)':
+    dependencies:
+      '@kobalte/core': 0.13.14(solid-js@1.9.18)
+      '@solid-primitives/keyed': 1.5.3(solid-js@1.9.18)
+      '@solid-primitives/resize-observer': 2.2.0(solid-js@1.9.18)
+      '@solid-primitives/storage': 1.3.11(solid-js@1.9.18)
+      '@tanstack/match-sorter-utils': 9.2.6
+      '@tanstack/query-core': 5.107.1
+      '@tanstack/solid-virtual': 3.13.53(solid-js@1.9.18)
+      clsx: 2.1.1
+      goober: 2.1.19(csstype@3.2.4)
+      solid-js: 1.9.18
+      solid-transition-group: 0.2.3(solid-js@1.9.18)
+      superjson: 2.2.6
+    transitivePeerDependencies:
+      - csstype
+
   '@tanstack/react-devtools@0.10.14(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(csstype@3.2.3)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(solid-js@1.9.18)':
     dependencies:
       '@tanstack/devtools': 0.16.0(csstype@3.2.3)(solid-js@1.9.18)
+      '@types/react': 19.3.0
+      '@types/react-dom': 19.3.0(@types/react@19.3.0)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+    transitivePeerDependencies:
+      - bufferutil
+      - csstype
+      - solid-js
+      - utf-8-validate
+
+  '@tanstack/react-devtools@0.10.14(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(csstype@3.2.4)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(solid-js@1.9.18)':
+    dependencies:
+      '@tanstack/devtools': 0.16.0(csstype@3.2.4)(solid-js@1.9.18)
       '@types/react': 19.3.0
       '@types/react-dom': 19.3.0(@types/react@19.3.0)
       react: 19.3.1
@@ -16441,6 +16501,16 @@ snapshots:
     transitivePeerDependencies:
       - csstype
 
+  '@tanstack/react-query-devtools@5.107.1(@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1))(@types/react@19.3.0)(csstype@3.2.4)(react@19.3.1)':
+    dependencies:
+      '@tanstack/query-devtools': 5.107.1(csstype@3.2.4)
+      '@tanstack/react-query': 5.107.1(@types/react@19.3.0)(react@19.3.1)
+      react: 19.3.1
+    optionalDependencies:
+      '@types/react': 19.3.0
+    transitivePeerDependencies:
+      - csstype
+
   '@tanstack/react-query@5.107.1(@types/react@19.3.0)(react@19.3.1)':
     dependencies:
       '@tanstack/query-core': 5.107.1
@@ -16452,6 +16522,17 @@ snapshots:
     dependencies:
       '@tanstack/react-router': 1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       '@tanstack/router-devtools-core': 1.168.3(@tanstack/router-core@1.171.39)(csstype@3.2.3)
+      react: 19.3.1
+      react-dom: 19.3.1(react@19.3.1)
+    optionalDependencies:
+      '@tanstack/router-core': 1.171.39
+    transitivePeerDependencies:
+      - csstype
+
+  '@tanstack/react-router-devtools@1.167.3(@tanstack/react-router@1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(@tanstack/router-core@1.171.39)(csstype@3.2.4)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)':
+    dependencies:
+      '@tanstack/react-router': 1.170.46(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
+      '@tanstack/router-devtools-core': 1.168.3(@tanstack/router-core@1.171.39)(csstype@3.2.4)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
     optionalDependencies:
@@ -16489,6 +16570,14 @@ snapshots:
       goober: 2.1.19(csstype@3.2.3)
     optionalDependencies:
       csstype: 3.2.3
+
+  '@tanstack/router-devtools-core@1.168.3(@tanstack/router-core@1.171.39)(csstype@3.2.4)':
+    dependencies:
+      '@tanstack/router-core': 1.171.39
+      clsx: 2.1.1
+      goober: 2.1.19(csstype@3.2.4)
+    optionalDependencies:
+      csstype: 3.2.4
 
   '@tanstack/router-generator@1.167.46(supports-color@10.2.2)':
     dependencies:
@@ -19649,6 +19738,10 @@ snapshots:
     dependencies:
       csstype: 3.2.3
 
+  goober@2.1.19(csstype@3.2.4):
+    dependencies:
+      csstype: 3.2.4
+
   gopd@1.2.0: {}
 
   graceful-fs@4.2.10: {}
@@ -21453,9 +21546,9 @@ snapshots:
 
   retry@0.12.0: {}
 
-  rolldown-plugin-dts@0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(rolldown@1.3.0)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2)):
+  rolldown-plugin-dts@0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.21.2)(rolldown@1.3.0)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2)):
     dependencies:
-      dts-resolver: 3.0.0(oxc-resolver@11.24.2)
+      dts-resolver: 3.0.0(oxc-resolver@11.21.2)
       get-tsconfig: 5.0.0-beta.6
       obug: 3.0.0
       rolldown: 1.3.0
@@ -21469,21 +21562,7 @@ snapshots:
       - '@yuku-toolchain/wasm'
       - oxc-resolver
 
-  rolldown-plugin-dts@0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.21.2)(rolldown@1.3.0):
-    dependencies:
-      dts-resolver: 3.0.0(oxc-resolver@11.21.2)
-      get-tsconfig: 5.0.0-beta.6
-      obug: 3.0.0
-      rolldown: 1.3.0
-      yuku: 0.27.0
-    optionalDependencies:
-      '@volar/typescript': 2.4.30(@typescript/typescript6@6.0.2)
-      typescript: '@typescript/typescript6@6.0.2'
-    transitivePeerDependencies:
-      - '@yuku-toolchain/wasm'
-      - oxc-resolver
-
-  rolldown-plugin-dts@0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(rolldown@1.3.0):
+  rolldown-plugin-dts@0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(rolldown@1.3.0)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2)):
     dependencies:
       dts-resolver: 3.0.0(oxc-resolver@11.24.2)
       get-tsconfig: 5.0.0-beta.6
@@ -21492,7 +21571,9 @@ snapshots:
       yuku: 0.27.0
     optionalDependencies:
       '@volar/typescript': 2.4.30(@typescript/typescript6@6.0.2)
+      '@vue/language-core': 3.3.14
       typescript: '@typescript/typescript6@6.0.2'
+      vue-tsc: 3.3.14(@typescript/typescript6@6.0.2)
     transitivePeerDependencies:
       - '@yuku-toolchain/wasm'
       - oxc-resolver
@@ -22112,6 +22193,33 @@ snapshots:
       minimist: 1.2.8
       strip-bom: 3.0.0
 
+  tsdown@0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.21.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2)):
+    dependencies:
+      cac: 7.1.0
+      defu: 6.1.7
+      empathic: 2.1.0
+      hookable: 6.1.2
+      import-without-cache: 0.4.1
+      obug: 3.0.0
+      picomatch: 4.0.7
+      rolldown: 1.3.0
+      rolldown-plugin-dts: 0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.21.2)(rolldown@1.3.0)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
+      tinyexec: 1.3.1
+      tinyglobby: 0.2.17
+      tinyps: 0.5.1
+      unconfig-core: 7.5.0
+      verkit: 0.5.0
+    optionalDependencies:
+      tsx: 4.23.15
+      typescript: '@typescript/typescript6@6.0.2'
+    transitivePeerDependencies:
+      - '@volar/typescript'
+      - '@vue/language-core'
+      - '@yuku-toolchain/wasm'
+      - oxc-resolver
+      - tsrs
+      - vue-tsc
+
   tsdown@0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(tsx@4.23.15)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2)):
     dependencies:
       cac: 7.1.0
@@ -22123,60 +22231,6 @@ snapshots:
       picomatch: 4.0.7
       rolldown: 1.3.0
       rolldown-plugin-dts: 0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(@vue/language-core@3.3.14)(oxc-resolver@11.24.2)(rolldown@1.3.0)(vue-tsc@3.3.14(@typescript/typescript6@6.0.2))
-      tinyexec: 1.3.1
-      tinyglobby: 0.2.17
-      tinyps: 0.5.1
-      unconfig-core: 7.5.0
-      verkit: 0.5.0
-    optionalDependencies:
-      tsx: 4.23.15
-      typescript: '@typescript/typescript6@6.0.2'
-    transitivePeerDependencies:
-      - '@volar/typescript'
-      - '@vue/language-core'
-      - '@yuku-toolchain/wasm'
-      - oxc-resolver
-      - tsrs
-      - vue-tsc
-
-  tsdown@0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.21.2)(tsx@4.23.15):
-    dependencies:
-      cac: 7.1.0
-      defu: 6.1.7
-      empathic: 2.1.0
-      hookable: 6.1.2
-      import-without-cache: 0.4.1
-      obug: 3.0.0
-      picomatch: 4.0.7
-      rolldown: 1.3.0
-      rolldown-plugin-dts: 0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.21.2)(rolldown@1.3.0)
-      tinyexec: 1.3.1
-      tinyglobby: 0.2.17
-      tinyps: 0.5.1
-      unconfig-core: 7.5.0
-      verkit: 0.5.0
-    optionalDependencies:
-      tsx: 4.23.15
-      typescript: '@typescript/typescript6@6.0.2'
-    transitivePeerDependencies:
-      - '@volar/typescript'
-      - '@vue/language-core'
-      - '@yuku-toolchain/wasm'
-      - oxc-resolver
-      - tsrs
-      - vue-tsc
-
-  tsdown@0.23.7(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(tsx@4.23.15):
-    dependencies:
-      cac: 7.1.0
-      defu: 6.1.7
-      empathic: 2.1.0
-      hookable: 6.1.2
-      import-without-cache: 0.4.1
-      obug: 3.0.0
-      picomatch: 4.0.7
-      rolldown: 1.3.0
-      rolldown-plugin-dts: 0.30.0(@typescript/typescript6@6.0.2)(@volar/typescript@2.4.30(@typescript/typescript6@6.0.2))(oxc-resolver@11.24.2)(rolldown@1.3.0)
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
       tinyps: 0.5.1
@@ -22368,7 +22422,7 @@ snapshots:
 
   unpipe@1.0.0: {}
 
-  unplugin-dts@1.1.2(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)):
+  unplugin-dts@1.1.2(@typescript/typescript6@6.0.2)(@vue/language-core@3.3.14)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
       '@rollup/pluginutils': 5.5.1
       '@volar/typescript': 2.4.30(@typescript/typescript6@6.0.2)
@@ -22381,6 +22435,7 @@ snapshots:
       typescript: '@typescript/typescript6@6.0.2'
       unplugin: 2.3.11
     optionalDependencies:
+      '@vue/language-core': 3.3.14
       esbuild: 0.28.2
       rolldown: 1.2.16
       vite: 8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
@@ -22484,9 +22539,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  vite-plugin-dts@5.1.2(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)):
+  vite-plugin-dts@5.1.2(@typescript/typescript6@6.0.2)(@vue/language-core@3.3.14)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)):
     dependencies:
-      unplugin-dts: 1.1.2(@typescript/typescript6@6.0.2)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
+      unplugin-dts: 1.1.2(@typescript/typescript6@6.0.2)(@vue/language-core@3.3.14)(esbuild@0.28.2)(rolldown@1.2.16)(supports-color@10.2.2)(vite@8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1))
     optionalDependencies:
       vite: 8.3.6(@types/node@25.9.9)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
     transitivePeerDependencies:
