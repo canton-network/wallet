@@ -22,6 +22,8 @@ import {
     idpSchema,
     resolveAuthIdentityProviderId,
     assertIsConnected,
+    findInvalidScope,
+    mergeScopes,
 } from '@canton-network/core-wallet-auth'
 import {
     assertLoginAllowed,
@@ -558,6 +560,7 @@ export const userController = ({
                 )
             }
 
+            assertValidScopes(params.scopes)
             const accessToken = await new AuthTokenProvider({
                 method: 'self_signed',
                 issuer: idp.issuer,
@@ -1596,22 +1599,13 @@ export const userController = ({
     })
 }
 
-// concatenates network.auth.scope with scoped token scopes requested by a dApp with deduplication
-function mergeScopes(networkScope: string, scopes: string[] = []): string {
-    // Don't throw on empty or space padded requested scope, just filter it out
-    const requested = scopes.map((scope) => scope.trim()).filter(Boolean)
-
-    // Prevent sneaking in multiple scopes as a single requested one with spaces in-between
-    const invalid = requested.find((scope) => /\s/.test(scope))
+function assertValidScopes(scopes: string[] | undefined): void {
+    const invalid = findInvalidScope(scopes)
     if (invalid !== undefined) {
         throw rpcErrors.invalidParams({
             message: `Scope "${invalid}" must not contain whitespace`,
         })
     }
-
-    return [...new Set([...networkScope.split(/\s+/), ...requested])]
-        .filter(Boolean)
-        .join(' ')
 }
 
 function toAuthDto(auth: Auth, redactSecrets: boolean): ApiNetwork['auth'] {
