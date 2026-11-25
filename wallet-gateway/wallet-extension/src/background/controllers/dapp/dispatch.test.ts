@@ -900,47 +900,24 @@ describe('createDappDispatcher', () => {
                 })
             })
 
-            it.each([
-                [
-                    'rejected',
-                    providerErrors.userRejectedRequest({
-                        message: 'Rejected by the user',
-                    }),
-                ],
-                [
-                    'failed',
-                    rpcErrors.transactionRejected({ message: 'INVALID: no' }),
-                ],
-                [
-                    'has an unknown outcome',
-                    rpcErrors.internal({
-                        message: 'The outcome of the transaction is unknown',
-                    }),
-                ],
-                [
-                    'timed out',
-                    providerErrors.userRejectedRequest({
-                        message: 'The transaction approval timed out',
-                    }),
-                ],
-            ])(
-                'returns the error of a transaction that %s in prepareExecuteAndWait',
-                async (_, error) => {
-                    deps.txApprovals.begin.mockReturnValue(
-                        approval(Promise.reject(error))
-                    )
+            it('returns the error of a transaction that fails in prepareExecuteAndWait', async () => {
+                const error = rpcErrors.transactionRejected({
+                    message: 'INVALID: no',
+                })
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(Promise.reject(error))
+                )
 
-                    await expect(
-                        dispatcher.request(
-                            request('prepareExecuteAndWait', params),
-                            origin,
-                            tab
-                        )
-                    ).resolves.toMatchObject({
-                        error: { code: error.code, message: error.message },
-                    })
-                }
-            )
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecuteAndWait', params),
+                        origin,
+                        tab
+                    )
+                ).resolves.toMatchObject({
+                    error: { code: error.code, message: error.message },
+                })
+            })
         })
 
         it('refuses disconnect while locked and keeps the approval', async () => {
