@@ -14,7 +14,7 @@ A local OAuth2 mock server used for development and tests.
 Access tokens live for one hour. To try out what happens when they expire, shorten the lifetime:
 
 ```bash
-MOCK_OAUTH2_TOKEN_TTL_SECONDS=90 pnpm start
+MOCK_OAUTH2_TOKEN_TTL_SECONDS=90 pnpm --filter @canton-network/mock-oauth2 start
 ```
 
 ## PKCE behavior
