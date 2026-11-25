@@ -84,7 +84,7 @@ describe('utils', () => {
             const status = await networkStatus(client)
             expect(status).toEqual({
                 isConnected: false,
-                reason: `Ledger unreachable: mock error`,
+                reason: `Ledger status check failed: mock error`,
             })
         })
     })

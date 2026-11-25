@@ -2219,7 +2219,7 @@ describe('userController', () => {
         it('addSession keeps the session when the ledger is disconnected', async () => {
             mockNetworkStatus.mockResolvedValueOnce({
                 isConnected: false,
-                reason: 'Ledger unreachable: fetch failed',
+                reason: 'Ledger status check failed: fetch failed',
             })
             const authWithValidClaims = createAuthWithAddSessionClaims()
             const store = await createStore(logger, authWithValidClaims, {
@@ -2238,7 +2238,9 @@ describe('userController', () => {
             })
 
             expect(result.status).toBe('disconnected')
-            expect(result.reason).toBe('Ledger unreachable: fetch failed')
+            expect(result.reason).toBe(
+                'Ledger status check failed: fetch failed'
+            )
             expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
             await expect(
                 store.getSession(authWithValidClaims.accessToken)
