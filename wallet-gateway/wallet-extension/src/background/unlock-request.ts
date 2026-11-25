@@ -84,7 +84,7 @@ export function createUnlockRequests({
             // Gone while the request waited, so no page would clear the icon.
             if (!connection?.live) return
             forget(tabId)
-            // Its prompt keeps the tab's heartbeat, and so the worker, going.
+            // Its prompt keeps the worker running.
             const timer = setTimeout(() => end(tabId), timeoutMs)
             pages.set(tabId, { connection, timer })
             await tabIcons.set(tabId, 'unlock', UNLOCK_VIEW)

@@ -54,17 +54,3 @@ export const txApprovalPortId = (name: string) =>
  * loaded. The background ends the page's prompts when it disconnects.
  */
 export const PAGE_PRESENCE_PORT_NAME = 'wg-page-presence'
-
-/**
- * What the background tells a presence port: whether the background holds a
- * prompt for the tab, during which the content script sends a heartbeat.
- */
-export interface PresenceHeartbeat {
-    heartbeat: boolean
-}
-
-/**
- * How often a content script sends its heartbeat. Chrome stops an idle
- * service worker after 30 seconds, and a port message resets that timer.
- */
-export const PRESENCE_HEARTBEAT_MS = 20_000

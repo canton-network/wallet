@@ -1,12 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { browser, type Browser } from 'wxt/browser'
+import { browser } from 'wxt/browser'
 
-import {
-    PAGE_PRESENCE_PORT_NAME,
-    type PresenceHeartbeat,
-} from '@/shared/ports.ts'
+import { PAGE_PRESENCE_PORT_NAME } from '@/shared/ports.ts'
 
 import { senderOrigin, senderTab } from './dapp-service.ts'
 
@@ -48,19 +45,6 @@ export interface PagePresence {
      * the same tab and frame connected.
      */
     onEnd(listener: (connection: PageConnection) => void): void
-    /**
-     * Makes the tab's pages send a heartbeat while the background holds
-     * a prompt for it, which keeps the service worker running.
-     */
-    heartbeat(tabId: number, held: boolean): void
-}
-
-function send(port: Browser.runtime.Port, heartbeat: boolean): void {
-    try {
-        port.postMessage({ heartbeat } satisfies PresenceHeartbeat)
-    } catch {
-        // Disconnected; the page has gone.
-    }
 }
 
 /**
@@ -73,15 +57,8 @@ export function createPagePresence(): PagePresence {
     // new document there has the same `page`, so only the newest counts.
     const byFrame = new Map<
         string,
-        {
-            page: string
-            origin: string
-            live: boolean
-            tabId: number
-            port: Browser.runtime.Port
-        }
+        { page: string; origin: string; live: boolean }
     >()
-    const heldTabs = new Set<number>()
 
     function end(frame: string): void {
         const connection = byFrame.get(frame)
@@ -103,21 +80,10 @@ export function createPagePresence(): PagePresence {
         }
         const frame = JSON.stringify([tab.tabId, port.sender?.frameId ?? 0])
         // The page before it may not have disconnected yet, and a request of
-        // the new page must not join its prompts. Once forgotten, it would
-        // miss the end of the tab's heartbeat.
-        const replaced = byFrame.get(frame)
+        // the new page must not join its prompts.
         end(frame)
-        if (replaced) send(replaced.port, false)
-        const connection = {
-            page: tab.page,
-            origin,
-            live: true,
-            tabId: tab.tabId,
-            port,
-        }
+        const connection = { page: tab.page, origin, live: true }
         byFrame.set(frame, connection)
-        // Another page of the tab, in another frame, may hold a prompt.
-        if (heldTabs.has(tab.tabId)) send(port, true)
         port.onDisconnect.addListener(() => {
             if (byFrame.get(frame) === connection) end(frame)
         })
@@ -134,13 +100,6 @@ export function createPagePresence(): PagePresence {
         },
         onEnd(listener) {
             listeners.add(listener)
-        },
-        heartbeat(tabId, held) {
-            if (held) heldTabs.add(tabId)
-            else heldTabs.delete(tabId)
-            for (const connection of byFrame.values()) {
-                if (connection.tabId === tabId) send(connection.port, held)
-            }
         },
     }
 }

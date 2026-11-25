@@ -19,6 +19,7 @@ import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
 import { userController } from './controllers/user/index.ts'
 import { transactionSubmitter } from './controllers/user/transactions.ts'
 import { registerDappService } from './dapp-service.ts'
+import { createKeepAlive } from './keep-alive.ts'
 import {
     createSitePorts,
     currentSessionSubscriber,
@@ -69,9 +70,7 @@ export function startBackground({
     const sites = createApprovedSiteStore(vault)
     const isCurrent = currentSessionCheck(getStore, authContext)
     const presence = createPagePresence()
-    const tabIcons = createTabIcons((tabId, held) =>
-        presence.heartbeat(tabId, held)
-    )
+    const tabIcons = createTabIcons(createKeepAlive())
     const siteApprovals = createSiteApprovals({
         vault,
         authContext,

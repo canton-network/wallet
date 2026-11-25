@@ -4,11 +4,7 @@
 import { browser, type Browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
-import {
-    PAGE_PRESENCE_PORT_NAME,
-    PRESENCE_HEARTBEAT_MS,
-    type PresenceHeartbeat,
-} from '@/shared/ports.ts'
+import { PAGE_PRESENCE_PORT_NAME } from '@/shared/ports.ts'
 
 type Port = Browser.runtime.Port
 
@@ -21,9 +17,7 @@ export interface PagePresence {
  * Holds a port to the background while the page is loaded, so the
  * background sees the page unload and ends the approval prompts it
  * asked for. A service worker restart closes the port, and the prompts with
- * it, so the next request opens it again. While the background holds a
- * prompt for the tab, it sends a heartbeat on the port, which keeps the
- * service worker from stopping while the user answers.
+ * it, so the next request opens it again.
  */
 export function createPagePresence(
     connect: () => Port = () =>
@@ -44,22 +38,7 @@ export function createPagePresence(
                 return
             }
             port = opened
-            let heartbeat: ReturnType<typeof setInterval> | undefined
-            const stop = () => {
-                clearInterval(heartbeat)
-                heartbeat = undefined
-            }
-            opened.onMessage.addListener((message) => {
-                if (!(message as PresenceHeartbeat).heartbeat) stop()
-                else if (heartbeat === undefined) {
-                    heartbeat = setInterval(
-                        () => opened.postMessage('heartbeat'),
-                        PRESENCE_HEARTBEAT_MS
-                    )
-                }
-            })
             opened.onDisconnect.addListener(() => {
-                stop()
                 if (port === opened) port = undefined
             })
         },
