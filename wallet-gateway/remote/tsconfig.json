@@ -64,6 +64,9 @@
             "path": "../../core/rpc-errors"
         },
         {
+            "path": "../../core/ledger-proto"
+        },
+        {
             "path": "../../core/ledger-client"
         },
         {

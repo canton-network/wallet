@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { isJsCantonError } from '@canton-network/core-ledger-client'
+import { Code } from '@canton-network/core-ledger-proto'
 import {
     JsonRpcError,
     rpcErrors,
@@ -91,14 +92,17 @@ export const handleRpcError = (
     }
 
     if (isJsCantonError(error)) {
+        // Canton redacts the cause of security-sensitive errors, the gRPC code still tells them apart
+        const grpcCode =
+            error.grpcCodeValue === undefined
+                ? undefined
+                : Code[error.grpcCodeValue]
         response.error = {
             code: rpcErrors.internal().code,
-            message: error.cause,
+            message: grpcCode ? `${error.cause} (${grpcCode})` : error.cause,
             data: error,
         }
-    }
-
-    if (error instanceof Error) {
+    } else if (error instanceof Error) {
         response.error.message = error.message
     } else if (typeof error === 'string') {
         response.error.message = error
