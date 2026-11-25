@@ -4,7 +4,7 @@
 import type { PartyId } from '@canton-network/core-types'
 import { test, expect, type Page } from '@playwright/test'
 
-import { toPortfolioInstrument } from '../src/types/instruments.ts'
+import { toRegistryInstrument } from '../src/types/instruments.ts'
 import { normalizeRegistryUrl } from '../src/utils/registry.ts'
 import {
     createGatewayApi,
@@ -222,7 +222,7 @@ test('normalizes registry URL aliases consistently', () => {
 })
 
 test('instrument mapping preserves registry and SDK fields', () => {
-    const instrument = toPortfolioInstrument({
+    const instrument = toRegistryInstrument({
         instrument: {
             id: 'Amulet',
             name: 'Amulet',
@@ -251,7 +251,7 @@ test('instrument mapping preserves registry and SDK fields', () => {
     expect(instrument).toEqual({
         id: 'Amulet',
         admin: 'DSO::1220admin',
-        registryUrl: new URL(LOCAL_REGISTRY_URL),
+        registryUrl: new URL(LOCAL_REGISTRY_URL).href,
         displayName: 'Amulet',
         name: 'Amulet',
         symbol: 'AMT',

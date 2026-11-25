@@ -21,9 +21,11 @@ export {
     getInstrumentKey,
     type AggregatedAccountBalance,
     type AggregatedHolding,
-    type TokenInstrument,
-    type TokenInstruments,
 } from './aggregate-holdings.ts'
+export type {
+    RegistryInstrument,
+    TokenInstruments,
+} from './registry-instrument.ts'
 export {
     useWalletHoldings,
     type WalletHoldingsResult,

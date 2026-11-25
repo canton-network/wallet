@@ -3,8 +3,8 @@
 
 import { createContext } from 'react'
 
-import type { TokenInstruments } from './aggregate-holdings.ts'
 import type { TokenClient } from './client.ts'
+import type { TokenInstruments } from './registry-instrument.ts'
 
 export interface TokenContextValue {
     client: TokenClient | undefined

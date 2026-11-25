@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { RegistryInstrument } from '@canton-network/core-wallet-ui-components/react/token'
 import { usePortfolioConfig } from '@contexts/PortfolioConfigContext'
 import { normalizeRegistryUrl } from '@utils/registry'
 import { useMemo } from 'react'
 
-import type { PortfolioInstrument } from '../types/instruments.ts'
 import type { PreapprovalRow } from '../types/preapprovals.ts'
 import { useInstruments } from './useInstruments.ts'
 import { useRegistryUrls } from './useRegistryUrls.ts'
@@ -18,14 +18,14 @@ const isAmuletInstrument = ({
     amuletRegistryUrl,
 }: {
     registryUrl: string
-    instrument: PortfolioInstrument
+    instrument: RegistryInstrument
     amuletRegistryUrl: string
 }) =>
     instrument.id === AMULET_INSTRUMENT_ID &&
     normalizeRegistryUrl(registryUrl) ===
         normalizeRegistryUrl(amuletRegistryUrl)
 
-export const formatInstrumentName = (instrument: PortfolioInstrument) => {
+export const formatInstrumentName = (instrument: RegistryInstrument) => {
     const name = instrument.name || instrument.id
     return instrument.symbol ? `${name} (${instrument.symbol})` : name
 }

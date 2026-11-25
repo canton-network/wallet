@@ -3,17 +3,13 @@
 
 import type { OffLedger } from '@canton-network/core-token-standard'
 import type { PartyId } from '@canton-network/core-types'
-import { resolveCapabilities, type AssetBody } from '@canton-network/wallet-sdk'
+import type { RegistryInstrument } from '@canton-network/core-wallet-ui-components/react/token'
+import { resolveCapabilities } from '@canton-network/wallet-sdk'
 
 export type Instrument =
     OffLedger.MetadataV1.components['schemas']['Instrument']
 
-export type PortfolioInstrument = AssetBody & {
-    name: string
-    decimals: number
-}
-
-export const toPortfolioInstrument = ({
+export const toRegistryInstrument = ({
     instrument,
     admin,
     registryUrl,
@@ -21,10 +17,10 @@ export const toPortfolioInstrument = ({
     instrument: Instrument
     admin: PartyId
     registryUrl: string
-}): PortfolioInstrument => ({
+}): RegistryInstrument => ({
     id: instrument.id,
     admin,
-    registryUrl: new URL(registryUrl),
+    registryUrl: new URL(registryUrl).href,
     displayName: instrument.name,
     name: instrument.name,
     symbol: instrument.symbol,
@@ -33,7 +29,5 @@ export const toPortfolioInstrument = ({
         supportedApis: instrument.supportedApis,
     }),
 })
-
-export type Instruments = ReadonlyMap<PartyId, PortfolioInstrument[]>
 
 export type TokenStandardVersion = 'v1' | 'v2'

@@ -4,10 +4,12 @@
 import type { PartyId } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Store } from '@canton-network/core-wallet-store'
+import type { RegistryInstrument } from '@canton-network/core-wallet-ui-components/react/token'
 import type { AssetBody } from '@canton-network/wallet-sdk'
 
 import type { AuthContextStore } from '../auth-context.ts'
 import type { RegistryStore } from '../store/registries.ts'
+import { registryInstruments } from './instruments.ts'
 import type { TokenSdk, TokenSdkConfig } from './sdk.ts'
 
 /** An asset as the pages receive it: messaging turns a `URL` into a string. */
@@ -35,6 +37,8 @@ type Holdings<V extends 'v1' | 'v2'> = Awaited<
 export type TokenService = {
     token: {
         assets(): Promise<TokenAsset[]>
+        /** The instruments of the current network's registries. */
+        instruments(): Promise<RegistryInstrument[]>
         v1: {
             utxos: {
                 list(params: ListHoldingsParams): Promise<Holdings<'v1'>>
@@ -131,6 +135,13 @@ export function createTokenService({
                     ...asset,
                     registryUrl: asset.registryUrl.toString(),
                 }))
+            },
+            async instruments() {
+                const { store } = await signedIn()
+                const network = await store.getCurrentNetwork()
+                const urls = await registries.forNetwork(network.id)
+                const lists = await Promise.all(urls.map(registryInstruments))
+                return lists.flat()
             },
             v1: {
                 utxos: {
