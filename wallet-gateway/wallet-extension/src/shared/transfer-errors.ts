@@ -5,9 +5,10 @@ import { errorCodes, rpcErrors } from '@canton-network/core-rpc-errors'
 
 /**
  * The `data` of a token service write error after which the transaction
- * can't have executed: the write failed before signing, or the ledger
- * reported that the transaction failed. Every other error, an uncoded one
- * from a closed message channel included, leaves the outcome unknown.
+ * can't have executed: the write failed before signing, or its unsigned
+ * pending transaction was removed. Every other error, a ledger-reported
+ * failure and an uncoded one from a closed message channel included,
+ * leaves the outcome unknown.
  */
 export const NOT_SUBMITTED = { outcome: 'not-submitted' } as const
 

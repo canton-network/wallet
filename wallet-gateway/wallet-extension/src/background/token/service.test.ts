@@ -404,6 +404,25 @@ describe('createTokenService', () => {
             }
         })
 
+        it('stops before preparing when the extension’s session is removed', async () => {
+            const tokenService = await signedIn()
+            createSdk.mockImplementationOnce(async () => {
+                await store.removeSession(context.accessToken)
+                return sdk as unknown as TokenSdk
+            })
+
+            const error = await tokenService.token.transfer
+                .create(transferParams)
+                .catch((cause: unknown) => cause)
+
+            expect(error).toMatchObject({
+                message: 'The extension is not connected',
+            })
+            expect(isNotSubmitted(error)).toBe(true)
+            expect(prepare).not.toHaveBeenCalled()
+            expect(sign).not.toHaveBeenCalled()
+        })
+
         it.each([
             [
                 'nothing',

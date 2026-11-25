@@ -268,16 +268,31 @@ export function createTokenService({
         return asset
     }
 
-    /** The extension's session for the user's token. */
-    async function extensionSession({ context, store }: SignedIn) {
+    /**
+     * The extension's session for the user's token, on `networkId` if
+     * given.
+     */
+    async function extensionSession(
+        { context, store }: SignedIn,
+        networkId?: string
+    ) {
         const accessTokenHash = await hashAccessToken(context.accessToken)
         const session = (await store.listSessions()).find(
             (candidate) =>
                 candidate.origin === EXTENSION_ORIGIN &&
-                candidate.accessTokenHash === accessTokenHash
+                candidate.accessTokenHash === accessTokenHash &&
+                (networkId === undefined || candidate.network === networkId)
         )
         if (!session) throw new Error('The extension is not connected')
         return session
+    }
+
+    // Signing out removes the session but leaves the token and the keys,
+    // so a write already under way checks it is still connected. A
+    // reconnect replaces the session on the same network, so any
+    // extension session there will do.
+    async function assertConnected(writer: Writer): Promise<void> {
+        await extensionSession(writer, writer.network.id)
     }
 
     /**
@@ -285,10 +300,12 @@ export function createTokenService({
      * transaction's id.
      */
     async function prepare(
-        { context, store }: Writer,
+        writer: Writer,
         partyId: PartyId,
         [command, disclosedContracts]: PreparedCommand
     ): Promise<string> {
+        await assertConnected(writer)
+        const { context, store } = writer
         const transactionId = crypto.randomUUID()
         const commandId = crypto.randomUUID()
         await prepareTransaction(store, context, {
@@ -307,11 +324,12 @@ export function createTokenService({
 
     /** Signs and executes a prepared transaction in the extension's session. */
     async function submit(
-        { context, store, sessionId }: Writer,
+        writer: Writer,
         transactionId: string
     ): Promise<void> {
+        const { context, store, sessionId } = writer
         try {
-            await submitTransaction(submitter, {
+            await submitTransaction(connected(writer), {
                 store,
                 auth: context,
                 sessionId,
@@ -329,6 +347,22 @@ export function createTokenService({
             throw rpcErrors.internal({
                 message: `The outcome of the transaction is unknown: ${message}`,
             })
+        }
+    }
+
+    /** `submitter`, checking before each step that `writer` is connected. */
+    function connected(
+        writer: Writer
+    ): Pick<TransactionSubmitter, 'sign' | 'execute'> {
+        return {
+            sign: async (...args) => {
+                await assertConnected(writer)
+                return submitter.sign(...args)
+            },
+            execute: async (...args) => {
+                await assertConnected(writer)
+                return submitter.execute(...args)
+            },
         }
     }
 
