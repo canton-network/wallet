@@ -121,10 +121,11 @@ export function startBackground({
         requireUnlocked(
             vault,
             createTokenService({
-                getStore,
+                getStore: () => walletStore.get(),
                 authContext,
                 registries: createRegistryStore(vault),
                 createSdk: createTokenSdk,
+                submitter: transactionSubmitter(deps),
             })
         )
     )

@@ -1,11 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { LedgerClient } from '@canton-network/core-ledger-client'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
 import type { Wallet } from '@canton-network/core-wallet-store'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
+
+import createPlain from '@/__tests__/fixtures/v3-create-plain.json'
+import { EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
 
 import type { AuthContextStore } from '../auth-context.ts'
+import type { TransactionSubmitter } from '../controllers/user/transactions.ts'
 import type { RegistryStore } from '../store/registries.ts'
 import { createTestWalletStore } from '../store/test-store.ts'
 import type { TokenSdk, TokenSdkConfig } from './sdk.ts'
@@ -28,22 +33,45 @@ const wallet: Wallet = {
     userId: context.userId,
 }
 
-function fakeSdk() {
+const registryUrl = new URL('http://scan.localhost:4000')
+const amulet = { admin: 'dso::1220', id: 'Amulet' }
+const command = () => [{ ExerciseCommand: {} }, []]
+
+function fakeSdk(transferVersions = ['v1', 'v2']) {
+    const transfer = () => ({
+        create: vi.fn(async () => command()),
+        withdraw: vi.fn(async () => command()),
+    })
     return {
         token: {
             assets: vi.fn(async () => [
                 {
-                    id: 'Amulet',
+                    ...amulet,
                     displayName: 'Amulet',
                     symbol: 'CC',
-                    registryUrl: new URL('http://scan.localhost:4000'),
-                    admin: 'dso::1220',
+                    registryUrl,
+                    capabilities: { transferInstruction: transferVersions },
                 },
             ]),
-            v1: { utxos: { list: vi.fn(async () => [{ contractId: 'v1' }]) } },
-            v2: { utxos: { list: vi.fn(async () => [{ contractId: 'v2' }]) } },
+            v1: {
+                utxos: { list: vi.fn(async () => [{ contractId: 'v1' }]) },
+                transfer: transfer(),
+            },
+            v2: {
+                utxos: { list: vi.fn(async () => [{ contractId: 'v2' }]) },
+                transfer: transfer(),
+            },
         },
     }
+}
+
+const transferParams = {
+    sender: wallet.partyId,
+    receiver: 'bob::1220',
+    instrumentId: amulet,
+    amount: '5',
+    expiry: '2026-12-01T00:00:00.000Z',
+    tokenStandardVersion: 'v2' as const,
 }
 
 describe('createTokenService', () => {
@@ -53,25 +81,27 @@ describe('createTokenService', () => {
     >
     let registries: RegistryStore
     let authContext: Pick<AuthContextStore, 'load'>
+    let sign: Mock<TransactionSubmitter['sign']>
+    let execute: Mock<TransactionSubmitter['execute']>
+    let prepare: Mock<LedgerClient['postWithRetry']>
+    let store: ReturnType<typeof createTestWalletStore>
 
     function service() {
-        const store = createTestWalletStore(context)
-        return {
-            store,
-            service: createTokenService({
-                authContext,
-                getStore: async () => store,
-                registries,
-                createSdk,
-            }),
-        }
+        store = createTestWalletStore(context)
+        return createTokenService({
+            authContext,
+            getStore: async () => store,
+            registries,
+            createSdk,
+            submitter: { sign, execute },
+        })
     }
 
     async function signedIn() {
-        const { store, service: tokenService } = service()
+        const tokenService = service()
         await store.setSession({
             id: 'session-1',
-            origin: 'popup',
+            origin: EXTENSION_ORIGIN,
             network: networkId,
             accessToken: context.accessToken,
         })
@@ -86,6 +116,39 @@ describe('createTokenService', () => {
             forNetwork: async (id) => (id === networkId ? registryUrls : []),
         }
         authContext = { load: async () => context }
+        vi.spyOn(LedgerClient.prototype, 'getSynchronizerId').mockResolvedValue(
+            'global::1220'
+        )
+        // A prepared transaction whose hash matches, as the ledger sends it.
+        prepare = vi
+            .spyOn(LedgerClient.prototype, 'postWithRetry')
+            .mockResolvedValue({
+                preparedTransaction: createPlain.preparedTransaction,
+                preparedTransactionHash: Buffer.from(
+                    createPlain.expected.hash,
+                    'hex'
+                ).toString('base64'),
+            })
+        sign = vi.fn(
+            async (signStore, _context, _session, { transactionId }) => {
+                await signStore.setTransactionSigned(transactionId, new Date())
+                return {
+                    status: 'signed' as const,
+                    partyId: wallet.partyId,
+                    signature: 'signature',
+                    signedBy: 'namespace',
+                }
+            }
+        )
+        execute = vi.fn(
+            async (executeStore, _context, _session, { transactionId }) => {
+                await executeStore.setTransactionStatus(
+                    transactionId,
+                    'executed'
+                )
+                return { updateId: 'update-1', completionOffset: 42 }
+            }
+        )
     })
 
     it('rejects a party that is not one of the user’s wallets', async () => {
@@ -168,7 +231,7 @@ describe('createTokenService', () => {
 
     it('rejects when nobody is signed in', async () => {
         authContext = { load: async () => undefined }
-        const { service: tokenService } = service()
+        const tokenService = service()
 
         await expect(tokenService.token.assets()).rejects.toThrow(
             'Not signed in'
@@ -201,6 +264,97 @@ describe('createTokenService', () => {
             network: expect.objectContaining({ id: networkId }),
             accessToken: context.accessToken,
             registries: registryUrls,
+        })
+    })
+
+    describe('transfer.create', () => {
+        it('falls back to v1 when the registry has no v2 transfers', async () => {
+            sdk = fakeSdk(['v1'])
+            const tokenService = await signedIn()
+
+            await tokenService.token.transfer.create(transferParams)
+
+            expect(sdk.token.v1.transfer.create).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    sender: wallet.partyId,
+                    recipient: 'bob::1220',
+                    instrumentId: 'Amulet',
+                    registryUrl,
+                })
+            )
+            expect(sdk.token.v2.transfer.create).not.toHaveBeenCalled()
+        })
+
+        it('refuses a sender that isn’t the user’s before preparing', async () => {
+            const tokenService = await signedIn()
+
+            await expect(
+                tokenService.token.transfer.create({
+                    ...transferParams,
+                    sender: 'mallory::1220',
+                })
+            ).rejects.toThrow('Party mallory::1220 does not belong to user')
+            expect(createSdk).not.toHaveBeenCalled()
+            expect(prepare).not.toHaveBeenCalled()
+        })
+
+        it('signs and executes the transfer in the extension’s session', async () => {
+            const tokenService = await signedIn()
+
+            await tokenService.token.transfer.create(transferParams)
+
+            expect(prepare).toHaveBeenCalledWith(
+                '/v2/interactive-submission/prepare',
+                expect.objectContaining({ actAs: [wallet.partyId] })
+            )
+            const [, , sessionId, { transactionId, partyId }] =
+                sign.mock.calls[0]!
+            expect([sessionId, partyId]).toEqual(['session-1', wallet.partyId])
+            expect(execute).toHaveBeenCalledWith(
+                expect.anything(),
+                context,
+                'session-1',
+                { transactionId, partyId }
+            )
+            await expect(store.getTransaction(transactionId)).resolves.toEqual(
+                expect.objectContaining({
+                    status: 'executed',
+                    origin: EXTENSION_ORIGIN,
+                })
+            )
+        })
+    })
+
+    describe('transfer.withdraw', () => {
+        it('sends a v1 and a v2 withdraw to their own SDK call', async () => {
+            const tokenService = await signedIn()
+            const withdraw = {
+                partyId: wallet.partyId,
+                contractId: 'instruction-1',
+                instrumentId: amulet,
+            }
+
+            await tokenService.token.transfer.withdraw({
+                ...withdraw,
+                version: 'v1',
+            })
+            expect(sdk.token.v1.transfer.withdraw).toHaveBeenCalledWith({
+                transferInstructionCid: 'instruction-1',
+                registryUrl,
+            })
+            expect(sdk.token.v2.transfer.withdraw).not.toHaveBeenCalled()
+
+            await tokenService.token.transfer.withdraw({
+                ...withdraw,
+                version: 'v2',
+            })
+            expect(sdk.token.v2.transfer.withdraw).toHaveBeenCalledWith(
+                'instruction-1',
+                [wallet.partyId],
+                registryUrl
+            )
+            expect(sdk.token.v1.transfer.withdraw).toHaveBeenCalledTimes(1)
+            expect(execute).toHaveBeenCalledTimes(2)
         })
     })
 })
