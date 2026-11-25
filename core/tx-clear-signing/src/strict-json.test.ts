@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { MAX_JSON_NESTING_DEPTH, parseJsonStrict } from './strict-json.ts'
+import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 
 const examples = import.meta.glob('../examples/descriptors/**/*.json', {
     eager: true,
@@ -68,28 +68,19 @@ describe('parseJsonStrict', () => {
         expect(polluted.polluted).toBeUndefined()
     })
 
-    it('rejects nesting deeper than the limit', () => {
+    it('has no nesting limit, and reports nesting beyond the stack as its own error', () => {
         const nest = (levels: number, wrap: (text: string) => string) => {
             let text = 'null'
             for (let i = 0; i < levels; i++) text = wrap(text)
             return text
         }
-        expect(
-            parseJsonStrict(
-                nest(MAX_JSON_NESTING_DEPTH, (text) => `{"k":${text}}`)
-            )
-        ).toEqual(
-            JSON.parse(nest(MAX_JSON_NESTING_DEPTH, (text) => `{"k":${text}}`))
+        const deep = nest(1000, (text) => `{"k":${text}}`)
+        expect(parseJsonStrict(deep)).toEqual(JSON.parse(deep))
+
+        const tooDeep = '['.repeat(1_000_000) + ']'.repeat(1_000_000)
+        expect(() => parseJsonStrict(tooDeep)).toThrow(StrictJsonError)
+        expect(() => parseJsonStrict(tooDeep)).toThrow(
+            'nesting is too deep for this parser'
         )
-        expect(() =>
-            parseJsonStrict(
-                nest(MAX_JSON_NESTING_DEPTH + 1, (text) => `{"k":${text}}`)
-            )
-        ).toThrow(`nesting is deeper than ${MAX_JSON_NESTING_DEPTH}`)
-        expect(() =>
-            parseJsonStrict(
-                nest(MAX_JSON_NESTING_DEPTH + 1, (text) => `[${text}]`)
-            )
-        ).toThrow(`nesting is deeper than ${MAX_JSON_NESTING_DEPTH}`)
     })
 })

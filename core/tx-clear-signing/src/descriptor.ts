@@ -18,11 +18,7 @@ import {
     ED25519_PUBLIC_KEY_PATTERN,
     ED25519_SIGNATURE_PATTERN,
 } from './signature.ts'
-import {
-    assertDescriptorSize,
-    parseJsonStrict,
-    StrictJsonError,
-} from './strict-json.ts'
+import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 
 // The patterns are those of canton-clear-signing-v1.schema.json. The conformance test runs the
 // schema and this parser on the same examples.
@@ -74,7 +70,7 @@ export const TRIMMED_LINE = new RegExp(
 )
 /** Like `TRIMMED_LINE`, and without braces, so it cannot contain a placeholder. */
 export const STABLE_INTENT = new RegExp(
-    `^${noMarkRun}[^\\s{}${UNSAFE_CLASS}](?:${safe}*[^\\s{}${UNSAFE_CLASS}])?$`,
+    `^${noMarkRun}[^\\s{}${UNSAFE_CLASS}](?:[^{}${UNSAFE_CLASS}]*[^\\s{}${UNSAFE_CLASS}])?$`,
     'u'
 )
 
@@ -90,40 +86,6 @@ const FORMATS = [
     'raw',
 ] as const
 
-/**
- * Caps that keep a descriptor small enough to parse and show. They guard against abuse; how much of a
- * long text fits on a screen is the wallet's concern. Lengths count Unicode code points, as JSON
- * Schema's maxLength does. The schema file states the same values.
- */
-export const LIMITS = {
-    /** A field label, the publisher, the name and an enum value. */
-    text: 256,
-    /** `intent` and `interpolatedIntent`. */
-    intent: 512,
-    comment: 4096,
-    path: 1024,
-    fieldsPerOperation: 256,
-    exercises: 256,
-    enumTables: 256,
-    enumEntries: 1024,
-    signatures: 16,
-} as const
-
-function codePoints(s: string): number {
-    let n = 0
-    for (const _ of s) n++
-    return n
-}
-
-/** A string of at most `max` code points that matches `pattern`, when given. */
-function text(max: number, pattern?: RegExp) {
-    const capped = z.string().refine((s) => codePoints(s) <= max, {
-        message: `must be at most ${max} characters`,
-        abort: true,
-    })
-    return pattern ? capped.regex(pattern) : capped
-}
-
 /** A value to display. `optional` allows the value to be None. */
 export interface Field {
     path: string
@@ -137,8 +99,8 @@ export interface Field {
 function fieldSchema(path: RegExp) {
     return z
         .strictObject({
-            path: text(LIMITS.path, path),
-            label: text(LIMITS.text, DISPLAY_TEXT).optional(),
+            path: z.string().regex(path),
+            label: z.string().regex(DISPLAY_TEXT).optional(),
             format: z.enum(FORMATS).optional(),
             params: z
                 .strictObject({ $ref: z.string().regex(enumRef) })
@@ -158,9 +120,9 @@ const ExerciseFieldSchema: z.ZodType<Field> = fieldSchema(PATH_PATTERN)
 
 function operationSchema(field: z.ZodType<Field>) {
     return z.strictObject({
-        intent: text(LIMITS.intent, STABLE_INTENT),
-        interpolatedIntent: text(LIMITS.intent, DISPLAY_TEXT).optional(),
-        fields: z.array(field).max(LIMITS.fieldsPerOperation).optional(),
+        intent: z.string().regex(STABLE_INTENT),
+        interpolatedIntent: z.string().regex(DISPLAY_TEXT).optional(),
+        fields: z.array(field).optional(),
     })
 }
 
@@ -196,8 +158,7 @@ const enumTableKey = z.union([
 
 const EnumTableSchema = recordWithoutProto(
     enumTableKey,
-    text(LIMITS.text, DISPLAY_TEXT),
-    LIMITS.enumEntries
+    z.string().regex(DISPLAY_TEXT)
 ).refine((table) => Object.keys(table).length > 0, {
     message: 'an enum table needs at least one entry',
 })
@@ -206,29 +167,24 @@ const DescriptorSchema = z.strictObject({
     $schema: z.literal(SCHEMA_ID, {
         error: `unsupported schema; expected '${SCHEMA_ID}'`,
     }),
-    $comment: text(LIMITS.comment).optional(),
+    $comment: z.string().optional(),
     context: z.strictObject({
         template: TemplateIdSchema,
     }),
     metadata: z.strictObject({
         version: z.string().regex(semver),
-        publisher: text(LIMITS.text, TRIMMED_LINE),
-        name: text(LIMITS.text, TRIMMED_LINE),
+        publisher: z.string().regex(TRIMMED_LINE),
+        name: z.string().regex(TRIMMED_LINE),
         url: z.url().optional(),
         enums: recordWithoutProto(
             z.string().regex(identifier),
-            EnumTableSchema,
-            LIMITS.enumTables
+            EnumTableSchema
         ).optional(),
     }),
     display: z
         .strictObject({
             create: CreateSchema.optional(),
-            exercises: z
-                .array(ExerciseSchema)
-                .min(1)
-                .max(LIMITS.exercises)
-                .optional(),
+            exercises: z.array(ExerciseSchema).min(1).optional(),
         })
         .refine((d) => d.create !== undefined || d.exercises !== undefined, {
             message: 'display needs create or exercises',
@@ -242,7 +198,6 @@ const DescriptorSchema = z.strictObject({
                 publicKey: z.string().regex(ED25519_PUBLIC_KEY_PATTERN),
             })
         )
-        .max(LIMITS.signatures)
         .optional(),
 })
 
@@ -260,6 +215,21 @@ export class DescriptorError extends Error {
 }
 
 /**
+ * Parses descriptor text. Duplicate member names, lone surrogates and trailing data are rejected
+ * before the schema is applied, because `JSON.parse` would drop them.
+ *
+ * @throws DescriptorError listing every problem found
+ */
+export function parseDescriptorText(text: string): Descriptor {
+    try {
+        return parseDescriptor(parseJsonStrict(text))
+    } catch (err) {
+        if (!(err instanceof StrictJsonError)) throw err
+        throw new DescriptorError([err.message])
+    }
+}
+
+/**
  * Validates descriptor JSON against the v1 schema, and then against the rules a JSON Schema cannot
  * express: an operation declares each path once, every placeholder equals the path of a field of the
  * same operation, every enum reference names a table, and no two exercise entries name the same
@@ -270,22 +240,6 @@ export class DescriptorError extends Error {
  *
  * @throws DescriptorError listing every problem found
  */
-/**
- * Parses descriptor text. Duplicate member names, lone surrogates and trailing data are rejected
- * before the schema is applied, because `JSON.parse` would drop them.
- *
- * @throws DescriptorError listing every problem found
- */
-export function parseDescriptorText(text: string): Descriptor {
-    try {
-        assertDescriptorSize(text)
-        return parseDescriptor(parseJsonStrict(text))
-    } catch (err) {
-        if (!(err instanceof StrictJsonError)) throw err
-        throw new DescriptorError([err.message])
-    }
-}
-
 export function parseDescriptor(json: unknown): Descriptor {
     const result = DescriptorSchema.safeParse(json)
     if (!result.success) {
@@ -403,31 +357,19 @@ function fieldPaths(op: Operation): string[] {
  */
 function recordWithoutProto<V extends z.ZodType>(
     key: z.ZodType<string>,
-    value: V,
-    maxEntries: number
+    value: V
 ): z.ZodType<Record<string, z.infer<V>>> {
     const record = z.record(key, value)
     return z
         .unknown()
         .superRefine((input, ctx) => {
-            if (hasOwnProto(input)) {
-                ctx.addIssue({
-                    code: 'custom',
-                    message: "'__proto__' is not allowed",
-                })
-            }
-            if (isObject(input) && Object.keys(input).length > maxEntries) {
-                ctx.addIssue({
-                    code: 'custom',
-                    message: `must have at most ${maxEntries} entries`,
-                })
-            }
+            if (!hasOwnProto(input)) return
+            ctx.addIssue({
+                code: 'custom',
+                message: "'__proto__' is not allowed",
+            })
         })
         .pipe(record)
-}
-
-function isObject(value: unknown): value is object {
-    return typeof value === 'object' && value !== null && !Array.isArray(value)
 }
 
 function hasOwnProto(value: unknown): boolean {

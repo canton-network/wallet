@@ -45,11 +45,7 @@ import {
     type TemplateRef,
 } from './roots.ts'
 import { verifySignatures } from './signature.ts'
-import {
-    assertDescriptorSize,
-    parseJsonStrict,
-    StrictJsonError,
-} from './strict-json.ts'
+import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 import { TRUSTED_KEYS } from './trusted-keys.ts'
 
 /** Shown when an interpolated intent cannot be filled from the transaction. */
@@ -133,9 +129,9 @@ export class HashMismatchError extends Error {
  *
  * A descriptor binds to a root by package ID, module and entity. Descriptors that bind to no root
  * are ignored. A bound descriptor is used only when every signature on it verifies against
- * {@link TRUSTED_KEYS}. Otherwise that root is `unverified` and its wording is not shown. The
- * description is only as trustworthy as its binding to what is signed, so the transaction is
- * described only when it hashes to `expectedHash`.
+ * {@link TRUSTED_KEYS}, the keys bundled from `trusted-keys.json`. Otherwise that root is
+ * `unverified` and its wording is not shown. The description is only as trustworthy as its binding
+ * to what is signed, so the transaction is described only when it hashes to `expectedHash`.
  *
  * @param tx - the prepared transaction, base64-encoded
  * @param descriptors - clear-signing descriptors as JSON text; any number, valid or not
@@ -187,13 +183,6 @@ async function bindDescriptors(
     const bindings = new Map<string, Binding>()
     for (const text of descriptors) {
         let json: unknown
-        try {
-            assertDescriptorSize(text)
-        } catch (err) {
-            if (!(err instanceof StrictJsonError)) throw err
-            // Too large to read even leniently, so it binds to no root and is ignored.
-            continue
-        }
         try {
             json = parseJsonStrict(text)
         } catch (err) {

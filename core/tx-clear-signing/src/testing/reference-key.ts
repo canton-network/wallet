@@ -7,8 +7,9 @@ import { signDescriptor } from '../signature.ts'
  * The reference Ed25519 private key, as a JWK.
  *
  * The private key is in this repository on purpose, so the examples and the tests can produce
- * signatures that `TRUSTED_KEYS` accepts. It demonstrates the mechanism. It must not be trusted
- * for a descriptor whose wording a deployment relies on.
+ * signatures. The shipped `trusted-keys.json` trusts its public key, so those signatures verify. It
+ * demonstrates the mechanism. A deployment that relies on descriptor wording removes it from that
+ * file; while it is there, `TRUSTS_REFERENCE_KEY` is true and the gateway shows a warning.
  */
 export const REFERENCE_PRIVATE_KEY: JsonWebKey = {
     kty: 'OKP',

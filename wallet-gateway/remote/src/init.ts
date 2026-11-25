@@ -9,6 +9,7 @@ import {
     connection as signingConnection,
     migrator as signingMigrator,
 } from '@canton-network/core-signing-store-sql'
+import { TRUSTS_REFERENCE_KEY } from '@canton-network/core-tx-clear-signing'
 import {
     type HASHING_SCHEME_VERSION,
     NotificationService,
@@ -41,6 +42,7 @@ import {
 } from './middleware/rateLimit.ts'
 import { securityHeaders } from './middleware/securityHeaders.ts'
 import { sessionHandler } from './middleware/sessionHandler.ts'
+import { reportClearSigningTrust } from './notices/clear-signing-notice.ts'
 import { ServerNotices } from './notices/server-notices.ts'
 import { ServerStatusService } from './notices/server-status-service.ts'
 import { registerSigningProviders } from './signing-providers-registration.ts'
@@ -255,6 +257,7 @@ export async function initialize(opts: CliOptions, logger: Logger) {
     )
     const { config, warnings } = ConfigUtils.loadConfigFile(opts.config)
     warnings.forEach((warning) => serverNotices.report(warning))
+    reportClearSigningTrust(serverNotices, TRUSTS_REFERENCE_KEY)
 
     // Use CLI port override or config port
     const port = opts.port ? Number(opts.port) : config.server.port

@@ -344,7 +344,11 @@ function jsonObject(members: [string, string][]): string {
 //   U+1160, U+3164 and U+FFA0, which render blank;
 // - U+2800, the blank Braille cell.
 // Descriptor text rejects the same set.
-export const UNSAFE_CLASS = String.raw`\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Co}\p{Default_Ignorable_Code_Point}⠀`
+// U+2800 is written as an escape, so the source does not hide a blank character.
+const BLANK_BRAILLE_CELL = '\\u2800'
+export const UNSAFE_CLASS =
+    String.raw`\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Co}\p{Default_Ignorable_Code_Point}` +
+    BLANK_BRAILLE_CELL
 
 /** Nonspacing and enclosing marks: the marks that stack on the character before them. */
 export const STACKING_MARK_CLASS = String.raw`\p{Mn}\p{Me}`

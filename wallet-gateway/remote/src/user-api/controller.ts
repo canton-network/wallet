@@ -13,7 +13,6 @@ import {
 } from '@canton-network/core-rpc-errors'
 import type { SigningProvider } from '@canton-network/core-signing-lib'
 import {
-    assertDescriptorSize,
     DescriptorError,
     parseDescriptor,
     parseJsonStrict,
@@ -1497,7 +1496,6 @@ export const userController = ({
             let json: unknown
             let parsed: Descriptor
             try {
-                assertDescriptorSize(params.descriptor)
                 json = parseJsonStrict(params.descriptor)
                 parsed = parseDescriptor(json)
             } catch (error) {

@@ -16,8 +16,7 @@
         "$comment": {
             "title": "Comment",
             "type": "string",
-            "description": "An optional comment documenting the purpose of the file. It has no effect on interpretation.",
-            "maxLength": 4096
+            "description": "An optional comment documenting the purpose of the file. It has no effect on interpretation."
         },
 
         "context": {
@@ -100,14 +99,12 @@
                 "publisher": {
                     "title": "Publisher",
                     "description": "The claimed publisher or author of the descriptor.",
-                    "$ref": "#/$definitions/trimmedLine",
-                    "maxLength": 256
+                    "$ref": "#/$definitions/trimmedLine"
                 },
                 "name": {
                     "title": "Descriptor Name",
                     "description": "A human-readable name for the descriptor.",
-                    "$ref": "#/$definitions/trimmedLine",
-                    "maxLength": 256
+                    "$ref": "#/$definitions/trimmedLine"
                 },
                 "url": {
                     "title": "Provenance URL",
@@ -127,7 +124,6 @@
             "title": "Enums",
             "type": "object",
             "description": "Named tables that the enum format uses to replace a value with a human-readable string. Each table is referenced as $.metadata.enums.ENUM_NAME. A table name cannot be __proto__.",
-            "maxProperties": 256,
             "propertyNames": {
                 "allOf": [
                     { "$ref": "#/$definitions/identifier" },
@@ -139,7 +135,6 @@
                 "type": "object",
                 "description": "Keys are Daml enum constructor names, or true and false for a Bool. Values are the displayed strings. A value missing from the table fails formatting; it is never shown raw. A key cannot be __proto__.",
                 "minProperties": 1,
-                "maxProperties": 1024,
                 "propertyNames": {
                     "allOf": [
                         {
@@ -153,8 +148,7 @@
                     ]
                 },
                 "additionalProperties": {
-                    "$ref": "#/$definitions/displayText",
-                    "maxLength": 256
+                    "$ref": "#/$definitions/displayText"
                 }
             }
         }
@@ -193,7 +187,6 @@
                     "type": "array",
                     "description": "Definitions for exercise nodes. Each entry names a choice and, when the choice is exercised through an interface, that interface. An entry matches a node when its choice and its interface both equal the node's. An entry without an interface also matches an exercise of that choice through an interface when no entry names that choice and that interface. An entry that names an interface matches only a node exercised through that interface.",
                     "minItems": 1,
-                    "maxItems": 256,
                     "items": {
                         "$ref": "#/$display/exercise"
                     }
@@ -269,20 +262,17 @@
                 "intent": {
                     "title": "Intent",
                     "description": "A stable description of the operation, shown when there is no interpolatedIntent. It must not contain a placeholder. It is not shown when a placeholder cannot be filled.",
-                    "$ref": "#/$definitions/stableIntent",
-                    "maxLength": 512
+                    "$ref": "#/$definitions/stableIntent"
                 },
                 "interpolatedIntent": {
                     "title": "Interpolated Intent",
                     "description": "The intent with {path} placeholders. Each placeholder names a field of the same operation and shows that field's value. {{ and }} are literal braces.",
-                    "$ref": "#/$definitions/displayText",
-                    "maxLength": 512
+                    "$ref": "#/$definitions/displayText"
                 },
                 "fields": {
                     "title": "Fields",
                     "type": "array",
                     "description": "The ordered fields the operation displays.",
-                    "maxItems": 256,
                     "items": {
                         "$ref": "#/$format/field"
                     }
@@ -297,8 +287,7 @@
             "title": "Path",
             "type": "string",
             "description": "A path to a value. No prefix starts at the create or choice argument. '@.contract.' starts at the exercised contract's create argument and continues with at least one step. '@.contractId', '@.signatories', '@.stakeholders', '@.synchronizerId' and '@.actAs' read the prepared transaction, on a create and an exercise. '@.actingParties', '@.choiceObservers' and '@.consuming' do so on an exercise only. A name selects a record field, or the payload of the variant constructor of that name; a different constructor fails. [\"key\"] selects a text-map entry. Some is unwrapped at every step. None at any step, or a record field the ledger left out, makes the value None. A final length on a list or text map is its number of elements. A list or map should be shown whole, with raw.",
-            "maxLength": 1024,
-            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.contract\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs|actingParties|choiceObservers|consuming))$"
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.contract\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs|actingParties|choiceObservers|consuming))$"
         },
 
         "field": {
@@ -313,8 +302,7 @@
                 "label": {
                     "title": "Field Label",
                     "description": "The label displayed in front of the formatted value.",
-                    "$ref": "#/$definitions/displayText",
-                    "maxLength": 256
+                    "$ref": "#/$definitions/displayText"
                 },
                 "format": {
                     "$ref": "#/$format/names"
@@ -355,8 +343,7 @@
             "title": "Create Path",
             "type": "string",
             "description": "A path on a create: an argument path, or a container field shared with exercises. '@.contract.' and the exercise-only container fields are not valid here.",
-            "maxLength": 1024,
-            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs))$"
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*(?:\\.[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\])*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs))$"
         },
 
         "names": {
@@ -424,7 +411,6 @@
             "title": "Signature Section",
             "type": "array",
             "description": "Signatures over the UTF-8 of the RFC 8785 canonical form of this descriptor with this array removed. The entries are independent, so their order does not matter. It does not establish that the publisher is trusted; a wallet decides that from its own set of keys.",
-            "maxItems": 16,
             "items": {
                 "$ref": "#/$signatures/entry"
             }
@@ -472,20 +458,20 @@
         "displayText": {
             "title": "Display Text",
             "type": "string",
-            "description": "Text shown to the user. It contains a non-whitespace character. It has no control, format, line separator, paragraph separator, private-use or default-ignorable character (such as the Hangul fillers U+115F, U+1160, U+3164 and U+FFA0), no U+2800, and no run of more than two nonspacing or enclosing marks. Lengths are capped where the text is used.",
-            "pattern": "^(?!.*[\\p{Mn}\\p{Me}]{3})[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]*[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀][^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]*$"
+            "description": "Text shown to the user. It contains a non-whitespace character. It has no control, format, line separator, paragraph separator, private-use or default-ignorable character (such as the Hangul fillers U+115F, U+1160, U+3164 and U+FFA0), no U+2800, and no run of more than two nonspacing or enclosing marks.",
+            "pattern": "^(?!.*[\\p{Mn}\\p{Me}]{3})[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]*[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800][^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]*$"
         },
         "trimmedLine": {
             "title": "Trimmed Line",
             "type": "string",
             "description": "Display text with no leading or trailing whitespace.",
-            "pattern": "^(?!.*[\\p{Mn}\\p{Me}]{3})[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀](?:[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]*[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀])?$"
+            "pattern": "^(?!.*[\\p{Mn}\\p{Me}]{3})[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800](?:[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]*[^\\s\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800])?$"
         },
         "stableIntent": {
             "title": "Stable Intent",
             "type": "string",
             "description": "Display text with no leading or trailing whitespace and no braces, so it cannot contain a placeholder.",
-            "pattern": "^(?!.*[\\p{Mn}\\p{Me}]{3})[^\\s{}\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀](?:[^\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀]*[^\\s{}\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}⠀])?$"
+            "pattern": "^(?!.*[\\p{Mn}\\p{Me}]{3})[^\\s{}\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800](?:[^{}\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800]*[^\\s{}\\p{Cc}\\p{Cf}\\p{Zl}\\p{Zp}\\p{Co}\\p{Default_Ignorable_Code_Point}\\u2800])?$"
         }
     }
 }

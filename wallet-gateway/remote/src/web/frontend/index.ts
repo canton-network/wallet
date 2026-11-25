@@ -11,10 +11,14 @@ import {
     toRelHref,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-import { css, html, LitElement } from 'lit'
+import { css, html, LitElement, nothing } from 'lit'
 import '@canton-network/core-wallet-ui-components'
 import { customElement, state } from 'lit/decorators.js'
 
+import {
+    REFERENCE_KEY_WARNING,
+    trustsReferenceKey,
+} from './clear-signing-trust.ts'
 import {
     DEFAULT_PAGE_REDIRECT,
     NOT_FOUND_PAGE_REDIRECT,
@@ -61,6 +65,16 @@ export class UserApp extends LitElement {
         .loading {
             color: var(--wg-text-secondary);
             margin-bottom: var(--wg-space-3);
+        }
+
+        .reference-key-warning {
+            margin-bottom: var(--wg-space-4);
+            padding: var(--wg-space-3) var(--wg-space-4);
+            border: 1px solid var(--bs-warning-border-subtle, #ffe69c);
+            border-radius: var(--wg-radius-md);
+            background: var(--bs-warning-bg-subtle, #fff3cd);
+            color: var(--bs-warning-text-emphasis, #664d03);
+            font-size: 0.875rem;
         }
     `
 
@@ -192,6 +206,13 @@ export class UserApp extends LitElement {
                 <user-ui-auth-redirect
                     @auth-settled=${this.handleAuthSettled}
                 ></user-ui-auth-redirect>
+                ${
+                    trustsReferenceKey()
+                        ? html`<div class="reference-key-warning" role="alert">
+                              ${REFERENCE_KEY_WARNING}
+                          </div>`
+                        : nothing
+                }
                 ${
                     this.showPage
                         ? html`<slot></slot>`

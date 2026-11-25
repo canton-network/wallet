@@ -8,9 +8,9 @@
  * requires I-JSON (RFC 7493), which forbids both. A descriptor is text until this parser has
  * accepted it, so a duplicate cannot be dropped before the signature is checked.
  *
- * A member named `__proto__` is stored as an own data property. Nesting deeper than
- * {@link MAX_JSON_NESTING_DEPTH} is rejected, which RFC 8259 section 9 allows: past that depth the
- * parser would throw a `RangeError` instead of reporting the document.
+ * A member named `__proto__` is stored as an own data property. There is no nesting limit. The
+ * parser recurses, so a document nested deeper than the JavaScript stack allows is reported as an
+ * error of this parser, not as the engine's `RangeError`.
  */
 export class StrictJsonError extends Error {
     constructor(message: string) {
@@ -21,36 +21,19 @@ export class StrictJsonError extends Error {
 
 const NUMBER = /^-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?/
 
-/**
- * The deepest array or object accepted, counting the root as 1.
- * `canonicalize` uses the same limit.
- */
-export const MAX_JSON_NESTING_DEPTH = 64
-
-/** The largest descriptor text accepted, in UTF-8 bytes. Longer text is refused before it is parsed. */
-export const MAX_DESCRIPTOR_BYTES = 256 * 1024
-
-/**
- * Throws when `text` is longer than {@link MAX_DESCRIPTOR_BYTES} in UTF-8. A UTF-16 code unit is at
- * least one UTF-8 byte, so text with more code units than the cap is refused without encoding it.
- *
- * @throws StrictJsonError
- */
-export function assertDescriptorSize(text: string): void {
-    const tooLong =
-        text.length > MAX_DESCRIPTOR_BYTES ||
-        new TextEncoder().encode(text).length > MAX_DESCRIPTOR_BYTES
-    if (tooLong) {
-        throw new StrictJsonError(
-            `descriptor is larger than ${MAX_DESCRIPTOR_BYTES} bytes`
-        )
-    }
-}
-
 /** Parses `text` as I-JSON. @throws StrictJsonError */
 export function parseJsonStrict(text: string): unknown {
     const parser = new Parser(text)
-    const value = parser.parseValue('$', 1)
+    let value: unknown
+    try {
+        value = parser.parseValue('$')
+    } catch (err) {
+        // The engine's stack overflow, on nesting deeper than this recursive parser can follow.
+        if (err instanceof RangeError) {
+            throw new StrictJsonError('nesting is too deep for this parser')
+        }
+        throw err
+    }
     parser.skipWs()
     if (!parser.done()) {
         throw new StrictJsonError(`trailing data at offset ${parser.offset()}`)
@@ -71,11 +54,11 @@ class Parser {
         return this.i >= this.text.length
     }
 
-    parseValue(path: string, depth: number): unknown {
+    parseValue(path: string): unknown {
         this.skipWs()
         const c = this.peek()
-        if (c === '{') return this.parseObject(path, depth)
-        if (c === '[') return this.parseArray(path, depth)
+        if (c === '{') return this.parseObject(path)
+        if (c === '[') return this.parseArray(path)
         if (c === '"') return this.parseString(path)
         if (c === 't') return this.literal('true', true)
         if (c === 'f') return this.literal('false', false)
@@ -101,8 +84,7 @@ class Parser {
         }
     }
 
-    private parseObject(path: string, depth: number): Record<string, unknown> {
-        this.assertDepth(path, depth)
+    private parseObject(path: string): Record<string, unknown> {
         this.expect('{')
         this.skipWs()
         const object: Record<string, unknown> = {}
@@ -123,11 +105,7 @@ class Parser {
             seen.add(key)
             this.skipWs()
             this.expect(':')
-            setMember(
-                object,
-                key,
-                this.parseValue(childPath(path, key), depth + 1)
-            )
+            setMember(object, key, this.parseValue(childPath(path, key)))
             this.skipWs()
             const next = this.peek()
             if (next === ',') {
@@ -142,8 +120,7 @@ class Parser {
         }
     }
 
-    private parseArray(path: string, depth: number): unknown[] {
-        this.assertDepth(path, depth)
+    private parseArray(path: string): unknown[] {
         this.expect('[')
         this.skipWs()
         const items: unknown[] = []
@@ -152,7 +129,7 @@ class Parser {
             return items
         }
         for (;;) {
-            items.push(this.parseValue(`${path}[${items.length}]`, depth + 1))
+            items.push(this.parseValue(`${path}[${items.length}]`))
             this.skipWs()
             const next = this.peek()
             if (next === ',') {
@@ -287,14 +264,6 @@ class Parser {
 
     private peek(): string | undefined {
         return this.text[this.i]
-    }
-
-    private assertDepth(path: string, depth: number): void {
-        if (depth > MAX_JSON_NESTING_DEPTH) {
-            throw this.fail(
-                `nesting is deeper than ${MAX_JSON_NESTING_DEPTH} at ${path}`
-            )
-        }
     }
 
     private fail(message: string): StrictJsonError {

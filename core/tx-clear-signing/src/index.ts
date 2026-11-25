@@ -14,12 +14,7 @@ export {
     parseDescriptorText,
     type Descriptor,
 } from './descriptor.ts'
-export {
-    assertDescriptorSize,
-    MAX_DESCRIPTOR_BYTES,
-    parseJsonStrict,
-    StrictJsonError,
-} from './strict-json.ts'
+export { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 export {
     signDescriptor,
     signingMessage,
@@ -28,4 +23,10 @@ export {
     type SignatureVerification,
     type TrustedKey,
 } from './signature.ts'
-export { REFERENCE_SIGNER, TRUSTED_KEYS } from './trusted-keys.ts'
+export {
+    REFERENCE_PUBLIC_KEY,
+    REFERENCE_SIGNER,
+    TRUSTED_KEYS,
+    TrustedKeysError,
+    TRUSTS_REFERENCE_KEY,
+} from './trusted-keys.ts'

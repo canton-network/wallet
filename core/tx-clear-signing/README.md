@@ -2,7 +2,7 @@
 
 Describes a Canton prepared transaction in words, before it is signed. `clearSign` takes the prepared-transaction bytes, the hash the user is asked to approve, and any number of clear-signing descriptors. It returns one operation per root node, in root order. A descriptor can word a create or an exercise. Every other root is still returned.
 
-A descriptor is one JSON document bound to one Daml template, by package ID, module and entity. It has a stable sentence, an optional sentence with placeholders, and typed fields. The document format is the v1 Canton Clear Signing Descriptor schema, modelled on ERC-7730. The schema is [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json). The next section is the map of that document. The tests run every example through the schema and through the parser `clearSign` uses.
+A descriptor is one JSON document bound to one Daml template, by package ID, module and entity. It has a stable sentence, an optional sentence with placeholders, and typed fields. The format is the v1 Canton Clear Signing Descriptor, modelled on ERC-7730, and is described under [The descriptor document](#the-descriptor-document).
 
 ## Example descriptors
 
@@ -57,11 +57,13 @@ Other Splice roots:
 - [otc-trade-proposal.json](examples/descriptors/splice/otc-trade-proposal.json) — `Splice.Testing.Apps.TradingApp:OTCTradeProposal`.
 - [batching-utility.json](examples/descriptors/splice/batching-utility.json) — `Splice.Util.Token.Wallet.BatchingUtilityV2:BatchingUtility`.
 
-[examples/descriptors/invalid](examples/descriptors/invalid) holds descriptors the schema rejects. The parser rejects each of them too. The file name is the rejection.
+[examples/descriptors/invalid](examples/descriptors/invalid) holds descriptors the schema rejects. The parser rejects each of them too. The file name is the rejection. The tests run every example through the schema and through the parser `clearSign` uses.
 
 ## The descriptor document
 
-A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example. A descriptor must not contain duplicate keys on any layer. A descriptor containing duplicate keys should get rejected by `clearSign`.
+A descriptor is one JSON object. [canton-clear-signing-v1.schema.json](canton-clear-signing-v1.schema.json) is the specification of that object. Every field the schema defines is described there. This section is the map of the document: what the top-level keys are, and what each one holds. [examples/descriptors/ping.json](examples/descriptors/ping.json) is a complete example.
+
+A descriptor must be I-JSON (RFC 7493): no duplicate member names on any level, well-formed Unicode, and numbers an IEEE 754 double represents, so integers are limited to 53 bits. A processor must reject a descriptor that is not, and `clearSign` does. No Unicode normalization is mandated: a processor must not normalize, or decode and re-encode, in a way that changes code points.
 
 The object has two keys that are not sections, `$schema` and `$comment`, and four sections: `context`, `metadata`, `display` and `signatures`.
 
@@ -77,13 +79,13 @@ The object has two keys that are not sections, `$schema` and `$comment`, and fou
 - `moduleName`, the dotted module name, such as `Canton.Internal.Ping`.
 - `entityName`, the template name in that module, such as `Ping`.
 
-A descriptor binds to a root only when all three equal that root's template ID. A second descriptor for the same three leaves the root `invalid`, if both descriptors are part of the call to `clearSign`.
+A descriptor binds to a root only when all three equal that root's template ID. [The descriptors](#the-descriptors) under Input describes the binding.
 
 ### `metadata`
 
 `metadata` describes the descriptor file itself. It does not describe the transaction.
 
-`version`, `publisher` and `name` are required. `version` is the semver of this descriptor's wording, independent of the schema version. `publisher` and `name` are the claimed author and a human-readable title. A signature does not check that claim. `signedBy`, on a described operation, names the trusted keys that signed the descriptor.
+`version`, `publisher` and `name` are required. `version` is the semver of this descriptor's wording, independent of the schema version. `publisher` and `name` are the claimed author and a human-readable title. A signature does not check that claim; see [Verification](#verification).
 
 `url` is optional. It is a URI with more information about the publisher or the application.
 
@@ -96,7 +98,7 @@ A descriptor binds to a root only when all three equal that root's template ID. 
 - `create`, one operation, used when the root is a create.
 - `exercises`, a list of one or more exercise entries, used when the root is an exercise.
 
-At least one of the two must be present. A create root whose descriptor has no `create`, or an exercise root whose list has no matching entry, is `undescribed`. The displayed sentence is then the generic `Create Module:Entity` or `Exercise Choice on Module:Entity`.
+At least one of the two must be present. A create root whose descriptor has no `create`, or an exercise root whose list has no matching entry, is [`undescribed`](#undescribed).
 
 An operation, whether `create` or `exercise`, has:
 
@@ -140,11 +142,10 @@ Five paths read the prepared transaction on both a create and an exercise: `@.co
 - `boolean` shows a `Bool` as `true` or `false`.
 - `party` shows a party identifier of 1 to 255 letters, digits, colons, minuses and underscores. A space is legal on the ledger and fails the field, so a party cannot extend the sentence.
 - `contractId` shows a contract identifier in full.
-- `dateTime` shows a `Time` as an ISO 8601 UTC timestamp with microseconds, or a `Date` as `YYYY-MM-DD`.
+- `dateTime` shows a `Time` as an ISO 8601 UTC timestamp with microseconds, or a `Date` as `YYYY-MM-DD`. A value outside Daml's range, 0001-01-01 to 9999-12-31, fails the field, here and under `raw`. The hasher refuses such a transaction first, so `clearSign` does not reach this.
 - `duration` shows a `DA.Time` `RelTime` in days, hours, minutes and seconds, such as `1d 2h 0.5s`.
 - `enum` shows the table entry for an enum constructor, a variant constructor with no payload, or a `Bool`. The table is the one named by `params`. A value missing from the table fails the field.
 - `raw` shows any value: a record, list or map as JSON, a variant as an object keyed by its constructor, `Text` as a JSON string literal, and other scalars as they are. Every entry is written, in order. A text-map key or a record label that occurs twice is shown twice, as `{"to":"alice","to":"mallory"}`, never merged. A record field with an empty label is keyed by its position.
-- `dateTime`, and `raw` on a timestamp or date, fail a value outside Daml's range, 0001-01-01 to 9999-12-31. The hasher refuses such a transaction first, so `clearSign` does not reach this.
 
 Text shown to the user, including labels, intents and enum entries, cannot contain:
 
@@ -156,33 +157,17 @@ Text shown to the user, including labels, intents and enum entries, cannot conta
 
 The same characters in a value or name read from the transaction are shown escaped as `\u{...}`. So are unassigned code points, and every mark after the second in a run. Descriptor text does not reject unassigned code points, because which code points are assigned depends on the JavaScript engine's Unicode version. Characters that only look like others, such as a Cyrillic `С` in `USDС`, are not flagged.
 
-### Size limits
-
-The caps guard against abuse. How much of a long text fits on a screen is the wallet's concern. Lengths count Unicode code points, as JSON Schema's `maxLength` does. The schema states each cap, and [src/descriptor.ts](src/descriptor.ts) exports them as `LIMITS`.
-
-| What                                        | Cap             |
-| ------------------------------------------- | --------------- |
-| `label`, `publisher`, `name`, an enum entry | 256 characters  |
-| `intent`, `interpolatedIntent`              | 512 characters  |
-| `$comment`                                  | 4096 characters |
-| `path`                                      | 1024 characters |
-| `fields` of one operation                   | 256             |
-| `exercises`                                 | 256             |
-| enum tables                                 | 256             |
-| entries in one enum table                   | 1024            |
-| `signatures`                                | 16              |
-
-Descriptor text larger than 256 KiB of UTF-8 (`MAX_DESCRIPTOR_BYTES`) is refused before it is parsed. An upload is rejected. In `clearSign`, such a text is ignored, because it is not read far enough to find the template it names.
-
 ### What the parser checks beyond the schema
 
-A descriptor is I-JSON (RFC 7493). [src/strict-json.ts](src/strict-json.ts) rejects duplicate member names, lone surrogates, non-finite numbers and trailing data before the schema runs. A member named `__proto__` is an ordinary member: it is kept, and it does not change the object's prototype. Nesting deeper than 64 arrays or objects is rejected. JSON Schema cannot express those rules. `parseDescriptorText` is that parse followed by the schema.
+JSON Schema cannot express the I-JSON rules above. [src/strict-json.ts](src/strict-json.ts) applies them before the schema runs: it rejects duplicate member names, lone surrogates, non-finite numbers and trailing data. A member named `__proto__` is an ordinary member: it is kept, and it does not change the object's prototype. `parseDescriptorText` is that parse followed by the schema.
+
+The format has no limit on length, size or nesting, as ERC-7730 has none. The parser and the canonicalizer recurse, so a document nested deeper than the JavaScript stack is reported as `nesting is too deep for this parser` instead of crashing. That is a limit of this implementation, not of the format.
 
 [src/descriptor.ts](src/descriptor.ts) rejects a document the schema rejects. It then rejects a document the schema accepts when one of these is true: a path is declared twice in one operation, a `{path}` placeholder does not equal the path of a field of that operation, an enum reference does not name a table in `metadata`, or two exercise entries share a choice and interface. A descriptor that fails and still names a root's template leaves that root `invalid`. The other roots are still described.
 
 ### `signatures`
 
-`signatures` is optional (but in this reference implementation required). It is an array of signatures over the descriptor with this array removed. Each entry is an object:
+`signatures` is optional in the format and required by this implementation. It is an array of signatures over the descriptor with this array removed. Omitting it and sending an empty array mean the same: the descriptor has no signature. Each entry is an object:
 
 - `scheme`, required. A string. The reference implementation verifies `ed25519` and rejects any other value.
 - `hashAlgorithm`, optional. A string. It is not supported. A signature that sets it fails verification. When it is omitted, the signature is over the canonical bytes. Ed25519 hashes internally.
@@ -191,34 +176,77 @@ A descriptor is I-JSON (RFC 7493). [src/strict-json.ts](src/strict-json.ts) reje
 
 Both must be canonical base64, as `decodeBase64` of `@canton-network/core-tx-hashing` accepts it: padded, and with the unused bits of the last character zero. Another encoding of the same bytes does not decode, and the signature is reported as `could not be decoded`.
 
-No other field is allowed. The entries are independent, so their order does not matter. Omitting the array and sending an empty array have the same effect: the descriptor has no signature.
+No other field is allowed. The entries are independent, so their order does not matter.
 
 ### Signing a descriptor
 
 The signed message is the descriptor with `signatures` removed. `$comment` and `$schema` are part of the message.
 
-1. Remove `signatures`.
-2. Serialize the remaining value with RFC 8785 (JSON Canonicalization Scheme). Object keys are sorted by UTF-16 code unit. There is no whitespace. Strings and numbers use the ECMAScript `JSON.stringify` rules. A lone surrogate, a non-finite number, or nesting deeper than 64 arrays or objects is rejected. Encode that text as UTF-8.
-3. Sign with Ed25519.
-4. Append the signature entry to `signatures`.
+1. Parse the document as I-JSON, rejecting what [The descriptor document](#the-descriptor-document) forbids.
+2. Remove the top-level `signatures` member entirely.
+3. Serialize the result using JCS (RFC 8785), and encode that text as UTF-8.
 
-`signDescriptor` does this. `signingMessage` returns the canonical bytes. [examples/sign-descriptors.ts](examples/sign-descriptors.ts) signs every file in [examples/descriptors](examples/descriptors) with the reference key.
+If no hashing algorithm is given, the serialized JSON is input verbatim to the signing algorithm; otherwise it is hashed using the specified algorithm and that hash is provided as input. The resulting signature is placed in a JSON object representing the signature tuple, which in turn is placed in the `signatures` array of the descriptor.
+
+```json
+{
+    "scheme": "...",
+    "publicKey": "...",
+    "signature": "..."
+}
+```
+
+Formats depend on the algorithm in question.
+
+| `scheme`  | Key Format                                     | Signature Format                                                                    | Remarks                                                                          |
+| --------- | ---------------------------------------------- | ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `ed25519` | 32-byte raw encoding (RFC 8032, Section 5.1.5) | 64 bytes (RFC 8032, Section 5.1.6). Verifiers must reject non-canonical S (S >= L). | Pure `ed25519` (RFC 8032), not `ed25519ph/ctx.` `hashAlgorithm` must be omitted. |
+
+Keys and signatures are canonical base64, as described under [`signatures`](#signatures).
+
+`signDescriptor(json, privateKey)` signs with any Ed25519 private key, given as a JWK, and appends the entry. `signingMessage` returns the bytes that are signed. `signWithReferenceKey`, from `@canton-network/core-tx-clear-signing/testing`, signs with the reference key. [examples/sign-descriptors.ts](examples/sign-descriptors.ts) uses it to sign every file in [examples/descriptors](examples/descriptors).
 
 ### Verification
 
-`clearSign` checks the hash of the prepared transaction first. It then checks each descriptor that binds to a root, before it parses that descriptor. A descriptor that binds to no root is not checked.
+`clearSign` checks the signatures of each descriptor that binds to a root, before it parses that descriptor. A descriptor that binds to no root is not checked.
 
-A descriptor is verified when it has at least one signature and every signature verifies. A signature verifies when the signature bytes are valid for the embedded public key and that key is in [src/trusted-keys.ts](src/trusted-keys.ts) (`TRUSTED_KEYS`), matched on scheme and key bytes. One signature from a key that is not in the list leaves the descriptor unverified, including when another signature is from a trusted key.
+The semantics of verification is up to the implementation. In this specific implementation, a descriptor is verified when it has at least one signature and every signature verifies. A signature verifies when the signature bytes are valid for the embedded (in the descriptor) public key and that key is configured as a trusted key within the `clearSign` boundary, matched on scheme and key bytes. One signature from a key that is not in the list leaves the descriptor unverified, including when another signature is from a trusted key.
+
+In general, the existence of one or more signatures does not indicate that a descriptor is trustworthy. Wallet implementers may include a truststore and verify signatures against those public keys. It is up to the implementer how this truststore is populated. Further, the semantics of this verification is out of scope. Possibilities include "at least one" or "M-of-N signatures must verify".
 
 A root bound to an unverified descriptor has status `unverified`. `intent` is the generic sentence, `fields` is empty, and `descriptor` is absent. `reason` lists the problems, joined with `; `. The other roots are still described. `clearSign` does not throw.
 
-A verified descriptor that then fails to parse leaves the root `invalid`, as before. A descriptor that is both unsigned and malformed is `unverified`.
-
-The list shipped with this package contains one key, named `reference`. Its private key is in [src/testing/reference-key.ts](src/testing/reference-key.ts), exported as `@canton-network/core-tx-clear-signing/testing`, so the examples and the tests can sign. That private key is not a secret. A deployment that trusts a descriptor author replaces `TRUSTED_KEYS` with that author's public key. Removing a key from the list is how a signature from it stops being accepted. v1 has no expiry and no revocation record.
-
-`verifySignatures(json)` checks the embedded keys only. `verifySignatures(json, TRUSTED_KEYS)` is what `clearSign` calls. Storing a descriptor uses the first form, so a descriptor can be kept while the trusted list still changes.
+A verified descriptor that then fails to parse leaves the root `invalid`. A descriptor that is both unsigned and malformed is `unverified`.
 
 A signature establishes that the holder of the key signed these bytes. It does not establish that the wording is right, or that `publisher` is true.
+
+### Trusted keys
+
+In this implementation, the trusted keys are in a config file, [src/trusted-keys.json](src/trusted-keys.json):
+
+```json
+{
+    "trustedKeys": [
+        {
+            "name": "reference",
+            "scheme": "ed25519",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}
+```
+
+A deployment trusts the signer of a descriptor when the signer's public key is in that file. Removing a key is how a signature from it stops being accepted. v1 has no expiry and no revocation record.
+
+The module is born with its keys:
+
+- [src/trusted-keys.ts](src/trusted-keys.ts) imports the file statically. The build inlines it into the module, and the gateway's build inlines the module into its pages. Nothing is fetched or read at runtime, and `clearSign` takes no keys from its caller. Changing the keys means rebuilding.
+- The file is validated when the module loads. Each entry has a non-empty `name`, `scheme` `ed25519`, and a `publicKey` that is canonical base64 of 32 bytes. No name and no key appears twice, and no other field is allowed. Anything else throws `TrustedKeysError`, so the module, and the page or gateway that loads it, fails instead of running with a wrong trust set. An empty list is valid: then no descriptor verifies.
+- The loaded list is frozen and exported as `TRUSTED_KEYS`.
+
+This implementation ships with a fixed private key in [src/testing/reference-key.ts](src/testing/reference-key.ts), exported as `@canton-network/core-tx-clear-signing/testing`, so the examples and the tests can sign. That private key is not a secret. The shipped config trusts its public key, named `reference`, so the examples verify. The reference public key is also fixed in the code, as `REFERENCE_PUBLIC_KEY`, for one purpose: `TRUSTS_REFERENCE_KEY` is true while the config contains that key, compared by key bytes under any name. While it is true, the remote gateway shows every user a warning on every page, and reports a `warning` notice to administrators at startup. The reference key must be removed from the config for a trustworthy deployment.
+
+`verifySignatures(json)` checks the embedded keys only. `verifySignatures(json, TRUSTED_KEYS)` is what `clearSign` calls. Storing a descriptor uses the first form, so a descriptor can be kept while the trusted keys change.
 
 ## Usage
 
@@ -234,9 +262,17 @@ const { complete, operations } = await clearSign(
 )
 ```
 
-`operations` has one entry per root, in root order. `operations[0].intent` is the sentence. `operations[0].fields` is the rows: `{ label, value }` when the row resolved, `{ label, error }` when it did not. `complete` is true when every root is `described` and every row has a value.
+The arguments are described under [Input](#input) and the result under [Output](#output).
 
-The package exports `clearSign`, `HashMismatchError`, `signDescriptor`, `signingMessage`, `verifySignatures`, `canonicalize`, `TRUSTED_KEYS`, and the types `ClearSigningResult`, `Descriptor`, `DescriptorSignature` and `TrustedKey`. `Descriptor` is the parsed document. `clearSign` accepts the JSON values and parses them. The arguments and the result are described under Input and Output. `@canton-network/core-tx-clear-signing/testing` exports the reference private key.
+The package exports:
+
+- describing: `clearSign`, `HashMismatchError`, and the type `ClearSigningResult`;
+- descriptors: `parseDescriptorText`, `parseDescriptor`, `DescriptorError`, `readDescriptorTemplate`, and the type `Descriptor`, the parsed document;
+- strict JSON: `parseJsonStrict`, `StrictJsonError`, `canonicalize`, `CanonicalizeError`;
+- signatures: `signDescriptor`, `signingMessage`, `verifySignatures`, and the types `DescriptorSignature`, `SignatureVerification` and `TrustedKey`;
+- trusted keys: `TRUSTED_KEYS`, `TrustedKeysError`, `REFERENCE_SIGNER`, `REFERENCE_PUBLIC_KEY` and `TRUSTS_REFERENCE_KEY`.
+
+`@canton-network/core-tx-clear-signing/testing` exports the reference private key and `signWithReferenceKey`.
 
 ### The examples
 
@@ -254,12 +290,6 @@ pnpm exec tsx core/tx-clear-signing/examples/showcase.ts
 
 [examples/allocation.ts](examples/allocation.ts) is one `AllocationFactory_Allocate`, exercised through the V2 allocation-factory interface on `ExternalPartyAmuletRules`. The capture and [amulet-external-party-amulet-rules.json](examples/descriptors/splice/amulet-external-party-amulet-rules.json) are both splice-amulet 0.1.25. The sentence is one settlement of two legs, and it is `intent` in that file.
 
-[examples/sign-descriptors.ts](examples/sign-descriptors.ts) signs every descriptor under [examples/descriptors](examples/descriptors) with the reference key. Run it after changing a descriptor's wording. A second run writes the same bytes.
-
-```bash
-pnpm exec tsx core/tx-clear-signing/examples/sign-descriptors.ts
-```
-
 [examples/showcase.ts](examples/showcase.ts) is three roots in one transaction, described with that same factory descriptor and [amulet-allocation-v2.json](examples/descriptors/splice/amulet-allocation-v2.json):
 
 1. A transfer through the factory on `ExternalPartyAmuletRules`.
@@ -267,6 +297,12 @@ pnpm exec tsx core/tx-clear-signing/examples/sign-descriptors.ts
 3. The withdrawal of an earlier allocation, exercised on `AmuletAllocationV2`.
 
 The three sentences are `intents` in that file, in root order.
+
+[examples/sign-descriptors.ts](examples/sign-descriptors.ts) signs every descriptor under [examples/descriptors](examples/descriptors) with the reference key. Run it after changing a descriptor's wording. A second run writes the same bytes.
+
+```bash
+pnpm exec tsx core/tx-clear-signing/examples/sign-descriptors.ts
+```
 
 ## Input
 
@@ -284,7 +320,7 @@ A transaction with no `transaction` message, or with no roots, is refused by the
 
 `descriptors` is any number of JSON texts, valid or not. A text is parsed when it names a root.
 
-Each text is parsed strictly first. A duplicate member name, a lone surrogate, text that is not JSON, or nesting deeper than 64 arrays or objects leaves a bound root `invalid`. `reason` is that problem. `JSON.parse` is used only to find which root the bad text would have bound to. A text that cannot be read, or that names no root, is ignored.
+Each text is parsed strictly first. A duplicate member name, a lone surrogate, or text that is not JSON leaves a bound root `invalid`. `reason` is that problem. `JSON.parse` is used only to find which root the bad text would have bound to. A text that cannot be read, or that names no root, is ignored.
 
 A document binds to a root when `context.template.packageId`, `moduleName` and `entityName` are non-empty strings and all three equal that root's template ID. The comparison is exact, including the package ID. The key is `packageId:moduleName:entityName`.
 
@@ -402,7 +438,7 @@ The signing provider signs the hash of the prepared-transaction bytes. The sente
 
 The remote gateway's `/approve` page, [wallet-gateway/remote/src/web/frontend/approve/index.ts](../../wallet-gateway/remote/src/web/frontend/approve/index.ts), loads the stored prepared transaction and its stored hash, and the descriptor texts stored for the logged-in user. When the descriptor load throws, the list is empty. The page then calls `clearSign` with the stored bytes, that list, and the stored hash. With an empty list, each create and each exercise comes back `undescribed`.
 
-An upload on `/descriptors` sends the file text unchanged. The gateway keeps it only when the text is within the size cap, parses strictly, the document is valid against the schema, and every signature verifies against the public key it contains. The signatures are checked on the strictly parsed JSON, as `clearSign` checks them. Deleting a stored descriptor reads its template leniently (`readDescriptorTemplate`), so a row that a later version of the parser rejects can still be deleted. Its card shows the parse error and a Delete button.
+An upload on `/descriptors` sends the file text unchanged. The gateway keeps it only when the text parses strictly, the document is valid against the schema, and every signature verifies against the public key it contains. The signatures are checked on the strictly parsed JSON, as `clearSign` checks them. Deleting a stored descriptor reads its template leniently (`readDescriptorTemplate`), so a row that a later version of the parser rejects can still be deleted. Its card shows the parse error and a Delete button.
 
 "What you are signing" renders `operations`. Each operation shows its `intent` and its rows. When `complete` is false, the section warns "Parts of this transaction are not described. Review the transaction JSON before approving." Below the operations is a checkbox, "I have reviewed the raw transaction and want to approve it anyway". Approve is disabled until it is ticked. It is cleared whenever the description changes. The same page shows the decoded transaction.
 
@@ -440,10 +476,10 @@ The extension approval page, [wallet-gateway/extension/entrypoints/approve/index
 [src/clear-sign.ts](src/clear-sign.ts) does the following, in order.
 
 1. **Hash** the bytes, as Input describes. The implementation is [src/hash.ts](src/hash.ts).
-2. **Decode** the same bytes to a `PreparedTransaction`, in [src/roots.ts](src/roots.ts). An unknown protobuf field throws here as well.
-3. **Read the roots**, `transaction.roots` in order. A root id with no v1 node is kept, with `nodeType` `missing`. A fetch, a rollback, a query-by-key, and an unset node type are kept as `other`. The remaining roots are still described. A create, exercise, fetch, or query-by-key with no template ID throws, and nothing is returned.
+2. **Decode** the same bytes to a `PreparedTransaction`, in [src/roots.ts](src/roots.ts). What throws here is listed under [The transaction](#the-transaction).
+3. **Read the roots**, `transaction.roots` in order. Roots that are not a create or an exercise are kept, as [`undescribable`](#undescribable) lists.
 4. **Index the contracts** an exercise can read. The index holds the v1 input contracts and every v1 create node in the transaction, root or child. A contract ID that occurs more than once is recorded and left out of the index. A later root can exercise a contract an earlier node created.
-5. **Bind** each root template to its descriptor, as Input describes. The text is parsed strictly first. A descriptor that parses is verified, as `signatures` describes. [src/descriptor.ts](src/descriptor.ts) then checks the schema.
+5. **Bind** each root template to its descriptor, as [The descriptors](#the-descriptors) describes. Its signatures are checked as [Verification](#verification) describes, and then [src/descriptor.ts](src/descriptor.ts) checks the schema.
 6. **Select the entry.** A create uses `display.create`. An exercise uses the `exercises` entry, selected as the descriptor document describes.
 7. **Resolve** each field in [src/path.ts](src/path.ts) and **format** it in [src/format.ts](src/format.ts), using the paths and formats above. **Interpolate** the sentence in [src/intent.ts](src/intent.ts). When `interpolatedIntent` is absent, the sentence is `intent`, and the fields are still resolved.
 

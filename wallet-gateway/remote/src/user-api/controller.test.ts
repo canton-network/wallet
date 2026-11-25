@@ -3,10 +3,7 @@
 
 import { errorCodes } from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
-import {
-    MAX_DESCRIPTOR_BYTES,
-    signDescriptor,
-} from '@canton-network/core-tx-clear-signing'
+import { signDescriptor } from '@canton-network/core-tx-clear-signing'
 import { signWithReferenceKey } from '@canton-network/core-tx-clear-signing/testing'
 import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
 import {
@@ -1634,31 +1631,6 @@ describe('userController', () => {
                 controller.setClearSigningDescriptor({ descriptor: text })
             ).rejects.toMatchObject({
                 message: expect.stringMatching(/duplicate key 'context'/),
-            })
-            expect(
-                (await controller.listClearSigningDescriptors()).descriptors
-            ).toEqual([])
-        })
-
-        it('rejects a descriptor larger than the size cap before parsing it', async () => {
-            const store = await createStore(logger, auth)
-            const controller = createController(
-                store,
-                notificationService,
-                logger,
-                auth
-            )
-            const body = await signWithReferenceKey({
-                ...descriptor(PKG_1, 'first'),
-                $comment: 'x'.repeat(MAX_DESCRIPTOR_BYTES),
-            })
-
-            await expect(
-                controller.setClearSigningDescriptor({
-                    descriptor: JSON.stringify(body),
-                })
-            ).rejects.toMatchObject({
-                message: expect.stringMatching(/larger than/),
             })
             expect(
                 (await controller.listClearSigningDescriptors()).descriptors

@@ -61,6 +61,12 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     }
 })
 
+const referenceKey = vi.hoisted(() => ({ trusted: true }))
+vi.mock('./clear-signing-trust.ts', () => ({
+    REFERENCE_KEY_WARNING: 'reference key warning',
+    trustsReferenceKey: () => referenceKey.trusted,
+}))
+
 vi.mock('./navigation.ts', () => ({ setLocationHref }))
 vi.mock('./rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
@@ -295,6 +301,24 @@ describe('UserApp', () => {
         expect(layout.networkName).toBe('network1')
         expect(layout.networkConnected).toBe(true)
         expect(layout.dappApiUrl).toBe('http://localhost:3030/api/v0/dapp')
+    })
+
+    it('warns on every page while the reference key is trusted', async () => {
+        const warning = el.shadowRoot?.querySelector('.reference-key-warning')
+        expect(warning?.getAttribute('role')).toBe('alert')
+        expect(warning?.textContent?.trim()).toBe('reference key warning')
+    })
+
+    it('shows no warning once the reference key is removed', async () => {
+        referenceKey.trusted = false
+        try {
+            const other = await fixture<UserApp>(componentFixture)
+            expect(
+                other.shadowRoot?.querySelector('.reference-key-warning')
+            ).toBeNull()
+        } finally {
+            referenceKey.trusted = true
+        }
     })
 
     it('passes isAdmin to the layout for the admin user', async () => {

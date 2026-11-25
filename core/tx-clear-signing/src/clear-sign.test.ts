@@ -39,7 +39,6 @@ import {
 } from './descriptor.ts'
 import { decode } from './roots.ts'
 import { signDescriptor } from './signature.ts'
-import { MAX_JSON_NESTING_DEPTH } from './strict-json.ts'
 import { signWithReferenceKey } from './testing/reference-key.ts'
 import { REFERENCE_SIGNER } from './trusted-keys.ts'
 
@@ -863,11 +862,8 @@ describe('clearSign', () => {
         expect(untrusted).not.toHaveProperty('descriptor')
     })
 
-    it('reports a descriptor nested too deeply as invalid', async () => {
-        let deep = 'null'
-        for (let i = 0; i < MAX_JSON_NESTING_DEPTH; i++) {
-            deep = `{"k":${deep}}`
-        }
+    it('reports a descriptor nested beyond the parser as invalid, not as a crash', async () => {
+        const deep = '['.repeat(1_000_000) + ']'.repeat(1_000_000)
         const text = `{"context":{"template":${JSON.stringify(ping.context.template)}},"deep":${deep}}`
         const [op] = (
             await clearSign(
@@ -879,9 +875,7 @@ describe('clearSign', () => {
         expect(op).toMatchObject({
             status: 'invalid',
             fields: [],
-            reason: expect.stringContaining(
-                `nesting is deeper than ${MAX_JSON_NESTING_DEPTH}`
-            ),
+            reason: 'nesting is too deep for this parser',
         })
         expect(op).not.toHaveProperty('descriptor')
     })

@@ -1,0 +1,10 @@
+{
+    "$comment": "Public keys whose descriptor signatures clearSign accepts. The file is bundled into the module at build time, so changing it means rebuilding. 'reference' is the published test key: anyone can sign with it. Remove it before relying on clear signing.",
+    "trustedKeys": [
+        {
+            "name": "reference",
+            "scheme": "ed25519",
+            "publicKey": "RF9nfV7c/KhUJc5wcmkWt6awyV2x8Ij/ueGQb1t9ZhQ="
+        }
+    ]
+}

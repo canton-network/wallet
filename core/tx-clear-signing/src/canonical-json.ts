@@ -1,16 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { MAX_JSON_NESTING_DEPTH } from './strict-json.ts'
-
 /**
  * RFC 8785 JSON Canonicalization Scheme.
  *
  * Object keys are sorted by UTF-16 code unit. Strings and numbers use the ECMAScript
  * `JSON.stringify` rules that the RFC adopts, and an object property whose value is `undefined`
- * is omitted, as `JSON.stringify` omits it. Lone surrogates, non-finite numbers, and nesting
- * deeper than {@link MAX_JSON_NESTING_DEPTH} are rejected, because a signature over them would
- * not be portable.
+ * is omitted, as `JSON.stringify` omits it. Lone surrogates and non-finite numbers are rejected,
+ * because a signature over them would not be portable. There is no nesting limit. The serializer
+ * recurses, so a value nested deeper than the JavaScript stack allows is reported as a
+ * `CanonicalizeError`, not as the engine's `RangeError`.
  */
 
 export class CanonicalizeError extends Error {
@@ -22,14 +21,18 @@ export class CanonicalizeError extends Error {
 
 /** The RFC 8785 canonical JSON text of `value`. */
 export function canonicalize(value: unknown): string {
-    return serialize(value, new WeakSet(), 1)
+    try {
+        return serialize(value, new WeakSet())
+    } catch (err) {
+        // The engine's stack overflow, on nesting deeper than this recursive serializer can follow.
+        if (err instanceof RangeError) {
+            throw new CanonicalizeError('nesting is too deep to canonicalize')
+        }
+        throw err
+    }
 }
 
-function serialize(
-    value: unknown,
-    stack: WeakSet<object>,
-    depth: number
-): string {
+function serialize(value: unknown, stack: WeakSet<object>): string {
     switch (typeof value) {
         case 'boolean':
             return value ? 'true' : 'false'
@@ -38,7 +41,7 @@ function serialize(
         case 'string':
             return serializeString(value)
         case 'object':
-            return serializeObject(value, stack, depth)
+            return serializeObject(value, stack)
         default:
             throw new CanonicalizeError('value must be JSON')
     }
@@ -57,15 +60,10 @@ function serializeString(value: string): string {
     return JSON.stringify(value)
 }
 
-function serializeObject(
-    value: object | null,
-    stack: WeakSet<object>,
-    depth: number
-): string {
+function serializeObject(value: object | null, stack: WeakSet<object>): string {
     if (value === null) return 'null'
-    assertDepth(depth)
     if (stack.has(value)) throw new CanonicalizeError('circular structure')
-    if (Array.isArray(value)) return serializeArray(value, stack, depth)
+    if (Array.isArray(value)) return serializeArray(value, stack)
     if (!isPlainObject(value)) throw new CanonicalizeError('value must be JSON')
     if (Object.getOwnPropertySymbols(value).length > 0) {
         throw new CanonicalizeError('value must be JSON')
@@ -78,9 +76,7 @@ function serializeObject(
         for (const key of Object.keys(record).sort(compareCodeUnits)) {
             const child = record[key]
             if (child === undefined) continue
-            parts.push(
-                `${serializeString(key)}:${serialize(child, stack, depth + 1)}`
-            )
+            parts.push(`${serializeString(key)}:${serialize(child, stack)}`)
         }
         return `{${parts.join(',')}}`
     } finally {
@@ -88,12 +84,7 @@ function serializeObject(
     }
 }
 
-function serializeArray(
-    value: unknown[],
-    stack: WeakSet<object>,
-    depth: number
-): string {
-    assertDepth(depth)
+function serializeArray(value: unknown[], stack: WeakSet<object>): string {
     stack.add(value)
     try {
         const parts: string[] = []
@@ -101,19 +92,11 @@ function serializeArray(
             if (item === undefined) {
                 throw new CanonicalizeError('undefined is not JSON')
             }
-            parts.push(serialize(item, stack, depth + 1))
+            parts.push(serialize(item, stack))
         }
         return `[${parts.join(',')}]`
     } finally {
         stack.delete(value)
-    }
-}
-
-function assertDepth(depth: number): void {
-    if (depth > MAX_JSON_NESTING_DEPTH) {
-        throw new CanonicalizeError(
-            `nesting is deeper than ${MAX_JSON_NESTING_DEPTH}`
-        )
     }
 }
 

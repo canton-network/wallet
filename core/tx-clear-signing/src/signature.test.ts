@@ -3,7 +3,7 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { toBase64 } from './bytes.ts'
+import { fromBase64, toBase64 } from './bytes.ts'
 import { canonicalize } from './canonical-json.ts'
 import {
     ed25519PublicKey,
@@ -38,14 +38,12 @@ function signaturesOf(json: Record<string, unknown>): DescriptorSignature[] {
 }
 
 describe('descriptor signatures', () => {
-    it('trusts the reference public key', () => {
-        expect(TRUSTED_KEYS).toEqual([
-            {
-                name: REFERENCE_SIGNER,
-                scheme: 'ed25519',
-                publicKey: ed25519PublicKey(REFERENCE_PRIVATE_KEY),
-            },
-        ])
+    it('trusts the reference public key in the shipped config', () => {
+        expect(TRUSTED_KEYS).toContainEqual({
+            name: REFERENCE_SIGNER,
+            scheme: 'ed25519',
+            publicKey: ed25519PublicKey(REFERENCE_PRIVATE_KEY),
+        })
     })
 
     it('verifies a signature from the reference key', async () => {
@@ -100,6 +98,34 @@ describe('descriptor signatures', () => {
             signatures: [{ ...entry, signature: toBase64(bytes) }],
         }
         const verified = await verifySignatures(tampered, TRUSTED_KEYS)
+        expect(verified).toEqual({
+            ok: false,
+            problems: ['signatures[0]: signature does not verify'],
+        })
+    })
+
+    it('rejects a signature whose S is not reduced (S + L)', async () => {
+        const signed = await signDescriptor(descriptor, REFERENCE_PRIVATE_KEY)
+        const [entry] = signaturesOf(signed)
+        if (!entry) throw new Error('expected a signature')
+        // The signature is R || S, S little-endian. S + L verifies under the same equation, so a
+        // verifier that does not check S < L accepts it (RFC 8032, section 5.1.7).
+        const L = 2n ** 252n + 27742317777372353535851937790883648493n
+        const bytes = fromBase64(entry.signature)
+        let s = 0n
+        for (let i = 31; i >= 0; i--) s = (s << 8n) | BigInt(bytes[32 + i]!)
+        let malleated = s + L
+        for (let i = 0; i < 32; i++) {
+            bytes[32 + i] = Number(malleated & 0xffn)
+            malleated >>= 8n
+        }
+        const verified = await verifySignatures(
+            {
+                ...signed,
+                signatures: [{ ...entry, signature: toBase64(bytes) }],
+            },
+            TRUSTED_KEYS
+        )
         expect(verified).toEqual({
             ok: false,
             problems: ['signatures[0]: signature does not verify'],
