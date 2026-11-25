@@ -19,21 +19,16 @@ import {
     mockRequest,
 } from '../../__tests__/test-helpers.ts'
 
-const {
-    showToastAfterNavigation,
-    mockCreateUserClient,
-    handleErrorToast,
-    setLocationHref,
-} = vi.hoisted(() => ({
-    showToastAfterNavigation: vi.fn(),
-    mockCreateUserClient: vi.fn(),
-    handleErrorToast: vi.fn(),
-    setLocationHref: vi.fn(),
-}))
+const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
+    () => ({
+        mockCreateUserClient: vi.fn(),
+        handleErrorToast: vi.fn(),
+        setLocationHref: vi.fn(),
+    })
+)
 
 vi.mock('../../index.ts', () => ({}))
 vi.mock('../../navigation.ts', () => ({ setLocationHref }))
-vi.mock('../../utils.ts', () => ({ showToastAfterNavigation }))
 vi.mock('../../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))

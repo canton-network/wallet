@@ -19,21 +19,16 @@ import {
     networkEditSaveEventFrom,
 } from '../../__tests__/test-helpers.ts'
 
-const {
-    showToastAfterNavigation,
-    mockCreateUserClient,
-    handleErrorToast,
-    setLocationHref,
-} = vi.hoisted(() => ({
-    showToastAfterNavigation: vi.fn(),
-    mockCreateUserClient: vi.fn(),
-    handleErrorToast: vi.fn(),
-    setLocationHref: vi.fn(),
-}))
+const { mockCreateUserClient, handleErrorToast, setLocationHref } = vi.hoisted(
+    () => ({
+        mockCreateUserClient: vi.fn(),
+        handleErrorToast: vi.fn(),
+        setLocationHref: vi.fn(),
+    })
+)
 
 vi.mock('../../index.ts', () => ({}))
 vi.mock('../../navigation.ts', () => ({ setLocationHref }))
-vi.mock('../../utils.ts', () => ({ showToastAfterNavigation }))
 vi.mock('../../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -314,10 +309,8 @@ describe('UserUiReviewNetwork', () => {
 
         await waitUntil(() => setLocationHref.mock.calls.length > 0)
 
-        expect(showToastAfterNavigation).toHaveBeenCalledWith({
-            title: 'Network deleted',
-            message: 'Deleted the network "Review Net".',
-            type: 'success',
-        })
+        expect(setLocationHref).toHaveBeenCalledWith(
+            expect.stringContaining('?status=deleted')
+        )
     })
 })

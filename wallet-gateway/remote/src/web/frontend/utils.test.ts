@@ -4,7 +4,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import '@canton-network/core-wallet-ui-components'
 
-import { fetchDappApiUrl, showToast } from './utils.ts'
+import { fetchDappApiUrl, showChangeToast, showToast } from './utils.ts'
 
 describe('showToast', () => {
     afterEach(() => {
@@ -22,6 +22,44 @@ describe('showToast', () => {
             'Message body'
         )
         expect((toast as HTMLElement & { type: string }).type).toBe('success')
+    })
+})
+
+describe('showChangeToast', () => {
+    const toasts = {
+        added: { title: 'Added', message: 'It was added.', type: 'success' },
+        saved: { title: 'Saved', message: 'It was saved.', type: 'success' },
+        deleted: {
+            title: 'Deleted',
+            message: 'It was deleted.',
+            type: 'success',
+        },
+    } as const
+
+    afterEach(() => {
+        document.body.innerHTML = ''
+        history.replaceState({}, '', '/')
+    })
+
+    it('shows the toast for the status and removes it from the URL', () => {
+        history.replaceState({}, '', '/networks/?status=saved&page=2')
+
+        showChangeToast(toasts)
+
+        const toast = document.body.querySelector('custom-toast') as
+            | (HTMLElement & { title: string })
+            | null
+        expect(toast?.title).toBe('Saved')
+        // A reload doesn't show it again, other parameters stay
+        expect(window.location.search).toBe('?page=2')
+    })
+
+    it('ignores an unknown status', () => {
+        history.replaceState({}, '', '/networks/?status=unknown')
+
+        showChangeToast(toasts)
+
+        expect(document.body.querySelector('custom-toast')).toBeNull()
     })
 })
 

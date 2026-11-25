@@ -14,15 +14,15 @@ import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
 import {
-    IDENTITY_PROVIDERS_INFO,
+    CHANGE_STATUS_PARAM,
     IDENTITY_PROVIDERS_DOCS_URL,
+    IDENTITY_PROVIDERS_INFO,
 } from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
 import '../../index.ts'
 import { stateManager } from '../../state-manager.ts'
-import { showToastAfterNavigation } from '../../utils.ts'
 
 @customElement('user-ui-review-idp')
 export class UserUiReviewIdp extends BaseElement {
@@ -105,12 +105,9 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { idp: e.idp },
             })
 
-            showToastAfterNavigation({
-                title: 'Identity provider updated',
-                message: `Saved the identity provider "${e.idp.id}".`,
-                type: 'success',
-            })
-            setLocationHref(toRelPath('/identity-providers/'))
+            setLocationHref(
+                `${toRelPath('/identity-providers/')}?${CHANGE_STATUS_PARAM}=saved`
+            )
         } catch (error) {
             handleErrorToast(error)
         }
@@ -129,12 +126,9 @@ export class UserUiReviewIdp extends BaseElement {
                 params: { identityProviderId: e.idp.id },
             })
 
-            showToastAfterNavigation({
-                title: 'Identity provider deleted',
-                message: `Deleted the identity provider "${e.idp.id}".`,
-                type: 'success',
-            })
-            setLocationHref(toRelPath('/identity-providers/'))
+            setLocationHref(
+                `${toRelPath('/identity-providers/')}?${CHANGE_STATUS_PARAM}=deleted`
+            )
         } catch (error) {
             handleErrorToast(error)
         }

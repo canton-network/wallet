@@ -13,16 +13,16 @@ import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
 import {
+    CHANGE_STATUS_PARAM,
     NETWORK_FORM_DOCS_URLS,
-    NETWORKS_INFO,
     NETWORKS_DOCS_URL,
+    NETWORKS_INFO,
 } from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
 import '../../index.ts'
 import { stateManager } from '../../state-manager.ts'
-import { showToastAfterNavigation } from '../../utils.ts'
 
 @customElement('user-ui-add-network')
 export class UserUiAddNetwork extends BaseElement {
@@ -90,12 +90,9 @@ export class UserUiAddNetwork extends BaseElement {
                 },
             })
 
-            showToastAfterNavigation({
-                title: 'Network added',
-                message: `Added the network "${e.network.name}".`,
-                type: 'success',
-            })
-            setLocationHref(toRelPath('/networks/'))
+            setLocationHref(
+                `${toRelPath('/networks/')}?${CHANGE_STATUS_PARAM}=added`
+            )
         } catch (error) {
             this.loading = false
             handleErrorToast(error)

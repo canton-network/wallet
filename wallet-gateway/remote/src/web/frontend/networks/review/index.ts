@@ -14,16 +14,16 @@ import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
 import {
+    CHANGE_STATUS_PARAM,
     NETWORK_FORM_DOCS_URLS,
-    NETWORKS_INFO,
     NETWORKS_DOCS_URL,
+    NETWORKS_INFO,
 } from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
 import '../../index.ts'
 import { stateManager } from '../../state-manager.ts'
-import { showToastAfterNavigation } from '../../utils.ts'
 
 @customElement('user-ui-review-network')
 export class UserUiReviewNetwork extends BaseElement {
@@ -113,12 +113,9 @@ export class UserUiReviewNetwork extends BaseElement {
                 },
             })
 
-            showToastAfterNavigation({
-                title: 'Network updated',
-                message: `Saved the network "${e.network.name}".`,
-                type: 'success',
-            })
-            setLocationHref(toRelPath('/networks/'))
+            setLocationHref(
+                `${toRelPath('/networks/')}?${CHANGE_STATUS_PARAM}=saved`
+            )
         } catch (error) {
             handleErrorToast(error)
         }
@@ -136,12 +133,9 @@ export class UserUiReviewNetwork extends BaseElement {
                 params: { networkName: e.network.id },
             })
 
-            showToastAfterNavigation({
-                title: 'Network deleted',
-                message: `Deleted the network "${e.network.name}".`,
-                type: 'success',
-            })
-            setLocationHref(toRelPath('/networks/'))
+            setLocationHref(
+                `${toRelPath('/networks/')}?${CHANGE_STATUS_PARAM}=deleted`
+            )
         } catch (error) {
             handleErrorToast(error)
         }

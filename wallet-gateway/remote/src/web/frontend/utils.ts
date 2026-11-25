@@ -6,6 +6,21 @@ import {
     type ToastMessageType,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
+import type { ToastDescriptor } from '@canton-network/core-wallet-ui-components/logic'
+
+import { CHANGE_STATUS_PARAM, type ChangeStatus } from './constants.ts'
+
+/** Confirms the change in the URL's CHANGE_STATUS_PARAM, once */
+export function showChangeToast(toasts: Record<ChangeStatus, ToastDescriptor>) {
+    const url = new URL(window.location.href)
+    const toast =
+        toasts[url.searchParams.get(CHANGE_STATUS_PARAM) as ChangeStatus]
+    if (!toast) return
+
+    showToast(toast.title, toast.message, toast.type)
+    url.searchParams.delete(CHANGE_STATUS_PARAM)
+    window.history.replaceState({}, '', url.toString())
+}
 
 export const showToast = (
     title: string,

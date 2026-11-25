@@ -15,6 +15,10 @@ export const ACTIVITIES_PAGE_REDIRECT = '/activities'
 export const NETWORKS_PAGE_REDIRECT = '/networks'
 export const IDENTITY_PROVIDERS_PAGE_REDIRECT = '/identity-providers'
 
+/** Set by a form when it returns to its list, so the list confirms the change */
+export const CHANGE_STATUS_PARAM = 'status'
+export type ChangeStatus = 'added' | 'saved' | 'deleted'
+
 /** Set on the login page's URL when an open page logged the user out */
 export const SESSION_EXPIRED_PARAM = 'sessionExpired'
 export const SESSION_EXPIRED_TOAST: ToastDescriptor = {

@@ -12,15 +12,15 @@ import { css, html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
 import {
-    IDENTITY_PROVIDERS_INFO,
+    CHANGE_STATUS_PARAM,
     IDENTITY_PROVIDERS_DOCS_URL,
+    IDENTITY_PROVIDERS_INFO,
 } from '../../constants.ts'
 import { detectCurrentOrigin } from '../../listeners.ts'
 import { setLocationHref } from '../../navigation.ts'
 import { createUserClient } from '../../rpc-client.ts'
 import '../../index.ts'
 import { stateManager } from '../../state-manager.ts'
-import { showToastAfterNavigation } from '../../utils.ts'
 
 @customElement('user-ui-add-idp')
 export class UserUiAddIdp extends BaseElement {
@@ -58,12 +58,9 @@ export class UserUiAddIdp extends BaseElement {
                 params: { idp: e.idp },
             })
 
-            showToastAfterNavigation({
-                title: 'Identity provider added',
-                message: `Added the identity provider "${e.idp.id}".`,
-                type: 'success',
-            })
-            setLocationHref(toRelPath('/identity-providers/'))
+            setLocationHref(
+                `${toRelPath('/identity-providers/')}?${CHANGE_STATUS_PARAM}=added`
+            )
         } catch (error) {
             this.loading = false
             handleErrorToast(error)
