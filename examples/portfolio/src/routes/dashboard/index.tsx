@@ -1,9 +1,10 @@
+import { useAllAccountAssets } from '@canton-network/core-wallet-ui-components/react/token'
 import { ActionRequiredSection } from '@components/dashboard/action-required-section'
 import { AllAssetsContent } from '@components/dashboard/all-assets-content'
 import { TransferDialog } from '@components/transfer-dialog'
 import { PillButton } from '@components/ui/PillButton'
+import { useAccounts } from '@hooks/useAccounts'
 import { useActionRequiredItems } from '@hooks/useActionRequiredItems'
-import { useAllAccountAssets } from '@hooks/useAllAccountAssets'
 import { Box, Typography } from '@mui/material'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState } from 'react'
@@ -13,7 +14,8 @@ export const Route = createFileRoute('/dashboard/')({
 })
 
 function RouteComponent() {
-    const allAccountAssets = useAllAccountAssets()
+    const accounts = useAccounts()
+    const allAccountAssets = useAllAccountAssets(accounts)
     const actionRequiredItems = useActionRequiredItems()
     const [transferOpen, setTransferOpen] = useState(false)
 

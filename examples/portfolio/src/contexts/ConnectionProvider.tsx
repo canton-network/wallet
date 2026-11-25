@@ -1,6 +1,7 @@
 // Copyright (c) 2025 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
 import { type QueryClient, useQueryClient } from '@tanstack/react-query'
@@ -127,7 +128,7 @@ const useConnectedProviderSubscriptions = ({
                     queryKey: queryKeys.walletConnection.pendingTransfers.all,
                 })
                 await queryClient.invalidateQueries({
-                    queryKey: queryKeys.walletConnection.holdings.all,
+                    queryKey: tokenQueryKeys.holdings.all,
                 })
                 await queryClient.invalidateQueries({
                     queryKey: queryKeys.walletConnection.transactionHistory.all,
@@ -166,6 +167,7 @@ export const ConnectionProvider: React.FC<{ children: React.ReactNode }> = ({
         queryClient.removeQueries({
             queryKey: queryKeys.walletConnection.all,
         })
+        queryClient.removeQueries({ queryKey: tokenQueryKeys.all })
     }, [queryClient])
 
     const updateSessionToken = useCallback(

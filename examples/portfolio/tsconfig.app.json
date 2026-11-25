@@ -23,6 +23,9 @@
             "path": "../../sdk/dapp-sdk"
         },
         {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
             "path": "../../core/wallet-auth"
         },
         {
@@ -32,10 +35,10 @@
             "path": "../../core/tx-parser"
         },
         {
-            "path": "../../core/token-standard-service"
+            "path": "../../core/token-standard-v2"
         },
         {
-            "path": "../../core/token-standard-v2"
+            "path": "../../core/token-standard-service"
         },
         {
             "path": "../../core/token-standard"

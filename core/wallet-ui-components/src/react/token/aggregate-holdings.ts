@@ -5,8 +5,20 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 import type { Account } from '@canton-network/core-token-standard-v2'
 import { Decimal } from 'decimal.js'
 
-import type { Instruments } from '../types/instruments.ts'
 import { isBasicAccount, type PortfolioHolding } from './holdings.ts'
+
+// The name and symbol we show next to a holding. The portfolio and the
+// extension each look these up their own way and hand them over in this
+// shape. The extension doesn't know how many decimals a token has, so that
+// part is optional.
+export interface TokenInstrument {
+    id: string
+    name: string
+    symbol: string
+    decimals?: number | undefined
+}
+
+export type TokenInstruments = ReadonlyMap<string, readonly TokenInstrument[]>
 
 export interface AggregatedAccountBalance {
     account: Account
@@ -23,11 +35,13 @@ export interface AggregatedHolding {
     availableAmount: string
     numOfHoldings: number
     accountBalances: AggregatedAccountBalance[]
-    instrument?: {
-        name: string
-        symbol: string
-        decimals: number
-    }
+    instrument?:
+        | {
+              name: string
+              symbol: string
+              decimals?: number | undefined
+          }
+        | undefined
 }
 
 export function getInstrumentKey(instrumentId: { admin: string; id: string }) {
@@ -127,7 +141,7 @@ function compareAccountBalances(
 
 export function enrichWithInstrumentInfo(
     aggregated: Map<string, AggregatedHolding>,
-    instruments: Instruments
+    instruments: TokenInstruments
 ): AggregatedHolding[] {
     return Array.from(aggregated.values(), (item) => {
         const instrumentInfo = instruments

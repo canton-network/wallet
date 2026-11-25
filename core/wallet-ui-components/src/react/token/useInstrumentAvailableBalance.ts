@@ -4,24 +4,24 @@
 import type { InstrumentId } from '@canton-network/core-token-standard'
 import type { Account } from '@canton-network/core-token-standard-v2'
 import { useQuery } from '@tanstack/react-query'
-import { basicAccount } from '@utils/holdings'
 import { useMemo } from 'react'
 
 import {
     aggregateHoldings,
     getInstrumentKey,
     type AggregatedAccountBalance,
-} from '../utils/aggregate-holdings.ts'
+} from './aggregate-holdings.ts'
+import { basicAccount } from './holdings.ts'
 import { holdingsQueryOptions } from './query-options.ts'
-import { useWalletSdk } from './useWalletSdk.ts'
+import { useTokenContext } from './useTokenContext.ts'
 
 export const useInstrumentAvailableBalance = (
     partyId: string | undefined,
     instrumentId: InstrumentId | null,
     account?: Account
 ): AggregatedAccountBalance | null => {
-    const { sdk } = useWalletSdk()
-    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, sdk }))
+    const { client } = useTokenContext()
+    const holdingsQuery = useQuery(holdingsQueryOptions({ partyId, client }))
     const holdings = holdingsQuery.data
 
     return useMemo(() => {
