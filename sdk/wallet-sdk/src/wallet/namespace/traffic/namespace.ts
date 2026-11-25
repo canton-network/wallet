@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { ACSReader } from '@canton-network/core-acs-reader'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { Ops } from '@canton-network/core-provider-ledger'
 import {
@@ -19,11 +20,9 @@ import {
     type TrafficPurchaser_PurchaseCredits,
     type TrafficPurchaserWithDisclosures,
 } from '@canton-network/core-traffic-purchase'
-import { ACSReader } from '@canton-network/core-acs-reader'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 import type { Numeric, PartyId } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import { Decimal } from 'decimal.js'
 import { z } from 'zod'
 

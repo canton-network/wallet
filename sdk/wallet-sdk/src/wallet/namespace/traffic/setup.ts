@@ -41,11 +41,12 @@ import {
     type ConversionRate_Update,
 } from '@canton-network/core-traffic-purchase'
 import type { Numeric, PartyId } from '@canton-network/core-types'
+
 import {
     parseAndNormalizeDamlDecimal,
     sameDecimal,
     sameInstant,
-} from './pricing.js'
+} from './pricing.ts'
 import type {
     ActiveConversionRate,
     ActiveTrafficPurchaser,
@@ -56,7 +57,7 @@ import type {
     SetupTrafficParams,
     TrafficSetupPlan,
     TrafficSetupRate,
-} from './types.js'
+} from './types.ts'
 
 /** What a setup plans, before the disclosures are gathered for it. */
 export type SetupPlan = Omit<TrafficSetupPlan, 'disclosedContracts'>

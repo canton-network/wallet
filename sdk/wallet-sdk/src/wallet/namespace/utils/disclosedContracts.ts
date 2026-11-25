@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { DisclosedContract } from '@canton-network/core-token-standard-service'
-import type { SDKErrorHandler } from '../../error/handler.js'
+
+import type { SDKErrorHandler } from '../../error/handler.ts'
 
 /**
  * Removes duplicate disclosures by contract ID.

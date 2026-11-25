@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect } from 'vitest'
 import {
     ConversionRate,
     TrafficPurchaser,
 } from '@canton-network/core-traffic-purchase'
+import { describe, it, expect } from 'vitest'
+
 import {
     assertSetupParams,
     conversionRateOf,
@@ -18,13 +19,13 @@ import {
     sameConversionRate,
     trafficSetupOf,
     type CreatedContract,
-} from './setup'
+} from './setup.ts'
 import type {
     ActiveConversionRate,
     ActiveTrafficSetup,
     ConversionRateSpec,
     SetupTrafficParams,
-} from './types'
+} from './types.ts'
 
 const paymaster = 'paymaster::1'
 const instrumentId = { admin: 'dso::1', id: 'Amulet' }
