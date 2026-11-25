@@ -34,6 +34,8 @@ const registry: AssetBody = {
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
     capabilities: mock.capabilities,
+    paused: false,
+    decimals: 10,
 }
 const validatorParty = 'validatorParty:123'
 

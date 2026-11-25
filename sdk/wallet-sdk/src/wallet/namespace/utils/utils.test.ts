@@ -40,6 +40,8 @@ const amuletAsset = {
     symbol: 'CC',
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
+    paused: false,
+    decimals: 10,
     capabilities,
 }
 
@@ -49,6 +51,8 @@ const testAsset = {
     symbol: 'test',
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
+    paused: false,
+    decimals: 10,
     capabilities,
 }
 
@@ -122,6 +126,8 @@ describe('utils package', () => {
             // deliberately invalid: registries are external input
             registryUrl: 'reg.com' as unknown as URL,
             admin: 'adminParty:123',
+            paused: false,
+            decimals: 10,
             capabilities,
         }
 
@@ -135,6 +141,8 @@ describe('utils package', () => {
             symbol: 'test',
             registryUrl: new URL('http://registry.com'),
             admin: undefined as unknown as string,
+            paused: false,
+            decimals: 10,
             capabilities,
         }
 

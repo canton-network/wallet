@@ -27,6 +27,8 @@ const amuletAsset = {
     symbol: 'CC',
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
+    paused: false,
+    decimals: 10,
     capabilities,
 }
 
@@ -36,6 +38,8 @@ const testAsset = {
     symbol: 'test',
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
+    paused: false,
+    decimals: 10,
     capabilities,
 }
 
@@ -45,6 +49,8 @@ const testAsset2 = {
     symbol: 'test',
     registryUrl: new URL('http://registry2.com'),
     admin: 'adminParty:123',
+    paused: false,
+    decimals: 10,
     capabilities,
 }
 

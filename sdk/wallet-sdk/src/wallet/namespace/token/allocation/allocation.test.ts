@@ -52,6 +52,8 @@ const asset = {
     symbol: 'CC',
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
+    paused: false,
+    decimals: 10,
     capabilities: mock.capabilities,
 }
 

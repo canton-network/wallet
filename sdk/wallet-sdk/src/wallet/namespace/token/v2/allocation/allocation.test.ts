@@ -62,6 +62,8 @@ const asset: AssetBody = {
     symbol: 'CC',
     registryUrl: new URL('http://registry.com'),
     admin: 'adminParty:123',
+    paused: false,
+    decimals: 10,
     capabilities: {
         allocation: ['v1', 'v2'],
         allocationInstruction: ['v1', 'v2'],
