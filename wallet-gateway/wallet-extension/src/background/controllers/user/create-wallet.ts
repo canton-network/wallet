@@ -12,6 +12,7 @@ import {
 } from '@canton-network/core-signing-lib'
 import { fingerprintPublicKey } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { getSigningController } from '@canton-network/core-wallet-services'
 import {
     PartyLevelRight,
     type Store,
@@ -49,7 +50,7 @@ export async function createKernelWallet({
     store: Store
     synchronizerId?: string
 }): Promise<Wallet> {
-    const driver = signingDriver.controller(authContext.userId)
+    const driver = getSigningController(signingDriver, authContext)
     const key = await driver.createKey({ name: keyName ?? partyHint })
     if (isRpcError(key)) {
         throw signingError('create key', key.error_description)

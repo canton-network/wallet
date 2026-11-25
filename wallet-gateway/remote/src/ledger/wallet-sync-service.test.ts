@@ -174,7 +174,9 @@ describe('WalletSyncService - resolveSigningProvider', () => {
         const internalDriver = service['signingDrivers'][
             SigningProvider.WALLET_KERNEL
         ] as InternalSigningDriver
-        const controller = internalDriver.controller(authContext.userId)
+        const controller = internalDriver.controller({
+            sub: authContext.userId,
+        })
         const key = await controller.createKey({ name: 'test-key' })
 
         if ('error' in key) {
@@ -214,6 +216,7 @@ describe('WalletSyncService - resolveSigningProvider', () => {
         )
 
         const mockFireblocksDriver = {
+            requiredClaims: ['sub'],
             controller: vi.fn().mockReturnValue({
                 getKeys: vi
                     .fn<() => Promise<GetKeysResult>>()
@@ -1054,7 +1057,7 @@ describe('WalletSyncService - multi-network features', () => {
                 new StoreSql(db, authContext)
             )
             const key = await internalDriver
-                .controller(authContext.userId)
+                .controller({ sub: authContext.userId })
                 .createKey({ name: 'test-key' })
             if ('error' in key) {
                 throw new Error(
@@ -1170,6 +1173,7 @@ describe('WalletSyncService - multi-network features', () => {
                 keys: [],
             }))
             const driver = {
+                requiredClaims: ['sub'],
                 controller: () => ({ getKeys }),
             } as unknown as SigningDriverInterface
             const keyService = new WalletSyncService(
@@ -1731,6 +1735,7 @@ describe('WalletSyncService - multi-network features', () => {
                 mockLogger,
                 {
                     [SigningProvider.WALLET_KERNEL]: {
+                        requiredClaims: ['sub'],
                         controller: () => ({ getKeys }),
                     },
                 } as never,
