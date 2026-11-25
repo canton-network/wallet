@@ -11,6 +11,7 @@ import type { Transaction } from '@canton-network/core-wallet-store'
 import { browser, type Browser } from 'wxt/browser'
 import { storage } from 'wxt/utils/storage'
 
+import { EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
 import { logger } from '@/shared/logger.ts'
 import { txApprovalPortId } from '@/shared/ports.ts'
 
@@ -360,8 +361,10 @@ export function createTxApprovals({
     /**
      * Deletes the pending transactions no prompt is in progress for: their
      * prompt ended while the vault was locked, or with a worker that has
-     * since stopped. Signed ones are left. Reports those of the current
-     * session failed, as its dApps may still wait for them.
+     * since stopped. Signed ones are left, and so are the extension's own
+     * reviews, which have no prompt and expire in the token service.
+     * Reports those of the current session failed, as its dApps may still
+     * wait for them.
      */
     async function removeOrphans(): Promise<void> {
         try {
@@ -370,7 +373,10 @@ export function createTxApprovals({
             const store = (await getStore()).withAuthContext(context)
             const session = await store.getSession(context.accessToken)
             const orphans = (await store.listAllPendingTransactions()).filter(
-                ({ id, status }) => status === 'pending' && !prompts.has(id)
+                ({ id, status, origin }) =>
+                    status === 'pending' &&
+                    origin !== EXTENSION_ORIGIN &&
+                    !prompts.has(id)
             )
             // A later one may be signed while an earlier one is deleted.
             for (const transaction of orphans) {
