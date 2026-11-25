@@ -19,6 +19,7 @@ import { expect, test, it, describe } from 'vitest'
 import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
 import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
 import generateTopology372 from './__tests__/fixtures/generate-topology-3.7.2.json'
+import tokenTransfer from './__tests__/fixtures/token-transfer.json'
 import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
 import {
     type DecodeOptions,
@@ -458,6 +459,17 @@ describe('hashPreparedTransaction', () => {
                 { hashingScheme: undefined, limits: undefined }
             )
         ).toBe(bigInt64V2.preparedTransactionHash)
+    })
+})
+
+describe('parsePreparedTransaction', () => {
+    it('reads the choice and amount of a token standard transfer', () => {
+        expect(
+            parsePreparedTransaction(tokenTransfer.preparedTransaction)
+        ).toMatchObject({
+            choiceId: 'TransferFactory_Transfer',
+            amount: '2000.0000000000',
+        })
     })
 })
 
