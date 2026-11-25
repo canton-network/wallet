@@ -533,6 +533,7 @@ describe('createTokenService', () => {
             release()
             await discarded
 
+            expect(error).toMatchObject({ code: -32603 })
             expect(isNotSubmitted(error)).toBe(false)
             expect(sign).not.toHaveBeenCalled()
             await expect(
