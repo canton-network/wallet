@@ -1,0 +1,49 @@
+{
+    "name": "@canton-network/core-tx-clear-signing-lib",
+    "version": "1.0.0",
+    "description": "The clear-signing interface for Canton prepared transactions, and the meta-schema of the clear-signing descriptor",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/tx-clear-signing-lib#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/tx-clear-signing-lib"
+    },
+    "files": [
+        "dist/**",
+        "canton-clear-signing-v1.schema.json"
+    ],
+    "type": "module",
+    "sideEffects": false,
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "@canton-network/source": "./src/index.ts",
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        },
+        "./canton-clear-signing-v1.schema.json": "./canton-clear-signing-v1.schema.json"
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
+        "clean": "rm -rf dist"
+    },
+    "devDependencies": {
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    }
+}
