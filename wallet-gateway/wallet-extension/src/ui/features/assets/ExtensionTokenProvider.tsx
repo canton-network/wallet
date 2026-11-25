@@ -16,7 +16,7 @@ const NO_INSTRUMENTS: TokenInstruments = new Map()
 
 /**
  * Holdings don't need the instruments, so a registry that fails only costs
- * the names: the error isn't passed on, the assets page shows it instead.
+ * the names: the error isn't passed on, the assets and send pages show it.
  */
 export function ExtensionTokenProvider({ children }: { children: ReactNode }) {
     const instruments = useQuery(tokenInstrumentsQuery())

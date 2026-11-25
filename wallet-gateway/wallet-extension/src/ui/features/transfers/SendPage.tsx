@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import { PageHeader } from '@canton-network/core-wallet-ui-components/react'
 import {
     getInstrumentKey,
+    tokenQueryKeys,
     transferAmountError,
     useAggregatedHoldings,
     useCreateTransfer,
-    useInstrumentAvailableBalance,
     type AggregatedHolding,
     type TokenStandardVersion,
     type TokenWallet,
@@ -23,13 +24,16 @@ import RadioGroup from '@mui/material/RadioGroup'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Decimal } from 'decimal.js'
-import { type SubmitEvent, useMemo, useState } from 'react'
+import { type SubmitEvent, useMemo, useRef, useState } from 'react'
 
 import { ButtonLink } from '@/ui/components/ButtonLink.tsx'
 import { PageLoader } from '@/ui/components/feedback.tsx'
-import { toTokenWallets } from '@/ui/features/assets/index.ts'
+import {
+    tokenInstrumentsQuery,
+    toTokenWallets,
+} from '@/ui/features/assets/index.ts'
 import { walletsQuery } from '@/ui/features/parties/index.ts'
 
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000
@@ -42,6 +46,42 @@ function toLocalInput(date: Date): string {
 
 function isPast(date: Date): boolean {
     return date.getTime() <= Date.now()
+}
+
+/** The token service's code for a signed transaction that didn't execute. */
+function isUnknownOutcome(error: Error): boolean {
+    return (error as { code?: unknown }).code === errorCodes.rpc.internal
+}
+
+/** What the party can send: the transfer is from its basic account. */
+function basicAvailable(holding: AggregatedHolding): string {
+    return (
+        holding.accountBalances.find((balance) => balance.isBasic)
+            ?.availableAmount ?? '0'
+    )
+}
+
+/**
+ * Menu labels by instrument key. Registries don't make names or symbols
+ * unique, so a label two instruments share also names the instrument.
+ */
+function instrumentLabels(
+    holdings: readonly AggregatedHolding[]
+): Map<string, string> {
+    const label = ({ instrument }: AggregatedHolding) =>
+        `${instrument!.name} (${instrument!.symbol})`
+    const counts = new Map<string, number>()
+    for (const holding of holdings) {
+        counts.set(label(holding), (counts.get(label(holding)) ?? 0) + 1)
+    }
+    return new Map(
+        holdings.map((holding) => [
+            getInstrumentKey(holding.instrumentId),
+            counts.get(label(holding))! > 1
+                ? `${label(holding)}: ${holding.instrumentId.id} of ${holding.instrumentId.admin}`
+                : label(holding),
+        ])
+    )
 }
 
 interface SendForm {
@@ -68,7 +108,10 @@ export function SendPage() {
         [wallets.data]
     )
     const [draft, setDraft] = useState<ReviewedTransfer>()
-    const [step, setStep] = useState<'form' | 'review' | 'sent'>('form')
+    const [step, setStep] = useState<'form' | 'review' | 'sent' | 'unknown'>(
+        'form'
+    )
+    const [unknownReason, setUnknownReason] = useState('')
 
     return (
         <>
@@ -96,11 +139,30 @@ export function SendPage() {
                         Outgoing transfers
                     </ButtonLink>
                 </Stack>
+            ) : step === 'unknown' ? (
+                <Stack spacing={2}>
+                    <Alert severity="warning">
+                        The transfer may have gone through: it was signed, but
+                        its outcome is unknown. {unknownReason} Check your
+                        outgoing transfers and your assets before you send it
+                        again.
+                    </Alert>
+                    <ButtonLink to="/transfers" variant="outlined">
+                        Outgoing transfers
+                    </ButtonLink>
+                    <ButtonLink to="/assets" variant="outlined">
+                        Assets
+                    </ButtonLink>
+                </Stack>
             ) : step === 'review' && draft ? (
                 <Review
                     transfer={draft}
                     onBack={() => setStep('form')}
                     onSent={() => setStep('sent')}
+                    onUnknownOutcome={(reason) => {
+                        setUnknownReason(reason)
+                        setStep('unknown')
+                    }}
                 />
             ) : (
                 <TransferForm
@@ -141,6 +203,7 @@ function TransferForm({
     // Set on submit, as the check depends on the time.
     const [expiryPassed, setExpiryPassed] = useState(false)
     const holdings = useAggregatedHoldings(form.sender)
+    const registry = useQuery(tokenInstrumentsQuery())
     // Only instruments with registry metadata can be sent: the transfer is
     // built from it, and the amount is checked against its decimals.
     const instruments = useMemo(
@@ -148,25 +211,24 @@ function TransferForm({
             holdings.instruments.filter(
                 (holding) =>
                     holding.instrument &&
-                    new Decimal(holding.availableAmount).gt(0)
+                    new Decimal(basicAvailable(holding)).gt(0)
             ),
         [holdings.instruments]
     )
+    const labels = useMemo(() => instrumentLabels(instruments), [instruments])
     const instrument = instruments.find(
         (holding) =>
             getInstrumentKey(holding.instrumentId) === form.instrumentKey
     )
-    const balance = useInstrumentAvailableBalance(
-        form.sender,
-        instrument?.instrumentId ?? null
-    )
+    const available = instrument ? basicAvailable(instrument) : '0'
+    const amount = form.amount.trim()
 
     const expiry = new Date(form.expiry)
     const errors = {
         instrument: instrument ? undefined : 'Select an asset',
         amount: instrument
-            ? transferAmountError(form.amount, {
-                  available: balance?.availableAmount ?? '0',
+            ? transferAmountError(amount, {
+                  available,
                   decimals: instrument.instrument!.decimals,
               })
             : undefined,
@@ -201,7 +263,7 @@ function TransferForm({
         onReview({
             form: {
                 ...form,
-                amount: form.amount.trim(),
+                amount,
                 receiver: form.receiver.trim(),
                 memo: form.memo.trim(),
             },
@@ -229,6 +291,23 @@ function TransferForm({
                     Couldn't load the holdings. {holdings.error?.message}
                 </Alert>
             )}
+            {registry.isError && (
+                <Alert
+                    severity="error"
+                    action={
+                        <Button
+                            color="inherit"
+                            size="small"
+                            onClick={() => void registry.refetch()}
+                        >
+                            Retry
+                        </Button>
+                    }
+                >
+                    Couldn't load the registries' instruments, so no asset can
+                    be sent. {registry.error.message}
+                </Alert>
+            )}
             <TextField
                 select
                 label="Asset"
@@ -238,9 +317,11 @@ function TransferForm({
                 error={!!shown(errors.instrument)}
                 helperText={
                     shown(errors.instrument) ??
-                    (holdings.isLoading
+                    (holdings.isLoading || registry.isPending
                         ? 'Loading assets…'
-                        : instruments.length === 0
+                        : instruments.length === 0 &&
+                            !holdings.isError &&
+                            registry.isSuccess
                           ? 'This party has no assets to send'
                           : undefined)
                 }
@@ -250,8 +331,7 @@ function TransferForm({
                         key={getInstrumentKey(holding.instrumentId)}
                         value={getInstrumentKey(holding.instrumentId)}
                     >
-                        {holding.instrument!.name} ({holding.instrument!.symbol}
-                        )
+                        {labels.get(getInstrumentKey(holding.instrumentId))}
                     </MenuItem>
                 ))}
             </TextField>
@@ -264,7 +344,7 @@ function TransferForm({
                 helperText={
                     shown(errors.amount) ??
                     (instrument &&
-                        `Available: ${balance?.availableAmount ?? '0'} ${instrument.instrument!.symbol}`)
+                        `Available: ${available} ${instrument.instrument!.symbol}`)
                 }
             />
             <TextField
@@ -316,15 +396,22 @@ function Review({
     transfer: { form, instrument, expiry },
     onBack,
     onSent,
+    onUnknownOutcome,
 }: {
     transfer: ReviewedTransfer
     onBack: () => void
     onSent: () => void
+    onUnknownOutcome: (reason: string) => void
 }) {
     const createTransfer = useCreateTransfer()
+    const queryClient = useQueryClient()
     const { name, symbol } = instrument.instrument!
+    // Claimed on the click, before the pending state renders.
+    const claimed = useRef(false)
 
-    const confirm = () =>
+    const confirm = () => {
+        if (claimed.current) return
+        claimed.current = true
         createTransfer.mutate(
             {
                 sender: form.sender,
@@ -335,13 +422,31 @@ function Review({
                 memo: form.memo || undefined,
                 tokenStandardVersion: form.version,
             },
-            { onSuccess: onSent }
+            {
+                onSuccess: onSent,
+                onError: (error) => {
+                    if (!isUnknownOutcome(error)) {
+                        claimed.current = false
+                        return
+                    }
+                    void queryClient.invalidateQueries({
+                        queryKey: tokenQueryKeys.holdings.all,
+                    })
+                    void queryClient.invalidateQueries({
+                        queryKey: tokenQueryKeys.pendingTransfers.all,
+                    })
+                    onUnknownOutcome(error.message)
+                },
+            }
         )
+    }
 
     const rows: [string, string][] = [
         ['From', form.sender],
         ['To', form.receiver],
         ['Amount', `${form.amount} ${symbol} (${name})`],
+        ['Instrument', instrument.instrumentId.id],
+        ['Admin', instrument.instrumentId.admin],
         ['Expires', expiry.toLocaleString()],
         ['Memo', form.memo || '-'],
         ['Token standard', form.version],
@@ -368,8 +473,8 @@ function Review({
             </Paper>
             {createTransfer.isError && (
                 <Alert severity="error">
-                    The transfer failed: {createTransfer.error.message}. Check
-                    your outgoing transfers and balance before you try again.
+                    The transfer didn't go through, so you can try again.{' '}
+                    {createTransfer.error.message}
                 </Alert>
             )}
             <Stack direction="row" spacing={1} sx={{ justifyContent: 'end' }}>
