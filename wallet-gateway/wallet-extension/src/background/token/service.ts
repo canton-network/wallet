@@ -110,14 +110,21 @@ interface Writer extends SignedIn {
 }
 
 // Messaging sends a rejection that is no `Error` as `{}`, and the page's
-// promise resolves with it, as if the transfer had executed.
+// promise resolves with it, as if the transfer had executed. The ledger
+// rejects with its JSON error, `{ code, cause }`.
 function toError(cause: unknown): Error {
     if (cause instanceof Error) return cause
-    return new Error(
-        typeof cause === 'string' && cause !== ''
-            ? cause
-            : 'The transfer failed without an error message'
-    )
+    if (typeof cause === 'string' && cause !== '') return new Error(cause)
+    const { code, cause: reason } = (cause ?? {}) as {
+        code?: unknown
+        cause?: unknown
+    }
+    if (typeof reason === 'string' && reason !== '') {
+        return new Error(
+            typeof code === 'string' ? `${code}: ${reason}` : reason
+        )
+    }
+    return new Error('The transfer failed without an error message')
 }
 
 /** Runs a step before signing: if it fails, nothing can have executed. */

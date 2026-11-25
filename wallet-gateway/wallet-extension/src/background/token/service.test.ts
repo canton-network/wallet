@@ -354,14 +354,30 @@ describe('createTokenService', () => {
             expect(prepare).not.toHaveBeenCalled()
         })
 
-        it('rejects with an Error when the registry rejects with nothing', async () => {
-            sdk.token.assets.mockRejectedValue(undefined)
-            const tokenService = await signedIn()
+        it.each([
+            [
+                'nothing',
+                undefined,
+                'The transfer failed without an error message',
+            ],
+            [
+                'a ledger error',
+                { code: 'UNKNOWN_INFORMEES', cause: 'not known' },
+                'UNKNOWN_INFORMEES: not known',
+            ],
+        ])(
+            'rejects with an Error when the SDK rejects with %s',
+            async (_, cause, message) => {
+                sdk.token.assets.mockRejectedValue(cause)
+                const tokenService = await signedIn()
 
-            await expect(
-                tokenService.token.transfer.create(transferParams)
-            ).rejects.toBeInstanceOf(Error)
-        })
+                const error = await tokenService.token.transfer
+                    .create(transferParams)
+                    .catch((rejection: unknown) => rejection)
+                expect(error).toBeInstanceOf(Error)
+                expect(error).toMatchObject({ message })
+            }
+        )
 
         it('tells a signed transfer whose outcome is unknown from a failed one', async () => {
             const tokenService = await signedIn()
