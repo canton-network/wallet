@@ -1,7 +1,11 @@
 {
     "name": "@canton-network/wallet-cli",
     "version": "1.0.0",
-    "description": "Wallet CLI PoC",
+    "description": "Wallet CLI",
+    "keywords": [
+        "cli",
+        "wallet"
+    ],
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
     "license": "Apache-2.0",
     "sideEffects": false,
