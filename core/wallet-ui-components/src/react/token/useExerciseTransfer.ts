@@ -4,7 +4,7 @@
 import type { PartyId } from '@canton-network/core-types'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 
-import type { TokenStandardVersion } from './client.ts'
+import type { TokenClient, TokenStandardVersion } from './client.ts'
 import { tokenQueryKeys } from './query-keys.ts'
 import { useTokenContext } from './useTokenContext.ts'
 
@@ -19,6 +19,37 @@ export interface ExerciseTransferArgs {
     actors?: PartyId[]
 }
 
+/**
+ * Calls the client's method for the choice directly: the extension's client
+ * is a messaging proxy, where reading `.call` would name another method.
+ */
+export async function exerciseTransfer(
+    client: TokenClient,
+    args: ExerciseTransferArgs
+): Promise<void> {
+    const { transfer } = client.token
+    const params = {
+        partyId: args.party,
+        contractId: args.contractId,
+        instrumentId: args.instrumentId,
+        version: args.version,
+        actors: args.actors,
+    }
+    switch (args.instructionChoice) {
+        case 'Withdraw':
+            return transfer.withdraw(params)
+        case 'Accept':
+            if (transfer.accept) return transfer.accept(params)
+            break
+        case 'Reject':
+            if (transfer.reject) return transfer.reject(params)
+            break
+    }
+    throw new Error(
+        `Unsupported instruction choice: ${String(args.instructionChoice)}`
+    )
+}
+
 export const useExerciseTransfer = () => {
     const { client } = useTokenContext()
     const queryClient = useQueryClient()
@@ -28,24 +59,7 @@ export const useExerciseTransfer = () => {
             if (!client) {
                 throw new Error('The token client is not ready')
             }
-            const { transfer } = client.token
-            const exercise = {
-                Accept: transfer.accept,
-                Reject: transfer.reject,
-                Withdraw: transfer.withdraw,
-            }[args.instructionChoice]
-            if (!exercise) {
-                throw new Error(
-                    `Unsupported instruction choice: ${String(args.instructionChoice)}`
-                )
-            }
-            await exercise.call(transfer, {
-                partyId: args.party,
-                contractId: args.contractId,
-                instrumentId: args.instrumentId,
-                version: args.version,
-                actors: args.actors,
-            })
+            await exerciseTransfer(client, args)
         },
         onSuccess: (_, args) => {
             // Refetch in the background so broad holdings refreshes do not

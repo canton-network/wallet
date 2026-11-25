@@ -2,6 +2,11 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import {
+    getTransferActions,
+    type TransferAction,
+    type TransferActionAvailability,
+} from '@canton-network/core-wallet-ui-components/react/token'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DateTimeText } from '@components/date-time-text'
 import { DescriptionText } from '@components/description-text'
@@ -18,11 +23,6 @@ import {
 } from '@mui/material'
 import { formatDistanceToNow } from '@utils/date-format'
 import { formatAmount } from '@utils/decimal'
-import {
-    getTransferActions,
-    type TransferAction,
-    type TransferActionAvailability,
-} from '@utils/transfer-actions'
 import { useMemo, type ComponentProps, type ReactNode } from 'react'
 
 export type AvailableTransferAction = Extract<

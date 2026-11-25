@@ -8,7 +8,11 @@ import { describe, expect, it } from 'vitest'
 
 import { alice, amulet, bob } from './__tests__/fixtures.ts'
 import { basicAccount } from './holdings.ts'
-import { outgoingTransfers } from './outgoing-transfers.ts'
+import {
+    canWithdraw,
+    type OutgoingTransfer,
+    outgoingTransfers,
+} from './outgoing-transfers.ts'
 
 const times = {
     requestedAt: '2026-01-01T00:00:00.000Z',
@@ -57,5 +61,37 @@ describe('outgoingTransfers', () => {
             { contractId: 'sent-v1', version: 'v1', receiver: bob, ...sent },
             { contractId: 'sent-v2', version: 'v2', receiver: bob, ...sent },
         ])
+    })
+})
+
+describe('canWithdraw', () => {
+    it('refuses a v2 transfer that doesn’t offer the sender a withdrawal', () => {
+        const transfer = (availableActions: unknown[]): OutgoingTransfer => ({
+            contractId: 'sent-v2',
+            version: 'v2',
+            instrumentId: amulet,
+            amount: '5',
+            receiver: bob,
+            ...times,
+            availableActions:
+                availableActions as unknown as OutgoingTransfer['availableActions'],
+        })
+        const action = (tag: string, groups: string[][]) => [
+            { tag, value: {} },
+            groups,
+        ]
+
+        expect(
+            canWithdraw(alice, transfer([action('TIA_Withdraw', [[alice]])]))
+        ).toBe(true)
+        expect(
+            canWithdraw(alice, transfer([action('TIA_Accept', [[bob]])]))
+        ).toBe(false)
+        expect(
+            canWithdraw(
+                alice,
+                transfer([action('TIA_Withdraw', [[alice, bob]])])
+            )
+        ).toBe(false)
     })
 })

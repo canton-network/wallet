@@ -3,6 +3,7 @@
 
 import { PageHeader } from '@canton-network/core-wallet-ui-components/react'
 import {
+    canWithdraw,
     useExerciseTransfer,
     useOutgoingTransfers,
     useTokenContext,
@@ -85,37 +86,42 @@ function Transfers({ partyId }: { partyId: string }) {
     const outgoing = useOutgoingTransfers(partyId)
     const [withdrawing, setWithdrawing] = useState<OutgoingTransfer>()
 
+    const retry = (
+        <Button color="inherit" size="small" onClick={outgoing.refetch}>
+            Retry
+        </Button>
+    )
+    const failures = outgoing.failures.map(
+        ({ version, error }) =>
+            `Couldn't load the token standard ${version} transfers. ${error.message}`
+    )
+
     if (outgoing.isError) {
         return (
-            <Alert
-                severity="error"
-                action={
-                    <Button
-                        color="inherit"
-                        size="small"
-                        onClick={outgoing.refetch}
-                    >
-                        Retry
-                    </Button>
-                }
-            >
-                Couldn't load the transfers. {outgoing.error?.message}
+            <Alert severity="error" action={retry}>
+                {failures.join(' ')}
             </Alert>
         )
     }
     if (outgoing.isLoading) return <PageLoader />
-    if (outgoing.transfers.length === 0) {
-        return (
-            <Alert severity="info">No transfers wait for their receiver.</Alert>
-        )
-    }
 
     return (
         <>
+            {failures.length > 0 && (
+                <Alert severity="warning" action={retry}>
+                    {failures.join(' ')}
+                </Alert>
+            )}
+            {outgoing.transfers.length === 0 && (
+                <Alert severity="info">
+                    No transfers wait for their receiver.
+                </Alert>
+            )}
             {outgoing.transfers.map((transfer) => (
                 <TransferCard
                     key={transfer.contractId}
                     transfer={transfer}
+                    canWithdraw={canWithdraw(partyId, transfer)}
                     onWithdraw={() => setWithdrawing(transfer)}
                 />
             ))}
@@ -142,9 +148,11 @@ function useSymbol({ instrumentId }: OutgoingTransfer): string {
 
 function TransferCard({
     transfer,
+    canWithdraw,
     onWithdraw,
 }: {
     transfer: OutgoingTransfer
+    canWithdraw: boolean
     onWithdraw: () => void
 }) {
     const symbol = useSymbol(transfer)
@@ -160,9 +168,15 @@ function TransferCard({
                 <Typography variant="body2" color="text.secondary">
                     Expires {new Date(transfer.executeBefore).toLocaleString()}
                 </Typography>
-                <Button size="small" sx={{ mt: 1 }} onClick={onWithdraw}>
-                    Withdraw
-                </Button>
+                {canWithdraw ? (
+                    <Button size="small" sx={{ mt: 1 }} onClick={onWithdraw}>
+                        Withdraw
+                    </Button>
+                ) : (
+                    <Typography variant="body2" color="text.secondary">
+                        This transfer doesn't let your party withdraw it alone.
+                    </Typography>
+                )}
             </CardContent>
         </Card>
     )

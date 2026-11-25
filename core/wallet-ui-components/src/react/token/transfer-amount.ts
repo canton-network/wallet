@@ -11,6 +11,9 @@ const toDecimalOrNull = (value: Decimal.Value): Decimal | null => {
     }
 }
 
+// What a Daml decimal accepts: no sign, exponent, other base or separator.
+const PLAIN_DECIMAL = /^\d+(\.\d+)?$/
+
 /**
  * Why `amount` can't be sent from a balance of `available` of an instrument
  * with `decimals` decimals, or undefined when it can.
@@ -19,9 +22,12 @@ export function transferAmountError(
     amount: string,
     { available, decimals }: { available: string; decimals: number }
 ): string | undefined {
-    if (amount.trim() === '') return 'Amount is required'
-    const requested = toDecimalOrNull(amount.trim())
-    if (!requested?.isPositive() || requested.isZero()) {
+    if (amount === '') return 'Amount is required'
+    if (!PLAIN_DECIMAL.test(amount)) {
+        return 'Amount must be digits, with an optional decimal point'
+    }
+    const requested = new Decimal(amount)
+    if (requested.isZero()) {
         return 'Amount must be a positive number'
     }
     if (requested.decimalPlaces() > decimals) {

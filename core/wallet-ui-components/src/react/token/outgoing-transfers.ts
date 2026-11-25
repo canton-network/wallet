@@ -6,6 +6,7 @@ import type { TransferInstructionView as TransferInstructionViewV2 } from '@cant
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 
 import type { TokenStandardVersion } from './client.ts'
+import { getTransferActions } from './transfer-actions.ts'
 
 export interface OutgoingTransfer {
     contractId: string
@@ -16,6 +17,7 @@ export interface OutgoingTransfer {
     receiver: string
     requestedAt: string
     executeBefore: string
+    availableActions?: TransferInstructionViewV2['availableActions'] | undefined
 }
 
 /**
@@ -52,7 +54,27 @@ export function outgoingTransfers(
             receiver: transfer.receiver.owner ?? '',
             requestedAt: transfer.requestedAt,
             executeBefore: transfer.executeBefore,
+            availableActions: interfaceViewValue.availableActions,
         })
     }
     return [...byContract.values()]
+}
+
+/**
+ * Whether `partyId`, the sender, can withdraw `transfer` alone. A v2
+ * transfer says which actions it allows and who must act.
+ */
+export function canWithdraw(
+    partyId: string,
+    transfer: OutgoingTransfer
+): boolean {
+    return getTransferActions({
+        currentPartyId: partyId,
+        versions: [transfer.version],
+        sender: partyId,
+        receiver: transfer.receiver,
+        availableActions: transfer.availableActions,
+    }).some(
+        ({ action, status }) => action === 'Withdraw' && status === 'available'
+    )
 }

@@ -4,6 +4,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
+import type { TokenStandardVersion } from './client.ts'
 import {
     type OutgoingTransfer,
     outgoingTransfers,
@@ -15,10 +16,13 @@ import {
 import { useTokenContext } from './useTokenContext.ts'
 
 export interface OutgoingTransfersResult {
+    /** The transfers of the versions that loaded. */
     transfers: OutgoingTransfer[]
     isLoading: boolean
+    /** Both versions failed. */
     isError: boolean
-    error: Error | null
+    /** The versions that failed, with their errors. */
+    failures: { version: TokenStandardVersion; error: Error }[]
     refetch: () => void
 }
 
@@ -37,11 +41,16 @@ export function useOutgoingTransfers(
         [partyId, v1.data, v2.data]
     )
 
+    const failures = [
+        ...(v1.error ? [{ version: 'v1' as const, error: v1.error }] : []),
+        ...(v2.error ? [{ version: 'v2' as const, error: v2.error }] : []),
+    ]
+
     return {
         transfers,
         isLoading: v1.isLoading || v2.isLoading,
-        isError: v1.isError || v2.isError,
-        error: v1.error ?? v2.error,
+        isError: failures.length === 2,
+        failures,
         refetch: () => {
             void v1.refetch()
             void v2.refetch()

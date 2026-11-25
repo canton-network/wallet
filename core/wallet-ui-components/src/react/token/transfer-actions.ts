@@ -6,17 +6,21 @@ import {
     decodeAvailableActions,
     type TransferInstructionAction,
     type ActionAvailability,
+    type TransferInstructionView as TransferInstructionViewV2,
 } from '@canton-network/core-token-standard-v2'
 import type { PartyId } from '@canton-network/core-types'
-import type { TransferActionItem } from '@components/types'
+
+import type { TokenStandardVersion } from './client.ts'
 
 export type TransferAction = 'Accept' | 'Reject' | 'Withdraw'
 
-export const TRANSFER_ACTIONS: readonly TransferAction[] = [
-    'Accept',
-    'Reject',
-    'Withdraw',
-]
+export interface TransferActionItem {
+    currentPartyId: PartyId
+    versions: TokenStandardVersion[]
+    sender: string
+    receiver: string
+    availableActions?: TransferInstructionViewV2['availableActions'] | undefined
+}
 
 const ACTION_BY_TAG: Record<
     TransferInstructionAction['tag'],

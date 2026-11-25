@@ -21,4 +21,12 @@ describe('transferAmountError', () => {
             'Amount exceeds available balance of 10.5'
         )
     })
+
+    it('refuses an amount that isn’t a plain decimal', () => {
+        for (const amount of ['0x10', '1_0', '1e2', '-1']) {
+            expect(
+                transferAmountError(amount, { available: '1000', decimals: 2 })
+            ).toBe('Amount must be digits, with an optional decimal point')
+        }
+    })
 })

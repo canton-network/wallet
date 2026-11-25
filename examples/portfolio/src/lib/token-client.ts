@@ -23,11 +23,19 @@ export function createPortfolioTokenClient({
     sdk,
     registryUrls,
     reachableRegistryUrls,
+    onSubmitted,
 }: {
     sdk: ReadyWalletSdk
     registryUrls: ReadonlyMap<PartyId, string>
     reachableRegistryUrls: ReadonlyMap<PartyId, string>
+    /** After a transaction the client sent succeeds. */
+    onSubmitted: () => void
 }): TokenClient {
+    const submit = async (command: PreparedCommand, partyId: PartyId) => {
+        await submitViaProvider(command, partyId)
+        onSubmitted()
+    }
+
     const registryUrlFor = (admin: PartyId): string => {
         const registryUrl = registryUrls.get(admin)
         if (!registryUrl) {
@@ -56,7 +64,7 @@ export function createPortfolioTokenClient({
                           transferInstructionCid: params.contractId,
                           registryUrl,
                       })
-            await submitViaProvider(preparedCommand, params.partyId)
+            await submit(preparedCommand, params.partyId)
         }
 
     return {
@@ -95,7 +103,7 @@ export function createPortfolioTokenClient({
                         version.used === 'v2'
                             ? await sdk.token.v2.transfer.create(params)
                             : await sdk.token.v1.transfer.create(params)
-                    await submitViaProvider(preparedCommand, args.sender)
+                    await submit(preparedCommand, args.sender)
                 },
                 accept: exercise('accept'),
                 reject: exercise('reject'),

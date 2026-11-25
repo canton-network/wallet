@@ -55,9 +55,16 @@ export {
 } from './transfer-version.ts'
 export { transferAmountError } from './transfer-amount.ts'
 export {
+    canWithdraw,
     outgoingTransfers,
     type OutgoingTransfer,
 } from './outgoing-transfers.ts'
+export {
+    getTransferActions,
+    type TransferAction,
+    type TransferActionAvailability,
+    type TransferActionItem,
+} from './transfer-actions.ts'
 export {
     useOutgoingTransfers,
     type OutgoingTransfersResult,
