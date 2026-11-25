@@ -9,7 +9,6 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@canton-network/core-splice-codegen": "workspace:",
         "@canton-network/dapp-sdk": "^1.10.0",
         "@walletconnect/sign-client": "^2.26.0",
         "vue": "^3.5.46"

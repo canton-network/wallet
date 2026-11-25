@@ -5,7 +5,6 @@ import * as sdk from '@canton-network/dapp-sdk'
 import type { StatusEvent, Wallet } from '@canton-network/dapp-sdk'
 import { css, html, nothing } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
-import { Ping } from '@canton-network/core-splice-codegen'
 import { CantonComponent } from './components/common/base'
 import './components'
 
@@ -122,7 +121,17 @@ export class CantonApp extends CantonComponent {
         this.run(async () => {
             await sdk.prepareExecute({
                 commands: [
-                    Ping.commands.create.ping(this.primaryParty!.partyId),
+                    {
+                        CreateCommand: {
+                            templateId:
+                                '#canton-builtin-admin-workflow-ping:Canton.Internal.Ping:Ping',
+                            createArguments: {
+                                id: `my-test-${new Date().getTime()}`,
+                                initiator: this.primaryParty?.partyId,
+                                responder: this.primaryParty?.partyId,
+                            },
+                        },
+                    },
                 ],
             })
         })
