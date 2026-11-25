@@ -318,7 +318,7 @@ describe('DsrvSigningDriver', () => {
             })
         })
 
-        test('returns transaction_not_found when the request fails', async () => {
+        test('returns fetch_error when the request fails', async () => {
             fetchMock.mockRejectedValue(new Error('connection refused'))
 
             const result = await driver
@@ -326,7 +326,7 @@ describe('DsrvSigningDriver', () => {
                 .getTransaction({ txId: 'dsrv-tx-1' })
 
             expect(result).toEqual({
-                error: 'transaction_not_found',
+                error: 'fetch_error',
                 error_description: 'connection refused',
             })
         })

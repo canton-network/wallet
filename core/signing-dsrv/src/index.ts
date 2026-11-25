@@ -190,7 +190,7 @@ export default class DsrvSigningDriver implements SigningDriverInterface<'sub'> 
                         : toTransaction(result)
                 } catch (error) {
                     return {
-                        error: 'transaction_not_found',
+                        error: 'fetch_error',
                         error_description: (error as Error).message,
                     }
                 }
