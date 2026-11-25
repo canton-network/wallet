@@ -8,6 +8,13 @@
     "main": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "bin": "./dist/bin.js",
+    "keywords": [
+        "wallet",
+        "dapp",
+        "create",
+        "template",
+        "starter"
+    ],
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
