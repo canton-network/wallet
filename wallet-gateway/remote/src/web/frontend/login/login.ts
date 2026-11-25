@@ -159,6 +159,7 @@ export class LoginUI extends BaseElement {
                         username: onboardingUsername,
                         networkId: selectedNetwork.id,
                         origin: currentOrigin,
+                        scopes: this.scopes,
                     },
                 })
                 stateManager.selfIssuedLoginSessionId.set(

@@ -6,6 +6,7 @@ import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     PartyLevelRight,
     type MessageRaw,
+    type NetworkConnection,
     type Store,
     type Wallet,
 } from '@canton-network/core-wallet-store'
@@ -79,6 +80,15 @@ const network = {
     },
 }
 
+const pendingConnection = (scopes: string[]): NetworkConnection => ({
+    id: 'connection-1',
+    sessionId: 'onboarding-session',
+    userId: 'alice',
+    createdAt: new Date(),
+    authMethod: 'self_issued',
+    payload: { state: 'pending', scopes },
+})
+
 describe('SelfIssuedAuthService', () => {
     const logger = {
         info: vi.fn(),
@@ -95,6 +105,8 @@ describe('SelfIssuedAuthService', () => {
             | 'setMessageRaw'
             | 'getMessageRaw'
             | 'setMessageRawStatus'
+            | 'getNetworkConnection'
+            | 'updateNetworkConnection'
         >
     >
     let signMessageService: Mocked<
@@ -140,6 +152,10 @@ describe('SelfIssuedAuthService', () => {
             setMessageRaw: vi.fn().mockResolvedValue(undefined),
             getMessageRaw: vi.fn(),
             setMessageRawStatus: vi.fn().mockResolvedValue(undefined),
+            getNetworkConnection: vi
+                .fn()
+                .mockResolvedValue(pendingConnection([])),
+            updateNetworkConnection: vi.fn().mockResolvedValue(undefined),
         }
         walletAllocator = {
             createWallet: vi.fn(),
@@ -615,6 +631,45 @@ describe('SelfIssuedAuthService', () => {
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
         })
 
+        it('adds the scopes of the network connection to the network scope', async () => {
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            store.getNetworkConnection.mockResolvedValue(
+                pendingConnection(['ledger:read', 'daml_ledger_api'])
+            )
+
+            await createService().signAccessToken('alice::ns')
+
+            expect(store.getNetworkConnection).toHaveBeenCalledWith(
+                'onboarding-session'
+            )
+            const payload = JSON.parse(
+                new TextDecoder().decode(
+                    decodeBase64(
+                        savedTokenMessage().message.split('.')[1],
+                        'base64url'
+                    )
+                )
+            )
+            expect(payload.scope).toBe('daml_ledger_api ledger:read')
+        })
+
+        it('rejects a login session without a network connection', async () => {
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            store.getNetworkConnection.mockResolvedValue(undefined)
+
+            await expect(
+                createService().signAccessToken('alice::ns')
+            ).rejects.toThrow(
+                'Self-issued login session onboarding-session has no network connection'
+            )
+            expect(store.setMessageRaw).not.toHaveBeenCalled()
+            expect(signMessageService.sign).not.toHaveBeenCalled()
+        })
+
         it('returns awaiting-signature while the provider awaits approval', async () => {
             store.getWallet.mockResolvedValue(
                 createWallet({ status: 'allocated' })
@@ -865,6 +920,9 @@ describe('SelfIssuedAuthService', () => {
             store.getWallet
                 .mockResolvedValueOnce(allocatedWallet)
                 .mockResolvedValueOnce(authPartyWallet)
+            store.getNetworkConnection.mockResolvedValue(
+                pendingConnection(['ledger:read'])
+            )
 
             const result =
                 await createService().connectWithSignedAccessToken(
@@ -899,6 +957,13 @@ describe('SelfIssuedAuthService', () => {
                 'onboarding-session',
                 accessToken,
                 'login-message'
+            )
+            expect(store.updateNetworkConnection).toHaveBeenCalledWith(
+                'connection-1',
+                {
+                    authMethod: 'self_issued',
+                    payload: { state: 'ready', scopes: ['ledger:read'] },
+                }
             )
             expect(result).toMatchObject({
                 status: 'connected',
@@ -938,6 +1003,26 @@ describe('SelfIssuedAuthService', () => {
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(store.updateWallet).not.toHaveBeenCalled()
             expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledOnce()
+        })
+
+        it('rejects a login session without a network connection', async () => {
+            store.getMessageRaw.mockResolvedValue(
+                selfIssuedTokenMessage({ status: 'signed', signature })
+            )
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated', isAuthParty: true })
+            )
+            store.getNetworkConnection.mockResolvedValue(undefined)
+
+            await expect(
+                createService().connectWithSignedAccessToken('login-message')
+            ).rejects.toThrow(
+                'Self-issued login session onboarding-session has no network connection'
+            )
+            expect(ledgerClient.patch).not.toHaveBeenCalled()
+            expect(probeGet).not.toHaveBeenCalled()
+            expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+            expect(store.updateNetworkConnection).not.toHaveBeenCalled()
         })
 
         it('rejects a token that is not signed yet', async () => {

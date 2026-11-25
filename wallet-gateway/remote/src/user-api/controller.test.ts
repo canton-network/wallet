@@ -417,6 +417,78 @@ describe('userController', () => {
                     .withAuthContext({ userId: 'alice', accessToken: '' })
                     .getCurrentNetwork()
             ).rejects.toThrow('No session found')
+            await expect(
+                onboardingStore.getNetworkConnection(sessionId)
+            ).resolves.toMatchObject({
+                authMethod: 'self_issued',
+                payload: { state: 'pending', scopes: [] },
+            })
+        })
+
+        it('stores the requested scopes on a pending network connection', async () => {
+            const selfIssuedNetwork = {
+                ...storeNetwork,
+                id: 'self-issued-network',
+                auth: { method: 'self_issued' },
+            } as unknown as StoreNetwork
+            const store = new StoreInternal(
+                { idps: [idp], networks: [selfIssuedNetwork] },
+                getLogger('mock')
+            )
+
+            const { sessionId } = await createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            ).startSelfIssuedLoginSession({
+                username: 'alice',
+                networkId: selfIssuedNetwork.id,
+                origin: 'https://example.com',
+                scopes: ['ledger:read', 'users:self'],
+            })
+
+            await expect(
+                store
+                    .withAuthContext({ userId: 'alice', accessToken: '' })
+                    .getNetworkConnection(sessionId)
+            ).resolves.toMatchObject({
+                sessionId,
+                userId: 'alice',
+                authMethod: 'self_issued',
+                payload: {
+                    state: 'pending',
+                    scopes: ['ledger:read', 'users:self'],
+                },
+            })
+        })
+
+        it('rejects a requested scope containing whitespace', async () => {
+            const selfIssuedNetwork = {
+                ...storeNetwork,
+                id: 'self-issued-network',
+                auth: { method: 'self_issued' },
+            } as unknown as StoreNetwork
+            const store = new StoreInternal(
+                { idps: [idp], networks: [selfIssuedNetwork] },
+                getLogger('mock')
+            )
+
+            await expect(
+                createController(
+                    store,
+                    notificationService,
+                    logger,
+                    undefined
+                ).startSelfIssuedLoginSession({
+                    username: 'alice',
+                    networkId: selfIssuedNetwork.id,
+                    origin: 'https://example.com',
+                    scopes: ['ledger:read daml_admin'],
+                })
+            ).rejects.toThrow(
+                'Scope "ledger:read daml_admin" must not contain whitespace'
+            )
         })
 
         it('refuses a session when the ledger user exists but cannot use self-issued auth', async () => {

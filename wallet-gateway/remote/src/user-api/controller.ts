@@ -683,6 +683,7 @@ export const userController = ({
             if (!username) {
                 throw new Error('username is required')
             }
+            assertValidScopes(params.scopes)
 
             const network = await authAwareStore.getNetwork(params.networkId)
             if (network.auth.method !== 'self_issued') {
@@ -697,11 +698,17 @@ export const userController = ({
             })
             await assertLoginAllowed(authAwareStore, network, username)
             const sessionId = crypto.randomUUID()
-            await onboardingStore.setSession({
-                id: sessionId,
-                origin: params.origin,
-                network: network.id,
-            })
+            await onboardingStore.setSession(
+                {
+                    id: sessionId,
+                    origin: params.origin,
+                    network: network.id,
+                },
+                {
+                    authMethod: 'self_issued',
+                    payload: { state: 'pending', scopes: params.scopes ?? [] },
+                }
+            )
 
             return { sessionId }
         },
