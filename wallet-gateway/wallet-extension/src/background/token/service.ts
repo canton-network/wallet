@@ -227,10 +227,24 @@ export function createTokenService({
     createSdk,
     submitter,
 }: TokenServiceDeps): TokenService {
-    // The transactions a `submit` is signing or executing. A worker stop
-    // ends those submits too, so a set lost with the worker leaves no
-    // unprotected submit behind.
+    // The transactions a `submit` is signing or executing, or a cleanup is
+    // removing. A worker stop ends those calls too, so a set lost with the
+    // worker leaves none of them unprotected.
     const claims = new Set<string>()
+
+    /** Removes the review unless another call holds it. */
+    async function removeUnclaimed(
+        store: ExtensionStore,
+        transactionId: string
+    ): Promise<void> {
+        if (claims.has(transactionId)) return
+        claims.add(transactionId)
+        try {
+            await removeReview(store, transactionId)
+        } finally {
+            claims.delete(transactionId)
+        }
+    }
 
     /**
      * The SDK for `user` and its current network. Callers load the user once
@@ -475,11 +489,10 @@ export function createTokenService({
             (transaction) =>
                 transaction.origin === EXTENSION_ORIGIN &&
                 transaction.status === 'pending' &&
-                !claims.has(transaction.id) &&
                 isExpired(transaction)
         )
         for (const { id } of expired) {
-            await removeReview(store, id)
+            await removeUnclaimed(store, id)
         }
     }
 
@@ -516,10 +529,17 @@ export function createTokenService({
                     ? await sdk.token.v2.transfer.create(params)
                     : await sdk.token.v1.transfer.create(params)
             const transactionId = await prepareCommand(writer, sender, command)
-            await reviewNetworks.set(transactionId, writer.network.id)
-            const transaction = await writer.store.getTransaction(transactionId)
-            if (!transaction?.createdAt) {
-                throw new Error('The prepared transfer was not stored')
+            let transaction: Transaction | undefined
+            try {
+                await reviewNetworks.set(transactionId, writer.network.id)
+                transaction = await writer.store.getTransaction(transactionId)
+                if (!transaction?.createdAt) {
+                    throw new Error('The prepared transfer was not stored')
+                }
+            } catch (cause) {
+                // The page gets no id to discard it with.
+                await removeReview(writer.store, transactionId)
+                throw cause
             }
             return {
                 transactionId,
@@ -557,7 +577,7 @@ export function createTokenService({
             )
         }
         if (claims.has(transactionId)) {
-            throw unknownOutcome('it is already being submitted')
+            throw unknownOutcome('another request is handling it')
         }
         claims.add(transactionId)
         try {
@@ -671,9 +691,14 @@ export function createTokenService({
         const { store } = await signedIn()
         if (typeof transactionId !== 'string' || transactionId === '') return
         if (claims.has(transactionId)) return
-        const transaction = await store.getTransaction(transactionId)
-        if (transaction?.origin !== EXTENSION_ORIGIN) return
-        await removeReview(store, transactionId)
+        claims.add(transactionId)
+        try {
+            const transaction = await store.getTransaction(transactionId)
+            if (transaction?.origin !== EXTENSION_ORIGIN) return
+            await removeReview(store, transactionId)
+        } finally {
+            claims.delete(transactionId)
+        }
     }
 
     async function withdraw({

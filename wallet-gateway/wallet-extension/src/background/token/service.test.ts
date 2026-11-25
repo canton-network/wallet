@@ -484,6 +484,62 @@ describe('createTokenService', () => {
             )
         })
 
+        it('doesn’t sign a review that a discard under way is removing', async () => {
+            const tokenService = await signedIn()
+            const { transactionId } =
+                await tokenService.token.transfer.prepare(transferParams)
+            // The discard's store holds its read until released.
+            const real = store
+            let release!: () => void
+            let reached!: () => void
+            const reading = new Promise<void>((resolve) => (reached = resolve))
+            const held = (scoped: typeof store) =>
+                new Proxy(scoped, {
+                    get(target, prop) {
+                        if (prop === 'getTransaction') {
+                            return async (id: string) => {
+                                reached()
+                                await new Promise<void>(
+                                    (done) => (release = done)
+                                )
+                                return target.getTransaction(id)
+                            }
+                        }
+                        const value: unknown = Reflect.get(target, prop)
+                        return typeof value === 'function'
+                            ? value.bind(target)
+                            : value
+                    },
+                })
+            store = new Proxy(real, {
+                get(target, prop) {
+                    if (prop === 'withAuthContext') {
+                        return (scope: AuthContext) =>
+                            held(target.withAuthContext(scope) as typeof store)
+                    }
+                    const value: unknown = Reflect.get(target, prop)
+                    return typeof value === 'function'
+                        ? value.bind(target)
+                        : value
+                },
+            })
+
+            const discarded = tokenService.token.transfer.discard(transactionId)
+            await reading
+            store = real
+            const error = await tokenService.token.transfer
+                .submit(transactionId)
+                .catch((rejection: unknown) => rejection)
+            release()
+            await discarded
+
+            expect(isNotSubmitted(error)).toBe(false)
+            expect(sign).not.toHaveBeenCalled()
+            await expect(
+                store.getTransaction(transactionId)
+            ).resolves.toBeUndefined()
+        })
+
         it('refuses when the extension’s session is on another network than the wallet’s', async () => {
             const tokenService = service()
             // The store takes the network from the first session with the
