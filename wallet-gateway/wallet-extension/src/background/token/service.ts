@@ -4,7 +4,10 @@
 import { rpcErrors } from '@canton-network/core-rpc-errors'
 import type { PartyId } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
-import { hashAccessToken } from '@canton-network/core-wallet-store'
+import {
+    hashAccessToken,
+    type Network,
+} from '@canton-network/core-wallet-store'
 import {
     type CreateTransferParams,
     type RegistryInstrument,
@@ -14,6 +17,7 @@ import {
 import type { AssetBody, PreparedCommand } from '@canton-network/wallet-sdk'
 
 import { EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
+import { notSubmittedError } from '@/shared/transfer-errors.ts'
 
 import type { AuthContextStore } from '../auth-context.ts'
 import type { PrepareExecuteParams } from '../controllers/dapp/rpc-gen/typings.ts'
@@ -53,8 +57,8 @@ export type TokenService = {
         /**
          * The extension page's review step is the approval: these prepare,
          * sign and execute in one call, and resolve once executed. They
-         * reject with an `Error`; a -32603 error code means the transaction
-         * was signed and may have executed.
+         * reject with an `Error`. Only an error that `isNotSubmitted`
+         * accepts means the transaction can't have executed.
          */
         transfer: {
             create(params: CreateTransferParams): Promise<void>
@@ -99,6 +103,12 @@ interface SignedIn {
     store: ExtensionStore
 }
 
+/** A signed-in user whose write runs in the extension's session. */
+interface Writer extends SignedIn {
+    sessionId: string
+    network: Network
+}
+
 // Messaging sends a rejection that is no `Error` as `{}`, and the page's
 // promise resolves with it, as if the transfer had executed.
 function toError(cause: unknown): Error {
@@ -110,11 +120,12 @@ function toError(cause: unknown): Error {
     )
 }
 
-async function rejectingWithError(write: () => Promise<void>): Promise<void> {
+/** Runs a step before signing: if it fails, nothing can have executed. */
+async function beforeSigning<T>(step: () => Promise<T>): Promise<T> {
     try {
-        await write()
+        return await step()
     } catch (cause) {
-        throw toError(cause)
+        throw notSubmittedError(toError(cause).message)
     }
 }
 
@@ -131,7 +142,13 @@ export function createTokenService({
      * ownership check with another user's token.
      */
     async function sdkFor({ context, store }: SignedIn): Promise<TokenSdk> {
-        const network = await store.getCurrentNetwork()
+        return sdkOn(await store.getCurrentNetwork(), context)
+    }
+
+    async function sdkOn(
+        network: Network,
+        context: AuthContext
+    ): Promise<TokenSdk> {
         return createSdk({
             network,
             accessToken: context.accessToken,
@@ -140,20 +157,47 @@ export function createTokenService({
     }
 
     /**
-     * The signed-in user, once `partyId` is one of their wallets. Messaging
+     * Throws unless `partyId` is one of the user's wallets. Messaging
      * doesn't check types, so a missing or non-string `partyId` is rejected
      * here.
      */
-    async function ownerOf(partyId: unknown): Promise<SignedIn> {
-        const user = await signedIn()
+    async function assertOwner(
+        { store }: SignedIn,
+        partyId: unknown
+    ): Promise<void> {
         if (typeof partyId !== 'string' || partyId === '') {
             throw new Error('A partyId is required')
         }
-        const wallets = await user.store.getWallets()
+        const wallets = await store.getWallets()
         if (!wallets.some((wallet) => wallet.partyId === partyId)) {
             throw new Error(`Party ${partyId} does not belong to user`)
         }
+    }
+
+    async function ownerOf(partyId: unknown): Promise<SignedIn> {
+        const user = await signedIn()
+        await assertOwner(user, partyId)
         return user
+    }
+
+    /**
+     * The signed-in user, in the extension's session, once `partyId` is one
+     * of their wallets on that session's network.
+     */
+    async function writerFor(partyId: unknown): Promise<Writer> {
+        const user = await signedIn()
+        const session = await extensionSession(user)
+        // The store takes the network, and so the wallets and the ledger,
+        // from the first session with the user's token, which can be
+        // another origin's on another network.
+        const network = await user.store.getCurrentNetwork()
+        if (session.network !== network.id) {
+            throw new Error(
+                `The extension is connected to ${session.network}, but the wallet would use ${network.id}`
+            )
+        }
+        await assertOwner(user, partyId)
+        return { ...user, sessionId: session.id, network }
     }
 
     async function sdkForParty(partyId: unknown): Promise<TokenSdk> {
@@ -194,16 +238,14 @@ export function createTokenService({
     }
 
     /**
-     * Prepares, signs and executes a command as `partyId`, in the
-     * extension's session.
+     * Prepares a command as `partyId` and stores it as pending. Returns the
+     * transaction's id.
      */
-    async function submit(
-        user: SignedIn,
+    async function prepare(
+        { context, store }: Writer,
         partyId: PartyId,
         [command, disclosedContracts]: PreparedCommand
-    ): Promise<void> {
-        const { context, store } = user
-        const session = await extensionSession(user)
+    ): Promise<string> {
         const transactionId = crypto.randomUUID()
         const commandId = crypto.randomUUID()
         await prepareTransaction(store, context, {
@@ -217,11 +259,19 @@ export function createTokenService({
                 disclosedContracts,
             },
         })
+        return transactionId
+    }
+
+    /** Signs and executes a prepared transaction in the extension's session. */
+    async function submit(
+        { context, store, sessionId }: Writer,
+        transactionId: string
+    ): Promise<void> {
         try {
             await submitTransaction(submitter, {
                 store,
                 auth: context,
-                sessionId: session.id,
+                sessionId,
                 transactionId,
             })
         } catch (cause) {
@@ -238,7 +288,7 @@ export function createTokenService({
                       .then((transaction) => transaction?.status)
                       .catch(() => undefined)
             if (status === 'pending' || status === 'failed') {
-                throw rpcErrors.transactionRejected({ message })
+                throw notSubmittedError(message)
             }
             throw rpcErrors.internal({
                 message: `The outcome of the transaction is unknown: ${message}`,
@@ -269,28 +319,31 @@ export function createTokenService({
         memo,
         tokenStandardVersion,
     }: CreateTransferParams): Promise<void> {
-        const user = await ownerOf(sender)
-        const expirationDate = new Date(expiry)
-        if (Number.isNaN(expirationDate.getTime())) {
-            throw new Error('The expiry is not a valid date')
-        }
-        const sdk = await sdkFor(user)
-        const asset = await findAsset(sdk, instrumentId)
-        const { used } = resolveTransferVersion(asset, tokenStandardVersion)
-        const params = {
-            sender,
-            recipient: receiver,
-            amount,
-            instrumentId: asset.id,
-            registryUrl: asset.registryUrl,
-            expirationDate,
-            memo,
-        }
-        const command =
-            used === 'v2'
-                ? await sdk.token.v2.transfer.create(params)
-                : await sdk.token.v1.transfer.create(params)
-        await submit(user, sender, command)
+        const [writer, transactionId] = await beforeSigning(async () => {
+            const writer = await writerFor(sender)
+            const expirationDate = new Date(expiry)
+            if (Number.isNaN(expirationDate.getTime())) {
+                throw new Error('The expiry is not a valid date')
+            }
+            const sdk = await sdkOn(writer.network, writer.context)
+            const asset = await findAsset(sdk, instrumentId)
+            const { used } = resolveTransferVersion(asset, tokenStandardVersion)
+            const params = {
+                sender,
+                recipient: receiver,
+                amount,
+                instrumentId: asset.id,
+                registryUrl: asset.registryUrl,
+                expirationDate,
+                memo,
+            }
+            const command =
+                used === 'v2'
+                    ? await sdk.token.v2.transfer.create(params)
+                    : await sdk.token.v1.transfer.create(params)
+            return [writer, await prepare(writer, sender, command)] as const
+        })
+        await submit(writer, transactionId)
     }
 
     async function withdraw({
@@ -299,21 +352,24 @@ export function createTokenService({
         instrumentId,
         version,
     }: TransferChoiceParams): Promise<void> {
-        const user = await ownerOf(partyId)
-        const sdk = await sdkFor(user)
-        const { registryUrl } = await findAsset(sdk, instrumentId)
-        const command =
-            version === 'v2'
-                ? await sdk.token.v2.transfer.withdraw(
-                      contractId,
-                      [partyId],
-                      registryUrl
-                  )
-                : await sdk.token.v1.transfer.withdraw({
-                      transferInstructionCid: contractId,
-                      registryUrl,
-                  })
-        await submit(user, partyId, command)
+        const [writer, transactionId] = await beforeSigning(async () => {
+            const writer = await writerFor(partyId)
+            const sdk = await sdkOn(writer.network, writer.context)
+            const { registryUrl } = await findAsset(sdk, instrumentId)
+            const command =
+                version === 'v2'
+                    ? await sdk.token.v2.transfer.withdraw(
+                          contractId,
+                          [partyId],
+                          registryUrl
+                      )
+                    : await sdk.token.v1.transfer.withdraw({
+                          transferInstructionCid: contractId,
+                          registryUrl,
+                      })
+            return [writer, await prepare(writer, partyId, command)] as const
+        })
+        await submit(writer, transactionId)
     }
 
     return {
@@ -326,9 +382,8 @@ export function createTokenService({
                 return lists.flat()
             },
             transfer: {
-                create: (params) => rejectingWithError(() => create(params)),
-                withdraw: (params) =>
-                    rejectingWithError(() => withdraw(params)),
+                create,
+                withdraw,
             },
             v1: {
                 utxos: {

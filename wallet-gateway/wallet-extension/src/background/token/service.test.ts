@@ -9,6 +9,7 @@ import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 
 import createPlain from '@/__tests__/fixtures/v3-create-plain.json'
 import { EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
+import { isNotSubmitted, NOT_SUBMITTED } from '@/shared/transfer-errors.ts'
 
 import type { AuthContextStore } from '../auth-context.ts'
 import type { TransactionSubmitter } from '../controllers/user/transactions.ts'
@@ -318,6 +319,41 @@ describe('createTokenService', () => {
             )
         })
 
+        it('refuses when the extension’s session is on another network than the wallet’s', async () => {
+            const tokenService = service()
+            // The store takes the network from the first session with the
+            // token: the dApp's.
+            await store.setSession({
+                id: 'dapp-session',
+                origin: 'https://dapp.example',
+                network: 'canton:local-oauth',
+                accessToken: context.accessToken,
+            })
+            await store.setSession({
+                id: 'session-1',
+                origin: EXTENSION_ORIGIN,
+                network: networkId,
+                accessToken: context.accessToken,
+            })
+            await store.addWallet({ ...wallet })
+            await store.addWallet({
+                ...wallet,
+                networkId: 'canton:local-oauth',
+            })
+
+            const error = await tokenService.token.transfer
+                .create(transferParams)
+                .catch((cause: unknown) => cause)
+            expect(error).toMatchObject({
+                message: expect.stringContaining(
+                    'The extension is connected to canton:localnet'
+                ),
+            })
+            expect(isNotSubmitted(error)).toBe(true)
+            expect(createSdk).not.toHaveBeenCalled()
+            expect(prepare).not.toHaveBeenCalled()
+        })
+
         it('rejects with an Error when the registry rejects with nothing', async () => {
             sdk.token.assets.mockRejectedValue(undefined)
             const tokenService = await signedIn()
@@ -335,6 +371,7 @@ describe('createTokenService', () => {
                 tokenService.token.transfer.create(transferParams)
             ).rejects.toMatchObject({
                 code: errorCodes.rpc.transactionRejected,
+                data: NOT_SUBMITTED,
             })
 
             execute.mockRejectedValueOnce(new Error('connection lost'))
