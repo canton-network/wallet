@@ -148,13 +148,20 @@ describe('createTokenService', () => {
                 }
             }
         )
+        // As the transaction service does, the completion replaces the
+        // payload, and with it `actAs`.
         execute = vi.fn(
             async (executeStore, _context, _session, { transactionId }) => {
+                const completion = {
+                    updateId: 'update-1',
+                    completionOffset: 42,
+                }
                 await executeStore.setTransactionStatus(
                     transactionId,
-                    'executed'
+                    'executed',
+                    { payload: completion, failureReason: '' }
                 )
-                return { updateId: 'update-1', completionOffset: 42 }
+                return completion
             }
         )
     })
@@ -423,6 +430,60 @@ describe('createTokenService', () => {
             expect(execute).not.toHaveBeenCalled()
         })
 
+        it('keeps a signed transfer’s outcome unknown when it can’t be checked again', async () => {
+            const tokenService = await signedIn()
+            const { transactionId } =
+                await tokenService.token.transfer.prepare(transferParams)
+            await store.setTransactionSigned(transactionId, new Date())
+            // The extension's session moves to another network than the
+            // wallet's.
+            await store.setSession({
+                id: 'session-1',
+                origin: EXTENSION_ORIGIN,
+                network: 'canton:local-oauth',
+                accessToken: context.accessToken,
+            })
+
+            const error = await tokenService.token.transfer
+                .submit(transactionId)
+                .catch((cause: unknown) => cause)
+
+            expect(isNotSubmitted(error)).toBe(false)
+            expect(error).toMatchObject({ code: errorCodes.rpc.internal })
+            expect(execute).not.toHaveBeenCalled()
+        })
+
+        it('doesn’t sweep a past-deadline review whose submit is signing', async () => {
+            const tokenService = await signedIn()
+            const { transactionId } =
+                await tokenService.token.transfer.prepare(transferParams)
+            let release!: () => void
+            const signing = new Promise<void>((resolve) => {
+                sign.mockImplementationOnce(async (signStore, ...rest) => {
+                    resolve()
+                    await new Promise<void>((done) => (release = done))
+                    return sign.getMockImplementation()!(signStore, ...rest)
+                })
+            })
+
+            const submitted = tokenService.token.transfer.submit(transactionId)
+            await signing
+            // The deadline passes while the signer runs, and another page
+            // prepares a transfer.
+            const transaction = (await store.getTransaction(transactionId))!
+            await store.setTransaction({
+                ...transaction,
+                createdAt: new Date(Date.now() - 5 * 60 * 1000),
+            })
+            await tokenService.token.transfer.prepare(transferParams)
+            release()
+
+            await expect(submitted).resolves.toBeUndefined()
+            await expect(store.getTransaction(transactionId)).resolves.toEqual(
+                expect.objectContaining({ status: 'executed' })
+            )
+        })
+
         it('refuses when the extension’s session is on another network than the wallet’s', async () => {
             const tokenService = service()
             // The store takes the network from the first session with the
@@ -516,6 +577,43 @@ describe('createTokenService', () => {
                     expect.objectContaining({ networkId }),
                 ])
             }
+        })
+
+        it('refuses to submit a review on another network than it was prepared on', async () => {
+            const tokenService = await signedIn()
+            await store.addWallet({
+                ...wallet,
+                networkId: 'canton:local-oauth',
+            })
+            const { transactionId } =
+                await tokenService.token.transfer.prepare(transferParams)
+            // Both sessions reconnect to the other network, where the
+            // party is the user's too.
+            await store.setSession({
+                id: 'dapp-session',
+                origin: 'https://dapp.example',
+                network: 'canton:local-oauth',
+                accessToken: context.accessToken,
+            })
+            await store.setSession({
+                id: 'session-1',
+                origin: EXTENSION_ORIGIN,
+                network: 'canton:local-oauth',
+                accessToken: context.accessToken,
+            })
+
+            const error = await tokenService.token.transfer
+                .submit(transactionId)
+                .catch((cause: unknown) => cause)
+
+            expect(isNotSubmitted(error)).toBe(true)
+            expect(error).toMatchObject({
+                message: expect.stringContaining('prepared on canton:localnet'),
+            })
+            expect(sign).not.toHaveBeenCalled()
+            await expect(
+                store.getTransaction(transactionId)
+            ).resolves.toBeUndefined()
         })
 
         it('stops before preparing when the extension’s session is removed', async () => {

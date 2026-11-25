@@ -17,6 +17,7 @@ import {
     type TransferChoiceParams,
 } from '@canton-network/core-wallet-ui-components/react/token'
 import type { AssetBody, PreparedCommand } from '@canton-network/wallet-sdk'
+import { storage } from 'wxt/utils/storage'
 
 import { EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
 import { notSubmittedError } from '@/shared/transfer-errors.ts'
@@ -65,6 +66,23 @@ export interface PreparedTransfer {
  */
 const REVIEW_TIMEOUT_MS = TX_APPROVAL_TIMEOUT_MS
 
+// The network a review was prepared on, by transaction id. The row can't
+// hold it: core rewrites the row on each status change without its
+// `networkId`, and sends the payload to the ledger. Session storage
+// outlives a worker restart.
+const reviewNetworkKey = (transactionId: string) =>
+    `session:reviewNetwork:${transactionId}` as const
+
+const reviewNetworks = {
+    get: (transactionId: string) =>
+        storage.getItem<string>(reviewNetworkKey(transactionId)),
+    set: (transactionId: string, networkId: string) =>
+        storage.setItem(reviewNetworkKey(transactionId), networkId),
+    // A record left behind only refers to a removed row.
+    forget: (transactionId: string) =>
+        storage.removeItem(reviewNetworkKey(transactionId)).catch(() => {}),
+}
+
 /**
  * The token API for the extension pages, with the SDK's nesting. The SDK
  * itself stays in the background: it also has the ledger, party and keys
@@ -89,7 +107,7 @@ export type TokenService = {
              * without signing, an executed one resolves.
              */
             submit(transactionId: string): Promise<void>
-            /** Removes the prepared transfer, unless it is signed. */
+            /** Removes the prepared transfer, unless it is signed or being submitted. */
             discard(transactionId: string): Promise<void>
             /**
              * Prepares, signs and executes in one call. v2 acts as `partyId`
@@ -187,6 +205,12 @@ function onNetwork(store: ExtensionStore, network: Network): ExtensionStore {
     })
 }
 
+function unknownOutcome(reason: string): Error {
+    return rpcErrors.internal({
+        message: `The outcome of the transaction is unknown: ${reason}`,
+    })
+}
+
 /** Runs a step before signing: if it fails, nothing can have executed. */
 async function beforeSigning<T>(step: () => Promise<T>): Promise<T> {
     try {
@@ -203,6 +227,11 @@ export function createTokenService({
     createSdk,
     submitter,
 }: TokenServiceDeps): TokenService {
+    // The transactions a `submit` is signing or executing. A worker stop
+    // ends those submits too, so a set lost with the worker leaves no
+    // unprotected submit behind.
+    const claims = new Set<string>()
+
     /**
      * The SDK for `user` and its current network. Callers load the user once
      * and pass it, so a sign-in that happens meanwhile can't mix one user's
@@ -388,14 +417,23 @@ export function createTokenService({
             // Unsigned, it can't reach the ledger. Once signed, even a
             // `failed` row is no proof: the ledger's timeout waiting for
             // the completion is recorded as `failed` too.
-            const removed = await store
-                .removePendingTransaction(transactionId)
-                .catch(() => false)
-            if (removed) throw notSubmittedError(message)
-            throw rpcErrors.internal({
-                message: `The outcome of the transaction is unknown: ${message}`,
-            })
+            if (await removeReview(store, transactionId)) {
+                throw notSubmittedError(message)
+            }
+            throw unknownOutcome(message)
         }
+    }
+
+    /** Removes the transaction if it is still pending. Resolves whether it did. */
+    async function removeReview(
+        store: ExtensionStore,
+        transactionId: string
+    ): Promise<boolean> {
+        const removed = await store
+            .removePendingTransaction(transactionId)
+            .catch(() => false)
+        if (removed) await reviewNetworks.forget(transactionId)
+        return removed
     }
 
     /** `submitter`, checking before each step that `writer` is connected. */
@@ -437,10 +475,11 @@ export function createTokenService({
             (transaction) =>
                 transaction.origin === EXTENSION_ORIGIN &&
                 transaction.status === 'pending' &&
+                !claims.has(transaction.id) &&
                 isExpired(transaction)
         )
         for (const { id } of expired) {
-            await store.removePendingTransaction(id)
+            await removeReview(store, id)
         }
     }
 
@@ -477,6 +516,7 @@ export function createTokenService({
                     ? await sdk.token.v2.transfer.create(params)
                     : await sdk.token.v1.transfer.create(params)
             const transactionId = await prepareCommand(writer, sender, command)
+            await reviewNetworks.set(transactionId, writer.network.id)
             const transaction = await writer.store.getTransaction(transactionId)
             if (!transaction?.createdAt) {
                 throw new Error('The prepared transfer was not stored')
@@ -493,70 +533,147 @@ export function createTokenService({
     }
 
     /**
-     * The extension's transaction `transactionId` of the signed-in user,
-     * with a writer for its acting party.
+     * A writer for the transaction's acting party, on the network it was
+     * prepared on.
      */
-    async function reviewed(
-        transactionId: unknown
-    ): Promise<[Writer, Transaction]> {
-        const user = await signedIn()
-        const transaction =
-            typeof transactionId === 'string' && transactionId !== ''
-                ? await user.store.getTransaction(transactionId)
-                : undefined
-        if (transaction?.origin !== EXTENSION_ORIGIN) {
-            throw new Error('There is no prepared transfer with this id')
+    async function writerForReview(
+        user: SignedIn,
+        transaction: Transaction
+    ): Promise<Writer> {
+        const writer = await writerOf(user, actingParty(transaction))
+        const preparedOn = await reviewNetworks.get(transaction.id)
+        if (preparedOn !== writer.network.id) {
+            throw new Error(
+                `The transfer was prepared on ${preparedOn ?? 'another network'}, but the extension is connected to ${writer.network.id}`
+            )
         }
-        return [await writerOf(user, actingParty(transaction)), transaction]
+        return writer
     }
 
     async function submit(transactionId: string): Promise<void> {
-        const [writer, transaction] = await beforeSigning(async () => {
-            const [writer, transaction] = await reviewed(transactionId)
-            if (transaction.status === 'pending' && isExpired(transaction)) {
-                await writer.store.removePendingTransaction(transaction.id)
-                throw new Error(
-                    'The review expired. Review the transfer again.'
+        if (typeof transactionId !== 'string' || transactionId === '') {
+            throw notSubmittedError(
+                'There is no prepared transfer with this id'
+            )
+        }
+        if (claims.has(transactionId)) {
+            throw unknownOutcome('it is already being submitted')
+        }
+        claims.add(transactionId)
+        try {
+            let user: SignedIn
+            let transaction: Transaction | undefined
+            // Without the row, an earlier submit may have reached the
+            // ledger.
+            try {
+                user = await signedIn()
+                transaction = await user.store.getTransaction(transactionId)
+            } catch (cause) {
+                throw unknownOutcome(toError(cause).message)
+            }
+            if (transaction?.origin !== EXTENSION_ORIGIN) {
+                throw notSubmittedError(
+                    'There is no prepared transfer with this id'
                 )
             }
-            return [writer, transaction] as const
-        })
-        const { id, status } = transaction
-        switch (status) {
-            case 'pending':
-                return signAndExecute(writer, id)
+            await submitAs(user, transaction)
+        } finally {
+            claims.delete(transactionId)
+        }
+    }
+
+    /**
+     * Acts on the stored status. Executed rows lose their acting party, so
+     * only the statuses that need the ledger build a writer.
+     */
+    async function submitAs(
+        user: SignedIn,
+        transaction: Transaction
+    ): Promise<void> {
+        const { id } = transaction
+        switch (transaction.status) {
+            case 'pending': {
+                if (isExpired(transaction)) {
+                    if (await removeReview(user.store, id)) {
+                        throw notSubmittedError(
+                            'The review expired. Review the transfer again.'
+                        )
+                    }
+                    return submitAs(user, await afterFailedRemoval(user, id))
+                }
+                const writer = await writerForReview(user, transaction).catch(
+                    async (cause: unknown) => {
+                        const message = toError(cause).message
+                        if (await removeReview(user.store, id)) {
+                            throw notSubmittedError(message)
+                        }
+                        throw unknownOutcome(message)
+                    }
+                )
+                await signAndExecute(writer, id)
+                return reviewNetworks.forget(id)
+            }
             // The ledger deduplicates by command id, and an already accepted
             // command is recorded as executed.
             case 'signed': {
+                const writer = await writerForReview(user, transaction).catch(
+                    (cause: unknown) => {
+                        throw unknownOutcome(toError(cause).message)
+                    }
+                )
                 const { context, store, sessionId } = writer
                 const partyId = actingParty(transaction)!
-                return settle(writer, id, () =>
+                await settle(writer, id, () =>
                     connected(writer).execute(store, context, sessionId, {
                         transactionId: id,
                         partyId,
                     })
                 )
+                return reviewNetworks.forget(id)
             }
             case 'executed':
-                return
+                return reviewNetworks.forget(id)
             case 'failed':
-                throw rpcErrors.internal({
-                    message: `The outcome of the transaction is unknown: ${transaction.failureReason ?? 'it failed without a reason'}`,
-                })
+                throw unknownOutcome(
+                    transaction.failureReason ?? 'it failed without a reason'
+                )
             case 'awaiting-signature':
-                throw rpcErrors.internal({
-                    message:
-                        'The outcome of the transaction is unknown: it is waiting for its signature',
-                })
+                throw unknownOutcome('it is waiting for its signature')
         }
+    }
+
+    /**
+     * Re-reads the transaction after its expired review could not be
+     * removed: another write may have moved it on.
+     */
+    async function afterFailedRemoval(
+        { store }: SignedIn,
+        transactionId: string
+    ): Promise<Transaction> {
+        let current: Transaction | undefined
+        try {
+            current = await store.getTransaction(transactionId)
+        } catch (cause) {
+            throw unknownOutcome(toError(cause).message)
+        }
+        if (!current) {
+            throw notSubmittedError(
+                'There is no prepared transfer with this id'
+            )
+        }
+        if (current.status === 'pending') {
+            throw unknownOutcome('the expired review could not be removed')
+        }
+        return current
     }
 
     async function discard(transactionId: string): Promise<void> {
         const { store } = await signedIn()
         if (typeof transactionId !== 'string' || transactionId === '') return
+        if (claims.has(transactionId)) return
         const transaction = await store.getTransaction(transactionId)
         if (transaction?.origin !== EXTENSION_ORIGIN) return
-        await store.removePendingTransaction(transactionId)
+        await removeReview(store, transactionId)
     }
 
     async function withdraw({
