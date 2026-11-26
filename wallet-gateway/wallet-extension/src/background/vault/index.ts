@@ -10,6 +10,7 @@ export {
     VaultNotFoundError,
     WeakPasswordError,
 } from './errors.ts'
+export { type LockableService, requireUnlocked } from './require-unlocked.ts'
 export {
     createVault,
     type Vault,

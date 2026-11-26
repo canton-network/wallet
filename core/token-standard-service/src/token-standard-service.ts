@@ -27,6 +27,7 @@ import { getLogger } from '@logtape/logtape'
 import type { Decimal } from 'decimal.js'
 
 import { CoreService } from './core-service.ts'
+import { checkLock } from './lock.ts'
 import {
     type ApiVersion,
     type AssetCapabilities,
@@ -511,41 +512,7 @@ export class TokenStandardService {
         createdAtTime: string,
         currentTime: Date = new Date()
     ): boolean {
-        if (!lock) return false
-
-        let expiresAtAbsolute: Date | null = null
-        let expiresAtRelative: Date | null = null
-
-        if (lock.expiresAfter) {
-            const createdAt = new Date(createdAtTime)
-
-            // 1 microsecond = 0.001 milliseconds
-            const msToAdd = parseInt(lock.expiresAfter.microseconds) / 1000
-
-            expiresAtRelative = new Date(createdAt.getTime() + msToAdd)
-        }
-        if (lock.expiresAt) {
-            expiresAtAbsolute = new Date(lock.expiresAt)
-        }
-
-        let expiresAt: Date
-
-        // If both `expiresAt` and `expiresAfter` are set, the lock expires at the earlier of the two times.
-        if (expiresAtRelative && expiresAtAbsolute) {
-            expiresAt =
-                expiresAtRelative < expiresAtAbsolute
-                    ? expiresAtRelative
-                    : expiresAtAbsolute
-        } else if (expiresAtRelative) {
-            expiresAt = expiresAtRelative
-        } else if (expiresAtAbsolute) {
-            expiresAt = expiresAtAbsolute
-        } else {
-            // No expiration => locked
-            return true
-        }
-
-        return currentTime < expiresAt
+        return checkLock(lock, createdAtTime, currentTime)
     }
 
     static isHoldingLocked(

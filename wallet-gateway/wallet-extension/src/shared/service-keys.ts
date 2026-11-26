@@ -5,6 +5,7 @@ import type { ProxyServiceKey } from '@webext-core/proxy-service'
 
 import type { DappDispatcher } from '@/background/controllers/dapp/dispatch.ts'
 import type { Methods as UserRpcMethods } from '@/background/controllers/user/rpc-gen/index.ts'
+import type { TokenService } from '@/background/token/service.ts'
 
 /** The user API, called by the extension pages. */
 export const USER_RPC_KEY =
@@ -13,3 +14,10 @@ export const USER_RPC_KEY =
 /** The dApp API dispatcher, called by the content script. */
 export const DAPP_RPC_KEY =
     'dapp-rpc-service' as ProxyServiceKey<DappDispatcher>
+
+/**
+ * The read-only token API, called by the extension pages. The background
+ * builds the wallet SDK, so the user's token stays there.
+ */
+export const TOKEN_RPC_KEY =
+    'token-rpc-service' as ProxyServiceKey<TokenService>

@@ -23,7 +23,7 @@ export type TxHashingErrorCode =
     | 'INVALID_HEX'
     | 'INVALID_VALUE'
 
-/** Thrown when `computePreparedTransactionHash` refuses a transaction, a scheme or an option. */
+/** Thrown when `computePreparedTransactionHash` refuses a transaction, a scheme or an option, or `computeTopologyMultiHash` gets no transactions or one that is not canonical base64. */
 export class TxHashingError extends Error {
     readonly code: TxHashingErrorCode
     /** Path of the field at fault, if known, such as `transaction.nodes[2].v1.exercise.children[0]` */

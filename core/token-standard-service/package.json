@@ -28,6 +28,12 @@
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
+        },
+        "./lock": {
+            "types": "./dist/lock.d.ts",
+            "import": "./dist/lock.js",
+            "require": "./dist/lock.cjs",
+            "default": "./dist/lock.js"
         }
     },
     "publishConfig": {

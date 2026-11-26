@@ -336,3 +336,25 @@ describe('hash.preparedTransaction', () => {
         expect(converter.toHex()).toBe(pingHex)
     })
 })
+
+describe('hash.topologyTransaction', () => {
+    const { hash } = new SDKUtilsNamespace(ctx)
+
+    it.each<[string, string[], TxHashingErrorCode]>([
+        ['an empty set', [], 'INVALID_VALUE'],
+        ['a transaction that is not base64', ['not base64!'], 'DECODE_FAILED'],
+    ])('throws a BadRequest SDKError for %s', async (_, input, code) => {
+        const error = await hash
+            .topologyTransaction(input)
+            .catch((e: unknown) => e)
+
+        expect(error).toBeInstanceOf(SDKError)
+        const { context, message } = error as SDKError<TxHashingError>
+        expect(context.type).toBe('BadRequest')
+        expect(context.originalError).toBeInstanceOf(TxHashingError)
+        expect(context.originalError).toMatchObject({ code })
+        expect(message).toBe(
+            `topology transactions refused: ${code}: ${context.originalError!.message}`
+        )
+    })
+})

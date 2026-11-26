@@ -33,34 +33,66 @@ import {
 // 08-interactive-submission). Unlike V2: no encoding version in nodes and
 // metadata, a contract key in create, exercise and fetch nodes, byKey in
 // exercise and fetch nodes, QueryByKey nodes, and maxRecordTime in metadata.
+// V4 reuses these encoders through keyedScheme.
 
-const SCHEME_VERSION = 0x03
-// The LF versions V3 hashes: "2.1", and the later "2" that contract keys need
-const LF_VERSIONS: ReadonlySet<string> = new Set(['2.1', '2'])
+interface KeyedVariant {
+    version: number
+    /** The LF versions it hashes */
+    lfVersions: readonly string[]
+    /** Bytes that end an exercise node, or a refusal of its external call results */
+    encodeExternalCallResults(exercise: Exercise, at: string): Uint8Array
+}
+
 const LF_WITHOUT_KEYS = '2.1'
 const NO_KEYS =
     'keys are not supported in nodes with LF serialization version 2.1'
 
 type ContractKey = NonNullable<Create['key']>
 
-export const schemeV3: Scheme = {
-    version: SCHEME_VERSION,
-    checkLfVersion,
-    encodeCreate,
-    encodeExercise,
-    encodeFetch,
-    rollbackHead: Uint8Array.of(0x03),
-    encodeQueryByKey,
-    encodeMetadata: encodeMetadataV3,
+const V3: KeyedVariant = {
+    version: 0x03,
+    lfVersions: ['2.1', '2'],
+    encodeExternalCallResults(exercise, at) {
+        if (exercise.externalCallResults.length > 0) {
+            throw new TxHashingError(
+                'FIELD_NOT_COVERED_BY_SCHEME',
+                'external call results are not covered by hashing scheme V3',
+                `${at}.externalCallResults`
+            )
+        }
+        return new Uint8Array()
+    },
 }
 
+export function keyedScheme(variant: KeyedVariant): Scheme {
+    return {
+        version: variant.version,
+        checkLfVersion: (lfVersion, path) =>
+            checkLfVersion(variant, lfVersion, path),
+        encodeCreate: (create, at, seed, maxValueDepth) =>
+            encodeCreate(variant, create, at, seed, maxValueDepth),
+        encodeExercise: (exercise, at, seed, maxValueDepth) =>
+            encodeExercise(variant, exercise, at, seed, maxValueDepth),
+        encodeFetch: (fetch, at, maxValueDepth) =>
+            encodeFetch(variant, fetch, at, maxValueDepth),
+        rollbackHead: Uint8Array.of(0x03),
+        encodeQueryByKey: (queryByKey, at, maxValueDepth) =>
+            encodeQueryByKey(variant, queryByKey, at, maxValueDepth),
+        encodeMetadata: (metadata, maxValueDepth) =>
+            encodeMetadataV3(variant, metadata, maxValueDepth),
+    }
+}
+
+export const schemeV3: Scheme = keyedScheme(V3)
+
 function encodeCreate(
+    variant: KeyedVariant,
     create: Create,
     at: string,
     seed: Uint8Array | undefined,
     maxValueDepth: number
 ): Uint8Array {
-    checkLfVersion(create.lfVersion, `${at}.lfVersion`)
+    checkLfVersion(variant, create.lfVersion, `${at}.lfVersion`)
     checkKeyUse(create, at)
     return concat(
         encodeString(create.lfVersion),
@@ -79,20 +111,15 @@ function encodeCreate(
 }
 
 function encodeExercise(
+    variant: KeyedVariant,
     exercise: Exercise,
     at: string,
     seed: Uint8Array,
     maxValueDepth: number
 ): Uint8Array {
-    checkLfVersion(exercise.lfVersion, `${at}.lfVersion`)
+    checkLfVersion(variant, exercise.lfVersion, `${at}.lfVersion`)
     checkKeyUse(exercise, at)
-    if (exercise.externalCallResults.length > 0) {
-        throw new TxHashingError(
-            'FIELD_NOT_COVERED_BY_SCHEME',
-            'external call results are not covered by hashing scheme V3',
-            `${at}.externalCallResults`
-        )
-    }
+    const externalCallResults = variant.encodeExternalCallResults(exercise, at)
     return concat(
         encodeString(exercise.lfVersion),
         0x01,
@@ -116,16 +143,18 @@ function encodeExercise(
         encodeBool(exercise.byKey),
         encodeOptional(exercise.key, (key) =>
             encodeKey(key, `${at}.key`, maxValueDepth)
-        )
+        ),
+        externalCallResults
     )
 }
 
 function encodeFetch(
+    variant: KeyedVariant,
     fetch: Fetch,
     at: string,
     maxValueDepth: number
 ): Uint8Array {
-    checkLfVersion(fetch.lfVersion, `${at}.lfVersion`)
+    checkLfVersion(variant, fetch.lfVersion, `${at}.lfVersion`)
     checkKeyUse(fetch, at)
     return concat(
         encodeString(fetch.lfVersion),
@@ -147,11 +176,12 @@ function encodeFetch(
 }
 
 function encodeQueryByKey(
+    variant: KeyedVariant,
     queryByKey: QueryByKey,
     at: string,
     maxValueDepth: number
 ): Uint8Array {
-    checkLfVersion(queryByKey.lfVersion, `${at}.lfVersion`)
+    checkLfVersion(variant, queryByKey.lfVersion, `${at}.lfVersion`)
     // Its key is required, and the participant refuses any key in this version
     if (queryByKey.lfVersion === LF_WITHOUT_KEYS) {
         throw new TxHashingError('UNSUPPORTED_LF_VERSION', NO_KEYS, at)
@@ -201,6 +231,7 @@ function encodeKey(
 }
 
 async function encodeMetadataV3(
+    variant: KeyedVariant,
     metadata: Metadata,
     maxValueDepth: number
 ): Promise<Uint8Array> {
@@ -219,7 +250,7 @@ async function encodeMetadataV3(
         ),
         encodeTime(metadata.preparationTime, 'metadata.preparationTime'),
         await encodeInputContracts(metadata.inputContracts, (create, path) =>
-            encodeCreate(create, path, undefined, maxValueDepth)
+            encodeCreate(variant, create, path, undefined, maxValueDepth)
         ),
         encodeOptional(metadata.maxRecordTime, (time) =>
             encodeTime(time, 'metadata.maxRecordTime')
@@ -227,11 +258,17 @@ async function encodeMetadataV3(
     )
 }
 
-function checkLfVersion(lfVersion: string, path: string): void {
-    if (!LF_VERSIONS.has(lfVersion)) {
+function checkLfVersion(
+    variant: KeyedVariant,
+    lfVersion: string,
+    path: string
+): void {
+    if (!variant.lfVersions.includes(lfVersion)) {
+        const earlier = variant.lfVersions.slice(0, -1).join(', ')
+        const last = variant.lfVersions[variant.lfVersions.length - 1]
         throw new TxHashingError(
             'UNSUPPORTED_LF_VERSION',
-            'hashing scheme V3 hashes LF versions 2.1 and 2 only',
+            `hashing scheme V${variant.version} hashes LF versions ${earlier} and ${last} only`,
             path
         )
     }

@@ -1,3 +1,4 @@
+import '@lib/logger'
 import { loadPortfolioConfig } from '@config/portfolio-config'
 
 import '@fontsource/inter/index.css'

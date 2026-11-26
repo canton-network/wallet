@@ -6,6 +6,7 @@ import type { TraversalLimits } from '../../limits.ts'
 
 export const V2 = 'HASHING_SCHEME_VERSION_V2'
 export const V3 = 'HASHING_SCHEME_VERSION_V3'
+export const V4 = 'HASHING_SCHEME_VERSION_V4'
 
 export interface Captured {
     canton: string

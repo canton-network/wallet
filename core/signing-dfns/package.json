@@ -39,7 +39,6 @@
     },
     "dependencies": {
         "@canton-network/core-signing-lib": "workspace:",
-        "@canton-network/core-wallet-auth": "workspace:",
         "@dfns/sdk": "catalog:",
         "@dfns/sdk-keysigner": "catalog:",
         "@logtape/logtape": "catalog:",
