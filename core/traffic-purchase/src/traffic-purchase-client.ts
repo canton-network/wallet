@@ -83,16 +83,13 @@ export class TrafficPurchaseClient {
                 const accessToken =
                     await this.accessTokenProvider.getAccessToken()
 
-                return fetch(url, {
-                    ...options,
-                    headers: {
-                        ...options.headers,
-                        ...(accessToken
-                            ? { Authorization: `Bearer ${accessToken}` }
-                            : {}),
-                        'Content-Type': 'application/json',
-                    },
-                })
+                const headers = new Headers(options.headers)
+                if (accessToken) {
+                    headers.set('Authorization', `Bearer ${accessToken}`)
+                }
+                headers.set('Content-Type', 'application/json')
+
+                return fetch(url, { ...options, headers })
             },
         })
     }
