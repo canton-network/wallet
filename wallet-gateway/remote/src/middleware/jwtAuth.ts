@@ -14,6 +14,15 @@ import {
 import type { Request, Response, NextFunction } from 'express'
 import type { Logger } from 'pino'
 
+import { resolveSseTicket } from './sseTicket.js'
+
+// Tickets are only for the dapp event stream. A copied ticket must not
+// authenticate status, ticket minting, or any other route.
+function isEventStream(req: Request): boolean {
+    const path = req.path ?? ''
+    return req.method === 'GET' && path.endsWith('/events')
+}
+
 export function jwtAuth(authService: AuthService, logger: Logger) {
     return async (req: Request, res: Response, next: NextFunction) => {
         // If the request has been verified as an API key, skip JWT verification
@@ -21,12 +30,21 @@ export function jwtAuth(authService: AuthService, logger: Logger) {
             return next()
         }
 
-        // Support both Authorization header and token query parameter (for EventSource)
+        // EventSource cannot set a header. New clients send a short-lived
+        // ticket. Older SDKs still put the session token in ?token=.
+        const ticket =
+            isEventStream(req) && typeof req.query.ticket === 'string'
+                ? req.query.ticket
+                : ''
+        const ticketToken = ticket ? resolveSseTicket(ticket) : undefined
+        const legacyToken =
+            typeof req.query.token === 'string' && req.query.token
+                ? `Bearer ${req.query.token}`
+                : undefined
         const authHeader =
             req.headers.authorization ||
-            (typeof req.query.token === 'string' && req.query.token
-                ? `Bearer ${req.query.token}`
-                : undefined)
+            (ticketToken ? `Bearer ${ticketToken}` : undefined) ||
+            legacyToken
 
         try {
             const context = await authService.verifyToken(authHeader)
