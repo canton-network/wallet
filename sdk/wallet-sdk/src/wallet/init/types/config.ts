@@ -38,3 +38,5 @@ export type EventsConfig = {
     websocketURL: URLInput
     auth: TokenProviderConfig
 }
+
+export type TrafficConfig = Record<string, never>

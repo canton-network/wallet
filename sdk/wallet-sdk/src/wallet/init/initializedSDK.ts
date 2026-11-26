@@ -169,6 +169,7 @@ const createNamespace: {
             websocketURL: new ParsedURL(ctx, config.websocketURL),
         })
     },
+    traffic: async (ctx: SDKContext) => new TrafficAccountNamespace(ctx),
 }
 
 export class InitializedSDK<
@@ -177,14 +178,12 @@ export class InitializedSDK<
     public readonly keys = new KeysNamespace()
     public readonly ledger: LedgerNamespace
     public readonly party: PartyNamespace
-    public readonly traffic: TrafficAccountNamespace
     public readonly user: UserNamespace
     public readonly utils: SDKUtilsNamespace
 
     constructor(protected ctx: SDKContext) {
         this.ledger = new LedgerNamespace(ctx)
         this.party = new PartyNamespace(ctx)
-        this.traffic = new TrafficAccountNamespace(ctx)
         this.user = new UserNamespace(ctx)
         this.utils = new SDKUtilsNamespace({
             logger: ctx.logger,
@@ -283,6 +282,9 @@ export class ExtendedInitializedSDK<
         : never
     declare readonly events: ExtendedItems extends 'events'
         ? EventsNamespace
+        : never
+    declare readonly traffic: ExtendedItems extends 'traffic'
+        ? TrafficAccountNamespace
         : never
 
     private constructor(

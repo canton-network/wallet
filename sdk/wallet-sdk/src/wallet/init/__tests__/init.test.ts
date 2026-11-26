@@ -110,6 +110,7 @@ describe('init SDK', () => {
             expect(sdk.party).toBeInstanceOf(PartyNamespace)
             expect(sdk.user).toBeInstanceOf(UserNamespace)
             expect(sdk.registerPlugins).toBeDefined()
+            expect('traffic' in sdk).toBe(false)
         })
     })
 
