@@ -69,7 +69,7 @@ An operation is a create, an exercise or another root, told apart by `kind`. `ki
 | `undescribed`   | No descriptor words the node: none binds, or the bound one has no matching `create` or exercise entry. `intent` is generic and `fields` is empty.                                                                                                                                                          |
 | `unverified`    | The descriptor bound to the node is not trusted. `intent` is generic, `fields` is empty, `descriptor` is absent and `reason` says why.                                                                                                                                                                     |
 | `invalid`       | The descriptor bound to the node is not valid, or more than one is. `intent` is generic, `fields` is empty and `reason` says why.                                                                                                                                                                          |
-| `undescribable` | The node cannot be worded: it is not a create or an exercise, or the contract an exercise acts on cannot be read. `intent` is generic.                                                                                                                                                                     |
+| `indescribable` | The node cannot be worded: it is not a create or an exercise, or the contract an exercise acts on cannot be read. `intent` is generic.                                                                                                                                                                     |
 
 `reason` is for display. It is absent for `described` and `undescribed`.
 
@@ -103,9 +103,5 @@ An implementation may reject more than the schema does. For example, it may reje
 import schema from '@canton-network/core-tx-clear-signing-lib/canton-clear-signing-v1.schema.json' with { type: 'json' }
 import Ajv2020 from 'ajv/dist/2020.js'
 
-const validate = new Ajv2020({ strict: false, unicodeRegExp: true }).compile(
-    schema
-)
+const validate = new Ajv2020({ strict: false }).compile(schema)
 ```
-
-Compile it with Unicode-aware regular expressions (`unicodeRegExp`, or the `u` flag). The patterns use `\p{...}` classes.

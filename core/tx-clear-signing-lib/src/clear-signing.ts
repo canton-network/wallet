@@ -24,7 +24,7 @@ export type DescribedField =
  *   `reason` says why. The descriptor's wording is not shown.
  * - `invalid`: the descriptor bound to the node is not valid, or there is more than one, so
  *   `intent` is generic and `reason` says why.
- * - `undescribable`: the node cannot be read, so `intent` is generic and `reason` says why.
+ * - `indescribable`: the node cannot be read, so `intent` is generic and `reason` says why.
  */
 export type OperationStatus =
     | 'described'
@@ -32,7 +32,7 @@ export type OperationStatus =
     | 'undescribed'
     | 'unverified'
     | 'invalid'
-    | 'undescribable'
+    | 'indescribable'
 
 /**
  * How one root node of a prepared transaction is shown.
