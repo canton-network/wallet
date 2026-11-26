@@ -5,13 +5,15 @@ import { randomUUID } from 'node:crypto'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+
 import { packageId } from '@canton-network/core-traffic-purchase'
-import { SDK } from '../../sdk.js'
-import { localNetStaticConfig } from '../../../config.js'
-import { localNetAuth } from './test-support/localnet-auth.js'
-import { TrafficScan } from './test-support/traffic-scan.js'
-import { TrafficPaymasterApi } from './test-support/traffic-paymaster-api.js'
+import { describe, expect, it } from 'vitest'
+
+import { localNetStaticConfig } from '../../../config.ts'
+import { SDK } from '../../sdk.ts'
+import { localNetAuth } from './test-support/localnet-auth.ts'
+import { TrafficPaymasterApi } from './test-support/traffic-paymaster-api.ts'
+import { TrafficScan } from './test-support/traffic-scan.ts'
 
 /**
  * The full round trip a wallet provider sets `traffic` up for, against a real

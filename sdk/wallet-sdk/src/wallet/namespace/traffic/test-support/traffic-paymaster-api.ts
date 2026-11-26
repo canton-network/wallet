@@ -26,23 +26,25 @@
  */
 import { createServer, type Server, type ServerResponse } from 'node:http'
 import type { AddressInfo } from 'node:net'
-import type {
-    ConversionRateWithDisclosures,
-    TrafficPurchaseDisclosedContract,
-    TrafficPurchaserWithDisclosures,
-} from '@canton-network/core-traffic-purchase'
+
 import {
     EventFilterBySetup,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
 import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
+import type {
+    ConversionRateWithDisclosures,
+    TrafficPurchaseDisclosedContract,
+    TrafficPurchaserWithDisclosures,
+} from '@canton-network/core-traffic-purchase'
+import type { PartyId } from '@canton-network/core-types'
 import {
     AuthTokenProvider,
     type TokenProviderConfig,
 } from '@canton-network/core-wallet-auth'
-import type { PartyId } from '@canton-network/core-types'
-import type { TrafficAccountNamespace } from '../namespace.js'
-import type { ContractIdString } from '../types.js'
+
+import type { TrafficAccountNamespace } from '../namespace.ts'
+import type { ContractIdString } from '../types.ts'
 
 const BASE_PATH = '/registry/traffic-purchase/v1'
 const RATES_PATH = `${BASE_PATH}/conversion-rates/`

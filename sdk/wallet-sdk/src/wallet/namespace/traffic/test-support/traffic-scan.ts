@@ -18,15 +18,16 @@
  */
 import { LedgerProvider, type Ops } from '@canton-network/core-provider-ledger'
 import {
-    AuthTokenProvider,
-    type TokenProviderConfig,
-} from '@canton-network/core-wallet-auth'
-import {
     TrafficCreditReporter,
     type TrafficCreditReporter_PublishCredit,
 } from '@canton-network/core-traffic-purchase'
 import type { PartyId } from '@canton-network/core-types'
-import type { TrafficAccountNamespace } from '../namespace.js'
+import {
+    AuthTokenProvider,
+    type TokenProviderConfig,
+} from '@canton-network/core-wallet-auth'
+
+import type { TrafficAccountNamespace } from '../namespace.ts'
 
 /**
  * The interface whose `TrafficCreditReporter_PublishCredit` exercises this scan
