@@ -1,0 +1,26 @@
+{
+    "amulet": {
+        "validatorUrl": "https://validator.example.invalid/api/validator",
+        "registry": "https://scan.sv-1.dev.global.canton.network.digitalasset.com/registry/"
+    },
+    "token": {
+        "validatorUrl": "https://validator.example.invalid/api/validator",
+        "registries": [
+            {
+                "name": "CBTC",
+                "partyId": "cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff",
+                "url": "https://api.utilities.digitalasset-dev.com/api/token-standard/v0/registrars/cbtc-network::12202a83c6f4082217c175e29bc53da5f2703ba2675778ab99217a5a881a949203ff/registry/"
+            },
+            {
+                "name": "trakx-issuer",
+                "partyId": "trakx-issuer::12204f41ef5557ab403dea9b24006a451a7d0a4191df07647c8c410a77bdca107c85",
+                "url": "https://api.utilities.digitalasset-dev.com/api/token-standard/v0/registrars/trakx-issuer::12204f41ef5557ab403dea9b24006a451a7d0a4191df07647c8c410a77bdca107c85/registry/"
+            },
+            {
+                "name": "USDCx",
+                "partyId": "decentralized-usdc-interchain-rep::1220d420ba8f168d63157f610e6593dca072bbd79ff90a830efc345ed4348a816de7",
+                "url": "https://api.utilities.digitalasset-dev.com/api/token-standard/v0/registrars/decentralized-usdc-interchain-rep::1220d420ba8f168d63157f610e6593dca072bbd79ff90a830efc345ed4348a816de7/registry/"
+            }
+        ]
+    }
+}
