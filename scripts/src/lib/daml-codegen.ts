@@ -74,7 +74,9 @@ export function runDamlBuild(workingDir: string): void {
             execSync('dpm build', { cwd: workingDir, stdio: 'inherit' })
         } catch (installErr) {
             console.error(
-                error(`Failed to install SDK or retry build: ${installErr}`)
+                error(
+                    `Failed to install SDK or retry build: ${String(installErr)}`
+                )
             )
             throw installErr
         }
