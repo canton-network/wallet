@@ -80,3 +80,7 @@ Components take their colours, fonts, spacing and radii from CSS custom properti
 Colours that are used as `rgba(var(--x), alpha)` have a `-rgb` token that takes `r, g, b` (`--wg-theme-accent-rgb`, `--wg-theme-primary-rgb`, `--wg-theme-text-rgb` and so on). Set both when you change such a colour. `--wg-theme-shade-rgb` is the colour of the faint tints and borders.
 
 New component styles should use `--wg-*` tokens and not literal colours, so that a page can theme them.
+
+## Token holdings hooks
+
+Apps that import `./react/token` install its optional peer dependencies themselves: `@tanstack/react-query`, `decimal.js`, `@canton-network/core-token-standard`, `@canton-network/core-token-standard-v2`, `@canton-network/core-token-standard-service` and `@canton-network/core-tx-parser`.

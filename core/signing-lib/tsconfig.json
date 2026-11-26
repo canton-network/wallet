@@ -4,9 +4,5 @@
         "types": ["node"]
     },
     "include": ["src"],
-    "references": [
-        {
-            "path": "../wallet-auth"
-        }
-    ]
+    "references": []
 }

@@ -17,6 +17,7 @@ export default defineConfig({
                 index: 'src/index.ts',
                 'react/index': 'src/react/index.ts',
                 'logic/index': 'src/logic/index.ts',
+                'react/token/index': 'src/react/token/index.ts',
             },
             formats: ['es', 'cjs'],
             fileName: (format, entryName) =>

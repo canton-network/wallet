@@ -1,0 +1,50 @@
+{
+    "name": "@canton-network/core-signing-dsrv",
+    "version": "1.0.0",
+    "description": "Wallet Gateway signing driver for the DSRV signing API",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-dsrv#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/signing-dsrv"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
+    "sideEffects": false,
+    "main": "dist/index.cjs",
+    "module": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "@canton-network/source": "./src/index.ts",
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs",
+            "default": "./dist/index.js"
+        }
+    },
+    "publishConfig": {
+        "access": "public"
+    },
+    "scripts": {
+        "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
+        "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@canton-network/core-signing-lib": "workspace:",
+        "@logtape/logtape": "catalog:"
+    },
+    "devDependencies": {
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
+    }
+}

@@ -1,6 +1,6 @@
 # @canton-network/core-tx-hashing
 
-Computes the hash of a Canton prepared transaction under hashing schemes V2 and V3, and the multi-hash of a set of topology transactions. The validator returns this hash with the prepared transaction only for convenience: a wallet that does not trust the validator computes it from the bytes, compares, and signs its own.
+Computes the hash of a Canton prepared transaction under hashing schemes V2, V3 and V4, and the multi-hash of a set of topology transactions. V4 also hashes the results of Daml external calls, and from protocol version 36 the participant needs it for a transaction that makes them. The validator returns this hash with the prepared transaction only for convenience: a wallet that does not trust the validator computes it from the bytes, compares, and signs its own.
 
 `@canton-network/wallet-sdk` (`sdk.utils.hash.preparedTransaction`, `sdk.utils.hash.topologyTransaction`) and `@canton-network/core-tx-visualizer` (`hashPreparedTransaction`) hash with this package.
 
@@ -35,7 +35,7 @@ if (btoa(String.fromCharCode(...hash)) !== response.preparedTransactionHash) {
 `computePreparedTransactionHash(input, scheme, options?)` resolves to the 32-byte SHA-256 hash as a `Uint8Array`.
 
 - `input`: the protobuf bytes of the `PreparedTransaction`, or the same bytes in base64 as the JSON API returns them.
-- `scheme`: `HashingSchemeVersion.V2` or `.V3` of `@canton-network/core-ledger-proto`, or the JSON API names `'HASHING_SCHEME_VERSION_V2'` and `'HASHING_SCHEME_VERSION_V3'`.
+- `scheme`: `HashingSchemeVersion.V2`, `.V3` or `.V4` of `@canton-network/core-ledger-proto`, or the JSON API names `'HASHING_SCHEME_VERSION_V2'`, `'HASHING_SCHEME_VERSION_V3'` and `'HASHING_SCHEME_VERSION_V4'`.
 - `options.limits`: see [Limits](#limits).
 
 The [wallet integration guide example](../../docs/wallet-integration-guide/examples/snippets/verify-transaction-hash.ts) runs the same check with the Wallet SDK, from prepare to execute.
@@ -67,9 +67,9 @@ Its `path`, where known, points into the transaction, such as `transaction.nodes
 | ----------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `DECODE_FAILED`               | the input is neither a Uint8Array nor a string, or the bytes or base64 are empty, not canonical or not a `PreparedTransaction`, or a topology transaction is not canonical base64                        |
 | `UNKNOWN_FIELD`               | a message holds a field number that its definition does not have                                                                                                                                         |
-| `UNSUPPORTED_SCHEME`          | the scheme is neither V2 nor V3                                                                                                                                                                          |
+| `UNSUPPORTED_SCHEME`          | the scheme is neither V2, V3 nor V4                                                                                                                                                                      |
 | `UNSUPPORTED_NODE_VERSION`    | a node is not a `v1` node                                                                                                                                                                                |
-| `UNSUPPORTED_LF_VERSION`      | the LF version of a node or of the transaction is one the scheme does not hash (V2 hashes `2.1`, V3 `2.1` and `2`), or under V3 a node of LF `2.1` has a key, has `byKey = true` or is a QueryByKey node |
+| `UNSUPPORTED_LF_VERSION`      | a node or transaction has an LF version the scheme does not hash (V2 hashes `2.1`, V3 adds `2`, V4 adds `3`), or under V3 or V4 a node of LF `2.1` has a key, has `byKey = true` or is a QueryByKey node |
 | `FIELD_NOT_COVERED_BY_SCHEME` | a field that the scheme does not hash is set, such as a contract key under V2                                                                                                                            |
 | `MISSING_FIELD`               | a part that the hash needs is absent                                                                                                                                                                     |
 | `MISSING_NODE_SEED`           | a create or exercise node has no seed                                                                                                                                                                    |
@@ -84,6 +84,8 @@ Its `path`, where known, points into the transaction, such as `transaction.nodes
 | `DEPTH_LIMIT_EXCEEDED`        | nodes nest deeper than `maxNodeDepth`, or a value deeper than `maxValueDepth`                                                                                                                            |
 | `INVALID_HEX`                 | a contract id is not lower case hex of even length                                                                                                                                                       |
 | `INVALID_VALUE`               | a value is not valid, such as a seed that is not 32 bytes or a time outside 0001-01-01 to 9999-12-31, or a limit option is not valid, or no topology transactions are given                              |
+
+Under V4, `UNSUPPORTED_LF_VERSION` also covers external call results in an exercise node below LF `3`, and LF `dev`, which Canton hashes but allows only on its development protocol version.
 
 ## Limits
 
