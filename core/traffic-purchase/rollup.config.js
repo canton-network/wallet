@@ -9,7 +9,7 @@ import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
 import typescript from '@rollup/plugin-typescript'
-import dts from 'rollup-plugin-dts'
+import { dts } from 'rollup-plugin-dts'
 
 const DAML_JS_BASE = path.resolve(
     import.meta.dirname,
@@ -150,7 +150,6 @@ const types = {
         dts({
             respectExternal: false,
             compilerOptions: {
-                baseUrl: '.',
                 paths: pathsMap,
                 declaration: true,
                 emitDeclarationOnly: true,
