@@ -26,9 +26,9 @@ checkout surfaces as a confusing `does not provide an export named ...` SyntaxEr
 missing build.
 
 Onboard a party in the wallet you'll connect with. It needs some Amulet (Canton Coin) to spend on
-traffic — either tap it via the wallet's usual onboarding/tap flow, or fund it with the
-`pnpm tap-amulet` script this package adds (see below). Without any Amulet, a purchase fails with
-`Sender has no holdings, so transfer can't be executed.`
+traffic. On LocalNet, use the UI's **Tap 10 Amulet** button and approve the transaction in the
+connected wallet; this works for externally signed parties as well. Without any Amulet, a purchase
+fails with `Sender has no holdings, so transfer can't be executed.`
 
 ## Running
 
@@ -51,17 +51,18 @@ pnpm dev               # terminal 3 — http://localhost:8081
 
 > **Note:** `scan-topup` won't be needed on Canton 3.7, which ships a built-in traffic-purchase service that credits purchases for you.
 
-`initialize` writes `.env.local` with the paymaster's party id;
-the API, and adds its URL to the same file, which `dev` then picks up. Run them in this order the
-first time; after that, `initialize` doesn't need to be re-run unless you want a fresh paymaster.
+`initialize` writes `.env.local` with the paymaster's party id; `serve-paymaster` adds its URL to
+the same file, which `dev` then picks up. Run them in this order the first time; after that,
+`initialize` doesn't need to be re-run unless you want a fresh paymaster.
 
 In the UI: connect your wallet, check the paymaster's rate and your traffic balance, then buy some
-traffic. If your party has no Amulet yet, fund it first with the `pnpm tap-amulet` script below (a
-LocalNet/DevNet dev faucet); the UI shows the party's Amulet balance so you can confirm it landed.
+traffic. If your party has no Amulet yet, use **Tap 10 Amulet** first; the UI shows the party's
+Amulet balance so you can confirm it landed.
 The traffic balance only updates once `scan-topup` notices the purchase on the ledger and credits
 it — that's the real shape of the production flow, not a UI bug.
 
-To fund a party with Amulet (so it can pay for traffic), use the one-shot tap script:
+To fund a participant-hosted internal party with Amulet, you can instead use the one-shot tap
+script. It cannot submit for externally signed parties; use the UI's wallet-signed tap for those:
 
 ```bash
 pnpm tap-amulet <partyId> [amount]   # defaults to 10 Amulet if amount is omitted
@@ -78,6 +79,8 @@ pnpm topup <partyId> [bytes]   # defaults to one Amulet's worth of traffic if by
 
 Writing `pnpm tap-amulet -- <partyId> [amount]` (or `pnpm topup -- …`) works too. pnpm forwards the
 `--` to the script rather than eating it, so the script drops a leading one itself.
+
+Run `pnpm test` for the example's unit tests; they do not require LocalNet.
 
 # Technical Notes
 

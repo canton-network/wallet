@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect, useState } from 'react'
 import * as dappSdk from '@canton-network/dapp-sdk'
 import { SDK, localNetStaticConfig } from '@canton-network/wallet-sdk'
+import { useEffect, useState } from 'react'
 
 /**
  * Builds the wallet-sdk instance for reading ledger state and building
@@ -29,6 +29,11 @@ async function buildWalletSdk(sessionToken: string) {
 
     return SDK.create({
         ledgerProvider: provider as never,
+        amulet: {
+            scanApiUrl: localNetStaticConfig.LOCALNET_SCAN_API_URL,
+            registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
+            auth,
+        },
         asset: { registries, auth },
         // Lets the UI read the connected party's Amulet holdings (summed for
         // the balance display). Reads go through the wallet gateway with the
