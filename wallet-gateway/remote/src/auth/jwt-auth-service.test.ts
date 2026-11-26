@@ -2,25 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    vi,
-    describe,
-    it,
-    expect,
-    beforeAll,
-    beforeEach,
-    afterEach,
-} from 'vitest'
-import { getLogger } from '@logtape/logtape'
-import { pino, type Logger } from 'pino'
-import { sink } from 'pino-test'
-import {
-    createLocalJWKSet,
-    exportJWK,
-    generateKeyPair,
-    SignJWT,
-    type JWK,
-} from 'jose'
-import {
     IdpUnavailableError,
     type AuthContext,
     type AuthService,
@@ -31,7 +12,27 @@ import {
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { jwtAuthService } from './jwt-auth-service.js'
+import { getLogger } from '@logtape/logtape'
+import {
+    createLocalJWKSet,
+    exportJWK,
+    generateKeyPair,
+    SignJWT,
+    type JWK,
+} from 'jose'
+import { pino, type Logger } from 'pino'
+import { sink } from 'pino-test'
+import {
+    vi,
+    describe,
+    it,
+    expect,
+    beforeAll,
+    beforeEach,
+    afterEach,
+} from 'vitest'
+
+import { jwtAuthService } from './jwt-auth-service.ts'
 
 const mockFetch = vi.hoisted(() => vi.fn())
 const mockCreateRemoteJWKSet = vi.hoisted(() => vi.fn())
@@ -263,7 +264,7 @@ describe('jwtAuthService', () => {
         await expect(service.verifyToken(token)).resolves.toBeUndefined()
     })
 
-    it('returns undefined when JWT has no scope or scp claim', async () => {
+    it('returns undefined when JWT has no scope, scp, or roles claim', async () => {
         await store.addIdp({
             id: 'idp-self',
             type: 'self_signed',
@@ -274,6 +275,30 @@ describe('jwtAuthService', () => {
         const token = await hs256BearerToken({
             iss: SELF_SIGNED_ISSUER,
             sub: 'user-1',
+        })
+        await expect(service.verifyToken(token)).resolves.toBeUndefined()
+    })
+
+    it('returns undefined when the roles claim is empty', async () => {
+        await store.addIdp({
+            id: 'idp-self',
+            type: 'self_signed',
+            issuer: SELF_SIGNED_ISSUER,
+        })
+        await store.addNetwork(
+            createSelfSignedNetwork(
+                'network-self',
+                SELF_SIGNED_AUDIENCE,
+                SELF_SIGNED_SECRET
+            )
+        )
+
+        const service = jwtAuthService(store, mockLogger)
+        const token = await hs256BearerToken({
+            iss: SELF_SIGNED_ISSUER,
+            sub: 'user-1',
+            aud: SELF_SIGNED_AUDIENCE,
+            roles: [],
         })
         await expect(service.verifyToken(token)).resolves.toBeUndefined()
     })
@@ -330,6 +355,27 @@ describe('jwtAuthService', () => {
 
             const result = await service.verifyToken(token)
             expect(result?.userId).toBe('user-1')
+        })
+
+        it('accepts a roles claim when scope and scp are absent', async () => {
+            await store.addNetwork(
+                createSelfSignedNetwork(
+                    'network-self',
+                    SELF_SIGNED_AUDIENCE,
+                    SELF_SIGNED_SECRET
+                )
+            )
+
+            const service = jwtAuthService(store, mockLogger)
+            const token = await hs256BearerToken({
+                iss: SELF_SIGNED_ISSUER,
+                sub: 'app-1',
+                aud: SELF_SIGNED_AUDIENCE,
+                roles: ['Wallet.Access'],
+            })
+
+            const result = await service.verifyToken(token)
+            expect(result?.userId).toBe('app-1')
         })
 
         it('includes email when present in token', async () => {

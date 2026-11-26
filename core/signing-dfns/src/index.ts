@@ -8,7 +8,6 @@ import {
     SigningProvider,
     type SignMessageResult,
 } from '@canton-network/core-signing-lib'
-
 import type {
     SignTransactionParams,
     SignTransactionResult,
@@ -27,17 +26,17 @@ import type {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
+import _ from 'lodash'
+import { z } from 'zod'
+
 import {
     DfnsHandler,
     type DfnsCredentials,
     type DfnsSignature,
-} from './dfns.js'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
-import _ from 'lodash'
-import { z } from 'zod'
+} from './dfns.ts'
 
-export type { DfnsCredentials, DfnsKey, DfnsSignature } from './dfns.js'
-export { DfnsHandler } from './dfns.js'
+export type { DfnsCredentials, DfnsKey, DfnsSignature } from './dfns.ts'
+export { DfnsHandler } from './dfns.ts'
 
 export interface DfnsConfig {
     orgId: string
@@ -67,6 +66,7 @@ function toTransaction(sig: DfnsSignature, publicKey?: string): Transaction {
     }
     if (sig.signature) tx.signature = sig.signature
     if (publicKey) tx.publicKey = publicKey
+    if (sig.failureReason) tx.failureReason = sig.failureReason
     return tx
 }
 
@@ -81,6 +81,7 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.DFNS
+    public requiredClaims = []
 
     private async resolveKeyId(keyIdentifier: {
         id?: string
@@ -93,7 +94,7 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
         return key?.id
     }
 
-    public controller = (_userId: AuthContext['userId'] | undefined) =>
+    public controller = () =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -307,6 +308,9 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
                         status: signingResult.status,
                         ...(signingResult.signature && {
                             signature: signingResult.signature,
+                        }),
+                        ...(signingResult.failureReason && {
+                            failureReason: signingResult.failureReason,
                         }),
                     }
                 } catch (error) {

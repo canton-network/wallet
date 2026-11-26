@@ -1,12 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { vi } from 'vitest'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import { LedgerClient } from '../ledger-client.js'
-import { createLogRecorder } from '@logtape/testing/recorder'
-
 import { configure } from '@logtape/logtape'
+import { createLogRecorder } from '@logtape/testing/recorder'
+import { vi } from 'vitest'
+
+import { LedgerClient } from '../ledger-client.ts'
 
 export const BASE_URL = new URL('https://ledger.example/')
 
@@ -19,7 +19,7 @@ export function createAccessTokenProvider(token?: string): AccessTokenProvider {
 
 export function createLedgerClient(
     accessTokenProvider = createAccessTokenProvider('ledger-token'),
-    version?: '3.5'
+    version?: '3.6'
 ) {
     return new LedgerClient({
         baseUrl: BASE_URL,

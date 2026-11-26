@@ -1,11 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-// Replaced at build time from package.json. See tsdown.config.ts.
-declare const __DAPP_SDK_VERSION__: string
+// Replaced at build time from package.json. See tsdown.config.ts. Dev servers
+// importing src/ don't replace it.
+declare const __DAPP_SDK_VERSION__: string | undefined
 
 /** Published version of `@canton-network/dapp-sdk`. */
-export const SDK_VERSION = __DAPP_SDK_VERSION__
+export const SDK_VERSION =
+    typeof __DAPP_SDK_VERSION__ === 'string' ? __DAPP_SDK_VERSION__ : 'dev'
 
 export const DAPP_SDK_BUILD = Object.freeze({
     name: '@canton-network/dapp-sdk' as const,

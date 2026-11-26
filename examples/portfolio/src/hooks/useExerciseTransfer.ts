@@ -2,14 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import type { PreparedCommand } from '@canton-network/wallet-sdk'
-import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { submitViaProvider } from '@lib/submit'
-import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
-import { queryKeys } from './query-keys'
-import { useWalletSdk } from './useWalletSdk'
-import type { TokenStandardVersion } from '../types/instruments'
-import type { Account } from '@canton-network/core-token-standard-v2'
+import { useQueryClient, useMutation } from '@tanstack/react-query'
+
+import type { TokenStandardVersion } from '../types/instruments.ts'
+import { queryKeys } from './query-keys.ts'
+import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export const useExerciseTransfer = () => {
     const { sdk } = useWalletSdk()
@@ -24,6 +25,7 @@ export const useExerciseTransfer = () => {
             instrumentId: { admin: string; id: string }
             instructionChoice: 'Accept' | 'Reject' | 'Withdraw'
             version: TokenStandardVersion
+            actors?: PartyId[]
         }) => {
             if (!sdk) {
                 throw new Error('Wallet SDK is not ready')
@@ -56,21 +58,21 @@ export const useExerciseTransfer = () => {
                     case 'Accept':
                         preparedCommand = await sdk.token.v2.transfer.accept(
                             args.contractId,
-                            [args.party],
+                            args.actors ?? [args.party],
                             new URL(registryUrl)
                         )
                         break
                     case 'Reject':
                         preparedCommand = await sdk.token.v2.transfer.reject(
                             args.contractId,
-                            [args.party],
+                            args.actors ?? [args.party],
                             new URL(registryUrl)
                         )
                         break
                     case 'Withdraw':
                         preparedCommand = await sdk.token.v2.transfer.withdraw(
                             args.contractId,
-                            [args.party],
+                            args.actors ?? [args.party],
                             new URL(registryUrl)
                         )
                         break
@@ -115,7 +117,7 @@ export const useExerciseTransfer = () => {
                 ),
             })
             void queryClient.invalidateQueries({
-                queryKey: queryKeys.walletConnection.holdings.all,
+                queryKey: tokenQueryKeys.holdings.all,
             })
             void queryClient.invalidateQueries({
                 queryKey: queryKeys.walletConnection.transactionHistory.all,
@@ -124,22 +126,13 @@ export const useExerciseTransfer = () => {
     })
 }
 
-export function transferActionVersion(
-    item: {
-        versions: TokenStandardVersion[]
-        senderAccount?: Account
-        receiverAccount?: Account
-    },
-    preferred: TokenStandardVersion = 'v1'
-): TokenStandardVersion {
-    const isBasicAccount = (a?: Account) =>
-        !a || (a.provider == null && a.id === '')
-    if (!item.versions.includes('v1')) return 'v2'
-    if (!item.versions.includes('v2')) return 'v1'
-    if (
-        !isBasicAccount(item.senderAccount) ||
-        !isBasicAccount(item.receiverAccount)
-    )
-        return 'v2' //non basic accounts can only use v2
-    return preferred //default to preferred version if an asset supports v1 and v2 transfers
+/**
+ * If contract implements v2 act through v2. v1 is only for contracts that only implement v1
+ * @param item
+ * @returns
+ */
+export function transferActionVersion(item: {
+    versions: TokenStandardVersion[]
+}): TokenStandardVersion {
+    return item.versions.includes('v2') ? 'v2' : 'v1'
 }

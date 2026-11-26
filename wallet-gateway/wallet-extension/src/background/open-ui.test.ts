@@ -12,7 +12,8 @@ import {
     vi,
 } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { openWalletUi, registerOpenUiHandler } from './open-ui'
+
+import { openWalletUi, registerOpenUiHandler } from './open-ui.ts'
 
 describe('openWalletUi', () => {
     beforeEach(() => {

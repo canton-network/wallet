@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as mock from '../../../__tests__/mocks'
-import type { TokenNamespaceConfig } from '../index'
-import { ParsedURL } from '../../utils/url'
-import { AllocationNamespace } from './service'
-import type {
-    AllocationContextParams,
-    AllocationInstructionCreateParams,
-} from './types'
 import {
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
+import { describe, it, vi, beforeEach, expect } from 'vitest'
+
+import * as mock from '../../../__tests__/mocks.ts'
+import { ParsedURL } from '../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../index.ts'
+import { AllocationNamespace } from './service.ts'
+import type {
+    AllocationContextParams,
+    AllocationInstructionCreateParams,
+} from './types.ts'
 /* oxlint-disable typescript/no-explicit-any */
 
 const { ctx, mockLogger } = mock

@@ -2,14 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
-import { emptyChoiceContext } from '../common'
 import type { TExpressOpenApiRequestHandler } from 'openapi-ts-router/express'
 
+import { getTransferFactoryContext } from './getTransferFactoryContext.ts'
+
 /**
- * @returns Empty choice context payload for the transfer accept operation.
+ * @returns Token rules context and disclosure for the transfer accept operation.
  */
 export const getTransferInstructionAcceptContext: TExpressOpenApiRequestHandler<
     OffLedger.TransferInstructionV2.paths['/registry/transfer-instruction/v2/{transferInstructionId}/choice-contexts/accept']['post']
-> = (_req, res) => {
-    res.json(emptyChoiceContext)
+> = async (req, res, next) => {
+    try {
+        const { choiceContext } = await getTransferFactoryContext(
+            req.params.transferInstructionId
+        )
+        res.json(choiceContext)
+    } catch (e) {
+        next(e)
+    }
 }

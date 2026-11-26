@@ -1,24 +1,40 @@
 {
     "name": "@canton-network/dapp-sdk",
-    "type": "module",
-    "version": "1.8.0",
+    "version": "1.10.0",
     "description": "Browser SDK for dApp development on the Canton Network",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/sdk/dapp-sdk#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "sdk/dapp-sdk"
+    },
+    "files": [
+        "dist/**",
+        "gateways.json"
+    ],
+    "type": "module",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist",
         "test:integration": "vitest run --project browser-integration"
@@ -35,18 +51,6 @@
         "@canton-network/core-wallet-ui-components": "workspace:",
         "qrcode": "catalog:"
     },
-    "peerDependencies": {
-        "@walletconnect/sign-client": "^2.23.8",
-        "@walletconnect/types": "^2.23.8"
-    },
-    "peerDependenciesMeta": {
-        "@walletconnect/sign-client": {
-            "optional": true
-        },
-        "@walletconnect/types": {
-            "optional": true
-        }
-    },
     "devDependencies": {
         "@types/node": "catalog:",
         "@types/qrcode": "catalog:",
@@ -59,21 +63,17 @@
         "typescript": "catalog:",
         "vitest": "catalog:"
     },
-    "files": [
-        "dist/**",
-        "gateways.json"
-    ],
-    "publishConfig": {
-        "access": "public"
+    "peerDependencies": {
+        "@walletconnect/sign-client": "^2.23.8",
+        "@walletconnect/types": "^2.23.8"
     },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "sdk/dapp-sdk"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/sdk/dapp-sdk#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "peerDependenciesMeta": {
+        "@walletconnect/sign-client": {
+            "optional": true
+        },
+        "@walletconnect/types": {
+            "optional": true
+        }
     },
     "nx": {
         "targets": {

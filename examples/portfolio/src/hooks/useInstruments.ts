@@ -1,18 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo } from 'react'
-import { useQueries } from '@tanstack/react-query'
 import type { PartyId } from '@canton-network/core-types'
+import { queryKeys } from '@hooks/query-keys'
+import { resolveRegistryClient } from '@lib/registry-client'
+import { useQueries } from '@tanstack/react-query'
+import { useMemo } from 'react'
+
 import {
     type Instrument,
     type Instruments,
     type PortfolioInstrument,
     toPortfolioInstrument,
-} from '../types/instruments'
-import { resolveRegistryClient } from '@lib/registry-client'
-import { useRegistryUrls } from './useRegistryUrls'
-import { queryKeys } from '@hooks/query-keys'
+} from '../types/instruments.ts'
+import { useRegistryUrls } from './useRegistryUrls.ts'
 
 const fetchAllInstruments = async (url: string): Promise<Instrument[]> => {
     const client = resolveRegistryClient(url)

@@ -1,10 +1,23 @@
 {
     "name": "@canton-network/core-wallet-ui-components",
-    "version": "1.18.0",
-    "type": "module",
+    "version": "1.21.0",
     "description": "Reusable UI components for the Splice wallet",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-ui-components#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Marc Juchli <marc.juchli@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/wallet-ui-components"
+    },
+    "files": [
+        "dist/**",
+        "themes/**"
+    ],
+    "type": "module",
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
@@ -23,42 +36,62 @@
             "require": "./dist/logic/index.cjs",
             "default": "./dist/logic/index.js"
         },
-        "./lit-react": {
-            "types": "./dist/lit-react/index.d.ts",
-            "import": "./dist/lit-react/index.js",
-            "require": "./dist/lit-react/index.cjs",
-            "default": "./dist/lit-react/index.js"
-        },
         "./react": {
             "types": "./dist/react/index.d.ts",
             "import": "./dist/react/index.js",
             "require": "./dist/react/index.cjs",
             "default": "./dist/react/index.js"
+        },
+        "./react/token": {
+            "types": "./dist/react/token/index.d.ts",
+            "import": "./dist/react/token/index.js",
+            "require": "./dist/react/token/index.cjs",
+            "default": "./dist/react/token/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "vite build",
         "build:watch": "vite build --watch & tsc -p tsconfig.lib.json --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist",
-        "dev": "storybook dev -p 6006 --no-open",
-        "dev:lit": "storybook dev -p 6007 -c .storybook-lit --no-open"
+        "dev": "storybook dev -p 6006 --no-open"
+    },
+    "dependencies": {
+        "@canton-network/core-rpc-errors": "workspace:",
+        "@canton-network/core-tx-visualizer": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@canton-network/core-wallet-store": "workspace:",
+        "@canton-network/core-wallet-user-rpc-client": "workspace:",
+        "@lit/react": "catalog:",
+        "@logtape/logtape": "catalog:",
+        "bootstrap": "catalog:",
+        "lit": "catalog:"
     },
     "devDependencies": {
+        "@canton-network/core-token-standard": "workspace:",
+        "@canton-network/core-token-standard-service": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
+        "@canton-network/core-tx-parser": "workspace:",
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
         "@open-wc/testing-helpers": "catalog:",
         "@storybook/addon-a11y": "catalog:",
         "@storybook/addon-vitest": "catalog:",
         "@storybook/react-vite": "catalog:",
-        "@storybook/web-components-vite": "catalog:",
+        "@tanstack/react-query": "catalog:",
+        "@testing-library/dom": "catalog:",
         "@types/react": "catalog:",
         "@types/react-dom": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",
+        "decimal.js": "catalog:",
         "playwright": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:",
+        "shadow-dom-testing-library": "catalog:",
         "storybook": "catalog:",
         "tsx": "catalog:",
         "typescript": "catalog:",
@@ -66,28 +99,41 @@
         "vite-plugin-dts": "catalog:",
         "vitest": "catalog:"
     },
-    "dependencies": {
-        "@lit/react": "catalog:",
-        "@canton-network/core-rpc-errors": "workspace:",
-        "@canton-network/core-tx-visualizer": "workspace:",
-        "@canton-network/core-types": "workspace:",
-        "@canton-network/core-wallet-store": "workspace:",
-        "@canton-network/core-wallet-user-rpc-client": "workspace:",
-        "@logtape/logtape": "catalog:",
-        "bootstrap": "catalog:",
-        "lit": "catalog:"
-    },
     "peerDependencies": {
+        "@canton-network/core-token-standard": "workspace:^",
+        "@canton-network/core-token-standard-service": "workspace:^",
+        "@canton-network/core-token-standard-v2": "workspace:^",
+        "@canton-network/core-tx-parser": "workspace:^",
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
+        "@tanstack/react-query": "catalog:",
+        "decimal.js": "catalog:",
         "react": "catalog:",
         "react-dom": "catalog:"
     },
     "peerDependenciesMeta": {
+        "@canton-network/core-token-standard": {
+            "optional": true
+        },
+        "@canton-network/core-token-standard-service": {
+            "optional": true
+        },
+        "@canton-network/core-token-standard-v2": {
+            "optional": true
+        },
+        "@canton-network/core-tx-parser": {
+            "optional": true
+        },
         "@mui/icons-material": {
             "optional": true
         },
         "@mui/material": {
+            "optional": true
+        },
+        "@tanstack/react-query": {
+            "optional": true
+        },
+        "decimal.js": {
             "optional": true
         },
         "react": {
@@ -97,20 +143,20 @@
             "optional": true
         }
     },
-    "files": [
-        "dist/**",
-        "themes/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/wallet-ui-components"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/wallet-ui-components#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "nx": {
+        "targets": {
+            "typecheck": {
+                "dependsOn": [
+                    "^typecheck",
+                    "dist-types"
+                ]
+            },
+            "dist-types": {
+                "executor": "nx:noop",
+                "dependsOn": [
+                    "build"
+                ]
+            }
+        }
     }
 }

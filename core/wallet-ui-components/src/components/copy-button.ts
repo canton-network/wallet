@@ -3,8 +3,9 @@
 
 import { css, html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { clipboardIcon } from '../icons'
+
+import { clipboardIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 export class CopySuccessEvent extends Event {
     constructor(public value: string) {
@@ -12,8 +13,9 @@ export class CopySuccessEvent extends Event {
     }
 }
 
+export
 @customElement('wg-copy-button')
-export class WgCopyButton extends BaseElement {
+class WgCopyButton extends BaseElement {
     @property({ type: String }) accessor value = ''
     @property({ type: String }) accessor label = 'Copy to clipboard'
 
@@ -115,6 +117,7 @@ export class WgCopyButton extends BaseElement {
 
         document.body.appendChild(input)
         input.select()
+        // oxlint-disable-next-line typescript/no-deprecated -- fallback for contexts without navigator.clipboard
         document.execCommand('copy')
         document.body.removeChild(input)
     }

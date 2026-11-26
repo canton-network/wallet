@@ -3,10 +3,11 @@
 
 import { css, html } from 'lit'
 import { customElement, property, state } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { toRelPath } from '../routing'
-import { menuIcon, clipboardIcon } from '../icons'
+
 import cantonLogo from '../../images/logos/canton-logo.png'
+import { menuIcon, clipboardIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
+import { toRelPath } from '../routing.ts'
 
 export class LogoutEvent extends Event {
     constructor() {
@@ -20,8 +21,9 @@ export class CopyDappApiUrlEvent extends Event {
     }
 }
 
+export
 @customElement('app-header')
-export class AppHeader extends BaseElement {
+class AppHeader extends BaseElement {
     @property({ type: String }) accessor iconSrc: string = 'images/icon.png'
     @property({ type: String }) accessor networkName: string =
         'No network connected'

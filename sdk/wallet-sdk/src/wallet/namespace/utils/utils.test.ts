@@ -1,13 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, expect } from 'vitest'
-import { parseAssets, ParsedURL } from './url.js'
-import type { SDKContext } from '../../init/types/context.js'
-import { SDKLogger } from '../../logger/index.js'
-import { SDKError, SDKErrorHandler } from '../../error/index.js'
-import { SDKUtilsNamespace } from './index.js'
-import { capabilities } from '../../__tests__/mocks'
 import {
     HashingSchemeVersion,
     PreparedTransaction,
@@ -16,7 +9,15 @@ import {
     TxHashingError,
     type TxHashingErrorCode,
 } from '@canton-network/core-tx-hashing'
-import { base64ToBytes } from './encoding.js'
+import { describe, it, vi, expect } from 'vitest'
+
+import { capabilities } from '../../__tests__/mocks.ts'
+import { SDKError, SDKErrorHandler } from '../../error/index.ts'
+import type { SDKContext } from '../../init/types/context.ts'
+import { SDKLogger } from '../../logger/index.ts'
+import { base64ToBytes } from './encoding.ts'
+import { SDKUtilsNamespace } from './index.ts'
+import { parseAssets, ParsedURL } from './url.ts'
 
 const makeProvider = (overrides: Record<string, unknown> = {}) => ({
     request: vi.fn().mockResolvedValue(undefined),
@@ -241,6 +242,7 @@ describe('hash.preparedTransaction', () => {
     })
 
     it('hashes under V2 through the deprecated preparedTransacation', async () =>
+        // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
         expect((await hash.preparedTransacation(pingTx)).toHex()).toBe(pingHex))
 
     it('rejects duplicate node ids', async () => {
@@ -332,5 +334,27 @@ describe('hash.preparedTransaction', () => {
             limits: undefined,
         })
         expect(converter.toHex()).toBe(pingHex)
+    })
+})
+
+describe('hash.topologyTransaction', () => {
+    const { hash } = new SDKUtilsNamespace(ctx)
+
+    it.each<[string, string[], TxHashingErrorCode]>([
+        ['an empty set', [], 'INVALID_VALUE'],
+        ['a transaction that is not base64', ['not base64!'], 'DECODE_FAILED'],
+    ])('throws a BadRequest SDKError for %s', async (_, input, code) => {
+        const error = await hash
+            .topologyTransaction(input)
+            .catch((e: unknown) => e)
+
+        expect(error).toBeInstanceOf(SDKError)
+        const { context, message } = error as SDKError<TxHashingError>
+        expect(context.type).toBe('BadRequest')
+        expect(context.originalError).toBeInstanceOf(TxHashingError)
+        expect(context.originalError).toMatchObject({ code })
+        expect(message).toBe(
+            `topology transactions refused: ${code}: ${context.originalError!.message}`
+        )
     })
 })

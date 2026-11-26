@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { createHash } from 'node:crypto'
+
 import {
     type GenerateTransactionResponse,
     LedgerClient,
 } from '@canton-network/core-ledger-client'
-import { createHash } from 'node:crypto'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 
 export type AllocatedParty = {

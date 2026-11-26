@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
 import { css, html, nothing, type PropertyValues } from 'lit'
 import { customElement, property, query, state } from 'lit/decorators.js'
-import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
-import { BaseElement } from '../internal/base-element'
-import { chevronDownIcon } from '../icons/index.js'
+
+import { chevronDownIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 /** Emitted when the user saves (add or update) an IDP */
 export class IdpFormSaveEvent extends Event {
@@ -35,8 +36,9 @@ export class IdpFormBackEvent extends Event {
     }
 }
 
+export
 @customElement('idp-form')
-export class IdpFormComponent extends BaseElement {
+class IdpFormComponent extends BaseElement {
     /** 'add' = creating a new IDP, 'review' = viewing/editing an existing one */
     @property({ type: String })
     accessor mode: 'add' | 'review' = 'add'

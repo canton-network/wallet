@@ -1,18 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fixture, waitUntil } from '@open-wc/testing-helpers'
-import { html } from 'lit'
 import {
     PageChangeEvent,
     TransactionCardReviewEvent,
+    type WgTransactionCard,
 } from '@canton-network/core-wallet-ui-components'
+import { fixture, waitUntil } from '@open-wc/testing-helpers'
+import { html } from 'lit'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
 import {
     createMockUserClient,
     makeTransaction,
     mockRequest,
-} from '../__tests__/test-helpers.js'
+} from '../__tests__/test-helpers.ts'
 
 const {
     mockCreateUserClient,
@@ -26,12 +28,12 @@ const {
     parsePreparedTransaction: vi.fn(() => ({ summary: 'parsed' })),
 }))
 
-vi.mock('../index.js', () => ({}))
-vi.mock('../navigation.js', () => ({ setLocationHref }))
-vi.mock('../rpc-client.js', () => ({
+vi.mock('../index.ts', () => ({}))
+vi.mock('../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../state-manager.js', () => ({
+vi.mock('../state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
@@ -51,8 +53,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     }
 })
 
-import './index.js'
-import type { UserUiActivities } from './index.js'
+import './index.ts'
+import type { UserUiActivities } from './index.ts'
 
 function makeTransactions(count: number) {
     return Array.from({ length: count }, (_, i) =>
@@ -267,6 +269,49 @@ describe('UserUiActivities', () => {
         expect(setLocationHref).toHaveBeenCalledWith(
             expect.stringContaining('/approve')
         )
+    })
+
+    it('passes the failure reason to the card', async () => {
+        mockRequest.mockResolvedValue({
+            transactions: [
+                {
+                    ...makeTransactions(1)[0],
+                    status: 'failed',
+                    failureReason: 'Signing provider returned status: rejected',
+                },
+            ],
+        })
+
+        el = await fixture<UserUiActivities>(componentFixture)
+        await waitUntil(() => el.transactions.length === 1)
+
+        const card = el.shadowRoot?.querySelector<WgTransactionCard>(
+            'wg-transaction-card'
+        )
+        expect(card?.failureReason).toBe(
+            'Signing provider returned status: rejected'
+        )
+    })
+
+    it('does not pass a failure reason for a transaction that has not failed', async () => {
+        mockRequest.mockResolvedValue({
+            transactions: [
+                {
+                    ...makeTransactions(1)[0],
+                    status: 'signed',
+                    failureReason:
+                        'Ledger did not confirm the submission, it may still be processing',
+                },
+            ],
+        })
+
+        el = await fixture<UserUiActivities>(componentFixture)
+        await waitUntil(() => el.transactions.length === 1)
+
+        const card = el.shadowRoot?.querySelector<WgTransactionCard>(
+            'wg-transaction-card'
+        )
+        expect(card?.failureReason).toBeNull()
     })
 
     it('calls handleErrorToast when listing transactions fails', async () => {

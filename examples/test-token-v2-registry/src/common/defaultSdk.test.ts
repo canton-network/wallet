@@ -1,12 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import { beforeEach } from 'node:test'
+
+import { localNetStaticConfig } from '@canton-network/wallet-sdk'
 import { describe, expect, it, vi } from 'vitest'
 
 const mocks = vi.hoisted(() => {
-    const create = vi.fn()
+    const create = vi.fn().mockResolvedValue({
+        ledger: {
+            connectedSynchronizers: () => [
+                {
+                    synchronizerAlias: 'global-domain',
+                    synchronizerId: 'id',
+                },
+            ],
+        },
+    })
 
     return {
         create,
@@ -28,9 +38,9 @@ describe('defaultSdk', () => {
     beforeEach(() => {})
 
     it('should create a default instance of wallet-sdk', async () => {
-        await import('./defaultSdk')
+        await import('./defaultSdk.ts')
 
-        expect(mocks.create).toHaveBeenCalledExactlyOnceWith({
+        expect(mocks.create).toHaveBeenLastCalledWith({
             auth: {
                 method: 'self_signed',
                 issuer: 'unsafe-auth',
@@ -42,6 +52,7 @@ describe('defaultSdk', () => {
                 },
             },
             ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            synchronizerId: '',
         })
     })
 })

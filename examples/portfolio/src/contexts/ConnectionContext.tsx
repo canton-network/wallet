@@ -1,8 +1,8 @@
 // Copyright (c) 2025 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { createContext, useContext } from 'react'
 import type * as sdk from '@canton-network/dapp-sdk'
+import { createContext, useContext } from 'react'
 
 type Connection = {
     initialized: boolean

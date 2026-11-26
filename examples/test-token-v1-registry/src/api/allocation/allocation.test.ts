@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it, beforeEach } from 'vitest'
-import { getAllocationTransferContext } from './getAllocationTransferContext'
-import { getAllocationCancelContext } from './getAllocationCancelContext'
-import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
-import { emptyChoiceContext } from '../common'
-import { expressContext, type RequestType } from '../../__tests__/mocks'
+
+import { expressContext, type RequestType } from '../../__tests__/mocks.ts'
+import { emptyChoiceContext } from '../common.ts'
+import { getAllocationCancelContext } from './getAllocationCancelContext.ts'
+import { getAllocationTransferContext } from './getAllocationTransferContext.ts'
+import { getAllocationWithdrawContext } from './getAllocationWithdrawContext.ts'
 
 const { res, next } = expressContext
 

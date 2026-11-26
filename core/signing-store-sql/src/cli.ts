@@ -1,12 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Command } from 'commander'
-import { connection } from './store-sql.js'
-import { migrator } from './migrator.js'
-import { bootstrap } from './bootstrap.js'
-import type { StoreConfig } from './schema.js'
 import { getLogger } from '@logtape/logtape'
+import { Command } from 'commander'
+
+import { bootstrap } from './bootstrap.ts'
+import { migrator } from './migrator.ts'
+import type { StoreConfig } from './schema.ts'
+import { connection } from './store-sql.ts'
 
 const logger = getLogger(['core', 'signing-store-sql', 'cli'])
 
@@ -57,7 +58,7 @@ export function createCLI(config: StoreConfig): Command {
             const executed = await umzug.executed()
 
             // Rollback all executed migrations in reverse order
-            for (const migration of executed.reverse()) {
+            for (const migration of executed.toReversed()) {
                 await umzug.down({ to: migration.name })
             }
 

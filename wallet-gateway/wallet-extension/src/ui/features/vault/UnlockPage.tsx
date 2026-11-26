@@ -7,9 +7,11 @@ import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import Typography from '@mui/material/Typography'
 import { useNavigate } from '@tanstack/react-router'
-import { type FormEvent, useState } from 'react'
-import { VaultErrorName } from '@/shared/vault-protocol'
-import { useUnlockVault } from './api'
+import { type SubmitEvent, useState } from 'react'
+
+import { VaultErrorName } from '@/shared/vault-protocol.ts'
+
+import { useUnlockVault } from './api.ts'
 
 export function UnlockPage() {
     const navigate = useNavigate()
@@ -18,7 +20,7 @@ export function UnlockPage() {
 
     const wrongPassword = unlock.error?.name === VaultErrorName.InvalidPassword
 
-    function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
         event.preventDefault()
         if (password === '' || unlock.isPending) return
         setPassword('')

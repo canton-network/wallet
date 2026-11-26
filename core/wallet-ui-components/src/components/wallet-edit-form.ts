@@ -1,15 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html, nothing } from 'lit'
-import { customElement, property } from 'lit/decorators.js'
-import { chevronDownIcon } from '../icons/index.js'
-import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.js'
+import type { PartyId } from '@canton-network/core-types'
 import type {
     Key,
     SigningProviderId,
 } from '@canton-network/core-wallet-user-rpc-client'
-import type { PartyId } from '@canton-network/core-types'
+import { css, html, nothing } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+
+import { chevronDownIcon } from '../icons/index.ts'
+import { SigningProviderChangeEvent, WgWalletForm } from './wallet-form.ts'
 
 export class WalletEditEvent extends Event {
     constructor(
@@ -21,8 +22,9 @@ export class WalletEditEvent extends Event {
     }
 }
 
+export
 @customElement('wg-wallet-edit-form')
-export class WgWalletEditForm extends WgWalletForm {
+class WgWalletEditForm extends WgWalletForm {
     protected readonly submitLabel = 'Edit'
     protected readonly submittingLabel = 'Editing...'
     protected readonly submittingMessage = 'Editing party, please wait...'
@@ -82,14 +84,22 @@ export class WgWalletEditForm extends WgWalletForm {
         return (
             this.hasNoSigningProviders ||
             !this.selectedSigningProvider.length ||
-            this.disabledSigningProviders.includes(
-                this.selectedSigningProvider
-            ) ||
+            this.selectedSigningProviderDisabled ||
             this.publicKeysLoading
         )
     }
 
+    private get selectedSigningProviderDisabled(): boolean {
+        return this.disabledSigningProviders.includes(
+            this.selectedSigningProvider
+        )
+    }
+
     protected get formFields() {
+        // A disabled signing provider shows the placeholder, not its key
+        const publicKey = this.selectedSigningProviderDisabled
+            ? ''
+            : this.selectedPublicKey
         return html`
             <div class="field-group d-flex flex-column">
                 <label for="party-id" class="form-label field-label mb-0">
@@ -163,27 +173,21 @@ export class WgWalletEditForm extends WgWalletForm {
                 </label>
                 <div class="select-wrap">
                     <select
-                        .value=${this.selectedPublicKey}
+                        .value=${publicKey}
                         @change=${this.onPublicKeyChange}
                         ?disabled=${this.submitting}
                         class="form-select field-control"
                         id="public-key-id"
                         required
                     >
-                        <option
-                            disabled
-                            .selected=${!this.selectedPublicKey || this.disabledSigningProviders.includes(this.selectedSigningProvider)}
-                            value=""
-                        >
-                            ${this.publicKeysLoading ? nothing : this.disabledSigningProviders.includes(this.selectedSigningProvider) ? 'Select different signing provider' : 'Select public key'}
+                        <option disabled .selected=${!publicKey} value="">
+                            ${this.publicKeysLoading ? nothing : this.selectedSigningProviderDisabled ? 'Select different signing provider' : 'Select public key'}
                         </option>
                         ${this.publicKeys.map(
                             (key) =>
                                 html`<option
                                     value=${key.publicKey}
-                                    .selected=${
-                                        this.selectedPublicKey === key.publicKey
-                                    }
+                                    .selected=${publicKey === key.publicKey}
                                 >
                                     ${key.name} (${key.publicKey})
                                 </option>`

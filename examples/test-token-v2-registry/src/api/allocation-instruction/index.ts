@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Router } from 'express'
-import { getAllocationFactory } from './getAllocationFactory'
 import type { OffLedger } from '@canton-network/core-token-standard-v2'
+import { Router } from 'express'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z from 'zod'
-import { getAllocationInstructionAcceptContext } from './getAllocationInstructionAcceptContext'
-import { getAllocationInstructionWithdrawContext } from './getAllocationInstructionWithdrawContext'
-import { choiceContextRequestSchema } from '../common'
+import { type ZodType, z } from 'zod'
+
+import { choiceContextRequestSchema } from '../common.ts'
+import { getAllocationFactory } from './getAllocationFactory.ts'
+import { getAllocationInstructionAcceptContext } from './getAllocationInstructionAcceptContext.ts'
+import { getAllocationInstructionWithdrawContext } from './getAllocationInstructionWithdrawContext.ts'
 
 const choiceContextPathSchema = z.object({
     allocationInstructionId: z.string(),
@@ -24,9 +25,11 @@ const openAPIRouter =
 openAPIRouter.post('/registry/allocation-instruction/v2/allocation-factory', {
     handler: getAllocationFactory,
     bodySchema: z.object({
-        choiceArguments: z.record(z.string(), z.never()),
+        choiceArguments: z.record(z.string(), z.unknown()),
         excludeDebugFields: z.boolean(),
-    }),
+    }) as unknown as ZodType<
+        OffLedger.AllocationInstructionV2.operations['getAllocationFactory']['requestBody']['content']['application/json']
+    >,
 })
 
 openAPIRouter.post(

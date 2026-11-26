@@ -1,3 +1,4 @@
+import LinkOffIcon from '@mui/icons-material/LinkOff'
 import {
     Box,
     Card,
@@ -17,10 +18,10 @@ import {
     Alert,
     CircularProgress,
 } from '@mui/material'
-import LinkOffIcon from '@mui/icons-material/LinkOff'
 import { useState } from 'react'
-import type { SessionInfo } from '../walletkit/index.ts'
+
 import { BalanceCard } from '../components/BalanceCard.tsx'
+import type { SessionInfo } from '../walletkit/index.ts'
 
 interface Wallet {
     partyId: string

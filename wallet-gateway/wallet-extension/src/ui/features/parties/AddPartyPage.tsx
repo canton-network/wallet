@@ -6,11 +6,12 @@ import {
     BackLink,
     PageHeader,
     WalletCreateForm,
-} from '@canton-network/core-wallet-ui-components/lit-react'
+} from '@canton-network/core-wallet-ui-components/react'
 import { useQuery } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { useState } from 'react'
-import { signingProvidersQuery, useCreateWallet } from './api'
+
+import { signingProvidersQuery, useCreateWallet } from './api.ts'
 
 export function AddPartyPage() {
     const navigate = useNavigate()

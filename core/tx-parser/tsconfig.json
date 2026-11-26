@@ -2,5 +2,23 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "types": ["node"]
-    }
+    },
+    "include": ["src", "src/**/*.json"],
+    "references": [
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../token-standard-v2"
+        },
+        {
+            "path": "../token-standard"
+        },
+        {
+            "path": "../provider-ledger"
+        },
+        {
+            "path": "../ledger-client-types"
+        }
+    ]
 }

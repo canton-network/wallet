@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SDKLogger } from '../logger/index.js'
+import type { SDKLogger } from '../logger/index.ts'
+import type { SDKContext } from './types/context.ts'
 import {
     EXTENDED_SDK_OPTION_KEYS,
     type ExtendedFullSDKInterface,
     type ExtendedSDKOptions,
     type SDKInterface,
-} from './types/sdk.js'
-import type { SDKContext } from './types/context.js'
+} from './types/sdk.ts'
 
 export type SDKPluginContext<
     ExtendedItems extends keyof ExtendedFullSDKInterface = never,
@@ -43,6 +43,7 @@ export abstract class SDKPlugin<
         /**
          * @deprecated
          */
+        // oxlint-disable-next-line typescript/no-deprecated -- keeps the deprecated field populated
         this.logger = logger
 
         this.ctx = {

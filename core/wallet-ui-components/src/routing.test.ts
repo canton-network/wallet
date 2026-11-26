@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, expect, it } from 'vitest'
+
 import {
     ALLOWED_ROUTES,
     getCurrentRoute,
     isAllowedRoute,
     toRelHref,
     toRelPath,
-} from './routing.js'
+} from './routing.ts'
 
 describe('isAllowedRoute', () => {
     it('accepts every configured route', () => {

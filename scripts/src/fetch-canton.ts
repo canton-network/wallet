@@ -6,20 +6,22 @@
  * and place it in the canton/ directory.
  */
 
+import crypto from 'crypto'
+import * as fs from 'fs'
 import path from 'path'
+
 import {
     API_SPECS_PATH,
     SUPPORTED_VERSIONS,
     CANTON_PATH,
     downloadAndUnpackTarball,
     error,
+    pruneStaleApiSpecs,
     setCantonHash,
     type Network,
     getNetworkArg,
     hasFlag,
-} from './lib/utils.js'
-import * as fs from 'fs'
-import crypto from 'crypto'
+} from './lib/utils.ts'
 
 async function main(network: Network) {
     const updateHash = hasFlag('updateHash')
@@ -87,6 +89,8 @@ async function main(network: Network) {
             `Expected to find OpenAPI spec in ${openApiSpecDir} but directory does not exist. Please check if the structure of the Canton release has changed.`
         )
     }
+
+    pruneStaleApiSpecs('ledger-api')
 }
 
 main(getNetworkArg()).catch((e) => {

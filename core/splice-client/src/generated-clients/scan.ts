@@ -499,53 +499,6 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/state/acs': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Deprecated. Please use /v1/state/acs instead. Returns the ACS in creation date ascending order, paged, for a given migration id and record time.
-         */
-        post: operations['getAcsSnapshotAt']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v1/state/acs': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Deprecated. Please use /v2/state/acs instead.
-         *     The only difference with this endpoint and that one is the type of the `after`/`next_page_token` pagination token.
-         *
-         *     Returns the ACS in creation date ascending order, paged, for a given migration id and record time.
-         *     Unlike /v0/state/acs, every contract is identified by an (optional) update_id
-         *     (as opposed to the event ID in /v0/state/acs, which was not BFT-safe).
-         *     The update_id is the ID of the update in which the contract was created, and can be used to correlate with updates returned by /v2/updates.
-         *     For contracts created in an earlier migration ID, the update_id will be absent.
-         */
-        post: operations['getAcsSnapshotAtV1']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
     '/v2/state/acs': {
         parameters: {
             query?: never
@@ -586,46 +539,6 @@ export interface paths {
          *     immediate internal snapshot and delay in the next automatic snapshot.
          */
         post: operations['forceAcsSnapshotNow']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/holdings/state': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /** @description Deprecated. Please use /v1/holdings/state instead. Returns the active amulet contracts for a given migration id and record time, in creation date ascending order, paged. */
-        post: operations['getHoldingsStateAt']
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v1/holdings/state': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get?: never
-        put?: never
-        /**
-         * @deprecated
-         * @description Deprecated. Please use /v2/holdings/state instead.
-         *     The only difference with this endpoint and that one is the type of the `after`/`next_page_token` pagination token.
-         *
-         *     Returns the active amulet contracts for a given migration id and record time, in creation date ascending order, paged.
-         */
-        post: operations['getHoldingsStateAtV1']
         delete?: never
         options?: never
         head?: never
@@ -976,38 +889,6 @@ export interface paths {
         patch?: never
         trace?: never
     }
-    '/v0/synchronizer-identities/{domain_id_prefix}': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get: operations['getSynchronizerIdentities']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
-    '/v0/synchronizer-bootstrapping-transactions/{domain_id_prefix}': {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        get: operations['getSynchronizerBootstrappingTransactions']
-        put?: never
-        post?: never
-        delete?: never
-        options?: never
-        head?: never
-        patch?: never
-        trace?: never
-    }
     '/v0/splice-instance-names': {
         parameters: {
             query?: never
@@ -1334,6 +1215,23 @@ export interface paths {
         patch?: never
         trace?: never
     }
+    '/v0/events/latest-record-time': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /** @description Returns the latest record time for which /v0/events will be able to return events. */
+        get: operations['getLatestEventRecordTime']
+        put?: never
+        post?: never
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
     '/v0/events/{update_id}': {
         parameters: {
             query?: never
@@ -1507,6 +1405,26 @@ export interface paths {
          *     Meant for internal use only, as part of the processing pipeline of bulk history objects.
          */
         post: operations['getBulkObjectChecksums']
+        delete?: never
+        options?: never
+        head?: never
+        patch?: never
+        trace?: never
+    }
+    '/v0/history/bulk/progress': {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        /**
+         * @description **Under Development, do not use in production yet** Query whether bulk storage object creation has advanced to a certain record time.
+         *     Meant for internal use only, as part of the processing pipeline of bulk objects.
+         */
+        get: operations['getBulkObjectsProgress']
+        put?: never
+        post?: never
         delete?: never
         options?: never
         head?: never
@@ -2119,45 +2037,6 @@ export interface components {
              */
             record_time: string
         }
-        AcsRequest: {
-            /**
-             * Format: int64
-             * @description The migration id for which to return the ACS.
-             */
-            migration_id: number
-            /**
-             * Format: date-time
-             * @description The timestamp at which the contract set was active.
-             *     This needs to be an exact timestamp, i.e.,
-             *     needs to correspond to a timestamp reported by `/v0/state/acs/snapshot-timestamp` if `record_time_match` is set to `exact` (which is the default).
-             *     If `record_time_match` is set to `at_or_before`, this can be any timestamp, and the most recent snapshot at or before the given `record_time` will be returned.
-             */
-            record_time: string
-            /**
-             * @description How to match the record_time. "exact" requires the record_time to match exactly.
-             *     "at_or_before" finds the most recent snapshot at or before the given record_time.
-             * @default exact
-             * @enum {string}
-             */
-            record_time_match: 'exact' | 'at_or_before'
-            /**
-             * Format: int64
-             * @description Pagination token for the next page of results. For this to be valid,
-             *     this must be the `next_page_token` from a prior request with identical
-             *     parameters aside from `after` and `page_size`; the response may be
-             *     invalid otherwise.
-             */
-            after?: number
-            /**
-             * Format: int32
-             * @description The maximum number of created events returned for this request.
-             */
-            page_size: number
-            /** @description Filters the ACS by contracts in which these party IDs are stakeholders. */
-            party_ids?: string[]
-            /** @description Filters the ACS by contracts with these template IDs, specified as "PACKAGE_NAME:MODULE_NAME:ENTITY_NAME". */
-            templates?: string[]
-        }
         AcsRequestV2: {
             /**
              * Format: int64
@@ -2196,40 +2075,6 @@ export interface components {
             party_ids?: string[]
             /** @description Filters the ACS by contracts with these template IDs, specified as "PACKAGE_NAME:MODULE_NAME:ENTITY_NAME". */
             templates?: string[]
-        }
-        HoldingsStateRequest: {
-            /**
-             * Format: int64
-             * @description The migration id for which to return the ACS.
-             */
-            migration_id: number
-            /**
-             * Format: date-time
-             * @description The timestamp at which the contract set was active.
-             *     This needs to be an exact timestamp, i.e.,
-             *     needs to correspond to a timestamp reported by `/v0/state/acs/snapshot-timestamp` if `record_time_match` is set to `exact` (which is the default).
-             *     If `record_time_match` is set to `at_or_before`, this can be any timestamp, and the most recent snapshot at or before the given `record_time` will be returned.
-             */
-            record_time: string
-            /**
-             * @description How to match the record_time. "exact" requires the record_time to match exactly.
-             *     "at_or_before" finds the most recent snapshot at or before the given record_time.
-             * @default exact
-             * @enum {string}
-             */
-            record_time_match: 'exact' | 'at_or_before'
-            /**
-             * Format: int64
-             * @description Pagination token for the next page of results.
-             */
-            after?: number
-            /**
-             * Format: int32
-             * @description The maximum number of created events returned for this request.
-             */
-            page_size: number
-            /** @description Filters by contracts in which these party_ids are the owners of the amulets. */
-            owner_party_ids: string[]
         }
         HoldingsStateRequestV2: {
             /**
@@ -2329,54 +2174,6 @@ export interface components {
              * @description The current migration ID of the Scan.
              */
             migration_id: number
-        }
-        AcsResponse: {
-            /**
-             * Format: date-time
-             * @description The same `record_time` as in the request.
-             */
-            record_time: string
-            /**
-             * Format: int64
-             * @description The same `migration_id` as in the request.
-             */
-            migration_id: number
-            /**
-             * @description Up to `page_size` contracts in the ACS.
-             *     `create_arguments` are always encoded as `compact_json`.
-             */
-            created_events: components['schemas']['CreatedEvent'][]
-            /**
-             * Format: int64
-             * @description When requesting the next page of results, pass this as `after`
-             *     to the `AcsRequest` or `HoldingsStateRequest`.
-             *     Will be absent when there are no more pages.
-             */
-            next_page_token?: number
-        }
-        AcsResponseV1: {
-            /**
-             * Format: date-time
-             * @description The same `record_time` as in the request.
-             */
-            record_time: string
-            /**
-             * Format: int64
-             * @description The same `migration_id` as in the request.
-             */
-            migration_id: number
-            /**
-             * @description Up to `page_size` contracts in the ACS.
-             *     `create_arguments` are always encoded as `compact_json`.
-             */
-            created_events: components['schemas']['ActiveContract'][]
-            /**
-             * Format: int64
-             * @description When requesting the next page of results, pass this as `after`
-             *     to the `AcsRequest` or `HoldingsStateRequest`.
-             *     Will be absent when there are no more pages.
-             */
-            next_page_token?: number
         }
         AcsResponseV2: {
             /**
@@ -2678,17 +2475,6 @@ export interface components {
             /** Format: int64 */
             migration_id: number
         }
-        SynchronizerIdentities: {
-            sequencer_id: string
-            sequencer_identity_transactions: string[]
-            mediator_id: string
-            mediator_identity_transactions: string[]
-        }
-        SynchronizerBootstrappingTransactions: {
-            domain_parameters: string
-            sequencer_domain_state: string
-            mediator_domain_state: string
-        }
         GetMigrationInfoRequest: {
             /** Format: int64 */
             migration_id: number
@@ -2902,6 +2688,13 @@ export interface components {
             traffic_summary?: components['schemas']['EventHistoryTrafficSummary']
             app_activity_records?: components['schemas']['EventHistoryAppActivityRecords']
         }
+        EventLatestRecordTimeResponse: {
+            /**
+             * Format: date-time
+             * @description The record_time of the latest event.
+             */
+            record_time: string
+        }
         EventHistoryVerdict: {
             /**
              * @description The ID of the transaction update associated with this verdict.
@@ -3050,7 +2843,10 @@ export interface components {
             object_keys: string[]
         }
         GetBulkObjectChecksumsResponse: {
-            /** @description The list of checksums for the requested bulk storage objects (in the same order as the object_keys). */
+            /**
+             * @description The list of (optional) checksums for the requested bulk storage objects (in the same order as the object_keys),
+             *     where `None` values indicate objects that do not exist.
+             */
             checksums: {
                 value?: string
             }[]
@@ -3060,6 +2856,9 @@ export interface components {
             url: string
             /** @description The sha256 digest of the bulk storage object, for verification of integrity and consistency across SVs. */
             digest: string
+        }
+        GetBulkObjectsProgressResponse: {
+            beyond_requested_record_time: boolean
         }
         GetRewardAccountingEarliestAvailableRoundResponse: {
             /** Format: int64 */
@@ -4010,60 +3809,6 @@ export interface operations {
             500: components['responses']['500']
         }
     }
-    getAcsSnapshotAt: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['AcsRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['AcsResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-            500: components['responses']['500']
-        }
-    }
-    getAcsSnapshotAtV1: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['AcsRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['AcsResponseV1']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-            500: components['responses']['500']
-        }
-    }
     getAcsSnapshotAtV2: {
         parameters: {
             query?: never
@@ -4110,60 +3855,6 @@ export interface operations {
                 }
             }
             400: components['responses']['400']
-            500: components['responses']['500']
-        }
-    }
-    getHoldingsStateAt: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['HoldingsStateRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['AcsResponse']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
-            500: components['responses']['500']
-        }
-    }
-    getHoldingsStateAtV1: {
-        parameters: {
-            query?: never
-            header?: never
-            path?: never
-            cookie?: never
-        }
-        requestBody: {
-            content: {
-                'application/json': components['schemas']['HoldingsStateRequest']
-            }
-        }
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['AcsResponseV1']
-                }
-            }
-            400: components['responses']['400']
-            404: components['responses']['404']
             500: components['responses']['500']
         }
     }
@@ -4624,52 +4315,6 @@ export interface operations {
             }
         }
     }
-    getSynchronizerIdentities: {
-        parameters: {
-            query?: never
-            header?: never
-            path: {
-                domain_id_prefix: string
-            }
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['SynchronizerIdentities']
-                }
-            }
-            404: components['responses']['404']
-        }
-    }
-    getSynchronizerBootstrappingTransactions: {
-        parameters: {
-            query?: never
-            header?: never
-            path: {
-                domain_id_prefix: string
-            }
-            cookie?: never
-        }
-        requestBody?: never
-        responses: {
-            /** @description ok */
-            200: {
-                headers: {
-                    [name: string]: unknown
-                }
-                content: {
-                    'application/json': components['schemas']['SynchronizerBootstrappingTransactions']
-                }
-            }
-            404: components['responses']['404']
-        }
-    }
     getSpliceInstanceNames: {
         parameters: {
             query?: never
@@ -5105,6 +4750,29 @@ export interface operations {
             500: components['responses']['500']
         }
     }
+    getLatestEventRecordTime: {
+        parameters: {
+            query?: never
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['EventLatestRecordTimeResponse']
+                }
+            }
+            400: components['responses']['400']
+            404: components['responses']['404']
+            500: components['responses']['500']
+        }
+    }
     getEventById: {
         parameters: {
             query?: {
@@ -5313,6 +4981,29 @@ export interface operations {
                 }
                 content: {
                     'application/json': components['schemas']['GetBulkObjectChecksumsResponse']
+                }
+            }
+            501: components['responses']['501']
+        }
+    }
+    getBulkObjectsProgress: {
+        parameters: {
+            query: {
+                record_time: string
+            }
+            header?: never
+            path?: never
+            cookie?: never
+        }
+        requestBody?: never
+        responses: {
+            /** @description ok */
+            200: {
+                headers: {
+                    [name: string]: unknown
+                }
+                content: {
+                    'application/json': components['schemas']['GetBulkObjectsProgressResponse']
                 }
             }
             501: components['responses']['501']

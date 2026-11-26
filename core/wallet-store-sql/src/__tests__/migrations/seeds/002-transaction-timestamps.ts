@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { DB } from '../../../schema'
 import { type Kysely, sql } from 'kysely'
+
+import type { DB } from '../../../schema.ts'
 
 export async function insertTransaction(
     db: Kysely<DB>,

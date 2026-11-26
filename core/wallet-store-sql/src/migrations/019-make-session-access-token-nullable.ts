@@ -2,10 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Kysely, sql } from 'kysely'
-import type { DB } from '../schema.js'
-import { isPostgres } from '../utils.js'
 
-export async function up(db: Kysely<DB>): Promise<void> {
+import type { DB } from '../schema.ts'
+import { isPostgres } from '../utils.ts'
+
+// Sessions still have access_token until migration 022 renames the column.
+type PreHashDB = Omit<DB, 'sessions'> & {
+    sessions: {
+        id: string
+        origin: string
+        network: string
+        accessToken: string | null
+        userId: string
+    }
+}
+
+export async function up(db: Kysely<PreHashDB>): Promise<void> {
     if (await isPostgres(db)) {
         await db.schema
             .alterTable('sessions')
@@ -60,7 +72,7 @@ export async function up(db: Kysely<DB>): Promise<void> {
     })
 }
 
-export async function down(db: Kysely<DB>): Promise<void> {
+export async function down(db: Kysely<PreHashDB>): Promise<void> {
     await db.deleteFrom('sessions').where('accessToken', 'is', null).execute()
 
     if (await isPostgres(db)) {

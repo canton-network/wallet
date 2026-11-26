@@ -1,8 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Splice } from './models/index.js'
 import type { PartyId } from '@canton-network/core-types'
+
+import { Splice } from './models/index.ts'
 
 export const TransferInstructionV2 = Splice.Api.Token.TransferInstructionV2
 export const AllocationInstructionV2 = Splice.Api.Token.AllocationInstructionV2
@@ -66,6 +67,7 @@ export type {
     AllocationRequest_Reject,
     AllocationRequest_Withdraw,
     AllocationRequestInterface,
+    AllocationRequestAction,
 } from '@daml.js/splice-api-token-allocation-request-v2-1.0.0/lib/Splice/Api/Token/AllocationRequestV2/module.js'
 
 export type {

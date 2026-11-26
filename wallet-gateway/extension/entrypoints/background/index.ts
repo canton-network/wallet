@@ -4,29 +4,24 @@
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import { registerService } from '@webext-core/proxy-service'
+
+import { AuthService } from './auth-service.ts'
+import { dappController } from './dapp/controller.ts'
+import { registerNotificationPorts } from './notifications.ts'
 import {
     initializeSigningStore,
     initializeWalletStore,
     loadAuthedStore,
-} from './store'
-import { dappController } from './dapp/controller'
-import { userController } from './user/controller'
-import { AuthService } from './auth-service'
-import {
-    registerNotificationPorts,
-    withoutNotificationArgs,
-} from './notifications'
+} from './store.ts'
+import { userController } from './user/controller.ts'
 
 export default defineBackground(() => {
     registerService(AUTH_SERVICE_KEY, AuthService)
 
     // One notification service is shared by the dApp & user controllers (the
     // approve popup reaches the user controller via proxy-service, so it runs
-    // here too) and the content-script notification ports. Event payloads are
-    // not logged, as they can contain the access token.
-    const notificationService = new NotificationService(
-        withoutNotificationArgs(pinoLogger)
-    )
+    // here too) and the content-script notification ports.
+    const notificationService = new NotificationService()
     const walletStore = initializeWalletStore()
 
     // Registered synchronously so a port connect that wakes the service worker

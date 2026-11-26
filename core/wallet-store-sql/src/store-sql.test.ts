@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, test, beforeEach, afterEach } from 'vitest'
+import { createHash } from 'node:crypto'
 
 import type {
     AuthContext,
@@ -13,15 +13,17 @@ import {
     type MessageRaw,
     type Network,
     PartyLevelRight,
-    type Session,
+    type NewSession,
     type Transaction,
     UserLevelRight,
     type Wallet,
 } from '@canton-network/core-wallet-store'
 import type { Kysely } from 'kysely'
-import { migrator } from './migrator'
-import type { DB } from './schema'
-import { connection, StoreSql } from './store-sql'
+import { describe, expect, test, beforeEach, afterEach } from 'vitest'
+
+import { migrator } from './migrator.ts'
+import type { DB } from './schema.ts'
+import { connection, StoreSql } from './store-sql.ts'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',
@@ -134,7 +136,7 @@ implementations.forEach(([name, StoreImpl]) => {
             const store = new StoreImpl(db, authContextMock)
             await store.addIdp(idp)
             await store.addNetwork(network)
-            const session: Session = {
+            const session: NewSession = {
                 id: 'session1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -169,7 +171,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(
                 selfIssuedNetwork('network-self-issued', 'self-issued-aud')
             )
-            const session: Session = {
+            const session: NewSession = {
                 id: 'session1',
                 origin: 'dapp-1',
                 network: 'network-self-issued',
@@ -309,7 +311,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addIdp(idp2)
             await store.addNetwork(network)
             await store.addNetwork(network2)
-            const session: Session = {
+            const session: NewSession = {
                 id: 'session1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -376,7 +378,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addIdp(idp)
             await store.addNetwork(network)
             // Set session so getCurrentNetwork() works
-            const session: Session = {
+            const session: NewSession = {
                 id: 'sess-123',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -491,7 +493,7 @@ implementations.forEach(([name, StoreImpl]) => {
             const store = new StoreImpl(db, authContextMock)
             await store.addIdp(idp)
             await store.addNetwork(network)
-            const session: Session = {
+            const session: NewSession = {
                 id: 'sess-123',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -500,12 +502,48 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.setSession(session)
             const result = await store.getSession('test-access-token')
             expect(result).toEqual({
-                ...session,
+                id: session.id,
+                origin: session.origin,
+                network: session.network,
+                accessTokenHash: sha256Hex('test-access-token'),
                 userId: authContextMock.userId,
             })
             await store.removeSession('test-access-token')
             const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
+        })
+
+        test('stores only the SHA-256 digest of a session access token', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+            await store.setSession({
+                id: 'sess-hashed',
+                origin: 'dapp-1',
+                network: 'network1',
+                accessToken: authContextMock.accessToken,
+            })
+
+            const rows = await db
+                .selectFrom('sessions')
+                .select(['id', 'accessTokenHash'])
+                .execute()
+            expect(rows).toEqual([
+                {
+                    id: 'sess-hashed',
+                    accessTokenHash: sha256Hex(authContextMock.accessToken),
+                },
+            ])
+
+            // Lookups still take the raw token
+            await expect(
+                store.getSession(authContextMock.accessToken)
+            ).resolves.toEqual(expect.objectContaining({ id: 'sess-hashed' }))
+            await expect(store.getCurrentNetwork()).resolves.toEqual(network)
+            // and the stored digest is not accepted as a token
+            await expect(
+                store.getSession(sha256Hex(authContextMock.accessToken))
+            ).resolves.toBeUndefined()
         })
 
         test('resolves the current network from a tokenless self-issued login session', async () => {
@@ -628,27 +666,79 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(
                 store.upgradeSelfIssuedLoginSession(
                     'onboarding-session',
-                    'new-token'
+                    'new-token',
+                    'login-message'
                 )
             ).resolves.toEqual(
                 expect.objectContaining({
                     id: 'onboarding-session',
                     network: 'network1',
-                    accessToken: 'new-token',
+                    accessTokenHash: sha256Hex('new-token'),
                 })
             )
             await expect(store.listSessions()).resolves.toEqual([
                 expect.objectContaining({
                     id: 'onboarding-session',
-                    accessToken: 'new-token',
+                    accessTokenHash: sha256Hex('new-token'),
                 }),
             ])
+            await expect(store.getSession('new-token')).resolves.toEqual(
+                expect.objectContaining({ id: 'onboarding-session' })
+            )
             await expect(
                 store.upgradeSelfIssuedLoginSession(
                     'onboarding-session',
-                    'other'
+                    'other',
+                    'login-message'
                 )
             ).rejects.toThrow('Self-issued login session not found')
+        })
+
+        test('deletes the signed login message in the same write as the session upgrade', async () => {
+            const loginContext: AuthContext = {
+                userId: authContextMock.userId,
+                accessToken: '',
+                sessionId: 'onboarding-session',
+            }
+            const loginStore = new StoreImpl(db, loginContext)
+            await loginStore.addIdp(idp)
+            await loginStore.addNetwork(network)
+            await loginStore.setSession({
+                id: 'onboarding-session',
+                origin: 'https://example.com',
+                network: network.id,
+            })
+            const signedMessage: MessageRaw = {
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: loginContext.userId,
+                partyId: 'party-msg',
+                publicKey: 'publicKey',
+                message: 'header.payload',
+                signature: 'signature-bytes',
+                origin: null,
+                createdAt: new Date('2026-03-01T10:00:00.000Z'),
+            }
+            await loginStore.setMessageRaw(signedMessage)
+            await loginStore.setMessageRaw({ ...signedMessage, id: 'other' })
+
+            await loginStore.upgradeSelfIssuedLoginSession(
+                'onboarding-session',
+                'new-token',
+                'login-message'
+            )
+
+            const connected = new StoreImpl(db, {
+                userId: loginContext.userId,
+                accessToken: 'new-token',
+            })
+            await expect(
+                connected.getMessageRaw('login-message')
+            ).resolves.toBeUndefined()
+            await expect(connected.getMessageRaw('other')).resolves.toEqual(
+                expect.objectContaining({ id: 'other' })
+            )
         })
 
         test('deletes a tokenless self-issued login session and leaves one that already has an access token', async () => {
@@ -693,6 +783,59 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.removeNetwork('network1')
             const afterRemove = await store.listNetworks()
             expect(afterRemove).toHaveLength(0)
+        })
+
+        test('should remove networks of other users and without an owner', async () => {
+            // e.g. from bootstrap or the config file
+            const withoutOwner = new StoreImpl(db)
+            await withoutOwner.addIdp(idp)
+            await withoutOwner.addNetwork(network)
+            const otherUser = new StoreImpl(db, {
+                userId: 'other-user-id',
+                accessToken: 'other-access-token',
+            })
+            await otherUser.addNetwork({ ...network, id: 'network2' })
+
+            const store = new StoreImpl(db, authContextMock)
+            await store.removeNetwork(network.id)
+            await store.removeNetwork('network2')
+
+            const rows = await db.selectFrom('networks').select('id').execute()
+            expect(rows).toEqual([])
+        })
+
+        test('should keep the owner of a network on update', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork(network)
+
+            await store.updateNetwork({ ...network, name: 'Renamed' })
+
+            const row = await db
+                .selectFrom('networks')
+                .select(['name', 'userId'])
+                .where('id', '=', network.id)
+                .executeTakeFirstOrThrow()
+            expect(row).toEqual({
+                name: 'Renamed',
+                userId: authContextMock.userId,
+            })
+        })
+
+        test('should clear optional auth fields removed on update', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.addIdp(idp)
+            await store.addNetwork({
+                ...network,
+                adminAuth: network.auth,
+                serviceAccountAuth: network.auth,
+            })
+
+            await store.updateNetwork(network)
+
+            const fetched = await store.getNetwork('network1')
+            expect(fetched.adminAuth).toBeUndefined()
+            expect(fetched.serviceAccountAuth).toBeUndefined()
         })
 
         test('should reject a second self-issued network with the same audience', async () => {
@@ -790,7 +933,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addIdp(idp)
             await store.addNetwork(network)
             await store.addNetwork(network2)
-            const session: Session = {
+            const session: NewSession = {
                 id: 'session1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -881,7 +1024,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network2)
 
             // Set session for network1
-            const session1: Session = {
+            const session1: NewSession = {
                 id: 'sess-1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -896,7 +1039,7 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(primary1?.networkId).toBe('network1')
 
             // Switch to network2
-            const session2: Session = {
+            const session2: NewSession = {
                 id: 'sess-2',
                 origin: 'dapp-1',
                 network: 'network2',
@@ -964,7 +1107,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network2)
 
             // Set session for network1
-            const session1: Session = {
+            const session1: NewSession = {
                 id: 'sess-1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -974,7 +1117,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addWallet(wallet1)
 
             // Switch to network2 and add same party
-            const session2: Session = {
+            const session2: NewSession = {
                 id: 'sess-2',
                 origin: 'dapp-1',
                 network: 'network2',
@@ -1408,6 +1551,17 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(fetched?.signature).toBe('signature-bytes')
             expect(await store.listMessageRaws('regular')).toHaveLength(1)
 
+            await store.setMessageRawStatus('msg-1', 'failed', {
+                failureReason: 'rejected',
+                signature: null,
+            })
+            const failed = await store.getMessageRaw('msg-1')
+            expect(failed?.signature).toBeUndefined()
+            expect(failed?.signedAt).toEqual(
+                new Date('2026-03-01T10:01:00.000Z')
+            )
+            expect(failed?.failureReason).toBe('rejected')
+
             await store.removeMessageRaw('msg-1')
             expect(await store.getMessageRaw('msg-1')).toBeUndefined()
         })
@@ -1603,3 +1757,7 @@ implementations.forEach(([name, StoreImpl]) => {
         })
     })
 })
+
+function sha256Hex(value: string): string {
+    return createHash('sha256').update(value, 'utf8').digest('hex')
+}

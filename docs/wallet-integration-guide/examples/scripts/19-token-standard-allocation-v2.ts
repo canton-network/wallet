@@ -1,24 +1,25 @@
-import pino from 'pino'
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
-import {
-    AMULET_NAMESPACE_CONFIG_SIMPLE,
-    ASSET_CONFIG,
-    localNetGlobalSynchronizer,
-    TOKEN_NAMESPACE_CONFIG_SIMPLE,
-    TOKEN_PROVIDER_CONFIG_DEFAULT,
-} from './utils/index.js'
-import type { PartyInfo } from './04-token-standard-allocation.js'
+
+import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
-import Decimal from 'decimal.js'
 import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_V2_REGISTRY_PORT } from './common/_constants.js'
-import { assertV2 } from './common/_utils.js'
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import { Decimal } from 'decimal.js'
+import pino from 'pino'
+
+import type { PartyInfo } from './04-token-standard-allocation.ts'
+import { assertV2 } from './utils/assert.ts'
+import { TEST_TOKEN_V2_REGISTRY } from './utils/constants.ts'
+import {
+    localNetGlobalSynchronizer,
+    TOKEN_NAMESPACE_CONFIG_SIMPLE,
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+} from './utils/index.ts'
 
 /*
 Used the TokenStandardV2AllocationIntegrationTest: https://github.com/canton-network/splice/blob/main/apps/app/src/test/scala/org/lfdecentralizedtrust/splice/integration/tests/TokenStandardV2AllocationIntegrationTest.scala
@@ -43,21 +44,15 @@ async function poll<T>(
 
 const logger = pino({ name: 'v2-token-standard-allocation', level: 'info' })
 
-const sdk = await SDK.create({
+const basicSdk = await SDK.create({
     auth: TOKEN_PROVIDER_CONFIG_DEFAULT,
     ledgerClientUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
     // LocalNet may run both the global and an app synchronizer; the SDK refuses
     // to guess, so target the global one explicitly.
     synchronizerId: localNetGlobalSynchronizer,
-    token: TOKEN_NAMESPACE_CONFIG_SIMPLE,
-    amulet: AMULET_NAMESPACE_CONFIG_SIMPLE,
-    asset: ASSET_CONFIG,
 })
 
-await startRegistry({
-    sdk,
-    port: TEST_TOKEN_V2_REGISTRY_PORT,
-})
+await TestTokenV2.utils.vetDar(basicSdk)
 
 // This example needs uploaded .dar for splice-token-test-trading-app
 // It's in files of localnet, but it's not uploaded to participant, so we need to do this in the script
@@ -78,7 +73,7 @@ const tradingDarPath = path.join(
 
 //upload dar
 const darBytes = await fs.readFile(tradingDarPath)
-await sdk.ledger.dar.upload(darBytes, TRADING_APP_V2_PACKAGE_ID)
+await basicSdk.ledger.dar.upload(darBytes, TRADING_APP_V2_PACKAGE_ID)
 
 logger.info('trading dar uploaded')
 
@@ -87,8 +82,8 @@ const bobSendAmount = 20
 
 const allocatedParties = await Promise.all(
     ['v2-04-alice', 'v2-04-bob', 'v2-04-venue'].map(async (partyHint) => {
-        const partyKeys = sdk.keys.generate()
-        const party = await sdk.party.external
+        const partyKeys = basicSdk.keys.generate()
+        const party = await basicSdk.party.external
             .create(partyKeys.publicKey, {
                 partyHint,
             })
@@ -108,6 +103,34 @@ const allocatedParties = await Promise.all(
     })
 )
 
+const adminKeys = basicSdk.keys.generate()
+const admin = await basicSdk.party.external
+    .create(adminKeys.publicKey, {
+        partyHint: 'admin',
+        isAdmin: true,
+    })
+    .sign(adminKeys.privateKey)
+    .execute()
+
+const registryPort = await startRegistry({
+    sdk: basicSdk,
+    port: TEST_TOKEN_V2_REGISTRY.PORT,
+    operator: {
+        party: admin.partyId,
+        keys: adminKeys,
+    },
+})
+const registryUrl = new URL(TEST_TOKEN_V2_REGISTRY.URL)
+registryUrl.port = registryPort.toString()
+
+// Register the bound URL only after startup, since port 0 selects a free port.
+const sdk = await basicSdk.extend({
+    token: {
+        auth: TOKEN_NAMESPACE_CONFIG_SIMPLE.auth,
+        registries: [registryUrl],
+    },
+})
+
 const partyInfo: Map<string, PartyInfo> = new Map(allocatedParties)
 
 const alice = partyInfo.get('v2-04-alice')!
@@ -116,67 +139,192 @@ const venue = partyInfo.get('v2-04-venue')!
 
 logger.info(`fund alice`)
 
-const [amuletTapCommand, amuletTapDisclosedContracts] = await sdk.amulet.tap(
-    alice.partyId,
-    '2000000'
+// Direct creation requires the admin and account owner to authorize it.
+const adminTestTokenCreateCommand = TestTokenV2.commands.create.token({
+    amount: '2000000',
+    account: {
+        owner: admin.partyId,
+        provider: null,
+        id: '',
+    },
+    instrumentId: {
+        admin: admin.partyId,
+    },
+})
+
+await sdk.ledger
+    .prepare({
+        partyId: admin.partyId,
+        commands: adminTestTokenCreateCommand,
+    })
+    .sign(adminKeys.privateKey)
+    .execute({ partyId: admin.partyId })
+
+// Wait for the holding to be synced before attempting transfer
+await poll('admin holdings to be available', async () => {
+    const holdings = await sdk.token.v2.utxos.list({
+        partyId: admin.partyId,
+    })
+    return holdings.filter(
+        (u) =>
+            u.interfaceViewValue.instrumentId.admin === admin.partyId &&
+            u.interfaceViewValue.instrumentId.id === TestTokenV2.DAR.TestTokenID
+    )
+})
+
+const [fundAliceCommand, fundAliceDisclosedContracts] =
+    await sdk.token.v2.transfer.create({
+        sender: admin.partyId,
+        recipient: alice.partyId,
+        instrumentId: TestTokenV2.DAR.TestTokenID,
+        registryUrl,
+        amount: '2000000',
+    })
+
+await sdk.ledger
+    .prepare({
+        partyId: admin.partyId,
+        commands: fundAliceCommand,
+        disclosedContracts: fundAliceDisclosedContracts,
+    })
+    .sign(adminKeys.privateKey)
+    .execute({ partyId: admin.partyId })
+
+const alicePendingTransfers = await sdk.token.v2.transfer.pending(alice.partyId)
+const fundingTransfer = alicePendingTransfers.find(
+    (transfer) =>
+        transfer.interfaceViewValue.transfer.sender.owner === admin.partyId &&
+        transfer.interfaceViewValue.transfer.instrumentId.admin ===
+            admin.partyId &&
+        transfer.interfaceViewValue.transfer.instrumentId.id ===
+            TestTokenV2.DAR.TestTokenID
 )
+assertV2(!!fundingTransfer, 'No funding transfer found for Alice')
+
+const [acceptFundingCommand, acceptFundingDisclosedContracts] =
+    await sdk.token.v2.transfer.accept(
+        fundingTransfer.contractId,
+        [alice.partyId],
+        registryUrl
+    )
 
 await sdk.ledger
     .prepare({
         partyId: alice.partyId,
-        commands: amuletTapCommand,
-        disclosedContracts: amuletTapDisclosedContracts,
+        commands: acceptFundingCommand,
+        disclosedContracts: acceptFundingDisclosedContracts,
     })
     .sign(alice.keyPair.privateKey)
     .execute({ partyId: alice.partyId })
 
-const aliceUtxosAfterTap = await sdk.token.v2.utxos.list({
+const aliceUtxosAfterFunding = await sdk.token.v2.utxos.list({
     partyId: alice.partyId,
 })
-const aliceBalance = aliceUtxosAfterTap.reduce(
+const aliceTestTokenUtxos = aliceUtxosAfterFunding.filter(
+    (utxo) =>
+        utxo.interfaceViewValue.instrumentId.admin === admin.partyId &&
+        utxo.interfaceViewValue.instrumentId.id === TestTokenV2.DAR.TestTokenID
+)
+const aliceBalance = aliceTestTokenUtxos.reduce(
     (sum, u) => sum + Number(u.interfaceViewValue.amount),
     0
 )
 
 assertV2(
     aliceBalance >= 2_000_000,
-    `Expected alice to have at least 2000000 Amulet after tap, got ${aliceBalance}`
+    `Expected Alice to have at least 2000000 TestTokenV2 after funding, got ${aliceBalance}`
 )
+
+logger.info({ aliceBalance }, 'Funded Alice with TestTokenV2')
 
 logger.info(`fund bob`)
 
-const [amuletTapCommand2, amuletTapDisclosedContracts2] = await sdk.amulet.tap(
-    bob.partyId,
-    '2000000'
+await sdk.ledger
+    .prepare({
+        partyId: admin.partyId,
+        commands: adminTestTokenCreateCommand,
+    })
+    .sign(adminKeys.privateKey)
+    .execute({ partyId: admin.partyId })
+
+// Wait for the holding to be synced before attempting transfer
+await poll('admin holdings to be available for bob transfer', async () => {
+    const holdings = await sdk.token.v2.utxos.list({
+        partyId: admin.partyId,
+    })
+    return holdings.filter(
+        (u) =>
+            u.interfaceViewValue.instrumentId.admin === admin.partyId &&
+            u.interfaceViewValue.instrumentId.id === TestTokenV2.DAR.TestTokenID
+    )
+})
+
+const [fundBobCommand, fundBobDisclosedContracts] =
+    await sdk.token.v2.transfer.create({
+        sender: admin.partyId,
+        recipient: bob.partyId,
+        instrumentId: TestTokenV2.DAR.TestTokenID,
+        registryUrl,
+        amount: '2000000',
+    })
+
+await sdk.ledger
+    .prepare({
+        partyId: admin.partyId,
+        commands: fundBobCommand,
+        disclosedContracts: fundBobDisclosedContracts,
+    })
+    .sign(adminKeys.privateKey)
+    .execute({ partyId: admin.partyId })
+
+const bobPendingTransfers = await sdk.token.v2.transfer.pending(bob.partyId)
+const bobFundingTransfer = bobPendingTransfers.find(
+    (transfer) =>
+        transfer.interfaceViewValue.transfer.sender.owner === admin.partyId &&
+        transfer.interfaceViewValue.transfer.instrumentId.admin ===
+            admin.partyId &&
+        transfer.interfaceViewValue.transfer.instrumentId.id ===
+            TestTokenV2.DAR.TestTokenID
 )
+assertV2(!!bobFundingTransfer, 'No funding transfer found for Bob')
+
+const [acceptBobFundingCommand, acceptBobFundingDisclosedContracts] =
+    await sdk.token.v2.transfer.accept(
+        bobFundingTransfer.contractId,
+        [bob.partyId],
+        registryUrl
+    )
 
 await sdk.ledger
     .prepare({
         partyId: bob.partyId,
-        commands: amuletTapCommand2,
-        disclosedContracts: amuletTapDisclosedContracts2,
+        commands: acceptBobFundingCommand,
+        disclosedContracts: acceptBobFundingDisclosedContracts,
     })
     .sign(bob.keyPair.privateKey)
     .execute({ partyId: bob.partyId })
 
-const bobUtxosAfterTap = await sdk.token.v2.utxos.list({
+const bobUtxosAfterFunding = await sdk.token.v2.utxos.list({
     partyId: bob.partyId,
 })
-const bobBalance = bobUtxosAfterTap.reduce(
+const bobTestTokenUtxos = bobUtxosAfterFunding.filter(
+    (utxo) =>
+        utxo.interfaceViewValue.instrumentId.admin === admin.partyId &&
+        utxo.interfaceViewValue.instrumentId.id === TestTokenV2.DAR.TestTokenID
+)
+const bobBalance = bobTestTokenUtxos.reduce(
     (sum, u) => sum + Number(u.interfaceViewValue.amount),
     0
 )
 
 assertV2(
     bobBalance >= 2_000_000,
-    `Expected alice to have at least 2000000 Amulet after tap, got ${bobBalance}`
+    `Expected Bob to have at least 2000000 TestTokenV2 after funding, got ${bobBalance}`
 )
 
-logger.info(`minted amulet for alice and bob`)
-
-const amuletAsset = await sdk.asset.find(
-    'Amulet',
-    localNetStaticConfig.LOCALNET_REGISTRY_API_URL
+logger.info(
+    { aliceBalance, bobBalance },
+    'Funded Alice and Bob with TestTokenV2'
 )
 
 const basicAccount = (partyId: string) => ({
@@ -191,13 +339,13 @@ const tradeLeg = (
     to: PartyInfo,
     amount: number
 ) => ({
-    admin: amuletAsset.admin,
+    admin: admin.partyId,
     leg: {
         transferLegId,
         sender: basicAccount(from.partyId),
         receiver: basicAccount(to.partyId),
         amount: String(amount),
-        instrumentId: 'Amulet',
+        instrumentId: TestTokenV2.DAR.TestTokenID,
         meta: { values: {} },
     },
 })
@@ -240,7 +388,7 @@ const activeTradeProposals = await sdk.ledger.acsReader.readJsContracts({
     filterByParty: true,
 })
 
-const otcpCid = activeTradeProposals[0].contractId
+const otcpCid = activeTradeProposals[0]?.contractId
 
 assertV2(!!otcpCid, 'Unexpected lack of OTCTradeProposal contract')
 
@@ -273,24 +421,39 @@ async function acceptAsTrader(trader: PartyInfo, name: string) {
         sdk.token.v2.allocation.request.pending(trader.partyId)
     )
 
-    const [commands, dc] = await sdk.token.v2.allocation.request.accept({
-        request,
-        partyId: trader.partyId,
-    })
+    const { allocate, accept, skipped } =
+        await sdk.token.v2.allocation.request.acceptForParty({
+            request,
+            partyId: trader.partyId,
+        })
 
-    commands.map(async (c) => {
-        await sdk.ledger
+    assertV2(
+        skipped.length === 0 && accept !== null,
+        `${name} has no configured registry for admins, skipped: ${skipped.join(',')}`
+    )
+
+    const submit = async ([
+        command,
+        disclosedContracts,
+    ]: (typeof allocate)[number]) =>
+        sdk.ledger
             .prepare({
                 partyId: trader.partyId,
-                commands: c,
-                disclosedContracts: dc,
+                commands: command,
+                disclosedContracts,
             })
             .sign(trader.keyPair.privateKey)
             .execute({ partyId: trader.partyId })
-    })
+
+    for (const prepared of allocate) {
+        await submit(prepared)
+    }
+    // `accept` is typed as nullable by acceptForParty, but the assertV2 above
+    // already guarantees it's non-null here — non-null assertion documents that.
+    await submit(accept!)
 
     logger.info(
-        { allocations: commands.length - 1 },
+        { allocations: allocate.length },
         `${name} allocated and accepted request`
     )
 
@@ -326,7 +489,7 @@ for (const leg of tradeLegs) {
 
     assertV2(
         actualAmount.equals(legAmount),
-        `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount}, expected ${legAmount}`
+        `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount.toString()}, expected ${legAmount.toString()}`
     )
 }
 
@@ -343,7 +506,7 @@ const finalizedAllocation: FinalizedAllocation[] = allocations.map(
 
 const { factoryId, choiceContext } =
     await sdk.token.v2.allocation.settlement.factory({
-        registryUrl: amuletAsset.registryUrl,
+        registryUrl,
         args: {
             settlement,
             transferLegs: tradeLegs.map((t) => t.leg),
@@ -362,7 +525,7 @@ const settleCmd = [
             choiceArgument: {
                 batchesByAdmin: [
                     [
-                        amuletAsset.admin,
+                        admin.partyId,
                         {
                             tag: 'SettlementBatchV2',
                             value: {
@@ -384,7 +547,7 @@ const settleCmd = [
                         },
                     ],
                 ],
-                allocationRequests: [], //AllocationRequest_Accept should ahve already consumed the requests
+                allocationRequests: [], // AllocationRequest_Accept already consumed the requests.
             },
         },
     },
@@ -419,7 +582,13 @@ function sumUnlocked(
     utxos: Awaited<ReturnType<typeof sdk.token.v2.utxos.list>>
 ) {
     return utxos
-        .filter((u) => u.interfaceViewValue.lock === null)
+        .filter(
+            (u) =>
+                u.interfaceViewValue.lock === null &&
+                u.interfaceViewValue.instrumentId.admin === admin.partyId &&
+                u.interfaceViewValue.instrumentId.id ===
+                    TestTokenV2.DAR.TestTokenID
+        )
         .reduce((sum, u) => sum + Number(u.interfaceViewValue.amount), 0)
 }
 

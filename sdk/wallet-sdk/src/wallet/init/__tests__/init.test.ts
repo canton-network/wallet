@@ -2,21 +2,22 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import * as mock from '../../__tests__/mocks'
+
+import * as mock from '../../__tests__/mocks.ts'
 import {
     InitializedSDK,
     OfflineInitializedSDK,
     ExtendedInitializedSDK,
-} from '../..'
-import { KeysNamespace } from '../../namespace/keys'
-import { SDKUtilsNamespace } from '../../namespace/utils'
-import { LedgerNamespace } from '../../namespace/ledger'
-import { PartyNamespace } from '../../namespace/party'
-import { UserNamespace } from '../../namespace/user'
-import { AmuletNamespace } from '../../namespace/amulet'
-import { AssetNamespace } from '../../namespace/asset'
-import { EventsNamespace } from '../../namespace/events'
-import { TokenNamespace } from '../../namespace/token'
+} from '../../index.ts'
+import { AmuletNamespace } from '../../namespace/amulet/index.ts'
+import { AssetNamespace } from '../../namespace/asset/index.ts'
+import { EventsNamespace } from '../../namespace/events/index.ts'
+import { KeysNamespace } from '../../namespace/keys/index.ts'
+import { LedgerNamespace } from '../../namespace/ledger/index.ts'
+import { PartyNamespace } from '../../namespace/party/index.ts'
+import { TokenNamespace } from '../../namespace/token/index.ts'
+import { UserNamespace } from '../../namespace/user/index.ts'
+import { SDKUtilsNamespace } from '../../namespace/utils/index.ts'
 
 const {
     ValidatorInternalClient,

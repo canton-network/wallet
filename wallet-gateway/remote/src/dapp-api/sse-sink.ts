@@ -1,13 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type express from 'express'
-import type { Logger } from 'pino'
 import type {
     DappNotificationEvent,
     NotificationSink,
     NotificationSubscriber,
 } from '@canton-network/core-wallet-services'
+import type express from 'express'
+import type { Logger } from 'pino'
 
 function writeSSE(res: express.Response, event: string, data: unknown): void {
     res.write(`event: ${event}\n`)

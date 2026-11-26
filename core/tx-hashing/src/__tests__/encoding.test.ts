@@ -1,10 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import type { Value } from '@canton-network/core-ledger-proto'
+import { describe, expect, it } from 'vitest'
+
 import {
     encodeBool,
+    encodeBytes,
     encodeHex,
     encodeIdentifier,
     encodeInt32,
@@ -13,8 +15,8 @@ import {
     encodeRepeated,
     encodeString,
     encodeValue,
-} from '../encoding.js'
-import type { TxHashingErrorCode } from '../errors.js'
+} from '../encoding.ts'
+import type { TxHashingErrorCode } from '../errors.ts'
 import {
     bool,
     contractId,
@@ -34,9 +36,9 @@ import {
     timestamp,
     unit,
     variant,
-} from './helpers/builders.js'
-import { toHex } from './helpers/hex.js'
-import { hx, rejection } from './helpers/matchers.js'
+} from './helpers/builders.ts'
+import { toHex } from './helpers/hex.ts'
+import { hx, rejection } from './helpers/matchers.ts'
 
 // The byte vectors for numbers, strings, hex, identifiers and values were produced by running
 // daml_transaction_hashing_common.py (canton v3.5.1, 08-interactive-submission) on the same
@@ -91,6 +93,15 @@ describe('encodeInt64', () => {
     ])('encodes the string %s big-endian', (n, expected) => {
         expect(toHex(encodeInt64(n))).toBe(expected)
         expect(toHex(encodeInt64(BigInt(n)))).toBe(expected)
+    })
+})
+
+describe('encodeBytes', () => {
+    it('writes the length as an int32, then the bytes', () => {
+        expect(toHex(encodeBytes(new Uint8Array()))).toBe('00000000')
+        expect(toHex(encodeBytes(Uint8Array.of(0x00, 0xff)))).toBe(
+            hx('00000002 00ff')
+        )
     })
 })
 

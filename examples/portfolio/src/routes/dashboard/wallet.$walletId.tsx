@@ -1,14 +1,14 @@
-import { useState } from 'react'
-import { Box, Typography } from '@mui/material'
-import { createFileRoute } from '@tanstack/react-router'
+import { useWalletHoldings } from '@canton-network/core-wallet-ui-components/react/token'
+import { CopyableIdentifier } from '@components/copyable-identifier'
 import { PrimaryBadge } from '@components/dashboard/primary-badge'
 import { TransactionHistory } from '@components/dashboard/transaction-history'
 import { WalletAssetsContent } from '@components/dashboard/wallet-assets-content'
 import { TransferDialog } from '@components/transfer-dialog'
 import { PillButton } from '@components/ui/PillButton'
-import { CopyableIdentifier } from '@components/copyable-identifier'
 import { useAccounts } from '@hooks/useAccounts'
-import { useWalletHoldings } from '@hooks/useWalletHoldings'
+import { Box, Typography } from '@mui/material'
+import { createFileRoute } from '@tanstack/react-router'
+import { useState } from 'react'
 
 export const Route = createFileRoute('/dashboard/wallet/$walletId')({
     component: RouteComponent,

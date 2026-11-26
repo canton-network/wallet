@@ -1,21 +1,36 @@
 {
     "name": "@canton-network/tool-conformance-cli",
     "version": "1.2.0",
-    "type": "module",
     "description": "CLI and Playwright harness for the CIP-103 conformance dApp",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/tools/conformance-cli#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
-    "sideEffects": false,
-    "main": "./dist/index.js",
-    "types": "./dist/index.d.ts",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "tools/conformance-cli"
+    },
     "bin": {
         "conformance-cli": "./dist/cli.js"
     },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
+    "sideEffects": false,
+    "main": "./dist/index.js",
+    "types": "./dist/index.d.ts",
     "exports": {
         ".": {
             "types": "./dist/index.d.ts",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "vite build && tsc -p tsconfig.lib.json",
@@ -38,20 +53,5 @@
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "tools/conformance-cli"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/tools/conformance-cli#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

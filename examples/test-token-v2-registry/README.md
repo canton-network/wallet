@@ -18,7 +18,11 @@ This project is a reference registry backend for Token Standard V2. It exposes V
 
 ### Example Scope
 
-This is a test implementation, not a production-ready registry. It serves a single in-memory test instrument, uses a test-token rules contract as the factory for V2 workflows, and returns empty choice contexts for follow-up actions. Replace those example behaviors with token-specific logic and persistence for a real token.
+This is a test implementation, not a production-ready registry. It serves a single in-memory test instrument and uses a test-token rules contract as the factory for V2 workflows. Transfer requests use V2 account objects (`owner`, `provider`, and `id`), not V1 party strings. Transfer factory and follow-up choice contexts include the token rules contract required for on-ledger event logging. Follow-up contexts also disclose the instruction's input holdings so that receivers can accept transfers without prior visibility of those holdings. Allocation follow-up contexts remain empty. Replace those example behaviors with token-specific logic and persistence for a real token.
+
+Creating a `TestTokenV2` holding directly requires authorization from both the instrument admin and the account parties. [Script 18](../../docs/wallet-integration-guide/examples/scripts/18-two-step-transfer-v2/index.ts) mints to the admin's basic account first, then transfers the tokens to the sender, who accepts with their own signature.
+
+[Script 19](../../docs/wallet-integration-guide/examples/scripts/19-token-standard-allocation-v2.ts) uses the same funding flow for Alice and Bob before allocating and settling TestTokenV2. Allocation creation and settlement factory contexts include the token rules contract for event logging. Settlement also discloses the requested allocations and their locked holdings, which the venue needs to settle the trade. Allocation creation and request acceptance are submitted sequentially because interactive submission supports one command per prepared transaction.
 
 ## API Overview
 

@@ -1,6 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { LedgerClient } from '@canton-network/core-ledger-client'
+import type {
+    AccessTokenProvider,
+    AuthContext,
+} from '@canton-network/core-wallet-auth'
+import type { Network } from '@canton-network/core-wallet-store'
 import {
     vi,
     describe,
@@ -10,13 +16,8 @@ import {
     afterEach,
     type Mocked,
 } from 'vitest'
-import type { LedgerClient } from '@canton-network/core-ledger-client'
-import type { Network } from '@canton-network/core-wallet-store'
-import type {
-    AccessTokenProvider,
-    AuthContext,
-} from '@canton-network/core-wallet-auth'
-import { PartyAllocationService } from './party-allocation-service.js'
+
+import { PartyAllocationService } from './party-allocation-service.ts'
 
 type MockLedgerClient = Mocked<
     Pick<

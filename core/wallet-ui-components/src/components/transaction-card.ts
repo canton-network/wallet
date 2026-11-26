@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
 import { css, html, nothing, type TemplateResult } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
 import { ifDefined } from 'lit/directives/if-defined.js'
-import { BaseElement } from '../internal/base-element.js'
-import { cardStyles } from '../styles/card.js'
-import type { ParsedTransactionInfo } from '@canton-network/core-tx-visualizer'
+
+import { formatDateTime, formatUtcDateTime } from '../date-time.ts'
 import {
     getActivityAmount,
     getActivityStatusBadgeClass,
     getActivityStatusLabel,
     getActivityType,
-} from '../internal/activity-utils.js'
-import { formatDateTime, formatUtcDateTime } from '../date-time.js'
+} from '../internal/activity-utils.ts'
+import { BaseElement } from '../internal/base-element.ts'
+import { cardStyles } from '../styles/card.ts'
 
 /** Emitted when the user clicks an activity card */
 export class TransactionCardReviewEvent extends Event {
@@ -25,8 +26,9 @@ export class TransactionCardReviewEvent extends Event {
     }
 }
 
+export
 @customElement('wg-transaction-card')
-export class WgTransactionCard extends BaseElement {
+class WgTransactionCard extends BaseElement {
     @property() accessor transactionId = ''
 
     @property() accessor commandId = ''
@@ -34,6 +36,8 @@ export class WgTransactionCard extends BaseElement {
     @property() accessor externalTxId: string | null = null
 
     @property() accessor status = ''
+
+    @property() accessor failureReason: string | null = null
 
     @property({ type: Object }) accessor parsed: ParsedTransactionInfo | null =
         null
@@ -199,6 +203,17 @@ export class WgTransactionCard extends BaseElement {
                             valueClass: 'status-value',
                         }
                     )}
+                    ${
+                        this.failureReason
+                            ? this.renderFieldRow(
+                                  'Failure reason',
+                                  this.failureReason,
+                                  {
+                                      title: this.failureReason,
+                                  }
+                              )
+                            : nothing
+                    }
                     ${this.renderFieldRow('Action type', activityType, {
                         title: activityType,
                         truncate: true,

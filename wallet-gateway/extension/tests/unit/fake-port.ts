@@ -1,9 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Browser } from 'wxt/browser'
 import { vi } from 'vitest'
-import { NOTIFICATIONS_PORT_NAME } from '@/utils/notifications.js'
+import type { Browser } from 'wxt/browser'
+
+import { NOTIFICATIONS_PORT_NAME } from '@/utils/notifications.ts'
 
 type Listener<T extends unknown[]> = (...args: T) => void
 

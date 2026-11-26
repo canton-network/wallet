@@ -1,9 +1,9 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { generateCommand } from '../common'
-import { TradingApp } from './dar'
-import type { OTCTrade, OTCTradeProposal } from './types'
+import { generateCommand } from '../common.ts'
+import { TradingApp } from './dar.ts'
+import type { OTCTrade, OTCTradeProposal } from './types.ts'
 
 const commands = {
     create: {

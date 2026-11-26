@@ -2,14 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import type { PreparedCommand } from '@canton-network/wallet-sdk'
-import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { submitViaProvider } from '@lib/submit'
+import { useQueryClient, useMutation } from '@tanstack/react-query'
 import { resolveAllocationAsset } from '@utils/allocation'
-import { useInstruments } from './useInstruments'
-import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
-import { useWalletSdk } from './useWalletSdk'
-import { queryKeys } from './query-keys'
+
+import { queryKeys } from './query-keys.ts'
+import { useInstruments } from './useInstruments.ts'
+import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export const useWithdrawAllocation = () => {
     const { sdk } = useWalletSdk()
@@ -34,7 +36,7 @@ export const useWithdrawAllocation = () => {
                 throw new Error('Wallet SDK is not ready')
             }
 
-            const preparedCommand = (await sdk.token.allocation.withdraw({
+            const preparedCommand = (await sdk.token.v1.allocation.withdraw({
                 allocationCid: args.contractId,
                 asset,
             })) as PreparedCommand
@@ -49,9 +51,7 @@ export const useWithdrawAllocation = () => {
                     ),
                 }),
                 queryClient.invalidateQueries({
-                    queryKey: queryKeys.walletConnection.holdings.forParty(
-                        args.party
-                    ),
+                    queryKey: tokenQueryKeys.holdings.forParty(args.party),
                 }),
             ])
         },

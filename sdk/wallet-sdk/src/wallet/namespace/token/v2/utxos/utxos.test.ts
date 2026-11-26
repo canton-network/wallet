@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect } from 'vitest'
-import * as mock from '../../../../__tests__/mocks'
-import type { TokenNamespaceConfig } from '../../index'
-import { TokenV2Namespace } from '../namespace'
-import { ParsedURL } from '../../../utils/url'
-import type { UtxoNamespace } from './namespace'
 import { HOLDING_INTERFACE_ID_V2 } from '@canton-network/core-token-standard-v2'
+import { describe, it, vi, beforeEach, expect } from 'vitest'
+
+import * as mock from '../../../../__tests__/mocks.ts'
+import { ParsedURL } from '../../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../../index.ts'
+import { TokenV2Namespace } from '../namespace.ts'
+import type { UtxoNamespace } from './namespace.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 const { ctx, mockLogger } = mock
@@ -45,7 +46,11 @@ describe('utxos namespace', () => {
                 interfaceViewValue: {
                     lock: null,
                 },
-                activeContract: 'contract',
+                activeContract: {
+                    createdEvent: {
+                        createdAt: new Date().toISOString(),
+                    },
+                },
                 fetchedAtOffset: 10,
             },
         ])

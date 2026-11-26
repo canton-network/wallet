@@ -116,6 +116,10 @@ export enum SigningKeySpec {
      * @generated from protobuf enum value: SIGNING_KEY_SPEC_EC_SECP256K1 = 4;
      */
     EC_SECP256K1 = 4,
+    /**
+     * @generated from protobuf enum value: SIGNING_KEY_SPEC_ML_DSA_65 = 5;
+     */
+    ML_DSA_65 = 5,
 }
 /**
  * Serialization format for crypto keys and signatures
@@ -174,6 +178,10 @@ export enum SigningAlgorithmSpec {
      * @generated from protobuf enum value: SIGNING_ALGORITHM_SPEC_EC_DSA_SHA_384 = 3;
      */
     EC_DSA_SHA_384 = 3,
+    /**
+     * @generated from protobuf enum value: SIGNING_ALGORITHM_SPEC_ML_DSA_65 = 4;
+     */
+    ML_DSA_65 = 4,
 }
 /**
  * @generated from protobuf enum com.daml.ledger.api.v2.SignatureFormat

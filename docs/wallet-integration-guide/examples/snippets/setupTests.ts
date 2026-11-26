@@ -1,5 +1,4 @@
-import { beforeAll } from 'vitest'
-import { PartyId } from '@canton-network/core-types'
+import type { PartyId } from '@canton-network/core-types'
 import {
     localNetStaticConfig,
     SDK,
@@ -10,7 +9,9 @@ import {
     type SynchronizerSelector,
     getValidatorParty,
 } from '@canton-network/wallet-sdk'
-import { localNetGlobalSynchronizer } from '../scripts/utils/index.js'
+import { beforeAll } from 'vitest'
+
+import { localNetGlobalSynchronizer } from '../scripts/utils/index.ts'
 
 declare global {
     var EXISTING_PARTY_1: PartyId
@@ -206,7 +207,7 @@ async function beforeEachSetup() {
             .execute({ partyId: global.EXISTING_PARTY_1 })
 
         const [transferCommand, transferDisclosedContracts] =
-            await sdk.token.transfer.create({
+            await sdk.token.v1.transfer.create({
                 sender: global.EXISTING_PARTY_1,
                 recipient: global.EXISTING_PARTY_2,
                 instrumentId: 'Amulet',

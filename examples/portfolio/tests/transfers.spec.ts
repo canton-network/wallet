@@ -1,11 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { test, expect, type Page } from '@playwright/test'
 import type {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
+import { test, expect, type Page } from '@playwright/test'
+
+import type { TokenStandardVersion } from '../src/types/instruments.ts'
 import {
     createGatewayApi,
     connectGateway,
@@ -23,10 +25,10 @@ import {
     setupRegistry,
     switchWallet,
     tap,
-    supportsTokenStandardV2,
     selectTransferVersion,
-} from './utils'
-import type { TokenStandardVersion } from '../src/types/instruments'
+    recordTransferChoiceContexts,
+    amuletSupportsTransferV2,
+} from './utils.ts'
 
 // Transfer tests involve multiple ledger transactions (tap + transfer + accept/reject/withdraw),
 // so give them more time than the default 30s.
@@ -71,10 +73,12 @@ for (const version of [
     'v2',
 ] as const satisfies readonly TokenStandardVersion[]) {
     test.describe(`dashboard transfer flow ${version}`, () => {
-        test.skip(
-            version === 'v2' && !supportsTokenStandardV2(),
-            'Token standard v2 requires splice 0.8.3+'
-        )
+        test.beforeEach(async () => {
+            test.skip(
+                version === 'v2' && !(await amuletSupportsTransferV2()),
+                'Registry does not support token standard v2 transfers'
+            )
+        })
 
         const testMessage = (label: string) =>
             `${label} ${version} ${Date.now()}`
@@ -105,7 +109,7 @@ for (const version of [
             await wg.rejectTransaction(() => submitButton.click())
 
             await expect(dialog.getByRole('alert')).toContainText(
-                /Transfer failed: Transaction with commandId \S+ failed to execute\./,
+                /Transfer failed: Transaction with commandId \S+ failed to execute: Rejected by the user/,
                 { timeout: 15000 }
             )
             await expect(
@@ -323,6 +327,47 @@ for (const version of [
             await wg.approveTransaction(() =>
                 dialog.getByRole('button', { name: 'Accept' }).click()
             )
+        })
+
+        test('lists a dual interface offer once and acts through v2', async ({
+            page: dappPage,
+        }) => {
+            const { wg, api, bob } = await setupTransferTest(dappPage)
+
+            await tap(dappPage, wg, '300')
+            const message = testMessage('dual interface test')
+            await openTransferDialog(dappPage)
+            await fillAndSubmitTransfer(dappPage, wg, {
+                amount: '50',
+                recipient: bob,
+                message,
+                version,
+            })
+
+            await switchWallet(api, bob)
+            await gotoDashboard(dappPage)
+
+            await expectOffersBadgeCount(dappPage, 1)
+            await expect(
+                dappPage.getByRole('button', {
+                    name: new RegExp(`Open Transfer Offer.*${message}`),
+                })
+            ).toHaveCount(1, { timeout: 15000 })
+
+            const dialog = await openTransferOfferDialog(dappPage, {
+                amount: '50',
+                message,
+            })
+            const contexts = recordTransferChoiceContexts(dappPage)
+            await wg.approveTransaction(() =>
+                dialog.getByRole('button', { name: 'Accept' }).click()
+            )
+            await expectWalletBalance(dappPage, bob, '50')
+
+            const expected = (await amuletSupportsTransferV2())
+                ? { v1: false, v2: true }
+                : { v1: true, v2: false }
+            expect(contexts.usedVersion('accept')).toEqual(expected)
         })
     })
 }

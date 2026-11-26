@@ -1,17 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import Box from '@mui/material/Box'
-import Chip from '@mui/material/Chip'
-import Typography from '@mui/material/Typography'
-import { useTheme } from '@mui/material/styles'
-import ArrowBackIcon from '@mui/icons-material/ArrowBack'
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
-import type React from 'react'
 import {
     formatDateTime,
     formatUtcDateTime,
 } from '@canton-network/core-wallet-ui-components'
+import ArrowBackIcon from '@mui/icons-material/ArrowBack'
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward'
+import Box from '@mui/material/Box'
+import Chip from '@mui/material/Chip'
+import { useTheme } from '@mui/material/styles'
+import Typography from '@mui/material/Typography'
+import type React from 'react'
+
 import type { Observation } from '../../report.ts'
 
 const TOKEN_PATTERN =

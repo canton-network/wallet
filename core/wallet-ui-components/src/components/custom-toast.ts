@@ -3,15 +3,17 @@
 
 import { html, css } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
+
+import { BaseElement } from '../internal/base-element.ts'
 
 export type ToastMessageType = 'info' | 'success' | 'error'
 
 const TOAST_DISMISS_DELAY_MS = 5000
 const TOAST_ANIMATION_MS = 250
 
+export
 @customElement('custom-toast')
-export class Toast extends BaseElement {
+class Toast extends BaseElement {
     static styles = [
         BaseElement.styles,
         css`

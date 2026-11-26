@@ -2,24 +2,21 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, vi, it, expect, beforeEach } from 'vitest'
-import { expressContext, mock, type RequestType } from '../../__tests__/mocks'
-import { getAllocationFactory } from './getAllocationFactory'
-import { APIError, emptyChoiceContext } from '../common'
-import { getAllocationInstructionAcceptContext } from './getAllocationInstructionAcceptContext'
-import { getAllocationInstructionWithdrawContext } from './getAllocationInstructionWithdrawContext'
+
+import {
+    expressContext,
+    mock,
+    type RequestType,
+} from '../../__tests__/mocks.ts'
+import { APIError, emptyChoiceContext } from '../common.ts'
+import { getAllocationFactory } from './getAllocationFactory.ts'
+import { getAllocationInstructionAcceptContext } from './getAllocationInstructionAcceptContext.ts'
+import { getAllocationInstructionWithdrawContext } from './getAllocationInstructionWithdrawContext.ts'
 
 const { res, next } = expressContext
 
-vi.mock('../../common/sdk', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
-
-    return {
-        default: importedMock.sdk,
-    }
-})
-
-vi.mock('../../common/state', async () => {
-    const { mock: importedMock } = await import('../../__tests__/mocks')
+vi.mock('../../common/state.ts', async () => {
+    const { mock: importedMock } = await import('../../__tests__/mocks.ts')
 
     return importedMock.state
 })
@@ -68,7 +65,14 @@ describe('Allocation Instruction', () => {
                 expect.objectContaining({
                     factoryId: 'cid',
                     choiceContext: expect.objectContaining({
-                        choiceContextData: {},
+                        choiceContextData: {
+                            values: {
+                                'testTokenV2/tokenRules': {
+                                    tag: 'AV_ContractId',
+                                    value: 'cid',
+                                },
+                            },
+                        },
                         disclosedContracts: expect.arrayContaining([
                             expect.objectContaining({ contractId: 'cid' }),
                         ]),
@@ -112,7 +116,14 @@ describe('Allocation Instruction', () => {
                 expect.objectContaining({
                     factoryId: 'cid',
                     choiceContext: expect.objectContaining({
-                        choiceContextData: {},
+                        choiceContextData: {
+                            values: {
+                                'testTokenV2/tokenRules': {
+                                    tag: 'AV_ContractId',
+                                    value: 'cid',
+                                },
+                            },
+                        },
                         disclosedContracts: expect.arrayContaining([
                             expect.objectContaining({ contractId: 'cid' }),
                         ]),
@@ -143,7 +154,14 @@ describe('Allocation Instruction', () => {
                 expect.objectContaining({
                     factoryId: 'cid-2',
                     choiceContext: expect.objectContaining({
-                        choiceContextData: {},
+                        choiceContextData: {
+                            values: {
+                                'testTokenV2/tokenRules': {
+                                    tag: 'AV_ContractId',
+                                    value: 'cid-2',
+                                },
+                            },
+                        },
                         disclosedContracts: expect.arrayContaining([
                             expect.objectContaining({ contractId: 'cid-2' }),
                         ]),
@@ -175,8 +193,8 @@ describe('Allocation Instruction', () => {
         })
     })
 
-    it('should return correct context for allocation instruction accept choice', () => {
-        getAllocationInstructionAcceptContext(
+    it('should return correct context for allocation instruction accept choice', async () => {
+        await getAllocationInstructionAcceptContext(
             {} as RequestType<typeof getAllocationInstructionAcceptContext>,
             res,
             next
@@ -185,8 +203,8 @@ describe('Allocation Instruction', () => {
         expect(res.json).toHaveBeenCalledExactlyOnceWith(emptyChoiceContext)
     })
 
-    it('should return correct context for allocation instruction withdraw choice', () => {
-        getAllocationInstructionWithdrawContext(
+    it('should return correct context for allocation instruction withdraw choice', async () => {
+        await getAllocationInstructionWithdrawContext(
             {} as RequestType<typeof getAllocationInstructionWithdrawContext>,
             res,
             next

@@ -1,14 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { OpenAPI } from '@scalar/openapi-types'
-import { dereference } from '@scalar/openapi-parser'
 import * as fs from 'node:fs/promises'
+import path from 'node:path'
+
 import { bundle } from '@scalar/json-magic/bundle'
 import { fetchUrls } from '@scalar/json-magic/bundle/plugins/browser'
 import { readFiles } from '@scalar/json-magic/bundle/plugins/node'
-
-import path from 'node:path'
+import { dereference } from '@scalar/openapi-parser'
+import type { OpenAPI } from '@scalar/openapi-types'
 
 // Given an HTTP method (i.e. 'get') and OpenAPI path (i.e. '/v2/parties'), generate a PascalCase type name (i.e. 'GetV2Parties')
 function toPascalCase(method: string, path: string) {

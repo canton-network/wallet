@@ -2,8 +2,6 @@
     "extends": "../../tsconfig.web.json",
     "compilerOptions": {
         "exactOptionalPropertyTypes": false,
-        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
-        "lib": ["ES2022", "DOM"],
         "paths": {
             "@components/*": ["./src/components/*"],
             "@config/*": ["./src/config/*"],
@@ -13,14 +11,46 @@
             "@utils/*": ["./src/utils/*"],
             "@services/*": ["./src/services/*"]
         },
-        "moduleDetection": "force",
         "jsx": "react-jsx",
-        "types": ["node"],
-        "noUnusedLocals": true,
-        "noUnusedParameters": true,
-        "erasableSyntaxOnly": true,
-        "noFallthroughCasesInSwitch": true,
-        "noUncheckedSideEffectImports": true
+        "types": ["node"]
     },
-    "include": ["src"]
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
+            "path": "../../sdk/dapp-sdk"
+        },
+        {
+            "path": "../../core/wallet-ui-components"
+        },
+        {
+            "path": "../../core/wallet-auth"
+        },
+        {
+            "path": "../../core/types"
+        },
+        {
+            "path": "../../core/tx-parser"
+        },
+        {
+            "path": "../../core/token-standard-v2"
+        },
+        {
+            "path": "../../core/token-standard-service"
+        },
+        {
+            "path": "../../core/token-standard"
+        },
+        {
+            "path": "../../core/provider-ledger"
+        },
+        {
+            "path": "../../core/ledger-client-types"
+        },
+        {
+            "path": "../../core/wallet-test-utils"
+        }
+    ]
 }

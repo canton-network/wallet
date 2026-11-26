@@ -1,4 +1,6 @@
-import { useState, useCallback } from 'react'
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
+import CloseIcon from '@mui/icons-material/Close'
+import OpenInNewIcon from '@mui/icons-material/OpenInNew'
 import {
     AppBar,
     Toolbar,
@@ -14,15 +16,14 @@ import {
     DialogTitle,
     DialogContent,
 } from '@mui/material'
-import CloseIcon from '@mui/icons-material/Close'
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet'
-import OpenInNewIcon from '@mui/icons-material/OpenInNew'
+import { useState, useCallback } from 'react'
+
+import { NetworkSelectModal } from './components/NetworkSelectModal.tsx'
+import { RequestApprovalModal } from './components/RequestApprovalModal.tsx'
+import { SessionProposalModal } from './components/SessionProposalModal.tsx'
+import { useWalletKit } from './hooks/useWalletKit.ts'
 import { DashboardPage } from './pages/DashboardPage.tsx'
 import { SettingsPage } from './pages/SettingsPage.tsx'
-import { NetworkSelectModal } from './components/NetworkSelectModal.tsx'
-import { SessionProposalModal } from './components/SessionProposalModal.tsx'
-import { RequestApprovalModal } from './components/RequestApprovalModal.tsx'
-import { useWalletKit } from './hooks/useWalletKit.ts'
 
 export default function App() {
     const [tab, setTab] = useState(0)
@@ -160,6 +161,8 @@ export default function App() {
                 </DialogTitle>
                 <DialogContent sx={{ p: 0, height: '75vh' }}>
                     {gatewayOpen && (
+                        // The gateway UI needs scripts, forms, storage and popups for login
+                        // oxlint-disable-next-line react/iframe-missing-sandbox
                         <iframe
                             src={gatewayUrl}
                             style={{

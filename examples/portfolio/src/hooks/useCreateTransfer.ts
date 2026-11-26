@@ -2,13 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import { useQueryClient, useMutation } from '@tanstack/react-query'
-import { submitViaProvider } from '@lib/submit'
-import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls'
-import { queryKeys } from './query-keys'
-import { useWalletSdk } from './useWalletSdk'
-import type { TokenStandardVersion } from '../types/instruments'
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import type { AssetBody } from '@canton-network/wallet-sdk'
+import { submitViaProvider } from '@lib/submit'
+import { useQueryClient, useMutation } from '@tanstack/react-query'
+
+import type { TokenStandardVersion } from '../types/instruments.ts'
+import { queryKeys } from './query-keys.ts'
+import { useReachableRegistryUrls, useRegistryUrls } from './useRegistryUrls.ts'
+import { useWalletSdk } from './useWalletSdk.ts'
 
 export interface CreateTransferArgs {
     sender: string
@@ -79,7 +81,7 @@ export const useCreateTransfer = () => {
                 queryKey: queryKeys.walletConnection.pendingTransfers.all,
             })
             void queryClient.invalidateQueries({
-                queryKey: queryKeys.walletConnection.holdings.all,
+                queryKey: tokenQueryKeys.holdings.all,
             })
             void queryClient.invalidateQueries({
                 queryKey: queryKeys.walletConnection.transactionHistory.all,

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { expect, type Locator, type Page, test } from '@playwright/test'
+
 import {
     createGatewayApi,
     connectGateway,
@@ -15,7 +16,7 @@ import {
     switchWallet,
     tap,
     togglePreapproval,
-} from './utils'
+} from './utils.ts'
 
 const BASE_URL = 'http://localhost:8081'
 const AMULET_INSTRUMENT = 'Amulet (AMT)'

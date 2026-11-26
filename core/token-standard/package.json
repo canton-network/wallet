@@ -1,9 +1,21 @@
 {
     "name": "@canton-network/core-token-standard",
-    "version": "1.16.0",
-    "type": "module",
+    "version": "1.19.0",
     "description": "daml codegen js for core token standard",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/token-standard"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
@@ -16,9 +28,11 @@
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown",
-        "dev": "tsdown --watch",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
@@ -35,19 +49,29 @@
         "tsdown": "catalog:",
         "typescript": "catalog:"
     },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/token-standard"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "nx": {
+        "targets": {
+            "typecheck": {
+                "dependsOn": [
+                    "^typecheck",
+                    "dist-types"
+                ]
+            },
+            "build": {
+                "inputs": [
+                    "production",
+                    "^production",
+                    "{workspaceRoot}/scripts/src/lib/version-config.json",
+                    "{workspaceRoot}/scripts/src/lib/daml-codegen.ts",
+                    "{workspaceRoot}/scripts/src/generate-token-standard.ts"
+                ]
+            },
+            "dist-types": {
+                "executor": "nx:noop",
+                "dependsOn": [
+                    "build"
+                ]
+            }
+        }
     }
 }

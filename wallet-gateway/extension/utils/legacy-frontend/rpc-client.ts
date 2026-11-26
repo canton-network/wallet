@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { RpcTransport } from '@canton-network/core-rpc-transport'
-import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 import type {
     RequestPayload,
     SuccessResponse,
 } from '@canton-network/core-types'
-import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index'
+import UserApiClient from '@canton-network/core-wallet-user-rpc-client'
 import { createProxyService } from '@webext-core/proxy-service'
+
+import type { Methods as UserRpcMethods } from '@/entrypoints/background/user/rpc-gen/index.ts'
 
 export const attemptRemoveSession = async (
     accessToken: string

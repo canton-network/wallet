@@ -1,15 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
-import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { LedgerClient } from '@canton-network/core-ledger-client'
-import type { Logger } from 'pino'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import type {
     MessageRaw,
     Store,
     Wallet,
 } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+import { beforeEach, describe, expect, it, type Mocked, vi } from 'vitest'
+
+import { decodeBase64, encodeBase64 } from './__tests__/test-utils.ts'
 import {
     SELF_ISSUED_LOGIN_EXPIRED,
     SELF_ISSUED_LOGIN_UNAVAILABLE,
@@ -17,9 +19,8 @@ import {
     SelfIssuedAuthService,
     type SelfIssuedWalletAllocationService,
     type SelfIssuedWalletSyncService,
-} from './self-issued-auth-service.js'
-import type { SignMessageService } from './sign-message-service.js'
-import { decodeBase64, encodeBase64 } from './__tests__/test-utils.js'
+} from './self-issued-auth-service.ts'
+import type { SignMessageService } from './sign-message-service.ts'
 
 const { probeGet, syncRights, syncAuthParty } = vi.hoisted(() => ({
     probeGet: vi.fn(),
@@ -770,7 +771,7 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(signMessageService.refreshMessage).not.toHaveBeenCalled()
         })
@@ -890,7 +891,8 @@ describe('SelfIssuedAuthService', () => {
             expect(probeGet).toHaveBeenCalledWith('/v2/authenticated-user')
             expect(store.upgradeSelfIssuedLoginSession).toHaveBeenCalledWith(
                 'onboarding-session',
-                accessToken
+                accessToken,
+                'login-message'
             )
             expect(result).toMatchObject({
                 status: 'connected',
@@ -1052,7 +1054,7 @@ describe('SelfIssuedAuthService', () => {
             expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                 'login-message',
                 'failed',
-                { failureReason: SELF_ISSUED_LOGIN_EXPIRED }
+                { failureReason: SELF_ISSUED_LOGIN_EXPIRED, signature: null }
             )
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(probeGet).not.toHaveBeenCalled()
@@ -1087,7 +1089,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession
@@ -1108,7 +1113,10 @@ describe('SelfIssuedAuthService', () => {
                 expect(store.setMessageRawStatus).toHaveBeenCalledWith(
                     'login-message',
                     'failed',
-                    { failureReason: SELF_ISSUED_TOKEN_REJECTED }
+                    {
+                        failureReason: SELF_ISSUED_TOKEN_REJECTED,
+                        signature: null,
+                    }
                 )
                 expect(
                     store.upgradeSelfIssuedLoginSession

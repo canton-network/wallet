@@ -3,10 +3,12 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
 
+import { BaseElement } from '../internal/base-element.ts'
+
+export
 @customElement('wg-loading-state')
-export class WgLoadingState extends BaseElement {
+class WgLoadingState extends BaseElement {
     @property({ type: String }) accessor text = 'Loading'
 
     static styles = [

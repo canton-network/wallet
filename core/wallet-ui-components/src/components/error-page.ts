@@ -3,9 +3,14 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { arrowLeftIcon, refreshIcon, warningTriangleIcon } from '../icons'
-import { toRelPath } from '../routing'
+
+import {
+    arrowLeftIcon,
+    refreshIcon,
+    warningTriangleIcon,
+} from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
+import { toRelPath } from '../routing.ts'
 
 export type ErrorPageMode = 'back' | 'refresh'
 
@@ -21,8 +26,9 @@ export class ErrorPageRefreshEvent extends Event {
     }
 }
 
+export
 @customElement('wg-error-page')
-export class WgErrorPage extends BaseElement {
+class WgErrorPage extends BaseElement {
     @property({ type: String }) accessor mode: ErrorPageMode = 'back'
     @property({ type: String }) accessor title = 'Something went wrong'
     @property({ type: String }) accessor message =

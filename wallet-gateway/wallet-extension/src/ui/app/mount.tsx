@@ -5,12 +5,14 @@ import GlobalStyles from '@mui/material/GlobalStyles'
 import { RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { watchVaultStatus } from '@/ui/features/vault'
-import '@/ui/theme/fonts'
-import { AppProviders } from './AppProviders'
-import { createQueryClient } from './query-client'
-import { createAppRouter } from './router'
-import type { UiEntry } from './router-context'
+
+import { watchVaultStatus } from '@/ui/features/vault/index.ts'
+import '@/ui/theme/fonts.ts'
+
+import { AppProviders } from './AppProviders.tsx'
+import { createQueryClient } from './query-client.ts'
+import type { UiEntry } from './router-context.ts'
+import { createAppRouter } from './router.ts'
 
 const popupSize = { body: { width: 360, minHeight: 600 } }
 

@@ -21,15 +21,17 @@ import {
     type SignTransactionResult,
     type SubscribeTransactionsParams,
     type SubscribeTransactionsResult,
+    type Transaction,
+    type ClaimsFor,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
-import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.js'
+
+import { SigningAPIClient, type CantonCaip2 } from './signing-api-sdk.ts'
 
 export {
     SigningAPIClient,
     cantonCaip2Values,
     type CantonCaip2,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
 
 export interface BlockdaemonConfig {
     baseUrl: string
@@ -37,7 +39,40 @@ export interface BlockdaemonConfig {
     caip2?: CantonCaip2
 }
 
-export default class BlockdaemonSigningDriver implements SigningDriverInterface {
+/**
+ * Blockdaemon reports why it rejected or failed a request in `metadata`, e.g.
+ * `{ ErrorCode: 'M0025', ErrorProperties: { DebugMessage: '…' } }` for a
+ * policy block. Only the code is surfaced, as the reason reaches end users and
+ * dApps, while `ErrorProperties` is internal debug information.
+ */
+function failureReason({ status, metadata }: Transaction): string | undefined {
+    if (status !== 'rejected' && status !== 'failed') {
+        return undefined
+    }
+
+    const reason =
+        status === 'rejected'
+            ? 'Blockdaemon rejected the signing request'
+            : 'Blockdaemon failed to sign the request'
+    const code: unknown = metadata?.ErrorCode
+    return typeof code === 'string' && code
+        ? `${reason} (error code ${code})`
+        : reason
+}
+
+function toTransaction(tx: Transaction): Transaction {
+    const reason = failureReason(tx)
+    return {
+        txId: tx.txId,
+        status: tx.status,
+        ...(tx.signature !== undefined && { signature: tx.signature }),
+        ...(tx.publicKey !== undefined && { publicKey: tx.publicKey }),
+        ...(tx.metadata !== undefined && { metadata: tx.metadata }),
+        ...(reason !== undefined && { failureReason: reason }),
+    }
+}
+
+export default class BlockdaemonSigningDriver implements SigningDriverInterface<'email'> {
     private client: SigningAPIClient
 
     constructor(config: BlockdaemonConfig) {
@@ -50,8 +85,9 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.BLOCKDAEMON
+    public requiredClaims = ['email'] as const
 
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public controller = ({ email }: ClaimsFor<'email'>) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -71,21 +107,9 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                         ...(params.internalTxId !== undefined && {
                             internalTxId: params.internalTxId,
                         }),
-                        userIdentifier: userId,
+                        userIdentifier: email,
                     })
-                    return {
-                        txId: tx.txId,
-                        status: tx.status,
-                        ...(tx.signature !== undefined && {
-                            signature: tx.signature,
-                        }),
-                        ...(tx.publicKey !== undefined && {
-                            publicKey: tx.publicKey,
-                        }),
-                        ...(tx.metadata !== undefined && {
-                            metadata: tx.metadata,
-                        }),
-                    }
+                    return toTransaction(tx)
                 } catch (error) {
                     return {
                         error: 'signing_error',
@@ -110,19 +134,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                     const tx = await this.client.getTransaction({
                         txId: params.txId,
                     })
-                    return {
-                        txId: tx.txId,
-                        status: tx.status,
-                        ...(tx.signature !== undefined && {
-                            signature: tx.signature,
-                        }),
-                        ...(tx.publicKey !== undefined && {
-                            publicKey: tx.publicKey,
-                        }),
-                        ...(tx.metadata !== undefined && {
-                            metadata: tx.metadata,
-                        }),
-                    }
+                    return toTransaction(tx)
                 } catch (error) {
                     return {
                         error: 'transaction_not_found',
@@ -139,22 +151,10 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                         const transactions = await this.client.getTransactions({
                             txIds: params.txIds!,
                             publicKeys: params.publicKeys!,
-                            userIdentifier: userId,
+                            userIdentifier: email,
                         })
                         return {
-                            transactions: transactions.map((tx) => ({
-                                txId: tx.txId,
-                                status: tx.status,
-                                ...(tx.signature !== undefined && {
-                                    signature: tx.signature,
-                                }),
-                                ...(tx.publicKey !== undefined && {
-                                    publicKey: tx.publicKey,
-                                }),
-                                ...(tx.metadata !== undefined && {
-                                    metadata: tx.metadata,
-                                }),
-                            })),
+                            transactions: transactions.map(toTransaction),
                         }
                     } catch (error) {
                         return {
@@ -179,7 +179,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                             id: k.id,
                             name: k.name,
                             publicKey: k.publicKey,
-                            userIdentifier: userId,
+                            userIdentifier: email,
                         })),
                     }
                 } catch (error) {
@@ -196,7 +196,7 @@ export default class BlockdaemonSigningDriver implements SigningDriverInterface 
                 try {
                     const key = await this.client.createKey({
                         name: params.name,
-                        userIdentifier: userId,
+                        userIdentifier: email,
                     })
                     return {
                         id: key.id,

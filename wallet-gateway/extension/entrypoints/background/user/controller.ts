@@ -2,12 +2,29 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import buildController from './rpc-gen/index.js'
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     SigningProvider,
     type SigningDriverInterface,
 } from '@canton-network/core-signing-lib'
+import {
+    assertConnected,
+    AuthTokenProvider,
+    resolveAuthIdentityProviderId,
+} from '@canton-network/core-wallet-auth'
+import {
+    type INotificationService,
+    LOGOUT_EVENT,
+    type SigningDrivers,
+    TransactionService,
+} from '@canton-network/core-wallet-services'
 import type { Store, Network, Session } from '@canton-network/core-wallet-store'
+
+import { AuthService } from '../auth-service.ts'
+import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.ts'
+import { notifySessionTerminated } from '../status.ts'
+import { createExtensionWallet } from './create-wallet.ts'
+import buildController from './rpc-gen/index.ts'
 import type {
     AddSessionParams,
     CreateWalletParams,
@@ -21,22 +38,7 @@ import type {
     Auth,
     Status,
     UserLevelRight,
-} from './rpc-gen/typings.js'
-import {
-    assertConnected,
-    AuthTokenProvider,
-    resolveAuthIdentityProviderId,
-} from '@canton-network/core-wallet-auth'
-import { AuthService } from '../auth-service.js'
-import { createExtensionWallet } from './create-wallet.js'
-import {
-    type INotificationService,
-    LOGOUT_EVENT,
-    type SigningDrivers,
-    TransactionService,
-} from '@canton-network/core-wallet-services'
-import { notifySessionTerminated } from '../status.js'
-import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.js'
+} from './rpc-gen/typings.ts'
 
 function toAuthDto(auth: Auth): ApiNetwork['auth'] {
     switch (auth.method) {
@@ -415,7 +417,7 @@ export const userController = (
             // them up first so their notification ports can be closed.
             const replacedSessions = (await store.listSessions()).filter(
                 (session) =>
-                    session.origin === params.origin && session.accessToken
+                    session.origin === params.origin && session.accessTokenHash
             )
 
             await store.setSession({
@@ -567,6 +569,10 @@ export const userController = (
             notificationService.getNotifier(session.id).emit('txChanged', {
                 status: 'failed',
                 commandId: transaction.commandId,
+                error: {
+                    code: errorCodes.provider.userRejectedRequest,
+                    message: 'Rejected by the user',
+                },
             } satisfies TxChangedFailedEvent)
             return null
         },

@@ -1,12 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { DappSDK, RemoteAdapter } from '@canton-network/dapp-sdk'
-import {
-    pickWallet,
-    type WalletPickerResult,
-} from '@canton-network/core-wallet-ui-components'
-import type { Config } from './config.ts'
 import {
     type TestProvider,
     UserInteractionWrapper,
@@ -15,6 +9,13 @@ import {
     type InteractionHandler,
     abortable,
 } from '@canton-network/core-provider-conformance'
+import {
+    pickWallet,
+    type WalletPickerResult,
+} from '@canton-network/core-wallet-ui-components'
+import { DappSDK, RemoteAdapter } from '@canton-network/dapp-sdk'
+
+import type { Config } from './config.ts'
 
 export async function createSession(
     config: Config,

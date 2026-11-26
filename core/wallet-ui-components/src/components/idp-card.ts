@@ -1,11 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { css, html } from 'lit'
 import type { Idp } from '@canton-network/core-wallet-user-rpc-client'
-import { cardStyles } from '../styles/card'
+import { css, html } from 'lit'
+import { customElement, property } from 'lit/decorators.js'
+
+import { BaseElement } from '../internal/base-element.ts'
+import { cardStyles } from '../styles/card.ts'
+import './copy-button.ts'
 
 /** Emitted when the user clicks an IDP card to review it */
 export class IdpCardReviewEvent extends Event {
@@ -28,10 +30,12 @@ export class IdpCardUpdateEvent extends Event {
     }
 }
 
+export
 @customElement('idp-card')
-export class IdpCard extends BaseElement {
+class IdpCard extends BaseElement {
     @property({ type: Object }) accessor idp: Idp | null = null
     @property({ type: Boolean }) accessor readonly = false
+    @property({ type: Boolean }) accessor configManaged = false
 
     static styles = [
         BaseElement.styles,
@@ -56,11 +60,22 @@ export class IdpCard extends BaseElement {
                 box-shadow: var(--wg-shadow-md);
             }
 
+            .card-header {
+                display: flex;
+                align-items: center;
+                gap: var(--wg-space-2);
+            }
+
             .card-title {
                 margin: 0;
                 font-size: var(--wg-font-size-base);
                 font-weight: var(--wg-font-weight-bold);
                 color: var(--wg-text);
+            }
+
+            .badge-config {
+                background: var(--wg-badge-bg);
+                color: var(--wg-text-secondary);
             }
 
             .meta {
@@ -132,7 +147,18 @@ export class IdpCard extends BaseElement {
                 class="wg-card idp-card${this.readonly ? ' readonly' : ''}"
                 @click=${this._onClick}
             >
-                <p class="card-title">${this.idp.id}</p>
+                <div class="card-header">
+                    <p class="card-title">${this.idp.id}</p>
+                    ${
+                        this.configManaged
+                            ? html`<span
+                                  class="wg-badge badge-config"
+                                  title="Managed by the Wallet Gateway config file, cannot be changed here"
+                                  >CONFIG FILE</span
+                              >`
+                            : ''
+                    }
+                </div>
 
                 <div class="meta">
                     <div class="meta-row">

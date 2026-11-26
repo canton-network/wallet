@@ -1,14 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import crypto from 'crypto'
+
+import type { AuthAware } from '@canton-network/core-wallet-auth'
+import type { Store } from '@canton-network/core-wallet-store'
 import type { Request, Response, NextFunction } from 'express'
-import { apiKeyAuth } from './apiKeyAuth.js'
 import { pino } from 'pino'
 import { sink } from 'pino-test'
-import type { Store } from '@canton-network/core-wallet-store'
-import type { AuthAware } from '@canton-network/core-wallet-auth'
-import crypto from 'crypto'
+import { describe, expect, it, vi, beforeEach } from 'vitest'
+
+import { apiKeyAuth } from './apiKeyAuth.ts'
 
 type ApiKeyStore = Pick<
     Store,

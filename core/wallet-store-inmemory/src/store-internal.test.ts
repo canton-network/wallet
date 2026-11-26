@@ -1,12 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, test } from 'vitest'
+import { createHash } from 'node:crypto'
 
-import { StoreInternal, type StoreInternalConfig } from './store-internal'
+import type {
+    AuthContext,
+    AuthorizationCodeAuth,
+    Idp,
+} from '@canton-network/core-wallet-auth'
 import {
     type Wallet,
-    type Session,
+    type NewSession,
     type Store,
     type LedgerApi,
     type Network,
@@ -16,12 +20,10 @@ import {
     PartyLevelRight,
     type ApiKey,
 } from '@canton-network/core-wallet-store'
-import type {
-    AuthContext,
-    AuthorizationCodeAuth,
-    Idp,
-} from '@canton-network/core-wallet-auth'
 import { getLogger, type Logger } from '@logtape/logtape'
+import { beforeEach, describe, expect, test } from 'vitest'
+
+import { StoreInternal, type StoreInternalConfig } from './store-internal.ts'
 
 const authContextMock: AuthContext = {
     userId: 'test-user-id',
@@ -150,7 +152,7 @@ implementations.forEach(([name, StoreImpl]) => {
                     audience: 'aud',
                 },
             }
-            const session: Session = {
+            const session: NewSession = {
                 id: 'session1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -308,7 +310,7 @@ implementations.forEach(([name, StoreImpl]) => {
                     audience: 'aud',
                 },
             }
-            const session: Session = {
+            const session: NewSession = {
                 id: 'session1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -436,7 +438,7 @@ implementations.forEach(([name, StoreImpl]) => {
                 networkId: 'network1',
                 rights: [PartyLevelRight.CanActAs],
             }
-            const session: Session = {
+            const session: NewSession = {
                 id: 'sess-123',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -497,7 +499,7 @@ implementations.forEach(([name, StoreImpl]) => {
         })
 
         test('should set and get session', async () => {
-            const session: Session = {
+            const session: NewSession = {
                 id: 'sess-123',
                 origin: 'dapp-1',
                 network: 'net',
@@ -506,9 +508,15 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.setSession(session)
             const result = await store.getSession('test-access-token')
             expect(result).toEqual({
-                ...session,
+                id: session.id,
+                origin: session.origin,
+                network: session.network,
+                accessTokenHash: sha256Hex('test-access-token'),
                 userId: authContextMock.userId,
             })
+            await expect(
+                store.getSession(sha256Hex('test-access-token'))
+            ).resolves.toBeUndefined()
             await store.removeSession('test-access-token')
             const removed = await store.getSession('test-access-token')
             expect(removed).toBeUndefined()
@@ -621,16 +629,38 @@ implementations.forEach(([name, StoreImpl]) => {
                 network: 'network1',
             })
             await expect(store.listSessions()).resolves.toHaveLength(2)
+            const signedMessage: MessageRaw = {
+                id: 'login-message',
+                kind: 'self-issued-token',
+                status: 'signed',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: 'header.payload',
+                signature: 'sig',
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            }
+            await store.setMessageRaw(signedMessage)
+            await store.setMessageRaw({ ...signedMessage, id: 'other' })
 
             await store.upgradeSelfIssuedLoginSession(
                 'onboarding-session',
-                'new-token'
+                'new-token',
+                'login-message'
+            )
+            // The signed message is the raw token, so it goes with the upgrade
+            await expect(
+                store.getMessageRaw('login-message')
+            ).resolves.toBeUndefined()
+            await expect(store.getMessageRaw('other')).resolves.toEqual(
+                expect.objectContaining({ id: 'other' })
             )
 
             await expect(store.listSessions()).resolves.toEqual([
                 expect.objectContaining({
                     id: 'onboarding-session',
-                    accessToken: 'new-token',
+                    accessTokenHash: sha256Hex('new-token'),
                 }),
             ])
             await expect(store.getSession('new-token')).resolves.toEqual(
@@ -639,9 +669,29 @@ implementations.forEach(([name, StoreImpl]) => {
             await expect(
                 store.upgradeSelfIssuedLoginSession(
                     'onboarding-session',
-                    'other'
+                    'other',
+                    'login-message'
                 )
             ).rejects.toThrow('Self-issued login session not found')
+        })
+
+        test('does not restore a regular message that was removed', async () => {
+            await store.setMessageRaw({
+                id: 'msg-1',
+                kind: 'regular',
+                status: 'pending',
+                userId: authContextMock.userId,
+                partyId: 'party1',
+                publicKey: 'pk',
+                message: 'hello',
+                origin: null,
+                createdAt: new Date('2026-01-01T00:00:00.000Z'),
+            })
+            await store.removeMessageRaw('msg-1')
+            await expect(
+                store.setMessageRawStatus('msg-1', 'signed')
+            ).rejects.toThrow('MessageRaw not found with id: msg-1')
+            await expect(store.getMessageRaw('msg-1')).resolves.toBeUndefined()
         })
 
         test('deletes a tokenless self-issued login session and leaves one that already has an access token', async () => {
@@ -787,7 +837,7 @@ implementations.forEach(([name, StoreImpl]) => {
                     audience: 'aud',
                 },
             }
-            const session: Session = {
+            const session: NewSession = {
                 id: 'session1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -923,7 +973,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addNetwork(network1)
             await store.addNetwork(network2)
 
-            const session1: Session = {
+            const session1: NewSession = {
                 id: 'sess-1',
                 network: 'network1',
                 origin: 'dapp-1',
@@ -937,7 +987,7 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(primary1?.partyId).toBe('party2')
             expect(primary1?.networkId).toBe('network1')
 
-            const session2: Session = {
+            const session2: NewSession = {
                 id: 'sess-2',
                 origin: 'dapp-1',
                 network: 'network2',
@@ -985,7 +1035,7 @@ implementations.forEach(([name, StoreImpl]) => {
             }
 
             // Set session for network1
-            const session1: Session = {
+            const session1: NewSession = {
                 id: 'sess-1',
                 origin: 'dapp-1',
                 network: 'network1',
@@ -995,7 +1045,7 @@ implementations.forEach(([name, StoreImpl]) => {
             await store.addWallet(wallet1)
 
             // Switch to network2 and add same party
-            const session2: Session = {
+            const session2: NewSession = {
                 id: 'sess-2',
                 origin: 'dapp-1',
                 network: 'network2',
@@ -1218,6 +1268,17 @@ implementations.forEach(([name, StoreImpl]) => {
             expect(stored?.status).toBe('signed')
             expect(stored?.signature).toBe('sig')
             expect(await store.listMessageRaws('regular')).toHaveLength(1)
+
+            await store.setMessageRawStatus('msg-1', 'failed', {
+                failureReason: 'rejected',
+                signature: null,
+            })
+            const failed = await store.getMessageRaw('msg-1')
+            expect(failed?.signature).toBeUndefined()
+            expect(failed?.signedAt).toEqual(
+                new Date('2026-01-01T00:01:00.000Z')
+            )
+            expect(failed?.failureReason).toBe('rejected')
 
             await expect(
                 store.setMessageRaw({ ...message, userId: 'other-user' })
@@ -1451,3 +1512,7 @@ implementations.forEach(([name, StoreImpl]) => {
         })
     })
 })
+
+function sha256Hex(value: string): string {
+    return createHash('sha256').update(value, 'utf8').digest('hex')
+}

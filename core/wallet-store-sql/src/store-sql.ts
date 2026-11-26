@@ -1,7 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { getLogger } from '@logtape/logtape'
+import { providerErrors } from '@canton-network/core-rpc-errors'
+import type { AccessToken } from '@canton-network/core-types'
 import {
     type AuthContext,
     type UserId,
@@ -9,11 +10,11 @@ import {
     assertConnected,
     type Idp,
 } from '@canton-network/core-wallet-auth'
-import { providerErrors } from '@canton-network/core-rpc-errors'
 import type {
     Store as BaseStore,
     Wallet,
     PartyId,
+    NewSession,
     Session,
     WalletFilter,
     Transaction,
@@ -33,8 +34,11 @@ import type {
 } from '@canton-network/core-wallet-store'
 import {
     assertUniqueSelfIssuedAudience,
+    hashAccessToken,
     resolveSelfIssuedNetworkByAudiences,
 } from '@canton-network/core-wallet-store'
+import { getLogger } from '@logtape/logtape'
+import Database from 'better-sqlite3'
 import {
     CamelCasePlugin,
     Kysely,
@@ -42,7 +46,8 @@ import {
     SqliteDialect,
     sql,
 } from 'kysely'
-import Database from 'better-sqlite3'
+import { Pool } from 'pg'
+
 import {
     type DB,
     fromIdp,
@@ -61,9 +66,7 @@ import {
     fromApiKey,
     toApiKey,
     toSession,
-} from './schema.js'
-import pg from 'pg'
-import type { AccessToken } from '@canton-network/core-types'
+} from './schema.ts'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     private logger = getLogger(['core', 'wallet-store-sql', 'StoreSql'])
@@ -204,7 +207,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
 
     async getPrimaryWallet(): Promise<Wallet | undefined> {
         const wallets = await this.getWallets()
-        return wallets.find((w) => w.primary === true)
+        return wallets.find((w) => w.primary)
     }
 
     async setPrimaryWallet(partyId: PartyId): Promise<void> {
@@ -218,7 +221,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             )
         }
 
-        const primary = wallets.find((w) => w.primary === true)
+        const primary = wallets.find((w) => w.primary)
 
         await this.db.transaction().execute(async (trx) => {
             if (primary) {
@@ -475,13 +478,14 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     // Session methods
     async getSession(accessToken: AccessToken): Promise<Session | undefined> {
         const userId = this.assertConnected()
+        const tokenHash = await hashAccessToken(accessToken)
         const row = await this.db
             .selectFrom('sessions')
             .selectAll()
             .where((eb) =>
                 eb.and([
                     eb('userId', '=', userId),
-                    eb('accessToken', '=', accessToken),
+                    eb('accessTokenHash', '=', tokenHash),
                 ])
             )
             .executeTakeFirst()
@@ -499,12 +503,15 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return rows.map((row) => toSession(row))
     }
 
-    async setSession(session: Session): Promise<void> {
+    async setSession(session: NewSession): Promise<void> {
         const userId = this.assertConnected()
 
         if (!session.origin) {
             throw new Error('Session origin is required')
         }
+        const tokenHash = session.accessToken
+            ? await hashAccessToken(session.accessToken)
+            : null
 
         await this.db.transaction().execute(async (trx) => {
             if (session.accessToken) {
@@ -516,7 +523,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                         eb.and([
                             eb('userId', '=', userId),
                             eb('origin', '=', session.origin),
-                            eb('accessToken', 'is not', null),
+                            eb('accessTokenHash', 'is not', null),
                         ])
                     )
                     .execute()
@@ -526,8 +533,10 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             const inserted = await trx
                 .insertInto('sessions')
                 .values({
-                    ...session,
-                    accessToken: session.accessToken ?? null,
+                    id: session.id,
+                    origin: session.origin,
+                    network: session.network,
+                    accessTokenHash: tokenHash,
                     userId,
                 })
                 .execute()
@@ -543,7 +552,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .selectFrom('sessions')
             .selectAll()
             .where('id', '=', sessionId)
-            .where('accessToken', 'is', null)
+            .where('accessTokenHash', 'is', null)
             .executeTakeFirst()
         return row ? toSession(row) : undefined
     }
@@ -554,15 +563,17 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .deleteFrom('sessions')
             .where('id', '=', sessionId)
             .where('userId', '=', userId)
-            .where('accessToken', 'is', null)
+            .where('accessTokenHash', 'is', null)
             .execute()
     }
 
     async upgradeSelfIssuedLoginSession(
         sessionId: string,
-        accessToken: AccessToken
+        accessToken: AccessToken,
+        signedMessageId: string
     ): Promise<Session> {
         const userId = this.assertConnected()
+        const tokenHash = await hashAccessToken(accessToken)
 
         return this.db.transaction().execute(async (trx) => {
             const row = await trx
@@ -570,7 +581,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .selectAll()
                 .where('id', '=', sessionId)
                 .where('userId', '=', userId)
-                .where('accessToken', 'is', null)
+                .where('accessTokenHash', 'is', null)
                 .executeTakeFirst()
             if (!row) {
                 throw new Error('Self-issued login session not found')
@@ -584,22 +595,29 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .execute()
             await trx
                 .updateTable('sessions')
-                .set({ accessToken })
+                .set({ accessTokenHash: tokenHash })
                 .where('id', '=', sessionId)
                 .execute()
+            await trx
+                .deleteFrom('messagesRaw')
+                .where('id', '=', signedMessageId)
+                .where('userId', '=', userId)
+                .where('networkId', '=', row.network)
+                .execute()
 
-            return toSession({ ...row, accessToken })
+            return toSession({ ...row, accessTokenHash: tokenHash })
         })
     }
 
     async removeSession(accessToken: string): Promise<void> {
         const userId = this.assertConnected()
+        const tokenHash = await hashAccessToken(accessToken)
         await this.db
             .deleteFrom('sessions')
             .where((eb) =>
                 eb.and([
                     eb('userId', '=', userId),
-                    eb('accessToken', '=', accessToken),
+                    eb('accessTokenHash', '=', tokenHash),
                 ])
             )
             .execute()
@@ -705,6 +723,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     async getCurrentNetwork(): Promise<Network> {
         const userId = this.assertConnected()
         const token = this.authContext?.accessToken
+            ? await hashAccessToken(this.authContext.accessToken)
+            : undefined
         const selfIssuedLoginSessionId =
             this.authContext && !this.authContext.isApiKey
                 ? this.authContext.sessionId
@@ -719,10 +739,10 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             .where('userId', '=', userId)
             .where((eb) =>
                 token
-                    ? eb('accessToken', '=', token)
+                    ? eb('accessTokenHash', '=', token)
                     : eb.and([
                           eb('id', '=', selfIssuedLoginSessionId!),
-                          eb('accessToken', 'is', null),
+                          eb('accessTokenHash', 'is', null),
                       ])
             )
             .executeTakeFirst()
@@ -788,8 +808,8 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
             ).map(toNetwork)
             assertUniqueSelfIssuedAudience(existing, network, network.id)
 
-            // we do not set a userId for now and leave all networks global when updating
-            const networkEntry = fromNetwork(network, undefined)
+            // An update keeps the owner of the network
+            const { userId: _userId, ...networkEntry } = fromNetwork(network)
             this.logger.info('Updating network table', { networkEntry })
             await trx
                 .updateTable('networks')
@@ -835,7 +855,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
     }
 
     async removeNetwork(networkId: string): Promise<void> {
-        const userId = this.assertConnected()
+        this.assertConnected()
         await this.db.transaction().execute(async (trx) => {
             const network = await trx
                 .selectFrom('networks')
@@ -844,11 +864,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 .executeTakeFirst()
             if (!network) {
                 throw new Error(`Network ${networkId} does not exists`)
-            }
-            if (network.userId !== userId) {
-                throw new Error(
-                    `Network ${networkId} is not owned by user ${userId}`
-                )
             }
             await trx
                 .deleteFrom('networks')
@@ -1114,12 +1129,16 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         updates: MessageRawStatusUpdate = {}
     ): MessageRaw {
         const signedAt = updates.signedAt ?? existing.signedAt
-        const signature = updates.signature ?? existing.signature
+        const signature =
+            updates.signature === null
+                ? undefined
+                : (updates.signature ?? existing.signature)
         const externalTxId = updates.externalTxId ?? existing.externalTxId
         const failureReason = updates.failureReason ?? existing.failureReason
+        const { signature: _previousSignature, ...rest } = existing
 
         return {
-            ...existing,
+            ...rest,
             status,
             ...(signedAt !== undefined && { signedAt }),
             ...(signature !== undefined && { signature }),
@@ -1309,7 +1328,7 @@ export const connection = (config: StoreConfig) => {
         case 'postgres':
             return new Kysely<DB>({
                 dialect: new PostgresDialect({
-                    pool: new pg.Pool(config.connection),
+                    pool: new Pool(config.connection),
                 }),
                 plugins: [new CamelCasePlugin()],
             })

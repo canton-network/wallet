@@ -1,10 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { spawnSync } from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { spawnSync } from 'child_process'
+
 import { input, select } from '@inquirer/prompts'
+
 import {
     error,
     success,
@@ -13,7 +15,7 @@ import {
     getArgValue,
     type Network,
     type SupportedVersions,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 async function getNetworkInput(): Promise<Network> {
     const networkArg = getArgValue('network')
@@ -173,7 +175,12 @@ async function main() {
             process.exit(1)
         }
     }
-    spawnSync('pnpm exec oxfmt --check')
+    // Format the downloaded API specs and the regenerated clients
+    const format = spawnSync('pnpm', ['exec', 'oxfmt'], { stdio: 'inherit' })
+    if (format.status !== 0) {
+        console.error(error('oxfmt failed'))
+        process.exit(1)
+    }
     console.log(success('Upgrade completed successfully.'))
 }
 

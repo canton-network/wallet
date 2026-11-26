@@ -7,6 +7,11 @@ import {
     type UserSchema,
 } from '@canton-network/core-ledger-client'
 import {
+    type Keys,
+    SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
+    SigningProvider,
+} from '@canton-network/core-signing-lib'
+import {
     type AuthAware,
     type AuthContext,
     AuthTokenProvider,
@@ -20,14 +25,10 @@ import type {
     Store,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import {
-    type Keys,
-    SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
 import type { GetSelfIssuedLoginModeResult } from '@canton-network/core-wallet-user-rpc-client'
 import type { Logger } from 'pino'
-import type { SignMessageService } from './sign-message-service.js'
+
+import type { SignMessageService } from './sign-message-service.ts'
 
 export type SelfIssuedLoginSession = {
     userId: string
@@ -354,7 +355,8 @@ export class SelfIssuedAuthService {
         }
         const session = await this.store.upgradeSelfIssuedLoginSession(
             this.session.sessionId,
-            accessToken
+            accessToken,
+            messageId
         )
 
         this.logger.info(
@@ -514,8 +516,10 @@ export class SelfIssuedAuthService {
         messageId: string,
         failureReason: string
     ): Promise<void> {
+        // A failed login never uses the signed token, so drop the signature
         await this.store.setMessageRawStatus(messageId, 'failed', {
             failureReason,
+            signature: null,
         })
     }
 

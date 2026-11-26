@@ -33,6 +33,22 @@ function getEmail(value: unknown): string | undefined {
 }
 
 /**
+ * App-only access tokens, such as Entra ID client-credentials tokens, carry
+ * application permissions in `roles` and omit `scope` and `scp`. The claim
+ * values are not matched; a non-empty role is enough, same as scope.
+ */
+function hasRolesClaim(roles: unknown): boolean {
+    if (typeof roles === 'string') {
+        return roles.length > 0
+    }
+
+    return (
+        Array.isArray(roles) &&
+        roles.some((role) => typeof role === 'string' && role.length > 0)
+    )
+}
+
+/**
  * Verifies a self-signed token against the secret of the network named by
  * the `kid` header, and rejects it if that network belongs to another IDP.
  */
@@ -339,8 +355,12 @@ export const jwtAuthService = (store: Store, logger: Logger): AuthService => {
                     return undefined
                 }
 
-                if (!decoded.scope && !decoded.scp) {
-                    logger.warn('JWT does not contain a scope claim')
+                if (
+                    !decoded.scope &&
+                    !decoded.scp &&
+                    !hasRolesClaim(decoded.roles)
+                ) {
+                    logger.warn('JWT does not contain a scope or roles claim')
                     return undefined
                 }
 

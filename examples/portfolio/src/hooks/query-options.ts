@@ -1,16 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { queryOptions, type QueryClient } from '@tanstack/react-query'
-import * as dappSdk from '@canton-network/dapp-sdk'
 import type { LedgerProvider } from '@canton-network/core-provider-ledger'
-import { usePortfolioConfig } from '../contexts/PortfolioConfigContext'
-import { queryKeys } from './query-keys'
-import { useWalletSdk, type WalletSdk } from './useWalletSdk'
-import type { PreapprovalRow } from '../types/preapprovals'
+import * as dappSdk from '@canton-network/dapp-sdk'
 import { logger } from '@lib/logger'
 import { TransactionHistoryService } from '@services/transaction-history-service'
-import { toOwnedHoldings, toUniquePortfolioHoldings } from '@utils/holdings'
+import { queryOptions, type QueryClient } from '@tanstack/react-query'
+
+import { usePortfolioConfig } from '../contexts/PortfolioConfigContext.tsx'
+import type { PreapprovalRow } from '../types/preapprovals.ts'
+import { queryKeys } from './query-keys.ts'
+import { useWalletSdk, type WalletSdk } from './useWalletSdk.ts'
 
 const UTILITY_OPERATOR_ENDPOINT = '/api/utilities/v0/operator'
 
@@ -74,33 +74,6 @@ export const transactionHistoryServiceQueryOptions = (partyId: string) =>
         },
         staleTime: Infinity,
         gcTime: Infinity,
-    })
-
-export const holdingsQueryOptions = ({
-    partyId,
-    sdk,
-}: {
-    partyId: string | undefined
-    sdk: WalletSdk
-}) =>
-    queryOptions({
-        queryKey: queryKeys.walletConnection.holdings.forParty(partyId),
-        enabled: !!partyId && !!sdk,
-        queryFn: async () => {
-            if (!partyId || !sdk) {
-                throw new Error('Wallet SDK and party are required')
-            }
-
-            const contracts = await sdk.token.utxos.list({
-                partyId,
-                includeLocked: true,
-            })
-
-            return toOwnedHoldings(
-                toUniquePortfolioHoldings(contracts),
-                partyId
-            )
-        },
     })
 
 export const usePendingTransfersQueryOptions = (party: string | undefined) => {
@@ -230,12 +203,13 @@ export const preapprovalStatusQueryOptions = ({
             // lookup. Resolving it here means a failed operator fetch surfaces
             // through this query's error state (and its retry), rather than
             // leaving the row stuck on "Checking...".
-            const operator = await queryClient.ensureQueryData(
-                utilityOperatorQueryOptions({
+            const operator = await queryClient.query({
+                ...utilityOperatorQueryOptions({
                     registryPartyId: row.registryPartyId,
                     registryUrl: row.registryUrl,
-                })
-            )
+                }),
+                staleTime: 'static',
+            })
 
             return await sdk.utilities.preapprovalTransfer.fetchQuick({
                 receiver: party,
@@ -245,3 +219,78 @@ export const preapprovalStatusQueryOptions = ({
             })
         },
     })
+
+const v2OrEmpty = async <T>(
+    label: string,
+    fetch: () => Promise<T[]>
+): Promise<T[]> => {
+    try {
+        return await fetch()
+    } catch (error) {
+        if (
+            !String((error as Error)?.message ?? error).includes(
+                'TEMPLATES_OR_INTERFACES_NOT_FOUND'
+            )
+        )
+            throw error
+        logger.warn({ error }, `${label} unavailable, showing V1 only`)
+        return []
+    }
+}
+
+export const useAllocationRequestsV2QueryOptions = (
+    party: string | undefined
+) => {
+    const { sdk } = useWalletSdk()
+
+    return queryOptions({
+        queryKey:
+            queryKeys.walletConnection.allocationRequestsV2.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return v2OrEmpty('V2 Allocation Requests', () =>
+                sdk.token.v2.allocation.request.pending(party)
+            )
+        },
+    })
+}
+
+export const useAllocationsV2QueryOptions = (party: string | undefined) => {
+    const { sdk } = useWalletSdk()
+
+    return queryOptions({
+        queryKey: queryKeys.walletConnection.allocationsV2.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return v2OrEmpty('V2 Allocation', () =>
+                sdk.token.v2.allocation.pending(party)
+            )
+        },
+    })
+}
+
+export const useAllocationInstructionsV2QueryOptions = (
+    party: string | undefined
+) => {
+    const { sdk } = useWalletSdk()
+
+    return queryOptions({
+        queryKey:
+            queryKeys.walletConnection.allocationInstructionsV2.forParty(party),
+        enabled: !!party && !!sdk,
+        queryFn: async () => {
+            if (!party || !sdk) {
+                throw new Error('Wallet SDK and party are required')
+            }
+            return v2OrEmpty('V2 Allocation Instruction', () =>
+                sdk.token.v2.allocation.instruction.pending(party)
+            )
+        },
+    })
+}

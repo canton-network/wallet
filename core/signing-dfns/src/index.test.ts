@@ -1,8 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { beforeEach, describe, expect, test, vi } from 'vitest'
-
 import {
     isRpcError,
     SigningProvider,
@@ -10,11 +8,11 @@ import {
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
+import { beforeEach, describe, expect, test, vi } from 'vitest'
 
-import DfnsSigningDriver, { type DfnsCredentials } from './index.js'
-import type { DfnsKey, DfnsSignature } from './dfns.js'
+import type { DfnsKey, DfnsSignature } from './dfns.ts'
+import DfnsSigningDriver, { type DfnsCredentials } from './index.ts'
 
-const TEST_USER_ID = 'test-user-id'
 const TEST_KEY_ID = 'key-test-1'
 const TEST_KEY_NAME = 'canton-key'
 const TEST_PUBLIC_KEY = 'dGVzdC1wdWJsaWMta2V5'
@@ -53,8 +51,8 @@ const dfnsHandlerMock = vi.hoisted(() => ({
     createKey: vi.fn(),
 }))
 
-vi.mock('./dfns.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('./dfns.js')>()
+vi.mock('./dfns.ts', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('./dfns.ts')>()
     return {
         ...actual,
         DfnsHandler: vi.fn(function DfnsHandler() {
@@ -121,7 +119,7 @@ describe('DfnsSigningDriver', () => {
 
     test('controller returns methods object', () => {
         const driver = createTestDriver()
-        const controller = driver.controller(TEST_USER_ID)
+        const controller = driver.controller()
 
         expect(controller.signTransaction).toBeDefined()
         expect(controller.getTransaction).toBeDefined()
@@ -134,7 +132,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('signTransaction signs with key id', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signTransaction({
             tx: 'ignored',
             txHash: TEST_TX_HASH,
@@ -154,7 +152,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('signTransaction resolves key by public key', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signTransaction({
             tx: 'ignored',
             txHash: TEST_TX_HASH,
@@ -176,7 +174,7 @@ describe('DfnsSigningDriver', () => {
 
     test('signTransaction returns key_not_found when key cannot be resolved', async () => {
         dfnsHandlerMock.findKeyByPublicKey.mockResolvedValue(undefined)
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signTransaction({
             tx: 'ignored',
             txHash: TEST_TX_HASH,
@@ -190,7 +188,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('signTransaction returns key_not_found when key identifier is empty', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signTransaction({
             tx: 'ignored',
             txHash: TEST_TX_HASH,
@@ -206,7 +204,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('signTransaction returns bad_arguments when txHash is missing', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signTransaction({
             tx: 'ignored',
             txHash: '',
@@ -221,7 +219,7 @@ describe('DfnsSigningDriver', () => {
 
     test('signTransaction returns signing_error when Dfns fails', async () => {
         dfnsHandlerMock.signHash.mockRejectedValue(new Error('sign failed'))
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signTransaction({
             tx: 'ignored',
             txHash: TEST_TX_HASH,
@@ -236,7 +234,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('signMessage signs the UTF-8 string and returns a signed status', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signMessage({
             message: 'header.payload',
             keyIdentifier: { id: TEST_KEY_ID },
@@ -257,7 +255,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('signMessage returns bad_arguments when the message is empty', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signMessage({
             message: '',
             keyIdentifier: { id: TEST_KEY_ID },
@@ -272,7 +270,7 @@ describe('DfnsSigningDriver', () => {
 
     test('signMessage returns key_not_found when key cannot be resolved', async () => {
         dfnsHandlerMock.findKeyByPublicKey.mockResolvedValue(undefined)
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signMessage({
             message: 'hello',
             keyIdentifier: { publicKey: 'unknown' },
@@ -287,7 +285,7 @@ describe('DfnsSigningDriver', () => {
 
     test('signMessage returns signing_error when handler throws fails', async () => {
         dfnsHandlerMock.signMessage.mockRejectedValue(new Error('sign failed'))
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signMessage({
             message: 'hello',
             keyIdentifier: { id: TEST_KEY_ID },
@@ -302,7 +300,7 @@ describe('DfnsSigningDriver', () => {
 
     test('signMessage returns pending status with txId without error', async () => {
         dfnsHandlerMock.signMessage.mockResolvedValue(PENDING_SIG)
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signMessage({
             message: 'hello',
             keyIdentifier: { id: TEST_KEY_ID },
@@ -320,7 +318,7 @@ describe('DfnsSigningDriver', () => {
             ...PENDING_SIG,
             status: 'rejected',
         })
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signMessage({
             message: 'hello',
             keyIdentifier: { id: TEST_KEY_ID },
@@ -333,13 +331,54 @@ describe('DfnsSigningDriver', () => {
         })
     })
 
+    test('signMessage passes on the failure reason', async () => {
+        dfnsHandlerMock.signMessage.mockResolvedValue({
+            ...PENDING_SIG,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+        const controller = createTestDriver().controller()
+        const result = await controller.signMessage({
+            message: 'hello',
+            keyIdentifier: { id: TEST_KEY_ID },
+        })
+
+        assertNotRpcError(result)
+        expect(result).toEqual({
+            txId: PENDING_SIG.id,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+    })
+
+    test('getTransaction passes on the failure reason', async () => {
+        dfnsHandlerMock.findSignature.mockResolvedValueOnce({
+            id: TEST_SIG_ID,
+            keyId: TEST_KEY_ID,
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+        const controller = createTestDriver().controller()
+        const result = await controller.getTransaction({ txId: TEST_SIG_ID })
+
+        assertNotRpcError(result)
+        expect(result).toMatchObject({
+            status: 'rejected',
+            failureReason:
+                'Dfns rejected the signing request (Denied by policy)',
+        })
+    })
+
     test('signTransaction omits optional signature on pending result', async () => {
         dfnsHandlerMock.signHash.mockResolvedValue({
             id: TEST_SIG_ID,
             keyId: TEST_KEY_ID,
             status: 'pending',
         })
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.signTransaction({
             tx: 'ignored',
             txHash: TEST_TX_HASH,
@@ -351,7 +390,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('getTransaction returns signature with public key from key lookup', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransaction({ txId: TEST_SIG_ID })
 
         assertNotRpcError(result)
@@ -363,7 +402,7 @@ describe('DfnsSigningDriver', () => {
 
     test('getTransaction returns transaction_not_found when signature is missing', async () => {
         dfnsHandlerMock.findSignature.mockResolvedValue(undefined)
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransaction({ txId: 'missing' })
 
         expect(isRpcError(result)).toBe(true)
@@ -374,7 +413,7 @@ describe('DfnsSigningDriver', () => {
 
     test('getTransaction returns fetch_error when lookup fails', async () => {
         dfnsHandlerMock.findSignature.mockRejectedValue(new Error('api down'))
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransaction({ txId: TEST_SIG_ID })
 
         expect(isRpcError(result)).toBe(true)
@@ -385,7 +424,7 @@ describe('DfnsSigningDriver', () => {
 
     test('getTransaction omits publicKey when key lookup returns undefined', async () => {
         dfnsHandlerMock.getKey.mockResolvedValue(undefined)
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransaction({ txId: TEST_SIG_ID })
 
         assertNotRpcError(result)
@@ -393,7 +432,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('getTransactions requires filters', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransactions({})
 
         expect(isRpcError(result)).toBe(true)
@@ -403,7 +442,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('getTransactions filters by publicKeys', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransactions({
             publicKeys: [TEST_PUBLIC_KEY],
         })
@@ -422,7 +461,7 @@ describe('DfnsSigningDriver', () => {
             yield { ...TEST_KEY, id: 'key-2', publicKey: 'other-pk' }
             yield TEST_KEY
         })
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransactions({
             publicKeys: [TEST_PUBLIC_KEY],
         })
@@ -434,7 +473,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('getTransactions filters by txIds', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransactions({
             txIds: [TEST_SIG_ID],
         })
@@ -445,7 +484,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('getTransactions ignores signatures that do not match txIds', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransactions({
             txIds: [PENDING_SIG.id],
         })
@@ -462,7 +501,7 @@ describe('DfnsSigningDriver', () => {
             yield SIGNED_SIG
             yield PENDING_SIG
         })
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransactions({
             txIds: [TEST_SIG_ID],
         })
@@ -477,7 +516,7 @@ describe('DfnsSigningDriver', () => {
         dfnsHandlerMock.iterateKeys.mockImplementation(async function* () {
             throw new Error('list failed')
         })
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getTransactions({
             txIds: [TEST_SIG_ID],
         })
@@ -489,7 +528,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('getKeys returns mapped keys', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getKeys()
 
         assertNotRpcError(result)
@@ -504,7 +543,7 @@ describe('DfnsSigningDriver', () => {
 
     test('getKeys returns fetch_error when listing fails', async () => {
         dfnsHandlerMock.listKeys.mockRejectedValue(new Error('keys failed'))
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.getKeys()
 
         expect(isRpcError(result)).toBe(true)
@@ -514,7 +553,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('createKey returns created key', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.createKey({ name: TEST_KEY_NAME })
 
         assertNotRpcError(result)
@@ -529,7 +568,7 @@ describe('DfnsSigningDriver', () => {
         dfnsHandlerMock.createKey.mockRejectedValue(
             new Error('Provided auth token is not scoped')
         )
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.createKey({ name: 'test-wallet' })
 
         expect(isRpcError(result)).toBe(true)
@@ -539,7 +578,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('getConfiguration roundtrips for setConfiguration', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const config = await controller.getConfiguration()
 
         expect(config.orgId).toBe('or-test-org-id')
@@ -553,7 +592,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('setConfiguration validates orgId', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.setConfiguration({
             orgId: '',
             baseUrl: 'https://api.dfns.io',
@@ -568,7 +607,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('setConfiguration validates baseUrl', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const result = await controller.setConfiguration({
             orgId: 'or-test-org-id',
             baseUrl: 'not-a-valid-url',
@@ -583,7 +622,7 @@ describe('DfnsSigningDriver', () => {
     })
 
     test('setConfiguration accepts valid config', async () => {
-        const controller = createTestDriver().controller(TEST_USER_ID)
+        const controller = createTestDriver().controller()
         const validConfig = {
             orgId: 'or-new-org-id',
             baseUrl: 'https://api.dfns.io',

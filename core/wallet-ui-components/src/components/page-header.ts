@@ -3,7 +3,8 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element.js'
+
+import { BaseElement } from '../internal/base-element.ts'
 
 /**
  * The title row at the top of a page.
@@ -12,8 +13,9 @@ import { BaseElement } from '../internal/base-element.js'
  *  - default: actions at the end of the row, such as an add button or a back link
  *  - `title-suffix`: content right next to the title, such as a refresh button
  */
+export
 @customElement('wg-page-header')
-export class WgPageHeader extends BaseElement {
+class WgPageHeader extends BaseElement {
     @property() accessor heading = ''
 
     static styles = [

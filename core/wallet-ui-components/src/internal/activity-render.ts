@@ -4,6 +4,8 @@
 import { html, nothing } from 'lit'
 import { ifDefined } from 'lit/directives/if-defined.js'
 
+import '../components/copy-button.ts'
+
 export function renderCopyableValue(
     label: string,
     value: string | null | undefined,

@@ -7,6 +7,7 @@ import {
     type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
 import {
     createPingDappWalletGateway,
     DAPP_URL,
@@ -14,7 +15,7 @@ import {
     expectDappDisconnected,
     GATEWAY_NAME,
     SELF_ISSUED_NETWORK,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 async function executePing(wg: WalletGateway, dappPage: Page): Promise<void> {
     const { commandId } =

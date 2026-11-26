@@ -7,26 +7,27 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { PartyManagementService } from './party_management_service.js'
-import type { GenerateExternalPartyTopologyResponse } from './party_management_service.js'
-import type { GenerateExternalPartyTopologyRequest } from './party_management_service.js'
-import type { UpdatePartyIdentityProviderIdResponse } from './party_management_service.js'
-import type { UpdatePartyIdentityProviderIdRequest } from './party_management_service.js'
-import type { UpdatePartyDetailsResponse } from './party_management_service.js'
-import type { UpdatePartyDetailsRequest } from './party_management_service.js'
-import type { AllocateExternalPartyResponse } from './party_management_service.js'
-import type { AllocateExternalPartyRequest } from './party_management_service.js'
-import type { AllocatePartyResponse } from './party_management_service.js'
-import type { AllocatePartyRequest } from './party_management_service.js'
-import type { ListKnownPartiesResponse } from './party_management_service.js'
-import type { ListKnownPartiesRequest } from './party_management_service.js'
-import type { GetPartiesResponse } from './party_management_service.js'
-import type { GetPartiesRequest } from './party_management_service.js'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { GetParticipantIdResponse } from './party_management_service.js'
-import type { GetParticipantIdRequest } from './party_management_service.js'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { PartyManagementService } from './party_management_service.ts'
+import type { GenerateExternalPartyTopologyResponse } from './party_management_service.ts'
+import type { GenerateExternalPartyTopologyRequest } from './party_management_service.ts'
+import type { UpdatePartyIdentityProviderIdResponse } from './party_management_service.ts'
+import type { UpdatePartyIdentityProviderIdRequest } from './party_management_service.ts'
+import type { UpdatePartyDetailsResponse } from './party_management_service.ts'
+import type { UpdatePartyDetailsRequest } from './party_management_service.ts'
+import type { AllocateExternalPartyResponse } from './party_management_service.ts'
+import type { AllocateExternalPartyRequest } from './party_management_service.ts'
+import type { AllocatePartyResponse } from './party_management_service.ts'
+import type { AllocatePartyRequest } from './party_management_service.ts'
+import type { ListKnownPartiesResponse } from './party_management_service.ts'
+import type { ListKnownPartiesRequest } from './party_management_service.ts'
+import type { GetPartiesResponse } from './party_management_service.ts'
+import type { GetPartiesRequest } from './party_management_service.ts'
+import type { GetParticipantIdResponse } from './party_management_service.ts'
+import type { GetParticipantIdRequest } from './party_management_service.ts'
 /**
  * This service allows inspecting the party management state of the ledger known to the participant
  * and managing the participant-local party metadata.
@@ -112,6 +113,10 @@ export interface IPartyManagementServiceClient {
         options?: RpcOptions
     ): UnaryCall<AllocatePartyRequest, AllocatePartyResponse>
     /**
+     * Alpha 3.3: Endpoint to allocate a new external party on a synchronizer
+     *
+     * Expected to be stable in 3.5
+     *
      * The external party must be hosted (at least) on this node with either confirmation or observation permissions
      * It can optionally be hosted on other nodes (then called a multi-hosted party).
      * If hosted on additional nodes, explicit authorization of the hosting relationship must be performed on those nodes
@@ -151,6 +156,10 @@ export interface IPartyManagementServiceClient {
         UpdatePartyIdentityProviderIdResponse
     >
     /**
+     * Alpha 3.3: Convenience endpoint to generate topology transactions for external signing
+     *
+     * Expected to be stable in 3.5
+     *
      * You may use this endpoint to generate the common external topology transactions
      * which can be signed externally and uploaded as part of the allocate party process
      *
@@ -293,6 +302,10 @@ export class PartyManagementServiceClient
         )
     }
     /**
+     * Alpha 3.3: Endpoint to allocate a new external party on a synchronizer
+     *
+     * Expected to be stable in 3.5
+     *
      * The external party must be hosted (at least) on this node with either confirmation or observation permissions
      * It can optionally be hosted on other nodes (then called a multi-hosted party).
      * If hosted on additional nodes, explicit authorization of the hosting relationship must be performed on those nodes
@@ -353,6 +366,10 @@ export class PartyManagementServiceClient
         >('unary', this._transport, method, opt, input)
     }
     /**
+     * Alpha 3.3: Convenience endpoint to generate topology transactions for external signing
+     *
+     * Expected to be stable in 3.5
+     *
      * You may use this endpoint to generate the common external topology transactions
      * which can be signed externally and uploaded as part of the allocate party process
      *

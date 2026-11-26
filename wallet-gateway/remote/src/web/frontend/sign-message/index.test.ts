@@ -1,11 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { JsonRpcError } from '@canton-network/core-rpc-errors'
 import { fixture, waitUntil } from '@open-wc/testing-helpers'
 import { html } from 'lit'
-import { JsonRpcError } from '@canton-network/core-rpc-errors'
-import { createMockUserClient, mockRequest } from '../__tests__/test-helpers.js'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { createMockUserClient, mockRequest } from '../__tests__/test-helpers.ts'
 
 const { mockCreateUserClient, handleErrorToast, setLocationHref, showToast } =
     vi.hoisted(() => ({
@@ -15,13 +16,13 @@ const { mockCreateUserClient, handleErrorToast, setLocationHref, showToast } =
         showToast: vi.fn(),
     }))
 
-vi.mock('../index.js', () => ({}))
-vi.mock('../utils.js', () => ({ showToast }))
-vi.mock('../navigation.js', () => ({ setLocationHref }))
-vi.mock('../rpc-client.js', () => ({
+vi.mock('../index.ts', () => ({}))
+vi.mock('../utils.ts', () => ({ showToast }))
+vi.mock('../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
-vi.mock('../state-manager.js', () => ({
+vi.mock('../state-manager.ts', () => ({
     stateManager: {
         accessToken: { get: () => 'test-token' },
         currentOrigin: {
@@ -39,8 +40,8 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     return { ...actual, handleErrorToast }
 })
 
-import './index.js'
-import type { UserUiSignMessage } from './index.js'
+import './index.ts'
+import type { UserUiSignMessage } from './index.ts'
 
 function approveButton(el: UserUiSignMessage) {
     return el.shadowRoot

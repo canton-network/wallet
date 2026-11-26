@@ -1,7 +1,22 @@
 {
     "name": "@canton-network/example-portfolio",
-    "version": "1.14.0",
+    "version": "1.16.0",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/examples/portfolio#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "examples/portfolio"
+    },
+    "files": [
+        "dist/**"
+    ],
     "type": "module",
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "dev": "vite",
         "build": "tsc -b && vite build",
@@ -13,16 +28,18 @@
         "@canton-network/core-ledger-client-types": "workspace:",
         "@canton-network/core-provider-ledger": "workspace:",
         "@canton-network/core-token-standard": "workspace:",
-        "@canton-network/core-token-standard-v2": "workspace:",
         "@canton-network/core-token-standard-service": "workspace:",
+        "@canton-network/core-token-standard-v2": "workspace:",
         "@canton-network/core-tx-parser": "workspace:",
         "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
+        "@canton-network/core-wallet-ui-components": "workspace:",
         "@canton-network/dapp-sdk": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",
         "@emotion/react": "catalog:",
         "@emotion/styled": "catalog:",
         "@fontsource/inter": "catalog:",
+        "@logtape/logtape": "catalog:",
         "@mui/icons-material": "catalog:",
         "@mui/material": "catalog:",
         "@mui/system": "catalog:",
@@ -58,19 +75,10 @@
         "typescript": "catalog:",
         "vite": "catalog:"
     },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "examples/portfolio"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/examples/portfolio#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "nx": {
+        "implicitDependencies": [
+            "@canton-network/wallet-gateway-remote",
+            "@canton-network/mock-oauth2"
+        ]
     }
 }

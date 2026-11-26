@@ -2,16 +2,18 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LOGOUT_EVENT } from '@canton-network/core-wallet-services'
-import { logger } from '@/shared/logger'
-import { notifySessionTerminated } from '../../status'
-import type { UserControllerDeps } from './deps'
-import { toNetworkDto } from './networks'
-import type { Methods } from './rpc-gen'
+
+import { logger } from '@/shared/logger.ts'
+
+import { notifySessionTerminated } from '../../status.ts'
+import type { UserControllerDeps } from './deps.ts'
+import { toNetworkDto } from './networks.ts'
+import type { Methods } from './rpc-gen/index.ts'
 import type {
     AddSessionParams,
     Status,
     UserLevelRight,
-} from './rpc-gen/typings'
+} from './rpc-gen/typings.ts'
 
 export const sessions = ({
     getStore,
@@ -42,7 +44,8 @@ export const sessions = ({
         // setSession replaces the origin's authenticated sessions; look
         // them up first so their notification ports can be closed.
         const replacedSessions = (await store.listSessions()).filter(
-            (session) => session.origin === params.origin && session.accessToken
+            (session) =>
+                session.origin === params.origin && session.accessTokenHash
         )
 
         await store.setSession({

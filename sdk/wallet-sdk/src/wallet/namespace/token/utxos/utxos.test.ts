@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, vi, beforeEach, expect, type Mock } from 'vitest'
-import * as mock from '../../../__tests__/mocks'
-import { TokenNamespace, type TokenNamespaceConfig } from '../index'
-import { ParsedURL } from '../../utils/url'
-import type { UtxoNamespace } from './service'
 import { HOLDING_INTERFACE_ID } from '@canton-network/core-token-standard'
-import type { MergeDelegationNamespace } from './mergeDelegation'
+import { describe, it, vi, beforeEach, expect, type Mock } from 'vitest'
+
+import * as mock from '../../../__tests__/mocks.ts'
+import { ParsedURL } from '../../utils/url.ts'
+import { TokenNamespace, type TokenNamespaceConfig } from '../index.ts'
+import type { MergeDelegationNamespace } from './mergeDelegation.ts'
+import type { UtxoNamespace } from './service.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 const { ctx, mockLogger } = mock
@@ -55,6 +56,7 @@ function makeUtxos(batchSize: number) {
                 createdEvent: {
                     templateId: 'tid',
                     contractId: 'cid',
+                    createdAt: new Date().toISOString(),
                 },
             },
             fetchedAtOffset: 10,
@@ -71,7 +73,7 @@ describe('utxos namespace', () => {
     let mockSubmit: Mock
     beforeEach(() => {
         vi.resetAllMocks()
-        utxos = new TokenNamespace(config).utxos
+        utxos = new TokenNamespace(config).v1.utxos
         delegatedMerge = utxos.delegatedMerge
 
         mockSubmit = vi.fn().mockResolvedValue({
@@ -88,7 +90,13 @@ describe('utxos namespace', () => {
                 interfaceViewValue: {
                     lock: null,
                 },
-                activeContract: 'contract',
+                activeContract: {
+                    createdEvent: {
+                        templateId: 'tid',
+                        contractId: 'cid',
+                        createdAt: new Date().toISOString(),
+                    },
+                },
                 fetchedAtOffset: 10,
             },
         ])
@@ -335,7 +343,7 @@ describe('delegated utxos merge namespace without validatorParty', () => {
             } as any,
             registryUrls: [new ParsedURL(ctx, 'http://registry.com')],
             tokenStandardService: mockTokenStandard as unknown as any,
-        }).utxos
+        }).v1.utxos
         delegatedMerge = utxos.delegatedMerge
 
         mockSubmit = vi.fn().mockResolvedValue({

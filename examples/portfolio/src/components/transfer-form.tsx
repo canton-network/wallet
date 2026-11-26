@@ -1,7 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useMemo, useState } from 'react'
+import { useInstrumentAvailableBalance } from '@canton-network/core-wallet-ui-components/react/token'
+import { CopyableIdentifier } from '@components/copyable-identifier'
+import { PillButton } from '@components/ui/PillButton'
+import { formatCharacterCount } from '@components/utils'
+import { usePrimaryAccount } from '@hooks/useAccounts'
+import type { useCreateTransfer } from '@hooks/useCreateTransfer'
 import CloseIcon from '@mui/icons-material/Close'
 import {
     Alert,
@@ -20,20 +25,16 @@ import {
 import { DateTimePicker } from '@mui/x-date-pickers'
 import { useForm } from '@tanstack/react-form'
 import type { AnyFieldApi } from '@tanstack/react-form'
-import { z } from 'zod'
-import { CopyableIdentifier } from '@components/copyable-identifier'
-import { formatCharacterCount } from '@components/utils'
-import { PillButton } from '@components/ui/PillButton'
-import { usePrimaryAccount } from '@hooks/useAccounts'
-import type { useCreateTransfer } from '@hooks/useCreateTransfer'
-import { useInstrumentAvailableBalance } from '@hooks/useInstrumentAvailableBalance'
 import { toDecimalOrNull } from '@utils/decimal'
-import { InstrumentSelect } from './instrument-select'
+import { useMemo, useState } from 'react'
+import { z } from 'zod'
+
+import { InstrumentSelect } from './instrument-select.tsx'
 import type {
     SelectableInstrument,
     SubmittedTransfer,
     TransferFormData,
-} from './transfer-types'
+} from './transfer-types.ts'
 
 interface TransferFormProps {
     initialValues?: TransferFormData
@@ -288,15 +289,17 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                                 error={hasFieldError(field)}
                                 helperText={getFieldError(field)}
                             />
-                            <Typography
-                                variant="body2"
-                                sx={{ mt: 0.75, color: 'text.secondary' }}
+                            <form.Subscribe
+                                selector={(state) => state.values.instrumentId}
                             >
-                                Available balance:{' '}
-                                {selectedInstrument
-                                    ? `${selectedInstrument.availableAmount} ${selectedInstrument.symbol}`
-                                    : '—'}
-                            </Typography>
+                                {(instrumentId) => (
+                                    <AvailableBalance
+                                        partyId={primaryParty}
+                                        instrumentId={instrumentId}
+                                        symbol={selectedInstrument?.symbol}
+                                    />
+                                )}
+                            </form.Subscribe>
                         </FieldBlock>
                     )}
                 </form.Field>
@@ -564,4 +567,24 @@ const hasFieldError = (field: AnyFieldApi) =>
 const getFieldError = (field: AnyFieldApi) => {
     if (!hasFieldError(field)) return undefined
     return field.state.meta.errors[0]?.message
+}
+
+function AvailableBalance({
+    partyId,
+    instrumentId,
+    symbol,
+}: {
+    partyId: string | undefined
+    instrumentId: TransferFormData['instrumentId']
+    symbol: string | undefined
+}) {
+    const balance = useInstrumentAvailableBalance(partyId, instrumentId)
+    return (
+        <Typography variant="body2" sx={{ mt: 0.75, color: 'text.secondary' }}>
+            Available balance:{' '}
+            {instrumentId && symbol
+                ? `${balance?.availableAmount ?? '0'} ${symbol}`
+                : '-'}
+        </Typography>
+    )
 }

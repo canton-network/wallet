@@ -1,18 +1,19 @@
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
-import type { KeyPair } from '@canton-network/core-signing-lib'
-import { ASSET_CONFIG } from './utils/index.js'
+
 import type { GenerateTransactionResponse } from '@canton-network/core-ledger-client'
+import type { KeyPair } from '@canton-network/core-signing-lib'
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
+import { ASSET_CONFIG } from './utils/index.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 export type PartyInfo = Omit<
@@ -253,10 +254,13 @@ if (!otcTradeCid) throw new Error('OTCTrade not found for venue')
 logger.info({ otcTradeCid }, `OtcTrades were found`)
 
 const pendingAllocationRequestsAlice =
-    await sdk.token.allocation.request.pending(sender.partyId)
+    await sdk.token.v1.allocation.request.pending(sender.partyId)
 
-const allocationRequestViewAlice =
-    pendingAllocationRequestsAlice?.[0].interfaceViewValue!
+const [allocationRequestAlice] = pendingAllocationRequestsAlice
+if (!allocationRequestAlice) {
+    throw new Error('No pending allocation request found for Alice')
+}
+const allocationRequestViewAlice = allocationRequestAlice.interfaceViewValue
 
 const legIdAlice = Object.keys(allocationRequestViewAlice.transferLegs).find(
     (key) =>
@@ -275,7 +279,7 @@ const specAlice = {
 //TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
 
 const [allocateCmdAlice, allocateDisclosedAlice] =
-    await sdk.token.allocation.instruction.create({
+    await sdk.token.v1.allocation.instruction.create({
         allocationSpecification: specAlice,
         asset: amuletAsset,
     })
@@ -291,12 +295,14 @@ await sdk.ledger
 
 logger.info('Alice created Allocation for her TransferLeg')
 
-const pendingAllocationRequestsBob = await sdk.token.allocation.request.pending(
-    recipient.partyId
-)
+const pendingAllocationRequestsBob =
+    await sdk.token.v1.allocation.request.pending(recipient.partyId)
 
-const allocationRequestViewBob =
-    pendingAllocationRequestsBob?.[0].interfaceViewValue!
+const [allocationRequestBob] = pendingAllocationRequestsBob
+if (!allocationRequestBob) {
+    throw new Error('No pending allocation request found for Bob')
+}
+const allocationRequestViewBob = allocationRequestBob.interfaceViewValue
 
 const legIdBob = Object.keys(allocationRequestViewAlice.transferLegs).find(
     (key) =>
@@ -316,7 +322,7 @@ const specBob = {
 //TODO: go over if we should pass in expectedAdmin or instrumentId/registryUrl
 
 const [allocateCmdBob, allocateDisclosedBlice] =
-    await sdk.token.allocation.instruction.create({
+    await sdk.token.v1.allocation.instruction.create({
         allocationSpecification: specBob,
         asset: amuletAsset,
     })
@@ -334,7 +340,7 @@ logger.info('Bob created Allocation for his TransferLeg')
 
 // Once the legs have been allocated, venue settles the trade triggering transfer of holdings
 
-const allocationsVenue = await sdk.token.allocation.pending(venue.partyId)
+const allocationsVenue = await sdk.token.v1.allocation.pending(venue.partyId)
 
 const settlementRefId = allocationRequestViewAlice.settlement.settlementRef.id
 const relevantAllocations = allocationsVenue.filter(
@@ -351,7 +357,7 @@ if (relevantAllocations.length === 0)
 const allocationEntries = await Promise.all(
     relevantAllocations.map(async (a) => {
         const cid = a.contractId
-        const choiceContext = await sdk.token.allocation.context.execute({
+        const choiceContext = await sdk.token.v1.allocation.context.execute({
             allocationCid: cid,
             registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
         })
@@ -370,16 +376,18 @@ const allocationEntries = await Promise.all(
     })
 )
 
-const allocationsWithContext: Record<string, { _1: string; _2: any }> =
-    Object.fromEntries(
-        allocationEntries.map((e) => [e.legId, { _1: e.cid, _2: e.extraArgs }])
-    )
+const allocationsWithContext: Record<
+    string,
+    { _1: string; _2: (typeof allocationEntries)[number]['extraArgs'] }
+> = Object.fromEntries(
+    allocationEntries.map((e) => [e.legId, { _1: e.cid, _2: e.extraArgs }])
+)
 
 const uniqueDisclosedContracts = Array.from(
     new Map(
         allocationEntries
             .flatMap((e) => e.disclosedContracts)
-            .map((d: any) => [d.contractId, d])
+            .map((d) => [d.contractId, d] as const)
     ).values()
 )
 
@@ -408,7 +416,7 @@ logger.info(
     'Venue settled the OTCTrade, holdings are transfered to Alice and Bob'
 )
 
-await sdk.token.utxos
+await sdk.token.v1.utxos
     .list({
         partyId: sender.partyId,
     })
@@ -419,7 +427,7 @@ await sdk.token.utxos
         )
     })
 
-await sdk.token.utxos
+await sdk.token.v1.utxos
     .list({
         partyId: recipient.partyId,
     })

@@ -1,6 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type {
+    DisclosedContract,
+    ExerciseCommand,
+} from '@canton-network/core-token-standard-service'
 import {
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
     ALLOCATION_INTERFACE_ID_V2,
@@ -8,12 +12,16 @@ import {
     type AllocationInstructionView,
     type AllocationView,
     type AllocationRequestView,
+    type AllocationRequestAction,
+    decodeAvailableActions,
+    actionAvailability,
 } from '@canton-network/core-token-standard-v2'
-import type { TokenNamespaceConfig } from '../../namespace'
-import type { PartyId } from '@canton-network/core-types'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
-import type { PreparedCommand } from '../../../transactions/types.js'
-import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.js'
+import type { PartyId } from '@canton-network/core-types'
+
+import type { PreparedCommand } from '../../../transactions/types.ts'
+import { parseAssets, ParsedURL, type URLInput } from '../../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../../namespace.ts'
 import {
     actorsFor,
     sameSettlement,
@@ -21,11 +29,17 @@ import {
     type AllocationChoiceParams,
     type AllocationContextParams,
     type AllocationInstructionCreateParams,
+    type AllocationRequestAcceptResult,
     type AllocationRequestActionParams,
     type AllocationScanParams,
     type PreparedCommands,
     type SettlementFactoryParams,
-} from './types'
+} from './types.ts'
+
+const toPrepared = ([cmd, dcs]: [
+    ExerciseCommand,
+    DisclosedContract[],
+]): PreparedCommand => [{ ExerciseCommand: cmd }, dcs]
 
 export class AllocationNamespace {
     constructor(private readonly sdkContext: TokenNamespaceConfig) {}
@@ -102,14 +116,11 @@ export class AllocationNamespace {
         const { logger } = this.sdkContext.commonCtx
 
         logger.debug(params)
-        const {
-            partyId,
-            settlement,
-            transferLegIds,
-            requireBothSides = true,
-            maxAttempts = 30,
-            retryIntervalMs = 1000,
-        } = params
+        const { partyId, settlement, transferLegIds } = params
+
+        const requireBothSides = params.requireBothSides ?? true
+        const maxAttempts = params.maxAttempts ?? 30
+        const retryIntervalMs = params.retryIntervalMs ?? 1000
 
         for (let attempt = 1; attempt <= maxAttempts; attempt++) {
             const allocations = (await this.pending(partyId)).filter((a) =>
@@ -266,12 +277,25 @@ export class AllocationNamespace {
             )
         },
 
+        /**
+         * Accepts an allocation request by creating the allocations and the
+         * accept command in a single batched submission.
+         *
+         * @deprecated Use {@link acceptForParty} instead. This method batches all
+         * commands into one tuple and cannot report allocations that were skipped
+         * because no registry serves their instrument admin. It will be removed
+         * in the next major version.
+         *
+         * @param params - The allocation request and the party accepting it.
+         * @returns A tuple of the wrapped exercise commands and their disclosed contracts.
+         */
         accept: async (
             params: AllocationRequestActionParams
         ): Promise<PreparedCommands> => {
             const view = params.request.interfaceViewValue
             const actors =
                 params.actors ??
+                // oxlint-disable-next-line typescript/no-deprecated -- used by the deprecated accept
                 actorsFor(view.availableActions, 'ARA_Accept', params.partyId)
             if (!actors) {
                 throw new Error(
@@ -280,6 +304,7 @@ export class AllocationNamespace {
             }
 
             const [commands, dc] =
+                // oxlint-disable-next-line typescript/no-deprecated -- used by the deprecated accept
                 await this.service.createAllocationsForRequest({
                     requestCid: params.request.contractId,
                     request: view,
@@ -293,24 +318,118 @@ export class AllocationNamespace {
             ]
         },
 
-        reject: async (
+        /**
+         * Prepares the commands needed for a party to accept an allocation request.
+         *
+         * Returns the allocation commands and the accept command separately, along
+         * with any instrument admins that were skipped because no configured
+         * registry serves them. When any admin is skipped, `accept` is `null`,
+         * since the request cannot be fully accepted.
+         *
+         * @returns The prepared allocate commands, the prepared accept command
+         * (or `null`), and the skipped admins.
+         * @throws If the request has no `ARA_Accept` action, or if accepting is
+         * not available to the party and no actors were given.
+         */
+
+        acceptForParty: async (
             params: AllocationRequestActionParams
-        ): Promise<PreparedCommand> => {
-            const actors =
-                params.actors ??
-                params.request.interfaceViewValue.settlement.executors
-            if (!actors) {
+        ): Promise<AllocationRequestAcceptResult> => {
+            const view = params.request.interfaceViewValue
+            const groups = decodeAvailableActions<AllocationRequestAction>(
+                view.availableActions
+            ).find(([key]) => key.tag === 'ARA_Accept')
+
+            if (!groups) {
+                throw new Error(`No groups found for ARA_Accept`)
+            }
+            const availability = actionAvailability(groups[1], params.partyId)
+
+            if (!params.actors && availability.status !== 'available') {
                 throw new Error(
                     `${params.partyId} cannot accept allocation request ${params.request.contractId}`
                 )
             }
 
-            const [command, dc] = this.service.createAllocationRequestChoice(
-                'reject',
-                params.request.contractId,
-                actors
+            const { allocate, accept, skipped } =
+                await this.service.createAllocationsForRequestForLoggedInParty({
+                    requestCid: params.request.contractId,
+                    request: view,
+                    partyId: params.partyId,
+                    ...(params.skipSpec ? { skipSpec: params.skipSpec } : {}),
+                    registry: async (admin) => {
+                        try {
+                            return await this.registryForAdmin(admin)
+                        } catch {
+                            return null
+                        }
+                    },
+                })
+
+            return {
+                allocate: allocate.map(toPrepared),
+                accept: accept ? toPrepared(accept) : null,
+                skipped,
+            }
+        },
+
+        /**
+         * Differs from acceptForParty where this doesn't select input holdings
+         * Useful for retrying after the accept failed in that case where the party's allocations already exist
+         */
+        prepareAccept: async (
+            params: AllocationRequestActionParams
+        ): Promise<PreparedCommand> => {
+            const view = params.request.interfaceViewValue
+            const groups = decodeAvailableActions<AllocationRequestAction>(
+                view.availableActions
+            ).find(([key]) => key.tag === 'ARA_Accept')
+
+            if (!groups) {
+                throw new Error(`No groups found for ARA_Accept`)
+            }
+            const availability = actionAvailability(groups[1], params.partyId)
+
+            if (!params.actors && availability.status !== 'available') {
+                throw new Error(
+                    `${params.partyId} cannot accept allocation request ${params.request.contractId} (${availability.status})`
+                )
+            }
+
+            return toPrepared(
+                this.service.createAllocationRequestChoice(
+                    'accept',
+                    params.request.contractId,
+                    params.actors ?? [params.partyId]
+                )
             )
-            return [{ ExerciseCommand: command }, dc]
+        },
+        reject: async (
+            params: AllocationRequestActionParams
+        ): Promise<PreparedCommand> => {
+            const view = params.request.interfaceViewValue
+            const groups =
+                decodeAvailableActions<AllocationRequestAction>(
+                    view.availableActions
+                ).find(([key]) => key.tag === 'ARA_Reject')?.[1] ?? []
+
+            if (
+                !params.actors &&
+                actionAvailability(groups, params.partyId).status !==
+                    'available'
+            ) {
+                throw new Error(
+                    `${params.partyId} cannot reject allocation request ${params.request.contractId}`
+                )
+            }
+
+            return toPrepared(
+                this.service.createAllocationRequestChoice(
+                    'reject',
+                    params.request.contractId,
+                    params.actors ?? [params.partyId]
+                )
+            )
         },
 
         withdraw: async (

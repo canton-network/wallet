@@ -1,8 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { SynchronizerSelector } from '@canton-network/wallet-sdk'
 import { localNetGlobalSynchronizer } from '@canton-network/core-wallet-test-utils/localnet'
+import type { SynchronizerSelector } from '@canton-network/wallet-sdk'
 
 /**
  * `synchronizerId` selector for `SDK.create`. The SDK refuses to guess when the

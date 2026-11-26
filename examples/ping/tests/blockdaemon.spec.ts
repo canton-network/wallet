@@ -1,11 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     test,
     type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
+import { setMockBlockdaemonTransactionState } from './external-signing-test-helpers.ts'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -14,8 +17,7 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-} from './ping-test-helpers.js'
-import { setMockBlockdaemonTransactionState } from './external-signing-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 test.describe('Blockdaemon external signing', () => {
     test.describe.configure({ mode: 'serial' })
@@ -89,15 +91,31 @@ test.describe('Blockdaemon external signing', () => {
         )
         await setMockBlockdaemonTransactionState(
             submission.externalTxId,
-            'rejected'
+            'rejected',
+            {
+                ErrorCode: 'M0025',
+                ErrorProperties: {
+                    DebugMessage: 'blocked by rule/restriction',
+                },
+            }
         )
+        const failureReason =
+            'Blockdaemon rejected the signing request (error code M0025)'
 
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 
     test('fails when Blockdaemon fails signing', async () => {
@@ -110,11 +128,21 @@ test.describe('Blockdaemon external signing', () => {
             'failed'
         )
 
+        const failureReason = 'Blockdaemon failed to sign the request'
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 })

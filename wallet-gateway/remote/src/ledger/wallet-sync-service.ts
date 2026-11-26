@@ -6,22 +6,26 @@ import {
     defaultRetryableOptions,
     isJsCantonError,
 } from '@canton-network/core-ledger-client'
+import {
+    type SigningDriverInterface,
+    SigningProvider,
+} from '@canton-network/core-signing-lib'
+import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
+import {
+    canUserUseSelfIssuedAuth,
+    getSigningController,
+} from '@canton-network/core-wallet-services'
 import {
     type Store,
     type Wallet,
     PartyLevelRight,
     UserLevelRight,
 } from '@canton-network/core-wallet-store'
-import {
-    type SigningDriverInterface,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import { canUserUseSelfIssuedAuth } from '@canton-network/core-wallet-services'
-import type { PartyAllocationService } from './party-allocation-service.js'
-import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.js'
-import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
+
+import type { SyncWalletsResult } from '../user-api/rpc-gen/typings.ts'
+import type { PartyAllocationService } from './party-allocation-service.ts'
 
 type ProviderKey = { id: string; publicKey: string; fingerprint: string }
 /** Maps provider IDs to their corresponding provider keys */
@@ -88,9 +92,8 @@ export class WalletSyncService {
     ): Promise<ProviderKey[]> {
         const partyAllocator = this.requirePartyAllocator()
         try {
-            const result = await driver
-                .controller(this.authContext?.userId)
-                .getKeys()
+            const controller = getSigningController(driver, this.authContext)
+            const result = await controller.getKeys()
 
             // In case of error getKeys resolve Promise but with error object
             if ('error' in result) {

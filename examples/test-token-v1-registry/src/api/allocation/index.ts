@@ -1,14 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Router } from 'express'
-import { getAllocationCancelContext } from './getAllocationCancelContext'
-import { getAllocationTransferContext } from './getAllocationTransferContext'
-import { getAllocationWithdrawContext } from './getAllocationWithdrawContext'
 import type { OffLedger } from '@canton-network/core-token-standard'
+import { Router } from 'express'
 import { createExpressOpenApiRouter } from 'openapi-ts-router/express'
-import z from 'zod'
-import { choiceContextRequestSchema } from '../common'
+import { z } from 'zod'
+
+import { choiceContextRequestSchema } from '../common.ts'
+import { getAllocationCancelContext } from './getAllocationCancelContext.ts'
+import { getAllocationTransferContext } from './getAllocationTransferContext.ts'
+import { getAllocationWithdrawContext } from './getAllocationWithdrawContext.ts'
 
 const pathSchema = z.object({
     allocationId: z.string(),

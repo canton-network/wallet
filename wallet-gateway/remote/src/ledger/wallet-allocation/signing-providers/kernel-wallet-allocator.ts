@@ -1,24 +1,26 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { UserId } from '@canton-network/core-wallet-auth'
+import {
+    type SigningDriverInterface,
+    SigningProvider,
+} from '@canton-network/core-signing-lib'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { getSigningController } from '@canton-network/core-wallet-services'
 import type {
     Store,
     UpdateWallet,
     Wallet,
 } from '@canton-network/core-wallet-store'
-import {
-    type SigningDriverInterface,
-    SigningProvider,
-} from '@canton-network/core-signing-lib'
 import type { Logger } from 'pino'
-import type { PartyAllocationService } from '../../party-allocation-service.js'
-import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.js'
+
+import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
+import type { PartyAllocationService } from '../../party-allocation-service.ts'
 import {
     handleSigningProviderError,
     type WalletAllocationOptions,
     type WalletAllocator,
-} from '../wallet-allocation-service.js'
+} from '../wallet-allocation-service.ts'
 
 export class KernelWalletAllocator implements WalletAllocator {
     constructor(
@@ -28,20 +30,19 @@ export class KernelWalletAllocator implements WalletAllocator {
         protected signingDriver: SigningDriverInterface
     ) {}
 
-    async getKeys(userId: UserId) {
+    async getKeys(authContext: AuthContext) {
         if (!this.signingDriver) return null
-        const driver = this.signingDriver.controller(userId)
+        const driver = getSigningController(this.signingDriver, authContext)
         return await driver.getKeys().then(handleSigningProviderError)
     }
 
     async createWallet(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false,
         options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
-        const driver = this.signingDriver.controller(userId)
+        const driver = getSigningController(this.signingDriver, authContext)
         const key = await driver
             .createKey({
                 name: partyHint,
@@ -53,6 +54,7 @@ export class KernelWalletAllocator implements WalletAllocator {
                 .signTransaction({
                     tx: '',
                     txHash: hash,
+                    extraParams: { txPurpose: 'topology' },
                     keyIdentifier: {
                         publicKey: key.publicKey,
                     },
@@ -73,7 +75,7 @@ export class KernelWalletAllocator implements WalletAllocator {
                       signingCallback
                   )
                 : await this.partyAllocator.allocatePartyAndGrantRights(
-                      userId,
+                      authContext.userId,
                       partyHint,
                       key.publicKey,
                       signingCallback
@@ -86,7 +88,7 @@ export class KernelWalletAllocator implements WalletAllocator {
             namespace: party.namespace,
             signingProviderId: SigningProvider.WALLET_KERNEL,
             networkId: network.id,
-            userId,
+            userId: authContext.userId,
             status: 'allocated',
             primary,
             publicKey: key.publicKey,
@@ -99,17 +101,17 @@ export class KernelWalletAllocator implements WalletAllocator {
     }
 
     async allocateParty(
-        userId: UserId,
-        email: string | undefined,
+        authContext: AuthContext,
         existingWallet: Wallet,
         options: WalletAllocationOptions = {}
     ): Promise<void> {
-        const driver = this.signingDriver.controller(userId)
+        const driver = getSigningController(this.signingDriver, authContext)
         const signingCallback = async (hash: string) => {
             const result = await driver
                 .signTransaction({
                     tx: '',
                     txHash: hash,
+                    extraParams: { txPurpose: 'topology' },
                     keyIdentifier: { publicKey: existingWallet.publicKey },
                 })
                 .then(handleSigningProviderError)
@@ -128,19 +130,19 @@ export class KernelWalletAllocator implements WalletAllocator {
                       signingCallback
                   )
                 : await this.partyAllocator.allocatePartyAndGrantRights(
-                      userId,
+                      authContext.userId,
                       existingWallet.hint,
                       existingWallet.publicKey,
                       signingCallback
                   )
 
         const network = await this.store.getCurrentNetwork()
-        const updateWallet: UpdateWallet = {
+        const walletUpdate: UpdateWallet = {
             networkId: network.id,
             partyId: party.partyId,
             status: 'allocated',
         }
 
-        return await this.store.updateWallet(updateWallet)
+        return this.store.updateWallet(walletUpdate)
     }
 }

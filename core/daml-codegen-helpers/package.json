@@ -1,25 +1,40 @@
 {
     "name": "@canton-network/core-daml-codegen-helpers",
-    "version": "1.15.0",
-    "type": "module",
+    "version": "1.18.0",
     "description": "Helpers for combining Daml codegen TypeScript output with the Splice Wallet SDK.",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/daml-codegen-helpers#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/daml-codegen-helpers"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "clean": "rm -rf dist",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
     },
@@ -27,20 +42,5 @@
         "@types/node": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/daml-codegen-helpers"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/daml-codegen-helpers#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

@@ -3,8 +3,9 @@
 
 import { css, html } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import { refreshIcon } from '../icons'
+
+import { refreshIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 export class WalletsSyncEvent extends Event {
     constructor() {
@@ -16,8 +17,9 @@ export class WalletsSyncEvent extends Event {
  * Refresh button for the parties list. It only reports clicks: the page does
  * the sync, shows the result and refreshes the wallets.
  */
+export
 @customElement('wg-wallets-sync')
-export class WgWalletsSync extends BaseElement {
+class WgWalletsSync extends BaseElement {
     static styles = [
         BaseElement.styles,
         css`

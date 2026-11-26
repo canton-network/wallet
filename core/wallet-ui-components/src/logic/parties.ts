@@ -216,7 +216,7 @@ export async function isWalletSyncNeeded(
 ): Promise<boolean> {
     try {
         const result = await client.request({ method: 'isWalletSyncNeeded' })
-        return result?.walletSyncNeeded === true
+        return result?.walletSyncNeeded
     } catch {
         return true
     }

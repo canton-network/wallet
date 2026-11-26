@@ -1,11 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { errorCodes } from '@canton-network/core-rpc-errors'
 import {
     test,
     type WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
+import {
+    MOCK_FIREBLOCKS_VAULT_NAME,
+    setMockFireblocksTransactionState,
+} from './external-signing-test-helpers.ts'
 import {
     clickCreatePingContract,
     connectPingDapp,
@@ -14,11 +20,7 @@ import {
     expectTxStatusInDappEvents,
     allocateExternalSigningParty,
     createPingContractAndApproveExternal,
-} from './ping-test-helpers.js'
-import {
-    MOCK_FIREBLOCKS_VAULT_NAME,
-    setMockFireblocksTransactionState,
-} from './external-signing-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 test.describe('Fireblocks external signing', () => {
     test.describe.configure({ mode: 'serial' })
@@ -93,12 +95,22 @@ test.describe('Fireblocks external signing', () => {
             submission.externalTxId,
             'rejected'
         )
+        const failureReason = 'Fireblocks rejected the signing request'
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 
     test('fails when Fireblocks fails signing', async () => {
@@ -111,11 +123,21 @@ test.describe('Fireblocks external signing', () => {
             'failed'
         )
 
+        const failureReason = 'Fireblocks failed to sign the request'
+
         await expectTxStatusInDappEvents(
             dappPage,
             submission.commandId,
-            'failed'
+            'failed',
+            {
+                error: {
+                    code: errorCodes.rpc.transactionRejected,
+                    message: failureReason,
+                },
+            }
         )
-        await wg.expectActivityWithStatus(submission.commandId, 'failed')
+        await wg.expectActivityWithStatus(submission.commandId, 'failed', {
+            failureReason,
+        })
     })
 })

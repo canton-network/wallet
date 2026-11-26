@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
 import { css, html } from 'lit'
-import { eyeFillIcon, eyeSlashIcon } from '../icons'
+import { customElement, property } from 'lit/decorators.js'
+
+import { eyeFillIcon, eyeSlashIcon } from '../icons/index.ts'
+import { BaseElement } from '../internal/base-element.ts'
 
 /**
  * Emitted when the value of an individual form input changes
@@ -21,8 +22,9 @@ export class FormInputChangedEvent extends Event {
 /**
  * An individual input field in the network form
  */
+export
 @customElement('form-input')
-export class FormInput extends BaseElement {
+class FormInput extends BaseElement {
     @property({ type: String }) accessor label = ''
     @property({ type: String }) accessor value = ''
     @property({ type: String }) accessor text = ''

@@ -18,7 +18,8 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { Empty } from '../../../../../google/protobuf/empty.js'
+
+import { Empty } from '../../../../../google/protobuf/empty.ts'
 /**
  * Encodes values that the ledger accepts as command arguments and emits as contract arguments.
  *
@@ -28,6 +29,7 @@ import { Empty } from '../../../../../google/protobuf/empty.js'
  * - NameStrings are strings with length <= 1000 that match the regexp ``[A-Za-z\$_][A-Za-z0-9\$_]*``.
  * - PackageIdStrings are strings with length <= 64 that match the regexp ``[A-Za-z0-9\-_ ]+``.
  * - PartyIdStrings are strings with length <= 255 that match the regexp ``[A-Za-z0-9:\-_ ]+``.
+ * - ParticipantIdStrings are strings with length <= 255 that match the regexp ``[A-Za-z0-9:\-_ ]+``.
  * - LedgerStrings are strings with length <= 255 that match the regexp ``[A-Za-z0-9#:\-_/ ]+``.
  * - UserIdStrings are strings with length <= 128 that match the regexp ``[a-zA-Z0-9@^$.!`\-#+'~_|:]+``.
  *

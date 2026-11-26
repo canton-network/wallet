@@ -3,11 +3,13 @@
 
 import { html, css } from 'lit'
 import { customElement, property } from 'lit/decorators.js'
-import { BaseElement } from '../internal/base-element'
-import './error-page' // ensure wg-error-page is registered
 
+import { BaseElement } from '../internal/base-element.ts'
+import './error-page.ts' // ensure wg-error-page is registered
+
+export
 @customElement('not-found')
-export class NotFound extends BaseElement {
+class NotFound extends BaseElement {
     static styles = [
         BaseElement.styles,
         css`

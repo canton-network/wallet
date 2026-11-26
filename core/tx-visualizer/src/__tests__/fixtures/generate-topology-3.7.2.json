@@ -1,0 +1,16 @@
+{
+    "note": "generate-topology responses of a Canton 3.7.2 participant on a protocol version 37 synchronizer (canton/devnet), for the key of partyToKeyMappingBase64: v31 by default, v30 with protocolVersion 36",
+    "v31": {
+        "topologyTransactions": [
+            "CvABCAEQARrpAUrmAQpLYWxpY2U6OjEyMjA1YTUwZWI5YjlkNjRiYjMwYWM0MTI1YWZhMWFlZWE3YmNhZTUxNzkyYWMyZDE3NGE2MTMyY2VlYzkyOTBkMDYyEAEaWApScGFydGljaXBhbnQxOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBACGAQiOwo3EAQaLDAqMAUGAytlcAMhAAObn3lI0ggq22FbOBYqSUQYSUCBWCi/vqhNrfJRHHIKKgMBBQQwARABEB8="
+        ],
+        "multiHash": "EiBuhfF+AOEyl1XK1niN4DCvOR1ll+kx8Mrs5+oNzVXSKQ=="
+    },
+    "v30": {
+        "topologyTransactions": [
+            "Cu4BCAEQARrnAUrkAQpLYWxpY2U6OjEyMjA1YTUwZWI5YjlkNjRiYjMwYWM0MTI1YWZhMWFlZWE3YmNhZTUxNzkyYWMyZDE3NGE2MTMyY2VlYzkyOTBkMDYyEAEaVgpScGFydGljaXBhbnQxOjoxMjIwZDQ0ZmMxYzNiYTBiNWJkZjdiOTU2ZWU3MWJjOTRlYmUyZDIzMjU4ZGMyNjhmZGYwODI0ZmJhZWZmMmM2MTQyNBACMjsKNxAEGiwwKjAFBgMrZXADIQADm595SNIIKtthWzgWKklEGElAgVgov76oTa3yURxyCioDAQUEMAEQARAe"
+        ],
+        "multiHash": "EiCvbxn+nvPOxtx7I0MDgjvYjf0gBgOGtPhTmbKzHt9U1g=="
+    },
+    "partyId": "alice::12205a50eb9b9d64bb30ac4125afa1aeea7bcae51792ac2d174a6132ceec9290d062"
+}

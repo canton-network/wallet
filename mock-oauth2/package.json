@@ -9,14 +9,14 @@
         "dev": "tsx src/index.ts",
         "start": "tsx src/index.ts"
     },
-    "devDependencies": {
-        "tsx": "catalog:",
-        "typescript": "catalog:"
-    },
     "dependencies": {
         "@types/node": "catalog:",
         "basic-auth": "catalog:",
         "oauth2-mock-server": "catalog:",
         "pino": "catalog:"
+    },
+    "devDependencies": {
+        "tsx": "catalog:",
+        "typescript": "catalog:"
     }
 }

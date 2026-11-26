@@ -3,12 +3,21 @@
 
 import type { LedgerClient, Types } from '@canton-network/core-ledger-client'
 import type {
+    ClaimName,
+    ClaimsFor,
+    IdentityClaims,
+    Methods,
+    SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type {
     DisclosedContracts,
     Commands,
     PackageIdSelectionPreference,
 } from '@canton-network/core-wallet-dapp-rpc-client'
 import type { Logger } from 'pino'
-import type { HASHING_SCHEME_VERSION } from './types.js'
+
+import type { HASHING_SCHEME_VERSION } from './types.ts'
 
 export interface PrepareParams {
     commandId?: string
@@ -114,4 +123,38 @@ export async function networkStatus(
             reason: `Ledger unreachable: ${(e as Error).message}`,
         }
     }
+}
+
+const claimMap = {
+    sub: 'userId',
+    email: 'email',
+} as const satisfies Record<keyof IdentityClaims, keyof AuthContext>
+
+export function getSigningController(
+    driver: SigningDriverInterface,
+    authContext: AuthContext
+): Methods
+export function getSigningController(
+    driver: SigningDriverInterface | undefined,
+    authContext: AuthContext
+): Methods | undefined
+export function getSigningController(
+    driver: SigningDriverInterface | undefined,
+    authContext: AuthContext
+): Methods | undefined {
+    if (!driver) return undefined
+
+    const claims: Partial<Record<ClaimName, string>> = {}
+    for (const claim of driver.requiredClaims) {
+        const value = authContext[claimMap[claim]]
+        if (!value) {
+            throw new Error(
+                `Required claim ${claim} is not present in auth context`
+            )
+        }
+        claims[claim] = value
+    }
+
+    // Safe: the loop above guarantees every required claim is present.
+    return driver.controller(claims as ClaimsFor<ClaimName>)
 }

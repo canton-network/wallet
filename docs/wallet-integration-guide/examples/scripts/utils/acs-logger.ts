@@ -3,7 +3,8 @@
 
 import type { SDKInterface } from '@canton-network/wallet-sdk'
 import type { Logger } from 'pino'
-import type { KnownSynchronizers } from './index.js'
+
+import type { KnownSynchronizers } from './index.ts'
 
 export type ContractReadSpec = {
     sdk: SDKInterface
@@ -121,12 +122,12 @@ function extractAmount(createArgument: unknown): string {
     // Token: { holding: { amount } }
     if (arg.holding && typeof arg.holding === 'object') {
         const amount = (arg.holding as Record<string, unknown>).amount
-        if (amount != null) return String(amount)
+        if (typeof amount === 'string') return amount
     }
     // Amulet: { amount: { initialAmount } }
     if (arg.amount && typeof arg.amount === 'object') {
         const initial = (arg.amount as Record<string, unknown>).initialAmount
-        if (initial != null) return String(initial)
+        if (typeof initial === 'string') return initial
     }
     return ''
 }

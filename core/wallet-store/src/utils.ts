@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Network } from './config/schema.js'
+import type { Network } from './config/schema.ts'
 
 // Throws if the given network has a self-issued audience that is already used by another network.
 export function assertUniqueSelfIssuedAudience(
@@ -50,4 +50,19 @@ export function resolveSelfIssuedNetworkByAudiences(
     }
 
     return matches[0] ?? undefined
+}
+
+/**
+ * Returns the hex-encoded SHA-256 digest of an access token. Stores keep this
+ * digest instead of the raw token, and look sessions up by it. An unsalted
+ * hash is enough because access tokens are signed JWTs with high entropy.
+ */
+export async function hashAccessToken(accessToken: string): Promise<string> {
+    const digest = await globalThis.crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(accessToken)
+    )
+    return Array.from(new Uint8Array(digest), (byte) =>
+        byte.toString(16).padStart(2, '0')
+    ).join('')
 }

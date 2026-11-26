@@ -1,8 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { html } from 'lit'
-import { customElement } from 'lit/decorators.js'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     type WalletCreateEvent,
     handleErrorToast,
@@ -13,13 +12,15 @@ import {
     PARTY_STATUS_PARAM,
     walletStatusToCode,
 } from '@canton-network/core-wallet-ui-components/logic'
-import { createUserClient } from '../../rpc-client'
-import { setLocationHref } from '../../navigation.js'
-import { stateManager } from '../../state-manager'
-import '../../index'
-import { detectCurrentOrigin } from '../../listeners.js'
-import { UserUiAddOrEditParty } from '../common.js'
-import { SigningProvider } from '@canton-network/core-signing-lib'
+import { html } from 'lit'
+import { customElement } from 'lit/decorators.js'
+
+import { detectCurrentOrigin } from '../../listeners.ts'
+import { setLocationHref } from '../../navigation.ts'
+import '../../index.ts'
+import { createUserClient } from '../../rpc-client.ts'
+import { stateManager } from '../../state-manager.ts'
+import { UserUiAddOrEditParty } from '../common.ts'
 
 @customElement('user-ui-add-party')
 export class UserUiAddParty extends UserUiAddOrEditParty {
