@@ -5,8 +5,7 @@
         "types": ["node"]
     },
     "include": [
-        "vite.config.ts",
-        "playwright.config.ts",
+        "*.ts",
         "tests",
         "scripts",
         "../../vite.source.ts"

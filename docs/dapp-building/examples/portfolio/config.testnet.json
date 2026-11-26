@@ -1,0 +1,31 @@
+{
+    "amulet": {
+        "validatorUrl": "https://validator.example.invalid/api/validator",
+        "registry": "https://scan.sv-1.test.global.canton.network.digitalasset.com/registry/"
+    },
+    "token": {
+        "validatorUrl": "https://validator.example.invalid/api/validator",
+        "registries": [
+            {
+                "name": "cantonwallet-send-bridge-registrar",
+                "partyId": "cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57",
+                "url": "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/cantonwallet-send-bridge-registrar::1220f6ac73835e1086f0d23aa42767e26234d175b4f8188399446c344bbfcdfbfe57/registry/"
+            },
+            {
+                "name": "CBTC",
+                "partyId": "cbtc-network::12201b1741b63e2494e4214cf0bedc3d5a224da53b3bf4d76dba468f8e97eb15508f",
+                "url": "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/cbtc-network::12201b1741b63e2494e4214cf0bedc3d5a224da53b3bf4d76dba468f8e97eb15508f/registry/"
+            },
+            {
+                "name": "trakx-issuer",
+                "partyId": "trakx-issuer::12203e227300a23db60608d86a3d1981ad3a98c7eb6d445a56d6d282115d9a3ffef2",
+                "url": "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/trakx-issuer::12203e227300a23db60608d86a3d1981ad3a98c7eb6d445a56d6d282115d9a3ffef2/registry/"
+            },
+            {
+                "name": "USDCx",
+                "partyId": "decentralized-usdc-interchain-rep::122049e2af8a725bd19759320fc83c638e7718973eac189d8f201309c512d1ffec61",
+                "url": "https://api.utilities.digitalasset-staging.com/api/token-standard/v0/registrars/decentralized-usdc-interchain-rep::122049e2af8a725bd19759320fc83c638e7718973eac189d8f201309c512d1ffec61/registry/"
+            }
+        ]
+    }
+}
