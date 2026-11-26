@@ -1,0 +1,68 @@
+// Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
+// SPDX-License-Identifier: Apache-2.0
+
+import type { SigningProvider } from '@canton-network/core-signing-lib'
+import type { AuthContext } from '@canton-network/core-wallet-auth'
+import type { Store, Wallet } from '@canton-network/core-wallet-store'
+import type { Logger } from 'pino'
+
+import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
+import type { PartyAllocationService } from '../../party-allocation-service.ts'
+import type { WalletAllocator } from '../wallet-allocation-service.ts'
+
+export class InternalWalletAllocator implements WalletAllocator {
+    constructor(
+        private store: Store,
+        private logger: Logger,
+        private partyAllocator: PartyAllocationService,
+        protected signingProvider: SigningProvider
+    ) {}
+
+    async getKeys() {
+        throw new Error('Method not implemented')
+    }
+
+    async createWallet(
+        authContext: AuthContext,
+        partyHint: PartyHint,
+        primary: Primary = false
+    ): Promise<Wallet> {
+        const party = await this.partyAllocator.allocateParty(
+            authContext.userId,
+            partyHint
+        )
+        const network = await this.store.getCurrentNetwork()
+        const wallet: Wallet = {
+            partyId: party.partyId,
+            hint: party.hint,
+            namespace: party.namespace,
+            signingProviderId: this.signingProvider,
+            networkId: network.id,
+            userId: authContext.userId,
+            status: 'allocated',
+            primary,
+            publicKey: party.namespace,
+            externalTxId: '',
+            topologyTransactions: '',
+            rights: [],
+        }
+        await this.store.addWallet(wallet)
+        return wallet
+    }
+
+    async allocateParty(
+        authContext: AuthContext,
+        existingWallet: Wallet
+    ): Promise<void> {
+        const party = await this.partyAllocator.allocateParty(
+            authContext.userId,
+            existingWallet.hint
+        )
+        const network = await this.store.getCurrentNetwork()
+        return await this.store.updateWallet({
+            partyId: party.partyId,
+            networkId: network.id,
+            status: 'allocated',
+        })
+    }
+}

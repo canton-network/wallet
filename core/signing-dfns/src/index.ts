@@ -26,7 +26,6 @@ import type {
     SetConfigurationResult,
     Transaction,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import _ from 'lodash'
 import { z } from 'zod'
 
@@ -82,6 +81,7 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.DFNS
+    public requiredClaims = []
 
     private async resolveKeyId(keyIdentifier: {
         id?: string
@@ -94,7 +94,7 @@ export default class DfnsSigningDriver implements SigningDriverInterface {
         return key?.id
     }
 
-    public controller = (_userId: AuthContext['userId'] | undefined) =>
+    public controller = () =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams

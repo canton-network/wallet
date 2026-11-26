@@ -33,8 +33,8 @@ import type {
     Transaction,
     SignMessageParams,
     SignMessageResult,
+    ClaimsFor,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 
 interface InternalKey {
     id: string
@@ -59,23 +59,23 @@ const convertInternalTransaction = (tx: InternalTransaction): Transaction => {
     }
 }
 
-export class InternalSigningDriver implements SigningDriverInterface {
+export class InternalSigningDriver implements SigningDriverInterface<'sub'> {
     private store: SigningDriverStore
 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SigningProvider.WALLET_KERNEL
+    public requiredClaims = ['sub'] as const
 
     constructor(store: SigningDriverStore) {
         this.store = store
     }
 
-    public controller = (_userId: AuthContext['userId'] | undefined) =>
+    public controller = ({ sub: userId }: ClaimsFor<'sub'>) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
             ): Promise<SignTransactionResult> => {
                 // TODO: validate transaction here
-
                 if (!params.keyIdentifier.publicKey) {
                     return Promise.resolve({
                         error: 'key_not_found',
@@ -88,7 +88,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     params.keyIdentifier.publicKey
                 )
 
-                if (key?.privateKey && _userId) {
+                if (key?.privateKey && userId) {
                     const txId = globalThis.crypto.randomUUID()
                     const signature = signTransactionHash(
                         params.txHash,
@@ -108,7 +108,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     }
 
                     await this.store.setSigningTransaction(
-                        _userId,
+                        userId,
                         internalTransaction
                     )
 
@@ -118,7 +118,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                         signature,
                     } as SignTransactionResult)
                 } else {
-                    if (!_userId) {
+                    if (!userId) {
                         return Promise.resolve({
                             error: 'userId_not_found',
                             error_description:
@@ -170,7 +170,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
             getTransaction: async (
                 params: GetTransactionParams
             ): Promise<GetTransactionResult> => {
-                if (!_userId) {
+                if (!userId) {
                     return Promise.resolve({
                         error: 'userId_not_found',
                         error_description:
@@ -179,7 +179,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                 }
 
                 const storedTx = await this.store.getSigningTransaction(
-                    _userId,
+                    userId,
                     params.txId
                 )
                 if (storedTx) {
@@ -200,7 +200,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
             getTransactions: async (
                 params: GetTransactionsParams
             ): Promise<GetTransactionsResult> => {
-                if (!_userId) {
+                if (!userId) {
                     return Promise.resolve({
                         error: 'userId_not_found',
                         error_description:
@@ -235,7 +235,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
             },
 
             getKeys: async (): Promise<GetKeysResult> => {
-                if (!_userId) {
+                if (!userId) {
                     return Promise.resolve({
                         error: 'userId_not_found',
                         error_description:
@@ -243,7 +243,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     })
                 }
 
-                const keys = await this.store.listSigningKeys(_userId)
+                const keys = await this.store.listSigningKeys(userId)
                 if (keys.length > 0) {
                     return Promise.resolve({
                         keys: Array.from(keys).map((key) => ({
@@ -261,7 +261,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
             createKey: async (
                 params: CreateKeyParams
             ): Promise<CreateKeyResult> => {
-                if (!_userId) {
+                if (!userId) {
                     return Promise.resolve({
                         error: 'userId_not_found',
                         error_description:
@@ -282,7 +282,7 @@ export class InternalSigningDriver implements SigningDriverInterface {
                     updatedAt: now,
                 }
 
-                await this.store.setSigningKey(_userId, internalKey)
+                await this.store.setSigningKey(userId, internalKey)
 
                 return {
                     id,

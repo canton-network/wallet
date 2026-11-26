@@ -12,7 +12,10 @@ import {
 } from '@canton-network/core-signing-lib'
 import { WALLET_DISABLED_REASON } from '@canton-network/core-types'
 import type { AuthContext } from '@canton-network/core-wallet-auth'
-import { canUserUseSelfIssuedAuth } from '@canton-network/core-wallet-services'
+import {
+    canUserUseSelfIssuedAuth,
+    getSigningController,
+} from '@canton-network/core-wallet-services'
 import {
     type Store,
     type Wallet,
@@ -89,9 +92,8 @@ export class WalletSyncService {
     ): Promise<ProviderKey[]> {
         const partyAllocator = this.requirePartyAllocator()
         try {
-            const result = await driver
-                .controller(this.authContext?.userId)
-                .getKeys()
+            const controller = getSigningController(driver, this.authContext)
+            const result = await controller.getKeys()
 
             // In case of error getKeys resolve Promise but with error object
             if ('error' in result) {

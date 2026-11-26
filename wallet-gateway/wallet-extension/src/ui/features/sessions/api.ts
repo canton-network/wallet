@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { tokenQueryKeys } from '@canton-network/core-wallet-ui-components/react/token'
 import type { Session } from '@canton-network/core-wallet-user-rpc-client'
 import {
     queryOptions,
@@ -11,6 +12,7 @@ import {
 import {
     authMessenger,
     type ConnectionStatus,
+    type ConnectRequest,
     EXTENSION_ORIGIN,
 } from '@/shared/auth-protocol.ts'
 import { queryKeys } from '@/ui/lib/query/keys.ts'
@@ -53,13 +55,14 @@ export const currentSessionQuery = () =>
 
 /**
  * Signs in to the network's identity provider and connects the extension
- * pages to it. The background keeps the token.
+ * pages to it. `clientId` and `clientSecret` are for `self_signed` networks.
+ * The background keeps the token.
  */
 export function useConnect() {
     const queryClient = useQueryClient()
     return useMutation({
-        mutationFn: (networkId: string) =>
-            authMessenger.sendMessage('auth.connect', { networkId }),
+        mutationFn: (data: ConnectRequest) =>
+            authMessenger.sendMessage('auth.connect', data),
         onSuccess: async () => {
             queryClient.setQueryData<ConnectionStatus>(
                 queryKeys.sessions.status(),
@@ -67,6 +70,7 @@ export function useConnect() {
             )
             // if changing users or networks, then we dont want to keep the old wallet queries in the cache
             await queryClient.resetQueries({ queryKey: queryKeys.wallets.all })
+            await queryClient.resetQueries({ queryKey: tokenQueryKeys.all })
 
             await queryClient.invalidateQueries({
                 queryKey: queryKeys.sessions.list(),

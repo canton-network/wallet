@@ -12,7 +12,7 @@ import { standardDecorators } from '../../vite.decorators.ts'
 import { browserProject, coverage, nodeProject } from '../../vitest.base.ts'
 
 // The packages the React sources and stories import (type-only imports and
-// workspace packages left out).
+// workspace packages left out). Test files are skipped.
 //
 // Vite caches its pre-bundled dependencies. A new import in a source file is
 // not in that cache, so Vite finds it while the tests are already running,
@@ -28,7 +28,7 @@ const reactDependencies = (): string[] => {
         recursive: true,
         encoding: 'utf8',
     })) {
-        if (!/\.tsx?$/.test(file)) continue
+        if (!/\.tsx?$/.test(file) || /\.test\.tsx?$/.test(file)) continue
 
         const source = readFileSync(path.join(root, file), 'utf8')
         for (const [, specifier] of source.matchAll(
