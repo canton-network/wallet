@@ -9,7 +9,7 @@ import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
 import { computePreparedTransactionHash } from '../index.ts'
 import { toHex } from './helpers/hex.ts'
 import { liveFixtures } from './helpers/live-fixtures.ts'
-import { loadVectors, V2, V3 } from './helpers/load-vectors.ts'
+import { loadVectors, V2, V3, V4 } from './helpers/load-vectors.ts'
 import { changedBytes, changedText, changedTime } from './helpers/one-byte.ts'
 
 interface Leaf {
@@ -85,7 +85,7 @@ function changed(value: unknown): unknown {
     throw new Error(`no one-byte change is defined for a ${typeof value}`)
 }
 
-const ACCEPTED = ([V2, V3] as const).flatMap((scheme) =>
+const ACCEPTED = ([V2, V3, V4] as const).flatMap((scheme) =>
     liveFixtures(scheme).map((fixture) => ({ scheme, ...fixture }))
 )
 
@@ -95,11 +95,15 @@ const FIELD_NAMES = [
     ),
 ].sort()
 
-// A byte off "2.1" or "2" is no LF version that a scheme hashes
-const REFUSED_AS = new Map<string, TxHashingErrorCode>([
-    ['lfVersion', 'UNSUPPORTED_LF_VERSION'],
-    ['version', 'UNSUPPORTED_LF_VERSION'],
-])
+// The LF versions each scheme hashes: a byte off one of them is refused,
+// unless it gives another, as "2" gives "3" under V4
+const LF_VERSIONS = {
+    [V2]: ['2.1'],
+    [V3]: ['2.1', '2'],
+    [V4]: ['2.1', '2', '3'],
+}
+
+const isLfVersion = (name: string) => name === 'lfVersion' || name === 'version'
 
 // A changed node id can name another node or none, byKey can become true
 // without a key, and a timestamp or a date can leave its range
@@ -113,9 +117,8 @@ const MAY_BE_REFUSED = new Set([
 ])
 
 const titleOf = (name: string) => {
-    const refusal = REFUSED_AS.get(name)
-    if (refusal !== undefined) {
-        return `a one-byte change in any ${name} gives ${refusal}`
+    if (isLfVersion(name)) {
+        return `a one-byte change in any ${name} gives UNSUPPORTED_LF_VERSION, or another hash if the scheme hashes the new version`
     }
     return MAY_BE_REFUSED.has(name)
         ? `a one-byte change in any ${name} gives another hash or a refusal`
@@ -140,7 +143,7 @@ function encodedWith(
 
 async function outcomeOf(
     bytes: Uint8Array,
-    scheme: typeof V2 | typeof V3
+    scheme: typeof V2 | typeof V3 | typeof V4
 ): Promise<{ hash: string } | { error: TxHashingErrorCode }> {
     try {
         return {
@@ -157,7 +160,6 @@ const unchangedHashes = new Map<PreparedTransaction, string>()
 it.each(FIELD_NAMES.map((name): [string, string] => [titleOf(name), name]))(
     '%s',
     async (_title, name) => {
-        const refusal = REFUSED_AS.get(name)
         const problems: string[] = []
         let count = 0
         for (const { scheme, scenario, tx } of ACCEPTED) {
@@ -182,12 +184,15 @@ it.each(FIELD_NAMES.map((name): [string, string] => [titleOf(name), name]))(
                 if (bytes === undefined) continue
                 count++
                 const outcome = await outcomeOf(bytes, scheme)
-                const expected =
-                    refusal !== undefined
-                        ? 'error' in outcome && outcome.error === refusal
-                        : 'hash' in outcome
-                          ? outcome.hash !== unchanged
-                          : MAY_BE_REFUSED.has(name)
+                const refused =
+                    isLfVersion(name) &&
+                    !LF_VERSIONS[scheme].includes(value as string)
+                const expected = refused
+                    ? 'error' in outcome &&
+                      outcome.error === 'UNSUPPORTED_LF_VERSION'
+                    : 'hash' in outcome
+                      ? outcome.hash !== unchanged
+                      : MAY_BE_REFUSED.has(name)
                 if (!expected) {
                     problems.push(
                         `${scheme} ${scenario} ${leaf.path}: ${JSON.stringify(outcome)}`

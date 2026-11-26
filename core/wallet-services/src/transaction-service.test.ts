@@ -100,6 +100,13 @@ const ledgerClient = {
     getSynchronizerId: vi.fn(),
 } as unknown as LedgerClient
 
+// postWithRetry takes either a body or a factory that builds one per attempt;
+// evaluate the factory so tests can assert on the body that would be sent.
+function resolvePostBody(mock: ReturnType<typeof vi.fn>, call = -1): unknown {
+    const body = mock.mock.calls.at(call)![1]
+    return typeof body === 'function' ? body() : body
+}
+
 const network: Network = {
     id: 'network1',
     name: 'testnet',
@@ -122,8 +129,10 @@ function walletWithProvider(signingProviderId: SigningProvider): Wallet {
 function createDriver(options: {
     signTransaction?: ReturnType<typeof vi.fn>
     getTransaction?: ReturnType<typeof vi.fn>
+    requiredClaims?: string[]
 }): SigningDriverInterface {
     return {
+        requiredClaims: options.requiredClaims ?? [],
         controller: vi.fn().mockReturnValue({
             signTransaction:
                 options.signTransaction ??
@@ -296,6 +305,7 @@ describe('TransactionService', () => {
                     tx: pendingTransaction.preparedTransaction,
                     txHash: pendingTransaction.preparedTransactionHash,
                     keyIdentifier: { publicKey: wallet.publicKey },
+                    internalTxId: expect.any(String),
                 })
                 expect(store.setTransactionSigned).toHaveBeenCalledWith(
                     pendingTransaction.id,
@@ -377,7 +387,9 @@ describe('TransactionService', () => {
                 const service = createService(
                     createStore(),
                     {
-                        [SigningProvider.BLOCKDAEMON]: createDriver({}),
+                        [SigningProvider.BLOCKDAEMON]: createDriver({
+                            requiredClaims: ['email'],
+                        }),
                     },
                     notifier
                 )
@@ -385,7 +397,7 @@ describe('TransactionService', () => {
                 await expect(
                     service.sign(authContext, blockdaemonWallet, signParams)
                 ).rejects.toThrow(
-                    'Email is required for Blockdaemon wallet allocation'
+                    'Required claim email is not present in auth context'
                 )
             })
 
@@ -400,6 +412,7 @@ describe('TransactionService', () => {
                     {
                         [SigningProvider.BLOCKDAEMON]: createDriver({
                             signTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -442,6 +455,7 @@ describe('TransactionService', () => {
                     {
                         [SigningProvider.BLOCKDAEMON]: createDriver({
                             getTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -454,7 +468,6 @@ describe('TransactionService', () => {
                 )
 
                 expect(getTransaction).toHaveBeenCalledWith({
-                    userId: authContextWithEmail.email,
                     txId: 'external-tx-1',
                 })
 
@@ -483,6 +496,7 @@ describe('TransactionService', () => {
                     {
                         [SigningProvider.BLOCKDAEMON]: createDriver({
                             getTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -621,6 +635,7 @@ describe('TransactionService', () => {
                     tx: pendingTransaction.preparedTransaction,
                     txHash: pendingTransaction.preparedTransactionHash,
                     keyIdentifier: { publicKey: wallet.publicKey },
+                    internalTxId: expect.any(String),
                 })
                 expect(store.setTransactionStatus).toHaveBeenCalledWith(
                     pendingTransaction.id,
@@ -665,6 +680,107 @@ describe('TransactionService', () => {
                     status: 'signed',
                     externalTxId: 'external-tx-1',
                 })
+            })
+        })
+
+        describe('dsrv', () => {
+            const dsrvWallet = walletWithProvider(SigningProvider.DSRV)
+
+            it('starts signing with an internal id and persists the pending request', async () => {
+                const signTransaction = vi.fn().mockResolvedValue({
+                    status: 'pending',
+                    txId: 'dsrv-tx-1',
+                })
+                const driver = createDriver({
+                    signTransaction,
+                    requiredClaims: ['sub'],
+                })
+                const store = createStore()
+                const service = createService(
+                    store,
+                    { [SigningProvider.DSRV]: driver },
+                    notifier
+                )
+
+                const result = await service.sign(
+                    authContext,
+                    dsrvWallet,
+                    signParams
+                )
+
+                expect(driver.controller).toHaveBeenCalledWith({
+                    sub: authContext.userId,
+                })
+                expect(signTransaction).toHaveBeenCalledWith({
+                    tx: pendingTransaction.preparedTransaction,
+                    txHash: pendingTransaction.preparedTransactionHash,
+                    keyIdentifier: { publicKey: wallet.publicKey },
+                    internalTxId: expect.stringMatching(/^[0-9a-f]{16}$/),
+                })
+                expect(store.setTransactionStatus).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    'awaiting-signature',
+                    { externalTxId: 'dsrv-tx-1' },
+                    { expectedStatus: 'pending' }
+                )
+                expect(emit).toHaveBeenCalledWith(
+                    'txChanged',
+                    expect.objectContaining({ status: 'pending' })
+                )
+                expect(result).toEqual({
+                    status: 'pending',
+                    externalTxId: 'dsrv-tx-1',
+                    partyId: wallet.partyId,
+                })
+            })
+
+            it('polls the provider and persists signed status', async () => {
+                const getTransaction = vi.fn().mockResolvedValue({
+                    status: 'signed',
+                    txId: 'dsrv-tx-1',
+                    signature: 'dsrv-signature',
+                })
+                const driver = createDriver({
+                    getTransaction,
+                    requiredClaims: ['sub'],
+                })
+                const store = createStore(awaitingTransaction)
+                const service = createService(
+                    store,
+                    { [SigningProvider.DSRV]: driver },
+                    notifier
+                )
+
+                const result = await service.refreshTransaction(
+                    authContext,
+                    dsrvWallet,
+                    pendingTransaction.id
+                )
+
+                expect(driver.controller).toHaveBeenCalledWith({
+                    sub: authContext.userId,
+                })
+                expect(getTransaction).toHaveBeenCalledWith({
+                    txId: 'external-tx-1',
+                })
+                expect(store.setTransactionSigned).toHaveBeenCalledWith(
+                    pendingTransaction.id,
+                    expect.any(Date),
+                    'dsrv-tx-1',
+                    { expectedStatus: 'awaiting-signature' }
+                )
+                expect(result).toEqual({
+                    status: 'signed',
+                    externalTxId: 'dsrv-tx-1',
+                })
+            })
+
+            it('throws when the DSRV signing driver is not available', async () => {
+                const service = createService(createStore(), {}, notifier)
+
+                await expect(
+                    service.sign(authContext, dsrvWallet, signParams)
+                ).rejects.toThrow('No driver found for dsrv')
             })
         })
 
@@ -1188,6 +1304,11 @@ describe('TransactionService', () => {
                 provider: SigningProvider.BITGO,
                 auth: authContext,
             },
+            {
+                name: 'dsrv',
+                provider: SigningProvider.DSRV,
+                auth: authContext,
+            },
         ])(
             'rejects signing an already executed transaction for $name',
             async ({ provider, auth }) => {
@@ -1300,6 +1421,7 @@ describe('TransactionService', () => {
                 SigningProvider.FIREBLOCKS,
                 SigningProvider.DFNS,
                 SigningProvider.SECUROSYS,
+                SigningProvider.DSRV,
             ])(
                 'executes with the provided signature for %s',
                 async (signingProviderId) => {
@@ -1347,20 +1469,7 @@ describe('TransactionService', () => {
 
                     expect(postWithRetry).toHaveBeenCalledWith(
                         '/v2/interactive-submission/executeAndWait',
-                        expect.objectContaining({
-                            userId: authContext.userId,
-
-                            preparedTransaction:
-                                pendingTransaction.preparedTransaction,
-                            submissionId: expect.any(String),
-                            partySignatures: expect.objectContaining({
-                                signatures: [
-                                    expect.objectContaining({
-                                        party: wallet.partyId,
-                                    }),
-                                ],
-                            }),
-                        }),
+                        expect.any(Function),
                         {
                             retries: 20,
                             delayMs: 3000,
@@ -1374,6 +1483,15 @@ describe('TransactionService', () => {
                             ],
                         }
                     )
+                    expect(resolvePostBody(postWithRetry)).toMatchObject({
+                        userId: authContext.userId,
+                        preparedTransaction:
+                            pendingTransaction.preparedTransaction,
+                        submissionId: expect.any(String),
+                        partySignatures: {
+                            signatures: [{ party: wallet.partyId }],
+                        },
+                    })
                     expect(store.setTransactionStatus).toHaveBeenCalledWith(
                         pendingTransaction.id,
                         'executed',
@@ -1400,6 +1518,7 @@ describe('TransactionService', () => {
                     {
                         [signingProviderId]: createDriver({
                             getTransaction,
+                            requiredClaims: ['email'],
                         }),
                     },
                     notifier
@@ -1420,7 +1539,7 @@ describe('TransactionService', () => {
                         network
                     )
                 ).rejects.toThrow(
-                    'Invalid auth context (missing email) for SigningProvider BlockDaemon'
+                    'Required claim email is not present in auth context'
                 )
             })
 
@@ -1462,28 +1581,71 @@ describe('TransactionService', () => {
                 })
                 expect(postWithRetry).toHaveBeenCalledWith(
                     '/v2/interactive-submission/executeAndWait',
-                    expect.objectContaining({
-                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-                        partySignatures: {
-                            signatures: [
-                                {
-                                    party: wallet.partyId,
-                                    signatures: [
-                                        {
-                                            signature: 'kernel-signature',
-                                            signedBy: wallet.namespace,
-                                            format: 'SIGNATURE_FORMAT_CONCAT',
-                                            signingAlgorithmSpec:
-                                                'SIGNING_ALGORITHM_SPEC_ED25519',
-                                        },
-                                    ],
-                                },
-                            ],
-                        },
-                    }),
+                    expect.any(Function),
                     expect.any(Object)
                 )
+                expect(resolvePostBody(postWithRetry)).toMatchObject({
+                    hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+                    partySignatures: {
+                        signatures: [
+                            {
+                                party: wallet.partyId,
+                                signatures: [
+                                    {
+                                        signature: 'kernel-signature',
+                                        signedBy: wallet.namespace,
+                                        format: 'SIGNATURE_FORMAT_CONCAT',
+                                        signingAlgorithmSpec:
+                                            'SIGNING_ALGORITHM_SPEC_ED25519',
+                                    },
+                                ],
+                            },
+                        ],
+                    },
+                })
                 expect(result).toEqual({ updateId: 'kernel-update-1' })
+            })
+
+            it('builds a fresh submissionId for every executeAndWait attempt', async () => {
+                const store = createStore(signedWithExternal)
+                const service = createService(
+                    store,
+                    {
+                        [SigningProvider.FIREBLOCKS]: createDriver({
+                            getTransaction: vi.fn().mockResolvedValue({
+                                status: 'signed',
+                                signature: 'sig',
+                            }),
+                        }),
+                    },
+                    notifier
+                )
+                const postWithRetry = vi
+                    .fn()
+                    .mockResolvedValue({ updateId: 'external-update-1' })
+
+                await service.execute(
+                    authContext.userId,
+                    walletWithProvider(SigningProvider.FIREBLOCKS),
+                    signedWithExternal,
+                    executeParams,
+                    { postWithRetry } as unknown as LedgerClient,
+                    authContext,
+                    network
+                )
+
+                // Simulate what postWithRetry does on each retry attempt
+                const buildBody = postWithRetry.mock.calls[0]![1] as () => {
+                    submissionId: string
+                }
+                const first = buildBody()
+                const second = buildBody()
+
+                expect(first.submissionId).not.toBe(second.submissionId)
+                expect({ ...first, submissionId: undefined }).toEqual({
+                    ...second,
+                    submissionId: undefined,
+                })
             })
 
             it('throws when the wallet-kernel fallback returns no signature', async () => {

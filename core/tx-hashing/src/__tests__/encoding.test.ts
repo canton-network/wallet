@@ -6,6 +6,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
     encodeBool,
+    encodeBytes,
     encodeHex,
     encodeIdentifier,
     encodeInt32,
@@ -92,6 +93,15 @@ describe('encodeInt64', () => {
     ])('encodes the string %s big-endian', (n, expected) => {
         expect(toHex(encodeInt64(n))).toBe(expected)
         expect(toHex(encodeInt64(BigInt(n)))).toBe(expected)
+    })
+})
+
+describe('encodeBytes', () => {
+    it('writes the length as an int32, then the bytes', () => {
+        expect(toHex(encodeBytes(new Uint8Array()))).toBe('00000000')
+        expect(toHex(encodeBytes(Uint8Array.of(0x00, 0xff)))).toBe(
+            hx('00000002 00ff')
+        )
     })
 })
 

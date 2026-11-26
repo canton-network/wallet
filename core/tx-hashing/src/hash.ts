@@ -10,13 +10,16 @@ import { DEFAULT_LIMITS, type TraversalLimits } from './limits.ts'
 import { hashPrepared, type Scheme } from './scheme.ts'
 import { schemeV2 } from './v2.ts'
 import { schemeV3 } from './v3.ts'
+import { schemeV4 } from './v4.ts'
 
 /** A `HashingSchemeVersion` or its JSON API name */
 export type HashingScheme =
     | HashingSchemeVersion.V2
     | HashingSchemeVersion.V3
+    | HashingSchemeVersion.V4
     | 'HASHING_SCHEME_VERSION_V2'
     | 'HASHING_SCHEME_VERSION_V3'
+    | 'HASHING_SCHEME_VERSION_V4'
 
 export interface HashOptions {
     /** Overrides for `DEFAULT_LIMITS`: integers of at least 1, `maxValueDepth` at most 256 */
@@ -28,6 +31,8 @@ const SCHEMES = new Map<HashingScheme, Scheme>([
     ['HASHING_SCHEME_VERSION_V2', schemeV2],
     [HashingSchemeVersion.V3, schemeV3],
     ['HASHING_SCHEME_VERSION_V3', schemeV3],
+    [HashingSchemeVersion.V4, schemeV4],
+    ['HASHING_SCHEME_VERSION_V4', schemeV4],
 ])
 
 // Upper bound for `maxValueDepth`, as values are encoded recursively
@@ -58,7 +63,7 @@ export async function computePreparedTransactionHash(
                   : typeof scheme
         throw new TxHashingError(
             'UNSUPPORTED_SCHEME',
-            `hashing scheme ${shown} is not supported: expected HashingSchemeVersion.V2 or V3, or HASHING_SCHEME_VERSION_V2 or HASHING_SCHEME_VERSION_V3`
+            `hashing scheme ${shown} is not supported: expected HashingSchemeVersion.V2, V3 or V4, or HASHING_SCHEME_VERSION_V2, HASHING_SCHEME_VERSION_V3 or HASHING_SCHEME_VERSION_V4`
         )
     }
     const limits = limitsOf(options)
