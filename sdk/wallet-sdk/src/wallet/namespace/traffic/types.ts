@@ -1,11 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Ops } from '@canton-network/core-provider-ledger'
 import type {
     LedgerCommonSchemas,
     WrappedCommand,
 } from '@canton-network/core-ledger-client-types'
+import type { Ops } from '@canton-network/core-provider-ledger'
 import type { InstrumentId } from '@canton-network/core-token-standard'
 import type { Numeric, PartyId } from '@canton-network/core-types'
 
