@@ -10,11 +10,10 @@ import ping from '../examples/descriptors/ping.json'
 import {
     CREATE_PATH_PATTERN,
     DISPLAY_TEXT,
+    NO_BRACES,
     parseDescriptor,
     parseDescriptorText,
     PATH_PATTERN,
-    STABLE_INTENT,
-    TRIMMED_LINE,
 } from './descriptor.ts'
 import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
@@ -45,7 +44,6 @@ const invalid = import.meta.glob('../examples/descriptors/invalid/*.json', {
 const ajv = new Ajv2020({
     allErrors: true,
     strict: false,
-    unicodeRegExp: true,
 })
 addFormats(ajv)
 const validate = ajv.compile(schema)
@@ -53,12 +51,12 @@ const validate = ajv.compile(schema)
 function schemaPatterns(): { path: string; createPath: string } {
     const format = (
         schema as {
-            $format?: {
+            $defs?: {
                 path?: { pattern?: string }
                 createPath?: { pattern?: string }
             }
         }
-    ).$format
+    ).$defs
     return {
         path: format?.path?.pattern ?? '',
         createPath: format?.createPath?.pattern ?? '',
@@ -106,8 +104,8 @@ describe('schema conformance', () => {
     it('uses the same signature patterns as the parser', () => {
         const entry = (
             schema as {
-                $signatures?: {
-                    entry?: {
+                $defs?: {
+                    signature?: {
                         properties?: {
                             signature?: { pattern?: string }
                             publicKey?: { pattern?: string }
@@ -115,7 +113,7 @@ describe('schema conformance', () => {
                     }
                 }
             }
-        ).$signatures?.entry?.properties
+        ).$defs?.signature?.properties
         expect(entry?.signature?.pattern).toBe(ED25519_SIGNATURE_PATTERN.source)
         expect(entry?.publicKey?.pattern).toBe(
             ED25519_PUBLIC_KEY_PATTERN.source
@@ -149,7 +147,7 @@ describe('schema conformance', () => {
 
     it('uses the same container fields as the parser', () => {
         const { path, createPath } = schemaPatterns()
-        expect(schema).not.toHaveProperty('$format.argumentPath')
+        expect(schema).not.toHaveProperty('$defs.argumentPath')
         for (const name of SHARED_CONTAINER_FIELDS) {
             expect(path).toContain(name)
             expect(createPath).toContain(name)
@@ -160,13 +158,43 @@ describe('schema conformance', () => {
         }
     })
 
+    it('keeps its definitions under $defs and compiles in strict mode', () => {
+        const root = schema as Record<string, unknown>
+        const standard = new Set(['$schema', '$id', '$defs', '$comment'])
+        const custom = Object.keys(root).filter(
+            (k) => k.startsWith('$') && !standard.has(k)
+        )
+        expect(custom).toEqual([])
+
+        const defs = new Set(Object.keys(root.$defs as object))
+        const refs = [
+            ...JSON.stringify(schema).matchAll(/"\$ref":"#\/([^"]*)"/g),
+        ]
+        expect(refs.length).toBeGreaterThan(0)
+        for (const [, pointer] of refs) {
+            const [dir, name] = (pointer ?? '').split('/')
+            expect(dir, pointer).toBe('$defs')
+            expect(defs.has(name ?? ''), pointer).toBe(true)
+        }
+
+        // `version` is an annotation, as in ERC-7730; every other keyword is a JSON Schema one.
+        // `strictRequired` and `strictTypes` are ajv style lints, not rules of the specification.
+        const strict = new Ajv2020({
+            strict: true,
+            strictRequired: false,
+            strictTypes: false,
+        })
+        addFormats(strict)
+        strict.addKeyword('version')
+        expect(() => strict.compile(schema)).not.toThrow()
+    })
+
     it('uses the same text and path patterns as the parser', () => {
         const s = schema as unknown as SchemaShape
-        expect(s.$definitions.displayText.pattern).toBe(DISPLAY_TEXT.source)
-        expect(s.$definitions.trimmedLine.pattern).toBe(TRIMMED_LINE.source)
-        expect(s.$definitions.stableIntent.pattern).toBe(STABLE_INTENT.source)
-        expect(s.$format.path.pattern).toBe(PATH_PATTERN.source)
-        expect(s.$format.createPath.pattern).toBe(CREATE_PATH_PATTERN.source)
+        expect(s.$defs.displayText.pattern).toBe(DISPLAY_TEXT.source)
+        expect(s.$defs.stableIntent.pattern).toBe(NO_BRACES.source)
+        expect(s.$defs.path.pattern).toBe(PATH_PATTERN.source)
+        expect(s.$defs.createPath.pattern).toBe(CREATE_PATH_PATTERN.source)
     })
 })
 
@@ -175,10 +203,10 @@ interface Patterned {
 }
 
 interface SchemaShape {
-    $format: { path: Patterned; createPath: Patterned }
-    $definitions: {
+    $defs: {
+        path: Patterned
+        createPath: Patterned
         displayText: Patterned
-        trimmedLine: Patterned
         stableIntent: Patterned
     }
 }

@@ -3,12 +3,7 @@
 
 import { z } from 'zod'
 
-import {
-    ENUM_REF_PREFIX,
-    MAX_MARK_RUN,
-    STACKING_MARK_CLASS,
-    UNSAFE_CLASS,
-} from './format.ts'
+import { ENUM_REF_PREFIX } from './format.ts'
 import { parseIntent } from './intent.ts'
 import {
     EXERCISE_ONLY_CONTAINER_FIELDS,
@@ -25,13 +20,11 @@ import { parseJsonStrict, StrictJsonError } from './strict-json.ts'
 const SCHEMA_ID = 'https://example.org/canton-clear-signing/v1/schema.json'
 
 const NAME = '[A-Za-z_][A-Za-z0-9_]*'
-// A map key is a JSON string. Escapes are the JSON ones, and the key text has none of the characters
-// display text rejects.
-const MAP_KEY = String.raw`\["(?:[^"\\${UNSAFE_CLASS}]|\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))*"\]`
-// Every step is a name, with optional map-key steps. There is no step for every element of a list or
-// map: a field shows a list or map of variable size as a whole, with the raw format.
-const NAME_STEP = `${NAME}(?:${MAP_KEY})*`
-const STEPS = `${NAME_STEP}(?:\\.${NAME_STEP})*`
+// A map key is a JSON string: no unescaped quote, backslash or control character, and the JSON escapes.
+const MAP_KEY = String.raw`\["(?:[^"\\\x00-\x1f]|\\(?:["\\/bfnrt]|u[0-9a-fA-F]{4}))*"\]`
+// A name, then map keys and further names. There is no step for every element of a list or map: a
+// field shows a list or map of variable size as a whole, with the raw format.
+const STEPS = `${NAME}(?:${MAP_KEY}|\\.${NAME})*`
 
 const identifier = new RegExp(`^${NAME}$`)
 const dottedName = new RegExp(`^${NAME}(?:\\.${NAME})*$`)
@@ -43,36 +36,19 @@ const EXERCISE_CONTAINER = [
 ].join('|')
 /** A path of an exercise field: the choice argument, the exercised contract, or a container field. */
 export const PATH_PATTERN = new RegExp(
-    `^(?:${STEPS}|@\\.contract\\.${STEPS}|@\\.(?:${EXERCISE_CONTAINER}))$`,
-    'u'
+    `^(?:(?:@\\.contract\\.)?${STEPS}|@\\.(?:${EXERCISE_CONTAINER}))$`
 )
 /** A path of a create field: the create argument, or a container field shared with exercises. */
 export const CREATE_PATH_PATTERN = new RegExp(
-    `^(?:${STEPS}|@\\.(?:${SHARED_CONTAINER}))$`,
-    'u'
+    `^(?:${STEPS}|@\\.(?:${SHARED_CONTAINER}))$`
 )
 const enumRef = new RegExp(`^\\$\\.metadata\\.enums\\.${NAME}$`)
 const semver =
     /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$/
-const safe = `[^${UNSAFE_CLASS}]`
-const nonSpace = `[^\\s${UNSAFE_CLASS}]`
-// No run of more stacking marks than `sanitize` shows.
-const noMarkRun = `(?!.*[${STACKING_MARK_CLASS}]{${MAX_MARK_RUN + 1}})`
-/** Display text: a non-whitespace character, no unsafe character, and no long run of marks. */
-export const DISPLAY_TEXT = new RegExp(
-    `^${noMarkRun}${safe}*${nonSpace}${safe}*$`,
-    'u'
-)
-/** Display text with no leading or trailing whitespace. */
-export const TRIMMED_LINE = new RegExp(
-    `^${noMarkRun}${nonSpace}(?:${safe}*${nonSpace})?$`,
-    'u'
-)
-/** Like `TRIMMED_LINE`, and without braces, so it cannot contain a placeholder. */
-export const STABLE_INTENT = new RegExp(
-    `^${noMarkRun}[^\\s{}${UNSAFE_CLASS}](?:[^{}${UNSAFE_CLASS}]*[^\\s{}${UNSAFE_CLASS}])?$`,
-    'u'
-)
+/** Display text: it contains a non-whitespace character. */
+export const DISPLAY_TEXT = /\S/
+/** Without braces, so display text cannot contain a placeholder. */
+export const NO_BRACES = /^[^{}]*$/
 
 const FORMATS = [
     'string',
@@ -120,7 +96,7 @@ const ExerciseFieldSchema: z.ZodType<Field> = fieldSchema(PATH_PATTERN)
 
 function operationSchema(field: z.ZodType<Field>) {
     return z.strictObject({
-        intent: z.string().regex(STABLE_INTENT),
+        intent: z.string().regex(DISPLAY_TEXT).regex(NO_BRACES),
         interpolatedIntent: z.string().regex(DISPLAY_TEXT).optional(),
         fields: z.array(field).optional(),
     })
@@ -151,17 +127,12 @@ const ExerciseSchema = operationSchema(ExerciseFieldSchema).extend({
     interface: InterfaceSchema.optional(),
 })
 
-const enumTableKey = z.union([
-    z.string().regex(identifier),
-    z.literal(['true', 'false']),
-])
-
-const EnumTableSchema = recordWithoutProto(
-    enumTableKey,
-    z.string().regex(DISPLAY_TEXT)
-).refine((table) => Object.keys(table).length > 0, {
-    message: 'an enum table needs at least one entry',
-})
+// The keys are enum constructors, or `true` and `false` for a Bool; both are identifiers.
+const EnumTableSchema = z
+    .record(z.string().regex(identifier), z.string().regex(DISPLAY_TEXT))
+    .refine((table) => Object.keys(table).length > 0, {
+        message: 'an enum table needs at least one entry',
+    })
 
 const DescriptorSchema = z.strictObject({
     $schema: z.literal(SCHEMA_ID, {
@@ -173,13 +144,12 @@ const DescriptorSchema = z.strictObject({
     }),
     metadata: z.strictObject({
         version: z.string().regex(semver),
-        publisher: z.string().regex(TRIMMED_LINE),
-        name: z.string().regex(TRIMMED_LINE),
+        publisher: z.string().regex(DISPLAY_TEXT),
+        name: z.string().regex(DISPLAY_TEXT),
         url: z.url().optional(),
-        enums: recordWithoutProto(
-            z.string().regex(identifier),
-            EnumTableSchema
-        ).optional(),
+        enums: z
+            .record(z.string().regex(identifier), EnumTableSchema)
+            .optional(),
     }),
     display: z
         .strictObject({
@@ -347,36 +317,4 @@ function fieldProblems(
 // The paths an interpolatedIntent may name: the operation's fields.
 function fieldPaths(op: Operation): string[] {
     return (op.fields ?? []).map((f) => f.path)
-}
-
-/**
- * A record schema that rejects an own `__proto__` key.
- *
- * `z.record` drops that key before the key schema runs. Checking the input keeps the parsed
- * descriptor equal to the bytes that were signed.
- */
-function recordWithoutProto<V extends z.ZodType>(
-    key: z.ZodType<string>,
-    value: V
-): z.ZodType<Record<string, z.infer<V>>> {
-    const record = z.record(key, value)
-    return z
-        .unknown()
-        .superRefine((input, ctx) => {
-            if (!hasOwnProto(input)) return
-            ctx.addIssue({
-                code: 'custom',
-                message: "'__proto__' is not allowed",
-            })
-        })
-        .pipe(record)
-}
-
-function hasOwnProto(value: unknown): boolean {
-    return (
-        typeof value === 'object' &&
-        value !== null &&
-        !Array.isArray(value) &&
-        Object.hasOwn(value, '__proto__')
-    )
 }

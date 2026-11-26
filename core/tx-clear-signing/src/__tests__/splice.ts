@@ -17,7 +17,7 @@ interface Fixture {
     preparedTransactionHash: string
     hashingSchemeVersion: string
     /** Set when no descriptor words this root. The test requires the reason. */
-    undescribable?: string
+    indescribable?: string
 }
 
 const fixtureFiles = import.meta.glob<Fixture>('./fixtures/splice/*.json', {

@@ -107,7 +107,7 @@ const pingDescriptor = JSON.stringify(
     })
 )
 
-// A fetch root decodes and hashes. clearSign reports it as undescribable, because only a create or
+// A fetch root decodes and hashes. clearSign reports it as indescribable, because only a create or
 // an exercise root is described. An empty prepared transaction cannot be hashed, which would also
 // disable approval.
 const fetchRoot =
@@ -443,7 +443,7 @@ describe('UserUiApprove', () => {
             expect(isComplete(el.clearSigning)).toBe(false)
             expect(el.clearSigning?.operations[0]).toMatchObject({
                 kind: 'other',
-                status: 'undescribable',
+                status: 'indescribable',
             })
             const detail = el.shadowRoot?.querySelector(
                 'wg-transaction-detail'

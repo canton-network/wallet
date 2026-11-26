@@ -415,24 +415,85 @@ describe('parseDescriptor', () => {
         )
     })
 
-    it('rejects __proto__ as an enum name or a table key', () => {
+    it('never matches a __proto__ enum name or table key', () => {
+        // The key is dropped, so a reference to it is missing and the table has no such entry.
         const named = withOwnProto({}, { Yes: 'yes' })
-        expect(() =>
-            parseDescriptor({
-                ...ping,
-                metadata: { ...ping.metadata, enums: named },
-                display: { create: { intent: 'Ping' } },
-            })
-        ).toThrow("'__proto__' is not allowed")
+        const parsed = parseDescriptor({
+            ...ping,
+            metadata: { ...ping.metadata, enums: named },
+            display: { create: { intent: 'Ping' } },
+        })
+        expect(Object.keys(parsed.metadata.enums ?? {})).toEqual([])
 
         const table = withOwnProto({ Yes: 'yes' }, 'no')
+        const withTable = parseDescriptor({
+            ...ping,
+            metadata: { ...ping.metadata, enums: { Side: table } },
+            display: { create: { intent: 'Ping' } },
+        })
+        expect(withTable.metadata.enums?.Side).toEqual({ Yes: 'yes' })
+    })
+
+    it.each([
+        ['an escaped quote', '["a\\"b"]'],
+        ['an escaped backslash', '["a\\\\b"]'],
+        ['a unicode escape', '["a\\u00e9b"]'],
+        ['a non-ASCII character', '["café"]'],
+        ['a chain of keys and names', '["a"]["b"].c["d"]'],
+    ])('accepts a map key path with %s', (_, steps) => {
+        const path = `values${steps}`
         expect(() =>
             parseDescriptor({
                 ...ping,
-                metadata: { ...ping.metadata, enums: { Side: table } },
-                display: { create: { intent: 'Ping' } },
+                display: { create: { intent: 'Ping', fields: [{ path }] } },
             })
-        ).toThrow("'__proto__' is not allowed")
+        ).not.toThrow()
+    })
+
+    it.each([
+        ['an unescaped quote', 'values["a"b"]'],
+        ['a bad escape', 'values["a\\xb"]'],
+        ['a raw control character', 'values["a\u0007b"]'],
+        ['an unterminated key', 'values["a'],
+        ['a dot before a key', 'values.["a"]'],
+        ['a leading key', '["a"]'],
+    ])('rejects a path with %s', (_, path) => {
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                display: { create: { intent: 'Ping', fields: [{ path }] } },
+            })
+        ).toThrow('display.create.fields.0.path')
+    })
+
+    it.each(['', ' ', '\t\n'])('rejects blank display text %j', (text) => {
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                metadata: { ...ping.metadata, name: text },
+            })
+        ).toThrow('metadata.name')
+    })
+
+    it('rejects braces in a stable intent only', () => {
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                display: { create: { intent: 'Ping {id}' } },
+            })
+        ).toThrow('display.create.intent')
+        expect(() =>
+            parseDescriptor({
+                ...ping,
+                display: {
+                    create: {
+                        intent: 'Ping',
+                        interpolatedIntent: 'Ping {id}',
+                        fields: [{ path: 'id' }],
+                    },
+                },
+            })
+        ).not.toThrow()
     })
 })
 

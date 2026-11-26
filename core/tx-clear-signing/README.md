@@ -149,15 +149,9 @@ Five paths read the prepared transaction on both a create and an exercise: `@.co
 - `enum` shows the table entry for an enum constructor, a variant constructor with no payload, or a `Bool`. The table is the one named by `params`. A value missing from the table fails the field.
 - `raw` shows any value: a record, list or map as JSON, a variant as an object keyed by its constructor, `Text` as a JSON string literal, and other scalars as they are. Every entry is written, in order. A text-map key or a record label that occurs twice is shown twice, as `{"to":"alice","to":"mallory"}`, never merged. A record field with an empty label is keyed by its position.
 
-Text shown to the user, including labels, intents and enum entries, cannot contain:
+Text shown to the user, including labels, intents, enum entries, `publisher` and `name`, must contain a non-whitespace character, as ERC-7730 text is otherwise unrestricted. A stable `intent` also cannot contain a brace, so it cannot hold a placeholder.
 
-- a control, format, line-separator or paragraph-separator character;
-- a private-use character;
-- a default-ignorable code point, such as the Hangul fillers U+115F, U+1160, U+3164 and U+FFA0, variation selectors and zero-width characters, which render blank;
-- U+2800, the blank Braille cell;
-- a run of more than two nonspacing or enclosing marks, which would stack over the text around them.
-
-The same characters in a value or name read from the transaction are shown escaped as `\u{...}`. So are unassigned code points, and every mark after the second in a run. Descriptor text does not reject unassigned code points, because which code points are assigned depends on the JavaScript engine's Unicode version. Characters that only look like others, such as a Cyrillic `С` in `USDС`, are not flagged.
+Every string shown to the user is escaped before it is shown, not rejected when the descriptor is read: a control, format, line-separator or paragraph-separator character, a private-use character, a default-ignorable code point (such as the Hangul fillers U+115F, U+1160, U+3164 and U+FFA0, variation selectors and zero-width characters, which render blank), U+2800 (the blank Braille cell) and an unassigned code point are shown as `\u{...}`, and so is every nonspacing or enclosing mark after the second in a run. This holds for the wording of the descriptor and for a value or name read from the transaction alike. Characters that only look like others, such as a Cyrillic `С` in `USDС`, are not flagged.
 
 ### What the parser checks beyond the schema
 
@@ -364,9 +358,9 @@ The types are the interface's, in [@canton-network/core-tx-clear-signing-lib](..
 
 `template` is present on a create, an exercise, a fetch, and a query-by-key. It is absent on a rollback, on a root id that has no node, and on a node whose type is unset.
 
-`descriptor` is set when a valid descriptor is bound to the template: a `described` root, an `unfilled` root, an `undescribed` root whose descriptor has no matching entry, and an `undescribable` exercise whose contract cannot be read. It is absent when no descriptor binds, and when the bound document is `invalid`. `name`, `publisher` and `version` are the descriptor's own metadata, and `url` is present when the descriptor has one. The signature covers them, so a verified descriptor's `publisher` is the one it was signed with. Whether the signing key belongs to that publisher is for the trusted-key list, as [Verification](#verification) describes.
+`descriptor` is set when a valid descriptor is bound to the template: a `described` root, an `unfilled` root, an `undescribed` root whose descriptor has no matching entry, and an `indescribable` exercise whose contract cannot be read. It is absent when no descriptor binds, and when the bound document is `invalid`. `name`, `publisher` and `version` are the descriptor's own metadata, and `url` is present when the descriptor has one. The signature covers them, so a verified descriptor's `publisher` is the one it was signed with. Whether the signing key belongs to that publisher is for the trusted-key list, as [Verification](#verification) describes.
 
-`fields` is empty for `undescribed`, `invalid`, and `undescribable`. For `described` and `unfilled` there is one row per field, in the order the descriptor lists them. A resolved row is `{ label, value }`. A failed row is `{ label, error }`. `label` is the field's label, or its path when the label is omitted.
+`fields` is empty for `undescribed`, `invalid`, and `indescribable`. For `described` and `unfilled` there is one row per field, in the order the descriptor lists them. A resolved row is `{ label, value }`. A failed row is `{ label, error }`. `label` is the field's label, or its path when the label is omitted.
 
 A field error on a `described` operation leaves the status `described`, and `clearSign` still returns the result.
 
@@ -390,7 +384,7 @@ The document bound to the template has no signature, or a signature that does no
 
 The document bound to the template failed to parse, or more than one document names it. The signature check passed: an unsigned document is `unverified` and is not parsed. `intent` is the same generic create or exercise sentence. `reason` is the parser's problems joined with `; `, or `more than one descriptor for template '<packageId:moduleName:entityName>'`.
 
-### `undescribable`
+### `indescribable`
 
 The root cannot be worded, and the other roots are still described.
 
@@ -451,7 +445,7 @@ The extension approval page, [wallet-gateway/extension/entrypoints/approve/index
 
 1. **Hash** the bytes, as Input describes. The implementation is [src/hash.ts](src/hash.ts).
 2. **Decode** the same bytes to a `PreparedTransaction`, in [src/roots.ts](src/roots.ts). What throws here is listed under [The transaction](#the-transaction).
-3. **Read the roots**, `transaction.roots` in order. Roots that are not a create or an exercise are kept, as [`undescribable`](#undescribable) lists.
+3. **Read the roots**, `transaction.roots` in order. Roots that are not a create or an exercise are kept, as [`indescribable`](#indescribable) lists.
 4. **Index the contracts** an exercise can read. The index holds the v1 input contracts and every v1 create node in the transaction, root or child. A contract ID that occurs more than once is recorded and left out of the index. A later root can exercise a contract an earlier node created.
 5. **Bind** each root template to its descriptor, as [The descriptors](#the-descriptors) describes. Its signatures are checked as [Verification](#verification) describes, and then [src/descriptor.ts](src/descriptor.ts) checks the schema.
 6. **Select the entry.** A create uses `display.create`. An exercise uses the `exercises` entry, selected as the descriptor document describes.
@@ -463,7 +457,7 @@ A path that starts with `@.contract.` reads the create argument of the contract 
 
 The contract's package name, module and entity must equal the exercise's. Its package ID may differ, because an upgrade keeps the package name and changes the package ID. The descriptor's own binding is still the package ID of the root's template, together with the module and entity.
 
-A missing contract, a repeated contract ID, or a different package name, module or entity makes that root `undescribable`. `reason` names the contract ID. The other roots are still described.
+A missing contract, a repeated contract ID, or a different package name, module or entity makes that root `indescribable`. `reason` names the contract ID. The other roots are still described.
 
 ### Roots and children
 

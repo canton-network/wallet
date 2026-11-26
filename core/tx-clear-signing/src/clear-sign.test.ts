@@ -444,7 +444,7 @@ describe('clearSign', () => {
         tx.metadata?.inputContracts.push(input)
         const [op] = (await described(encode(tx), [ping])).operations
         expect(op).toMatchObject({
-            status: 'undescribable',
+            status: 'indescribable',
             reason: expect.stringMatching(/occurs more than once/),
         })
     })
@@ -458,7 +458,7 @@ describe('clearSign', () => {
         input.v1.templateId.entityName = 'Other'
         const [op] = (await described(encode(tx), [ping])).operations
         expect(op).toMatchObject({
-            status: 'undescribable',
+            status: 'indescribable',
             reason: expect.stringMatching(
                 /is '.*:Canton\.Internal\.Ping:Other', not '.*:Canton\.Internal\.Ping:Ping'/
             ),
@@ -474,7 +474,7 @@ describe('clearSign', () => {
         input.v1.packageName = 'another-package'
         const [op] = (await described(encode(tx), [ping])).operations
         expect(op).toMatchObject({
-            status: 'undescribable',
+            status: 'indescribable',
             reason: expect.stringMatching(
                 /is 'another-package:Canton\.Internal\.Ping:Ping'/
             ),
@@ -533,7 +533,7 @@ describe('clearSign', () => {
         tx.metadata.inputContracts = []
         const [op] = (await described(encode(tx), [ping])).operations
         expect(op).toMatchObject({
-            status: 'undescribable',
+            status: 'indescribable',
             reason: expect.stringMatching(
                 /is neither an input contract nor created by the transaction/
             ),
@@ -832,6 +832,42 @@ describe('clearSign', () => {
         const error = shown(op?.fields[0])
         expect(error).toContain('\\u{202e}')
         expect(error).not.toContain(RLO)
+    })
+
+    it('escapes unsafe characters in the wording of a descriptor', async () => {
+        const RLO = String.fromCodePoint(0x202e)
+        const FILLER = String.fromCodePoint(0x3164)
+        const descriptor = parseDescriptor({
+            ...pingJson,
+            metadata: {
+                ...pingJson.metadata,
+                publisher: `Block${RLO}daemon`,
+                name: `Ping${FILLER}`,
+            },
+            display: {
+                create: {
+                    intent: `Ping${RLO}`,
+                    interpolatedIntent: `Ping${RLO} {id}`,
+                    fields: [{ path: 'id', format: 'string' }],
+                },
+            },
+        })
+        const [op] = (await described(builtinPingCreate, [descriptor]))
+            .operations
+        expect(op?.status).toBe('described')
+        expect(op?.intent).toContain('Ping\\u{202e} ')
+        expect(op?.descriptor?.publisher).toBe('Block\\u{202e}daemon')
+        expect(op?.descriptor?.name).toBe('Ping\\u{3164}')
+        expect(JSON.stringify(op)).not.toContain(RLO)
+        expect(JSON.stringify(op)).not.toContain(FILLER)
+
+        const stable = parseDescriptor({
+            ...pingJson,
+            display: { create: { intent: `Ping${RLO}` } },
+        })
+        const [plain] = (await described(builtinPingCreate, [stable]))
+            .operations
+        expect(plain?.intent).toBe('Ping\\u{202e}')
     })
 
     it('reports a descriptor with no trusted signature as unverified', async () => {

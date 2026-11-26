@@ -343,24 +343,23 @@ function jsonObject(members: [string, string][]): string {
 // - private-use characters, and default-ignorable code points such as the Hangul fillers U+115F,
 //   U+1160, U+3164 and U+FFA0, which render blank;
 // - U+2800, the blank Braille cell.
-// Descriptor text rejects the same set.
+// The wording of a descriptor is escaped the same way when it is shown.
 // U+2800 is written as an escape, so the source does not hide a blank character.
 const BLANK_BRAILLE_CELL = '\\u2800'
-export const UNSAFE_CLASS =
+const UNSAFE_CLASS =
     String.raw`\p{Cc}\p{Cf}\p{Zl}\p{Zp}\p{Co}\p{Default_Ignorable_Code_Point}` +
     BLANK_BRAILLE_CELL
 
 /** Nonspacing and enclosing marks: the marks that stack on the character before them. */
-export const STACKING_MARK_CLASS = String.raw`\p{Mn}\p{Me}`
+const STACKING_MARK_CLASS = String.raw`\p{Mn}\p{Me}`
 
 /**
  * The most stacking marks shown in a row. Two cover a base letter with two diacritics, as in
- * Vietnamese written decomposed. Descriptor text rejects a longer run.
+ * Vietnamese written decomposed.
  */
-export const MAX_MARK_RUN = 2
+const MAX_MARK_RUN = 2
 
-// Unassigned code points are escaped for display too. Descriptor text does not reject them, because
-// which code points are assigned depends on the Unicode version of the JavaScript engine.
+// Unassigned code points are escaped for display too.
 const ESCAPED = new RegExp(`[${UNSAFE_CLASS}\\p{Cn}]`, 'u')
 const STACKING_MARK = new RegExp(`[${STACKING_MARK_CLASS}]`, 'u')
 

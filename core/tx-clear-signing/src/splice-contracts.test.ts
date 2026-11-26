@@ -254,7 +254,7 @@ describe('wallet and apps', () => {
         ])
     })
 
-    it('describes every fixture that is not marked undescribable', async () => {
+    it('describes every fixture that is not marked indescribable', async () => {
         const intents: Record<string, string> = {}
         const marked: string[] = []
         for (const id of capturedIds) {
@@ -263,8 +263,8 @@ describe('wallet and apps', () => {
             const { operations } = result
             expect(operations, id).toHaveLength(1)
             const op = operations[0]!
-            if (fixture.undescribable !== undefined) {
-                expect(fixture.undescribable, id).not.toBe('')
+            if (fixture.indescribable !== undefined) {
+                expect(fixture.indescribable, id).not.toBe('')
                 expect(op.status, id).toBe('undescribed')
                 marked.push(id)
                 continue

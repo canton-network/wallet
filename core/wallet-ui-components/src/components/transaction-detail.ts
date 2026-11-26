@@ -33,7 +33,7 @@ const OPERATION_STATUS_LABELS: Record<
     undescribed: 'Not described',
     unverified: 'Unverified descriptor',
     invalid: 'Invalid descriptor',
-    undescribable: 'Cannot describe',
+    indescribable: 'Cannot describe',
 }
 
 const OPERATION_KIND_LABELS: Record<OperationDescription['kind'], string> = {

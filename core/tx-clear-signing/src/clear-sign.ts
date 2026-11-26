@@ -222,7 +222,7 @@ function describeNode(
     }
     if (node.kind === 'other') {
         const reason = `root node '${node.nodeId}' is a '${node.nodeType}' node`
-        return { ...generic, status: 'undescribable', reason: sanitize(reason) }
+        return { ...generic, status: 'indescribable', reason: sanitize(reason) }
     }
     const binding =
         header.template && bindings.get(templateKey(header.template))
@@ -263,7 +263,7 @@ function describeNode(
     if ('reason' in args) {
         return {
             ...described,
-            status: 'undescribable',
+            status: 'indescribable',
             reason: sanitize(args.reason),
         }
     }
@@ -353,8 +353,8 @@ function descriptorInfo({
 }: Descriptor): NonNullable<OperationDescription['descriptor']> {
     const { name, publisher, version, url } = metadata
     return {
-        name,
-        publisher,
+        name: sanitize(name),
+        publisher: sanitize(publisher),
         version,
         ...(url !== undefined && { url }),
     }
@@ -486,7 +486,7 @@ function describeOperation(
     const declared = op.fields ?? []
     const fields = declared.map((f) => describeField(f, args, enums))
     if (op.interpolatedIntent === undefined) {
-        return { status: 'described', intent: op.intent, fields }
+        return { status: 'described', intent: sanitize(op.intent), fields }
     }
     const byPath = new Map(declared.map((f, i) => [f.path, fields[i]]))
     const intent = interpolate(op.interpolatedIntent, byPath)
@@ -498,7 +498,7 @@ function describeOperation(
             fields,
         }
     }
-    return { status: 'described', intent, fields }
+    return { status: 'described', intent: sanitize(intent), fields }
 }
 
 /** Why an interpolated intent could not be filled, one failing placeholder at a time. */
