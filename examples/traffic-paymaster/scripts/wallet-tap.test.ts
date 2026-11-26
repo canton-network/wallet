@@ -22,7 +22,7 @@ const prepared: Awaited<ReturnType<AmuletNamespace['tap']>> = [
     [{ contractId: 'amulet-rules', createdEventBlob: 'blob' }],
 ]
 
-test('submits the tap and disclosures through the connected wallet', async () => {
+void test('submits the tap and disclosures through the connected wallet', async () => {
     const requests: Parameters<typeof prepareExecuteAndWait>[0][] = []
     const amulet: Pick<AmuletNamespace, 'tap'> = {
         async tap(party, amount) {
@@ -46,7 +46,7 @@ test('submits the tap and disclosures through the connected wallet', async () =>
     assert.deepEqual(requests[0].disclosedContracts, prepared[1])
 })
 
-test('propagates a wallet rejection', async () => {
+void test('propagates a wallet rejection', async () => {
     const rejection = new Error('Rejected by the user')
     await assert.rejects(
         tapAmuletWithWallet({ tap: async () => prepared }, partyId, () =>
@@ -56,7 +56,7 @@ test('propagates a wallet rejection', async () => {
     )
 })
 
-test('does not submit when creating the tap fails', async () => {
+void test('does not submit when creating the tap fails', async () => {
     const failure = new Error('Could not create tap')
     let submitted = false
     await assert.rejects(

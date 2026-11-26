@@ -66,7 +66,7 @@ export function useConnect() {
 
         const onAccountsChanged = (event: sdk.dappAPI.AccountsChangedEvent) =>
             setAccounts(event as unknown as sdk.dappAPI.Wallet[])
-        sdk.onAccountsChanged(onAccountsChanged)
+        void sdk.onAccountsChanged(onAccountsChanged)
         return () => {
             void sdk.removeOnAccountsChanged(onAccountsChanged)
             setAccounts(undefined)

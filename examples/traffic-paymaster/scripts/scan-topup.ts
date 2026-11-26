@@ -59,12 +59,10 @@ async function main() {
     )
     console.log('Leave this running. Ctrl+C to stop.')
 
-    let stopped = false
-    process.on('SIGINT', () => {
-        stopped = true
-    })
+    const stop = new AbortController()
+    process.on('SIGINT', () => stop.abort())
 
-    while (!stopped) {
+    while (!stop.signal.aborted) {
         const responses = await ledger.request<Ops.PostV2Updates>({
             method: 'ledgerApi',
             params: {
