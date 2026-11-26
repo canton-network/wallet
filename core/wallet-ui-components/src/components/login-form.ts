@@ -8,12 +8,20 @@ import type {
 import { css, html, nothing, type PropertyValues } from 'lit'
 
 import './back-link.ts'
-import './scope-list.ts'
+import './scope-consent.ts'
 import { customElement, property, state } from 'lit/decorators.js'
 
 import cantonLogo from '../../images/logos/canton-logo.png'
 import { chevronDownIcon } from '../icons/index.ts'
 import { BaseElement } from '../internal/base-element.ts'
+import { assessScopes } from '../logic/scopes.ts'
+
+const CONSENT_LABELS = {
+    none: 'I allow this dApp full access',
+    scoped: 'I allow this dApp to use these permissions',
+    partial: 'I allow this dApp to use these permissions',
+    unrecognized: 'I understand this dApp may get full access',
+} as const
 
 /** Emitted when the user clicks the Connect button */
 export class LoginConnectEvent extends Event {
@@ -289,23 +297,13 @@ class WgLoginForm extends BaseElement {
     }
 
     private renderScopesConsent() {
-        const origin = html`<strong class="text-break">${this.origin}</strong>`
-        const isScoped = !!this.scopes?.length
+        const { verdict } = assessScopes(this.scopes)
 
-        return html`<div class="alert alert-warning">
-            ${
-                isScoped
-                    ? html`<p class="mb-2">
-                              ${origin} requested ledger permissions:
-                          </p>
-                          <wg-scope-list
-                              .scopes=${this.scopes}
-                          ></wg-scope-list>`
-                    : html`<p class="mb-2">
-                          ${origin} requested no specific permissions and will
-                          have full ledger access.
-                      </p>`
-            }
+        return html`<div class="mb-3">
+            <wg-scope-consent
+                .scopes=${this.scopes}
+                .origin=${this.origin}
+            ></wg-scope-consent>
             <div class="form-check mt-2 mb-0">
                 <input
                     id="scopes-consent"
@@ -315,11 +313,7 @@ class WgLoginForm extends BaseElement {
                     ?disabled=${this.connecting}
                 />
                 <label class="form-check-label" for="scopes-consent"
-                    >${
-                        isScoped
-                            ? 'I allow this dApp to use these permissions'
-                            : 'I allow this dApp full access'
-                    }</label
+                    >${CONSENT_LABELS[verdict]}</label
                 >
             </div>
         </div>`

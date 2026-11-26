@@ -193,14 +193,74 @@ export const ScopedConsent: Story = {
     },
     play: async ({ canvasElement }) => {
         await expect(
+            await findByShadowText(canvasElement, /requests limited access/)
+        ).toBeInTheDocument()
+        await expect(
             await findByShadowText(canvasElement, 'ledger:read')
         ).toBeInTheDocument()
         await expect(
             await findByShadowText(canvasElement, 'users:self')
         ).toBeInTheDocument()
+        // Recognized scopes explain what they allow
+        await expect(
+            await findByShadowRole(canvasElement, 'button', {
+                name: 'About ledger:read',
+            })
+        ).toBeInTheDocument()
         await expect(
             await findByShadowRole(canvasElement, 'checkbox', {
                 name: 'I allow this dApp to use these permissions',
+            })
+        ).toBeRequired()
+    },
+}
+
+export const PartiallyRecognizedConsent: Story = {
+    args: {
+        scopes: ['ledger:read', 'Iedger:act'],
+        origin: 'https://dapp.example',
+    },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                /doesn't recognize some of the permissions/
+            )
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'ledger:read')
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, 'Iedger:act')
+        ).toBeInTheDocument()
+        await expect(
+            queryByShadowRole(canvasElement, 'button', {
+                name: 'About Iedger:act',
+            })
+        ).not.toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'checkbox', {
+                name: 'I allow this dApp to use these permissions',
+            })
+        ).toBeRequired()
+    },
+}
+
+export const UnrecognizedConsent: Story = {
+    args: { scopes: ['Iedger:read'], origin: 'https://dapp.example' },
+    play: async ({ canvasElement }) => {
+        await expect(
+            await findByShadowText(
+                canvasElement,
+                /requests permissions Wallet Gateway doesn't recognize/
+            )
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowText(canvasElement, /the dApp gets full access/)
+        ).toBeInTheDocument()
+        await expect(
+            await findByShadowRole(canvasElement, 'checkbox', {
+                name: 'I understand this dApp may get full access',
             })
         ).toBeRequired()
     },
