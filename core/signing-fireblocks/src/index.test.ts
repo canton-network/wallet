@@ -8,7 +8,6 @@ import {
     type Key,
     type Error as RpcError,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { PublicKeyInformationAlgorithmEnum } from '@fireblocks/ts-sdk'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -42,12 +41,12 @@ const FAKE_TRANSACTION: FireblocksTransaction = {
     derivationPath: TEST_FIREBLOCKS_DERIVATION_PATH,
 }
 
-const TEST_AUTH_CONTEXT: AuthContext = {
+const TEST_AUTH_CONTEXT = {
     userId: 'test-user-id',
     accessToken: 'test-access-token',
 }
 
-const TEST_BAD_AUTH_CONTEXT: AuthContext = {
+const TEST_BAD_AUTH_CONTEXT = {
     userId: 'bad-user-id',
     accessToken: 'test-access-token',
 }
@@ -127,7 +126,7 @@ async function setupTest(keyName: string = TEST_KEY_NAME): Promise<TestValues> {
         signingDriver,
         noDefaultSigningDriver,
         key: { ...TEST_KEY, name: keyName },
-        controller: signingDriver.controller(TEST_AUTH_CONTEXT.userId),
+        controller: signingDriver.controller({ sub: TEST_AUTH_CONTEXT.userId }),
     }
 }
 
@@ -152,7 +151,7 @@ describe('FireblocksSigningDriver', () => {
             new Error('User does not exist in Fireblocks')
         )
         const result = await noDefaultSigningDriver
-            .controller(TEST_BAD_AUTH_CONTEXT.userId)
+            .controller({ sub: TEST_BAD_AUTH_CONTEXT.userId })
             .getKeys()
         expect(isRpcError(result)).toBe(true)
         if (isRpcError(result)) {
@@ -163,7 +162,7 @@ describe('FireblocksSigningDriver', () => {
     it('non-existing user can use driver that does have a default', async () => {
         const { signingDriver } = await setupTest()
         const keys = await signingDriver
-            .controller(TEST_BAD_AUTH_CONTEXT.userId)
+            .controller({ sub: TEST_BAD_AUTH_CONTEXT.userId })
             .getKeys()
         throwWhenRpcError(keys)
         expect(keys.keys).toHaveLength(1)
@@ -453,7 +452,7 @@ describe('FireblocksSigningDriver', () => {
         })
 
         const config = await signingDriver
-            .controller(TEST_AUTH_CONTEXT.userId)
+            .controller({ sub: TEST_AUTH_CONTEXT.userId })
             .getConfiguration()
         throwWhenRpcError(config)
 

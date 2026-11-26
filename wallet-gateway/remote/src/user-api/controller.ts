@@ -1422,6 +1422,11 @@ export const userController = ({
         ): Promise<GeneratedApiKey> => {
             const userId = assertConnected(authContext).userId
             const network = await store.getCurrentNetwork()
+            if (!supportsApiKeys(network)) {
+                throw rpcErrors.invalidRequest({
+                    message: `API keys can't be used on network '${network.id}' because it has no service account auth configured`,
+                })
+            }
 
             const apiKeyId = crypto.randomUUID()
             const generatedApiKey = randomBytes(32).toString('hex')
@@ -1464,7 +1469,8 @@ export const userController = ({
                     createdAt: key.createdAt.toISOString(),
                 }))
             )
-            return { apiKeys }
+            const network = await store.getCurrentNetwork()
+            return { apiKeys, apiKeysSupported: supportsApiKeys(network) }
         },
         removeApiKey: async (params: RemoveApiKeyParams): Promise<Null> => {
             await store.removeApiKey(params.id)
@@ -1612,6 +1618,11 @@ function mergeScopes(networkScope: string, scopes: string[] = []): string {
     return [...new Set([...networkScope.split(/\s+/), ...requested])]
         .filter(Boolean)
         .join(' ')
+}
+
+/** API keys get their ledger tokens through the network's service account auth */
+function supportsApiKeys(network: Network): boolean {
+    return network.serviceAccountAuth?.method === 'client_credentials'
 }
 
 function toAuthDto(auth: Auth, redactSecrets: boolean): ApiNetwork['auth'] {

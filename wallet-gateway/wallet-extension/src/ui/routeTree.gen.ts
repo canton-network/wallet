@@ -17,6 +17,7 @@ import { Route as UnlockedConnectedRouteImport } from './routes/_unlocked/_conne
 import { Route as OnboardingIndexRouteImport } from './routes/onboarding/index'
 import { Route as OnboardingPasswordRouteImport } from './routes/onboarding/password'
 import { Route as UnlockedConnectIndexRouteImport } from './routes/_unlocked/connect/index'
+import { Route as UnlockedConnectedAssetsIndexRouteImport } from './routes/_unlocked/_connected/assets/index'
 import { Route as UnlockedConnectedPartiesIndexRouteImport } from './routes/_unlocked/_connected/parties/index'
 import { Route as UnlockedConnectedPartiesAddRouteImport } from './routes/_unlocked/_connected/parties/add'
 
@@ -58,6 +59,12 @@ const UnlockedConnectIndexRoute = UnlockedConnectIndexRouteImport.update({
   path: '/connect/',
   getParentRoute: () => UnlockedRoute,
 } as any)
+const UnlockedConnectedAssetsIndexRoute =
+  UnlockedConnectedAssetsIndexRouteImport.update({
+    id: '/assets/',
+    path: '/assets/',
+    getParentRoute: () => UnlockedConnectedRoute,
+  } as any)
 const UnlockedConnectedPartiesIndexRoute =
   UnlockedConnectedPartiesIndexRouteImport.update({
     id: '/parties/',
@@ -79,6 +86,7 @@ export interface FileRoutesByFullPath {
   '/onboarding/': typeof OnboardingIndexRoute
   '/connect/': typeof UnlockedConnectIndexRoute
   '/parties/add': typeof UnlockedConnectedPartiesAddRoute
+  '/assets/': typeof UnlockedConnectedAssetsIndexRoute
   '/parties/': typeof UnlockedConnectedPartiesIndexRoute
 }
 export interface FileRoutesByTo {
@@ -88,6 +96,7 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingIndexRoute
   '/connect': typeof UnlockedConnectIndexRoute
   '/parties/add': typeof UnlockedConnectedPartiesAddRoute
+  '/assets': typeof UnlockedConnectedAssetsIndexRoute
   '/parties': typeof UnlockedConnectedPartiesIndexRoute
 }
 export interface FileRoutesById {
@@ -101,6 +110,7 @@ export interface FileRoutesById {
   '/onboarding/': typeof OnboardingIndexRoute
   '/_unlocked/connect/': typeof UnlockedConnectIndexRoute
   '/_unlocked/_connected/parties/add': typeof UnlockedConnectedPartiesAddRoute
+  '/_unlocked/_connected/assets/': typeof UnlockedConnectedAssetsIndexRoute
   '/_unlocked/_connected/parties/': typeof UnlockedConnectedPartiesIndexRoute
 }
 export interface FileRouteTypes {
@@ -113,6 +123,7 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/connect/'
     | '/parties/add'
+    | '/assets/'
     | '/parties/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -122,6 +133,7 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/connect'
     | '/parties/add'
+    | '/assets'
     | '/parties'
   id:
     | '__root__'
@@ -134,6 +146,7 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/_unlocked/connect/'
     | '/_unlocked/_connected/parties/add'
+    | '/_unlocked/_connected/assets/'
     | '/_unlocked/_connected/parties/'
   fileRoutesById: FileRoutesById
 }
@@ -202,6 +215,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnlockedConnectIndexRouteImport
       parentRoute: typeof UnlockedRoute
     }
+    '/_unlocked/_connected/assets/': {
+      id: '/_unlocked/_connected/assets/'
+      path: '/assets'
+      fullPath: '/assets/'
+      preLoaderRoute: typeof UnlockedConnectedAssetsIndexRouteImport
+      parentRoute: typeof UnlockedConnectedRoute
+    }
     '/_unlocked/_connected/parties/': {
       id: '/_unlocked/_connected/parties/'
       path: '/parties'
@@ -221,11 +241,13 @@ declare module '@tanstack/react-router' {
 
 interface UnlockedConnectedRouteChildren {
   UnlockedConnectedPartiesAddRoute: typeof UnlockedConnectedPartiesAddRoute
+  UnlockedConnectedAssetsIndexRoute: typeof UnlockedConnectedAssetsIndexRoute
   UnlockedConnectedPartiesIndexRoute: typeof UnlockedConnectedPartiesIndexRoute
 }
 
 const UnlockedConnectedRouteChildren: UnlockedConnectedRouteChildren = {
   UnlockedConnectedPartiesAddRoute: UnlockedConnectedPartiesAddRoute,
+  UnlockedConnectedAssetsIndexRoute: UnlockedConnectedAssetsIndexRoute,
   UnlockedConnectedPartiesIndexRoute: UnlockedConnectedPartiesIndexRoute,
 }
 

@@ -162,14 +162,16 @@ describe('createWalletStore', () => {
         expect(read).toEqual(transaction())
     })
 
-    it('starts a new vault with the local network and the mock IdP', async () => {
+    it('starts a new vault with the seeded networks and IdPs', async () => {
         const store = await createWalletStore(await createdVault()).get()
 
         expect((await store.listNetworks()).map(({ id }) => id)).toEqual([
             NETWORK_ID,
+            'canton:localnet',
         ])
         expect((await store.listIdps()).map(({ id }) => id)).toEqual([
             'idp-mock-oauth',
+            'idp-self-signed',
         ])
     })
 

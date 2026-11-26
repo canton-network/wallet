@@ -6,6 +6,9 @@
     },
     "references": [
         {
+            "path": "../../sdk/wallet-sdk"
+        },
+        {
             "path": "../../core/wallet-user-rpc-client"
         },
         {
@@ -27,6 +30,18 @@
             "path": "../../core/types"
         },
         {
+            "path": "../../core/tx-parser"
+        },
+        {
+            "path": "../../core/token-standard-v2"
+        },
+        {
+            "path": "../../core/token-standard-service"
+        },
+        {
+            "path": "../../core/token-standard"
+        },
+        {
             "path": "../../core/signing-lib"
         },
         {
@@ -34,6 +49,9 @@
         },
         {
             "path": "../../core/rpc-errors"
+        },
+        {
+            "path": "../../core/ledger-client-types"
         },
         {
             "path": "../../core/ledger-client"

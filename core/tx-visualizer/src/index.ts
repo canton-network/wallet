@@ -17,10 +17,6 @@ import {
 
 import { fromBase64, toBase64, toHex } from './utils.ts'
 export {
-    computeSha256CantonHash,
-    computeMultiHashForTopology,
-} from './hashing_scheme_v2.ts'
-export {
     decodeUnknownFields,
     type RawFields,
     type RawValue,

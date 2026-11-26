@@ -14,6 +14,7 @@ import {
     loadVectors,
     V2,
     V3,
+    V4,
     vectorFiles,
     type Vector,
 } from './helpers/load-vectors.ts'
@@ -44,6 +45,7 @@ const ERROR_CODES: Record<TxHashingErrorCode, true> = {
 const KIND_OF_FOLDER: Record<string, Vector['kind']> = {
     v2: 'accepted',
     v3: 'accepted',
+    v4: 'accepted',
     'held-out': 'held-out',
     mutation: 'mutation',
     reject: 'reject',
@@ -103,7 +105,8 @@ describe('the corpus', () => {
             expect(v.kind, path).toBe(KIND_OF_FOLDER[folder])
             expect(v.id, path).toBe(ids[i])
             expect(v.scheme, path).toBeTypeOf('string')
-            if (v.kind !== 'reject') expect([V2, V3], path).toContain(v.scheme)
+            if (v.kind !== 'reject')
+                expect([V2, V3, V4], path).toContain(v.scheme)
             expect(isCanonicalBase64(v.preparedTransaction), path).toBe(true)
             if (v.kind === 'reject') {
                 expect(Object.keys(v.expected), path).toEqual(['error'])

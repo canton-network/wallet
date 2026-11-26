@@ -8,3 +8,9 @@ export {
     type HashOptions,
 } from './hash.ts'
 export { DEFAULT_LIMITS, type TraversalLimits } from './limits.ts'
+export {
+    computeMultiHashForTopology,
+    computeSha256CantonHash,
+    computeTopologyMultiHash,
+    HashPurpose,
+} from './topology.ts'
