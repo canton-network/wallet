@@ -15,6 +15,7 @@ import {
     createPaymasterClient,
     fetchTrafficBalance,
 } from './lib/paymasterClient.ts'
+import { tapAmuletWithWallet } from './lib/tapAmulet.ts'
 
 /** The token registry (asset/transfer resolution) -- distinct from the traffic registry below. */
 const tokenRegistryUrl = localNetStaticConfig.LOCALNET_REGISTRY_API_URL
@@ -36,6 +37,7 @@ function App() {
     const [balance, setBalance] = useState<number>()
     const [amuletBalance, setAmuletBalance] = useState<string>()
     const [trafficAmount, setTrafficAmount] = useState('2097152')
+    const [tapping, setTapping] = useState(false)
     const [purchasing, setPurchasing] = useState(false)
     const [lastResult, setLastResult] = useState<string>()
 
@@ -115,6 +117,26 @@ function App() {
     }
 
     useEffect(refreshAmulet, [sdk, primaryParty])
+
+    async function tapAmulet() {
+        if (!sdk || !primaryParty) return
+        setError(undefined)
+        setLastResult(undefined)
+        setTapping(true)
+        try {
+            await tapAmuletWithWallet(
+                sdk.amulet,
+                primaryParty,
+                dappSdk.prepareExecuteAndWait
+            )
+            setLastResult('Tapped 10 Amulet.')
+            refreshAmulet()
+        } catch (err) {
+            setError(err instanceof Error ? err.message : String(err))
+        } finally {
+            setTapping(false)
+        }
+    }
 
     async function purchase() {
         if (!sdk || !primaryParty || !trafficRegistryUrl) return
@@ -276,13 +298,8 @@ function App() {
             <section>
                 <h2>Buy traffic</h2>
                 <p className="muted">
-                    Paid in Amulet. If the purchase fails with "Sender has no
-                    holdings", your party has no Amulet yet -- fund it with the
-                    <code>
-                        {' '}
-                        pnpm tap-amulet -- &lt;partyId&gt; [amount]
-                    </code>{' '}
-                    script first.
+                    Paid in Amulet. On LocalNet, use the tap below to fund your
+                    connected wallet before purchasing.
                 </p>
                 <dl>
                     <dt>Amulet balance</dt>
@@ -293,6 +310,12 @@ function App() {
                     disabled={!sdk || !primaryParty}
                 >
                     Refresh Amulet
+                </button>{' '}
+                <button
+                    onClick={tapAmulet}
+                    disabled={!sdk || !primaryParty || tapping || purchasing}
+                >
+                    {tapping ? 'Tapping…' : 'Tap 10 Amulet (LocalNet only)'}
                 </button>
                 <br />
                 <br />
@@ -311,6 +334,7 @@ function App() {
                         !sdk ||
                         !primaryParty ||
                         !trafficRegistryUrl ||
+                        tapping ||
                         purchasing
                     }
                 >

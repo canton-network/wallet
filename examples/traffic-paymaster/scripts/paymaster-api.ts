@@ -28,6 +28,16 @@ const BASE_PATH = '/registry/traffic-purchase/v1'
 const RATES_PATH = `${BASE_PATH}/conversion-rates/`
 const TRAFFIC_PATH = `${BASE_PATH}/traffic/`
 
+type PaymasterTraffic = Pick<
+    AdminSdk['traffic'],
+    'readTrafficSetup' | 'getTraffic'
+>
+type PaymasterLedger = {
+    acsReader: {
+        raw: Pick<AdminSdk['ledger']['acsReader']['raw'], 'readJsContracts'>
+    }
+}
+
 class ApiError extends Error {
     readonly status: number
 
@@ -39,14 +49,14 @@ class ApiError extends Error {
 
 export class PaymasterApi {
     private readonly server: Server
-    private readonly traffic: AdminSdk['traffic']
-    private readonly ledger: AdminSdk['ledger']
+    private readonly traffic: PaymasterTraffic
+    private readonly ledger: PaymasterLedger
     private readonly paymaster: PartyId
     public readonly url: string
 
     private constructor(
-        traffic: AdminSdk['traffic'],
-        ledger: AdminSdk['ledger'],
+        traffic: PaymasterTraffic,
+        ledger: PaymasterLedger,
         paymaster: PartyId,
         server: Server
     ) {
@@ -72,8 +82,8 @@ export class PaymasterApi {
     }
 
     static async start(options: {
-        traffic: AdminSdk['traffic']
-        ledger: AdminSdk['ledger']
+        traffic: PaymasterTraffic
+        ledger: PaymasterLedger
         paymaster: PartyId
         port?: number
     }): Promise<PaymasterApi> {
@@ -105,9 +115,13 @@ export class PaymasterApi {
             // Logged, not just returned: a 500 the browser shows as an opaque
             // "Internal Server Error" is far easier to diagnose from the real
             // cause printed in this server's own terminal.
-            console.error(`Request to ${target} failed:`, error)
-            send(response, error instanceof ApiError ? error.status : 500, {
-                error: error instanceof Error ? error.message : String(error),
+            console.error('Request to %s failed:', target, error)
+            const status = error instanceof ApiError ? error.status : 500
+            send(response, status, {
+                error:
+                    error instanceof ApiError && status < 500
+                        ? error.message
+                        : 'Internal Server Error',
             })
         }
     }
