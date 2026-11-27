@@ -2,12 +2,15 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { TransferInstructionView } from '@canton-network/core-token-standard'
-import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import type { TransferInstructionView as TransferInstructionViewV2 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 
 import type { TokenStandardVersion } from './client.ts'
 import { getTransferActions, type TransferAction } from './transfer-actions.ts'
+
+// `TokenStandardService.MEMO_KEY`. Importing the service for it would add
+// about 140 kB to the extension popup.
+const MEMO_KEY = 'splice.lfdecentralizedtrust.org/reason'
 
 export interface PendingTransfer {
     contractId: string
@@ -50,7 +53,7 @@ export function pendingTransfers(
             amount: transfer.amount,
             sender: transfer.sender,
             receiver: transfer.receiver,
-            memo: transfer.meta?.values?.[TokenStandardService.MEMO_KEY] ?? '',
+            memo: transfer.meta?.values?.[MEMO_KEY] ?? '',
             requestedAt: transfer.requestedAt,
             executeBefore: transfer.executeBefore,
         })
@@ -64,7 +67,7 @@ export function pendingTransfers(
             amount: transfer.amount,
             sender: transfer.sender.owner ?? '',
             receiver: transfer.receiver.owner ?? '',
-            memo: transfer.meta?.values?.[TokenStandardService.MEMO_KEY] ?? '',
+            memo: transfer.meta?.values?.[MEMO_KEY] ?? '',
             requestedAt: transfer.requestedAt,
             executeBefore: transfer.executeBefore,
             availableActions: interfaceViewValue.availableActions,
