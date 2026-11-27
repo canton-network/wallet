@@ -105,11 +105,17 @@ describe('createSiteApprovals', () => {
      * Opens the presence port of a page in tab 7, and gives the tab of its
      * requests, as `registerDappService` would.
      */
-    const openPage = ({
-        documentId = tab.page as string | undefined,
-        frameId = 0,
-        pageOrigin = origin,
-    } = {}) => {
+    const openPage = (
+        options: {
+            documentId?: string | undefined
+            frameId?: number
+            pageOrigin?: string
+        } = {}
+    ) => {
+        // An explicit undefined is a sender without a documentId (Firefox).
+        const documentId =
+            'documentId' in options ? options.documentId : tab.page
+        const { frameId = 0, pageOrigin = origin } = options
         const port = connectPresence({
             tab: { id: tab.tabId, windowId: tab.windowId } as Browser.tabs.Tab,
             documentId,
