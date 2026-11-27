@@ -2,4 +2,4 @@
 // SPDX-License-Identifier: Apache-2.0
 
 export * from './service.ts'
-export type * from './converter.ts'
+export type { Converter } from '@canton-network/core-tx-hashing'

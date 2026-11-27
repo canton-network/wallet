@@ -2,7 +2,7 @@
 
 Computes the hash of a Canton prepared transaction under hashing schemes V2, V3 and V4, and the multi-hash of a set of topology transactions. V4 also hashes the results of Daml external calls, and from protocol version 36 the participant needs it for a transaction that makes them. The validator returns this hash with the prepared transaction only for convenience: a wallet that does not trust the validator computes it from the bytes, compares, and signs its own.
 
-`@canton-network/wallet-sdk` (`sdk.utils.hash.preparedTransaction`, `sdk.utils.hash.topologyTransaction`) and `@canton-network/core-tx-visualizer` (`hashPreparedTransaction`) hash with this package.
+`@canton-network/wallet-sdk` (`sdk.utils.hash.preparedTransaction`, `sdk.utils.hash.topologyTransaction`) hashes with this package.
 
 ## Installation
 
@@ -37,6 +37,8 @@ if (btoa(String.fromCharCode(...hash)) !== response.preparedTransactionHash) {
 - `input`: the protobuf bytes of the `PreparedTransaction`, or the same bytes in base64 as the JSON API returns them.
 - `scheme`: `HashingSchemeVersion.V2`, `.V3` or `.V4` of `@canton-network/core-ledger-proto`, or the JSON API names `'HASHING_SCHEME_VERSION_V2'`, `'HASHING_SCHEME_VERSION_V3'` and `'HASHING_SCHEME_VERSION_V4'`.
 - `options.limits`: see [Limits](#limits).
+
+`hashPreparedTransaction(preparedTransaction, options?)` resolves to the same hash as a `Converter`, to read with `toBase64()` or `toHex()`. It also takes a `PreparedTransaction` that `@canton-network/core-ledger-proto` decoded, the scheme as `options.hashingScheme` (V2 by default), and `options.readUnknownField: false` to drop unknown fields of a base64 input instead of refusing them. `sdk.utils.hash.preparedTransaction` of `@canton-network/wallet-sdk` hashes with it.
 
 The [wallet integration guide example](../../docs/wallet-integration-guide/examples/snippets/verify-transaction-hash.ts) runs the same check with the Wallet SDK, from prepare to execute.
 

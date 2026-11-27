@@ -3,7 +3,6 @@
 
 import {
     DamlTransaction,
-    HashingSchemeVersion,
     PreparedTransaction,
     UntypedVersionedMessage,
     v30_topology,
@@ -16,21 +15,18 @@ import {
 import camelcaseKeys from 'camelcase-keys'
 import { expect, test, it, describe } from 'vitest'
 
-import bigInt64V2 from './__tests__/fixtures/big-int64-v2.json'
 import createPingFixture from './__tests__/fixtures/create_ping_prepared_response.json'
 import generateTopology372 from './__tests__/fixtures/generate-topology-3.7.2.json'
-import createPlainV3 from './__tests__/fixtures/v3-create-plain.json'
 import {
     type DecodeOptions,
     decodePreparedTransaction,
     decodeUnknownFields,
     decodeTopologyTransaction,
-    hashPreparedTransaction,
     type ParsedTransactionInfo,
     parsePreparedTransaction,
     validateAuthorizedPartyIds,
 } from './index.ts'
-import { fromBase64, fromHex, toBase64, toHex } from './utils.ts'
+import { fromBase64, toBase64 } from './utils.ts'
 
 const parsedTxInfo: ParsedTransactionInfo = {
     jsonString:
@@ -78,28 +74,6 @@ test('decode a base 64 encoded prepared tx', async () => {
     expect(res).toStrictEqual(parsedTxInfo)
 
     expect(preparedTx).toStrictEqual(message)
-
-    const preparedTxHasBase64 = 'D8D0WGX3KgYcY/bkHDcm6OxHpgvTX8TQlDUeGIZtBzo='
-    const calculatedPreparedTxHashBase64 =
-        await hashPreparedTransaction(preparedTx)
-    expect(preparedTxHasBase64).toEqual(calculatedPreparedTxHashBase64)
-})
-
-test('hash from preparedTx ledger api call should match calculated hash', async () => {
-    const preparedTxHashFromLAPI =
-        'f97Cv1BO7QS7jmSY03p56JGsPf60Vx/ABXmRub7iiQI='
-    const preparedTxHashFromLAPIHex =
-        '7fdec2bf504eed04bb8e6498d37a79e891ac3dfeb4571fc0057991b9bee28902'
-
-    const preparedTx2 =
-        'CsoHCgMyLjESATAamwcKATDCPpQHCpEHCgMyLjESQjAwMTY4Nzc3ODEwNzU3MmJlZWVjYzQzODk3MmQxODQ4M2VhZDI1MGQxZDUwYmI2MzU3ZjdmYjhmNjdkY2U3ZDYzNRoNc3BsaWNlLXdhbGxldCKCAQpAZWI2ZTAxZWZhY2MzMzk3ZTIzYzZiZThiOWJlN2RiNGJmMzc2NzIyMTE5NzRkNjllMjRiNDg5ODBlMmY5OGI3ZRIhU3BsaWNlLldhbGxldC5UcmFuc2ZlclByZWFwcHJvdmFsGhtUcmFuc2ZlclByZWFwcHJvdmFsUHJvcG9zYWwqtQNysgMKggEKQGViNmUwMWVmYWNjMzM5N2UyM2M2YmU4YjliZTdkYjRiZjM3NjcyMjExOTc0ZDY5ZTI0YjQ4OTgwZTJmOThiN2USIVNwbGljZS5XYWxsZXQuVHJhbnNmZXJQcmVhcHByb3ZhbBobVHJhbnNmZXJQcmVhcHByb3ZhbFByb3Bvc2FsElcKCHJlY2VpdmVyEks6SWJvYjo6MTIyMDViZTNiOWQxNzc1NzNmZmZiNjhlYjI0NTk4NmY4OGI5ZGY1OGQ0NGNlNTc1ODE5MDc4OTcwNTgwZDg3ZDFkYzAScgoIcHJvdmlkZXISZjpkYXBwX3VzZXJfbG9jYWxuZXQtbG9jYWxwYXJ0eS0xOjoxMjIwM2E1MmZlNWFmM2I4N2UwNjk2MTgyYWM2NjhhNmNiMzE1ZGFiNGJkYzMwZGE5ZTViNmRkYTllYjcyODc4NDIxNhJeCgtleHBlY3RlZERzbxJPUk0KSzpJRFNPOjoxMjIwYmJkMDAwYjY5ODc1NzNiOGMwOWY0NDRlNGRmNTUwOWFmODk5N2I4MzkxMDlkN2UyYzIxMmQ1NDdmMGFmMDk1MDJJYm9iOjoxMjIwNWJlM2I5ZDE3NzU3M2ZmZmI2OGViMjQ1OTg2Zjg4YjlkZjU4ZDQ0Y2U1NzU4MTkwNzg5NzA1ODBkODdkMWRjMDpkYXBwX3VzZXJfbG9jYWxuZXQtbG9jYWxwYXJ0eS0xOjoxMjIwM2E1MmZlNWFmM2I4N2UwNjk2MTgyYWM2NjhhNmNiMzE1ZGFiNGJkYzMwZGE5ZTViNmRkYTllYjcyODc4NDIxNjpJYm9iOjoxMjIwNWJlM2I5ZDE3NzU3M2ZmZmI2OGViMjQ1OTg2Zjg4YjlkZjU4ZDQ0Y2U1NzU4MTkwNzg5NzA1ODBkODdkMWRjMCIiEiDBzeNcgqLvsssBxhNx7wP9pK71TsAprgz+a8jag/Lb3RL3ARJxCklib2I6OjEyMjA1YmUzYjlkMTc3NTczZmZmYjY4ZWIyNDU5ODZmODhiOWRmNThkNDRjZTU3NTgxOTA3ODk3MDU4MGQ4N2QxZGMwEiQ5NzU4ZTQ2ZS05ZmJlLTRmOTQtOTczZC04NWQ5ZTBmMTMyNzUaU2dsb2JhbC1kb21haW46OjEyMjBiYmQwMDBiNjk4NzU3M2I4YzA5ZjQ0NGU0ZGY1NTA5YWY4OTk3YjgzOTEwOWQ3ZTJjMjEyZDU0N2YwYWYwOTUwKiQ5NGJkYmFmNS0wYjJjLTQwYmMtOTZjZC1jM2M5YTlkODQ3ZDIw+eaGkdz0jwM='
-
-    const hashResult = await hashPreparedTransaction(preparedTx2, 'base64')
-    const hashResultHex = await hashPreparedTransaction(preparedTx2, 'hex')
-
-    expect(hashResult).toBe(preparedTxHashFromLAPI)
-    expect(toHex(fromHex(hashResultHex))).toEqual(hashResultHex)
-    expect(hashResultHex).toBe(preparedTxHashFromLAPIHex)
 })
 
 // UntypedVersionedMessages with proto version 30, as the Ledger API returns them
@@ -387,80 +361,6 @@ describe('decodeTopologyTransaction', () => {
     })
 })
 
-test(`should throw an error when converting invalid base64 to hex`, async () => {
-    await expect(hashPreparedTransaction('badtx')).rejects.toThrow(
-        'The string to be decoded is not correctly encoded'
-    )
-})
-
-describe('hashPreparedTransaction', () => {
-    it('hashes an int64 above 2^53 exactly', async () => {
-        const { preparedTransaction, preparedTransactionHash } = bigInt64V2
-        // 2^53 + 1, which a JavaScript number rounds to 2^53
-        expect(
-            PreparedTransaction.toJsonString(
-                decodePreparedTransaction(preparedTransaction)
-            )
-        ).toContain('"int64":"9007199254740993"')
-
-        expect(await hashPreparedTransaction(preparedTransaction)).toBe(
-            preparedTransactionHash
-        )
-    })
-
-    it('refuses two nodes of one id', async () => {
-        const prepared = decodePreparedTransaction(
-            bigInt64V2.preparedTransaction
-        )
-        const { nodes } = prepared.transaction!
-        nodes.push({ ...nodes[0], nodeId: '5' })
-
-        await expect(hashPreparedTransaction(prepared)).rejects.toThrow(
-            expect.objectContaining({
-                name: 'TxHashingError',
-                code: 'DUPLICATE_NODE_ID',
-            })
-        )
-    })
-
-    it('hashes V3 when hashingScheme is V3', async () => {
-        expect(
-            await hashPreparedTransaction(
-                createPlainV3.preparedTransaction,
-                'hex',
-                { hashingScheme: HashingSchemeVersion.V3 }
-            )
-        ).toBe(createPlainV3.expected.hash)
-    })
-
-    it('applies limits.maxNodes', async () => {
-        // The participant's transaction has six nodes
-        const { preparedTransaction, preparedTransactionHash } = bigInt64V2
-        const hash = (maxNodes: number) =>
-            hashPreparedTransaction(preparedTransaction, 'base64', {
-                limits: { maxNodes },
-            })
-
-        await expect(hash(5)).rejects.toThrow(
-            expect.objectContaining({
-                name: 'TxHashingError',
-                code: 'NODE_LIMIT_EXCEEDED',
-            })
-        )
-        expect(await hash(6)).toBe(preparedTransactionHash)
-    })
-
-    it('hashes under V2 when the options are undefined', async () => {
-        expect(
-            await hashPreparedTransaction(
-                bigInt64V2.preparedTransaction,
-                'base64',
-                { hashingScheme: undefined, limits: undefined }
-            )
-        ).toBe(bigInt64V2.preparedTransactionHash)
-    })
-})
-
 describe('unknown fields', () => {
     // A message consisting only of field 999 (varint, value 1)
     const txWithUnknownField = toBase64(Uint8Array.from([0xb8, 0x3e, 0x01]))
@@ -511,7 +411,7 @@ describe('unknown fields', () => {
         })
     })
 
-    it('rejects them with readUnknownField: throw', async () => {
+    it('rejects them with readUnknownField: throw', () => {
         const error = /Unknown field 999/
         expect(() =>
             decodePreparedTransaction(txWithUnknownField, strict)
@@ -525,36 +425,5 @@ describe('unknown fields', () => {
         expect(() =>
             parsePreparedTransaction(txWithUnknownField, strict)
         ).toThrow(error)
-        await expect(
-            hashPreparedTransaction(txWithUnknownField, 'hex', strict)
-        ).rejects.toThrow(error)
-    })
-
-    describe('in a transaction to hash', () => {
-        // Protobuf decodes concatenated messages as one: the transaction with
-        // field 999 added
-        const tx = toBase64(
-            Uint8Array.from([
-                ...fromBase64(bigInt64V2.preparedTransaction),
-                ...fromBase64(txWithUnknownField),
-            ])
-        )
-
-        it('refuses to hash them by default', async () => {
-            await expect(hashPreparedTransaction(tx)).rejects.toThrow(
-                expect.objectContaining({
-                    name: 'TxHashingError',
-                    code: 'UNKNOWN_FIELD',
-                })
-            )
-        })
-
-        it('hashes without them with readUnknownField: false', async () => {
-            expect(
-                await hashPreparedTransaction(tx, 'base64', {
-                    readUnknownField: false,
-                })
-            ).toBe(bigInt64V2.preparedTransactionHash)
-        })
     })
 })

@@ -3,18 +3,18 @@
 
 import {
     HashingSchemeVersion,
-    PreparedTransaction,
+    type PreparedTransaction,
 } from '@canton-network/core-ledger-proto'
 import {
-    computePreparedTransactionHash,
     computeTopologyMultiHash,
+    type Converter,
     type HashingScheme,
+    hashPreparedTransaction,
     type HashOptions,
     TxHashingError,
 } from '@canton-network/core-tx-hashing'
 
 import type { OfflineSDKContext } from '../../../sdk.ts'
-import { Converter } from './converter.ts'
 
 export class HashNamespace {
     constructor(private readonly ctx: OfflineSDKContext) {}
@@ -29,7 +29,7 @@ export class HashNamespace {
     }
 
     /**
-     * Computes the hash of a prepared transaction with `@canton-network/core-tx-hashing`.
+     * Computes the hash of a prepared transaction with `hashPreparedTransaction` of `@canton-network/core-tx-hashing`.
      *
      * @param value - The prepared transaction, or its bytes in base64 as the JSON API returns them
      * @param scheme - The hashing scheme the participant used, V2 by default
@@ -42,17 +42,10 @@ export class HashNamespace {
         options?: HashOptions
     ): Promise<Converter> {
         try {
-            // Bytes, so fields core-tx-hashing's own bindings lack are refused
-            const input =
-                typeof value === 'string'
-                    ? value
-                    : PreparedTransaction.toBinary(value)
-            const hash = await computePreparedTransactionHash(
-                input,
-                scheme,
-                options
-            )
-            return new Converter(hash)
+            return await hashPreparedTransaction(value, {
+                hashingScheme: scheme,
+                limits: options?.limits,
+            })
         } catch (error) {
             if (!(error instanceof TxHashingError)) throw error
             const at = error.path === undefined ? '' : ` at ${error.path}`

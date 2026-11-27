@@ -8,7 +8,7 @@ import {
 } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
 
-import { concat, fromBase64 } from '../bytes.ts'
+import { concat, fromBase64, toHex } from '../bytes.ts'
 import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
 import {
     computePreparedTransactionHash,
@@ -25,7 +25,6 @@ import {
     single,
     tx,
 } from './helpers/builders.ts'
-import { toHex } from './helpers/hex.ts'
 import { liveFixtures } from './helpers/live-fixtures.ts'
 import { V2, V3 } from './helpers/load-vectors.ts'
 
@@ -312,6 +311,7 @@ describe('computePreparedTransactionHash', () => {
 
 it('exports only the public API', async () =>
     expect(Object.keys(await import('../index.ts')).sort()).toEqual([
+        'Converter',
         'DEFAULT_LIMITS',
         'HashPurpose',
         'TxHashingError',
@@ -319,4 +319,5 @@ it('exports only the public API', async () =>
         'computePreparedTransactionHash',
         'computeSha256CantonHash',
         'computeTopologyMultiHash',
+        'hashPreparedTransaction',
     ]))

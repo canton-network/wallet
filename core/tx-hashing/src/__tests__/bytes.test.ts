@@ -3,8 +3,14 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { concat, concatAll, fromBase64, hexToBytes, sha256 } from '../bytes.ts'
-import { toHex } from './helpers/hex.ts'
+import {
+    concat,
+    concatAll,
+    fromBase64,
+    hexToBytes,
+    sha256,
+    toHex,
+} from '../bytes.ts'
 
 const utf8 = (s: string) => new TextEncoder().encode(s)
 

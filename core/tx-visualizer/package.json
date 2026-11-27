@@ -38,10 +38,10 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-ledger-proto": "workspace:",
-        "@canton-network/core-tx-hashing": "workspace:"
+        "@canton-network/core-ledger-proto": "workspace:"
     },
     "devDependencies": {
+        "@canton-network/core-tx-hashing": "workspace:",
         "@types/node": "catalog:",
         "@vitest/browser-playwright": "catalog:",
         "@vitest/coverage-v8": "catalog:",

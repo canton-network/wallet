@@ -4,6 +4,7 @@
 import type { PreparedTransaction } from '@canton-network/core-ledger-proto'
 import { describe, expect, it } from 'vitest'
 
+import { toHex } from '../bytes.ts'
 import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.ts'
 import { schemeV3 } from '../v3.ts'
 import {
@@ -37,7 +38,6 @@ import {
     unit,
     withInputContract,
 } from './helpers/builders.ts'
-import { toHex } from './helpers/hex.ts'
 import { liveFixtures } from './helpers/live-fixtures.ts'
 import { hx, rejection } from './helpers/matchers.ts'
 

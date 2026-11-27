@@ -15,6 +15,7 @@ import type {
     Value,
 } from '@canton-network/core-ledger-proto'
 
+import { toHex } from '../../bytes.ts'
 import { checkForest } from '../../forest.ts'
 import { DEFAULT_LIMITS, type TraversalLimits } from '../../limits.ts'
 import {
@@ -24,7 +25,6 @@ import {
     type Scheme,
     type V1Node,
 } from '../../scheme.ts'
-import { toHex } from './hex.ts'
 
 export const identifier = (
     packageId: string,

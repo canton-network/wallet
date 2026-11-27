@@ -2,20 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
-    HashingSchemeVersion,
     PreparedTransaction,
     UntypedVersionedMessage,
     decodeUnknownFields,
     v30_topology,
     v31_topology,
 } from '@canton-network/core-ledger-proto'
-import {
-    computePreparedTransactionHash,
-    type HashingScheme,
-    type HashOptions,
-} from '@canton-network/core-tx-hashing'
 
-import { fromBase64, toBase64, toHex } from './utils.ts'
+import { fromBase64 } from './utils.ts'
 export {
     decodeUnknownFields,
     type RawFields,
@@ -113,45 +107,6 @@ const dataOf = ({ wrapper }: Pick<UntypedVersionedMessage, 'wrapper'>) => {
         throw new Error('Topology transaction without data')
     }
     return wrapper.data
-}
-
-/**
- * Computes the hash of a prepared transaction.
- * With `readUnknownField: false`, unknown fields are dropped before hashing instead of refused.
- *
- * @param preparedTransaction - The prepared transaction to hash
- * @param format - The format of the output hash (base64 or hex)
- * @param options - Decode options, used when `preparedTransaction` is a base64 string,
- *   and the `hashingScheme` (V2 by default) and `limits` passed to core-tx-hashing
- * @returns The computed hash in the specified format
- */
-export const hashPreparedTransaction = async (
-    preparedTransaction: string | PreparedTransaction,
-    format: 'base64' | 'hex' = 'base64',
-    options?: DecodeOptions &
-        HashOptions & { hashingScheme?: HashingScheme | undefined }
-): Promise<string> => {
-    let preparedTx: PreparedTransaction
-
-    if (typeof preparedTransaction === 'string') {
-        preparedTx = decodePreparedTransaction(preparedTransaction, options)
-    } else {
-        preparedTx = preparedTransaction
-    }
-
-    // Bytes, so fields that core-tx-hashing's own bindings lack are refused
-    const hash = await computePreparedTransactionHash(
-        PreparedTransaction.toBinary(preparedTx),
-        options?.hashingScheme ?? HashingSchemeVersion.V2,
-        { limits: options?.limits }
-    )
-
-    switch (format) {
-        case 'base64':
-            return toBase64(hash)
-        case 'hex':
-            return toHex(hash)
-    }
 }
 
 type ValidationResult = Record<

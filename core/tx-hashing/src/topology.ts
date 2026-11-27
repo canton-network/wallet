@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { concat, concatAll, fromBase64, sha256 } from './bytes.ts'
+import { concat, concatAll, fromBase64, sha256, toBase64 } from './bytes.ts'
 import { encodeInt32 } from './encoding.ts'
 import { TxHashingError } from './errors.ts'
 
@@ -81,5 +81,5 @@ export async function computeTopologyMultiHash(
         HashPurpose.MultiTopologyTransaction,
         await computeMultiHashForTopology(hashes)
     )
-    return btoa(String.fromCharCode(...multiHash))
+    return toBase64(multiHash)
 }
