@@ -150,6 +150,9 @@
             "path": "./core/tx-hashing"
         },
         {
+            "path": "./core/tx-clear-signing-lib"
+        },
+        {
             "path": "./core/tx-parser"
         },
         {

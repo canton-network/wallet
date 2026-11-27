@@ -1,0 +1,450 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://example.org/canton-clear-signing/v1/schema.json",
+    "version": "1.0.0",
+    "type": "object",
+    "description": "Canton Clear Signing Descriptor Schema. A descriptor ties display text and typed fields to one Daml template, so that a wallet can describe the create and exercise nodes of a prepared transaction. The document must be I-JSON (RFC 7493).",
+
+    "properties": {
+        "$schema": {
+            "title": "Schema",
+            "type": "string",
+            "const": "https://example.org/canton-clear-signing/v1/schema.json",
+            "description": "The schema the descriptor follows: the $id of this schema. A wallet rejects a schema it does not support."
+        },
+
+        "$comment": {
+            "title": "Comment",
+            "type": "string",
+            "description": "A comment on the file. It has no effect on how the descriptor is read."
+        },
+
+        "context": {
+            "$ref": "#/$defs/context"
+        },
+
+        "metadata": {
+            "$ref": "#/$defs/metadata"
+        },
+
+        "display": {
+            "$ref": "#/$defs/display"
+        },
+
+        "signatures": {
+            "$ref": "#/$defs/signatures"
+        }
+    },
+    "required": ["$schema", "context", "metadata", "display"],
+    "additionalProperties": false,
+
+    "$defs": {
+        "context": {
+            "title": "Context",
+            "type": "object",
+            "description": "Binds the descriptor to one Daml template.",
+
+            "properties": {
+                "template": {
+                    "$ref": "#/$defs/template"
+                }
+            },
+            "required": ["template"],
+            "additionalProperties": false
+        },
+
+        "template": {
+            "title": "Template",
+            "type": "object",
+            "description": "The template the descriptor applies to. A node matches when all three values equal its template_id.",
+
+            "properties": {
+                "packageId": {
+                    "title": "Package ID",
+                    "type": "string",
+                    "description": "The package ID, as lowercase hex.",
+                    "pattern": "^[0-9a-f]{64}$"
+                },
+                "moduleName": {
+                    "title": "Module Name",
+                    "type": "string",
+                    "description": "The Daml module name, e.g. Splice.ExternalPartyAmuletRules.",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+                },
+                "entityName": {
+                    "title": "Entity Name",
+                    "type": "string",
+                    "description": "The template name in the module.",
+                    "$ref": "#/$defs/identifier"
+                }
+            },
+            "required": ["packageId", "moduleName", "entityName"],
+            "additionalProperties": false
+        },
+
+        "metadata": {
+            "title": "Metadata",
+            "type": "object",
+            "description": "Information about the descriptor, and the enum tables its fields use.",
+
+            "properties": {
+                "version": {
+                    "title": "Descriptor Version",
+                    "type": "string",
+                    "description": "The version of the descriptor, as semver. It is independent of the schema version.",
+                    "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-[0-9A-Za-z.-]+)?(\\+[0-9A-Za-z.-]+)?$"
+                },
+                "publisher": {
+                    "title": "Publisher",
+                    "description": "The publisher or author of the descriptor, as claimed by the descriptor.",
+                    "$ref": "#/$defs/displayText"
+                },
+                "name": {
+                    "title": "Descriptor Name",
+                    "description": "A human-readable name for the descriptor.",
+                    "$ref": "#/$defs/displayText"
+                },
+                "url": {
+                    "title": "Provenance URL",
+                    "type": "string",
+                    "format": "uri",
+                    "description": "A URL with more information on the publisher or the application."
+                },
+                "enums": {
+                    "$ref": "#/$defs/enums"
+                }
+            },
+            "required": ["version", "publisher", "name"],
+            "additionalProperties": false
+        },
+
+        "enums": {
+            "title": "Enums",
+            "type": "object",
+            "description": "Named tables for the enum format. A table is referenced as $.metadata.enums.NAME.",
+            "propertyNames": {
+                "$ref": "#/$defs/identifier"
+            },
+            "additionalProperties": {
+                "title": "Enum Table",
+                "type": "object",
+                "description": "Maps each Daml enum constructor, or true and false for a Bool, to the string shown.",
+                "minProperties": 1,
+                "propertyNames": {
+                    "$ref": "#/$defs/identifier"
+                },
+                "additionalProperties": {
+                    "$ref": "#/$defs/displayText"
+                }
+            }
+        },
+
+        "display": {
+            "title": "Display",
+            "type": "object",
+            "description": "How the operations on the template are shown. A create node uses create. An exercise node uses the entry with the same choice and interface. If the node has an interface and no entry names it, the entry for that choice without an interface is used. A node with no definition must not be left out: the wallet shows a generic description or refuses.",
+
+            "properties": {
+                "create": {
+                    "title": "Create",
+                    "description": "How create nodes of the template are shown.",
+                    "unevaluatedProperties": false,
+                    "allOf": [
+                        { "$ref": "#/$defs/operation" },
+                        {
+                            "properties": {
+                                "fields": {
+                                    "items": {
+                                        "properties": {
+                                            "path": {
+                                                "$ref": "#/$defs/createPath"
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                },
+                "exercises": {
+                    "title": "Exercises",
+                    "type": "array",
+                    "description": "How exercise nodes of the template are shown, one entry per choice, and per interface when the choice is exercised through one.",
+                    "minItems": 1,
+                    "items": {
+                        "$ref": "#/$defs/exercise"
+                    }
+                }
+            },
+            "anyOf": [
+                { "required": ["create"] },
+                { "required": ["exercises"] }
+            ],
+            "additionalProperties": false
+        },
+
+        "choice": {
+            "title": "Choice",
+            "type": "string",
+            "description": "The choice name.",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+
+        "exercise": {
+            "title": "Exercise",
+            "description": "How one choice is shown. An entry with an interface only matches nodes exercised through that interface.",
+            "unevaluatedProperties": false,
+            "allOf": [
+                { "$ref": "#/$defs/operation" },
+                {
+                    "properties": {
+                        "choice": {
+                            "$ref": "#/$defs/choice"
+                        },
+                        "interface": {
+                            "$ref": "#/$defs/interface"
+                        }
+                    },
+                    "required": ["choice"]
+                }
+            ]
+        },
+
+        "interface": {
+            "title": "Interface",
+            "type": "object",
+            "description": "The interface the choice is exercised through. moduleName and entityName must equal those of the node's interface_id.",
+            "properties": {
+                "packageId": {
+                    "title": "Package ID",
+                    "type": "string",
+                    "description": "The interface package ID, as lowercase hex. When set, it must equal the package ID of the node's interface_id.",
+                    "pattern": "^[0-9a-f]{64}$"
+                },
+                "moduleName": {
+                    "title": "Module Name",
+                    "type": "string",
+                    "description": "The Daml module name of the interface.",
+                    "pattern": "^[A-Za-z_][A-Za-z0-9_]*(\\.[A-Za-z_][A-Za-z0-9_]*)*$"
+                },
+                "entityName": {
+                    "$ref": "#/$defs/identifier",
+                    "title": "Entity Name",
+                    "description": "The interface name in the module."
+                }
+            },
+            "required": ["moduleName", "entityName"],
+            "additionalProperties": false
+        },
+
+        "operation": {
+            "title": "Operation",
+            "type": "object",
+            "description": "How one kind of node is shown: an intent, an optional interpolated intent, and the fields to display.",
+
+            "properties": {
+                "intent": {
+                    "title": "Intent",
+                    "description": "A description of the operation, shown when there is no interpolatedIntent. It has no placeholders.",
+                    "$ref": "#/$defs/stableIntent"
+                },
+                "interpolatedIntent": {
+                    "title": "Interpolated Intent",
+                    "description": "The intent with {path} placeholders. Each one names the path of a field of the same operation and is replaced by that field's value. {{ and }} are literal braces. If a placeholder cannot be filled, the intent is not shown.",
+                    "$ref": "#/$defs/displayText"
+                },
+                "fields": {
+                    "title": "Fields",
+                    "type": "array",
+                    "description": "The fields to display, in order.",
+                    "items": {
+                        "$ref": "#/$defs/field"
+                    }
+                }
+            },
+            "required": ["intent"]
+        },
+
+        "path": {
+            "title": "Path",
+            "type": "string",
+            "description": "A path to a value. Without a prefix it starts at the create or choice argument. '@.contract.' starts at the create argument of the exercised contract and needs at least one more step. '@.contractId', '@.signatories', '@.stakeholders', '@.synchronizerId' and '@.actAs' read the prepared transaction. '@.actingParties', '@.choiceObservers' and '@.consuming' do too, on an exercise only. A name selects a record field, or the payload of the variant constructor of that name; another constructor fails. [\"key\"] selects a text-map entry. Some is unwrapped at every step. None at any step, or a record field the ledger left out, makes the value None. A final length on a list or text map is its number of elements. There is no step for list elements: show a list or map whole, with raw.",
+            "pattern": "^(?:(?:@\\.contract\\.)?[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\]|\\.[A-Za-z_][A-Za-z0-9_]*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs|actingParties|choiceObservers|consuming))$"
+        },
+
+        "field": {
+            "title": "Field",
+            "type": "object",
+            "description": "A value to display. The label defaults to the path and the format to raw. A None value fails the field unless optional is true.",
+
+            "properties": {
+                "path": {
+                    "$ref": "#/$defs/path"
+                },
+                "label": {
+                    "title": "Field Label",
+                    "description": "The text shown before the value.",
+                    "$ref": "#/$defs/displayText"
+                },
+                "format": {
+                    "$ref": "#/$defs/formatName"
+                },
+                "params": {
+                    "title": "Format Parameters",
+                    "type": "object",
+                    "description": "Parameters of the format. Only enum takes them."
+                },
+                "optional": {
+                    "title": "Optional",
+                    "type": "boolean",
+                    "description": "Set when the path may be None. None is shown as None, and a Some is shown with the format."
+                }
+            },
+            "required": ["path"],
+            "allOf": [
+                {
+                    "if": {
+                        "properties": { "format": { "const": "enum" } },
+                        "required": ["format"]
+                    },
+                    "then": {
+                        "properties": {
+                            "params": { "$ref": "#/$defs/enumParameters" }
+                        },
+                        "required": ["params"]
+                    },
+                    "else": {
+                        "not": { "required": ["params"] }
+                    }
+                }
+            ],
+            "additionalProperties": false
+        },
+
+        "createPath": {
+            "title": "Create Path",
+            "type": "string",
+            "description": "A path on a create node: into the create argument, or one of '@.contractId', '@.signatories', '@.stakeholders', '@.synchronizerId' and '@.actAs'.",
+            "pattern": "^(?:[A-Za-z_][A-Za-z0-9_]*(?:\\[\"(?:[^\"\\\\\\x00-\\x1f]|\\\\(?:[\"\\\\/bfnrt]|u[0-9a-fA-F]{4}))*\"\\]|\\.[A-Za-z_][A-Za-z0-9_]*)*|@\\.(?:contractId|signatories|stakeholders|synchronizerId|actAs))$"
+        },
+
+        "formatName": {
+            "title": "Field Format",
+            "type": "string",
+            "description": "How the value is shown.",
+            "anyOf": [
+                {
+                    "const": "string",
+                    "description": "A Text as a JSON string literal, in double quotes."
+                },
+                {
+                    "const": "number",
+                    "description": "An Int64 as a canonical decimal, or a Numeric as its ledger decimal, with at most 38 digits and at most 37 after the point."
+                },
+                {
+                    "const": "boolean",
+                    "description": "A Bool as true or false."
+                },
+                {
+                    "const": "party",
+                    "description": "A party identifier of 1 to 255 letters, digits, colons, minuses and underscores. Anything else, including a space, fails the field."
+                },
+                {
+                    "const": "contractId",
+                    "description": "A contract ID, in full."
+                },
+                {
+                    "const": "dateTime",
+                    "description": "A Time as an ISO 8601 UTC timestamp with microseconds, or a Date as YYYY-MM-DD."
+                },
+                {
+                    "const": "duration",
+                    "description": "A DA.Time RelTime in days, hours, minutes and seconds, e.g. 1d 2h 0.5s."
+                },
+                {
+                    "const": "enum",
+                    "description": "The string that the table named by params.$ref has for an enum constructor, a variant constructor without payload, or a Bool. A value missing from the table fails the field."
+                },
+                {
+                    "const": "raw",
+                    "description": "Any value: a record, list or map as JSON, a variant as an object keyed by its constructor, Text as a JSON string, and other scalars as they are."
+                }
+            ]
+        },
+
+        "enumParameters": {
+            "title": "Enum Parameters",
+            "type": "object",
+            "properties": {
+                "$ref": {
+                    "title": "Enum Reference",
+                    "type": "string",
+                    "description": "The table in metadata.enums, e.g. $.metadata.enums.Side.",
+                    "pattern": "^\\$\\.metadata\\.enums\\.[A-Za-z_][A-Za-z0-9_]*$"
+                }
+            },
+            "required": ["$ref"],
+            "additionalProperties": false
+        },
+
+        "signatures": {
+            "title": "Signatures",
+            "type": "array",
+            "description": "Signatures over the UTF-8 bytes of the RFC 8785 canonical form of the descriptor with this array removed. The entries are independent. A signature shows who signed. Whether to trust that signer is the wallet's decision.",
+            "items": {
+                "$ref": "#/$defs/signature"
+            }
+        },
+        "signature": {
+            "title": "Signature",
+            "type": "object",
+            "description": "One signature over the canonical bytes.",
+            "properties": {
+                "scheme": {
+                    "title": "Signature Scheme",
+                    "description": "The signature scheme. Only ed25519 is supported.",
+                    "type": "string"
+                },
+                "hashAlgorithm": {
+                    "title": "Hash Algorithm",
+                    "description": "Not supported. A signature that sets it fails verification. Without it, the signature is over the canonical bytes themselves.",
+                    "type": "string"
+                },
+                "signature": {
+                    "title": "Signature",
+                    "type": "string",
+                    "description": "The signature, in standard base64. Only ed25519 signatures are accepted.",
+                    "pattern": "^[A-Za-z0-9+/]{86}==$"
+                },
+                "publicKey": {
+                    "title": "Public Key",
+                    "type": "string",
+                    "description": "The public key that verifies the signature, in standard base64. Only ed25519 keys are accepted.",
+                    "pattern": "^[A-Za-z0-9+/]{43}=$"
+                }
+            },
+            "required": ["scheme", "signature", "publicKey"],
+            "additionalProperties": false
+        },
+
+        "identifier": {
+            "title": "Identifier",
+            "type": "string",
+            "description": "A Daml name: a letter or underscore, then letters, digits or underscores.",
+            "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+        },
+        "displayText": {
+            "title": "Display Text",
+            "type": "string",
+            "description": "Text shown to the user. It must contain a non-whitespace character.",
+            "pattern": "\\S"
+        },
+        "stableIntent": {
+            "title": "Stable Intent",
+            "type": "string",
+            "description": "Display text without braces, so it has no placeholder.",
+            "$ref": "#/$defs/displayText",
+            "pattern": "^[^{}]*$"
+        }
+    }
+}
