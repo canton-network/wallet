@@ -418,14 +418,11 @@ describe('userController', () => {
                     .getCurrentNetwork()
             ).rejects.toThrow('No session found')
             await expect(
-                onboardingStore.getNetworkConnection(sessionId)
-            ).resolves.toMatchObject({
-                authMethod: 'self_issued',
-                payload: { state: 'pending', scopes: [] },
-            })
+                store.getSelfIssuedLoginSession(sessionId)
+            ).resolves.not.toHaveProperty('scopes')
         })
 
-        it('stores the requested scopes on a pending network connection', async () => {
+        it('stores the requested scopes on the login session', async () => {
             const selfIssuedNetwork = {
                 ...storeNetwork,
                 id: 'self-issued-network',
@@ -449,18 +446,14 @@ describe('userController', () => {
             })
 
             await expect(
-                store
-                    .withAuthContext({ userId: 'alice', accessToken: '' })
-                    .getNetworkConnection(sessionId)
-            ).resolves.toMatchObject({
-                sessionId,
-                userId: 'alice',
-                authMethod: 'self_issued',
-                payload: {
-                    state: 'pending',
+                store.getSelfIssuedLoginSession(sessionId)
+            ).resolves.toEqual(
+                expect.objectContaining({
+                    id: sessionId,
+                    userId: 'alice',
                     scopes: ['ledger:read', 'users:self'],
-                },
-            })
+                })
+            )
         })
 
         it('rejects a requested scope containing whitespace', async () => {
@@ -2354,6 +2347,57 @@ describe('userController', () => {
             ).resolves.toMatchObject({
                 network: 'network1',
             })
+        })
+
+        it('addSession records the requested scopes with the session', async () => {
+            const authWithValidClaims = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithValidClaims, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithValidClaims
+            )
+
+            await controller.addSession({
+                origin: 'dapp-1',
+                networkId: 'network1',
+                scopes: ['ledger:read', 'users:self'],
+            })
+
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toMatchObject({
+                scopes: ['ledger:read', 'users:self'],
+            })
+        })
+
+        it('addSession rejects a requested scope containing whitespace', async () => {
+            const authWithValidClaims = createAuthWithAddSessionClaims()
+            const store = await createStore(logger, authWithValidClaims, {
+                withWallet: false,
+            })
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                authWithValidClaims
+            )
+
+            await expect(
+                controller.addSession({
+                    origin: 'dapp-1',
+                    networkId: 'network1',
+                    scopes: ['ledger:read daml_admin'],
+                })
+            ).rejects.toThrow(
+                'Scope "ledger:read daml_admin" must not contain whitespace'
+            )
+            await expect(
+                store.getSession(authWithValidClaims.accessToken)
+            ).resolves.toBeUndefined()
         })
 
         it('addSession keeps the session when the ledger is disconnected', async () => {

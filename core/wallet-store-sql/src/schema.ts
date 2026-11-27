@@ -18,8 +18,6 @@ import {
     type MessageRaw,
     type MessageRawKind,
     type ApiKey,
-    type NetworkConnection,
-    networkConnectionAuthSchema,
 } from '@canton-network/core-wallet-store'
 
 interface MigrationTable {
@@ -131,16 +129,7 @@ interface SessionTable {
     network: string
     accessTokenHash: string | null
     userId: UserId
-}
-
-interface NetworkConnectionTable {
-    id: string
-    sessionId: string
-    authMethod: string
-    userId: UserId
-    payload: string // json stringified
-    expiresAt: string | null
-    createdAt: string
+    scopes: string | null // json stringified
 }
 
 interface ApiKeysTable {
@@ -164,7 +153,6 @@ export interface DB {
     transactions: TransactionTable
     messagesRaw: MessageRawTable
     sessions: SessionTable
-    networkConnections: NetworkConnectionTable
     apiKeys: ApiKeysTable
 }
 
@@ -289,28 +277,7 @@ export const toSession = (table: SessionTable): Session => {
             ? { accessTokenHash: table.accessTokenHash }
             : {}),
         userId: table.userId,
-    }
-}
-
-export const toNetworkConnection = (
-    table: NetworkConnectionTable
-): NetworkConnection => {
-    const auth = networkConnectionAuthSchema.parse({
-        authMethod: table.authMethod,
-        payload:
-            typeof table.payload === 'string'
-                ? JSON.parse(table.payload)
-                : table.payload,
-    })
-    return {
-        ...auth,
-        id: table.id,
-        sessionId: table.sessionId,
-        userId: table.userId,
-        createdAt: new Date(table.createdAt),
-        ...(table.expiresAt !== null && {
-            expiresAt: new Date(table.expiresAt),
-        }),
+        ...(table.scopes !== null && { scopes: JSON.parse(table.scopes) }),
     }
 }
 

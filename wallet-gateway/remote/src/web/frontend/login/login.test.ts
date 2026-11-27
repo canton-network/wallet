@@ -260,7 +260,8 @@ describe('LoginUI', () => {
         expect(mockExpirationDateSet).toHaveBeenCalled()
         expect(mockAddUserSession).toHaveBeenCalledWith(
             defaultAccessToken,
-            'net-1'
+            'net-1',
+            []
         )
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
@@ -361,6 +362,11 @@ describe('LoginUI', () => {
                         scopes: ['ledger:read', 'l:pkg:#pkg-one'],
                     },
                 })
+            )
+            expect(mockAddUserSession).toHaveBeenCalledWith(
+                defaultAccessToken,
+                'net-1',
+                ['ledger:read', 'l:pkg:#pkg-one']
             )
         } finally {
             window.history.replaceState(null, '', originalUrl)

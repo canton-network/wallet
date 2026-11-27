@@ -28,8 +28,6 @@ import type {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
-    NetworkConnection,
-    NetworkConnectionInput,
 } from '@canton-network/core-wallet-store'
 import {
     assertUniqueSelfIssuedAudience,
@@ -45,8 +43,6 @@ export interface UserStorage {
     messageRaws: Map<string, MessageRaw>
     /** Keyed by session id. */
     sessions: Map<string, Session>
-    /** Keyed by connection id. */
-    networkConnections: Map<string, NetworkConnection>
     apiKeys: Map<string, ApiKey>
     userRightsByNetwork: Map<string, Set<UserLevelRight>>
 }
@@ -95,7 +91,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             transactions: new Map<string, Transaction>(),
             messageRaws: new Map<string, MessageRaw>(),
             sessions: new Map<string, Session>(),
-            networkConnections: new Map<string, NetworkConnection>(),
             apiKeys: new Map<string, ApiKey>(),
             userRightsByNetwork: new Map<string, Set<UserLevelRight>>(),
         }
@@ -116,16 +111,6 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
     private updateStorage(storage: UserStorage): void {
         const userId = this.assertConnected()
         this.userStorage.set(userId, storage)
-    }
-
-    // A session's connections must not outlive it, as with ON DELETE CASCADE in SQL
-    private deleteSession(storage: UserStorage, sessionId: string): void {
-        storage.sessions.delete(sessionId)
-        for (const [id, connection] of storage.networkConnections) {
-            if (connection.sessionId === sessionId) {
-                storage.networkConnections.delete(id)
-            }
-        }
     }
 
     // Wallet methods
@@ -244,7 +229,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const storage = this.getStorage()
         const session = storage.sessions.get(sessionId)
         if (!session || session.accessTokenHash) return
-        this.deleteSession(storage, sessionId)
+        storage.sessions.delete(sessionId)
         this.updateStorage(storage)
     }
 
@@ -336,12 +321,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         return Array.from(this.getStorage().sessions.values())
     }
 
-    async setSession(
-        session: NewSession,
-        connection?: NetworkConnectionInput
-    ): Promise<void> {
+    async setSession(session: NewSession): Promise<void> {
         const userId = this.assertConnected()
-        const { accessToken, ...rest } = session
+        const { accessToken, scopes, ...rest } = session
         const tokenHash = accessToken
             ? await hashAccessToken(accessToken)
             : undefined
@@ -352,26 +334,16 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                     existingSession.origin === session.origin &&
                     existingSession.accessTokenHash
                 ) {
-                    this.deleteSession(storage, id)
+                    storage.sessions.delete(id)
                 }
             }
         }
-        this.deleteSession(storage, session.id)
         storage.sessions.set(session.id, {
             ...rest,
             ...(tokenHash ? { accessTokenHash: tokenHash } : {}),
             userId,
+            ...(scopes?.length ? { scopes } : {}),
         })
-        if (connection) {
-            const id = crypto.randomUUID()
-            storage.networkConnections.set(id, {
-                ...connection,
-                id,
-                sessionId: session.id,
-                userId,
-                createdAt: new Date(),
-            })
-        }
         this.updateStorage(storage)
     }
 
@@ -380,33 +352,9 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
         const storage = this.getStorage()
         for (const [id, session] of storage.sessions) {
             if (session.accessTokenHash === tokenHash) {
-                this.deleteSession(storage, id)
+                storage.sessions.delete(id)
             }
         }
-        this.updateStorage(storage)
-    }
-
-    // Network connection methods
-    async getNetworkConnection(
-        sessionId: string
-    ): Promise<NetworkConnection | undefined> {
-        return Array.from(this.getStorage().networkConnections.values()).find(
-            (connection) => connection.sessionId === sessionId
-        )
-    }
-
-    async updateNetworkConnection(
-        connectionId: string,
-        update: NetworkConnectionInput
-    ): Promise<void> {
-        const storage = this.getStorage()
-        const existing = storage.networkConnections.get(connectionId)
-        if (!existing || existing.authMethod !== update.authMethod) {
-            throw new Error(
-                `Network connection not found with id: ${connectionId}`
-            )
-        }
-        storage.networkConnections.set(connectionId, { ...existing, ...update })
         this.updateStorage(storage)
     }
 
@@ -439,7 +387,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
                 id !== sessionId &&
                 session.origin === selfIssuedLoginSession.origin
             ) {
-                this.deleteSession(storage, id)
+                storage.sessions.delete(id)
             }
         }
         const upgraded = {

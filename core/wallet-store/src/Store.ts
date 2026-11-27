@@ -4,10 +4,6 @@
 import type { Idp } from '@canton-network/core-wallet-auth'
 
 import type { Network } from './config/schema.ts'
-import type {
-    NetworkConnection,
-    NetworkConnectionInput,
-} from './network-connection.ts'
 
 export enum AddressType {
     PaperAddress = 'PaperAddress',
@@ -106,6 +102,10 @@ export interface Session {
      */
     accessTokenHash?: string
     userId?: string
+    /**
+     * Ledger API scopes the dApp requested. Absent when the dApp requested none.
+     */
+    scopes?: string[]
 }
 
 /**
@@ -230,14 +230,7 @@ export interface Store {
      */
     listSessions(): Promise<Array<Session>>
 
-    /**
-     * Adds a session for the authenticated user, together with its network
-     * connection if one is given, in a single write.
-     */
-    setSession(
-        session: NewSession,
-        connection?: NetworkConnectionInput
-    ): Promise<void>
+    setSession(session: NewSession): Promise<void>
 
     /**
      * removeSession is keyed by the accessToken, which is unique per session. It removes the session associated with the provided accessToken.
@@ -267,21 +260,6 @@ export interface Store {
         accessToken: string,
         signedMessageId: string
     ): Promise<Session>
-
-    // Network connection methods
-    /** Returns the authenticated user's network connection of the given session. */
-    getNetworkConnection(
-        sessionId: string
-    ): Promise<NetworkConnection | undefined>
-
-    /**
-     * Updates the authenticated user's network connection. Throws if there is
-     * no such connection or it uses a different auth method.
-     */
-    updateNetworkConnection(
-        connectionId: string,
-        update: NetworkConnectionInput
-    ): Promise<void>
 
     // IDP methods
     getIdp(idpId: string): Promise<Idp>

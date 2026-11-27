@@ -465,7 +465,11 @@ export class UserUIAuthRedirect extends LitElement {
     }
 }
 
-export const addUserSession = async (token: string, networkId: string) => {
+export const addUserSession = async (
+    token: string,
+    networkId: string,
+    scopes?: string[]
+) => {
     const authenticatedUserClient = await createUserClient(token)
 
     const currentOrigin = await detectCurrentOrigin()
@@ -479,6 +483,7 @@ export const addUserSession = async (token: string, networkId: string) => {
         params: {
             origin: currentOrigin,
             networkId,
+            ...(scopes && { scopes }),
         },
     })
 

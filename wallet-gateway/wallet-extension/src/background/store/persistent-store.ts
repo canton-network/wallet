@@ -36,10 +36,6 @@ const KIND = {
     removeSelfIssuedLoginSession: 'write',
     upgradeSelfIssuedLoginSession: 'write',
 
-    // The extension has no self-issued login yet, the only user of network connections as of now.
-    getNetworkConnection: 'unsupported',
-    updateNetworkConnection: 'unsupported',
-
     getIdp: 'read',
     listIdps: 'read',
     updateIdp: 'write',

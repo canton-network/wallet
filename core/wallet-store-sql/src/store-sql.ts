@@ -31,8 +31,6 @@ import type {
     ApiKey,
     ListTransactionsOptions,
     WalletUniqueConstraint,
-    NetworkConnection,
-    NetworkConnectionInput,
 } from '@canton-network/core-wallet-store'
 import {
     assertUniqueSelfIssuedAudience,
@@ -68,7 +66,6 @@ import {
     fromApiKey,
     toApiKey,
     toSession,
-    toNetworkConnection,
 } from './schema.ts'
 
 export class StoreSql implements BaseStore, AuthAware<StoreSql> {
@@ -506,10 +503,7 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
         return rows.map((row) => toSession(row))
     }
 
-    async setSession(
-        session: NewSession,
-        connection?: NetworkConnectionInput
-    ): Promise<void> {
+    async setSession(session: NewSession): Promise<void> {
         const userId = this.assertConnected()
 
         if (!session.origin) {
@@ -544,26 +538,13 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     network: session.network,
                     accessTokenHash: tokenHash,
                     userId,
+                    scopes: session.scopes?.length
+                        ? JSON.stringify(session.scopes)
+                        : null,
                 })
                 .execute()
 
             this.logger.info('Inserted new session', { inserted })
-
-            // TODO probably should enforce for self-issued, so without an access token
-            if (connection) {
-                await trx
-                    .insertInto('networkConnections')
-                    .values({
-                        id: crypto.randomUUID(),
-                        sessionId: session.id,
-                        authMethod: connection.authMethod,
-                        userId,
-                        payload: JSON.stringify(connection.payload),
-                        expiresAt: connection.expiresAt?.toISOString() ?? null,
-                        createdAt: new Date().toISOString(),
-                    })
-                    .execute()
-            }
         })
     }
 
@@ -643,44 +624,6 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                 ])
             )
             .execute()
-    }
-
-    // Network connection methods
-    async getNetworkConnection(
-        sessionId: string
-    ): Promise<NetworkConnection | undefined> {
-        const userId = this.assertConnected()
-        const row = await this.db
-            .selectFrom('networkConnections')
-            .selectAll()
-            .where('sessionId', '=', sessionId)
-            .where('userId', '=', userId)
-            .executeTakeFirst()
-        return row ? toNetworkConnection(row) : undefined
-    }
-
-    async updateNetworkConnection(
-        connectionId: string,
-        update: NetworkConnectionInput
-    ): Promise<void> {
-        const userId = this.assertConnected()
-        const result = await this.db
-            .updateTable('networkConnections')
-            .set({
-                payload: JSON.stringify(update.payload),
-                ...(update.expiresAt && {
-                    expiresAt: update.expiresAt.toISOString(),
-                }),
-            })
-            .where('id', '=', connectionId)
-            .where('userId', '=', userId)
-            .where('authMethod', '=', update.authMethod)
-            .executeTakeFirst()
-        if (result.numUpdatedRows === 0n) {
-            throw new Error(
-                `Network connection not found with id: ${connectionId}`
-            )
-        }
     }
 
     /**

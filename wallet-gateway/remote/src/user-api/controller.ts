@@ -698,17 +698,12 @@ export const userController = ({
             })
             await assertLoginAllowed(authAwareStore, network, username)
             const sessionId = crypto.randomUUID()
-            await onboardingStore.setSession(
-                {
-                    id: sessionId,
-                    origin: params.origin,
-                    network: network.id,
-                },
-                {
-                    authMethod: 'self_issued',
-                    payload: { state: 'pending', scopes: params.scopes ?? [] },
-                }
-            )
+            await onboardingStore.setSession({
+                id: sessionId,
+                origin: params.origin,
+                network: network.id,
+                ...(params.scopes && { scopes: params.scopes }),
+            })
 
             return { sessionId }
         },
@@ -1071,6 +1066,7 @@ export const userController = ({
                 const network = await store.getNetwork(params.networkId)
                 const idp = await store.getIdp(network.identityProviderId)
 
+                // TODO should check scope claim against params.scopes?
                 assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
                 await store.setSession({
@@ -1078,6 +1074,7 @@ export const userController = ({
                     origin: params.origin,
                     network: params.networkId,
                     accessToken: accessToken || '',
+                    ...(params.scopes && { scopes: params.scopes }),
                 })
 
                 const ledgerClient = new LedgerClient({

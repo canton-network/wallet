@@ -19,7 +19,6 @@ import {
     UserLevelRight,
     PartyLevelRight,
     type ApiKey,
-    type NetworkConnectionInput,
 } from '@canton-network/core-wallet-store'
 import { getLogger, type Logger } from '@logtape/logtape'
 import { beforeEach, describe, expect, test } from 'vitest'
@@ -101,11 +100,6 @@ type StoreCtor = new (
 const implementations: Array<[string, StoreCtor]> = [
     ['StoreInternal', StoreInternal],
 ]
-
-const pendingConnection: NetworkConnectionInput = {
-    authMethod: 'self_issued',
-    payload: { state: 'pending', scopes: ['ledger:read'] },
-}
 
 function addTx(id: string, createdAt: Date | undefined) {
     const initial: Transaction = {
@@ -721,180 +715,54 @@ implementations.forEach(([name, StoreImpl]) => {
             )
         })
 
-        test('saves a network connection together with its session', async () => {
-            const owner = new StoreInternal(
-                { idps: [], networks: [] },
-                getLogger('mock'),
-                authContextMock
-            )
-            await owner.setSession(
-                {
-                    id: 'onboarding-session',
-                    origin: 'https://example.com',
-                    network: 'network1',
-                },
-                pendingConnection
-            )
-
-            await expect(
-                owner.getNetworkConnection('onboarding-session')
-            ).resolves.toEqual({
-                ...pendingConnection,
-                id: expect.any(String),
-                sessionId: 'onboarding-session',
-                userId: authContextMock.userId,
-                createdAt: expect.any(Date),
-            })
-            await expect(
-                owner
-                    .withAuthContext({
-                        userId: 'other-user',
-                        accessToken: 'other-token',
-                    })
-                    .getNetworkConnection('onboarding-session')
-            ).resolves.toBeUndefined()
-        })
-
-        test('updates the payload and expiry of a network connection', async () => {
-            await store.setSession(
-                {
-                    id: 'onboarding-session',
-                    origin: 'https://example.com',
-                    network: 'network1',
-                },
-                pendingConnection
-            )
-            const { id } =
-                (await store.getNetworkConnection('onboarding-session'))!
-            const expiresAt = new Date('2026-11-24T10:10:00.000Z')
-
-            await store.updateNetworkConnection(id, {
-                authMethod: 'self_issued',
-                payload: {
-                    state: 'pending',
-                    scopes: ['ledger:read'],
-                    signingMessageId: 'login-message',
-                },
-                expiresAt,
-            })
-            await expect(
-                store.getNetworkConnection('onboarding-session')
-            ).resolves.toEqual(
-                expect.objectContaining({
-                    payload: {
-                        state: 'pending',
-                        scopes: ['ledger:read'],
-                        signingMessageId: 'login-message',
-                    },
-                    expiresAt,
-                })
-            )
-
-            await store.updateNetworkConnection(id, {
-                authMethod: 'self_issued',
-                payload: { state: 'ready', scopes: ['ledger:read'] },
-            })
-            await expect(
-                store.getNetworkConnection('onboarding-session')
-            ).resolves.toEqual(
-                expect.objectContaining({
-                    payload: { state: 'ready', scopes: ['ledger:read'] },
-                    expiresAt,
-                })
-            )
-        })
-
-        test('refuses to update a network connection of another user', async () => {
-            const owner = new StoreInternal(
-                { idps: [], networks: [] },
-                getLogger('mock'),
-                authContextMock
-            )
-            await owner.setSession(
-                {
-                    id: 'onboarding-session',
-                    origin: 'https://example.com',
-                    network: 'network1',
-                },
-                pendingConnection
-            )
-            const { id } =
-                (await owner.getNetworkConnection('onboarding-session'))!
-
-            await expect(
-                owner
-                    .withAuthContext({
-                        userId: 'other-user',
-                        accessToken: 'other-token',
-                    })
-                    .updateNetworkConnection(id, {
-                        authMethod: 'self_issued',
-                        payload: { state: 'ready', scopes: [] },
-                    })
-            ).rejects.toThrow(`Network connection not found with id: ${id}`)
-            await expect(
-                owner.getNetworkConnection('onboarding-session')
-            ).resolves.toEqual(
-                expect.objectContaining({
-                    payload: pendingConnection.payload,
-                })
-            )
-        })
-
-        test('deletes network connections together with their sessions', async () => {
-            const session = (id: string, origin: string, token?: string) => ({
-                id,
-                origin,
+        test('stores the requested scopes with the session and keeps them through the self-issued upgrade', async () => {
+            await store.setSession({
+                id: 'scoped-session',
+                origin: 'https://a.example',
                 network: 'network1',
-                ...(token && { accessToken: token }),
+                accessToken: 'scoped-token',
+                scopes: ['ledger:read', 'users:self'],
             })
-            await store.setSession(
-                session('tokenless', 'https://a.example'),
-                pendingConnection
-            )
-            await store.setSession(
-                session('removed', 'https://b.example', 'removed-token'),
-                pendingConnection
-            )
-            await store.setSession(
-                session('replaced', 'https://c.example', 'replaced-token'),
-                pendingConnection
-            )
-            await store.setSession(
-                session('upgraded-away', 'https://d.example', 'old-token'),
-                pendingConnection
-            )
-            await store.setSession(
-                session('upgraded', 'https://d.example'),
-                pendingConnection
-            )
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://b.example',
+                network: 'network1',
+                scopes: ['ledger:read'],
+            })
 
-            await store.removeSelfIssuedLoginSession('tokenless')
-            await store.removeSession('removed-token')
-            await store.setSession(
-                session('replacement', 'https://c.example', 'new-token')
+            await expect(store.getSession('scoped-token')).resolves.toEqual(
+                expect.objectContaining({
+                    scopes: ['ledger:read', 'users:self'],
+                })
             )
-            await store.upgradeSelfIssuedLoginSession(
-                'upgraded',
-                'upgraded-token',
-                'login-message'
-            )
-
-            for (const sessionId of [
-                'tokenless',
-                'removed',
-                'replaced',
-                'upgraded-away',
-            ]) {
-                await expect(
-                    store.getNetworkConnection(sessionId)
-                ).resolves.toBeUndefined()
-            }
             await expect(
-                store.getNetworkConnection('upgraded')
+                store.getSelfIssuedLoginSession('onboarding-session')
             ).resolves.toEqual(
-                expect.objectContaining({ sessionId: 'upgraded' })
+                expect.objectContaining({ scopes: ['ledger:read'] })
             )
+            await expect(
+                store.upgradeSelfIssuedLoginSession(
+                    'onboarding-session',
+                    'upgraded-token',
+                    'login-message'
+                )
+            ).resolves.toEqual(
+                expect.objectContaining({ scopes: ['ledger:read'] })
+            )
+        })
+
+        test('stores an empty scope list as no scopes', async () => {
+            await store.setSession({
+                id: 'unscoped-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'unscoped-token',
+                scopes: [],
+            })
+
+            const session = await store.getSession('unscoped-token')
+            expect(session).toBeDefined()
+            expect(session).not.toHaveProperty('scopes')
         })
 
         test('should add, list, get, update, and remove networks', async () => {

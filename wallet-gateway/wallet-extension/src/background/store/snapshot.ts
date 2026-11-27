@@ -170,7 +170,6 @@ function decodeUser(user: unknown): UserStorage {
         sessions: byId(user.sessions.map(withId<Session>)),
         transactions: byId(user.transactions.map(decodeTransaction)),
         messageRaws: byId(user.messageRaws.map(decodeMessageRaw)),
-        networkConnections: new Map(),
         apiKeys: new Map(),
         userRightsByNetwork: new Map(
             Object.entries(user.userRightsByNetwork).map(

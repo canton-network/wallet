@@ -323,7 +323,6 @@ export class SelfIssuedAuthService {
         if (SelfIssuedTokenService.isSigningInputExpired(message.message)) {
             return this.failLogin(messageId, SELF_ISSUED_LOGIN_EXPIRED)
         }
-        const connection = await this.requireNetworkConnection()
 
         const username = this.session.userId
         const existingUser = await this.getExistingUser()
@@ -360,10 +359,6 @@ export class SelfIssuedAuthService {
             accessToken,
             messageId
         )
-        await this.store.updateNetworkConnection(connection.id, {
-            authMethod: 'self_issued',
-            payload: { state: 'ready', scopes: connection.payload.scopes },
-        })
 
         this.logger.info(
             {
@@ -499,28 +494,23 @@ export class SelfIssuedAuthService {
             throw new Error('Current network has no synchronizerId')
         }
 
-        const connection = await this.requireNetworkConnection()
+        const loginSession = await this.store.getSelfIssuedLoginSession(
+            this.session.sessionId
+        )
+        if (!loginSession) {
+            throw new Error(
+                `Self-issued login session ${this.session.sessionId} not found`
+            )
+        }
 
         return SelfIssuedTokenService.prepareForSigning(wallet.publicKey, {
             audience: network.auth.audience,
-            scope: mergeScopes(network.auth.scope, connection.payload.scopes),
+            scope: mergeScopes(network.auth.scope, loginSession.scopes),
             partyId: wallet.partyId,
             username: this.session.userId,
             synchronizerId: network.synchronizerId,
             ttlSeconds: ACCESS_TOKEN_TTL_SECONDS,
         })
-    }
-
-    private async requireNetworkConnection() {
-        const connection = await this.store.getNetworkConnection(
-            this.session.sessionId
-        )
-        if (connection?.authMethod !== 'self_issued') {
-            throw new Error(
-                `Self-issued login session ${this.session.sessionId} has no network connection`
-            )
-        }
-        return connection
     }
 
     private async probeLedger(accessToken: string): Promise<void> {

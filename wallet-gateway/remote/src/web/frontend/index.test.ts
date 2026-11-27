@@ -250,6 +250,20 @@ describe('addUserSession', () => {
             expect.objectContaining({ method: 'addSession' })
         )
     })
+
+    it('records the requested scopes with the session', async () => {
+        mockRequest.mockResolvedValue({ id: 'session-new' })
+
+        await addUserSession('token-abc', 'network1', ['ledger:read'])
+
+        expect(mockRequest).toHaveBeenCalledWith({
+            method: 'addSession',
+            params: expect.objectContaining({
+                networkId: 'network1',
+                scopes: ['ledger:read'],
+            }),
+        })
+    })
 })
 
 describe('UserApp', () => {

@@ -1035,6 +1035,12 @@ export const paramSchemas: Record<string, z.ZodType> = {
                 minLength: 1,
                 description: 'Network Id',
             },
+            scopes: {
+                title: 'scopes',
+                type: 'array',
+                description: 'Ledger api token scopes the dApp requested.',
+                items: { title: 'scope', type: 'string' },
+            },
         },
         required: ['networkId', 'origin'],
     }),
