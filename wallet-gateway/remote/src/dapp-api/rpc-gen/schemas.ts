@@ -8,9 +8,33 @@ import { z } from 'zod'
 // Methods without a declared param only accept an omitted or empty `params`.
 const noParams = z.union([z.undefined(), z.tuple([]), z.strictObject({})])
 
+// An optional param may also be omitted positionally, as `[]`.
+const optionalParams = (schema: z.ZodType) =>
+    z.preprocess(
+        (params) =>
+            Array.isArray(params) && params.length === 0 ? undefined : params,
+        schema.optional()
+    )
+
 export const paramSchemas: Record<string, z.ZodType> = {
     status: noParams,
-    connect: noParams,
+    connect: optionalParams(
+        z.fromJSONSchema({
+            title: 'connectParams',
+            type: 'object',
+            description: 'Request to connect to the wallet provider.',
+            additionalProperties: { type: 'null' },
+            properties: {
+                scopes: {
+                    title: 'scopes',
+                    type: 'array',
+                    description:
+                        'Ledger API access token scopes requested by the dApp, for the user to approve.',
+                    items: { title: 'scope', type: 'string' },
+                },
+            },
+        })
+    ),
     disconnect: noParams,
     isConnected: noParams,
     getActiveNetwork: noParams,

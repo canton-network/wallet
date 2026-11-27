@@ -30,6 +30,7 @@ export * from './error.ts'
 export * as dappAPI from '@canton-network/core-wallet-dapp-rpc-client'
 export type {
     StatusEvent,
+    ConnectParams,
     ConnectResult,
     PrepareExecuteParams,
     PrepareExecuteAndWaitResult,

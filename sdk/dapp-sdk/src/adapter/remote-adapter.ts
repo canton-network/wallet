@@ -156,7 +156,7 @@ class RemoteMappedProvider implements Provider<DappRpcTypes> {
             case 'status':
                 return controller.status() as Promise<DappRpcTypes[M]['result']>
             case 'connect':
-                return controller.connect() as Promise<
+                return controller.connect(args.params) as Promise<
                     DappRpcTypes[M]['result']
                 >
             case 'disconnect':
