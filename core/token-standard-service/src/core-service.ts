@@ -172,8 +172,13 @@ export class CoreService {
             )
         }
 
+        // The ACS also holds holdings the sender only observes or co-signs
+        // (e.g. every holding of an instrument for its admin), and the
+        // registry rejects inputs the sender does not own.
         const unlockedSenderHoldings = senderHoldings.filter(
-            (utxo) => !TokenStandardService.isHoldingLocked(utxo, now)
+            (utxo) =>
+                utxo.interfaceViewValue.owner === sender &&
+                !TokenStandardService.isHoldingLocked(utxo, now)
         )
 
         if (unlockedSenderHoldings.length > 100) {
