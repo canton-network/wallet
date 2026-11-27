@@ -20,10 +20,10 @@ const keys: Key[] = [
 ]
 
 const partyHintInput = (canvasElement: HTMLElement) =>
-    findByShadowRole(canvasElement, 'textbox', { name: /^Party ID Hint/ })
+    findByShadowRole(canvasElement, 'textbox', { name: /^Party hint/ })
 
 const signingProviderSelect = (canvasElement: HTMLElement) =>
-    findByShadowRole(canvasElement, 'combobox', { name: /^Signing Provider/ })
+    findByShadowRole(canvasElement, 'combobox', { name: /^Signing provider/ })
 
 const vaultSelect = (canvasElement: HTMLElement) =>
     findByShadowRole(canvasElement, 'combobox', { name: /^Vault name/ })
@@ -57,7 +57,7 @@ export const Default: Story = {
         }
         await expect(
             await findByShadowRole(canvasElement, 'checkbox', {
-                name: 'Set as primary wallet',
+                name: 'Set as primary party',
             })
         ).not.toBeChecked()
         await expect(
@@ -92,7 +92,7 @@ export const AsPrimary: Story = {
         )
         await userEvent.click(
             await findByShadowRole(canvasElement, 'checkbox', {
-                name: 'Set as primary wallet',
+                name: 'Set as primary party',
             })
         )
         await userEvent.click(await submitButton(canvasElement))
@@ -114,7 +114,7 @@ export const WithoutPrimaryOption: Story = {
         await partyHintInput(canvasElement)
         await expect(
             queryByShadowRole(canvasElement, 'checkbox', {
-                name: 'Set as primary wallet',
+                name: 'Set as primary party',
             })
         ).not.toBeInTheDocument()
     },
@@ -203,7 +203,7 @@ export const Submitting: Story = {
         await expect(await signingProviderSelect(canvasElement)).toBeDisabled()
         await expect(
             await findByShadowRole(canvasElement, 'checkbox', {
-                name: 'Set as primary wallet',
+                name: 'Set as primary party',
             })
         ).toBeDisabled()
         await expect(
@@ -391,7 +391,7 @@ export const AppFlow: Story = {
         )
         await userEvent.click(
             await findByShadowRole(canvasElement, 'checkbox', {
-                name: 'Set as primary wallet',
+                name: 'Set as primary party',
             })
         )
         await userEvent.click(await submitButton(canvasElement))

@@ -31,7 +31,7 @@ export const SigningProviderSelect = ({
             // The id the e2e helpers and the Lit form used
             id="signing-provider-id"
             select
-            label="Signing Provider"
+            label="Signing provider"
             required
             fullWidth
             value={value}

@@ -7,6 +7,7 @@ import { customElement, property, query, state } from 'lit/decorators.js'
 
 import { chevronDownIcon } from '../icons/index.ts'
 import { BaseElement } from '../internal/base-element.ts'
+import { IDP_TYPE_LABELS } from './idp-type.ts'
 
 /** Emitted when the user saves (add or update) an IDP */
 export class IdpFormSaveEvent extends Event {
@@ -367,9 +368,13 @@ class IdpFormComponent extends BaseElement {
                         @change=${this.handleTypeChange}
                         required
                     >
-                        <option value="oauth">oauth</option>
-                        <option value="self_signed">self_signed</option>
-                        <option value="self_issued">self_issued</option>
+                        <option value="oauth">${IDP_TYPE_LABELS.oauth}</option>
+                        <option value="self_signed">
+                            ${IDP_TYPE_LABELS.self_signed}
+                        </option>
+                        <option value="self_issued">
+                            ${IDP_TYPE_LABELS.self_issued}
+                        </option>
                     </select>
                     <span class="select-chevron">${chevronDownIcon}</span>
                 </div>
