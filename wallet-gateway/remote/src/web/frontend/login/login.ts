@@ -20,12 +20,14 @@ import type {
 import { html } from 'lit'
 import { customElement, state } from 'lit/decorators.js'
 
+import { SESSION_EXPIRED_PARAM, SESSION_EXPIRED_TOAST } from '../constants.ts'
 import { redirectToIntendedOrDefault, addUserSession } from '../index.ts'
 import { detectCurrentOrigin } from '../listeners.ts'
 import '../index.ts'
 import { setLocationHref } from '../navigation.ts'
 import { createUserClient } from '../rpc-client.ts'
 import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
 
 const PKCE_CODE_VERIFIER_LENGTH = 64
 
@@ -92,8 +94,19 @@ export class LoginUI extends BaseElement {
         return response.idps
     }
 
+    private showSessionExpiredToastIfNeeded() {
+        const url = new URL(window.location.href)
+        if (!url.searchParams.has(SESSION_EXPIRED_PARAM)) return
+
+        const { title, message, type } = SESSION_EXPIRED_TOAST
+        showToast(title, message, type)
+        url.searchParams.delete(SESSION_EXPIRED_PARAM)
+        window.history.replaceState({}, '', url.toString())
+    }
+
     async connectedCallback() {
         super.connectedCallback()
+        this.showSessionExpiredToastIfNeeded()
         try {
             // Connecting needs both, so fetch them together and publish them update once both are resolved
 
