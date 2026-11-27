@@ -21,6 +21,7 @@ import type {
 import type { PartyAllocationService } from '../../party-allocation-service.ts'
 import {
     handleSigningProviderError,
+    type WalletAllocationOptions,
     type WalletAllocator,
 } from '../wallet-allocation-service.ts'
 import { finalizeWallet } from './utils.ts'
@@ -71,12 +72,12 @@ export class ExternalWalletAllocator implements WalletAllocator {
         authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary = false,
-        keyName?: KeyName
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         const driver = getSigningController(this.signingDriver, authContext)
 
         const key = await this.getOrCreateKey(authContext, {
-            keyName,
+            keyName: options.keyName,
             partyHint,
         })
 
@@ -134,7 +135,8 @@ export class ExternalWalletAllocator implements WalletAllocator {
             topologyTransactions,
             namespace,
             driver,
-            this.partyAllocator
+            this.partyAllocator,
+            options
         )
 
         await this.store.addWallet(wallet)
@@ -143,7 +145,8 @@ export class ExternalWalletAllocator implements WalletAllocator {
 
     async allocateParty(
         authContext: AuthContext,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         if (
             !existingWallet.externalTxId ||
@@ -172,12 +175,18 @@ export class ExternalWalletAllocator implements WalletAllocator {
                 )
             }
             const partyId =
-                await this.partyAllocator.allocatePartyWithExistingWallet(
-                    existingWallet.namespace,
-                    existingWallet.topologyTransactions.split(', '),
-                    signature,
-                    authContext.userId
-                )
+                options.grantRights === false
+                    ? await this.partyAllocator.allocatePartyWithExistingWallet(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature
+                      )
+                    : await this.partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                          existingWallet.namespace,
+                          existingWallet.topologyTransactions.split(', '),
+                          signature,
+                          authContext.userId
+                      )
             walletUpdate = {
                 ...walletUpdate,
                 partyId,

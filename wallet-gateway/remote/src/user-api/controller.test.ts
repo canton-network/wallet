@@ -2638,7 +2638,7 @@ describe('userController', () => {
                 'alice',
                 false,
                 SigningProvider.WALLET_KERNEL,
-                undefined
+                {}
             )
             expect(walletSyncMocks.syncRights).toHaveBeenCalledOnce()
             expect(walletSyncMocks.syncWallets).not.toHaveBeenCalled()
@@ -2652,7 +2652,7 @@ describe('userController', () => {
             })
         })
 
-        it('passes auth context to wallet allocation service', async () => {
+        it('passes auth context and selected key to the wallet allocation service', async () => {
             const authWithEmail = { ...auth, email: 'direct@example.com' }
             const store = await createStore(logger, authWithEmail)
             walletAllocationMocks.createWallet.mockResolvedValue(primaryWallet)
@@ -2667,6 +2667,7 @@ describe('userController', () => {
             await controller.createWallet({
                 partyHint: 'bob',
                 signingProviderId: SigningProvider.WALLET_KERNEL,
+                keyName: 'key-1',
             })
 
             expect(walletAllocationMocks.createWallet).toHaveBeenCalledWith(
@@ -2674,7 +2675,7 @@ describe('userController', () => {
                 'bob',
                 false,
                 SigningProvider.WALLET_KERNEL,
-                undefined
+                { keyName: 'key-1' }
             )
         })
 

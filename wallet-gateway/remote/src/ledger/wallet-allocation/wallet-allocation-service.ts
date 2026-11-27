@@ -22,16 +22,22 @@ import { ExternalWalletAllocator } from './signing-providers/external-wallet-all
 import { InternalWalletAllocator } from './signing-providers/internal-wallet-allocator.ts'
 import { KernelWalletAllocator } from './signing-providers/kernel-wallet-allocator.ts'
 
+export type WalletAllocationOptions = {
+    grantRights?: boolean
+    keyName?: KeyName
+}
+
 export interface WalletAllocator {
     createWallet(
         authContext: AuthContext,
         partyHint: PartyHint,
         primary: Primary,
-        vaultName?: KeyName
+        options: WalletAllocationOptions
     ): Promise<Wallet>
     allocateParty(
         authContext: AuthContext,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions
     ): Promise<void>
     getKeys(authContext: AuthContext): Promise<Keys | null | void>
 }
@@ -111,24 +117,26 @@ export class WalletAllocationService {
         partyHint: PartyHint,
         primary: Primary,
         signingProviderId: SigningProvider,
-        keyName?: KeyName
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         return this.getAllocator(signingProviderId).createWallet(
             authContext,
             partyHint,
             primary,
-            keyName
+            options
         )
     }
 
     public async allocateParty(
         authContext: AuthContext,
         existingWallet: Wallet,
-        signingProviderId: SigningProvider
+        signingProviderId: SigningProvider,
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         return this.getAllocator(signingProviderId).allocateParty(
             authContext,
-            existingWallet
+            existingWallet,
+            options
         )
     }
 
