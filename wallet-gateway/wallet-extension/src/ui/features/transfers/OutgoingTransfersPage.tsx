@@ -12,6 +12,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 
+import { isActionable } from './is-actionable.ts'
 import { partyLabel } from './party-label.ts'
 import { PartyTransfersPage, TransferList } from './PartyTransfers.tsx'
 import { TransferChoiceDialog } from './TransferChoiceDialog.tsx'
@@ -47,6 +48,7 @@ function Transfers({ partyId }: { partyId: string }) {
                     partyId={partyId}
                     transfer={withdrawing}
                     choice="Withdraw"
+                    actionable={isActionable(outgoing, withdrawing)}
                     onClose={() => setWithdrawing(undefined)}
                 />
             )}

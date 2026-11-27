@@ -57,11 +57,14 @@ export function TransferChoiceDialog({
     partyId,
     transfer,
     choice,
+    actionable,
     onClose,
 }: {
     partyId: string
     transfer: PendingTransfer
     choice: TransferInstructionChoice
+    /** False while the list says the transfer can't be acted on. */
+    actionable: boolean
     onClose: () => void
 }) {
     const exercise = useExerciseTransfer()
@@ -72,7 +75,9 @@ export function TransferChoiceDialog({
     // confirming checks the deadline again.
     const [expiredOnConfirm, setExpiredOnConfirm] = useState(false)
     const expired = useHasExpired(transfer.executeBefore) || expiredOnConfirm
-    const acceptExpired = choice === 'Accept' && expired
+    // A call already sent keeps its controls until it settles.
+    const acceptExpired = choice === 'Accept' && expired && !exercise.isPending
+    const withheld = !actionable && !exercise.isPending
     const unknownOutcome = exercise.isError && !isNotSubmitted(exercise.error)
 
     const confirm = () => {
@@ -80,28 +85,26 @@ export function TransferChoiceDialog({
             setExpiredOnConfirm(true)
             return
         }
-        exercise.mutate(
-            {
+        // Not `mutate`'s callbacks: they don't run once the dialog unmounts,
+        // and an unknown outcome must still refresh the lists.
+        void exercise
+            .mutateAsync({
                 party: partyId,
                 contractId: transfer.contractId,
                 instrumentId: transfer.instrumentId,
                 instructionChoice: choice,
                 version: transfer.version,
-            },
-            {
-                onSuccess: onClose,
-                onError: (error) => {
-                    if (isNotSubmitted(error)) return
-                    // It may have executed: show what the ledger has now.
-                    void queryClient.invalidateQueries({
-                        queryKey: tokenQueryKeys.pendingTransfers.all,
-                    })
-                    void queryClient.invalidateQueries({
-                        queryKey: tokenQueryKeys.holdings.all,
-                    })
-                },
-            }
-        )
+            })
+            .then(onClose, (error: unknown) => {
+                if (isNotSubmitted(error)) return
+                // It may have executed: show what the ledger has now.
+                void queryClient.invalidateQueries({
+                    queryKey: tokenQueryKeys.pendingTransfers.all,
+                })
+                void queryClient.invalidateQueries({
+                    queryKey: tokenQueryKeys.holdings.all,
+                })
+            })
     }
 
     return (
@@ -124,6 +127,12 @@ export function TransferChoiceDialog({
                         </Alert>
                     )
                 )}
+                {withheld && (
+                    <Alert severity="warning" sx={{ mt: 2 }}>
+                        The token standard v2 transfers didn't load, so this
+                        transfer can't be acted on until they do.
+                    </Alert>
+                )}
                 {acceptExpired && (
                     <Alert severity="warning" sx={{ mt: 2 }}>
                         This transfer expired, so your party can no longer
@@ -132,7 +141,7 @@ export function TransferChoiceDialog({
                 )}
             </DialogContent>
             <DialogActions>
-                {unknownOutcome || acceptExpired ? (
+                {unknownOutcome || acceptExpired || withheld ? (
                     <Button onClick={onClose}>Close</Button>
                 ) : (
                     <>

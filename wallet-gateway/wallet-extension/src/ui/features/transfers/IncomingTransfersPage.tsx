@@ -13,6 +13,7 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 
+import { isActionable } from './is-actionable.ts'
 import { partyLabel } from './party-label.ts'
 import { PartyTransfersPage, TransferList } from './PartyTransfers.tsx'
 import { TransferChoiceDialog } from './TransferChoiceDialog.tsx'
@@ -57,6 +58,7 @@ function Transfers({ partyId }: { partyId: string }) {
                     partyId={partyId}
                     transfer={choosing.transfer}
                     choice={choosing.choice}
+                    actionable={isActionable(incoming, choosing.transfer)}
                     onClose={() => setChoosing(undefined)}
                 />
             )}

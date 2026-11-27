@@ -18,6 +18,8 @@ import { PageLoader } from '@/ui/components/feedback.tsx'
 import { toTokenWallets } from '@/ui/features/assets/index.ts'
 import { walletsQuery } from '@/ui/features/parties/index.ts'
 
+import { isActionable } from './is-actionable.ts'
+
 /** A transfers page for one of the user's parties, the primary by default. */
 export function PartyTransfersPage({
     heading,
@@ -76,9 +78,7 @@ export function PartyTransfersPage({
 
 /**
  * The loaded transfers, with an alert for the versions that failed and,
- * when none loaded, `No transfers wait for {waitingFor}.` A transfer is
- * `actionable` unless it is listed as v1 while v2 failed to load: the
- * contract may implement v2, which must then be acted through.
+ * when none loaded, `No transfers wait for {waitingFor}.`
  */
 export function TransferList({
     pending,
@@ -103,7 +103,6 @@ export function TransferList({
         (version) =>
             !pending.failures.some((failure) => failure.version === version)
     )
-    const v2Failed = !loaded.includes('v2')
 
     if (pending.isError) {
         return (
@@ -129,7 +128,7 @@ export function TransferList({
                 </Alert>
             )}
             {pending.transfers.map((transfer) =>
-                children(transfer, !(v2Failed && transfer.version === 'v1'))
+                children(transfer, isActionable(pending, transfer))
             )}
         </>
     )
