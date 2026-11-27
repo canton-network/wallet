@@ -72,6 +72,8 @@ export async function allocateAmuletForAlice(
                 symbol: 'CC',
                 registryUrl: localNetStaticConfig.LOCALNET_REGISTRY_API_URL,
                 admin: amuletAdmin,
+                paused: false,
+                decimals: 10,
                 capabilities: resolveCapabilities({
                     supportedApis: {
                         'splice-api-token-transfer-instruction-v2': 1,

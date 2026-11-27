@@ -10,7 +10,6 @@ export type Instrument =
 
 export type PortfolioInstrument = AssetBody & {
     name: string
-    decimals: number
 }
 
 export const toPortfolioInstrument = ({
@@ -29,6 +28,8 @@ export const toPortfolioInstrument = ({
     name: instrument.name,
     symbol: instrument.symbol,
     decimals: instrument.decimals,
+    paused: instrument.paused,
+    pauseInfo: instrument.pauseInfo,
     capabilities: resolveCapabilities({
         supportedApis: instrument.supportedApis,
     }),
