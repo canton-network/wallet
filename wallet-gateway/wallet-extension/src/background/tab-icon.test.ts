@@ -41,13 +41,63 @@ describe('createTabIcons', () => {
     it('records the tabs whose icon it changed', async () => {
         const tabIcons = createTabIcons()
 
-        await tabIcons.set(7, 'approval', prompt)
+        await tabIcons.set(7, 'site', prompt)
         await vi.waitFor(async () =>
             expect(await overriddenTabs()).toEqual([7])
         )
-        await tabIcons.set(7, 'approval', undefined)
+        await tabIcons.set(7, 'site', undefined)
 
         await vi.waitFor(async () => expect(await overriddenTabs()).toEqual([]))
+    })
+
+    it('shows a site approval, then a transaction, then the unlock page', async () => {
+        const tabIcons = createTabIcons()
+        const site = prompt
+        const transaction = {
+            popup: 'popup.html#/approve-transaction?id=tx-1',
+            badge: '2',
+        }
+        const unlock = { popup: 'popup.html#/unlock', badge: '!' }
+        const shown = async () => [
+            popups.get(7),
+            await fakeBrowser.action.getBadgeText({ tabId: 7 }),
+        ]
+
+        await tabIcons.set(7, 'unlock', unlock)
+        await tabIcons.set(7, 'transaction', transaction)
+        expect(await shown()).toEqual([transaction.popup, '2'])
+        await tabIcons.set(7, 'site', site)
+        expect(await shown()).toEqual([site.popup, '1'])
+
+        await tabIcons.set(7, 'site', undefined)
+        expect(await shown()).toEqual([transaction.popup, '2'])
+        await tabIcons.set(7, 'transaction', undefined)
+        expect(await shown()).toEqual([unlock.popup, '!'])
+        await tabIcons.set(7, 'unlock', undefined)
+        expect(await shown()).toEqual(['popup.html', ''])
+    })
+
+    it('reports a tab held from its first prompt until its last one ends or it closes', async () => {
+        const onHeld = vi.fn()
+        const tabIcons = createTabIcons(onHeld)
+        const unlock = { popup: 'popup.html#/unlock', badge: '!' }
+
+        await tabIcons.set(7, 'site', prompt)
+        await tabIcons.set(7, 'unlock', unlock)
+        await tabIcons.set(7, 'site', undefined)
+        expect(onHeld.mock.calls).toEqual([[7, true]])
+        await tabIcons.set(7, 'unlock', undefined)
+        expect(onHeld.mock.calls).toEqual([
+            [7, true],
+            [7, false],
+        ])
+
+        await tabIcons.set(9, 'site', prompt)
+        await fakeBrowser.tabs.onRemoved.trigger(9, {
+            windowId: 1,
+            isWindowClosing: false,
+        })
+        expect(onHeld).toHaveBeenLastCalledWith(9, false)
     })
 
     it("resets the icons the previous worker left, but not a new request's", async () => {
@@ -60,7 +110,7 @@ describe('createTabIcons', () => {
 
         const tabIcons = createTabIcons()
         // A request that wakes the worker sets its tab's icon right away.
-        void tabIcons.set(9, 'approval', prompt)
+        void tabIcons.set(9, 'site', prompt)
 
         await vi.waitFor(async () => {
             expect(popups.get(7)).toBe('popup.html')

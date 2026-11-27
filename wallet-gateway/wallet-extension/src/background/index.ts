@@ -9,6 +9,7 @@ import { logger } from '@/shared/logger.ts'
 import {
     SITE_APPROVAL_RPC_KEY,
     TOKEN_RPC_KEY,
+    TX_APPROVAL_RPC_KEY,
     USER_RPC_KEY,
 } from '@/shared/service-keys.ts'
 
@@ -16,7 +17,9 @@ import { createAuthContextStore } from './auth-context.ts'
 import { registerAuthService } from './auth-service.ts'
 import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
 import { userController } from './controllers/user/index.ts'
+import { transactionSubmitter } from './controllers/user/transactions.ts'
 import { registerDappService } from './dapp-service.ts'
+import { createKeepAlive } from './keep-alive.ts'
 import {
     createSitePorts,
     currentSessionSubscriber,
@@ -24,7 +27,8 @@ import {
 } from './notifications.ts'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui.ts'
 import { createPagePresence } from './page-presence.ts'
-import { createSiteApprovals, currentSessionCheck } from './site-approval.ts'
+import { currentSessionCheck } from './session-check.ts'
+import { createSiteApprovals } from './site-approval.ts'
 import { createApprovedSiteStore } from './store/approved-sites.ts'
 import {
     createSigningStore,
@@ -36,6 +40,7 @@ import { createTabIcons } from './tab-icon.ts'
 import { createTokenSdk } from './token/sdk.ts'
 import { createTokenService } from './token/service.ts'
 import { registerTrustedService } from './trusted-service.ts'
+import { createTxApprovals } from './tx-approval.ts'
 import { createUnlockRequests } from './unlock-request.ts'
 import { registerVaultService } from './vault-service.ts'
 import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
@@ -65,7 +70,7 @@ export function startBackground({
     const sites = createApprovedSiteStore(vault)
     const isCurrent = currentSessionCheck(getStore, authContext)
     const presence = createPagePresence()
-    const tabIcons = createTabIcons()
+    const tabIcons = createTabIcons(createKeepAlive())
     const siteApprovals = createSiteApprovals({
         vault,
         authContext,
@@ -75,6 +80,17 @@ export function startBackground({
         sites,
     })
     const unlockRequests = createUnlockRequests({ vault, presence, tabIcons })
+    const txApprovals = createTxApprovals({
+        vault,
+        authContext,
+        presence,
+        tabIcons,
+        isCurrent,
+        sites,
+        notificationService,
+        getStore: () => walletStore.get(),
+        submitter: transactionSubmitter(deps),
+    })
     const sitePorts = createSitePorts(vault, authContext)
 
     registerVaultService(vault)
@@ -84,10 +100,10 @@ export function startBackground({
         createDappDispatcher(
             {
                 getStore: () => walletStore.get(),
-                notificationService,
                 sites,
                 siteApprovals,
                 unlockRequests,
+                txApprovals,
                 sitePorts,
                 isCurrent,
             },
@@ -98,7 +114,7 @@ export function startBackground({
     )
     registerTrustedService(
         USER_RPC_KEY,
-        requireUnlocked(vault, userController(deps))
+        requireUnlocked(vault, userController(deps, txApprovals))
     )
     registerTrustedService(
         TOKEN_RPC_KEY,
@@ -115,6 +131,10 @@ export function startBackground({
     registerTrustedService(
         SITE_APPROVAL_RPC_KEY,
         requireUnlocked(vault, siteApprovals.service)
+    )
+    registerTrustedService(
+        TX_APPROVAL_RPC_KEY,
+        requireUnlocked(vault, txApprovals.service)
     )
     registerNotificationPorts(
         notificationService,

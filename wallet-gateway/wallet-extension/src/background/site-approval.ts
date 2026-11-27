@@ -2,15 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { providerErrors } from '@canton-network/core-rpc-errors'
-import { jwtExpired } from '@canton-network/core-wallet-auth'
-import type { Store } from '@canton-network/core-wallet-store'
 import { browser, type Browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
 import { siteApprovalPortId } from '@/shared/ports.ts'
 
-import type { AuthContextChanges, AuthContextStore } from './auth-context.ts'
-import type { PageConnection, PagePresence } from './page-presence.ts'
+import type { AuthContextChanges } from './auth-context.ts'
+import type { PagePresence, RequestTab } from './page-presence.ts'
+import type { SessionCheck } from './session-check.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { DEFAULT_POPUP, openTabPopup, type TabIcons } from './tab-icon.ts'
 import { isTrustedSender } from './trusted-service.ts'
@@ -30,19 +29,6 @@ export type SiteApprovalService = {
     decide(id: string, approved: boolean): Promise<void>
 }
 
-/** The browser tab of the page that sent a dApp request. */
-export interface SiteApprovalTab {
-    tabId: number
-    windowId: number
-    /** The document that sent it: `documentId`, or the tab and frame. */
-    page: string
-    /**
-     * The page's presence connection when the request arrived. None, or not
-     * live, means the page has gone.
-     */
-    connection: PageConnection | undefined
-}
-
 export interface SiteApprovalRequest {
     /** See `sitePrincipal`. */
     principal: string
@@ -50,7 +36,7 @@ export interface SiteApprovalRequest {
     /** The token of the session that asked. */
     accessToken: string
     /** Where the prompt is shown. Without one, it waits for the timeout. */
-    tab?: SiteApprovalTab
+    tab?: RequestTab
 }
 
 export interface SiteApprovals {
@@ -67,31 +53,6 @@ export interface SiteApprovals {
      */
     request(request: SiteApprovalRequest): Promise<void>
     service: SiteApprovalService
-}
-
-/**
- * Whether `accessToken` is the signed-in user's, unexpired and has a session.
- * The same rule as the auth service's `getStatus`: an expired token counts as
- * signed out.
- */
-export type SessionCheck = (accessToken: string) => Promise<boolean>
-
-export function currentSessionCheck(
-    getStore: () => Promise<Pick<Store, 'getSession'>>,
-    authContext: Pick<AuthContextStore, 'load'>
-): SessionCheck {
-    return async (accessToken) => {
-        try {
-            const context = await authContext.load()
-            if (context?.accessToken !== accessToken) return false
-            if (jwtExpired(accessToken)) return false
-            const store = await getStore()
-            return (await store.getSession(accessToken)) !== undefined
-        } catch (error) {
-            if (error instanceof VaultLockedError) return false
-            throw error
-        }
-    }
 }
 
 interface PendingApproval extends SiteApprovalRequest {
@@ -178,7 +139,7 @@ export function createSiteApprovals({
         const newest = prompts.at(-1)
         return tabIcons.set(
             tabId,
-            'approval',
+            'site',
             newest && {
                 popup: approvalPopup(newest.id),
                 badge: String(prompts.length),
@@ -324,10 +285,7 @@ export function createSiteApprovals({
         return pending
     }
 
-    function prompt(
-        { tabId, windowId }: SiteApprovalTab,
-        pending: PendingApproval
-    ) {
+    function prompt({ tabId, windowId }: RequestTab, pending: PendingApproval) {
         byTab.set(tabId, [...(byTab.get(tabId) ?? []), pending])
         void showTab(tabId).then(() => {
             // Settled in the meantime: the popup is the wallet again.

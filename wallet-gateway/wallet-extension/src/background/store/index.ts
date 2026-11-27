@@ -11,11 +11,20 @@ import { createVaultSigningStore } from './signing-store.ts'
 
 export { createWalletStore } from './wallet-store.ts'
 
-export type WalletStore = Store & AuthAware<Store>
+/** The wallet store, with the extension's own writes. */
+export interface ExtensionStore extends Store {
+    /**
+     * Deletes the transaction if it is still pending, within one write, so
+     * no other write can sign it in between. Resolves whether it did.
+     */
+    removePendingTransaction(id: string): Promise<boolean>
+}
+
+export type WalletStore = ExtensionStore & AuthAware<ExtensionStore>
 
 /** The wallet store, scoped to the signed-in user (if any). */
 export async function loadAuthedStore(
-    store: WalletStore,
+    store: AuthAware<Store>,
     authContext: AuthContextStore
 ): Promise<Store> {
     return store.withAuthContext(await authContext.load())

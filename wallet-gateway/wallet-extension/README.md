@@ -25,10 +25,11 @@ src/
 │   ├── trusted-service.ts  isTrustedSender and registerTrustedService, for services only the extension pages may call
 │   ├── dapp-service.ts  registerDappService, which takes each dApp request's origin from the browser
 │   ├── site-approval.ts  the pending site approvals that a dApp's connect waits on
+│   ├── tx-approval.ts  the transactions a dApp asked for that wait for the user's approval
 │   ├── unlock-request.ts  the tabs whose locked connect shows the unlock page
-│   ├── tab-icon.ts   what each tab's toolbar icon opens, for the two above
+│   ├── tab-icon.ts   what each tab's toolbar icon opens, for the three above
 │   ├── page-presence.ts  the content scripts' presence ports, which tell when a dApp page unloads
-│   ├── auth-context.ts, status.ts, notifications.ts, open-ui.ts
+│   ├── auth-context.ts, session-check.ts, status.ts, notifications.ts, open-ui.ts
 │   └── index.ts      startBackground()
 ├── content/          content script code: startContent(), the JSON-RPC proxy and the notification relay
 ├── shared/           code that more than one runtime imports: service keys, ports, storage items, logger
@@ -70,6 +71,7 @@ The pages and the content script call the background through [`@webext-core/prox
 - `USER_RPC_KEY` is the user API, for the extension pages.
 - `TOKEN_RPC_KEY` is the token service, for the extension pages. See [Token service](#token-service).
 - `SITE_APPROVAL_RPC_KEY` is for the site approval page. See [Site approval](#site-approval).
+- `TX_APPROVAL_RPC_KEY` is for the transaction approval page. See [Transaction approval](#transaction-approval).
 - `DAPP_RPC_KEY` is the dApp dispatcher, for the content script. `registerDappService` (`background/dapp-service.ts`) answers it, because proxy-service's `registerService` drops the sender. The content script calls `request(request)`, and the background takes the origin from the message sender (`sender.origin`, or the origin of `sender.url` in Firefox). It refuses a sender without an http or https origin, which includes `file:` pages and the extension's own pages. The content script starts nothing on a page whose own origin is opaque (`window.origin` is `'null'`), such as a CSP-sandboxed page, because in Firefox the background only sees the page's URL. The dispatcher builds the dApp controller for that origin, calls only the controller's own methods (`Object.hasOwn`) and always resolves to a JSON-RPC response. Thrown errors become JSON-RPC errors that keep their code.
 
 `registerService` ignores the sender, so the user API and the token service use `registerTrustedService` (`background/trusted-service.ts`) instead. It answers the same `createProxyService` messages, but only from `popup.html` and `app.html`, and it calls only the service's own methods (`Object.hasOwn` at every step of the path), so paths such as `token.constructor` are refused. Both services also sit behind `requireUnlocked` (`background/vault/`), which wraps every method, nested ones included, so it rejects with `VaultLockedError` while the vault isn't unlocked.
@@ -101,6 +103,14 @@ A site can use the dApp API only after the signed-in user approves it. Approvals
 - Each site is kept separate: the origin comes from the browser, events and the token go only to that site, and `disconnect` forgets only that site.
 - Approved sites can call `ledgerApi`, which forwards to the current network's ledger with the user's token.
 - An approved site keeps the token it was given until it expires, even after it disconnects.
+
+### Transaction approval
+
+A transaction a site asks for appears on the toolbar icon of that site's tab, where the user approves or rejects it (`background/tx-approval.ts`, `ui/features/transactions/`).
+
+- `prepareExecuteAndWait` also returns the outcome: the executed transaction, or the error the prompt ended with.
+- A prompt ends after 4 minutes, or when the vault locks, the user signs out or the page goes away.
+- Its events go only to the site that asked.
 
 ### Controllers
 

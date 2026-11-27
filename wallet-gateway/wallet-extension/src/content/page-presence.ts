@@ -15,7 +15,7 @@ export interface PagePresence {
 
 /**
  * Holds a port to the background while the page is loaded, so the
- * background sees the page unload and ends the site approval prompts it
+ * background sees the page unload and ends the approval prompts it
  * asked for. A service worker restart closes the port, and the prompts with
  * it, so the next request opens it again.
  */

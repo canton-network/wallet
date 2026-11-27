@@ -155,7 +155,8 @@ describe('handleNotificationPort', () => {
         await subscribe(otherPort)
 
         sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
-        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+        const event = { status: 'x', origin: 'https://other.example' }
+        service.getNotifier('session-1').emit('txChanged', event)
 
         expect(port.postMessage.mock.calls).toEqual([
             [
@@ -168,7 +169,7 @@ describe('handleNotificationPort', () => {
         expect(port.disconnect).toHaveBeenCalledTimes(1)
         expect(otherPort.postMessage).toHaveBeenCalledWith({
             method: 'txChanged',
-            params: { status: 'x' },
+            params: event,
         })
         expect(otherPort.disconnect).not.toHaveBeenCalled()
     })
@@ -252,11 +253,13 @@ describe('handleNotificationPort', () => {
         await subscribe(port)
 
         auth.signIn({ ...userA, accessToken: 'token-a2' })
-        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+        service
+            .getNotifier('session-1')
+            .emit('txChanged', { status: 'x', origin })
 
         expect(port.disconnect).not.toHaveBeenCalled()
         expect(port.postMessage.mock.calls).toEqual([
-            [{ method: 'txChanged', params: { status: 'x' } }],
+            [{ method: 'txChanged', params: { status: 'x', origin } }],
         ])
     })
 
@@ -310,6 +313,32 @@ describe('handleNotificationPort', () => {
         expect(otherPort.postMessage).not.toHaveBeenCalled()
     })
 
+    it("sends a transaction's events only to the site that asked for it", async () => {
+        const other = 'https://other.example'
+        const otherPort = fakePort(other)
+        await subscribe(port)
+        await subscribe(otherPort)
+        const signed = {
+            id: 'tx-1',
+            origin,
+            status: 'signed',
+            commandId: 'command-1',
+            payload: { signature: 'signature', signedBy: 'ns', party: 'p' },
+        }
+
+        service.getNotifier('session-1').emit('txChanged', signed)
+        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+        service.getNotifier('user-1').emit('accountsChanged', [])
+
+        expect(port.postMessage.mock.calls).toEqual([
+            [{ method: 'txChanged', params: signed }],
+            [{ method: 'accountsChanged', params: [] }],
+        ])
+        expect(otherPort.postMessage.mock.calls).toEqual([
+            [{ method: 'accountsChanged', params: [] }],
+        ])
+    })
+
     it('cleans up every port of an origin when one fails to send', async () => {
         const failing = fakePort()
         failing.postMessage.mockImplementation(() => {
@@ -356,12 +385,12 @@ describe('handleNotificationPort', () => {
 
         service
             .getNotifier('session-1')
-            .emit('txChanged', { status: 'pending' })
+            .emit('txChanged', { status: 'pending', origin })
         service.getNotifier('user-1').emit('accountsChanged', [])
         service.getNotifier('session-2').emit('txChanged', { other: true })
 
         expect(port.postMessage.mock.calls).toEqual([
-            [{ method: 'txChanged', params: { status: 'pending' } }],
+            [{ method: 'txChanged', params: { status: 'pending', origin } }],
             [{ method: 'accountsChanged', params: [] }],
         ])
         expect(port.disconnect).not.toHaveBeenCalled()

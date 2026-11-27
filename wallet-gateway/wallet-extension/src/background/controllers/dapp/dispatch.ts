@@ -58,6 +58,7 @@ export function createDappDispatcher(
         origin: DappRequestContext['origin'],
         tab: DappRequestContext['tab']
     ): Promise<DappRequestContext> {
+        const receivedAt = Date.now()
         // Wait for the restore, so a request that wakes the background
         // isn't refused while the vault is still unlocking.
         await vault.ready
@@ -75,6 +76,7 @@ export function createDappDispatcher(
                     auth,
                     principal,
                     approved,
+                    receivedAt,
                 }
             } catch (error) {
                 // A lock() landed after the status check.
@@ -88,6 +90,7 @@ export function createDappDispatcher(
             auth: undefined,
             principal: undefined,
             approved: false,
+            receivedAt,
         }
     }
 

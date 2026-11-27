@@ -13,7 +13,7 @@ export interface TabIconView {
 }
 
 /** Who asks for a tab's icon, highest priority first. */
-const USERS = ['approval', 'unlock'] as const
+const USERS = ['site', 'transaction', 'unlock'] as const
 
 export type TabIconUser = (typeof USERS)[number]
 
@@ -63,8 +63,12 @@ export async function openTabPopup(
  * Owns what each tab's toolbar icon shows. Other tabs keep the default
  * popup. Must be created synchronously during background start-up, as it
  * adds tab listeners, and resets the icons the previous worker left behind.
+ * Calls `onHeld` when a tab gets its first prompt and when it loses its
+ * last one.
  */
-export function createTabIcons(): TabIcons {
+export function createTabIcons(
+    onHeld: (tabId: number, held: boolean) => void = () => {}
+): TabIcons {
     const views = new Map<number, Map<TabIconUser, TabIconView>>()
     // Saves go in order, after the previous worker's list was read.
     let saved = restoreLeftovers().catch(ignore)
@@ -111,7 +115,9 @@ export function createTabIcons(): TabIcons {
 
     // Nothing left to restore on a closed tab.
     browser.tabs.onRemoved.addListener((tabId) => {
-        if (views.delete(tabId)) save()
+        if (!views.delete(tabId)) return
+        save()
+        onHeld(tabId, false)
     })
 
     return {
@@ -122,7 +128,10 @@ export function createTabIcons(): TabIcons {
             const had = views.has(tabId)
             if (users.size) views.set(tabId, users)
             else views.delete(tabId)
-            if (had !== views.has(tabId)) save()
+            if (had !== views.has(tabId)) {
+                save()
+                onHeld(tabId, !had)
+            }
             return show(tabId)
         },
     }

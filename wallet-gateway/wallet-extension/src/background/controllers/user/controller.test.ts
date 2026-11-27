@@ -39,6 +39,8 @@ const authContext = {
     identityProviderId: 'idp-mock-oauth',
 }
 
+const noPrompts = { hasPrompt: () => false }
+
 describe('userController.addSession', () => {
     let service: NotificationService
     let controller: ReturnType<typeof userController>
@@ -57,12 +59,15 @@ describe('userController.addSession', () => {
     beforeEach(() => {
         service = new NotificationService()
         const store = createTestWalletStore(authContext)
-        controller = userController({
-            getStore: async () => store,
-            authContext: fakeAuthContext(authContext),
-            signingDriver: {} as SigningDriverInterface,
-            notificationService: service,
-        })
+        controller = userController(
+            {
+                getStore: async () => store,
+                authContext: fakeAuthContext(authContext),
+                signingDriver: {} as SigningDriverInterface,
+                notificationService: service,
+            },
+            noPrompts
+        )
     })
 
     it('closes the notification subscriptions of a replaced session', async () => {
@@ -107,12 +112,15 @@ describe('userController.addSession', () => {
 
     it('refuses to move a session while the sign-in provider is unknown', async () => {
         const { identityProviderId: _, ...legacy } = authContext
-        controller = userController({
-            getStore: async () => createTestWalletStore(legacy),
-            authContext: fakeAuthContext(legacy),
-            signingDriver: {} as SigningDriverInterface,
-            notificationService: service,
-        })
+        controller = userController(
+            {
+                getStore: async () => createTestWalletStore(legacy),
+                authContext: fakeAuthContext(legacy),
+                signingDriver: {} as SigningDriverInterface,
+                notificationService: service,
+            },
+            noPrompts
+        )
 
         await expect(
             controller.addSession({ origin: 'https://dapp.example', networkId })
@@ -163,6 +171,7 @@ describe('userController transactions', () => {
         typeof call[1] === 'function' ? call[1]() : call[1]
     let sessionSink: { send: ReturnType<typeof vi.fn>; close: () => void }
     let otherSessionSink: { send: ReturnType<typeof vi.fn>; close: () => void }
+    let prompted: Set<string>
 
     const subscribe = (sessionId: string) => {
         const sink = { send: vi.fn(), close: vi.fn() }
@@ -180,6 +189,7 @@ describe('userController transactions', () => {
 
     beforeEach(async () => {
         fakeBrowser.reset()
+        prompted = new Set()
         const authContextStore = fakeAuthContext(authContext)
         postWithRetry = vi
             .spyOn(LedgerClient.prototype, 'postWithRetry')
@@ -197,12 +207,15 @@ describe('userController transactions', () => {
             createdAt: new Date(),
             updatedAt: new Date(),
         })
-        controller = userController({
-            getStore: async () => store,
-            authContext: authContextStore,
-            signingDriver: new InternalSigningDriver(signingStore),
-            notificationService: service,
-        })
+        controller = userController(
+            {
+                getStore: async () => store,
+                authContext: authContextStore,
+                signingDriver: new InternalSigningDriver(signingStore),
+                notificationService: service,
+            },
+            { hasPrompt: (id) => prompted.has(id) }
+        )
 
         const session = await controller.addSession({
             origin: pendingTransaction.origin!,
@@ -480,6 +493,27 @@ describe('userController transactions', () => {
         expect(otherSessionSink.send).not.toHaveBeenCalled()
     })
 
+    it('leaves a transaction with an approval prompt to that prompt', async () => {
+        prompted.add(pendingTransaction.id)
+
+        for (const call of [
+            () => controller.sign(params),
+            () => controller.execute(params),
+            () =>
+                controller.deleteTransaction({
+                    transactionId: pendingTransaction.id,
+                }),
+        ]) {
+            await expect(call()).rejects.toThrow(
+                'is waiting for its approval prompt'
+            )
+        }
+        expect(await store.getTransaction(pendingTransaction.id)).toMatchObject(
+            { status: 'pending' }
+        )
+        expect(sessionSink.send).not.toHaveBeenCalled()
+    })
+
     it('only signs with the wallet-kernel driver', async () => {
         await store.updateWallet({
             partyId: wallet.partyId,
@@ -533,12 +567,15 @@ describe('userController wallets', () => {
     }
 
     async function setup(getStore: () => Promise<Store>) {
-        const controller = userController({
-            getStore,
-            authContext: fakeAuthContext(authContext),
-            signingDriver: new InternalSigningDriver(signingStore),
-            notificationService: service,
-        })
+        const controller = userController(
+            {
+                getStore,
+                authContext: fakeAuthContext(authContext),
+                signingDriver: new InternalSigningDriver(signingStore),
+                notificationService: service,
+            },
+            noPrompts
+        )
         const session = await controller.addSession({ origin, networkId })
         subscribeNotifications(
             service,

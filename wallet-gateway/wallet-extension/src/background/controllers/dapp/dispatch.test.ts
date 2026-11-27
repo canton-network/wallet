@@ -2,13 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { LedgerClient } from '@canton-network/core-ledger-client'
-import { errorCodes, providerErrors } from '@canton-network/core-rpc-errors'
+import {
+    errorCodes,
+    providerErrors,
+    rpcErrors,
+} from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { JsonRpcRequest } from '@canton-network/core-types'
-import {
-    NotificationService,
-    subscribeNotifications,
-} from '@canton-network/core-wallet-services'
+import { NotificationService } from '@canton-network/core-wallet-services'
 import {
     PartyLevelRight,
     type Store,
@@ -21,6 +22,7 @@ import {
     expect,
     it,
     type Mock,
+    type MockInstance,
     vi,
 } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
@@ -28,7 +30,6 @@ import { fakeBrowser } from 'wxt/testing/fake-browser'
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
 import { asPort, fakePort } from '@/__tests__/fake-port.ts'
 import { inAnHour, jwt } from '@/__tests__/jwt.ts'
-import { approvalRequestsItem } from '@/shared/storage.ts'
 import type { VaultStatus } from '@/shared/vault-protocol.ts'
 
 import {
@@ -41,9 +42,10 @@ import { disconnectedStatusEvent } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
 import { createTestWalletStore } from '../../store/test-store.ts'
+import type { TxApprovals } from '../../tx-approval.ts'
 import type { UnlockRequests } from '../../unlock-request.ts'
 import { VaultLockedError } from '../../vault/index.ts'
-import type { DappControllerDeps } from './controller.ts'
+import { type DappControllerDeps, END_SITE_TIMEOUT_MS } from './controller.ts'
 import { createDappDispatcher, type DappDispatcher } from './dispatch.ts'
 
 const origin = 'https://dapp.example'
@@ -100,6 +102,10 @@ describe('createDappDispatcher', () => {
     let deps: DappControllerDeps & {
         siteApprovals: { request: Mock<SiteApprovals['request']> }
         unlockRequests: { request: Mock<UnlockRequests['request']> }
+        txApprovals: {
+            begin: Mock<TxApprovals['begin']>
+            endSite: Mock<TxApprovals['endSite']>
+        }
         sitePorts: {
             send: Mock<SitePorts['send']>
             close: Mock<SitePorts['close']>
@@ -116,10 +122,10 @@ describe('createDappDispatcher', () => {
         sites = fakeApprovedSites()
         deps = {
             getStore: async () => walletStore,
-            notificationService: service,
             sites,
             siteApprovals: { request: vi.fn() },
             unlockRequests: { request: vi.fn(async () => {}) },
+            txApprovals: { begin: vi.fn(), endSite: vi.fn() },
             sitePorts: { send: vi.fn(), close: vi.fn() },
             isCurrent: vi.fn(async () => true),
         }
@@ -131,6 +137,7 @@ describe('createDappDispatcher', () => {
     })
 
     afterEach(() => {
+        vi.useRealTimers()
         vi.restoreAllMocks()
     })
 
@@ -311,10 +318,28 @@ describe('createDappDispatcher', () => {
 
         it('revokes only this site on disconnect and keeps the session', async () => {
             await sites.approve(principal, 'https://other.example')
+            let finishEnding!: () => void
+            deps.txApprovals.endSite.mockImplementation(async () => {
+                expect(await sites.isApproved(principal, origin)).toBe(false)
+                await new Promise<void>((resolve) => (finishEnding = resolve))
+            })
 
-            await expect(
-                dispatcher.request(request('disconnect'), origin)
-            ).resolves.toEqual({ jsonrpc: '2.0', id: 7, result: null })
+            const disconnected = dispatcher.request(
+                request('disconnect'),
+                origin
+            )
+            await vi.waitFor(() =>
+                expect(deps.txApprovals.endSite).toHaveBeenCalled()
+            )
+            // The site's other tabs still get its transactions' failures.
+            expect(deps.sitePorts.close).not.toHaveBeenCalled()
+            finishEnding()
+
+            await expect(disconnected).resolves.toEqual({
+                jsonrpc: '2.0',
+                id: 7,
+                result: null,
+            })
 
             expect(await sites.isApproved(principal, origin)).toBe(false)
             expect(
@@ -325,6 +350,10 @@ describe('createDappDispatcher', () => {
                 disconnectedStatusEvent('disconnect')
             )
             expect(deps.sitePorts.close).toHaveBeenCalledTimes(1)
+            expect(deps.txApprovals.endSite).toHaveBeenCalledWith(
+                principal,
+                origin
+            )
             expect(await store.getSession(authContext.accessToken)).toEqual(
                 expect.objectContaining({ id: sessionId })
             )
@@ -333,6 +362,45 @@ describe('createDappDispatcher', () => {
             ).resolves.toMatchObject({
                 error: { code: errorCodes.provider.unauthorized },
             })
+        })
+
+        it("closes the site's ports on disconnect when ending its prompts fails", async () => {
+            deps.txApprovals.endSite.mockRejectedValue(new Error('boom'))
+
+            await dispatcher.request(request('disconnect'), origin)
+
+            expect(await sites.isApproved(principal, origin)).toBe(false)
+            expect(deps.sitePorts.close).toHaveBeenCalledWith(
+                origin,
+                disconnectedStatusEvent('disconnect')
+            )
+        })
+
+        it("closes the site's ports on disconnect once ending its prompts takes too long", async () => {
+            let endingStarted!: () => void
+            const started = new Promise<void>((resolve) => {
+                endingStarted = resolve
+            })
+            deps.txApprovals.endSite.mockImplementation(() => {
+                endingStarted()
+                return new Promise(() => {})
+            })
+            vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] })
+
+            const disconnected = dispatcher.request(
+                request('disconnect'),
+                origin
+            )
+            await started
+            await vi.advanceTimersByTimeAsync(END_SITE_TIMEOUT_MS - 1)
+            expect(deps.sitePorts.close).not.toHaveBeenCalled()
+            await vi.advanceTimersByTimeAsync(1)
+
+            await expect(disconnected).resolves.toMatchObject({ result: null })
+            expect(deps.sitePorts.close).toHaveBeenCalledWith(
+                origin,
+                disconnectedStatusEvent('disconnect')
+            )
         })
 
         describe('ledgerApi', () => {
@@ -591,52 +659,265 @@ describe('createDappDispatcher', () => {
             })
         })
 
-        it('records the requesting origin on a prepared transaction', async () => {
-            const postWithRetry = vi
-                .spyOn(LedgerClient.prototype, 'postWithRetry')
-                .mockResolvedValue({
+        describe('prepareExecute', () => {
+            const tab = {
+                tabId: 7,
+                windowId: 3,
+                page: 'document-1',
+                connection: { page: 'document-1', origin, live: true },
+            }
+            const executed = {
+                status: 'executed' as const,
+                commandId: 'command-1',
+                payload: { updateId: 'update-1', completionOffset: 42 },
+            }
+            const params = {
+                commandId: 'command-1',
+                commands: [{ CreateCommand: {} }],
+            }
+            let postWithRetry: MockInstance<LedgerClient['postWithRetry']>
+
+            beforeEach(() => {
+                postWithRetry = vi
+                    .spyOn(LedgerClient.prototype, 'postWithRetry')
+                    .mockResolvedValue({
+                        preparedTransaction: 'prepared-tx',
+                        preparedTransactionHash: 'prepared-hash',
+                    })
+            })
+
+            const approval = (outcome: Promise<typeof executed>) => {
+                outcome.catch(() => {})
+                return {
+                    outcome,
+                    prompt: vi.fn(async () => {}),
+                    abort: vi.fn(),
+                }
+            }
+
+            it('stores the transaction, then prompts for it on the tab', async () => {
+                const started = approval(new Promise(() => {}))
+                deps.txApprovals.begin.mockReturnValue(started)
+
+                const response = await dispatcher.request(
+                    request('prepareExecute', params),
+                    origin,
+                    tab
+                )
+
+                expect(response).toEqual({
+                    jsonrpc: '2.0',
+                    id: 7,
+                    result: null,
+                })
+                expect(postWithRetry).toHaveBeenCalledWith(
+                    '/v2/interactive-submission/prepare',
+                    expect.objectContaining({
+                        commandId: 'command-1',
+                        actAs: [wallet.partyId],
+                    })
+                )
+                expect(deps.txApprovals.begin).toHaveBeenCalledWith({
+                    transactionId: expect.any(String),
+                    commandId: 'command-1',
+                    sessionId,
+                    auth: authContext,
+                    principal,
+                    origin,
+                    tab,
+                    receivedAt: expect.any(Number),
+                })
+                const [{ transactionId }] =
+                    deps.txApprovals.begin.mock.calls[0]!
+                const stored = await store.getTransaction(transactionId)
+                expect(stored).toMatchObject({
+                    status: 'pending',
+                    commandId: 'command-1',
                     preparedTransaction: 'prepared-tx',
-                    preparedTransactionHash: 'prepared-hash',
+                    origin,
                 })
-            const sink = { send: vi.fn(), close: vi.fn() }
-            subscribeNotifications(
-                service,
-                { sessionId, userId: authContext.userId },
-                sink
-            )
+                // The payload reaches dApps, which must not see the session.
+                expect(stored?.payload).not.toHaveProperty('sessionId')
+                expect(started.prompt).toHaveBeenCalled()
+            })
 
-            const response = await dispatcher.request(
-                request('prepareExecute', {
-                    commandId: 'command-1',
-                    commands: [{ CreateCommand: {} }],
-                }),
-                origin
-            )
+            it('counts the approval time from the request, before the vault has restored', async () => {
+                vi.useFakeTimers({ toFake: ['Date'] })
+                let restored!: () => void
+                const vault = {
+                    ready: new Promise<void>((resolve) => (restored = resolve)),
+                    status: () => 'unlocked' as const,
+                }
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(new Promise(() => {}))
+                )
+                const arrived = Date.now()
 
-            expect(response).toEqual({ jsonrpc: '2.0', id: 7, result: null })
-            expect(postWithRetry).toHaveBeenCalledWith(
-                '/v2/interactive-submission/prepare',
-                expect.objectContaining({
-                    commandId: 'command-1',
-                    actAs: [wallet.partyId],
+                const response = createDappDispatcher(
+                    deps,
+                    vault,
+                    authContextStore
+                ).request(request('prepareExecute', params), origin, tab)
+                vi.setSystemTime(arrived + 60_000)
+                restored()
+                await response
+
+                expect(deps.txApprovals.begin).toHaveBeenCalledWith(
+                    expect.objectContaining({ receivedAt: arrived })
+                )
+            })
+
+            it('ends the prompt when the transaction cannot be prepared', async () => {
+                const started = approval(new Promise(() => {}))
+                deps.txApprovals.begin.mockReturnValue(started)
+                postWithRetry.mockRejectedValue(new Error('ledger down'))
+
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecute', params),
+                        origin,
+                        tab
+                    )
+                ).resolves.toMatchObject({
+                    error: { message: 'ledger down' },
                 })
-            )
-            const [queued] = await approvalRequestsItem.getValue()
-            expect(queued).toEqual({
-                transactionId: expect.any(String),
-                commandId: 'command-1',
+                expect(started.abort).toHaveBeenCalledWith(
+                    expect.objectContaining({ message: 'ledger down' })
+                )
+                expect(started.prompt).not.toHaveBeenCalled()
             })
-            expect(
-                await store.getTransaction(queued!.transactionId)
-            ).toMatchObject({
-                status: 'pending',
-                commandId: 'command-1',
-                preparedTransaction: 'prepared-tx',
-                origin,
+
+            describe('with more than one acting party', () => {
+                const other: Wallet = {
+                    ...wallet,
+                    primary: false,
+                    partyId: 'other::namespace',
+                    hint: 'other',
+                }
+
+                beforeEach(async () => {
+                    await store.addWallet({ ...other })
+                })
+
+                it('refuses them for an externally signed first party, before preparing', async () => {
+                    deps.txApprovals.begin.mockReturnValue(
+                        approval(new Promise(() => {}))
+                    )
+
+                    await expect(
+                        dispatcher.request(
+                            request('prepareExecute', {
+                                ...params,
+                                actAs: [wallet.partyId, other.partyId],
+                            }),
+                            origin,
+                            tab
+                        )
+                    ).resolves.toMatchObject({
+                        error: {
+                            code: errorCodes.rpc.invalidParams,
+                            message: expect.stringContaining(
+                                'Multi-party external signing is not supported'
+                            ),
+                        },
+                    })
+                    expect(postWithRetry).not.toHaveBeenCalled()
+                })
+
+                it.each([
+                    [
+                        'a participant-hosted first party',
+                        SigningProvider.PARTICIPANT,
+                        [wallet.partyId, other.partyId],
+                    ],
+                    [
+                        'one party named twice',
+                        SigningProvider.WALLET_KERNEL,
+                        [wallet.partyId, wallet.partyId],
+                    ],
+                ])('prepares for %s', async (_, signingProviderId, actAs) => {
+                    await store.updateWallet({
+                        partyId: wallet.partyId,
+                        networkId,
+                        signingProviderId,
+                    })
+                    deps.txApprovals.begin.mockReturnValue(
+                        approval(new Promise(() => {}))
+                    )
+
+                    await expect(
+                        dispatcher.request(
+                            request('prepareExecute', { ...params, actAs }),
+                            origin,
+                            tab
+                        )
+                    ).resolves.toMatchObject({ result: null })
+                    expect(postWithRetry).toHaveBeenCalledWith(
+                        '/v2/interactive-submission/prepare',
+                        expect.objectContaining({ actAs })
+                    )
+                })
             })
-            expect(sink.send).toHaveBeenCalledWith('txChanged', [
-                { status: 'pending', commandId: 'command-1' },
-            ])
+
+            it('waits for the executed transaction in prepareExecuteAndWait', async () => {
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(Promise.resolve(executed))
+                )
+
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecuteAndWait', params),
+                        origin,
+                        tab
+                    )
+                ).resolves.toEqual({
+                    jsonrpc: '2.0',
+                    id: 7,
+                    result: { tx: executed },
+                })
+            })
+
+            it('answers prepareExecuteAndWait when the prompt ends before the ledger has prepared it', async () => {
+                postWithRetry.mockReturnValue(new Promise(() => {}))
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(
+                        Promise.reject(
+                            providerErrors.userRejectedRequest({
+                                message: 'The transaction approval timed out',
+                            })
+                        )
+                    )
+                )
+
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecuteAndWait', params),
+                        origin,
+                        tab
+                    )
+                ).resolves.toMatchObject({
+                    error: { code: errorCodes.provider.userRejectedRequest },
+                })
+            })
+
+            it('returns the error of a transaction that fails in prepareExecuteAndWait', async () => {
+                const error = rpcErrors.transactionRejected({
+                    message: 'INVALID: no',
+                })
+                deps.txApprovals.begin.mockReturnValue(
+                    approval(Promise.reject(error))
+                )
+
+                await expect(
+                    dispatcher.request(
+                        request('prepareExecuteAndWait', params),
+                        origin,
+                        tab
+                    )
+                ).resolves.toMatchObject({
+                    error: { code: error.code, message: error.message },
+                })
+            })
         })
 
         it('refuses disconnect while locked and keeps the approval', async () => {

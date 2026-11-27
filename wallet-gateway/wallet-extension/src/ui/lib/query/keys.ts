@@ -47,6 +47,11 @@ export const queryKeys = {
         detail: (id: string) => ['siteApprovals', id] as const,
     },
 
+    transactions: {
+        all: ['transactions'] as const,
+        detail: (id: string) => ['transactions', id] as const,
+    },
+
     // Under the shared token keys, so that clearing `tokenQueryKeys.all`
     // also drops the previous network's assets.
     token: {

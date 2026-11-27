@@ -9,7 +9,8 @@ import {
     type PostEndpoint,
     type PrepareSubmissionResponse,
 } from '@canton-network/core-ledger-client'
-import { providerErrors } from '@canton-network/core-rpc-errors'
+import { providerErrors, rpcErrors } from '@canton-network/core-rpc-errors'
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     assertConnected,
     type AuthContext,
@@ -17,7 +18,6 @@ import {
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
 import {
-    type INotificationService,
     ledgerPrepareParams,
     networkStatus,
 } from '@canton-network/core-wallet-services'
@@ -26,19 +26,16 @@ import type {
     Transaction,
 } from '@canton-network/core-wallet-store'
 
-import { enqueueApprovalRequest } from '@/shared/approval-requests.ts'
 import { logger } from '@/shared/logger.ts'
 
 import type { SitePorts } from '../../notifications.ts'
-import {
-    type SessionCheck,
-    type SiteApprovals,
-    type SiteApprovalTab,
-    sessionEnded,
-} from '../../site-approval.ts'
+import type { RequestTab } from '../../page-presence.ts'
+import type { SessionCheck } from '../../session-check.ts'
+import { type SiteApprovals, sessionEnded } from '../../site-approval.ts'
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
 import type { WalletStore } from '../../store/index.ts'
+import { HASHING_SCHEME, type TxApprovals } from '../../tx-approval.ts'
 import type { UnlockRequests } from '../../unlock-request.ts'
 import buildController from './rpc-gen/index.ts'
 import type {
@@ -46,19 +43,26 @@ import type {
     LedgerApiParams,
     LedgerApiResult,
     Network,
+    PrepareExecuteAndWaitResult,
     PrepareExecuteParams,
     StatusEvent,
-    TxChangedPendingEvent,
     Wallet,
 } from './rpc-gen/typings.ts'
+
+/**
+ * How long a disconnect waits for the site's prompts to report their
+ * failure before it closes the site's ports anyway, which would otherwise
+ * keep receiving wallet events.
+ */
+export const END_SITE_TIMEOUT_MS = 2000
 
 export interface DappControllerDeps {
     /** The wallet store, not yet scoped to a user. */
     getStore: () => Promise<WalletStore>
-    notificationService: INotificationService
     sites: ApprovedSiteStore
     siteApprovals: Pick<SiteApprovals, 'request'>
     unlockRequests: Pick<UnlockRequests, 'request'>
+    txApprovals: Pick<TxApprovals, 'begin' | 'endSite'>
     sitePorts: Pick<SitePorts, 'send' | 'close'>
     isCurrent: SessionCheck
 }
@@ -68,7 +72,7 @@ export interface DappRequestContext {
     /** Origin of the page that sent the request, e.g. `https://app.example`. */
     origin: string
     /** The browser tab of the page, where a site approval prompt shows. */
-    tab?: SiteApprovalTab
+    tab?: RequestTab
     /** The vault isn't unlocked. */
     locked: boolean
     /** The signed-in user. Always undefined while locked. */
@@ -77,6 +81,8 @@ export interface DappRequestContext {
     principal: string | undefined
     /** The principal approved `origin`. Always false without one. */
     approved: boolean
+    /** When the request arrived, before the vault restore and the checks. */
+    receivedAt: number
 }
 
 function ledgerClientFor(network: StoreNetwork, accessToken: string) {
@@ -90,14 +96,22 @@ function ledgerClientFor(network: StoreNetwork, accessToken: string) {
 export const dappController = (
     {
         getStore,
-        notificationService,
         sites,
         siteApprovals,
         unlockRequests,
+        txApprovals,
         sitePorts,
         isCurrent,
     }: DappControllerDeps,
-    { origin, tab, locked, auth, principal, approved }: DappRequestContext
+    {
+        origin,
+        tab,
+        locked,
+        auth,
+        principal,
+        approved,
+        receivedAt,
+    }: DappRequestContext
 ) => {
     const notConnected = () =>
         disconnectedStatusEvent(locked ? 'Locked' : 'Unauthenticated')
@@ -133,6 +147,141 @@ export const dappController = (
     async function loadSession() {
         if (!auth || !approved) return undefined
         return sessionOf(auth)
+    }
+
+    /**
+     * Starts the approval prompt, then prepares the transaction, stores it
+     * as pending and puts the prompt on the tab's toolbar icon. `prompted`
+     * resolves once the prompt is up; `outcome` may settle before that, for
+     * example when the prompt times out during the preparation.
+     */
+    async function prepareForApproval(params: PrepareExecuteParams) {
+        const context = requireAuth()
+        const store = await loadStore()
+        const session = await store.getSession(context.accessToken)
+        if (!session) {
+            throw new Error('No active session found')
+        }
+        // Only an approved site gets here, and approval needs a principal.
+        if (principal === undefined) {
+            throw providerErrors.unauthorized({
+                message: 'The user has not approved this site',
+            })
+        }
+
+        const commandId = params.commandId || crypto.randomUUID()
+        const transactionId = crypto.randomUUID()
+        const sessionId = session.id
+        const approval = txApprovals.begin({
+            transactionId,
+            commandId,
+            sessionId,
+            auth: context,
+            principal,
+            origin,
+            tab,
+            receivedAt,
+        })
+
+        async function prepare() {
+            const primaryWallet = await store.getPrimaryWallet()
+            const wallets = await store.getWallets()
+            const network = await store.getCurrentNetwork()
+
+            let actAs = params.actAs ? [...params.actAs] : []
+            if (actAs.length === 0) {
+                if (!primaryWallet) {
+                    throw new Error(
+                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
+                    )
+                }
+                actAs = [primaryWallet.partyId]
+            }
+
+            for (const party of actAs) {
+                if (!wallets.some((wallet) => wallet.partyId === party)) {
+                    throw new Error(
+                        `Acting party ${party} does not belong to user`
+                    )
+                }
+            }
+
+            const wallet = wallets.find(
+                (candidate) => candidate.partyId === actAs[0]
+            )
+            if (!wallet) {
+                throw new Error(
+                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
+                )
+            }
+            // An external signature is the first acting party's alone,
+            // while the participant executes for all of them.
+            if (
+                new Set(actAs).size > 1 &&
+                wallet.signingProviderId !== SigningProvider.PARTICIPANT
+            ) {
+                throw rpcErrors.invalidParams({
+                    message:
+                        'Multi-party external signing is not supported: a transaction with more than one acting party needs a participant-hosted first party',
+                })
+            }
+
+            const ledgerClient = ledgerClientFor(network, context.accessToken)
+            const synchronizerId =
+                network.synchronizerId ??
+                (await ledgerClient.getSynchronizerId())
+
+            logger.info('prepareExecute: Submitting request to ledger', {
+                transactionId,
+                commandId,
+                actAs,
+            })
+
+            const prepared: PrepareSubmissionResponse =
+                await ledgerClient.postWithRetry(
+                    '/v2/interactive-submission/prepare',
+                    ledgerPrepareParams({
+                        userId: context.userId,
+                        commandId,
+                        actAs,
+                        synchronizerId,
+                        params,
+                        hashingSchemeVersion: HASHING_SCHEME,
+                    })
+                )
+
+            const transaction: Transaction = {
+                id: transactionId,
+                commandId,
+                status: 'pending',
+                preparedTransaction: prepared.preparedTransaction,
+                preparedTransactionHash: prepared.preparedTransactionHash,
+                payload: { ...params, commandId, actAs },
+                // The requesting page, not the session's login origin.
+                origin,
+                createdAt: new Date(),
+            }
+
+            await store.setTransaction(transaction)
+        }
+
+        const prompted = prepare().then(
+            async () => {
+                await approval.prompt()
+                logger.info(
+                    'prepareExecute: Prepared transaction for approval',
+                    {
+                        transactionId,
+                        commandId,
+                    }
+                )
+            },
+            (error: unknown) => {
+                approval.abort(error)
+                throw error
+            }
+        )
+        return { prompted, outcome: approval.outcome }
     }
 
     return buildController({
@@ -210,8 +359,24 @@ export const dappController = (
         // make while locked or signed out.
         disconnect: async () => {
             requireAuth()
-            if (principal !== undefined) await sites.revoke(principal, origin)
-            sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+            if (principal === undefined) {
+                sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+                return null
+            }
+            await sites.revoke(principal, origin)
+            let timer: ReturnType<typeof setTimeout> | undefined
+            try {
+                // Its other tabs get the failures before their ports close.
+                await Promise.race([
+                    txApprovals.endSite(principal, origin),
+                    new Promise<void>((resolve) => {
+                        timer = setTimeout(resolve, END_SITE_TIMEOUT_MS)
+                    }),
+                ])
+            } finally {
+                clearTimeout(timer)
+                sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
+            }
             return null
         },
         isConnected: async () => {
@@ -276,101 +441,19 @@ export const dappController = (
         },
 
         prepareExecute: async (params: PrepareExecuteParams) => {
-            const context = requireAuth()
-            const store = await loadStore()
-            const session = await store.getSession(context.accessToken)
-            if (!session) {
-                throw new Error('No active session found')
-            }
-
-            const primaryWallet = await store.getPrimaryWallet()
-            const wallets = await store.getWallets()
-            const network = await store.getCurrentNetwork()
-
-            let actAs = params.actAs ? [...params.actAs] : []
-            if (actAs.length === 0) {
-                if (!primaryWallet) {
-                    throw new Error(
-                        'No primary wallet found. Create or sync a wallet and set it as primary before prepareExecute.'
-                    )
-                }
-                actAs = [primaryWallet.partyId]
-            }
-
-            for (const party of actAs) {
-                if (!wallets.some((wallet) => wallet.partyId === party)) {
-                    throw new Error(
-                        `Acting party ${party} does not belong to user`
-                    )
-                }
-            }
-
-            const wallet = wallets.find(
-                (candidate) => candidate.partyId === actAs[0]
-            )
-            if (!wallet) {
-                throw new Error(
-                    'No wallet found for the first acting party. Create or sync a wallet and set it as primary before prepareExecute.'
-                )
-            }
-
-            const ledgerClient = ledgerClientFor(network, context.accessToken)
-            const commandId = params.commandId || crypto.randomUUID()
-            const transactionId = crypto.randomUUID()
-            const synchronizerId =
-                network.synchronizerId ??
-                (await ledgerClient.getSynchronizerId())
-
-            logger.info('prepareExecute: Submitting request to ledger', {
-                transactionId,
-                commandId,
-                actAs,
-            })
-
-            const prepared: PrepareSubmissionResponse =
-                await ledgerClient.postWithRetry(
-                    '/v2/interactive-submission/prepare',
-                    ledgerPrepareParams({
-                        userId: context.userId,
-                        commandId,
-                        actAs,
-                        synchronizerId,
-                        params,
-                        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
-                    })
-                )
-
-            const transaction: Transaction = {
-                id: transactionId,
-                commandId,
-                status: 'pending',
-                preparedTransaction: prepared.preparedTransaction,
-                preparedTransactionHash: prepared.preparedTransactionHash,
-                payload: { ...params, commandId, actAs },
-                // The requesting page, not the session's login origin.
-                origin,
-                createdAt: new Date(),
-            }
-
-            await store.setTransaction(transaction)
-
-            notificationService.getNotifier(session.id).emit('txChanged', {
-                status: 'pending',
-                commandId,
-            } satisfies TxChangedPendingEvent)
-
-            await enqueueApprovalRequest({ transactionId, commandId })
-
-            logger.info('prepareExecute: Prepared transaction for approval', {
-                transactionId,
-                commandId,
-                actAs,
-            })
-
+            const { prompted } = await prepareForApproval(params)
+            await prompted
             return null
         },
-        prepareExecuteAndWait: async () => {
-            throw new Error('Function prepareExecuteAndWait not implemented.')
+        // Answers within the prompt's timeout, even while the ledger is
+        // still preparing the transaction.
+        prepareExecuteAndWait: async (
+            params: PrepareExecuteParams
+        ): Promise<PrepareExecuteAndWaitResult> => {
+            const { prompted, outcome } = await prepareForApproval(params)
+            // Its error also ends `outcome`.
+            prompted.catch(() => {})
+            return { tx: await outcome }
         },
         status: async (): Promise<StatusEvent> => {
             const signedIn = await loadSession()

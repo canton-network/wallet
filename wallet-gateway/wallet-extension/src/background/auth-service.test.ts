@@ -15,7 +15,7 @@ import type { AuthContextStore, SignedInContext } from './auth-context.ts'
 import { createAuthService } from './auth-service.ts'
 import type { AuthorizationCodeParams } from './oauth.ts'
 import { defaultConfig } from './store/default-config.ts'
-import { loadAuthedStore, type WalletStore } from './store/index.ts'
+import { loadAuthedStore } from './store/index.ts'
 
 const networkId = 'canton:local-oauth'
 
@@ -54,7 +54,7 @@ function memoryAuthContext(initial?: SignedInContext) {
 describe('createAuthService', () => {
     let vaultStatus: VaultStatus
     let lockVault: () => void
-    let store: WalletStore
+    let store: StoreInternal
     let authContext: ReturnType<typeof memoryAuthContext>
     let signIn: Mock<(params: AuthorizationCodeParams) => Promise<string>>
 

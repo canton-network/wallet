@@ -7,6 +7,7 @@ import type { DappService } from '@/background/controllers/dapp/dispatch.ts'
 import type { Methods as UserRpcMethods } from '@/background/controllers/user/rpc-gen/index.ts'
 import type { SiteApprovalService } from '@/background/site-approval.ts'
 import type { TokenService } from '@/background/token/service.ts'
+import type { TxApprovalService } from '@/background/tx-approval.ts'
 
 /** The user API, called by the extension pages. */
 export const USER_RPC_KEY =
@@ -25,3 +26,7 @@ export const TOKEN_RPC_KEY =
 /** Approves or rejects a site's `connect`, called by the approval page. */
 export const SITE_APPROVAL_RPC_KEY =
     'site-approval-rpc-service' as ProxyServiceKey<SiteApprovalService>
+
+/** Approves or rejects a dApp's transaction, called by the approval page. */
+export const TX_APPROVAL_RPC_KEY =
+    'tx-approval-rpc-service' as ProxyServiceKey<TxApprovalService>

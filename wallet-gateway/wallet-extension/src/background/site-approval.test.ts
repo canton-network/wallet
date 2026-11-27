@@ -24,14 +24,16 @@ import {
     siteApprovalPortName,
 } from '@/shared/ports.ts'
 
-import { createPagePresence, type PagePresence } from './page-presence.ts'
+import {
+    createPagePresence,
+    type PagePresence,
+    type RequestTab,
+} from './page-presence.ts'
+import { currentSessionCheck, type SessionCheck } from './session-check.ts'
 import {
     createSiteApprovals,
-    currentSessionCheck,
-    type SessionCheck,
     type SiteApprovalRequest,
     type SiteApprovals,
-    type SiteApprovalTab,
 } from './site-approval.ts'
 import type { ApprovedSiteStore } from './store/approved-sites.ts'
 import { createTestWalletStore } from './store/test-store.ts'
@@ -57,7 +59,7 @@ describe('createSiteApprovals', () => {
     let approvals: SiteApprovals
     // The presence port of alice's page, tab 7's document-1.
     let alicePage: FakePort
-    let alice: SiteApprovalRequest & { tab: SiteApprovalTab }
+    let alice: SiteApprovalRequest & { tab: RequestTab }
 
     /** The request ID the tab's toolbar icon points at. */
     const shownId = (tabId = tab.tabId) =>
@@ -834,6 +836,14 @@ describe('currentSessionCheck', () => {
         await expect(
             check(jwt({ iss: 'idp', sub: 'bob', exp: inAnHour() }))
         ).resolves.toBe(false)
+    })
+
+    it('refuses a session that replaced the given one, with the same token', async () => {
+        const token = jwt({ iss: 'idp', sub: 'alice', exp: inAnHour() })
+        const check = await signedIn(token)
+
+        await expect(check(token, 'session-1')).resolves.toBe(true)
+        await expect(check(token, 'session-0')).resolves.toBe(false)
     })
 
     it('gives an expired session no prompt and no grant', async () => {
