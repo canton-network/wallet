@@ -29,6 +29,7 @@ const NAV_ITEMS = [
     { to: '/parties', label: 'Parties' },
     { to: '/assets', label: 'Assets' },
     { to: '/assets/send', label: 'Send' },
+    { to: '/transfers/incoming', label: 'Incoming transfers' },
     { to: '/transfers', label: 'Outgoing transfers' },
 ] as const
 
