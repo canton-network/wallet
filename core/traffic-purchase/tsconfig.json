@@ -4,6 +4,7 @@
         "rootDir": "./src",
         "outDir": "./dist",
         "moduleResolution": "bundler",
+        "types": ["node"],
         "paths": {
             "@daml.js/*": [
                 "../../damljs/traffic-purchase-models/*/lib/index.d.ts"
@@ -20,6 +21,15 @@
     "references": [
         {
             "path": "../wallet-auth"
+        },
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../provider-ledger"
+        },
+        {
+            "path": "../ledger-client-types"
         }
     ]
 }

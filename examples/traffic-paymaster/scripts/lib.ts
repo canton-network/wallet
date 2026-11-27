@@ -1,8 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TokenProviderConfig } from '@canton-network/core-wallet-auth'
-import { SDK, localNetStaticConfig } from '@canton-network/wallet-sdk'
+import {
+    AuthTokenProvider,
+    type TokenProviderConfig,
+} from '@canton-network/core-wallet-auth'
+import {
+    LedgerProvider,
+    SDK,
+    localNetStaticConfig,
+} from '@canton-network/wallet-sdk'
 
 /** A mebibyte of traffic per Amulet -- the same rate the SDK's own integration test uses. */
 export const BYTES_PER_AMULET = '1048576'
@@ -73,3 +80,13 @@ export async function createAdminSdk() {
 }
 
 export type AdminSdk = Awaited<ReturnType<typeof createAdminSdk>>
+
+/** Ledger API access as the app-user, which hosts the paymaster. */
+export function createPaymasterLedger(): LedgerProvider {
+    return new LedgerProvider({
+        baseUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+        accessTokenProvider: new AuthTokenProvider(
+            localNetAuth(localNetStaticConfig.LOCALNET_USER_ID)
+        ),
+    })
+}

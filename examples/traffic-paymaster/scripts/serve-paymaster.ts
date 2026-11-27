@@ -8,18 +8,24 @@
  * its rate/paymaster display panel reads from it too. Leave running until
  * Ctrl+C.
  */
+import { TrafficPaymasterApi } from '@canton-network/core-traffic-purchase/paymaster'
+
 import { requireEnvVar, writeEnvVar } from './env-file.ts'
-import { createAdminSdk } from './lib.ts'
-import { PaymasterApi } from './paymaster-api.ts'
+import { createAdminSdk, createPaymasterLedger } from './lib.ts'
 
 async function main() {
     const paymaster = await requireEnvVar('VITE_PAYMASTER_PARTY_ID')
     const admin = await createAdminSdk()
 
-    const paymasterApi = await PaymasterApi.start({
+    const paymasterApi = await TrafficPaymasterApi.start({
         traffic: admin.traffic,
-        ledger: admin.ledger,
+        ledger: createPaymasterLedger(),
         paymaster,
+        cors: true,
+        readTrafficBalance: async (accountId) =>
+            (await admin.traffic.getTraffic(accountId)).balance,
+        onError: (target, error) =>
+            console.error('Request to %s failed:', target, error),
     })
     await writeEnvVar('VITE_PAYMASTER_API_URL', paymasterApi.url)
 

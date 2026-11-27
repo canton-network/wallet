@@ -26,6 +26,12 @@
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
+        },
+        "./paymaster": {
+            "types": "./dist/paymaster.d.ts",
+            "import": "./dist/paymaster.js",
+            "require": "./dist/paymaster.cjs",
+            "default": "./dist/paymaster.js"
         }
     },
     "publishConfig": {
@@ -39,11 +45,15 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
+        "@canton-network/core-ledger-client-types": "workspace:",
+        "@canton-network/core-provider-ledger": "workspace:",
+        "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@daml/types": "catalog:",
         "@logtape/logtape": "catalog:",
         "@mojotech/json-type-validation": "catalog:",
-        "openapi-fetch": "catalog:"
+        "openapi-fetch": "catalog:",
+        "zod": "catalog:"
     },
     "devDependencies": {
         "@rollup/plugin-alias": "catalog:",
@@ -51,9 +61,12 @@
         "@rollup/plugin-json": "catalog:",
         "@rollup/plugin-node-resolve": "catalog:",
         "@rollup/plugin-typescript": "catalog:",
+        "@types/node": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
         "rollup": "catalog:",
         "rollup-plugin-dts": "catalog:",
         "tslib": "catalog:",
-        "typescript": "catalog:"
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     }
 }
