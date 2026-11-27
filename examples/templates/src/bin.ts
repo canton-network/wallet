@@ -9,7 +9,7 @@ import { message } from '@optique/core'
 await runProgram({
     commands,
     metadata: {
-        name: 'template-create',
+        name: 'wallet-create',
         brief: message`Create wallet-specific app from starter templates.`,
     },
 }).catch((error: unknown) => {
