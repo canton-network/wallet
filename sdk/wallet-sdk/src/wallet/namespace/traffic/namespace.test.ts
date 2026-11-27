@@ -5,6 +5,7 @@ import { TokenStandardService } from '@canton-network/core-token-standard-servic
 import { describe, it, vi, beforeEach, expect } from 'vitest'
 
 import * as mock from '../../__tests__/mocks.ts'
+import { SDKErrorHandler } from '../../error/handler.ts'
 import { TrafficAccountNamespace } from './namespace.ts'
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
@@ -104,6 +105,61 @@ describe('TrafficAccountNamespace', () => {
                     }),
                 })
             )
+        })
+
+        describe('input and response guards', () => {
+            const strict = () =>
+                new TrafficAccountNamespace({
+                    ...mock.ctx,
+                    error: new SDKErrorHandler(mock.mockLogger),
+                    tokenStandardService: emptyTokenStandardService(),
+                    registryUrls: [],
+                    paymasterAuth: {} as any,
+                })
+
+            it.each([NaN, Infinity, -Infinity])(
+                'rejects a non-finite balanceDelta %s without calling the ledger',
+                async (balanceDelta) => {
+                    await expect(
+                        strict().topUpTraffic({
+                            accountId: 'acc-1',
+                            balanceDelta,
+                        })
+                    ).rejects.toThrow(
+                        expect.objectContaining({
+                            message: `topUpTraffic needs a finite balanceDelta, got ${balanceDelta}`,
+                            context: expect.objectContaining({
+                                type: 'BadRequest',
+                            }),
+                        })
+                    )
+                    expect(mock.ledgerProvider.request).not.toHaveBeenCalled()
+                }
+            )
+
+            it.each([
+                ['no result', undefined],
+                ['no response', {}],
+                ['a null response', { response: null }],
+            ])('rejects when the ledger returns %s', async (_, result) => {
+                mock.ledgerProvider.request.mockResolvedValueOnce(result)
+
+                await expect(
+                    strict().topUpTraffic({
+                        accountId: 'acc-1',
+                        balanceDelta: 10,
+                        deduplicationId: 'dedup-1',
+                    })
+                ).rejects.toThrow(
+                    expect.objectContaining({
+                        message:
+                            'Participant returned no account state for traffic account acc-1 (delta 10, deduplication id dedup-1)',
+                        context: expect.objectContaining({
+                            type: 'Unexpected',
+                        }),
+                    })
+                )
+            })
         })
     })
 

@@ -163,6 +163,13 @@ export class TrafficAccountNamespace {
         const { accountId, balanceDelta } = params
         const deduplicationId = params.deduplicationId ?? crypto.randomUUID()
 
+        if (!Number.isFinite(balanceDelta)) {
+            return this.ctx.error.throw({
+                message: `topUpTraffic needs a finite balanceDelta, got ${balanceDelta}`,
+                type: 'BadRequest',
+            })
+        }
+
         this.logger.debug(
             { accountId, balanceDelta, deduplicationId },
             'Topping up traffic account'
@@ -177,6 +184,13 @@ export class TrafficAccountNamespace {
                     body: { accountId, balanceDelta, deduplicationId },
                 },
             })
+
+        if (updated?.response == null) {
+            return this.ctx.error.throw({
+                message: `Participant returned no account state for traffic account ${accountId} (delta ${balanceDelta}, deduplication id ${deduplicationId})`,
+                type: 'Unexpected',
+            })
+        }
 
         return updated.response
     }
