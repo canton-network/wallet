@@ -8,6 +8,8 @@ import { LOGIN_PAGE_REDIRECT } from './constants.ts'
 import {
     attemptRemoveSession,
     createUserClient,
+    createUserClientWithoutAutoLogout,
+    markSessionVerified,
     resetRpcClientCachesForTests,
 } from './rpc-client.ts'
 
@@ -176,6 +178,27 @@ describe('rpc-client', () => {
         )
     })
 
+    it('leaves a 401 to the caller of createUserClientWithoutAutoLogout', async () => {
+        fetchMock.mockResolvedValue(
+            new Response(JSON.stringify({}), { status: 200 })
+        )
+        await createUserClientWithoutAutoLogout('session-token')
+        const transport = MockUserApiClient.lastTransport as {
+            handleErrorResponse: (response: Response) => Promise<never>
+        }
+
+        await expect(
+            transport.handleErrorResponse(
+                new Response('Unauthorized', { status: 401 })
+            )
+        ).rejects.toBeDefined()
+        // Gives a logout, if one was started, the time to run
+        await new Promise((resolve) => setTimeout(resolve, 50))
+
+        expect(mockClearAuthState).not.toHaveBeenCalled()
+        expect(mockSetLocationHref).not.toHaveBeenCalled()
+    })
+
     describe('401 auto logout', () => {
         async function trigger401OnAuthTransport() {
             fetchMock.mockResolvedValue(
@@ -196,6 +219,7 @@ describe('rpc-client', () => {
         it('clears auth state, removes session, and redirects to login', async () => {
             authState.accessToken = 'stale-token'
             mockGetCurrentRoute.mockReturnValue('/parties')
+            markSessionVerified()
 
             await expect(trigger401OnAuthTransport()).rejects.toMatchObject({
                 code: 4100,
@@ -211,6 +235,21 @@ describe('rpc-client', () => {
                 window.location.pathname
             )
             expect(mockToRelHref).toHaveBeenCalledWith(LOGIN_PAGE_REDIRECT)
+            // The login page tells the user why they have to log in again
+            expect(mockSetLocationHref).toHaveBeenCalledWith(
+                `${LOGIN_PAGE_REDIRECT}?sessionExpired`
+            )
+        })
+
+        it('says nothing about an expired session before the session was verified', async () => {
+            // e.g. a page that loads its data while a stored old session is checked
+            authState.accessToken = 'stale-token'
+            mockGetCurrentRoute.mockReturnValue('/parties')
+
+            await expect(trigger401OnAuthTransport()).rejects.toBeDefined()
+
+            await waitUntil(() => mockSetLocationHref.mock.calls.length > 0)
+
             expect(mockSetLocationHref).toHaveBeenCalledWith(
                 LOGIN_PAGE_REDIRECT
             )

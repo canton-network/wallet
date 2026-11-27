@@ -27,6 +27,7 @@ const {
     mockNetworkIdGet,
     mockOnboardingSessionIdSet,
     setLocationHref,
+    showToast,
 } = vi.hoisted(() => ({
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
@@ -38,6 +39,7 @@ const {
     mockNetworkIdGet: vi.fn(() => 'net-1'),
     mockOnboardingSessionIdSet: vi.fn(),
     setLocationHref: vi.fn(),
+    showToast: vi.fn(),
 }))
 
 const defaultAccessToken =
@@ -69,6 +71,7 @@ vi.mock('../state-manager.ts', () => ({
         currentOrigin: { get: vi.fn(), set: vi.fn(), clear: vi.fn() },
     },
 }))
+vi.mock('../utils.ts', () => ({ showToast }))
 vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     const actual =
         await importOriginal<
@@ -78,6 +81,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
 })
 
 import './login.ts'
+import { SESSION_EXPIRED_TOAST } from '../constants.ts'
 import type { LoginUI } from './login.ts'
 
 const selfSignedNetwork = makePublicNetwork({
@@ -190,6 +194,30 @@ describe('LoginUI', () => {
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
         vi.useRealTimers()
+    })
+
+    it('says why when an open page logged the user out', async () => {
+        showToast.mockClear()
+        history.replaceState({}, '', '/login?sessionExpired')
+
+        await fixture<LoginUI>(html`<user-ui-login></user-ui-login>`)
+
+        expect(showToast).toHaveBeenCalledWith(
+            SESSION_EXPIRED_TOAST.title,
+            SESSION_EXPIRED_TOAST.message,
+            SESSION_EXPIRED_TOAST.type
+        )
+        // Not again after a reload
+        expect(window.location.search).toBe('')
+    })
+
+    it('shows no toast without a reason', async () => {
+        showToast.mockClear()
+        history.replaceState({}, '', '/login')
+
+        await fixture<LoginUI>(html`<user-ui-login></user-ui-login>`)
+
+        expect(showToast).not.toHaveBeenCalled()
     })
 
     it('renders the login form with loaded networks and idps', async () => {

@@ -1,12 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { ToastDescriptor } from '@canton-network/core-wallet-ui-components/logic'
+
 export const DEFAULT_PAGE_REDIRECT = '/parties'
 export const NOT_FOUND_PAGE_REDIRECT = '/404'
 export const LOGIN_PAGE_REDIRECT = '/login'
 export const ACTIVITIES_PAGE_REDIRECT = '/activities'
 export const NETWORKS_PAGE_REDIRECT = '/networks'
 export const IDENTITY_PROVIDERS_PAGE_REDIRECT = '/identity-providers'
+
+/** Set on the login page's URL when an open page logged the user out */
+export const SESSION_EXPIRED_PARAM = 'sessionExpired'
+export const SESSION_EXPIRED_TOAST: ToastDescriptor = {
+    title: 'Session expired',
+    message: 'Your session has ended. Log in again to continue.',
+    type: 'info',
+}
 
 export const TOKEN_EXPIRED_SKEW_MS = 5000
 // UI sets timeout to trigger logout when token expires. It needs capping, because setTimeout stops delaying if timeout exceed ~24 days (unsigned 32bit in ms)
