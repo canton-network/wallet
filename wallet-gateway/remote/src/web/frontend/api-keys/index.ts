@@ -1,9 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-
 import {
     type ApiKeyCardRevokeEvent,
     BaseElement,
@@ -11,19 +8,21 @@ import {
     type PageChangeEvent,
     toRelPath,
 } from '@canton-network/core-wallet-ui-components'
-
 import type { ApiKey } from '@canton-network/core-wallet-user-rpc-client'
+import { css, html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
 
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
-import '../index'
-import { stateManager } from '../state-manager'
-import { showToast } from '../utils.js'
-import { detectCurrentOrigin } from '../listeners.js'
+import { detectCurrentOrigin } from '../listeners.ts'
+import { setLocationHref } from '../navigation.ts'
+import '../index.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
 
 @customElement('user-ui-api-keys')
 export class UserUiApiKeys extends BaseElement {
     @state() accessor apiKeys: ApiKey[] = []
+    @state() private accessor apiKeysSupported: boolean | undefined = undefined
     @state() accessor currentPage = 1
 
     private readonly pageSize = 4
@@ -81,6 +80,7 @@ export class UserUiApiKeys extends BaseElement {
             )
             const apiKeys = await userClient.request({ method: 'listApiKeys' })
             this.apiKeys = apiKeys.apiKeys
+            this.apiKeysSupported = apiKeys.apiKeysSupported
 
             const maxPage = Math.max(
                 1,
@@ -98,8 +98,9 @@ export class UserUiApiKeys extends BaseElement {
         this.currentPage = e.page
     }
 
-    // TODO: https://github.com/canton-network/wallet/issues/2043
     private async _revokeApiKey(apiKeyEvent: ApiKeyCardRevokeEvent) {
+        if (!confirm(`Revoke API key "${apiKeyEvent.apiKey.name}"?`)) return
+
         try {
             const currentOrigin = await detectCurrentOrigin()
             const userClient = await createUserClient(
@@ -111,7 +112,11 @@ export class UserUiApiKeys extends BaseElement {
                 params: { id: apiKeyEvent.apiKey.id },
             })
 
-            showToast('', 'API key removed', 'success')
+            showToast(
+                'API key revoked',
+                `Revoked the API key "${apiKeyEvent.apiKey.name}".`,
+                'success'
+            )
 
             this.apiKeys = this.apiKeys.filter(
                 (key) => key.id !== apiKeyEvent.apiKey.id
@@ -129,6 +134,7 @@ export class UserUiApiKeys extends BaseElement {
                 <button
                     class="btn btn-primary btn-sm rounded-pill btn-add"
                     type="button"
+                    ?disabled=${this.apiKeysSupported !== true}
                     @click=${() => setLocationHref(toRelPath('/api-keys/add/'))}
                 >
                     <span aria-hidden="true">+</span>
@@ -136,6 +142,15 @@ export class UserUiApiKeys extends BaseElement {
                 </button>
             </div>
 
+            ${
+                this.apiKeysSupported === false
+                    ? html`<div class="alert alert-info" role="status">
+                          API keys can't be used on this network because it has
+                          no service account auth configured. An admin can add
+                          it on the Networks page.
+                      </div>`
+                    : ''
+            }
             ${
                 this.apiKeys.length === 0
                     ? html`<p class="mb-0 text-body-secondary">

@@ -1,23 +1,25 @@
-import pino from 'pino'
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import fs from 'fs/promises'
 import path from 'path'
 import { fileURLToPath } from 'url'
-import fs from 'fs/promises'
-import {
-    localNetGlobalSynchronizer,
-    TOKEN_NAMESPACE_CONFIG_SIMPLE,
-    TOKEN_PROVIDER_CONFIG_DEFAULT,
-} from './utils/index.js'
-import type { PartyInfo } from './04-token-standard-allocation.js'
+
+import { TestTokenV2 } from '@canton-network/core-splice-codegen'
 import type { FinalizedAllocation } from '@canton-network/core-token-standard-v2'
-import Decimal from 'decimal.js'
 import {
     startRegistry,
     stopRegistry,
 } from '@canton-network/example-test-token-v2-registry'
-import { TEST_TOKEN_V2_REGISTRY } from './utils/constants.js'
-import { assertV2 } from './utils/assert.js'
-import { TestTokenV2 } from '@canton-network/core-splice-codegen'
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import { Decimal } from 'decimal.js'
+import pino from 'pino'
+
+import type { PartyInfo } from './04-token-standard-allocation.ts'
+import { assertV2 } from './utils/assert.ts'
+import { TEST_TOKEN_V2_REGISTRY } from './utils/constants.ts'
+import {
+    localNetGlobalSynchronizer,
+    TOKEN_NAMESPACE_CONFIG_SIMPLE,
+    TOKEN_PROVIDER_CONFIG_DEFAULT,
+} from './utils/index.ts'
 
 /*
 Used the TokenStandardV2AllocationIntegrationTest: https://github.com/canton-network/splice/blob/main/apps/app/src/test/scala/org/lfdecentralizedtrust/splice/integration/tests/TokenStandardV2AllocationIntegrationTest.scala
@@ -159,7 +161,7 @@ await sdk.ledger
     .execute({ partyId: admin.partyId })
 
 // Wait for the holding to be synced before attempting transfer
-const result = await poll('admin holdings to be available', async () => {
+await poll('admin holdings to be available', async () => {
     const holdings = await sdk.token.v2.utxos.list({
         partyId: admin.partyId,
     })
@@ -487,7 +489,7 @@ for (const leg of tradeLegs) {
 
     assertV2(
         actualAmount.equals(legAmount),
-        `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount}, expected ${legAmount}`
+        `Allocation for ${leg.leg.transferLegId} has amount ${actualAmount.toString()}, expected ${legAmount.toString()}`
     )
 }
 

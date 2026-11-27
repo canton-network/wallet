@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { CoreService } from '../core-service'
 import {
     type AllocationFactory_Allocate,
     type AllocationSpecification,
@@ -16,14 +15,16 @@ import {
     type OffLedger,
     AllocationInstruction,
 } from '@canton-network/core-token-standard-v2'
+import type { ContractId, PartyId } from '@canton-network/core-types'
+import { getLogger } from '@logtape/logtape'
+import { Decimal } from 'decimal.js'
+
+import type { CoreService } from '../core-service.ts'
 import {
     REQUESTED_AT_SKEW_MS,
     type DisclosedContract,
     type ExerciseCommand,
-} from '../types'
-import Decimal from 'decimal.js'
-import type { ContractId, PartyId } from '@canton-network/core-types'
-import { getLogger } from '@logtape/logtape'
+} from '../types.ts'
 
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
@@ -442,6 +443,7 @@ export class AllocationService {
      * or `null` if no registry serves that admin.
      * @param opts.partyId - The party accepting the request. Only allocations
      * this party owns are created, and it acts on every command.
+     * @params opts.skipSpec Specs to leave out (e.g. already allocated by an earlier attempt).
      * @returns The allocate commands with their disclosed contracts, the accept
      * command with its disclosed contracts (or `null` if any allocation was
      * skipped), and the admins whose allocations were skipped.
@@ -452,20 +454,28 @@ export class AllocationService {
         request: AllocationRequestViewV2
         registry: (admin: PartyId) => Promise<URL | null>
         partyId: PartyId
+        skipSpec?: (
+            spec: AllocationRequestViewV2['allocations'][number]
+        ) => boolean
     }): Promise<{
         allocate: [ExerciseCommand, DisclosedContract[]][]
         accept: [ExerciseCommand, DisclosedContract[]] | null
         skipped: PartyId[]
     }> {
-        const specs = opts.request.allocations.filter(
+        const ownSpecs = opts.request.allocations.filter(
             (p) => p.authorizer.owner === opts.partyId
         )
 
-        if (specs.length === 0) {
+        if (ownSpecs.length === 0) {
             throw new Error(
                 `Request ${opts.requestCid} has no allocation for account ${opts.partyId}`
             )
         }
+
+        // Only uncovered specs need a registry and funding
+        const specs = opts.skipSpec
+            ? ownSpecs.filter((spec) => !opts.skipSpec!(spec))
+            : ownSpecs
 
         const used = new Set<string>()
         const allocate: [ExerciseCommand, DisclosedContract[]][] = []
@@ -474,7 +484,7 @@ export class AllocationService {
         for (const spec of specs) {
             const registryUrl = await opts.registry(spec.admin)
             if (!registryUrl) {
-                skipped.push(spec.admin)
+                if (!skipped.includes(spec.admin)) skipped.push(spec.admin)
                 continue
             }
             const [cmd, dcs] = await this.createAllocation(
@@ -495,6 +505,7 @@ export class AllocationService {
             allocate.push([cmd, dcs])
         }
 
+        // Built from the original request either way: covered specs count as done
         const accept =
             skipped.length === 0
                 ? this.createAllocationRequestChoice(

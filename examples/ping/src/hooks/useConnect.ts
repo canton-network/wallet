@@ -1,10 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useEffect, useState } from 'react'
+import { handleErrorToast } from '@canton-network/core-wallet-ui-components'
 import * as sdk from '@canton-network/dapp-sdk'
 import { WalletConnectAdapter } from '@canton-network/dapp-sdk'
-import { handleErrorToast } from '@canton-network/core-wallet-ui-components'
+import { useEffect, useState } from 'react'
 
 const wcProjectId = import.meta.env.VITE_WC_PROJECT_ID as string
 const wcAdapter = wcProjectId

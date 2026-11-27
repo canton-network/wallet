@@ -1,30 +1,39 @@
 {
     "name": "@canton-network/core-provider-conformance",
-    "version": "1.5.0",
-    "type": "module",
+    "version": "1.7.0",
     "description": "Typed conformance test providers and wallet interaction wrappers",
-    "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/provider-conformance#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "author": "Pascal Honegger <pascal.honegger@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/provider-conformance"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
-    "files": [
-        "dist/**"
-    ],
     "publishConfig": {
         "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
     },
@@ -39,14 +48,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/provider-conformance"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/provider-conformance#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

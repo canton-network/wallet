@@ -1,19 +1,20 @@
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from '../utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from '../utils/index.js'
-import path from 'node:path'
-import { fileURLToPath } from 'node:url'
-import fs from 'node:fs/promises'
-import type { RewardsForDepositsTestScriptParameters } from './types.js'
-import _accept from './_accept.js'
-import _withdraw from './_withdraw.js'
-import _reject from './_reject.js'
-
-import { configureLogging } from '../utils/configure-logging.js'
+} from '../utils/index.ts'
+import _accept from './_accept.ts'
+import _reject from './_reject.ts'
+import _withdraw from './_withdraw.ts'
+import type { RewardsForDepositsTestScriptParameters } from './types.ts'
 const logger = await configureLogging()
 
 // This example script implements https://docs.digitalasset.com/integrate/devnet/exchange-integration/extensions.html#earning-app-rewards-for-deposits
@@ -117,14 +118,14 @@ await sdk.ledger
 const setupIteration =
     async (): Promise<RewardsForDepositsTestScriptParameters> => {
         const createDelegateProxyCommandResult =
-            await sdk.token.transfer.delegatedProxy.create(treasury.partyId)
+            await sdk.token.v1.transfer.delegatedProxy.create(treasury.partyId)
 
         logger.info({ createDelegateProxyCommandResult })
 
         const amountToSend = 100
 
         const [transferCommand, transferDisclosedContracts] =
-            await sdk.token.transfer.create({
+            await sdk.token.v1.transfer.create({
                 sender: alice.partyId,
                 recipient: treasury.partyId,
                 amount: amountToSend.toString(),
@@ -157,7 +158,7 @@ const setupIteration =
         )
 
         const transferInstructionCid = (
-            await sdk.token.transfer.pending(alice.partyId)
+            await sdk.token.v1.transfer.pending(alice.partyId)
         )[0].contractId
 
         logger.info({ proxyCid, transferInstructionCid })

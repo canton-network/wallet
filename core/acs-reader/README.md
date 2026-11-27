@@ -14,6 +14,7 @@ pnpm add @canton-network/core-acs-reader
 
 ```typescript
 import { ACSReader } from '@canton-network/core-acs-reader'
+
 import { ledgerProvider } from './your-ledger-setup'
 
 // Initialize the reader

@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
 import { createComponent, type EventName } from '@lit/react'
+import React from 'react'
+
 import {
     WgWalletCreateForm as WgWalletCreateFormElement,
     type WalletCreateEvent,
-} from '../../components/wallet-create-form.js'
-import type { SigningProviderChangeEvent } from '../../components/wallet-form.js'
+} from '../../components/wallet-create-form.ts'
+import type { SigningProviderChangeEvent } from '../../components/wallet-form.ts'
 
 export const WalletCreateForm = createComponent({
     tagName: 'wg-wallet-create-form',

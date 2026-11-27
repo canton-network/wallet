@@ -9,7 +9,8 @@ import {
     queryByShadowRole,
 } from 'shadow-dom-testing-library'
 import { expect, fn, waitFor } from 'storybook/test'
-import { AppHeader } from './AppHeader'
+
+import { AppHeader } from './AppHeader.tsx'
 
 const dappApiUrl = 'http://localhost:3030/api/v0/dapp'
 
@@ -212,8 +213,8 @@ export const AdminWarningBadges: Story = {
     args: { isAdmin: true, warningCount: 2 },
     play: async ({ canvasElement, userEvent }) => {
         await userEvent.click(await menuButton(canvasElement))
-        await waitFor(() => {
-            expect(
+        await waitFor(async () => {
+            await expect(
                 findBadges(canvasElement).map((badge) =>
                     badge.textContent?.trim()
                 )

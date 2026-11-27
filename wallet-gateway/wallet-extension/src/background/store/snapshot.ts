@@ -30,14 +30,19 @@ type MessageRawJson = Omit<MessageRaw, 'createdAt' | 'signedAt'> & {
 /**
  * A `StoreInternal`'s `config` and `memory` in a form that survives JSON.
  * Maps and Sets become arrays or records, and Dates become ISO strings. The
- * `V1` suffix follows the naming in `vault/envelope.ts`.
+ * `V2` suffix follows the naming in `vault/envelope.ts`.
  *
  * Snapshots outlive the build that wrote them, so the decoder checks
  * `version` first. Bump it when core changes Wallet, Session, Transaction,
- * MessageRaw, Network or Idp in a way that old snapshots don't satisfy.
+ * MessageRaw, Network or Idp in a way that old snapshots don't satisfy, and
+ * teach `upgradeSnapshot` to bring the old version forward.
+ *
+ * Version 2: sessions hold the SHA-256 digest of the access token in
+ * `accessTokenHash`. A version 1 snapshot is upgraded by dropping its
+ * sessions; wallets and config are kept.
  */
-export interface SnapshotV1 {
-    version: 1
+export interface SnapshotV2 {
+    version: 2
     config: { idps: Idp[]; networks: Network[] }
     users: Record<
         UserId,
@@ -58,12 +63,34 @@ export class CorruptSnapshotError extends Error {
     }
 }
 
+/**
+ * Brings an older snapshot up to the current version, so `decodeSnapshot`
+ * only has to read one. `upgraded` tells the caller to save the result, which
+ * drops any leftover raw tokens from storage. Anything it doesn't recognise
+ * is returned as is, for `decodeSnapshot` to reject.
+ */
+export function upgradeSnapshot(raw: unknown): {
+    snapshot: unknown
+    upgraded: boolean
+} {
+    if (!isRecord(raw) || raw.version !== 1 || !isRecord(raw.users)) {
+        return { snapshot: raw, upgraded: false }
+    }
+    // Null prototype so a user id like "__proto__" is stored as a
+    // real entry instead of changing Object.prototype.
+    const users: Record<string, unknown> = Object.create(null)
+    for (const [userId, user] of Object.entries(raw.users)) {
+        users[userId] = isRecord(user) ? { ...user, sessions: [] } : user
+    }
+    return { snapshot: { ...raw, version: 2, users }, upgraded: true }
+}
+
 export function encodeSnapshot(
     config: StoreInternalConfig,
     memory: Memory
-): SnapshotV1 {
+): SnapshotV2 {
     return {
-        version: 1,
+        version: 2,
         config: { idps: config.idps, networks: config.networks },
         users: Object.fromEntries(
             Array.from(memory, ([userId, storage]) => [
@@ -100,7 +127,7 @@ export function decodeSnapshot(raw: unknown): {
     config: StoreInternalConfig
     memory: Memory
 } {
-    if (!isRecord(raw) || raw.version !== 1) {
+    if (!isRecord(raw) || raw.version !== 2) {
         throw new CorruptSnapshotError(
             'The wallet store snapshot has an unknown version.'
         )

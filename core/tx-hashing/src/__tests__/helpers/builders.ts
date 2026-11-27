@@ -14,16 +14,17 @@ import type {
     PreparedTransaction,
     Value,
 } from '@canton-network/core-ledger-proto'
-import { checkForest } from '../../forest.js'
-import { DEFAULT_LIMITS, type TraversalLimits } from '../../limits.js'
+
+import { checkForest } from '../../forest.ts'
+import { DEFAULT_LIMITS, type TraversalLimits } from '../../limits.ts'
 import {
     hashPrepared,
     kindOf,
     type QueryByKey,
     type Scheme,
     type V1Node,
-} from '../../scheme.js'
-import { toHex } from './hex.js'
+} from '../../scheme.ts'
+import { toHex } from './hex.ts'
 
 export const identifier = (
     packageId: string,
@@ -183,6 +184,7 @@ export const exercise = (fields: Partial<Exercise> = {}): Exercise => ({
     children: [],
     choiceObservers: [],
     byKey: false,
+    externalCallResults: [],
     ...fields,
 })
 
@@ -263,6 +265,7 @@ export const metadata = (fields: Partial<Metadata> = {}): Metadata => ({
     transactionUuid: 'uuid',
     preparationTime: 1n,
     inputContracts: [],
+    // oxlint-disable-next-line typescript/no-deprecated -- required by the generated proto type
     globalKeyMapping: [],
     ...fields,
 })

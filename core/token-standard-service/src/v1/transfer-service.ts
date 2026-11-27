@@ -11,17 +11,18 @@ import {
     type OffLedger,
     TransferInstruction,
 } from '@canton-network/core-token-standard'
-import { getLogger } from '@logtape/logtape'
 import type { ContractId, PartyId } from '@canton-network/core-types'
+import { getLogger } from '@logtape/logtape'
 import { Decimal } from 'decimal.js'
+
+import type { CoreService } from '../core-service.ts'
+import { TokenStandardService } from '../token-standard-service.ts'
 import {
     type CreateTransferChoiceArgs,
     type DisclosedContract,
     type ExerciseCommand,
     REQUESTED_AT_SKEW_MS,
-} from '../types.js'
-import { TokenStandardService } from '../token-standard-service.js'
-import type { CoreService } from '../core-service.js'
+} from '../types.ts'
 export class TransferService {
     private logger = getLogger([
         'core',

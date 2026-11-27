@@ -1,19 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import {
     Exercise,
     HashingSchemeVersion,
     PreparedTransaction,
 } from '@canton-network/core-ledger-proto'
-import { concat, fromBase64 } from '../bytes.js'
-import { TxHashingError, type TxHashingErrorCode } from '../errors.js'
+import { describe, expect, it } from 'vitest'
+
+import { concat, fromBase64 } from '../bytes.ts'
+import { TxHashingError, type TxHashingErrorCode } from '../errors.ts'
 import {
     computePreparedTransactionHash,
     type HashingScheme,
     type HashOptions,
-} from '../hash.js'
+} from '../hash.ts'
 import {
     createNode,
     exercise,
@@ -23,10 +24,10 @@ import {
     seed,
     single,
     tx,
-} from './helpers/builders.js'
-import { toHex } from './helpers/hex.js'
-import { liveFixtures } from './helpers/live-fixtures.js'
-import { V2, V3 } from './helpers/load-vectors.js'
+} from './helpers/builders.ts'
+import { toHex } from './helpers/hex.ts'
+import { liveFixtures } from './helpers/live-fixtures.ts'
+import { V2, V3 } from './helpers/load-vectors.ts'
 
 const run = (input: unknown, scheme: unknown, options?: unknown) =>
     computePreparedTransactionHash(
@@ -70,10 +71,10 @@ interface Refusal {
 
 const REFUSALS: Refusal[] = [
     {
-        title: 'rejects scheme 4',
-        call: () => run(V2_FIXTURE.base64, 4),
+        title: 'rejects scheme 5',
+        call: () => run(V2_FIXTURE.base64, 5),
         code: 'UNSUPPORTED_SCHEME',
-        says: 'scheme 4 is not supported',
+        says: 'hashing scheme 5 is not supported: expected HashingSchemeVersion.V2, V3 or V4, or HASHING_SCHEME_VERSION_V2, HASHING_SCHEME_VERSION_V3 or HASHING_SCHEME_VERSION_V4',
     },
     {
         title: 'rejects a missing scheme',
@@ -98,7 +99,7 @@ const REFUSALS: Refusal[] = [
     })),
     {
         title: 'checks the scheme before decoding the input',
-        call: () => run('not base64!', 4),
+        call: () => run('not base64!', 5),
         code: 'UNSUPPORTED_SCHEME',
     },
     {
@@ -231,6 +232,7 @@ describe('computePreparedTransactionHash', () => {
     describe.each([
         ['V2', HashingSchemeVersion.V2, 'HASHING_SCHEME_VERSION_V2'],
         ['V3', HashingSchemeVersion.V3, 'HASHING_SCHEME_VERSION_V3'],
+        ['V4', HashingSchemeVersion.V4, 'HASHING_SCHEME_VERSION_V4'],
     ] as const)('under HashingSchemeVersion.%s', (_label, scheme, name) => {
         it('returns the participant hash for base64 and bytes', async () => {
             const [{ base64, hashHex }] = liveFixtures(name)
@@ -240,6 +242,20 @@ describe('computePreparedTransactionHash', () => {
             ])
             expect(hashes.map(toHex)).toEqual([hashHex, hashHex])
         })
+    })
+
+    it('hashes under HashingSchemeVersion.V4 and HASHING_SCHEME_VERSION_V4 alike, not as V3', async () => {
+        // A transaction of the V3 fixtures is one that V4 hashes too
+        const [{ base64, hashHex }] = liveFixtures(V3)
+        const [byVersion, byName] = (
+            await Promise.all([
+                run(base64, HashingSchemeVersion.V4),
+                run(base64, 'HASHING_SCHEME_VERSION_V4'),
+            ])
+        ).map(toHex)
+
+        expect(byName).toBe(byVersion)
+        expect(byVersion).not.toBe(hashHex)
     })
 
     it('hashes a Buffer view at a non-zero byteOffset', async () => {
@@ -295,8 +311,12 @@ describe('computePreparedTransactionHash', () => {
 })
 
 it('exports only the public API', async () =>
-    expect(Object.keys(await import('../index.js')).sort()).toEqual([
+    expect(Object.keys(await import('../index.ts')).sort()).toEqual([
         'DEFAULT_LIMITS',
+        'HashPurpose',
         'TxHashingError',
+        'computeMultiHashForTopology',
         'computePreparedTransactionHash',
+        'computeSha256CantonHash',
+        'computeTopologyMultiHash',
     ]))

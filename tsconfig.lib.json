@@ -1,7 +1,8 @@
 {
     "compilerOptions": {
         "noEmit": false,
-        "allowImportingTsExtensions": false,
+        "composite": false,
+        "customConditions": [],
         "declaration": true,
         "declarationMap": true,
         "emitDeclarationOnly": true,

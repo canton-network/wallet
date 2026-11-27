@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Request, Response } from 'express'
-import { RegistryState } from '../../common/state'
+
+import { RegistryState } from '../../common/state.ts'
 
 export const getUtilityOperator = (_req: Request, res: Response) => {
     res.json({

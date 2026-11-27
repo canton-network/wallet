@@ -5,6 +5,7 @@
 
 import { execFileSync } from 'child_process'
 import fs from 'fs'
+
 import {
     ensureDir,
     getRepoRoot,
@@ -12,23 +13,30 @@ import {
     getAllFilesWithExtension,
     SUPPORTED_VERSIONS,
     CANTON_PATH,
-} from './lib/utils.js'
+} from './lib/utils.ts'
 
 const repoRoot = getRepoRoot()
 
 const outdir = `${repoRoot}/core/ledger-proto/src/_proto`
 
-const version = SUPPORTED_VERSIONS.mainnet.canton.version
+// The newest supported Canton version, as its protos are a superset of older ones
+const version = Object.values(SUPPORTED_VERSIONS)
+    .map((config) => config.canton.version)
+    .sort((a, b) => a.localeCompare(b, 'en', { numeric: true }))
+    .at(-1)!
 
 const roots = [
     `${CANTON_PATH}/${version}/protobuf/community`,
+    `${CANTON_PATH}/${version}/protobuf/admin-api`,
     `${CANTON_PATH}/${version}/protobuf/lib`,
 ]
 const protos = [
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/topology/admin/v30/topology_manager_write_service.proto`,
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/topology/admin/v30/topology_manager_read_service.proto`,
-    `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/topology/admin/v30/common.proto`,
+    `${CANTON_PATH}/${version}/protobuf/admin-api/com/digitalasset/canton/topology/admin/v30/common.proto`,
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/protocol/v30/topology.proto`,
+    `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/protocol/v31/topology.proto`,
+    `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/version/v1/untyped_versioned_message.proto`,
     `${CANTON_PATH}/${version}/protobuf/community/com/digitalasset/canton/crypto/v30/crypto.proto`,
 ]
 
@@ -41,7 +49,7 @@ function generateProtos() {
     ]
 
     try {
-        execFileSync('grpc_tools_node_protoc', protocArgs, { stdio: 'inherit' })
+        execFileSync('protoc', protocArgs, { stdio: 'inherit' })
         console.log('Protobuf files generated successfully.')
     } catch (error) {
         console.error('Error generating protobuf files:', error)
@@ -71,7 +79,6 @@ function generateProtosWithPlugin() {
     const protoRoots = [ledgerApiRoot, ledgerApiValueRoot, libRoot]
 
     const protocArgs = [
-        '--plugin=protoc-gen-ts_proto=$(pnpm bin protoc-gen-ts_proto)',
         `--ts_out=${outdir}`,
         '--ts_opt=generate_dependencies',
         ...protoRoots.map((root) => `-I${root}`),
@@ -81,7 +88,7 @@ function generateProtosWithPlugin() {
     ]
 
     try {
-        execFileSync('grpc_tools_node_protoc', protocArgs, { stdio: 'inherit' })
+        execFileSync('protoc', protocArgs, { stdio: 'inherit' })
         console.log('Protobuf files generated successfully.')
     } catch (error) {
         console.error('Error generating protobuf files:', error)
@@ -92,17 +99,17 @@ function generateProtosWithPlugin() {
 // The protobuf plugin we're using, @protobuf-ts/plugin, generates files with relative imports that do not include the .js extension.
 // This is required in ESModule projects using NodeJS (non-bundler mode).
 // See: https://github.com/timostamm/protobuf-ts/issues/182
-// This function rewrites those imports to include the .js extension.
+// This function rewrites those imports to include the .ts extension, like all relative imports in this repo.
 function rewriteImports() {
     traverseDirectory(outdir, (file) => {
         const content = fs.readFileSync(file, 'utf8')
         const updated = content
             .split('\n')
             .map((s) =>
-                s.replace(/(} from ["']\..+(?<!\.js))(["'];)$/, '$1.js$2')
+                s.replace(/(} from ["']\..+(?<!\.ts))(["'];)$/, '$1.ts$2')
             )
             .join('\n')
-        fs.writeFileSync(`${file}`, updated, 'utf-8')
+        fs.writeFileSync(file, updated, 'utf-8')
     })
 }
 

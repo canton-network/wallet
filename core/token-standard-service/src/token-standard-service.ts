@@ -1,6 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { EventFilterBySetup } from '@canton-network/core-ledger-client-types'
+import type {
+    AbstractLedgerProvider,
+    Ops,
+} from '@canton-network/core-provider-ledger'
 import {
     type HoldingView,
     type Metadata,
@@ -8,8 +13,6 @@ import {
     type Beneficiaries,
 } from '@canton-network/core-token-standard'
 import type { HoldingView as HoldingViewV2 } from '@canton-network/core-token-standard-v2'
-import { EventFilterBySetup } from '@canton-network/core-ledger-client-types'
-import type { PartyId } from '@canton-network/core-types'
 import {
     TokenStandardTransactionInterfaces,
     type PrettyContract,
@@ -17,13 +20,17 @@ import {
     type PrettyTransactions,
     type Transaction,
     type TransferObject,
+    ALL_TOKEN_STANDARD_VERSIONS,
+    getTokenStandardInterfaces,
+    type TokenStandardVersion,
 } from '@canton-network/core-tx-parser'
+import type { PartyId } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import type {
-    AbstractLedgerProvider,
-    Ops,
-} from '@canton-network/core-provider-ledger'
+import { getLogger } from '@logtape/logtape'
 import type { Decimal } from 'decimal.js'
+
+import { CoreService } from './core-service.ts'
+import { checkLock } from './lock.ts'
 import {
     type ApiVersion,
     type AssetCapabilities,
@@ -34,13 +41,11 @@ import {
     KEY_MAPPING,
     SUPPORTED_VERSIONS,
     type UpdateFormat,
-} from './types.js'
-import { TransferServiceV2 } from './v2/transfer-service.js'
-import { TransferService } from './v1/transfer-service.js'
-import { AllocationService } from './v1/allocation-service.js'
-import { CoreService } from './core-service.js'
-import { getLogger } from '@logtape/logtape'
-import { AllocationService as AllocationServiceV2 } from './v2/allocation-service.js'
+} from './types.ts'
+import { AllocationService } from './v1/allocation-service.ts'
+import { TransferService } from './v1/transfer-service.ts'
+import { AllocationService as AllocationServiceV2 } from './v2/allocation-service.ts'
+import { TransferServiceV2 } from './v2/transfer-service.ts'
 
 export function isApiVersion(v: string): v is ApiVersion {
     return (SUPPORTED_VERSIONS as readonly string[]).includes(v)
@@ -328,12 +333,16 @@ export class TokenStandardService {
 
     async getTransactionById(
         updateId: string,
-        partyId: PartyId
+        partyId: PartyId,
+        options: { tokenStandardVersions?: TokenStandardVersion[] } = {}
     ): Promise<Transaction> {
+        const versions =
+            options.tokenStandardVersions ?? ALL_TOKEN_STANDARD_VERSIONS
+
         const updateFormat: UpdateFormat = {
             includeTransactions: {
                 eventFormat: EventFilterBySetup({
-                    interfaceIds: TokenStandardTransactionInterfaces,
+                    interfaceIds: getTokenStandardInterfaces(versions),
                     isMasterUser: this.isMasterUser,
                     partyId: partyId,
                     includeWildcard: true,
@@ -510,41 +519,7 @@ export class TokenStandardService {
         createdAtTime: string,
         currentTime: Date = new Date()
     ): boolean {
-        if (!lock) return false
-
-        let expiresAtAbsolute: Date | null = null
-        let expiresAtRelative: Date | null = null
-
-        if (lock.expiresAfter) {
-            const createdAt = new Date(createdAtTime)
-
-            // 1 microsecond = 0.001 milliseconds
-            const msToAdd = parseInt(lock.expiresAfter.microseconds) / 1000
-
-            expiresAtRelative = new Date(createdAt.getTime() + msToAdd)
-        }
-        if (lock.expiresAt) {
-            expiresAtAbsolute = new Date(lock.expiresAt)
-        }
-
-        let expiresAt: Date
-
-        // If both `expiresAt` and `expiresAfter` are set, the lock expires at the earlier of the two times.
-        if (expiresAtRelative && expiresAtAbsolute) {
-            expiresAt =
-                expiresAtRelative < expiresAtAbsolute
-                    ? expiresAtRelative
-                    : expiresAtAbsolute
-        } else if (expiresAtRelative) {
-            expiresAt = expiresAtRelative
-        } else if (expiresAtAbsolute) {
-            expiresAt = expiresAtAbsolute
-        } else {
-            // No expiration => locked
-            return true
-        }
-
-        return currentTime < expiresAt
+        return checkLock(lock, createdAtTime, currentTime)
     }
 
     static isHoldingLocked(

@@ -27,10 +27,11 @@
     - SCRIPT_NAME: Run only a single script (full name match, e.g. '06-multi-hosted-party')
 */
 
+import child_process from 'child_process'
 import fs from 'fs'
 import path from 'path'
-import { error, getRepoRoot, success } from './lib/utils.js'
-import child_process from 'child_process'
+
+import { error, getRepoRoot, success } from './lib/utils.ts'
 
 const maxIoListeners = Number.parseInt(process.env.MAX_IO_LISTENERS ?? '', 10)
 if (Number.isFinite(maxIoListeners) && maxIoListeners > 0) {
@@ -136,7 +137,7 @@ async function cmd(bin: string, args: string[]): Promise<void> {
     })
 }
 
-function startBackgroundStress(): child_process.ChildProcess {
+async function startBackgroundStress(): Promise<child_process.ChildProcess> {
     const target = path.join(dir, STRESS_BG_FILE)
     if (!fs.existsSync(target)) {
         throw new Error(`Background stress script not found: ${target}`)
@@ -161,23 +162,26 @@ BACKGROUND_STRESS_LOG_LEVEL: ${BACKGROUND_STRESS_LOG_LEVEL}`
         },
     })
 
-    let ready = false
-    const onData = (buf: Buffer) => {
-        const s = buf.toString()
-        if (s.includes('[stress] ready') || s.includes('starting stress run')) {
-            child.stdout?.off('data', onData)
-            ready = true
-        }
-    }
-    child.stdout?.on('data', onData)
-
     // show only errors from stress
     child.stderr.pipe(process.stderr)
 
-    const start = Date.now()
-    while (Date.now() - start < WARMUP_MS && !ready) {
-        Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 50) // tiny sleep without reformatting structure
-    }
+    await new Promise<void>((resolve) => {
+        const timeout = setTimeout(done, WARMUP_MS)
+        function done() {
+            clearTimeout(timeout)
+            child.stdout?.off('data', onData)
+            resolve()
+        }
+        function onData(buf: Buffer) {
+            const s = buf.toString()
+            if (
+                s.includes('[stress] ready') ||
+                s.includes('starting stress run')
+            )
+                done()
+        }
+        child.stdout?.on('data', onData)
+    })
 
     console.log(success(`Background stress warmed up (<= ${WARMUP_MS}ms).`))
     return child
@@ -211,7 +215,7 @@ async function stopBackgroundStress(
 }
 
 // this is sequential, we can parallelize if needed
-const stressProc = startBackgroundStress()
+const stressProc = await startBackgroundStress()
 
 let failed = false
 for (const script of scripts) {

@@ -2,11 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { UnlockPage, vaultStatusQuery } from '@/ui/features/vault'
+
+import { UnlockPage, vaultStatusQuery } from '@/ui/features/vault/index.ts'
 
 export const Route = createFileRoute('/unlock')({
     beforeLoad: async ({ context }) => {
-        const status = await context.queryClient.fetchQuery(vaultStatusQuery())
+        const status = await context.queryClient.query(vaultStatusQuery())
         if (status === 'uninitialized') {
             throw redirect({ to: '/onboarding/password' })
         }

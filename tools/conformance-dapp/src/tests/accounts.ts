@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { z } from 'zod'
+
 import { requireCondition, walletSchema } from './helpers.ts'
 import type { Case } from './types.ts'
 

@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { base64url, calculateJwkThumbprint, type JWK } from 'jose'
-import { jwtExpiresAt } from './auth-utils.js'
+
+import { jwtExpiresAt } from './auth-utils.ts'
 
 export type SelfIssuedTokenClaimsInputs = {
     audience: string
@@ -46,6 +47,8 @@ export class SelfIssuedTokenService {
             exp: now + claims.ttlSeconds,
             iss: claims.partyId,
             sub: claims.partyId,
+            // Unique per token, so two tokens never share a payload
+            jti: crypto.randomUUID(),
             'daml.com': {
                 syn: claims.synchronizerId,
                 usr: claims.username,

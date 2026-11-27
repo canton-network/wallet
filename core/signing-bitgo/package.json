@@ -1,20 +1,36 @@
 {
     "name": "@canton-network/core-signing-bitgo",
-    "version": "1.7.0",
-    "type": "module",
+    "version": "1.9.0",
     "description": "Wallet Gateway signing driver for BitGo",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-bitgo#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/signing-bitgo"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
@@ -23,7 +39,6 @@
     "dependencies": {
         "@bitgo/sdk-lib-mpc": "catalog:",
         "@canton-network/core-signing-lib": "workspace:",
-        "@canton-network/core-wallet-auth": "workspace:",
         "zod": "catalog:"
     },
     "devDependencies": {
@@ -32,20 +47,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/signing-bitgo"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/signing-bitgo#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

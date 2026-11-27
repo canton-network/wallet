@@ -1,18 +1,18 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import SpliceWalletJSONRPCRemoteDAppAPI, {
-    type RpcTypes as DappAsyncRpcTypes,
-    type Session,
-} from '@canton-network/core-wallet-dapp-remote-rpc-client'
-import { AbstractProvider } from '@canton-network/core-splice-provider'
+import { ParentWindowOriginManager } from '@canton-network/core-origin-manager'
 import { HttpTransport } from '@canton-network/core-rpc-transport'
+import { AbstractProvider } from '@canton-network/core-splice-provider'
 import {
     isSpliceMessageEvent,
     type RequestArgs,
     WalletEvent,
 } from '@canton-network/core-types'
-import { ParentWindowOriginManager } from '@canton-network/core-origin-manager'
+import SpliceWalletJSONRPCRemoteDAppAPI, {
+    type RpcTypes as DappAsyncRpcTypes,
+    type Session,
+} from '@canton-network/core-wallet-dapp-remote-rpc-client'
 
 // Maintain a global SSE connection in-memory to avoid multiple connections
 // per DappAsyncProvider instance.

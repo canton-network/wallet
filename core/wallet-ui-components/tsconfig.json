@@ -4,5 +4,34 @@
         "jsx": "react-jsx",
         "types": []
     },
-    "include": ["src", "*.ts", ".storybook/*.ts"]
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-user-rpc-client"
+        },
+        {
+            "path": "../wallet-store"
+        },
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../tx-visualizer"
+        },
+        {
+            "path": "../rpc-errors"
+        },
+        {
+            "path": "../tx-parser"
+        },
+        {
+            "path": "../token-standard-v2"
+        },
+        {
+            "path": "../token-standard-service"
+        },
+        {
+            "path": "../token-standard"
+        }
+    ]
 }

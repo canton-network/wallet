@@ -1,12 +1,12 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({
@@ -94,13 +94,13 @@ await sdk.ledger
 
 logger.info(`buy member traffic for sender (${alice.partyId}) party completed`)
 
-const utxos = await sdk.token.utxos.list({ partyId: alice.partyId })
+const utxos = await sdk.token.v1.utxos.list({ partyId: alice.partyId })
 logger.info(utxos, 'alice utxos')
 
 const sentValue = 2000
 
 const [transferCommand, transferDisclosedContracts] =
-    await sdk.token.transfer.create({
+    await sdk.token.v1.transfer.create({
         sender: alice.partyId,
         recipient: bob.partyId,
         amount: sentValue.toString(),

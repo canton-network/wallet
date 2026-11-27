@@ -5,21 +5,34 @@ import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import { registerService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
-import { logger } from '@/shared/logger'
-import { DAPP_RPC_KEY, USER_RPC_KEY } from '@/shared/service-keys'
-import { createAuthContextStore } from './auth-context'
-import { createDappDispatcher } from './controllers/dapp/dispatch'
-import { requireUnlocked, userController } from './controllers/user'
+
+import { logger } from '@/shared/logger.ts'
+import {
+    DAPP_RPC_KEY,
+    TOKEN_RPC_KEY,
+    USER_RPC_KEY,
+} from '@/shared/service-keys.ts'
+
+import { createAuthContextStore } from './auth-context.ts'
+import { registerAuthService } from './auth-service.ts'
+import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
+import { userController } from './controllers/user/index.ts'
 import {
     currentSessionSubscriber,
     registerNotificationPorts,
-    toNotificationLogger,
-    withoutNotificationArgs,
-} from './notifications'
-import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui'
-import { createSigningStore, createWalletStore, loadAuthedStore } from './store'
-import { createVault, type Vault } from './vault'
-import { registerVaultService } from './vault-service'
+} from './notifications.ts'
+import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui.ts'
+import {
+    createSigningStore,
+    createWalletStore,
+    loadAuthedStore,
+} from './store/index.ts'
+import { createRegistryStore } from './store/registries.ts'
+import { createTokenSdk } from './token/sdk.ts'
+import { createTokenService } from './token/service.ts'
+import { registerTrustedService } from './trusted-service.ts'
+import { registerVaultService } from './vault-service.ts'
+import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
 
 /**
  * Runs in the service worker. Every listener is added in the first turn,
@@ -34,13 +47,8 @@ export function startBackground({
     vault = createVault(),
 }: { vault?: Vault } = {}): void {
     // One notification service is shared by the dApp & user controllers and
-    // the content-script notification ports. Event payloads are not logged,
-    // as they can contain the access token.
-    const notificationService = new NotificationService(
-        withoutNotificationArgs(
-            toNotificationLogger(logger.getChild('notifications'))
-        )
-    )
+    // the content-script notification ports.
+    const notificationService = new NotificationService()
     const authContext = createAuthContextStore(vault)
     const walletStore = createWalletStore(vault)
     const getStore = async () =>
@@ -50,7 +58,9 @@ export function startBackground({
     const deps = { getStore, authContext, signingDriver, notificationService }
 
     registerVaultService(vault)
+    registerAuthService({ ...deps, vault })
     // The dApp controller scopes the store to each request's user itself.
+    // The content script is its caller, so it takes any sender.
     registerService(
         DAPP_RPC_KEY,
         createDappDispatcher(
@@ -59,7 +69,22 @@ export function startBackground({
             authContext
         )
     )
-    registerService(USER_RPC_KEY, requireUnlocked(vault, userController(deps)))
+    registerTrustedService(
+        USER_RPC_KEY,
+        requireUnlocked(vault, userController(deps))
+    )
+    registerTrustedService(
+        TOKEN_RPC_KEY,
+        requireUnlocked(
+            vault,
+            createTokenService({
+                getStore,
+                authContext,
+                registries: createRegistryStore(vault),
+                createSdk: createTokenSdk,
+            })
+        )
+    )
     registerNotificationPorts(
         notificationService,
         currentSessionSubscriber(getStore, authContext)

@@ -1,21 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { Transaction } from '@canton-network/core-tx-parser'
 import {
     useInfiniteQuery,
     useQueryClient,
     type UseInfiniteQueryResult,
     type InfiniteData,
 } from '@tanstack/react-query'
-import type { Transaction } from '@canton-network/core-tx-parser'
-import { useConnection } from '../contexts/ConnectionContext'
-import type { TransactionHistoryResponse } from '../services/transaction-history-service'
-import { queryKeys } from './query-keys'
-import { transactionHistoryServiceQueryOptions } from './query-options'
+
+import { useConnection } from '../contexts/ConnectionContext.tsx'
+import type { TransactionHistoryResponse } from '../services/transaction-history-service.ts'
+import { queryKeys } from './query-keys.ts'
+import { transactionHistoryServiceQueryOptions } from './query-options.ts'
 
 export const useTransactionHistoryForParty = (
     partyId: string | undefined
-): UseInfiniteQueryResult<InfiniteData<TransactionHistoryResponse>, Error> => {
+): UseInfiniteQueryResult<InfiniteData<TransactionHistoryResponse>> => {
     const queryClient = useQueryClient()
     const { status } = useConnection()
     const isConnected = status?.connection?.isConnected ?? false
@@ -30,9 +31,10 @@ export const useTransactionHistoryForParty = (
                 throw new Error('Party is unavailable')
             }
 
-            const service = await queryClient.ensureQueryData(
-                transactionHistoryServiceQueryOptions(partyId)
-            )
+            const service = await queryClient.query({
+                ...transactionHistoryServiceQueryOptions(partyId),
+                staleTime: 'static',
+            })
             return service.query(pageParam)
         },
         getNextPageParam: (lastPage: TransactionHistoryResponse) => {

@@ -1,13 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import React from 'react'
 import { createComponent, type EventName } from '@lit/react'
+import React from 'react'
+
 import {
     AppHeader as AppHeaderElement,
     type LogoutEvent,
     type CopyDappApiUrlEvent,
-} from '../../components/app-header.js'
+} from '../../components/app-header.ts'
 
 export const AppHeader = createComponent({
     tagName: 'app-header',

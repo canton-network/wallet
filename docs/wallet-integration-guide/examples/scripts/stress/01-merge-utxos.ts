@@ -1,14 +1,14 @@
 import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import { Decimal } from 'decimal.js'
+
+import { configureLogging } from '../utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from '../utils/index.js'
-import { batchTap } from './utils.js'
-import Decimal from 'decimal.js'
-
-import { configureLogging } from '../utils/configure-logging.js'
+} from '../utils/index.ts'
+import { batchTap } from './utils.ts'
 const logger = await configureLogging()
 
 const sdk = await SDK.create({
@@ -42,14 +42,14 @@ const totalSum = await batchTap(
     logger
 )
 
-const utxosAlice = await sdk.token.utxos.list({
+const utxosAlice = await sdk.token.v1.utxos.list({
     partyId: alice.partyId,
 })
 
 logger.info(`number of unlocked utxos for alice ${utxosAlice.length}`)
 
 const [mergeUtxoCommands, mergedDisclosedContracts] =
-    await sdk.token.utxos.merge({
+    await sdk.token.v1.utxos.merge({
         partyId: alice.partyId,
     })
 
@@ -66,7 +66,7 @@ const mergePromises = mergeUtxoCommands.map((mergeCommand) => {
 
 await Promise.all(mergePromises)
 
-const utxosAliceMerged = await sdk.token.utxos.list({
+const utxosAliceMerged = await sdk.token.v1.utxos.list({
     partyId: alice.partyId,
 })
 

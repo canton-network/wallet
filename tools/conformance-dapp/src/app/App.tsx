@@ -1,22 +1,23 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useRef, useState } from 'react'
-import type React from 'react'
-import { ThemeProvider } from '@mui/material/styles'
-import CssBaseline from '@mui/material/CssBaseline'
-import useMediaQuery from '@mui/material/useMediaQuery'
+import { CANTON_LOGO_PNG } from '@canton-network/dapp-sdk'
+import DarkModeIcon from '@mui/icons-material/DarkMode'
+import GppBadIcon from '@mui/icons-material/GppBad'
+import LightModeIcon from '@mui/icons-material/LightMode'
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
 import Alert from '@mui/material/Alert'
 import Box from '@mui/material/Box'
 import CircularProgress from '@mui/material/CircularProgress'
+import CssBaseline from '@mui/material/CssBaseline'
 import IconButton from '@mui/material/IconButton'
 import LinearProgress from '@mui/material/LinearProgress'
+import { ThemeProvider } from '@mui/material/styles'
 import Typography from '@mui/material/Typography'
-import DarkModeIcon from '@mui/icons-material/DarkMode'
-import LightModeIcon from '@mui/icons-material/LightMode'
-import VerifiedUserIcon from '@mui/icons-material/VerifiedUser'
-import GppBadIcon from '@mui/icons-material/GppBad'
-import { CANTON_LOGO_PNG } from '@canton-network/dapp-sdk'
+import useMediaQuery from '@mui/material/useMediaQuery'
+import { useRef, useState } from 'react'
+import type React from 'react'
+
 import { ConfigSchema, defaultConfig } from '../config.ts'
 import {
     runPassed,
@@ -26,18 +27,18 @@ import {
     type TestResult,
     type Observation,
 } from '../report.ts'
-import { InteractionDialog } from './components/InteractionDialog.tsx'
-import { WaitingDialog } from './components/WaitingDialog.tsx'
-import { ConfigurationPanel } from './components/ConfigurationPanel.tsx'
-import { RunToolbar } from './components/RunToolbar.tsx'
-import { ResultsList } from './components/ResultsList.tsx'
-import { ReportSigningPanel } from './components/ReportSigningPanel.tsx'
-import { useSuiteRun } from './hooks/useSuiteRun.ts'
-import { useReportSigning } from './hooks/useReportSigning.ts'
-import { useReportImport } from './hooks/useReportImport.ts'
 import { TEST_CASE_COUNT } from '../suite.ts'
-import { cases } from '../tests/index.ts'
 import { describeError } from '../tests/helpers.ts'
+import { cases } from '../tests/index.ts'
+import { ConfigurationPanel } from './components/ConfigurationPanel.tsx'
+import { InteractionDialog } from './components/InteractionDialog.tsx'
+import { ReportSigningPanel } from './components/ReportSigningPanel.tsx'
+import { ResultsList } from './components/ResultsList.tsx'
+import { RunToolbar } from './components/RunToolbar.tsx'
+import { WaitingDialog } from './components/WaitingDialog.tsx'
+import { useReportImport } from './hooks/useReportImport.ts'
+import { useReportSigning } from './hooks/useReportSigning.ts'
+import { useSuiteRun } from './hooks/useSuiteRun.ts'
 import { lightTheme, darkTheme } from './theme.ts'
 
 const SummaryStat: React.FC<{ value: number; label: string }> = ({

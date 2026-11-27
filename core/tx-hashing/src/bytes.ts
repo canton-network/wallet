@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { TxHashingError } from './errors.js'
+import { TxHashingError } from './errors.ts'
 
 /** Joins byte arrays; a number stands for one byte. */
 export function concat(...parts: (Uint8Array | number)[]): Uint8Array {

@@ -1,20 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { isIPv6, type AddressInfo } from 'node:net'
 import { once } from 'node:events'
 import { access, mkdtemp, rm, writeFile } from 'node:fs/promises'
+import { isIPv6, type AddressInfo } from 'node:net'
+import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { tmpdir } from 'node:os'
+
+import {
+    TEST_CASE_COUNT,
+    type Report,
+} from '@canton-network/tool-conformance-dapp'
 import express from 'express'
 import { chromium, type BrowserContext } from 'playwright'
-import {
-    RunOptionsSchema,
-    ServeConfigSchema,
-    type RunOptions,
-    type ServeOptions,
-} from './config.ts'
+
 import {
     readArtifact,
     signArtifact,
@@ -22,9 +22,11 @@ import {
     writeSignature,
 } from './artifact.ts'
 import {
-    TEST_CASE_COUNT,
-    type Report,
-} from '@canton-network/tool-conformance-dapp'
+    RunOptionsSchema,
+    ServeConfigSchema,
+    type RunOptions,
+    type ServeOptions,
+} from './config.ts'
 
 const BROWSER_OVERHEAD_MS = 30_000
 

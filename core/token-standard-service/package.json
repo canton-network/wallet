@@ -1,36 +1,48 @@
 {
     "name": "@canton-network/core-token-standard-service",
-    "version": "2.3.0",
-    "type": "module",
+    "version": "2.5.0",
     "description": "Provides a service layer that wraps the token-standard-client and contains higher level functions for interacting with token standard contracts on Canton.",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard-service#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/token-standard-service"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
+        },
+        "./lock": {
+            "types": "./dist/lock.d.ts",
+            "import": "./dist/lock.js",
+            "require": "./dist/lock.cjs",
+            "default": "./dist/lock.js"
         }
+    },
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "clean": "rm -rf dist",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
-    },
-    "devDependencies": {
-        "@types/node": "catalog:",
-        "@vitest/browser-playwright": "catalog:",
-        "@vitest/coverage-v8": "catalog:",
-        "playwright": "catalog:",
-        "tsdown": "catalog:",
-        "typescript": "catalog:",
-        "vitest": "catalog:"
     },
     "dependencies": {
         "@canton-network/core-acs-reader": "workspace:",
@@ -44,19 +56,13 @@
         "@logtape/logtape": "catalog:",
         "decimal.js": "catalog:"
     },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/token-standard-service"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/token-standard-service#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
+    "devDependencies": {
+        "@types/node": "catalog:",
+        "@vitest/browser-playwright": "catalog:",
+        "@vitest/coverage-v8": "catalog:",
+        "playwright": "catalog:",
+        "tsdown": "catalog:",
+        "typescript": "catalog:",
+        "vitest": "catalog:"
     }
 }

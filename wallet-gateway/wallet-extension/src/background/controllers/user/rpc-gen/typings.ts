@@ -316,6 +316,13 @@ export interface PublicNetwork {
     audience?: Audience
 }
 export type Networks = PublicNetwork[]
+export type StringDoaGddGA = string
+/**
+ *
+ * Ids of the entries managed by the config file of the Wallet Gateway. These cannot be changed or removed at runtime. Only returned to the admin user.
+ *
+ */
+export type ConfigManagedIds = StringDoaGddGA[]
 /**
  *
  * The access token for the session.
@@ -680,6 +687,12 @@ export interface ApiKey {
 export type ApiKeys = ApiKey[]
 /**
  *
+ * Whether the current network has service account auth configured. API keys can only submit transactions on such networks.
+ *
+ */
+export type ApiKeysSupported = boolean
+/**
+ *
  * The IDs of the available signing providers.
  *
  */
@@ -819,6 +832,7 @@ export interface ChangeSigningProviderParams {
 }
 export interface ListNetworksResult {
     networks: Networks
+    configManagedIds?: ConfigManagedIds
 }
 export interface GetNetworkResult {
     network: Network
@@ -828,6 +842,7 @@ export interface SelfSignedAccessTokenResult {
 }
 export interface ListIdpsResult {
     idps: Idps
+    configManagedIds?: ConfigManagedIds
 }
 export interface CreateWalletResult {
     wallet: Wallet
@@ -959,6 +974,7 @@ export interface GeneratedApiKey {
 }
 export interface ListApiKeysResult {
     apiKeys: ApiKeys
+    apiKeysSupported: ApiKeysSupported
 }
 export interface ListSigningProvidersResult {
     signingProviders: SigningProviders

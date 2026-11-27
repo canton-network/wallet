@@ -1,10 +1,13 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { resolve } from 'path'
+import { isAbsolute, resolve } from 'path'
+
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
-import { standardDecorators } from '../../vite.decorators.js'
+
+import { standardDecorators } from '../../vite.decorators.ts'
+import { workspaceSources } from '../../vite.source.ts'
 
 export default defineConfig({
     build: {
@@ -14,6 +17,7 @@ export default defineConfig({
                 index: 'src/index.ts',
                 'react/index': 'src/react/index.ts',
                 'logic/index': 'src/logic/index.ts',
+                'react/token/index': 'src/react/token/index.ts',
             },
             formats: ['es', 'cjs'],
             fileName: (format, entryName) =>
@@ -21,17 +25,12 @@ export default defineConfig({
             cssFileName: 'index',
         },
         rolldownOptions: {
-            external: [
-                /^lit($|\/)/,
-                /^@lit\//,
-                'bootstrap',
-                '@popperjs/core',
-                'react',
-                'react-dom',
-                /^react\//,
-                /^react-dom\//,
-                /^@mui\//,
-            ],
+            // Leaves every package import to the consumer, so that classes like JsonRpcError exist only once and
+            // `instanceof` works across packages while stylesheets stay bundled.
+            external: (id) =>
+                !id.startsWith('.') &&
+                !isAbsolute(id) &&
+                !/\.css($|\?)/.test(id),
             output: {
                 exports: 'auto',
             },
@@ -41,5 +40,6 @@ export default defineConfig({
     plugins: [
         standardDecorators(resolve(import.meta.dirname, 'src/**/*.ts')),
         dts({ tsconfigPath: './tsconfig.lib.json' }),
+        workspaceSources(),
     ],
 })

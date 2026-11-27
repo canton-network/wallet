@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { TokenNamespaceConfig } from '../../namespace.js'
-import type { PartyId } from '@canton-network/core-types'
-import type { PreparedCommand } from '../../../transactions/types.js'
 import {
     TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
     type TransferInstructionView as TransferInstructionViewV2,
 } from '@canton-network/core-token-standard-v2'
-import { toAccount, type TransferParamsV2 } from '../../transfer/types.js'
-import { ParsedURL, parseAssets } from '../../../utils/url.js'
-import { findAsset } from '../../../asset/index.js'
+import type { PartyId } from '@canton-network/core-types'
+
+import { findAsset } from '../../../asset/index.ts'
+import type { PreparedCommand } from '../../../transactions/types.ts'
+import { ParsedURL, parseAssets } from '../../../utils/url.ts'
+import type { TokenNamespaceConfig } from '../../namespace.ts'
+import { toAccount, type TransferParamsV2 } from '../../transfer/types.ts'
 
 export class TransferNamespace {
     constructor(private readonly sdkContext: TokenNamespaceConfig) {}

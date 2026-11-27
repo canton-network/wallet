@@ -2,7 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { readFileSync } from 'node:fs'
+
 import { defineConfig } from 'tsdown'
+
 import { base } from '../../tsdown.base.ts'
 
 const sdkVersion = JSON.parse(

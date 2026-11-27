@@ -4,12 +4,12 @@ import {
     localNetStaticConfig,
     SDK,
 } from '@canton-network/wallet-sdk'
+
+import { configureLogging } from './utils/configure-logging.ts'
 import {
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     localNetGlobalSynchronizer,
-} from './utils/index.js'
-
-import { configureLogging } from './utils/configure-logging.js'
+} from './utils/index.ts'
 const logger = await configureLogging()
 
 const userId = localNetStaticConfig.LOCALNET_USER_ID
@@ -86,7 +86,7 @@ const subscribeToCommandsMultiHostedParty = async () => {
                 completion,
                 'received command completion update for multi hosted party'
             )
-            commandsCompletionsEvents.push(completion as any)
+            commandsCompletionsEvents.push(completion)
             if (commandsCompletionsController.signal.aborted) break
         }
     } catch (err) {
@@ -94,7 +94,7 @@ const subscribeToCommandsMultiHostedParty = async () => {
     }
 }
 
-subscribeToCommandsMultiHostedParty()
+void subscribeToCommandsMultiHostedParty()
 logger.info('subscribed to command completion')
 
 const charliePingCommand = sdk.utils.ping.create([
@@ -152,7 +152,7 @@ const subscribeToPingUpdates = async () => {
     }
 }
 
-subscribeToPingUpdates()
+void subscribeToPingUpdates()
 
 const observingConradPingCommand = sdk.utils.ping.create([
     {

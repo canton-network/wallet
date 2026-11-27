@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { Ops } from '@canton-network/core-provider-ledger'
-import type { SDKContext } from '../../init/types/context.js'
-import type { ExecuteOptions } from '../ledger/types.js'
-import type { LedgerNamespace } from '../ledger/index.js'
+
+import type { SDKContext } from '../../init/types/context.ts'
+import type { LedgerNamespace } from '../ledger/index.ts'
+import type { ExecuteOptions } from '../ledger/types.ts'
 
 export class SignedTransaction {
     constructor(

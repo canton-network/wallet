@@ -1,14 +1,16 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Chip, TableCell, TableRow, Typography } from '@mui/material'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { DateTimeText } from '@components/date-time-text'
+import { Chip, TableCell, TableRow, Typography } from '@mui/material'
+
 import {
     getTransactionDisplay,
     type TransactionHistoryEntry,
     type BalanceEffect,
-} from './transaction-history-utils'
+    formatDisplayAmount,
+} from './transaction-history-utils.ts'
 
 interface TransactionHistoryRowProps {
     entry: TransactionHistoryEntry
@@ -35,12 +37,7 @@ export function TransactionHistoryRow({
 }: TransactionHistoryRowProps) {
     const display = getTransactionDisplay(entry, walletId)
     const amountColor = AMOUNT_COLOR[display.balanceEffect]
-    const amountPrefix =
-        display.direction === 'received'
-            ? '+'
-            : display.direction === 'sent'
-              ? '-'
-              : ''
+    const amount = formatDisplayAmount(display)
 
     return (
         <TableRow
@@ -86,7 +83,7 @@ export function TransactionHistoryRow({
                         whiteSpace: 'nowrap',
                     }}
                 >
-                    {display.amount ? `${amountPrefix}${display.amount}` : '—'}
+                    {amount ?? '—'}
                 </Typography>
             </TableCell>
 

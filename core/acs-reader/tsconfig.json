@@ -2,5 +2,17 @@
     "extends": "../../tsconfig.base.json",
     "compilerOptions": {
         "types": ["node"]
-    }
+    },
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../types"
+        },
+        {
+            "path": "../provider-ledger"
+        },
+        {
+            "path": "../ledger-client-types"
+        }
+    ]
 }

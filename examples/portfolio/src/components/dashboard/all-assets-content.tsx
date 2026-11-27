@@ -1,20 +1,20 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from 'react'
-import { Alert } from '@mui/material'
-import type {
-    PortfolioAssetView,
-    PortfolioAssetsResult,
-} from '@hooks/useAllAccountAssets'
-import { getInstrumentKey } from '@utils/aggregate-holdings'
-import { getInstrumentInitials } from '@utils/instrument-display'
-import { AssetViewDialog } from '@components/dashboard/asset-view-dialog'
+import {
+    getInstrumentKey,
+    type PortfolioAssetView,
+    type PortfolioAssetsResult,
+} from '@canton-network/core-wallet-ui-components/react/token'
 import {
     AssetBalanceCard,
     AssetBalanceCardSkeleton,
     AssetsPanel,
 } from '@components/dashboard/asset-balance-card'
+import { AssetViewDialog } from '@components/dashboard/asset-view-dialog'
+import { Alert } from '@mui/material'
+import { getInstrumentInitials } from '@utils/instrument-display'
+import { useState } from 'react'
 
 export function AllAssetsContent({
     assets,

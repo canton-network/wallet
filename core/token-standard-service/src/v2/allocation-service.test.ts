@@ -1,9 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, vi } from 'vitest'
-import { AllocationService } from './allocation-service.js'
-import type { CoreService } from '../core-service.js'
 import type {
     AllocationFactory_Allocate as AllocationFactory_AllocateV2,
     AllocationSpecification,
@@ -22,6 +19,10 @@ import {
     ALLOCATION_REQUEST_INTERFACE_ID_V2,
     ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
 } from '@canton-network/core-token-standard-v2'
+import { describe, it, expect, vi } from 'vitest'
+
+import type { CoreService } from '../core-service.ts'
+import { AllocationService } from './allocation-service.ts'
 
 type AllocationChoiceContextV2 =
     OffLedger.AllocationInstructionV2.components['schemas']['ChoiceContext']
@@ -687,6 +688,7 @@ describe('AllocationService', () => {
             const registry = vi.fn().mockResolvedValue(registryUrl)
 
             const [commands, disclosed] =
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 await service.createAllocationsForRequest({
                     requestCid: 'request-cid',
                     request: makeRequest([specA, specB]),
@@ -724,6 +726,7 @@ describe('AllocationService', () => {
 
             const spec = makeAllocationSpec({ admin: 'custom-admin::123' })
 
+            // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
             await service.createAllocationsForRequest({
                 requestCid: 'request-cid',
                 request: makeRequest([spec]),
@@ -753,6 +756,7 @@ describe('AllocationService', () => {
                 authorizer: makeAccount({ owner: '' }),
             })
 
+            // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
             const [commands] = await service.createAllocationsForRequest({
                 requestCid: 'request-cid',
                 request: makeRequest([spec]),
@@ -785,6 +789,7 @@ describe('AllocationService', () => {
                 authorizer: makeAccount({ owner: 'bob::owner' }),
             })
 
+            // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
             const [commands] = await service.createAllocationsForRequest({
                 requestCid: 'request-cid',
                 request: makeRequest([specA, specB]),
@@ -814,6 +819,7 @@ describe('AllocationService', () => {
             })
 
             await expect(
+                // oxlint-disable-next-line typescript/no-deprecated -- tests the deprecated API
                 service.createAllocationsForRequest({
                     requestCid: 'request-cid',
                     request: makeRequest([spec]),
@@ -927,15 +933,7 @@ describe('AllocationService', () => {
             }
 
             vi.spyOn(service, 'createAllocation')
-                .mockResolvedValueOnce([
-                    {
-                        templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,
-                        contractId: 'factory-1',
-                        choice: 'AllocationFactory_Allocate',
-                        choiceArgument: makeAllocationCommand(['cid-1']),
-                    },
-                    [dcA, dcShared],
-                ])
+                .mockResolvedValueOnce([allocateCmd, [dcA, dcShared]])
                 .mockResolvedValueOnce([
                     {
                         templateId: ALLOCATION_FACTORY_INTERFACE_ID_V2,

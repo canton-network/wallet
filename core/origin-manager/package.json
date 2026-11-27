@@ -1,30 +1,46 @@
 {
     "name": "@canton-network/core-origin-manager",
-    "version": "1.8.0",
-    "type": "module",
+    "version": "1.10.0",
     "description": "Secure cross-window origin handshake and guarded postMessage helpers.",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/origin-manager#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Mateusz Piątkowski <mateusz.piatkowski@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/origin-manager"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "./dist/index.cjs",
     "module": "./dist/index.js",
     "types": "./dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
-    "dependencies": {
-        "zod": "catalog:",
-        "@canton-network/core-types": "workspace:"
+    "publishConfig": {
+        "access": "public"
     },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
         "clean": "rm -rf dist",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
+    },
+    "dependencies": {
+        "@canton-network/core-types": "workspace:",
+        "zod": "catalog:"
     },
     "devDependencies": {
         "@vitest/browser-playwright": "catalog:",
@@ -32,20 +48,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/origin-manager"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/origin-manager#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

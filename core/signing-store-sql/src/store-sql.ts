@@ -1,12 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import {
-    type AuthContext,
-    type UserId,
-    type AuthAware,
-    assertConnected,
-} from '@canton-network/core-wallet-auth'
 import type {
     SigningDriverStore,
     SigningKey,
@@ -15,14 +9,21 @@ import type {
     SigningDriverConfig,
 } from '@canton-network/core-signing-lib'
 import {
+    type AuthContext,
+    type UserId,
+    type AuthAware,
+    assertConnected,
+} from '@canton-network/core-wallet-auth'
+import Database from 'better-sqlite3'
+import {
     CamelCasePlugin,
     Kysely,
     SqliteDialect,
     sql,
     PostgresDialect,
 } from 'kysely'
-import pg from 'pg'
-import Database from 'better-sqlite3'
+import { Pool } from 'pg'
+
 import {
     type DB,
     fromSigningKey,
@@ -33,7 +34,7 @@ import {
     toSigningDriverConfig,
     type SigningKeyTable,
     type StoreConfig,
-} from './schema.js'
+} from './schema.ts'
 
 export class StoreSql implements SigningDriverStore, AuthAware<StoreSql> {
     authContext: AuthContext | undefined
@@ -344,7 +345,7 @@ export const connection = (config: StoreConfig) => {
                 dialect: new PostgresDialect({
                     // Pass through all pg connection options (e.g. `ssl`)
                     // The schema intentionally allows extra postgres driver properties.
-                    pool: new pg.Pool(config.connection),
+                    pool: new Pool(config.connection),
                 }),
                 plugins: [new CamelCasePlugin()],
             })

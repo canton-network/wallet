@@ -1,7 +1,10 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
+import { errorCodes } from '@canton-network/core-rpc-errors'
+import type { Provider } from '@canton-network/core-splice-provider'
+import { WalletEvent } from '@canton-network/core-types'
 import type {
     RpcTypes as DappRpcTypes,
     SignMessageParams,
@@ -10,14 +13,13 @@ import type {
     TxChangedExecutedEvent,
     Wallet,
 } from '@canton-network/core-wallet-dapp-rpc-client'
-import type { Provider } from '@canton-network/core-splice-provider'
-import type { DappAsyncProvider } from '@canton-network/core-provider-dapp'
-import { WalletEvent } from '@canton-network/core-types'
-import { errorCodes } from '@canton-network/core-rpc-errors'
-import type { PrepareExecuteParams } from '../../index'
-import { DappSDK } from '../../sdk'
-import { RemoteAdapter } from '../../adapter'
 import { popup } from '@canton-network/core-wallet-ui-components'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
+
+import { RemoteAdapter } from '../../adapter/index.ts'
+import type { PrepareExecuteParams } from '../../index.ts'
+import { DappSDK } from '../../sdk.ts'
+import * as storage from '../../storage.ts'
 import {
     APPROVE_URL,
     connectResultConnected,
@@ -26,12 +28,11 @@ import {
     SIGN_MESSAGE_ID,
     statusConnected,
     USER_URL,
-} from './mock-remote/json-rpc-handlers'
-import * as storage from '../../storage'
+} from './mock-remote/json-rpc-handlers.ts'
 
 // This test file doesn't validate browser extension wallets, so skip the
 // wait for CANTON_ANNOUNCE_PROVIDER_EVENT discovery step to save 600ms per test
-vi.mock('../../announce-discovery', () => ({
+vi.mock('../../announce-discovery.ts', () => ({
     requestAnnouncedProviders: async () => [],
 }))
 

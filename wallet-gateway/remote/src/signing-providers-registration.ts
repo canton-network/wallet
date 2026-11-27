@@ -1,27 +1,32 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import BlockdaemonSigningProvider, {
     type CantonCaip2,
 } from '@canton-network/core-signing-blockdaemon'
-import BitGoSigningProvider from '@canton-network/core-signing-bitgo'
 import DfnsSigningProvider from '@canton-network/core-signing-dfns'
+import DsrvSigningProvider from '@canton-network/core-signing-dsrv'
 import FireblocksSigningProvider from '@canton-network/core-signing-fireblocks'
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
-import { SigningProvider } from '@canton-network/core-signing-lib'
+import {
+    SigningProvider,
+    type SigningDriverInterface,
+} from '@canton-network/core-signing-lib'
 import { ParticipantSigningDriver } from '@canton-network/core-signing-participant'
 import SecurosysSigningProvider, {
     type TsbSignatureAlgorithm,
 } from '@canton-network/core-signing-securosys'
 import type { StoreSql as SigningStoreSql } from '@canton-network/core-signing-store-sql'
-import type { Logger } from 'pino'
-import type { ServerNotices } from './notices/server-notices.js'
 import type { SigningDrivers } from '@canton-network/core-wallet-services'
+import type { Logger } from 'pino'
+
 import {
     signingProvidersConfigSchema,
     type SigningProvidersConfig,
-} from './config/Config.js'
-import { Env } from './env.js'
+} from './config/Config.ts'
+import { Env } from './env.ts'
+import type { ServerNotices } from './notices/server-notices.ts'
 
 const fireblocksSchema =
     signingProvidersConfigSchema.shape.fireblocks.unwrap().shape
@@ -31,6 +36,7 @@ const dfnsSchema = signingProvidersConfigSchema.shape.dfns.unwrap().shape
 const securosysSchema =
     signingProvidersConfigSchema.shape.securosys.unwrap().shape
 const bitgoSchema = signingProvidersConfigSchema.shape.bitgo.unwrap().shape
+const dsrvSchema = signingProvidersConfigSchema.shape.dsrv.unwrap().shape
 
 type ProviderSecrets = {
     fireblocksApiKey: string | undefined
@@ -44,6 +50,7 @@ type ProviderSecrets = {
     dfnsPrivateKey: string | undefined
     dfnsAuthToken: string | undefined
     bitgoAccessToken: string | undefined
+    dsrvBearerToken: string | undefined
 }
 
 type ProviderSettings = {
@@ -59,6 +66,7 @@ type ProviderSettings = {
     bitgoBaseUrl: string
     bitgoEnterpriseId: string | undefined
     bitgoCoin: string | undefined
+    dsrvBaseUrl: string | undefined
 }
 
 type ProviderSelection = {
@@ -69,6 +77,7 @@ type ProviderSelection = {
     securosys: boolean
     dfns: boolean
     bitgo: boolean
+    dsrv: boolean
 }
 
 type UnavailableProvider =
@@ -78,6 +87,7 @@ type UnavailableProvider =
     | 'securosys'
     | 'dfns'
     | 'bitgo'
+    | 'dsrv'
 
 // Why an enabled provider is unavailable, depending on whether providers are
 // configured in signingProviders (explicit) or not (legacy). Legacy mode
@@ -117,6 +127,11 @@ const UNAVAILABLE_PROVIDER_MESSAGES: Record<
             'BitGo is unavailable because the environment variable named by signingProviders.bitgo.accessTokenEnv is not set. Set it, or remove signingProviders.bitgo.',
         legacy: 'BitGo is not registered because BITGO_ACCESS_TOKEN is not set.',
     },
+    dsrv: {
+        explicit:
+            'DSRV is unavailable because signingProviders.dsrv.baseUrl is empty or the environment variable named by signingProviders.dsrv.bearerTokenEnv is not set. Set them, or remove signingProviders.dsrv.',
+        legacy: 'DSRV is not registered because it is only configured through signingProviders.',
+    },
 }
 
 function readLegacySecrets(): ProviderSecrets {
@@ -146,6 +161,7 @@ function readLegacySecrets(): ProviderSecrets {
         dfnsPrivateKey: Env.get(dfnsSchema.privateKeyEnv.parse(undefined)),
         dfnsAuthToken: Env.get(dfnsSchema.authTokenEnv.parse(undefined)),
         bitgoAccessToken: Env.get(bitgoSchema.accessTokenEnv.parse(undefined)),
+        dsrvBearerToken: undefined,
     }
 }
 
@@ -204,6 +220,11 @@ function readExplicitSecrets(
                 signingProviders.bitgo?.accessTokenEnv
             )
         ),
+        dsrvBearerToken: Env.get(
+            dsrvSchema.bearerTokenEnv.parse(
+                signingProviders.dsrv?.bearerTokenEnv
+            )
+        ),
     }
 }
 
@@ -229,6 +250,7 @@ function legacySettings(): ProviderSettings {
         bitgoBaseUrl: bitgoSchema.baseUrl.parse(Env.get('BITGO_API_URL')),
         bitgoEnterpriseId: Env.get('BITGO_ENTERPRISE_ID'),
         bitgoCoin: Env.get('BITGO_COIN'),
+        dsrvBaseUrl: undefined,
     }
 }
 
@@ -258,6 +280,7 @@ function explicitSettings(
         ),
         bitgoEnterpriseId: signingProviders.bitgo?.enterpriseId,
         bitgoCoin: signingProviders.bitgo?.coin,
+        dsrvBaseUrl: signingProviders.dsrv?.baseUrl,
     }
 }
 
@@ -271,6 +294,10 @@ function buildDrivers(
     explicit: boolean
 ): SigningDrivers {
     const drivers: SigningDrivers = {}
+
+    const register = (driver: SigningDriverInterface) => {
+        drivers[driver.signingProvider] = driver
+    }
 
     const reportUnavailable = (provider: UnavailableProvider) => {
         const messages = UNAVAILABLE_PROVIDER_MESSAGES[provider]
@@ -286,16 +313,14 @@ function buildDrivers(
     }
 
     if (selected.participant) {
-        drivers[SigningProvider.PARTICIPANT] = new ParticipantSigningDriver()
+        register(new ParticipantSigningDriver())
     }
 
     if (selected.walletKernel) {
         if (!signingStore) {
             reportUnavailable('walletKernel')
         } else {
-            drivers[SigningProvider.WALLET_KERNEL] = new InternalSigningDriver(
-                signingStore
-            )
+            register(new InternalSigningDriver(signingStore))
         }
     }
 
@@ -305,12 +330,13 @@ function buildDrivers(
                 apiKey: secrets.fireblocksApiKey,
                 apiSecret: secrets.fireblocksApiSecret,
             }
-            drivers[SigningProvider.FIREBLOCKS] = new FireblocksSigningProvider(
-                {
+
+            register(
+                new FireblocksSigningProvider({
                     defaultKeyInfo: keyInfo,
                     userApiKeys: new Map([['user', keyInfo]]),
                     apiPath: settings.fireblocksApiPath,
-                }
+                })
             )
         } else {
             reportUnavailable('fireblocks')
@@ -319,12 +345,13 @@ function buildDrivers(
 
     if (selected.blockdaemon) {
         if (secrets.blockdaemonApiKey) {
-            drivers[SigningProvider.BLOCKDAEMON] =
+            register(
                 new BlockdaemonSigningProvider({
                     baseUrl: settings.blockdaemonBaseUrl,
                     apiKey: secrets.blockdaemonApiKey,
                     caip2: settings.blockdaemonCaip2,
                 })
+            )
         } else {
             reportUnavailable('blockdaemon')
         }
@@ -332,29 +359,32 @@ function buildDrivers(
 
     if (selected.securosys) {
         if (settings.securosysBaseUrl) {
-            drivers[SigningProvider.SECUROSYS] = new SecurosysSigningProvider({
-                baseUrl: settings.securosysBaseUrl,
-                ...(secrets.securosysKeyManagementApiKey && {
-                    keyManagementApiKey: secrets.securosysKeyManagementApiKey,
-                }),
-                ...(secrets.securosysKeyOperationApiKey && {
-                    keyOperationApiKey: secrets.securosysKeyOperationApiKey,
-                }),
-                ...(secrets.securosysBearerToken && {
-                    bearerToken: secrets.securosysBearerToken,
-                }),
-                ...(settings.securosysMtlsP12Path && {
-                    mtlsP12Path: settings.securosysMtlsP12Path,
-                }),
-                ...(secrets.securosysMtlsP12Password && {
-                    mtlsP12Password: secrets.securosysMtlsP12Password,
-                }),
-                ...(secrets.securosysKeyPassword && {
-                    keyPassword: secrets.securosysKeyPassword,
-                }),
-                signatureAlgorithm:
-                    settings.securosysSignatureAlgorithm as TsbSignatureAlgorithm,
-            })
+            register(
+                new SecurosysSigningProvider({
+                    baseUrl: settings.securosysBaseUrl,
+                    ...(secrets.securosysKeyManagementApiKey && {
+                        keyManagementApiKey:
+                            secrets.securosysKeyManagementApiKey,
+                    }),
+                    ...(secrets.securosysKeyOperationApiKey && {
+                        keyOperationApiKey: secrets.securosysKeyOperationApiKey,
+                    }),
+                    ...(secrets.securosysBearerToken && {
+                        bearerToken: secrets.securosysBearerToken,
+                    }),
+                    ...(settings.securosysMtlsP12Path && {
+                        mtlsP12Path: settings.securosysMtlsP12Path,
+                    }),
+                    ...(secrets.securosysMtlsP12Password && {
+                        mtlsP12Password: secrets.securosysMtlsP12Password,
+                    }),
+                    ...(secrets.securosysKeyPassword && {
+                        keyPassword: secrets.securosysKeyPassword,
+                    }),
+                    signatureAlgorithm:
+                        settings.securosysSignatureAlgorithm as TsbSignatureAlgorithm,
+                })
+            )
         } else {
             reportUnavailable('securosys')
         }
@@ -367,15 +397,17 @@ function buildDrivers(
             secrets.dfnsPrivateKey &&
             secrets.dfnsAuthToken
         ) {
-            drivers[SigningProvider.DFNS] = new DfnsSigningProvider({
-                orgId: settings.dfnsOrgId,
-                baseUrl: settings.dfnsBaseUrl,
-                credentials: {
-                    credId: settings.dfnsCredId,
-                    privateKey: secrets.dfnsPrivateKey,
-                    authToken: secrets.dfnsAuthToken,
-                },
-            })
+            register(
+                new DfnsSigningProvider({
+                    orgId: settings.dfnsOrgId,
+                    baseUrl: settings.dfnsBaseUrl,
+                    credentials: {
+                        credId: settings.dfnsCredId,
+                        privateKey: secrets.dfnsPrivateKey,
+                        authToken: secrets.dfnsAuthToken,
+                    },
+                })
+            )
         } else {
             reportUnavailable('dfns')
         }
@@ -400,6 +432,19 @@ function buildDrivers(
             })
         } else {
             reportUnavailable('bitgo')
+        }
+    }
+
+    if (selected.dsrv) {
+        if (settings.dsrvBaseUrl && secrets.dsrvBearerToken) {
+            register(
+                new DsrvSigningProvider({
+                    baseUrl: settings.dsrvBaseUrl,
+                    bearerToken: secrets.dsrvBearerToken,
+                })
+            )
+        } else {
+            reportUnavailable('dsrv')
         }
     }
 
@@ -433,6 +478,8 @@ export function registerSigningProviders(
                 securosys: true,
                 dfns: true,
                 bitgo: true,
+                // Not discovered from the environment, needs signingProviders.dsrv
+                dsrv: false,
             },
             legacySettings(),
             secrets,
@@ -452,6 +499,7 @@ export function registerSigningProviders(
             securosys: signingProviders.securosys !== undefined,
             dfns: signingProviders.dfns !== undefined,
             bitgo: signingProviders.bitgo !== undefined,
+            dsrv: signingProviders.dsrv !== undefined,
         },
         explicitSettings(signingProviders),
         secrets,

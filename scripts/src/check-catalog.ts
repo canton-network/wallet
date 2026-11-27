@@ -5,7 +5,10 @@
 //  - every third party dependency is declared as `catalog:` (peer dependencies
 //    may declare the range they support instead)
 //  - every dependency on a workspace project uses `workspace:` (core packages)
-//    or `workspace:^` (everything else) and is never part of a catalog
+//    or `workspace:^` (everything else) and is never part of a catalog. Peer
+//    dependencies on a workspace project use `workspace:^`, which publishes as
+//    a caret range: `workspace:` would publish an exact version, which a
+//    consumer's compatible patch release wouldn't satisfy
 //  - the catalog entries in pnpm-workspace.yaml are sorted alphabetically
 //
 // `pnpm add` under `catalogMode: strict` puts workspace packages into the
@@ -15,8 +18,11 @@
 import { execSync } from 'node:child_process'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
+
 import { load } from 'js-yaml'
-import { getRepoRoot } from './lib/utils.js'
+import { applyEdits, modify } from 'jsonc-parser'
+
+import { getRepoRoot } from './lib/utils.ts'
 
 const DEPENDENCY_FIELDS = [
     'dependencies',
@@ -40,6 +46,7 @@ interface Workspace {
 
 interface SpecViolation {
     file: string
+    field: (typeof DEPENDENCY_FIELDS)[number]
     where: string
     name: string
     spec: string
@@ -84,17 +91,26 @@ const findSpecViolations = (): SpecViolation[] => {
             for (const [name, spec] of Object.entries(manifest[field] ?? {})) {
                 const where = `${file}: ${field}["${name}"]`
                 if (workspaceNames.has(name)) {
-                    const expected = name.startsWith('@canton-network/core-')
-                        ? 'workspace:'
-                        : 'workspace:^'
+                    const expected =
+                        field !== 'peerDependencies' &&
+                        name.startsWith('@canton-network/core-')
+                            ? 'workspace:'
+                            : 'workspace:^'
                     if (spec !== expected) {
-                        violations.push({ file, where, name, spec, expected })
+                        violations.push({
+                            file,
+                            field,
+                            where,
+                            name,
+                            spec,
+                            expected,
+                        })
                     }
                 } else if (
                     field !== 'peerDependencies' &&
                     !spec.startsWith('catalog:')
                 ) {
-                    violations.push({ file, where, name, spec })
+                    violations.push({ file, field, where, name, spec })
                 }
             }
         }
@@ -141,17 +157,14 @@ const catalogBlocks = (): { header: string; indent: number }[] => [
         .map((name) => ({ header: `    ${name}:`, indent: 8 })),
 ]
 
-// Points the dependencies of the package.json files at the workspace.
+// Points the dependencies of the package.json files at the workspace, editing
+// only the violating field: devDependencies and peerDependencies differ.
 const fixSpecs = (violations: SpecViolation[]) => {
     for (const v of violations.filter((v) => v.expected)) {
         const path = join(root, v.file)
-        writeFileSync(
-            path,
-            readFileSync(path, 'utf8').replaceAll(
-                `"${v.name}": "${v.spec}"`,
-                `"${v.name}": "${v.expected}"`
-            )
-        )
+        const text = readFileSync(path, 'utf8')
+        const edits = modify(text, [v.field, v.name], v.expected, {})
+        writeFileSync(path, applyEdits(text, edits))
     }
 }
 

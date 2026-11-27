@@ -1,10 +1,11 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, it } from 'vitest'
 import type { PreparedTransaction } from '@canton-network/core-ledger-proto'
-import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.js'
-import { schemeV3 } from '../v3.js'
+import { describe, expect, it } from 'vitest'
+
+import { DEFAULT_LIMITS, type TraversalLimits } from '../limits.ts'
+import { schemeV3 } from '../v3.ts'
 import {
     contractId,
     contractKey,
@@ -35,10 +36,10 @@ import {
     tx,
     unit,
     withInputContract,
-} from './helpers/builders.js'
-import { toHex } from './helpers/hex.js'
-import { liveFixtures } from './helpers/live-fixtures.js'
-import { hx, rejection } from './helpers/matchers.js'
+} from './helpers/builders.ts'
+import { toHex } from './helpers/hex.ts'
+import { liveFixtures } from './helpers/live-fixtures.ts'
+import { hx, rejection } from './helpers/matchers.ts'
 
 // Expected values that do not come from a participant were produced by running
 // daml_transaction_hashing_v3.py (canton v3.5.1, 08-interactive-submission) on
@@ -364,6 +365,30 @@ describe('hashing scheme V3', () => {
     })
 
     describe('rejections', () => {
+        it('rejects an exercise with external call results', () =>
+            expect(
+                v3(
+                    single(
+                        exerciseNode('0', [], {
+                            externalCallResults: [
+                                {
+                                    extensionId: 'ext',
+                                    functionId: 'fn',
+                                    config: new Uint8Array(),
+                                    input: new Uint8Array(),
+                                    output: new Uint8Array(),
+                                },
+                            ],
+                        })
+                    )
+                )
+            ).rejects.toThrow(
+                rejection(
+                    'FIELD_NOT_COVERED_BY_SCHEME',
+                    'transaction.nodes[0].v1.exercise.externalCallResults'
+                )
+            ))
+
         it.each(['3', 'dev', '2.2', ''])('rejects lf version %j', (lf) =>
             expect(
                 v3(single(createNode('0', { lfVersion: lf })))

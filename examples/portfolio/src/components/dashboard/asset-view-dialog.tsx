@@ -1,6 +1,8 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { PortfolioAssetView } from '@canton-network/core-wallet-ui-components/react/token'
+import { portfolioColors } from '@lib/theme'
 import CloseIcon from '@mui/icons-material/Close'
 import {
     Avatar,
@@ -10,8 +12,6 @@ import {
     IconButton,
     Typography,
 } from '@mui/material'
-import type { PortfolioAssetView } from '@hooks/useAllAccountAssets'
-import { portfolioColors } from '@lib/theme'
 import { getInstrumentInitials } from '@utils/instrument-display'
 
 type AssetViewDialogProps = {

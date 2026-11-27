@@ -13,8 +13,8 @@ import {
     migrateUpToBefore,
     primaryKeyColumns,
     tableExists,
-} from '../helpers.js'
-import { insertMessageRaw } from '../seeds/012-add-messages-to-sign.js'
+} from '../helpers.ts'
+import { insertMessageRaw } from '../seeds/012-add-messages-to-sign.ts'
 
 const TARGET = 12
 const TABLE = 'messages_raw'

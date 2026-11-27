@@ -16,13 +16,15 @@ import {
 } from '@canton-network/core-wallet-store'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
-import { fakeAuthContext } from '@/__tests__/fake-auth-context'
-import { approvalRequestsItem } from '@/shared/storage'
-import type { VaultStatus } from '@/shared/vault-protocol'
-import type { WalletStore } from '../../store'
-import { createTestWalletStore } from '../../store/test-store'
-import { VaultLockedError } from '../../vault'
-import { createDappDispatcher, type DappDispatcher } from './dispatch'
+
+import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
+import { approvalRequestsItem } from '@/shared/storage.ts'
+import type { VaultStatus } from '@/shared/vault-protocol.ts'
+
+import type { WalletStore } from '../../store/index.ts'
+import { createTestWalletStore } from '../../store/test-store.ts'
+import { VaultLockedError } from '../../vault/index.ts'
+import { createDappDispatcher, type DappDispatcher } from './dispatch.ts'
 
 const origin = 'https://dapp.example'
 const networkId = 'canton:local-oauth'
@@ -50,7 +52,7 @@ describe('createDappDispatcher', () => {
 
     beforeEach(() => {
         fakeBrowser.reset()
-        service = new NotificationService({ debug: vi.fn(), error: vi.fn() })
+        service = new NotificationService()
         walletStore = createTestWalletStore()
         authContextStore = fakeAuthContext()
         dispatcher = createDappDispatcher(

@@ -1,26 +1,44 @@
 {
     "name": "@canton-network/core-tx-hashing",
-    "version": "1.1.0",
-    "type": "module",
-    "description": "Recompute Canton prepared transaction hashes for hashing schemes V2 and V3",
+    "version": "1.3.0",
+    "description": "Recompute Canton prepared transaction hashes for hashing schemes V2, V3 and V4, and topology transaction multi-hashes",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/tx-hashing#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/tx-hashing"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\"",
         "clean": "rm -rf dist"
+    },
+    "dependencies": {
+        "@canton-network/core-ledger-proto": "workspace:"
     },
     "devDependencies": {
         "@types/node": "catalog:",
@@ -31,23 +49,5 @@
         "typescript": "catalog:",
         "vite": "catalog:",
         "vitest": "catalog:"
-    },
-    "dependencies": {
-        "@canton-network/core-ledger-proto": "workspace:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/tx-hashing"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/tx-hashing#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

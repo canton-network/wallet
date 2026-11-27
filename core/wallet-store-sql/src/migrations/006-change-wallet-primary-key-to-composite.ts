@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type Kysely, sql } from 'kysely'
-import type { DB } from '../schema.js'
-import { isPostgres } from '../utils.js'
+
+import type { DB } from '../schema.ts'
+import { isPostgres } from '../utils.ts'
 
 async function tableExists(
     db: Kysely<DB>,

@@ -2,10 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { PreparedTransaction } from '@canton-network/core-ledger-proto'
-import { fromBase64 } from '../../bytes.js'
-import { loadVectors } from './load-vectors.js'
 
-type Scheme = 'HASHING_SCHEME_VERSION_V2' | 'HASHING_SCHEME_VERSION_V3'
+import { fromBase64 } from '../../bytes.ts'
+import { loadVectors } from './load-vectors.ts'
+
+type Scheme =
+    | 'HASHING_SCHEME_VERSION_V2'
+    | 'HASHING_SCHEME_VERSION_V3'
+    | 'HASHING_SCHEME_VERSION_V4'
 
 export function liveFixtures(scheme: Scheme): {
     scenario: string

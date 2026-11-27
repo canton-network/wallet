@@ -1,17 +1,19 @@
-import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
-import path from 'path'
-import { fileURLToPath } from 'url'
 import { existsSync } from 'fs'
 import { readFile } from 'fs/promises'
+import path from 'path'
+import { fileURLToPath } from 'url'
+
+import { localNetStaticConfig, SDK } from '@canton-network/wallet-sdk'
+import { Decimal } from 'decimal.js'
+
+import { configureLogging } from '../utils/configure-logging.ts'
 import {
     TOKEN_NAMESPACE_CONFIG,
     TOKEN_PROVIDER_CONFIG_DEFAULT,
     AMULET_NAMESPACE_CONFIG,
     localNetGlobalSynchronizer,
-} from '../utils/index.js'
-import { batchTap } from './utils.js'
-import Decimal from 'decimal.js'
-import { configureLogging } from '../utils/configure-logging.js'
+} from '../utils/index.ts'
+import { batchTap } from './utils.ts'
 const logger = await configureLogging()
 
 const PATH_TO_LOCALNET = '../../../../../.localnet'
@@ -64,14 +66,16 @@ const totalSum = await batchTap(
     aliceKeys.privateKey,
     logger
 )
-logger.info(`All taps successfully parsed with totalTapped: ${totalSum}`)
+logger.info(
+    `All taps successfully parsed with totalTapped: ${totalSum.toString()}`
+)
 
-const batchMergingUtility = await sdk.token.utxos.delegatedMerge.setup()
+const batchMergingUtility = await sdk.token.v1.utxos.delegatedMerge.setup()
 
 logger.info({ batchMergingUtility })
 
 const mergeDelegationProposalCommand =
-    sdk.token.utxos.delegatedMerge.command.propose({
+    sdk.token.v1.utxos.delegatedMerge.command.propose({
         owner: alice.partyId,
     })
 
@@ -91,7 +95,7 @@ logger.info(
 )
 
 const approveMergeDelegationProposalResult =
-    await sdk.token.utxos.delegatedMerge.approve({
+    await sdk.token.v1.utxos.delegatedMerge.approve({
         owner: alice.partyId,
     })
 
@@ -100,7 +104,7 @@ logger.info(
     'Successfully executed approveDelegationProposalCommand'
 )
 
-const mergeDelegationResult = await sdk.token.utxos.delegatedMerge.execute({
+const mergeDelegationResult = await sdk.token.v1.utxos.delegatedMerge.execute({
     party: alice.partyId,
 })
 
@@ -109,7 +113,7 @@ logger.info(
     'Successfully executed useMergeDelegationsCommand'
 )
 
-const utxosAlice = await sdk.token.utxos.list({
+const utxosAlice = await sdk.token.v1.utxos.list({
     partyId: alice.partyId,
 })
 

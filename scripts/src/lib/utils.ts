@@ -1,18 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import zlib from 'zlib'
-import { pipeline } from 'stream/promises'
+import { exec } from 'child_process'
 import crypto from 'crypto'
 import * as fs from 'fs'
+import { tmpdir } from 'os'
 import * as path from 'path'
 import * as process from 'process'
-import { white, green, italic, red, yellow, bold } from 'yoctocolors'
+import { pipeline } from 'stream/promises'
+import { promisify } from 'util'
+import zlib from 'zlib'
+
 import * as jsonc from 'jsonc-parser'
 import * as tar from 'tar-fs'
-import { exec } from 'child_process'
-import { promisify } from 'util'
-import { tmpdir } from 'os'
+import { white, green, italic, red, yellow, bold } from 'yoctocolors'
 
 const ex = promisify(exec)
 
@@ -82,6 +83,17 @@ export function getSupportedCantonVersions(): string[] {
     ]
 }
 
+// Every Splice version the repo supports, one per network.
+export function getSupportedSpliceVersions(): string[] {
+    return [
+        ...new Set(
+            Object.values(SUPPORTED_VERSIONS).map(
+                (config) => config.splice.version
+            )
+        ),
+    ]
+}
+
 /** Downloads `url` to `destination`, retrying any failure with exponential backoff. */
 export async function downloadWithRetry(
     url: string | URL,
@@ -100,7 +112,7 @@ export async function downloadWithRetry(
             if (attempt >= attempts) throw e
             console.warn(
                 warn(
-                    `Download of ${url} failed (${e}), retry ${attempt}/${attempts - 1}`
+                    `Download of ${url} failed (${String(e)}), retry ${attempt}/${attempts - 1}`
                 )
             )
             await new Promise((r) => setTimeout(r, 2 ** attempt * 1000))
@@ -383,8 +395,8 @@ export async function ensureDir(dir: string) {
     }
 }
 
-// Delete the files of `dir` whose version is not in `keep`, and return the names deleted.
-// `pattern` must capture the version in group 1. Files it does not match are left untouched.
+// Delete the files or directories of `dir` whose version is not in `keep`, and return the names deleted.
+// `pattern` must capture the version in group 1. Entries it does not match are left untouched.
 export function pruneVersionedFiles(
     dir: string,
     pattern: RegExp,
@@ -399,10 +411,32 @@ export function pruneVersionedFiles(
     })
 
     for (const name of stale) {
-        fs.rmSync(path.join(dir, name))
+        fs.rmSync(path.join(dir, name), { recursive: true })
     }
 
     return stale
+}
+
+/**
+ * Delete the spec directories of `api-specs/<kind>` (one per version, e.g. `ledger-api/3.6.4`)
+ * whose version no network supports. Keeps every network's version, as a fetch runs for one
+ * network only.
+ */
+export function pruneStaleApiSpecs(kind: 'ledger-api' | 'splice'): void {
+    const removed = pruneVersionedFiles(
+        path.join(API_SPECS_PATH, kind),
+        /^(\d+\.\d+\.\d+)$/,
+        kind === 'ledger-api'
+            ? getSupportedCantonVersions()
+            : getSupportedSpliceVersions()
+    )
+    if (removed.length > 0) {
+        console.log(
+            warn(
+                `Removed ${removed.length} stale ${kind} spec(s): ${removed.join(', ')}`
+            )
+        )
+    }
 }
 
 // Copy a file

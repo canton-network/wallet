@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { TestTokenV2 } from '@canton-network/core-splice-codegen'
-import { RegistryState } from '../common/state'
-import { APIError } from './common'
+
+import { RegistryState } from '../common/state.ts'
+import { APIError } from './common.ts'
 
 /**
  * @throws {500} when instantiating new allocation factory contract has failed.

@@ -10,6 +10,15 @@ import {
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
 } from '@canton-network/core-token-standard'
+import { TRANSFER_INSTRUCTION_INTERFACE_ID_V2 } from '@canton-network/core-token-standard-v2'
+import {
+    ALLOCATION_FACTORY_INTERFACE_ID_V2,
+    ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
+    ALLOCATION_INTERFACE_ID_V2,
+    ALLOCATION_REQUEST_INTERFACE_ID_V2,
+    HOLDING_INTERFACE_ID_V2,
+    TRANSFER_FACTORY_INTERFACE_ID_V2,
+} from '@canton-network/core-token-standard-v2'
 export interface InterfaceIdParts {
     packageName: string
     moduleName: string
@@ -51,6 +60,38 @@ export const TokenStandardTransactionInterfaces = [
     ALLOCATION_INTERFACE_ID,
     ALLOCATION_REQUEST_INTERFACE_ID,
 ]
+
+export const V2TokenStandardTransactionInterfaces = [
+    HOLDING_INTERFACE_ID_V2,
+    TRANSFER_FACTORY_INTERFACE_ID_V2,
+    TRANSFER_INSTRUCTION_INTERFACE_ID_V2,
+    ALLOCATION_FACTORY_INTERFACE_ID_V2,
+    ALLOCATION_INSTRUCTION_INTERFACE_ID_V2,
+    ALLOCATION_INTERFACE_ID_V2,
+    ALLOCATION_REQUEST_INTERFACE_ID_V2,
+]
+
+export const TOKEN_STANDARD_INTERFACES_BY_VERSION = {
+    v1: TokenStandardTransactionInterfaces,
+    v2: V2TokenStandardTransactionInterfaces,
+} as const satisfies Record<string, readonly string[]>
+
+export type TokenStandardVersion =
+    keyof typeof TOKEN_STANDARD_INTERFACES_BY_VERSION
+
+export const ALL_TOKEN_STANDARD_VERSIONS = Object.keys(
+    TOKEN_STANDARD_INTERFACES_BY_VERSION
+) as TokenStandardVersion[]
+
+export function getTokenStandardInterfaces(
+    versions: readonly TokenStandardVersion[] = ALL_TOKEN_STANDARD_VERSIONS
+): string[] {
+    if (versions.length === 0) {
+        throw new Error('At least one token standard version must be specified')
+    }
+    const ids = versions.flatMap((v) => TOKEN_STANDARD_INTERFACES_BY_VERSION[v])
+    return [...new Set(ids)]
+}
 
 const SpliceMetaKeyPrefix = 'splice.lfdecentralizedtrust.org/'
 export const TxKindMetaKey = `${SpliceMetaKeyPrefix}tx-kind`

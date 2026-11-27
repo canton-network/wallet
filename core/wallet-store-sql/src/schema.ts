@@ -39,11 +39,11 @@ interface NetworkTable {
     description: string
     ledgerApiBaseUrl: string
     identityProviderId: string
-    userId: UserId | undefined // global if undefined
+    userId: UserId | null // global if null
 
     auth: string // json stringified
-    adminAuth: string | undefined // json stringified
-    serviceAccountAuth: string | undefined // json stringified
+    adminAuth: string | null // json stringified
+    serviceAccountAuth: string | null // json stringified
 }
 
 /**
@@ -127,7 +127,7 @@ interface SessionTable {
     id: string
     origin: string
     network: string
-    accessToken: string | null
+    accessTokenHash: string | null
     userId: UserId
 }
 
@@ -257,15 +257,13 @@ export const fromNetwork = (
         synchronizerId: network.synchronizerId ?? null,
         description: network.description,
         ledgerApiBaseUrl: network.ledgerApi.baseUrl,
-        userId: userId,
+        userId: userId ?? null,
         identityProviderId: network.identityProviderId,
         auth: JSON.stringify(network.auth),
-        adminAuth: network.adminAuth
-            ? JSON.stringify(network.adminAuth)
-            : undefined,
+        adminAuth: network.adminAuth ? JSON.stringify(network.adminAuth) : null,
         serviceAccountAuth: network.serviceAccountAuth
             ? JSON.stringify(network.serviceAccountAuth)
-            : undefined,
+            : null,
     }
 }
 
@@ -274,7 +272,9 @@ export const toSession = (table: SessionTable): Session => {
         id: table.id,
         network: table.network,
         origin: table.origin,
-        ...(table.accessToken ? { accessToken: table.accessToken } : {}),
+        ...(table.accessTokenHash
+            ? { accessTokenHash: table.accessTokenHash }
+            : {}),
         userId: table.userId,
     }
 }

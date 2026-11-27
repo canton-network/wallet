@@ -1,15 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { z } from 'zod'
+import { cantonCaip2Values } from '@canton-network/core-signing-blockdaemon'
+import { storeConfigSchema as signingStoreConfigSchema } from '@canton-network/core-signing-store-sql'
+import {
+    authFromEnvSchema,
+    authSchema,
+    idpSchema,
+} from '@canton-network/core-wallet-auth'
 import {
     storeConfigSchema,
     bootstrapConfigSchema,
     networkSchema,
 } from '@canton-network/core-wallet-store'
-import { storeConfigSchema as signingStoreConfigSchema } from '@canton-network/core-signing-store-sql'
-import { authFromEnvSchema, authSchema } from '@canton-network/core-wallet-auth'
-import { cantonCaip2Values } from '@canton-network/core-signing-blockdaemon'
+import { z } from 'zod'
 
 export const kernelInfoSchema = z.object({
     id: z.string(),
@@ -105,14 +109,37 @@ const loggingConfigSchema = z
 
 const authFromEnvOrConfig = z.union([authSchema, authFromEnvSchema])
 
-const bootstrapFromEnv = bootstrapConfigSchema.extend({
-    networks: z.array(
-        networkSchema.extend({
-            auth: authFromEnvOrConfig,
-            adminAuth: authFromEnvOrConfig.optional(),
-            serviceAccountAuth: authFromEnvOrConfig.optional(),
-        })
-    ),
+const bootstrapFromEnv = bootstrapConfigSchema
+    .extend({
+        networks: z.array(
+            networkSchema.extend({
+                auth: authFromEnvOrConfig,
+                adminAuth: authFromEnvOrConfig.optional(),
+                serviceAccountAuth: authFromEnvOrConfig.optional(),
+            })
+        ),
+    })
+    .optional()
+    .meta({
+        deprecated: true,
+        description:
+            'Deprecated, use the top-level idps and networks instead. Identity providers and networks that are only written to the database if it is empty. Move an entry to idps or networks with the same id to keep its existing wallets. Will be removed in a future release.',
+    })
+
+const configNetworkSchema = networkSchema.extend({
+    auth: authFromEnvOrConfig,
+    adminAuth: authFromEnvOrConfig.optional(),
+    serviceAccountAuth: authFromEnvOrConfig.optional(),
+})
+
+const configIdpsSchema = z.array(idpSchema).default([]).meta({
+    description:
+        'Identity providers managed by this config file. They are written to the database on every start and cannot be changed at runtime.',
+})
+
+const configNetworksSchema = z.array(configNetworkSchema).default([]).meta({
+    description:
+        'Networks managed by this config file. They are written to the database on every start and cannot be changed at runtime. Each network must reference an identity provider from idps.',
 })
 
 const secretEnvName = (defaultName: string, purpose: string) =>
@@ -265,6 +292,22 @@ export const signingProvidersConfigSchema = z
                 description:
                     'Include this object to opt in BitGo. The access token is read from the environment variable named by accessTokenEnv.',
             }),
+        dsrv: z
+            .object({
+                baseUrl: z.string().meta({
+                    description:
+                        'DSRV signing API base URL. Requests go to {baseUrl}/api/signing/{operation}.',
+                }),
+                bearerTokenEnv: secretEnvName(
+                    'DSRV_SIGNING_API_TOKEN',
+                    'the DSRV signing API bearer token'
+                ),
+            })
+            .optional()
+            .meta({
+                description:
+                    'Include this object to opt in DSRV. Requires baseUrl. The bearer token is read from the environment variable named by bearerTokenEnv and sent as Authorization: Bearer; it identifies the calling Wallet Gateway, not the user or the request. Not available in legacy discovery mode.',
+            }),
     })
     .meta({
         description:
@@ -290,6 +333,8 @@ export const rawConfigSchema = z.object({
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
     signingProviders: signingProvidersConfigSchema.optional(),
+    idps: configIdpsSchema,
+    networks: configNetworksSchema,
     bootstrap: bootstrapFromEnv,
     hashingScheme: hashingSchemeSchema,
 })
@@ -301,6 +346,8 @@ export const configSchema = z.object({
     store: storeConfigSchema,
     signingStore: signingStoreConfigSchema.optional(),
     signingProviders: signingProvidersConfigSchema.optional(),
+    idps: z.array(idpSchema),
+    networks: z.array(networkSchema),
     bootstrap: bootstrapConfigSchema,
     hashingScheme: hashingSchemeSchema,
 })

@@ -1,27 +1,49 @@
 {
     "name": "@canton-network/core-acs-reader",
-    "version": "1.25.0",
-    "type": "module",
+    "version": "1.27.0",
     "description": "Reader for active contract set (ACS) data from the Canton ledger, providing functions to retrieve and process active contract information for specified filters.",
+    "homepage": "https://github.com/canton-network/wallet/tree/main/core/acs-reader#readme",
+    "bugs": {
+        "url": "https://github.com/canton-network/wallet/issues"
+    },
     "license": "Apache-2.0",
     "author": "Phillip Olesen <phillip.olesen@digitalasset.com>",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/canton-network/wallet.git",
+        "directory": "core/acs-reader"
+    },
+    "files": [
+        "dist/**"
+    ],
+    "type": "module",
     "sideEffects": false,
     "main": "dist/index.cjs",
     "module": "dist/index.js",
     "types": "dist/index.d.ts",
     "exports": {
         ".": {
+            "@canton-network/source": "./src/index.ts",
             "types": "./dist/index.d.ts",
             "import": "./dist/index.js",
             "require": "./dist/index.cjs",
             "default": "./dist/index.js"
         }
     },
+    "publishConfig": {
+        "access": "public"
+    },
     "scripts": {
         "build": "tsdown --onSuccess \"tsc -p tsconfig.lib.json\"",
-        "dev": "tsdown --watch --onSuccess \"tsc -p tsconfig.lib.json\"",
         "clean": "rm -rf dist",
         "flatpack": "pnpm pack --pack-destination \"$FLATPACK_OUTDIR\""
+    },
+    "dependencies": {
+        "@canton-network/core-ledger-client-types": "workspace:",
+        "@canton-network/core-provider-ledger": "workspace:",
+        "@canton-network/core-types": "workspace:",
+        "@logtape/logtape": "catalog:",
+        "typescript-lru-cache": "catalog:"
     },
     "devDependencies": {
         "@types/node": "catalog:",
@@ -31,27 +53,5 @@
         "tsdown": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:"
-    },
-    "dependencies": {
-        "@canton-network/core-ledger-client-types": "workspace:",
-        "@canton-network/core-provider-ledger": "workspace:",
-        "@canton-network/core-types": "workspace:",
-        "@logtape/logtape": "catalog:",
-        "typescript-lru-cache": "catalog:"
-    },
-    "files": [
-        "dist/**"
-    ],
-    "publishConfig": {
-        "access": "public"
-    },
-    "repository": {
-        "type": "git",
-        "url": "git+https://github.com/canton-network/wallet.git",
-        "directory": "core/acs-reader"
-    },
-    "homepage": "https://github.com/canton-network/wallet/tree/main/core/acs-reader#readme",
-    "bugs": {
-        "url": "https://github.com/canton-network/wallet/issues"
     }
 }

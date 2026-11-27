@@ -11,6 +11,7 @@ export enum SigningProvider {
     DFNS = 'dfns',
     SECUROSYS = 'securosys',
     BITGO = 'bitgo',
+    DSRV = 'dsrv',
 }
 
 export const SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS: readonly SigningProvider[] =
@@ -23,7 +24,7 @@ export const SIGN_MESSAGE_CAPABLE_SIGNING_PROVIDERS: readonly SigningProvider[] 
 
 // Generic signing driver configuration schema
 export const signingDriverConfigSchema = z.object({
-    provider: z.nativeEnum(SigningProvider),
+    provider: z.enum(SigningProvider),
     properties: z.record(z.string(), z.any()).optional(),
 })
 

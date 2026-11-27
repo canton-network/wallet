@@ -3,12 +3,13 @@
 
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { lazy, Suspense } from 'react'
-import type { RouterContext } from '@/ui/app/router-context'
+
+import type { RouterContext } from '@/ui/app/router-context.ts'
 
 // `wxt build` replaces import.meta.env.DEV with false, so the devtools chunk
 // is never emitted in production builds.
 const Devtools = import.meta.env.DEV
-    ? lazy(() => import('@/ui/app/devtools'))
+    ? lazy(() => import('@/ui/app/devtools.tsx'))
     : null
 
 export const Route = createRootRouteWithContext<RouterContext>()({

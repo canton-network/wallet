@@ -2,9 +2,10 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { useQueries, useQueryClient } from '@tanstack/react-query'
-import { preapprovalStatusQueryOptions } from './query-options'
-import type { WalletSdk } from './useWalletSdk'
-import type { PreapprovalRow } from '../types/preapprovals'
+
+import type { PreapprovalRow } from '../types/preapprovals.ts'
+import { preapprovalStatusQueryOptions } from './query-options.ts'
+import type { WalletSdk } from './useWalletSdk.ts'
 
 type UsePreapprovalStatusesArgs = {
     rows: PreapprovalRow[]

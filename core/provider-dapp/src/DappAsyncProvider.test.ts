@@ -20,8 +20,9 @@ let sessionToken: string
 let walletOrigin: string
 let tokenCounter = 0
 
-import { DappAsyncProvider } from './DappAsyncProvider'
 import { WalletEvent } from '@canton-network/core-types'
+
+import { DappAsyncProvider } from './DappAsyncProvider.ts'
 
 function emitSseEvent(eventName: string, data: unknown) {
     const handler = sseHandlers[eventName]

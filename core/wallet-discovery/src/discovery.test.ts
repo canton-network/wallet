@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+import { DiscoveryClient } from './client.ts'
 import {
     DiscoveryError,
     NotConnectedError,
@@ -10,8 +12,7 @@ import {
     UserRejectedError,
     WalletNotFoundError,
     WalletNotInstalledError,
-} from './errors.js'
-import { DiscoveryClient } from './client.js'
+} from './errors.ts'
 
 /* oxlint-disable typescript/no-explicit-any */
 const {
@@ -24,7 +25,7 @@ const {
     mockClearPesristedSession: vi.fn(),
 }))
 
-vi.mock('./storage', () => ({
+vi.mock('./storage.ts', () => ({
     persistSession: mockPersistSession,
     loadPersistedSession: mockLoadPersistedSession,
     clearPersistedSession: mockClearPesristedSession,

@@ -1,12 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { css, html } from 'lit'
-import { customElement, state } from 'lit/decorators.js'
-
-import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
-import type UserApiClient from '@canton-network/core-wallet-user-rpc-client'
-
+import { SigningProvider } from '@canton-network/core-signing-lib'
 import {
     BaseElement,
     type WalletSetPrimaryEvent,
@@ -25,14 +20,17 @@ import {
     syncWallets,
     walletSyncResultToast,
 } from '@canton-network/core-wallet-ui-components/logic'
-import { createUserClient } from '../rpc-client'
-import { setLocationHref } from '../navigation.js'
+import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
+import type UserApiClient from '@canton-network/core-wallet-user-rpc-client'
+import { css, html } from 'lit'
+import { customElement, state } from 'lit/decorators.js'
 
-import '../index'
-import { stateManager } from '../state-manager'
-import { showToast } from '../utils'
-import { detectCurrentOrigin } from '../listeners.js'
-import { SigningProvider } from '@canton-network/core-signing-lib'
+import { detectCurrentOrigin } from '../listeners.ts'
+import '../index.ts'
+import { setLocationHref } from '../navigation.ts'
+import { createUserClient } from '../rpc-client.ts'
+import { stateManager } from '../state-manager.ts'
+import { showToast } from '../utils.ts'
 
 @customElement('user-ui-parties')
 export class UserUiParties extends BaseElement {
@@ -149,7 +147,7 @@ export class UserUiParties extends BaseElement {
 
         this.wallets = await loadWallets(
             userClient,
-            await stateManager.networkId.get(currentOrigin)
+            stateManager.networkId.get(currentOrigin)
         )
     }
 

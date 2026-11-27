@@ -6,12 +6,13 @@ import {
     useMutation,
     useQueryClient,
 } from '@tanstack/react-query'
-import { vaultMessenger, type VaultStatus } from '@/shared/vault-protocol'
-import { queryKeys } from '@/ui/lib/query/keys'
+
+import { vaultMessenger, type VaultStatus } from '@/shared/vault-protocol.ts'
+import { queryKeys } from '@/ui/lib/query/keys.ts'
 
 /**
  * The vault status, from the background. `staleTime: 0` makes
- * `fetchQuery` ask the background every time, so route guards never act on a
+ * `queryClient.query` ask the background every time, so route guards never act on a
  * cached status.
  */
 export const vaultStatusQuery = () =>
@@ -19,7 +20,6 @@ export const vaultStatusQuery = () =>
         queryKey: queryKeys.vault.status(),
         queryFn: () => vaultMessenger.sendMessage('vault.getStatus'),
         staleTime: 0,
-        networkMode: 'always',
     })
 
 // Vault messages stay inside the extension, so they use `networkMode:
@@ -35,7 +35,6 @@ export function useCreateVault() {
     return useMutation({
         mutationFn: (password: string) =>
             vaultMessenger.sendMessage('vault.create', { password }),
-        networkMode: 'always',
         gcTime: 0,
         onSuccess: () => {
             queryClient.setQueryData<VaultStatus>(
@@ -51,7 +50,6 @@ export function useUnlockVault() {
     return useMutation({
         mutationFn: (password: string) =>
             vaultMessenger.sendMessage('vault.unlock', { password }),
-        networkMode: 'always',
         gcTime: 0,
         onSuccess: () => {
             queryClient.setQueryData<VaultStatus>(
@@ -66,7 +64,6 @@ export function useLockVault() {
     const queryClient = useQueryClient()
     return useMutation({
         mutationFn: () => vaultMessenger.sendMessage('vault.lock'),
-        networkMode: 'always',
         // Drop everything read while unlocked, the status included.
         // watchVaultStatus does the same in every open page; this covers the
         // page that locked even if the storage event comes late.

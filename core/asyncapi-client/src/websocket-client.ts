@@ -1,7 +1,6 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { PartyId } from '@canton-network/core-types'
 import {
     asyncApiByVersion,
     supportedAsyncApiVersions,
@@ -11,6 +10,7 @@ import {
     type AsyncCommonChannels,
     type LedgerCommonSchemas,
 } from '@canton-network/core-ledger-client-types'
+import type { PartyId } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
 import { getLogger } from '@logtape/logtape'
 
@@ -55,7 +55,7 @@ export class WebSocketClient {
     private token: string = ''
     private protocol: string[] = []
     private readonly channelsByVersion: ChannelsMap
-    private version: SupportedVersions = '3.5'
+    private version: SupportedVersions = '3.6'
     private accessTokenProvider: AccessTokenProvider
 
     constructor({

@@ -1,15 +1,15 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { afterEach, beforeEach, describe } from 'vitest'
 import { type Kysely, sql } from 'kysely'
-import pg from 'pg'
+import { Pool } from 'pg'
+import { afterEach, beforeEach, describe } from 'vitest'
 
-import { connection } from '../../store-sql.js'
-import { migrator } from '../../migrator.js'
-import type { DB } from '../../schema.js'
-import { PG_ENV } from './global-setup.js'
-import { isPostgres } from '../../utils'
+import { migrator } from '../../migrator.ts'
+import type { DB } from '../../schema.ts'
+import { connection } from '../../store-sql.ts'
+import { isPostgres } from '../../utils.ts'
+import { PG_ENV } from './global-setup.ts'
 
 export type Dialect = 'sqlite' | 'postgres'
 
@@ -36,7 +36,7 @@ function requireEnv(key: string): string {
     return v
 }
 
-const adminPool = (): pg.Pool => new pg.Pool(pgConnection())
+const adminPool = (): Pool => new Pool(pgConnection())
 
 async function createPgDatabase(name: string): Promise<void> {
     const pool = adminPool()

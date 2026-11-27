@@ -1,7 +1,12 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState } from 'react'
+import { CopyableIdentifier } from '@components/copyable-identifier'
+import { PillButton } from '@components/ui/PillButton'
+import {
+    useReachableRegistryUrls,
+    useRegistryMutations,
+} from '@hooks/useRegistryUrls'
 import {
     Box,
     Paper,
@@ -13,15 +18,11 @@ import {
     TableRow,
     Typography,
 } from '@mui/material'
+import { useState } from 'react'
 import { toast } from 'sonner'
-import { CopyableIdentifier } from '@components/copyable-identifier'
-import { PillButton } from '@components/ui/PillButton'
-import {
-    useReachableRegistryUrls,
-    useRegistryMutations,
-} from '@hooks/useRegistryUrls'
-import type { RegistryReachabilityStatus } from '../../types/registries'
-import { AddRegistryDialog } from './add-registry-dialog'
+
+import type { RegistryReachabilityStatus } from '../../types/registries.ts'
+import { AddRegistryDialog } from './add-registry-dialog.tsx'
 
 const statusDetails: Record<
     RegistryReachabilityStatus,

@@ -9,16 +9,17 @@ import {
     LedgerGetRoutes,
     LedgerPostRoutes,
 } from '@canton-network/core-ledger-client-types'
-import createClient, { type Client, type FetchOptions } from 'openapi-fetch'
 import type { PartyId } from '@canton-network/core-types'
+import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
+import { getLogger } from '@logtape/logtape'
+import createClient, { type Client, type FetchOptions } from 'openapi-fetch'
+
 import {
     asJsCantonError,
     defaultRetryableOptions,
     retryable,
     type RetryableOptions,
-} from './ledger-api-utils.js'
-import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
-import { getLogger } from '@logtape/logtape'
+} from './ledger-api-utils.ts'
 
 export const supportedVersions = supportedLedgerApiVersions
 
@@ -131,10 +132,13 @@ export type PrepareSubmissionResponse =
 // Any options the client accepts besides body/params
 type ExtraPostOpts = Omit<FetchOptions<paths>, 'body' | 'params'>
 
+const isBodyFactory = <T>(b: T | (() => T)): b is () => T =>
+    typeof b === 'function'
+
 export class LedgerClient {
     // privately manage the active connected version and associated client codegen
     private readonly clients: ClientsByVersion
-    private clientVersion: SupportedVersions = '3.5'
+    private clientVersion: SupportedVersions = '3.6'
     private initialized: boolean = false
     private accessTokenProvider: AccessTokenProvider
     private readonly logger = getLogger([
@@ -345,6 +349,34 @@ export class LedgerClient {
     }
 
     /**
+     * Waits until a party is known to the participant.
+     *
+     * @param partyId The ID of the party to wait for.
+     * @param maxTries Optional max number of retries with default 30. May be increased if expecting heavy load.
+     * @param retryIntervalMs Optional interval between retries to verify that party exists with default 2000ms. May be increased if expecting heavy load.
+     * @returns A promise that resolves when the party exists.
+     */
+    public async waitForParty(
+        partyId: PartyId,
+        maxTries: number = 30,
+        retryIntervalMs: number = 2000
+    ): Promise<void> {
+        await this.init()
+        // Wait for party to appear on participant, only sleeping between checks
+        let partyFound = await this.checkIfPartyExists(partyId)
+        for (let tries = 1; !partyFound && tries < maxTries; tries++) {
+            await new Promise((resolve) => setTimeout(resolve, retryIntervalMs))
+            partyFound = await this.checkIfPartyExists(partyId)
+        }
+
+        if (!partyFound) {
+            throw new Error(
+                `timed out waiting for new party to appear after ${maxTries} tries`
+            )
+        }
+    }
+
+    /**
      * Grants a user the right to act as a party, while ensuring the party exists.
      *
      * @param userId The ID of the user to grant rights to.
@@ -359,19 +391,7 @@ export class LedgerClient {
         maxTries: number = 30,
         retryIntervalMs: number = 2000
     ) {
-        await this.init()
-        // Wait for party to appear on participant, only sleeping between checks
-        let partyFound = await this.checkIfPartyExists(partyId)
-        for (let tries = 1; !partyFound && tries < maxTries; tries++) {
-            await new Promise((resolve) => setTimeout(resolve, retryIntervalMs))
-            partyFound = await this.checkIfPartyExists(partyId)
-        }
-
-        if (!partyFound) {
-            throw new Error(
-                `timed out waiting for new party to appear after ${maxTries} tries`
-            )
-        }
+        await this.waitForParty(partyId, maxTries, retryIntervalMs)
 
         const result = await this.grantRights(userId, {
             actAs: [partyId],
@@ -544,7 +564,7 @@ export class LedgerClient {
 
     public async postWithRetry<Path extends PostEndpoint>(
         path: Path,
-        body: PostRequest<Path>,
+        body: PostRequest<Path> | (() => PostRequest<Path>),
         retryOptions: RetryableOptions = defaultRetryableOptions,
         params?: {
             path?: Record<string, string>
@@ -552,15 +572,17 @@ export class LedgerClient {
         },
         additionalOptions?: ExtraPostOpts
     ): Promise<PostResponse<Path>> {
-        return await retryable(
-            () => this.post(path, body, params, additionalOptions),
-            retryOptions
-        ).catch((e) => {
+        let lastBody: PostRequest<Path> | undefined
+
+        return await retryable(() => {
+            lastBody = isBodyFactory(body) ? body() : body
+            return this.post(path, lastBody, params, additionalOptions)
+        }, retryOptions).catch((e) => {
             this.logger.warn(`Error in postWithRetry for path {path}`, {
                 path,
                 options: retryOptions,
             })
-            this.logger.debug({ body })
+            this.logger.debug({ body: lastBody })
             throw asJsCantonError(e)
         })
     }

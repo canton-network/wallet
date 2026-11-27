@@ -2,11 +2,13 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { storage } from 'wxt/utils/storage'
-import { logger } from '@/shared/logger'
-import { passwordProblems } from '@/shared/password-policy'
-import { vaultStatusItem } from '@/shared/storage'
-import type { VaultStatus } from '@/shared/vault-protocol'
-import { exportKey, fromB64, importKey, toB64 } from './crypto'
+
+import { logger } from '@/shared/logger.ts'
+import { passwordProblems } from '@/shared/password-policy.ts'
+import { vaultStatusItem } from '@/shared/storage.ts'
+import type { VaultStatus } from '@/shared/vault-protocol.ts'
+
+import { exportKey, fromB64, importKey, toB64 } from './crypto.ts'
 import {
     deriveVaultKey,
     headerOf,
@@ -18,13 +20,13 @@ import {
     type VaultDocV1,
     type VaultEnvelopeV1,
     type VaultHeaderV1,
-} from './envelope'
+} from './envelope.ts'
 import {
     VaultExistsError,
     VaultLockedError,
     VaultNotFoundError,
     WeakPasswordError,
-} from './errors'
+} from './errors.ts'
 
 export interface Vault {
     /** Settles when the restore after a background start has finished. Never rejects. */

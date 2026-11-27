@@ -3,6 +3,7 @@
 
 import {
     buildController,
+    type ClaimsFor,
     type CreateKeyParams,
     type CreateKeyResult,
     type GetConfigurationResult,
@@ -24,13 +25,15 @@ import {
     type SubscribeTransactionsParams,
     type SubscribeTransactionsResult,
 } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
+import { getLogger } from '@logtape/logtape'
+
 import {
     keyLabelFromPublicKey,
     SigningAPIClient,
+    TsbApiError,
     type SecurosysTSBClientConfig,
     type TsbSignatureAlgorithm,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
 
 export {
     keyLabelFromPublicKey,
@@ -41,13 +44,19 @@ export {
     type SecurosysTSBClientConfig,
     type TsbCreateKeyRequest,
     type TsbSignatureAlgorithm,
-} from './signing-api-sdk.js'
+} from './signing-api-sdk.ts'
+
+const logger = getLogger([
+    'core',
+    'signing-securosys',
+    'SecurosysSigningDriver',
+])
 
 export type SecurosysConfig = SecurosysTSBClientConfig
 
 export const SECUROSYS_SIGNING_PROVIDER = 'securosys' as SigningProvider
 
-export default class SecurosysSigningDriver implements SigningDriverInterface {
+export default class SecurosysSigningDriver implements SigningDriverInterface<'sub'> {
     private client: SigningAPIClient
 
     constructor(config: SecurosysConfig) {
@@ -56,8 +65,9 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
 
     public partyMode = PartyMode.EXTERNAL
     public signingProvider = SECUROSYS_SIGNING_PROVIDER
+    public requiredClaims = ['sub'] as const
 
-    public controller = (userId: AuthContext['userId'] | undefined) =>
+    public controller = ({ sub }: ClaimsFor<'sub'>) =>
         buildController({
             signTransaction: async (
                 params: SignTransactionParams
@@ -79,7 +89,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         keyIdentifier,
                         extraParams: {
                             ...params.extraParams,
-                            userIdentifier: userId,
+                            userIdentifier: sub,
                         },
                     })
 
@@ -95,11 +105,14 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...(tx.metadata !== undefined && {
                             metadata: tx.metadata,
                         }),
+                        ...(tx.failureReason !== undefined && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
                         error: 'signing_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -130,7 +143,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...params,
                         extraParams: {
                             ...params.extraParams,
-                            userIdentifier: userId,
+                            userIdentifier: sub,
                         },
                     })
 
@@ -144,7 +157,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 } catch (error) {
                     return {
                         error: 'signing_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -168,11 +181,14 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                         ...(tx.metadata !== undefined && {
                             metadata: tx.metadata,
                         }),
+                        ...(tx.failureReason !== undefined && {
+                            failureReason: tx.failureReason,
+                        }),
                     }
                 } catch (error) {
                     return {
                         error: 'transaction_not_found',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -200,12 +216,15 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                                 ...(tx.metadata !== undefined && {
                                     metadata: tx.metadata,
                                 }),
+                                ...(tx.failureReason !== undefined && {
+                                    failureReason: tx.failureReason,
+                                }),
                             })),
                         }
                     } catch (error) {
                         return {
                             error: 'fetch_error',
-                            error_description: (error as Error).message,
+                            error_description: errorDescription(error),
                         }
                     }
                 }
@@ -225,13 +244,13 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                             id: key.id,
                             name: key.name,
                             publicKey: key.publicKey,
-                            userIdentifier: userId,
+                            userIdentifier: sub,
                         })),
                     }
                 } catch (error) {
                     return {
                         error: 'fetch_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -242,7 +261,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 try {
                     const key = await this.client.createKey({
                         ...params,
-                        userIdentifier: userId,
+                        userIdentifier: sub,
                     })
                     return {
                         id: key.id,
@@ -252,7 +271,7 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
                 } catch (error) {
                     return {
                         error: 'create_key_error',
-                        error_description: (error as Error).message,
+                        error_description: errorDescription(error),
                     }
                 }
             },
@@ -286,6 +305,15 @@ export default class SecurosysSigningDriver implements SigningDriverInterface {
             ): Promise<SubscribeTransactionsResult> =>
                 Promise.resolve({} as SubscribeTransactionsResult),
         })
+}
+
+// The message of a failed TSB call carries the raw response body, which only
+// goes to the log
+function errorDescription(error: unknown): string {
+    logger.error('Securosys request failed', { error })
+    return error instanceof TsbApiError
+        ? error.userMessage
+        : (error as Error).message
 }
 
 /**

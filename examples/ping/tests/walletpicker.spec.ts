@@ -7,6 +7,7 @@ import {
     openWalletPicker,
 } from '@canton-network/core-wallet-test-utils'
 import type { Page } from '@playwright/test'
+
 import {
     connectPingDapp,
     createPingDappWalletGateway,
@@ -16,7 +17,7 @@ import {
     expectDappConnected,
     expectDappDisconnected,
     GATEWAY_NAME,
-} from './ping-test-helpers.js'
+} from './ping-test-helpers.ts'
 
 test('wallet picker: handling error cases', async ({
     page: dappPage,

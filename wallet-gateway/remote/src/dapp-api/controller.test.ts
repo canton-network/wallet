@@ -1,6 +1,19 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { SigningProvider } from '@canton-network/core-signing-lib'
+import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
+import { NotificationService } from '@canton-network/core-wallet-services'
+import {
+    type Network as StoreNetwork,
+    PartyLevelRight,
+    type NewSession,
+    type Wallet,
+} from '@canton-network/core-wallet-store'
+import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
+import { getLogger } from '@logtape/logtape'
+import { pino, type Logger } from 'pino'
+import { sink } from 'pino-test'
 import {
     afterEach,
     beforeEach,
@@ -10,21 +23,9 @@ import {
     vi,
     type MockInstance,
 } from 'vitest'
-import { pino, type Logger } from 'pino'
-import { sink } from 'pino-test'
-import type { AuthContext, Idp } from '@canton-network/core-wallet-auth'
-import {
-    type Network as StoreNetwork,
-    PartyLevelRight,
-    type Session,
-    type Wallet,
-} from '@canton-network/core-wallet-store'
-import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
-import { SigningProvider } from '@canton-network/core-signing-lib'
-import type { KernelInfo } from '../config/Config.js'
-import { NotificationService } from '@canton-network/core-wallet-services'
-import { dappController, type DappControllerDeps } from './controller.js'
-import { getLogger } from '@logtape/logtape'
+
+import type { KernelInfo } from '../config/Config.ts'
+import { dappController, type DappControllerDeps } from './controller.ts'
 
 const ledgerMocks = vi.hoisted(() => ({
     getWithRetry: vi.fn(),
@@ -124,7 +125,7 @@ const auth: AuthContext = {
     accessToken: 'access-token-1',
 }
 
-const session: Session = {
+const session: NewSession = {
     id: 'session-1',
     origin: 'dapp-1',
     network: 'network1',
@@ -172,18 +173,18 @@ function createController(
     requestOrigin: string | null = origin,
     deps?: DappControllerDeps
 ) {
-    return dappController(
+    return dappController({
         kernelInfo,
         dappUrl,
         userUrl,
         store,
         notificationService,
         logger,
-        requestOrigin,
-        deps || { signingDrivers: {} },
-        'HASHING_SCHEME_VERSION_V3',
-        context
-    )
+        origin: requestOrigin,
+        deps: deps || { signingDrivers: {} },
+        hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+        context,
+    })
 }
 
 describe('dappController', () => {
@@ -192,7 +193,7 @@ describe('dappController', () => {
 
     beforeEach(() => {
         logger = pino({ level: 'silent' }, sink())
-        notificationService = new NotificationService(logger)
+        notificationService = new NotificationService()
         ledgerMocks.getWithRetry.mockReset()
         ledgerMocks.postWithRetry.mockReset()
         ledgerMocks.getSynchronizerId.mockReset()

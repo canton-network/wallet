@@ -602,6 +602,29 @@
                 },
                 "required": ["status", "commandId", "payload"]
             },
+            "FailureError": {
+                "title": "FailureError",
+                "type": "object",
+                "description": "Why it failed, as a JSON-RPC error object with one of the error codes adopted by CIP-103, e.g. 4001 when the user rejected it or -32003 when the signing provider or the ledger rejected it. The message is human readable and meant for display, not for parsing.",
+                "additionalProperties": false,
+                "properties": {
+                    "code": {
+                        "title": "errorCode",
+                        "type": "integer",
+                        "description": "One of the EIP-1193 or EIP-1474 error codes adopted by CIP-103."
+                    },
+                    "message": {
+                        "title": "errorMessage",
+                        "type": "string",
+                        "description": "Human readable description of the failure."
+                    },
+                    "data": {
+                        "title": "errorData",
+                        "description": "Optional additional information about the failure, as for JSON-RPC errors."
+                    }
+                },
+                "required": ["code", "message"]
+            },
             "TxChangedFailedEvent": {
                 "title": "TxChangedFailedEvent",
                 "description": "Event emitted when a transaction has failed.",
@@ -616,6 +639,9 @@
                     },
                     "commandId": {
                         "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/CommandId"
+                    },
+                    "error": {
+                        "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/FailureError"
                     }
                 },
                 "required": ["status", "commandId"]
@@ -693,6 +719,9 @@
                     },
                     "messageId": {
                         "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/MessageId"
+                    },
+                    "error": {
+                        "$ref": "api-specs/openrpc-dapp-api.json#/components/schemas/FailureError"
                     }
                 },
                 "required": ["status", "messageId"]

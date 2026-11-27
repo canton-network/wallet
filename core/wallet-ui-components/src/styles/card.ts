@@ -25,6 +25,16 @@ export const cardStyles = css`
         box-shadow: var(--wg-shadow-md);
     }
 
+    .wg-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: var(--wg-radius-full);
+        padding: 0.15rem 0.55rem;
+        font-size: var(--wg-font-size-xs);
+        font-weight: var(--wg-font-weight-semibold);
+        letter-spacing: 0.04em;
+    }
+
     .network-card {
         background: var(--wg-surface);
         border: none;

@@ -7,18 +7,19 @@
 //
 import type { RpcTransport } from '@protobuf-ts/runtime-rpc'
 import type { ServiceInfo } from '@protobuf-ts/runtime-rpc'
-import { PackageManagementService } from './package_management_service.js'
-import type { UpdateVettedPackagesResponse } from './package_management_service.js'
-import type { UpdateVettedPackagesRequest } from './package_management_service.js'
-import type { ValidateDarFileResponse } from './package_management_service.js'
-import type { ValidateDarFileRequest } from './package_management_service.js'
-import type { UploadDarFileResponse } from './package_management_service.js'
-import type { UploadDarFileRequest } from './package_management_service.js'
 import { stackIntercept } from '@protobuf-ts/runtime-rpc'
-import type { ListKnownPackagesResponse } from './package_management_service.js'
-import type { ListKnownPackagesRequest } from './package_management_service.js'
 import type { UnaryCall } from '@protobuf-ts/runtime-rpc'
 import type { RpcOptions } from '@protobuf-ts/runtime-rpc'
+
+import { PackageManagementService } from './package_management_service.ts'
+import type { UpdateVettedPackagesResponse } from './package_management_service.ts'
+import type { UpdateVettedPackagesRequest } from './package_management_service.ts'
+import type { ValidateDarFileResponse } from './package_management_service.ts'
+import type { ValidateDarFileRequest } from './package_management_service.ts'
+import type { UploadDarFileResponse } from './package_management_service.ts'
+import type { UploadDarFileRequest } from './package_management_service.ts'
+import type { ListKnownPackagesResponse } from './package_management_service.ts'
+import type { ListKnownPackagesRequest } from './package_management_service.ts'
 /**
  * Status: experimental interface, will change before it is deemed production
  * ready

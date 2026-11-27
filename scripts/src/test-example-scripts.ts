@@ -1,16 +1,17 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import child_process from 'child_process'
 import fs from 'fs'
 import path from 'path'
+
 import {
     error,
     getRepoRoot,
     success,
     SUPPORTED_VERSIONS,
     getNetworkArg,
-} from './lib/utils.js'
-import child_process from 'child_process'
+} from './lib/utils.ts'
 
 const maxIoListeners = Number.parseInt(process.env.MAX_IO_LISTENERS ?? '', 10)
 if (Number.isFinite(maxIoListeners) && maxIoListeners > 0) {
@@ -34,20 +35,10 @@ console.log(
 )
 
 // do not run tests from these directory names; full name match
-const EXCEPTIONS_DIR_NAMES = [
-    'stress',
-    '13-rewards-for-deposits',
-    ...(network === 'mainnet' ? ['18-two-step-transfer-v2'] : []),
-]
+const EXCEPTIONS_DIR_NAMES = ['stress', '13-rewards-for-deposits']
 
 // do not run these tests; exceptions can be full filename or just any length subset of its starting characters
-const EXCEPTIONS_FILE_NAMES = [
-    '_',
-    'utils',
-    'types.ts',
-    'upload-dars.ts',
-    '19-token-standard-allocation-v2.ts',
-]
+const EXCEPTIONS_FILE_NAMES = ['_', 'utils', 'types.ts', 'upload-dars.ts']
 
 function getScriptsRecursive(currentDir: string): string[] {
     return fs.readdirSync(currentDir).flatMap((f) => {

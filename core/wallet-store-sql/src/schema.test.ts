@@ -1,7 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { describe, expect, test } from 'vitest'
+import type { Idp } from '@canton-network/core-wallet-auth'
 import {
     PartyLevelRight,
     UserLevelRight,
@@ -10,7 +10,8 @@ import {
     type Transaction,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import type { Idp } from '@canton-network/core-wallet-auth'
+import { describe, expect, test } from 'vitest'
+
 import {
     fromIdp,
     fromMessageRaw,
@@ -26,7 +27,7 @@ import {
     toWallet,
     toWalletStatus,
     toWalletUpdateProperties,
-} from './schema.js'
+} from './schema.ts'
 
 const oauthIdp: Idp = {
     id: 'idp-oauth',
@@ -104,11 +105,11 @@ describe('schema mappers', () => {
             expect(toNetwork(table)).toEqual(baseNetwork)
         })
 
-        test('omits adminAuth when not set on the domain model', () => {
+        test('stores null adminAuth when not set on the domain model', () => {
             // oxlint-disable-next-line no-unused-vars
             const { adminAuth, ...withoutAdmin } = baseNetwork
             const table = fromNetwork(withoutAdmin)
-            expect(table.adminAuth).toBeUndefined()
+            expect(table.adminAuth).toBeNull()
             expect(toNetwork(table).adminAuth).toBeUndefined()
         })
     })

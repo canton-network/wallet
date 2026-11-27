@@ -14,8 +14,9 @@ import { UnknownFieldHandler } from '@protobuf-ts/runtime'
 import type { PartialMessage } from '@protobuf-ts/runtime'
 import { reflectionMergePartial } from '@protobuf-ts/runtime'
 import { MessageType } from '@protobuf-ts/runtime'
-import { TrafficControlParameters } from './traffic_control_parameters.js'
-import { Duration } from '../../../../../google/protobuf/duration.js'
+
+import { Duration } from '../../../../../google/protobuf/duration.ts'
+import { TrafficControlParameters } from './traffic_control_parameters.ts'
 /**
  * catch-up configuration parameters
  *
@@ -70,8 +71,15 @@ export interface DynamicSynchronizerParameters {
      * @generated from protobuf field: google.protobuf.Duration mediator_deduplication_timeout = 7
      */
     mediatorDeduplicationTimeout?: Duration
+    // Note: limits obtained from the topology transactions are active
+    // on Netty only after a node restart, since it is not possible
+    // to change the configured maxRequestSize on a running instance
+    // of Netty. However, the application-layer size checks
+    // (in GrpcSequencerService) are immediately active after an update.
+
     /**
-     * when updated, the new value is effective only after a restart
+     * Thus, in combination, decreased limits are immediately
+     * enforced, but increased limits require a node restart to update.
      *
      * @generated from protobuf field: uint32 max_request_size = 8
      */

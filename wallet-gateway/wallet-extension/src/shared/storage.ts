@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { storage } from 'wxt/utils/storage'
-import type { VaultStatus } from './vault-protocol'
+
+import type { VaultStatus } from './vault-protocol.ts'
 
 /** A transaction a dApp prepared that waits for the user's approval. */
 export interface ApprovalRequest {

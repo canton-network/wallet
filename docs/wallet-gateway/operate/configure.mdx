@@ -34,7 +34,9 @@ The configuration file has these top-level sections:
 | `kernel` | yes | Identity of this Wallet Gateway instance, served to dApps. |
 | `server` | yes | Network binding, ports, API paths, and the admin user. |
 | `store` | yes | Database connection for sessions, wallets, networks, IDPs, and transactions. |
-| `bootstrap` | yes | Networks and identity providers seeded on first run. |
+| `idps` | no | Identity providers managed by the configuration file. |
+| `networks` | no | Networks managed by the configuration file. |
+| `bootstrap` | no | Deprecated, use `idps` and `networks` instead. |
 | `signingStore` | no | Secondary database for keys when using internal signing. |
 | `signingProviders` | no       | signing providers configuration.                                             |
 | `hashingScheme`    | no       | Ledger hashing scheme version used to compute transaction hashes.            |
@@ -60,14 +62,12 @@ A minimal configuration for a local setup looks like this:
             "database": "store.sqlite"
         }
     },
-    "bootstrap": {
-        "idps": [],
-        "networks": []
-    }
+    "idps": [],
+    "networks": []
 }
 ```
 
-Fill in `bootstrap.idps` and `bootstrap.networks` following
+Fill in `idps` and `networks` following
 [Networks & identity providers](networks-and-identity.mdx).
 
 ## Kernel
@@ -106,7 +106,7 @@ The `server` section configures binding, ports, and API paths.
 - `admin` (optional): the user ID granted admin privileges: the value of the JWT `sub` claim,
   or of `daml.com.usr` for self-issued tokens. Admins can manage networks and identity
   providers at runtime and see the [Administration page](#administration-page). If omitted,
-  network and IDP management is restricted to the bootstrap configuration.
+  network and IDP management is restricted to the configuration file.
 
 ```json
 {
