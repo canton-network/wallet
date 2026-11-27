@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { ParentWindowOriginManager } from '@canton-network/core-origin-manager'
 import { HttpTransport } from '@canton-network/core-rpc-transport'
 import { AbstractProvider } from '@canton-network/core-splice-provider'
 import {
@@ -41,6 +42,7 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
     private readonly sseForwarder = (event: string, args: unknown[]) => {
         this.emit(event, ...args)
     }
+    private readonly parentOrigin = new ParentWindowOriginManager()
 
     private createClient(
         sessionToken?: string
@@ -130,7 +132,9 @@ export class DappAsyncProvider extends AbstractProvider<DappAsyncRpcTypes> {
             if (!isSpliceMessageEvent(event)) return
 
             if (
-                event.data.type === WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS
+                event.data.type ===
+                    WalletEvent.SPLICE_WALLET_IDP_AUTH_SUCCESS &&
+                this.parentOrigin.assert(event.origin)
             ) {
                 this.sessionToken = event.data.token
                 this.client = this.createClient(this.sessionToken)
