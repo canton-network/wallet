@@ -327,6 +327,44 @@ describe('LoginUI', () => {
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
 
+    it('requests a self-signed token with the scopes from the URL query', async () => {
+        const originalUrl = window.location.href
+        window.history.replaceState(
+            null,
+            '',
+            '?scopes=ledger%3Aread&scopes=l%3Apkg%3A%23pkg-one'
+        )
+        try {
+            const scopedEl = await fixture<LoginUI>(componentFixture)
+            await waitUntil(() => scopedEl.networks.length === 1)
+
+            dispatchConnect(
+                scopedEl,
+                selfSignedNetwork,
+                selfSignedIdp,
+                'client-id',
+                'network-secret'
+            )
+
+            await waitUntil(
+                () => mockRedirectToIntendedOrDefault.mock.calls.length > 0
+            )
+            expect(mockRequest).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    method: 'selfSignedAccessToken',
+                    params: {
+                        networkId: 'net-1',
+                        clientId: 'client-id',
+                        clientSecret: 'network-secret',
+                        scopes: ['ledger:read', 'l:pkg:#pkg-one'],
+                    },
+                })
+            )
+        } finally {
+            window.history.replaceState(null, '', originalUrl)
+        }
+    })
+
     it('shows loading state while connecting', async () => {
         await waitUntil(() => el.networks.length === 1)
 

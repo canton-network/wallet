@@ -1242,6 +1242,74 @@ describe('userController', () => {
             )
             expect(header.kid).toBe('network-self-signed')
             expect(payload.sub).toBe('test-user')
+            expect(payload.scope).toBe('scope')
+        })
+
+        it('adds the requested scopes to the network scope', async () => {
+            const store = new StoreInternal(
+                {
+                    idps: [selfSignedIdp],
+                    networks: [
+                        {
+                            ...selfSignedNetwork,
+                            auth: {
+                                ...selfSignedNetwork.auth,
+                                scope: 'daml_ledger_api openid',
+                            },
+                        },
+                    ],
+                },
+                getLogger('mock')
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            const result = await controller.selfSignedAccessToken({
+                networkId: 'network-self-signed',
+                clientId: 'test-user',
+                clientSecret: 'network-secret',
+                scopes: [' ledger:read ', 'openid', '', '  ', 'l:pkg:#pkg-one'],
+            })
+
+            const payload = JSON.parse(
+                Buffer.from(
+                    result.accessToken.split('.')[1]!,
+                    'base64url'
+                ).toString()
+            )
+            expect(payload.scope).toBe(
+                'daml_ledger_api openid ledger:read l:pkg:#pkg-one'
+            )
+        })
+
+        it('rejects a requested scope containing whitespace', async () => {
+            const store = new StoreInternal(
+                { idps: [selfSignedIdp], networks: [selfSignedNetwork] },
+                getLogger('mock')
+            )
+            const controller = createController(
+                store,
+                notificationService,
+                logger,
+                undefined
+            )
+
+            await expect(
+                controller.selfSignedAccessToken({
+                    networkId: 'network-self-signed',
+                    clientId: 'test-user',
+                    clientSecret: 'network-secret',
+                    scopes: ['ledger:read daml_admin'],
+                })
+            ).rejects.toMatchObject({
+                code: errorCodes.rpc.invalidParams,
+                message:
+                    'Scope "ledger:read daml_admin" must not contain whitespace',
+            })
         })
 
         it('rejects when the client secret does not match', async () => {

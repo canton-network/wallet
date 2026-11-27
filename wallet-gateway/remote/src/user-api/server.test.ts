@@ -169,6 +169,46 @@ test('selfSignedAccessToken token is accepted by jwt auth', async () => {
     expect(context?.accessToken).toBe(accessToken)
 })
 
+test('selfSignedAccessToken rpc rejects scopes containing whitespace', async () => {
+    const app = express()
+    app.use(cors())
+    app.use(express.json())
+
+    const { publicUrl } = deriveUrls(config)
+    const response = await request(
+        user({
+            route: '/api/v0/user',
+            app,
+            logger: pino(sink()),
+            kernelInfo: config.kernel,
+            userUrl: publicUrl,
+            notificationService,
+            drivers: {},
+            store,
+            hashingSchemeVersion: 'HASHING_SCHEME_VERSION_V3',
+            adminUserId: undefined,
+            serverStatus,
+            configManaged,
+        })
+    )
+        .post('/api/v0/user')
+        .send({
+            jsonrpc: '2.0',
+            id: 4,
+            method: 'selfSignedAccessToken',
+            params: {
+                networkId: 'canton:local-self-signed',
+                clientId: 'test-user',
+                clientSecret: 'unsafe',
+                scopes: ['ledger:read daml_admin'],
+            },
+        })
+        .set('Accept', 'application/json')
+
+    expect(response.body.result).toBeUndefined()
+    expect(response.body.error.code).toBe(-32602)
+})
+
 test('selfSignedAccessToken rpc rejects a mismatched client secret', async () => {
     const app = express()
     app.use(cors())
