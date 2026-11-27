@@ -5,10 +5,7 @@ import { LedgerClient } from '@canton-network/core-ledger-client'
 import { errorCodes, providerErrors } from '@canton-network/core-rpc-errors'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type { JsonRpcRequest } from '@canton-network/core-types'
-import {
-    NotificationService,
-    subscribeNotifications,
-} from '@canton-network/core-wallet-services'
+import { NotificationService } from '@canton-network/core-wallet-services'
 import {
     PartyLevelRight,
     type Store,
@@ -116,7 +113,6 @@ describe('createDappDispatcher', () => {
         sites = fakeApprovedSites()
         deps = {
             getStore: async () => walletStore,
-            notificationService: service,
             sites,
             siteApprovals: { request: vi.fn() },
             unlockRequests: { request: vi.fn(async () => {}) },
@@ -598,12 +594,6 @@ describe('createDappDispatcher', () => {
                     preparedTransaction: 'prepared-tx',
                     preparedTransactionHash: 'prepared-hash',
                 })
-            const sink = { send: vi.fn(), close: vi.fn() }
-            subscribeNotifications(
-                service,
-                { sessionId, userId: authContext.userId },
-                sink
-            )
 
             const response = await dispatcher.request(
                 request('prepareExecute', {
@@ -634,8 +624,12 @@ describe('createDappDispatcher', () => {
                 preparedTransaction: 'prepared-tx',
                 origin,
             })
-            expect(sink.send).toHaveBeenCalledWith('txChanged', [
-                { status: 'pending', commandId: 'command-1' },
+            expect(deps.sitePorts.send.mock.calls).toEqual([
+                [
+                    origin,
+                    'txChanged',
+                    [{ status: 'pending', commandId: 'command-1' }],
+                ],
             ])
         })
 

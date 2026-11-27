@@ -17,7 +17,6 @@ import {
     jwtExpired,
 } from '@canton-network/core-wallet-auth'
 import {
-    type INotificationService,
     ledgerPrepareParams,
     networkStatus,
 } from '@canton-network/core-wallet-services'
@@ -55,7 +54,6 @@ import type {
 export interface DappControllerDeps {
     /** The wallet store, not yet scoped to a user. */
     getStore: () => Promise<WalletStore>
-    notificationService: INotificationService
     sites: ApprovedSiteStore
     siteApprovals: Pick<SiteApprovals, 'request'>
     unlockRequests: Pick<UnlockRequests, 'request'>
@@ -90,7 +88,6 @@ function ledgerClientFor(network: StoreNetwork, accessToken: string) {
 export const dappController = (
     {
         getStore,
-        notificationService,
         sites,
         siteApprovals,
         unlockRequests,
@@ -354,10 +351,12 @@ export const dappController = (
 
             await store.setTransaction(transaction)
 
-            notificationService.getNotifier(session.id).emit('txChanged', {
-                status: 'pending',
-                commandId,
-            } satisfies TxChangedPendingEvent)
+            sitePorts.send(origin, 'txChanged', [
+                {
+                    status: 'pending',
+                    commandId,
+                } satisfies TxChangedPendingEvent,
+            ])
 
             await enqueueApprovalRequest({ transactionId, commandId })
 

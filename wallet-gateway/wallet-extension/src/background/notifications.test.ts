@@ -17,6 +17,7 @@ import {
     currentSessionSubscriber,
     handleNotificationPort,
     PortNotificationSink,
+    siteNotifier,
     type SitePorts,
 } from './notifications.ts'
 import { disconnectedStatusEvent } from './status.ts'
@@ -155,7 +156,7 @@ describe('handleNotificationPort', () => {
         await subscribe(otherPort)
 
         sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
-        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+        service.getNotifier('session-1').emit('statusChanged', { status: 'x' })
 
         expect(port.postMessage.mock.calls).toEqual([
             [
@@ -167,7 +168,7 @@ describe('handleNotificationPort', () => {
         ])
         expect(port.disconnect).toHaveBeenCalledTimes(1)
         expect(otherPort.postMessage).toHaveBeenCalledWith({
-            method: 'txChanged',
+            method: 'statusChanged',
             params: { status: 'x' },
         })
         expect(otherPort.disconnect).not.toHaveBeenCalled()
@@ -252,11 +253,11 @@ describe('handleNotificationPort', () => {
         await subscribe(port)
 
         auth.signIn({ ...userA, accessToken: 'token-a2' })
-        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+        service.getNotifier('session-1').emit('statusChanged', { status: 'x' })
 
         expect(port.disconnect).not.toHaveBeenCalled()
         expect(port.postMessage.mock.calls).toEqual([
-            [{ method: 'txChanged', params: { status: 'x' } }],
+            [{ method: 'statusChanged', params: { status: 'x' } }],
         ])
     })
 
@@ -356,15 +357,30 @@ describe('handleNotificationPort', () => {
 
         service
             .getNotifier('session-1')
-            .emit('txChanged', { status: 'pending' })
+            .emit('statusChanged', { status: 'pending' })
         service.getNotifier('user-1').emit('accountsChanged', [])
-        service.getNotifier('session-2').emit('txChanged', { other: true })
+        service.getNotifier('session-2').emit('statusChanged', { other: true })
 
         expect(port.postMessage.mock.calls).toEqual([
-            [{ method: 'txChanged', params: { status: 'pending' } }],
+            [{ method: 'statusChanged', params: { status: 'pending' } }],
             [{ method: 'accountsChanged', params: [] }],
         ])
         expect(port.disconnect).not.toHaveBeenCalled()
+    })
+
+    it("sends a site's transaction events to that site only", async () => {
+        const otherPort = fakePort('https://other.example')
+        await subscribe(port)
+        await subscribe(otherPort)
+
+        // Both sites share the session, so it must not carry them.
+        service.getNotifier('session-1').emit('txChanged', { status: 'x' })
+        siteNotifier(sitePorts, origin).emit('txChanged', { status: 'pending' })
+
+        expect(port.postMessage.mock.calls).toEqual([
+            [{ method: 'txChanged', params: { status: 'pending' } }],
+        ])
+        expect(otherPort.postMessage).not.toHaveBeenCalled()
     })
 
     it('disconnects the port when there is no authenticated session', async () => {

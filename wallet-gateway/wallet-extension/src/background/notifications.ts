@@ -4,6 +4,7 @@
 import {
     type DappNotificationEvent,
     type INotificationService,
+    type Notifier,
     type NotificationSink,
     type NotificationSubscriber,
     subscribeNotifications,
@@ -55,6 +56,38 @@ export class PortNotificationSink implements NotificationSink {
 
     close(): void {
         this.port.disconnect()
+    }
+}
+
+/**
+ * Events about one site's requests, such as its transactions. Every site
+ * shares the user's session, so these go through `SitePorts.send` to the
+ * site that made the request, never through the session.
+ */
+const SITE_EVENTS: ReadonlySet<string> = new Set<DappNotificationEvent>([
+    'txChanged',
+    'messageSignature',
+])
+
+/**
+ * A notifier that sends to `origin`'s ports only, for code that takes a
+ * `Notifier`, such as `TransactionService`. Without an origin, e.g. a
+ * transaction the wallet made itself, it sends nothing.
+ */
+export function siteNotifier(
+    sitePorts: Pick<SitePorts, 'send'>,
+    origin: string | null | undefined
+): Notifier {
+    return {
+        emit(event, ...args) {
+            if (!origin) return false
+            sitePorts.send(origin, event as DappNotificationEvent, args)
+            return true
+        },
+        on() {
+            throw new Error('A site notifier only sends')
+        },
+        removeListener() {},
     }
 }
 
@@ -291,7 +324,12 @@ export async function handleNotificationPort(
     const unsubscribe = subscribeNotifications(
         notificationService,
         subscriber,
-        sink
+        {
+            send: (event, args) => {
+                if (!SITE_EVENTS.has(event)) sink.send(event, args)
+            },
+            close: () => sink.close(),
+        }
     )
     untrack = sitePorts.add(origin, {
         principal: subscriber.principal,

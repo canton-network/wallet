@@ -12,6 +12,7 @@ import type {
 import type { Store } from '@canton-network/core-wallet-store'
 
 import type { AuthContextStore } from '../../auth-context.ts'
+import type { SitePorts } from '../../notifications.ts'
 
 /** What every area module of the user controller gets. */
 export interface UserControllerDeps {
@@ -22,6 +23,8 @@ export interface UserControllerDeps {
     /** The wallet-kernel (internal) signing driver. */
     signingDriver: SigningDriverInterface
     notificationService: INotificationService
+    /** Where a transaction's events go: the site that asked for it. */
+    sitePorts: Pick<SitePorts, 'send'>
 }
 
 // TODO(#2498/#2406): use the HD-wallet driver.

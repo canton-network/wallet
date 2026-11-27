@@ -84,6 +84,7 @@ describe('createAuthService', () => {
             authContext,
             signingDriver: {} as SigningDriverInterface,
             notificationService: new NotificationService(),
+            sitePorts: { send: vi.fn() },
         })
     }
 

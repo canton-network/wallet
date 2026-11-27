@@ -61,7 +61,14 @@ export function startBackground({
         loadAuthedStore(await walletStore.get(), authContext)
     // TODO(#2498/#2406): use the HD-wallet driver.
     const signingDriver = new InternalSigningDriver(createSigningStore(vault))
-    const deps = { getStore, authContext, signingDriver, notificationService }
+    const sitePorts = createSitePorts(vault, authContext)
+    const deps = {
+        getStore,
+        authContext,
+        signingDriver,
+        notificationService,
+        sitePorts,
+    }
     const sites = createApprovedSiteStore(vault)
     const isCurrent = currentSessionCheck(getStore, authContext)
     const presence = createPagePresence()
@@ -75,7 +82,6 @@ export function startBackground({
         sites,
     })
     const unlockRequests = createUnlockRequests({ vault, presence, tabIcons })
-    const sitePorts = createSitePorts(vault, authContext)
 
     registerVaultService(vault)
     registerAuthService({ ...deps, vault })
@@ -84,7 +90,6 @@ export function startBackground({
         createDappDispatcher(
             {
                 getStore: () => walletStore.get(),
-                notificationService,
                 sites,
                 siteApprovals,
                 unlockRequests,
