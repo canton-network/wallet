@@ -20,6 +20,9 @@ import {
     type PrettyTransactions,
     type Transaction,
     type TransferObject,
+    ALL_TOKEN_STANDARD_VERSIONS,
+    getTokenStandardInterfaces,
+    type TokenStandardVersion,
 } from '@canton-network/core-tx-parser'
 import type { PartyId } from '@canton-network/core-types'
 import type { AccessTokenProvider } from '@canton-network/core-wallet-auth'
@@ -330,12 +333,16 @@ export class TokenStandardService {
 
     async getTransactionById(
         updateId: string,
-        partyId: PartyId
+        partyId: PartyId,
+        options: { tokenStandardVersions?: TokenStandardVersion[] } = {}
     ): Promise<Transaction> {
+        const versions =
+            options.tokenStandardVersions ?? ALL_TOKEN_STANDARD_VERSIONS
+
         const updateFormat: UpdateFormat = {
             includeTransactions: {
                 eventFormat: EventFilterBySetup({
-                    interfaceIds: TokenStandardTransactionInterfaces,
+                    interfaceIds: getTokenStandardInterfaces(versions),
                     isMasterUser: this.isMasterUser,
                     partyId: partyId,
                     includeWildcard: true,
