@@ -3,7 +3,7 @@
 
 import { PageHeader } from '@canton-network/core-wallet-ui-components/react'
 import {
-    canWithdraw,
+    canAct,
     useExerciseTransfer,
     useOutgoingTransfers,
     useTokenContext,
@@ -122,7 +122,7 @@ function Transfers({ partyId }: { partyId: string }) {
                 <TransferCard
                     key={transfer.contractId}
                     transfer={transfer}
-                    canWithdraw={canWithdraw(partyId, transfer)}
+                    canWithdraw={canAct(partyId, transfer, 'Withdraw')}
                     onWithdraw={() => setWithdrawing(transfer)}
                 />
             ))}

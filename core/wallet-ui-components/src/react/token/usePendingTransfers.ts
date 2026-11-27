@@ -6,18 +6,19 @@ import { useMemo } from 'react'
 
 import type { TokenStandardVersion } from './client.ts'
 import {
-    type OutgoingTransfer,
-    outgoingTransfers,
-} from './outgoing-transfers.ts'
+    type PendingTransfer,
+    pendingTransfers,
+    type TransferDirection,
+} from './pending-transfers.ts'
 import {
     pendingTransfersQueryOptions,
     pendingTransfersV2QueryOptions,
 } from './query-options.ts'
 import { useTokenContext } from './useTokenContext.ts'
 
-export interface OutgoingTransfersResult {
+export interface PendingTransfersResult {
     /** The transfers of the versions that loaded. */
-    transfers: OutgoingTransfer[]
+    transfers: PendingTransfer[]
     isLoading: boolean
     /** Both versions failed. */
     isError: boolean
@@ -26,9 +27,13 @@ export interface OutgoingTransfersResult {
     refetch: () => void
 }
 
-export function useOutgoingTransfers(
-    partyId: string | undefined
-): OutgoingTransfersResult {
+export type OutgoingTransfersResult = PendingTransfersResult
+export type IncomingTransfersResult = PendingTransfersResult
+
+function usePendingTransfers(
+    partyId: string | undefined,
+    direction: TransferDirection
+): PendingTransfersResult {
     const { client } = useTokenContext()
     const v1 = useQuery(pendingTransfersQueryOptions({ client, partyId }))
     const v2 = useQuery(pendingTransfersV2QueryOptions({ client, partyId }))
@@ -36,9 +41,14 @@ export function useOutgoingTransfers(
     const transfers = useMemo(
         () =>
             partyId
-                ? outgoingTransfers(partyId, v1.data ?? [], v2.data ?? [])
+                ? pendingTransfers(
+                      partyId,
+                      direction,
+                      v1.data ?? [],
+                      v2.data ?? []
+                  )
                 : [],
-        [partyId, v1.data, v2.data]
+        [partyId, direction, v1.data, v2.data]
     )
 
     const failures = [
@@ -57,3 +67,11 @@ export function useOutgoingTransfers(
         },
     }
 }
+
+export const useOutgoingTransfers = (
+    partyId: string | undefined
+): OutgoingTransfersResult => usePendingTransfers(partyId, 'outgoing')
+
+export const useIncomingTransfers = (
+    partyId: string | undefined
+): IncomingTransfersResult => usePendingTransfers(partyId, 'incoming')

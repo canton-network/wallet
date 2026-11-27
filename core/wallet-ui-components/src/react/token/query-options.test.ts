@@ -18,7 +18,12 @@ function clientWith({
     return {
         token: {
             instruments: vi.fn(),
-            transfer: { create: vi.fn(), withdraw: vi.fn() },
+            transfer: {
+                create: vi.fn(),
+                withdraw: vi.fn(),
+                accept: vi.fn(),
+                reject: vi.fn(),
+            },
             v1: {
                 utxos: { list: vi.fn().mockResolvedValue(v1) },
                 transfer: { pending: vi.fn() },

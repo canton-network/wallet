@@ -55,9 +55,8 @@ export interface TokenClient {
             // and submits it apart.
             create?(params: CreateTransferParams): Promise<void>
             withdraw(params: TransferChoiceParams): Promise<void>
-            // Optional until the extension supports incoming transfers.
-            accept?(params: TransferChoiceParams): Promise<void>
-            reject?(params: TransferChoiceParams): Promise<void>
+            accept(params: TransferChoiceParams): Promise<void>
+            reject(params: TransferChoiceParams): Promise<void>
         }
         v1: {
             utxos: {

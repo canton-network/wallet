@@ -39,15 +39,10 @@ export async function exerciseTransfer(
         case 'Withdraw':
             return transfer.withdraw(params)
         case 'Accept':
-            if (transfer.accept) return transfer.accept(params)
-            break
+            return transfer.accept(params)
         case 'Reject':
-            if (transfer.reject) return transfer.reject(params)
-            break
+            return transfer.reject(params)
     }
-    throw new Error(
-        `Unsupported instruction choice: ${String(args.instructionChoice)}`
-    )
 }
 
 export const useExerciseTransfer = () => {
@@ -61,11 +56,12 @@ export const useExerciseTransfer = () => {
             }
             await exerciseTransfer(client, args)
         },
-        onSuccess: (_, args) => {
+        onSuccess: () => {
             // Refetch in the background so broad holdings refreshes do not
-            // keep the completed transfer mutation pending.
+            // keep the completed transfer mutation pending. The counterparty
+            // may be another of the user's parties, so refresh them all.
             void queryClient.invalidateQueries({
-                queryKey: tokenQueryKeys.pendingTransfers.forParty(args.party),
+                queryKey: tokenQueryKeys.pendingTransfers.all,
             })
             void queryClient.invalidateQueries({
                 queryKey: tokenQueryKeys.holdings.all,

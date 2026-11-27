@@ -55,10 +55,15 @@ export {
 } from './transfer-version.ts'
 export { transferAmountError } from './transfer-amount.ts'
 export {
-    canWithdraw,
+    canAct,
+    incomingTransfers,
     outgoingTransfers,
+    pendingTransfers,
+    type IncomingTransfer,
     type OutgoingTransfer,
-} from './outgoing-transfers.ts'
+    type PendingTransfer,
+    type TransferDirection,
+} from './pending-transfers.ts'
 export {
     getTransferActions,
     type TransferAction,
@@ -66,9 +71,12 @@ export {
     type TransferActionItem,
 } from './transfer-actions.ts'
 export {
+    useIncomingTransfers,
     useOutgoingTransfers,
+    type IncomingTransfersResult,
     type OutgoingTransfersResult,
-} from './useOutgoingTransfers.ts'
+    type PendingTransfersResult,
+} from './usePendingTransfers.ts'
 export {
     useCreateTransfer,
     type CreateTransferArgs,
