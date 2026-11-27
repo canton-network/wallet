@@ -7,8 +7,6 @@ import {
     useAllAccountAssets,
     type PortfolioAssetView,
 } from '@canton-network/core-wallet-ui-components/react/token'
-import ArrowBack from '@mui/icons-material/ArrowBack'
-import Send from '@mui/icons-material/Send'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -20,7 +18,6 @@ import Typography from '@mui/material/Typography'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import { ButtonLink } from '@/ui/components/ButtonLink.tsx'
 import { PageLoader } from '@/ui/components/feedback.tsx'
 import { walletsQuery } from '@/ui/features/parties/index.ts'
 
@@ -37,21 +34,7 @@ export function AssetsPage() {
 
     return (
         <>
-            <PageHeader heading="Assets">
-                <ButtonLink
-                    to="/parties"
-                    size="small"
-                    startIcon={<ArrowBack />}
-                >
-                    Parties
-                </ButtonLink>
-                <ButtonLink to="/assets/send" size="small" startIcon={<Send />}>
-                    Send
-                </ButtonLink>
-                <ButtonLink to="/transfers" size="small">
-                    Outgoing
-                </ButtonLink>
-            </PageHeader>
+            <PageHeader heading="Assets" />
 
             {instruments.isError && (
                 <Alert severity="warning" sx={{ mb: 2 }}>

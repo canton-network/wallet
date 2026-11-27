@@ -9,7 +9,6 @@ import {
     useTokenContext,
     type OutgoingTransfer,
 } from '@canton-network/core-wallet-ui-components/react/token'
-import ArrowBack from '@mui/icons-material/ArrowBack'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import Card from '@mui/material/Card'
@@ -25,7 +24,6 @@ import Typography from '@mui/material/Typography'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 
-import { ButtonLink } from '@/ui/components/ButtonLink.tsx'
 import { PageLoader } from '@/ui/components/feedback.tsx'
 import { toTokenWallets } from '@/ui/features/assets/index.ts'
 import { walletsQuery } from '@/ui/features/parties/index.ts'
@@ -44,11 +42,7 @@ export function OutgoingTransfersPage() {
 
     return (
         <>
-            <PageHeader heading="Outgoing transfers">
-                <ButtonLink to="/assets" size="small" startIcon={<ArrowBack />}>
-                    Assets
-                </ButtonLink>
-            </PageHeader>
+            <PageHeader heading="Outgoing transfers" />
 
             {wallets.isError ? (
                 <Alert severity="error">
