@@ -34,6 +34,7 @@ import {
     type SiteApprovals,
     type SiteApprovalTab,
     sessionEnded,
+    siteDisconnected,
 } from '../../site-approval.ts'
 import { disconnectedStatusEvent, extensionProvider } from '../../status.ts'
 import type { ApprovedSiteStore } from '../../store/approved-sites.ts'
@@ -55,7 +56,7 @@ export interface DappControllerDeps {
     /** The wallet store, not yet scoped to a user. */
     getStore: () => Promise<WalletStore>
     sites: ApprovedSiteStore
-    siteApprovals: Pick<SiteApprovals, 'request'>
+    siteApprovals: Pick<SiteApprovals, 'request' | 'cancel'>
     unlockRequests: Pick<UnlockRequests, 'request'>
     sitePorts: Pick<SitePorts, 'send' | 'close'>
     isCurrent: SessionCheck
@@ -150,13 +151,14 @@ export const dappController = (
             if (!signedIn) return notConnected().connection
 
             const { context, store } = signedIn
+            // Only undefined for a site that isn't approved.
+            if (principal === undefined) {
+                throw providerErrors.unauthorized({
+                    message:
+                        'Sign in again to approve sites: the identity provider you signed in through is not recorded',
+                })
+            }
             if (!approved) {
-                if (principal === undefined) {
-                    throw providerErrors.unauthorized({
-                        message:
-                            'Sign in again to approve sites: the identity provider you signed in through is not recorded',
-                    })
-                }
                 // Throws unless the user approves. A second connect from the
                 // origin waits on the same prompt.
                 await siteApprovals.request({
@@ -174,6 +176,10 @@ export const dappController = (
             // The user may have signed out or switched accounts during the
             // prompt or the network check. The token must not reach the site.
             if (!(await isCurrent(context.accessToken))) throw sessionEnded()
+            // Or the site disconnected, which revoked it.
+            if (!(await sites.isApproved(principal, origin))) {
+                throw siteDisconnected()
+            }
 
             logger.info('Dapp connect status: {*}', { status })
             const connection = {
@@ -207,7 +213,12 @@ export const dappController = (
         // make while locked or signed out.
         disconnect: async () => {
             requireAuth()
-            if (principal !== undefined) await sites.revoke(principal, origin)
+            if (principal !== undefined) {
+                // First, so that a prompt answered during the revoke can't
+                // restore the grant.
+                siteApprovals.cancel(principal, origin)
+                await sites.revoke(principal, origin)
+            }
             sitePorts.close(origin, disconnectedStatusEvent('disconnect'))
             return null
         },

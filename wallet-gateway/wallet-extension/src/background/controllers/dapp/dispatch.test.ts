@@ -95,7 +95,10 @@ describe('createDappDispatcher', () => {
     let authContextStore: ReturnType<typeof fakeAuthContext>
     let sites: ReturnType<typeof fakeApprovedSites>
     let deps: DappControllerDeps & {
-        siteApprovals: { request: Mock<SiteApprovals['request']> }
+        siteApprovals: {
+            request: Mock<SiteApprovals['request']>
+            cancel: Mock<SiteApprovals['cancel']>
+        }
         unlockRequests: { request: Mock<UnlockRequests['request']> }
         sitePorts: {
             send: Mock<SitePorts['send']>
@@ -114,7 +117,7 @@ describe('createDappDispatcher', () => {
         deps = {
             getStore: async () => walletStore,
             sites,
-            siteApprovals: { request: vi.fn() },
+            siteApprovals: { request: vi.fn(), cancel: vi.fn() },
             unlockRequests: { request: vi.fn(async () => {}) },
             sitePorts: { send: vi.fn(), close: vi.fn() },
             isCurrent: vi.fn(async () => true),
@@ -760,6 +763,27 @@ describe('createDappDispatcher', () => {
                 error: { code: errorCodes.provider.unauthorized },
             })
             expect(deps.isCurrent).toHaveBeenCalledWith(authContext.accessToken)
+            expect(deps.sitePorts.send).not.toHaveBeenCalled()
+        })
+
+        it('fails connect when the site disconnects during the network check', async () => {
+            let answer!: (value: { version: string }) => void
+            vi.spyOn(LedgerClient.prototype, 'get').mockImplementation(
+                () => new Promise((resolve) => (answer = resolve))
+            )
+
+            const connecting = dispatcher.request(request('connect'), origin)
+            await vi.waitFor(() => expect(answer).toBeDefined())
+            await dispatcher.request(request('disconnect'), origin)
+            answer({ version: '3.4.0' })
+
+            await expect(connecting).resolves.toMatchObject({
+                error: { code: errorCodes.provider.userRejectedRequest },
+            })
+            expect(deps.siteApprovals.cancel).toHaveBeenCalledWith(
+                principal,
+                origin
+            )
             expect(deps.sitePorts.send).not.toHaveBeenCalled()
         })
 

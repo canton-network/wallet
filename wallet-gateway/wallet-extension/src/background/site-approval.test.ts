@@ -768,6 +768,31 @@ describe('createSiteApprovals', () => {
         expect(await sites.isApproved('alice', origin)).toBe(false)
     })
 
+    it("ends the site's prompt when it disconnects, and undoes an approval being saved", async () => {
+        const waiting = approvals.request(alice)
+        await openedId()
+        approvals.cancel('alice', origin)
+        await expect(waiting).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+        })
+
+        const saving = approvals.request(alice)
+        const id = await openedId()
+        const approve = sites.approve.getMockImplementation()!
+        sites.approve.mockImplementationOnce(async (owner, site) => {
+            await approve(owner, site)
+            approvals.cancel('alice', origin)
+        })
+
+        await expect(approvals.service.decide(id, true)).rejects.toThrow(
+            'The site disconnected'
+        )
+        await expect(saving).rejects.toMatchObject({
+            code: errorCodes.provider.userRejectedRequest,
+        })
+        expect(await sites.isApproved('alice', origin)).toBe(false)
+    })
+
     it('closes the approval page when the prompt is cancelled', async () => {
         const request = approvals.request(alice).catch(() => {})
         const port = connectPage(await openedId())

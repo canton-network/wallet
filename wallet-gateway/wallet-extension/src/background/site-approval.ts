@@ -66,6 +66,11 @@ export interface SiteApprovals {
      * answer, while the page that asked first is still there.
      */
     request(request: SiteApprovalRequest): Promise<void>
+    /**
+     * Ends the principal's pending prompts for `origin`, after the site
+     * disconnected. An approval still being saved is undone.
+     */
+    cancel(principal: string, origin: string): void
     service: SiteApprovalService
 }
 
@@ -101,8 +106,11 @@ interface PendingApproval extends SiteApprovalRequest {
     settle: (error?: Error) => void
     /** The open approval pages, which close when their port disconnects. */
     ports: Set<Browser.runtime.Port>
-    /** Set when the session changed while the user's approval was being saved. */
-    stale?: boolean
+    /**
+     * Set when the session changed or the site disconnected while the user's
+     * approval was being saved: why the approval doesn't hold.
+     */
+    stale?: Error
 }
 
 export interface SiteApprovalsOptions {
@@ -125,6 +133,8 @@ export const sessionEnded = () =>
     providerErrors.unauthorized({
         message: 'The session that asked for the site approval has ended',
     })
+
+export const siteDisconnected = () => rejected('The site disconnected')
 
 const approvalPopup = (id: string) =>
     `${DEFAULT_POPUP}#/approve-site?id=${encodeURIComponent(id)}`
@@ -232,7 +242,7 @@ export function createSiteApprovals({
         }
         for (const pending of saving) {
             if (pending.accessToken !== context?.accessToken) {
-                pending.stale = true
+                pending.stale = sessionEnded()
             }
         }
     })
@@ -286,6 +296,15 @@ export function createSiteApprovals({
             // belongs to the user who gave it.
             if (!(error instanceof VaultLockedError)) throw error
         }
+    }
+
+    /** Why the user's approval no longer holds, if it doesn't. */
+    async function invalidated(
+        pending: PendingApproval
+    ): Promise<Error | undefined> {
+        const current = await isCurrent(pending.accessToken)
+        // Read after the check, which may have let a change land.
+        return pending.stale ?? (current ? undefined : sessionEnded())
     }
 
     function start(request: SiteApprovalRequest, key: string) {
@@ -356,6 +375,15 @@ export function createSiteApprovals({
                 shared && joins(shared, request) ? shared : start(request, key)
             ).promise
         },
+        cancel(principal, origin) {
+            const key = JSON.stringify([principal, origin])
+            for (const pending of byId.values()) {
+                if (pending.key === key) finish(pending, siteDisconnected())
+            }
+            for (const pending of saving) {
+                if (pending.key === key) pending.stale = siteDisconnected()
+            }
+        },
         service: {
             async get(id) {
                 const pending = byId.get(id)
@@ -373,25 +401,20 @@ export function createSiteApprovals({
                 }
                 saving.add(pending)
                 try {
-                    // The user may have signed out or switched accounts
-                    // while the page was open.
-                    if (
-                        !(await isCurrent(pending.accessToken)) ||
-                        pending.stale
-                    ) {
-                        throw sessionEnded()
-                    }
+                    // The user may have signed out or switched accounts, or
+                    // the site disconnected, while the page was open.
+                    const before = await invalidated(pending)
+                    if (before) throw before
                     await sites.approve(pending.principal, pending.origin)
-                    // An auth change can land between the check and the
-                    // write, as they are separate vault operations. Checking
+                    // An auth change or a disconnect can land between the
+                    // check and the write, as they are separate vault
+                    // operations. Checking
                     // again after the write catches it, and the grant is
                     // undone.
-                    if (
-                        pending.stale ||
-                        !(await isCurrent(pending.accessToken))
-                    ) {
+                    const after = await invalidated(pending)
+                    if (after) {
                         await undo(pending)
-                        throw sessionEnded()
+                        throw after
                     }
                 } catch (error) {
                     pending.settle(error as Error)
