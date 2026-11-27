@@ -15,6 +15,7 @@ const handleMessage = (event: MessageEvent) => {
     window.opener.postMessage(
         {
             type: WalletEvent.SPLICE_WALLET_BROADCAST_ORIGIN_ACK,
+            origin: event.origin,
         },
         event.origin
     )
