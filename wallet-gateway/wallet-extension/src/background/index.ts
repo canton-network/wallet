@@ -3,12 +3,11 @@
 
 import { InternalSigningDriver } from '@canton-network/core-signing-internal'
 import { NotificationService } from '@canton-network/core-wallet-services'
-import { registerService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
 
 import { logger } from '@/shared/logger.ts'
 import {
-    DAPP_RPC_KEY,
+    SITE_APPROVAL_RPC_KEY,
     TOKEN_RPC_KEY,
     USER_RPC_KEY,
 } from '@/shared/service-keys.ts'
@@ -17,20 +16,27 @@ import { createAuthContextStore } from './auth-context.ts'
 import { registerAuthService } from './auth-service.ts'
 import { createDappDispatcher } from './controllers/dapp/dispatch.ts'
 import { userController } from './controllers/user/index.ts'
+import { registerDappService } from './dapp-service.ts'
 import {
+    createSitePorts,
     currentSessionSubscriber,
     registerNotificationPorts,
 } from './notifications.ts'
 import { registerFirstRunOnboarding, registerOpenUiHandler } from './open-ui.ts'
+import { createPagePresence } from './page-presence.ts'
+import { createSiteApprovals, currentSessionCheck } from './site-approval.ts'
+import { createApprovedSiteStore } from './store/approved-sites.ts'
 import {
     createSigningStore,
     createWalletStore,
     loadAuthedStore,
 } from './store/index.ts'
 import { createRegistryStore } from './store/registries.ts'
+import { createTabIcons } from './tab-icon.ts'
 import { createTokenSdk } from './token/sdk.ts'
 import { createTokenService } from './token/service.ts'
 import { registerTrustedService } from './trusted-service.ts'
+import { createUnlockRequests } from './unlock-request.ts'
 import { registerVaultService } from './vault-service.ts'
 import { createVault, requireUnlocked, type Vault } from './vault/index.ts'
 
@@ -56,18 +62,39 @@ export function startBackground({
     // TODO(#2498/#2406): use the HD-wallet driver.
     const signingDriver = new InternalSigningDriver(createSigningStore(vault))
     const deps = { getStore, authContext, signingDriver, notificationService }
+    const sites = createApprovedSiteStore(vault)
+    const isCurrent = currentSessionCheck(getStore, authContext)
+    const presence = createPagePresence()
+    const tabIcons = createTabIcons()
+    const siteApprovals = createSiteApprovals({
+        vault,
+        authContext,
+        presence,
+        tabIcons,
+        isCurrent,
+        sites,
+    })
+    const unlockRequests = createUnlockRequests({ vault, presence, tabIcons })
+    const sitePorts = createSitePorts(vault, authContext)
 
     registerVaultService(vault)
     registerAuthService({ ...deps, vault })
     // The dApp controller scopes the store to each request's user itself.
-    // The content script is its caller, so it takes any sender.
-    registerService(
-        DAPP_RPC_KEY,
+    registerDappService(
         createDappDispatcher(
-            { getStore: () => walletStore.get(), notificationService },
+            {
+                getStore: () => walletStore.get(),
+                notificationService,
+                sites,
+                siteApprovals,
+                unlockRequests,
+                sitePorts,
+                isCurrent,
+            },
             vault,
             authContext
-        )
+        ),
+        presence
     )
     registerTrustedService(
         USER_RPC_KEY,
@@ -85,9 +112,14 @@ export function startBackground({
             })
         )
     )
+    registerTrustedService(
+        SITE_APPROVAL_RPC_KEY,
+        requireUnlocked(vault, siteApprovals.service)
+    )
     registerNotificationPorts(
         notificationService,
-        currentSessionSubscriber(getStore, authContext)
+        currentSessionSubscriber(getStore, authContext, sites),
+        sitePorts
     )
     registerOpenUiHandler()
     registerFirstRunOnboarding()

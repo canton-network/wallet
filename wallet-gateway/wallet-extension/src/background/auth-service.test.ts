@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { SigningDriverInterface } from '@canton-network/core-signing-lib'
-import type { AuthContext } from '@canton-network/core-wallet-auth'
 import { NotificationService } from '@canton-network/core-wallet-services'
 import { hashAccessToken } from '@canton-network/core-wallet-store'
 import { StoreInternal } from '@canton-network/core-wallet-store-inmemory'
@@ -12,7 +11,7 @@ import { AuthErrorName, EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
 import { logger } from '@/shared/logger.ts'
 import { VaultErrorName, type VaultStatus } from '@/shared/vault-protocol.ts'
 
-import type { AuthContextStore } from './auth-context.ts'
+import type { AuthContextStore, SignedInContext } from './auth-context.ts'
 import { createAuthService } from './auth-service.ts'
 import type { AuthorizationCodeParams } from './oauth.ts'
 import { defaultConfig } from './store/default-config.ts'
@@ -33,16 +32,19 @@ function jwt(claims: Record<string, unknown>): string {
 const inAnHour = () => Math.floor(Date.now() / 1000) + 3600
 
 /** An auth context store that keeps what it's given, like the real one. */
-function memoryAuthContext(initial?: AuthContext) {
+function memoryAuthContext(initial?: SignedInContext) {
     let context = initial
     return {
         load: vi.fn<AuthContextStore['load']>(async () => context),
-        store: vi.fn<AuthContextStore['store']>(async (token) => {
-            context = {
-                userId: JSON.parse(atob(token.split('.')[1]!)).sub,
-                accessToken: token,
+        store: vi.fn<AuthContextStore['store']>(
+            async (token, identityProviderId) => {
+                context = {
+                    userId: JSON.parse(atob(token.split('.')[1]!)).sub,
+                    accessToken: token,
+                    identityProviderId,
+                }
             }
-        }),
+        ),
         clear: vi.fn<AuthContextStore['clear']>(async () => {
             context = undefined
         }),
@@ -62,6 +64,7 @@ describe('createAuthService', () => {
             vault: {
                 ready: Promise.resolve(),
                 status: () => vaultStatus,
+                onUnlock: vi.fn(),
                 onLock: vi.fn((listener: () => void) => {
                     // The real vault runs listeners and sets the status in closeNow().
                     lockVault = () => {
@@ -108,7 +111,10 @@ describe('createAuthService', () => {
             scope: (network.auth as { scope: string }).scope,
             audience: (network.auth as { audience: string }).audience,
         })
-        expect(authContext.store).toHaveBeenCalledWith(token)
+        expect(authContext.store).toHaveBeenCalledWith(
+            token,
+            network.identityProviderId
+        )
 
         const sessions = await (
             await loadAuthedStore(store, authContext)
@@ -128,6 +134,14 @@ describe('createAuthService', () => {
         signIn.mockResolvedValue(expired)
         const auth = service()
         await auth.connect(networkId)
+
+        await expect(auth.getStatus()).resolves.toBe('disconnected')
+    })
+
+    it('is disconnected when the sign-in has no identity provider', async () => {
+        const auth = service()
+        await auth.connect(networkId)
+        await authContext.store(token, undefined)
 
         await expect(auth.getStatus()).resolves.toBe('disconnected')
     })
@@ -163,7 +177,7 @@ describe('createAuthService', () => {
             })
 
             expect(signIn).not.toHaveBeenCalled()
-            const [[stored]] = authContext.store.mock.calls as [[string]]
+            const stored = authContext.store.mock.calls[0]![0]
             const claims = JSON.parse(atob(stored.split('.')[1]!))
             expect(claims).toMatchObject({
                 sub: 'alice',
@@ -265,9 +279,9 @@ describe('createAuthService', () => {
         let releaseA!: () => void
         const aHeld = new Promise<void>((resolve) => (releaseA = resolve))
         const realStore = authContext.store.getMockImplementation()!
-        authContext.store.mockImplementation(async (token) => {
+        authContext.store.mockImplementation(async (token, idp) => {
             if (token === tokenA) await aHeld
-            return realStore(token)
+            return realStore(token, idp)
         })
 
         const auth = service()
@@ -276,12 +290,18 @@ describe('createAuthService', () => {
 
         // Let everything that isn't blocked run to completion.
         await vi.waitFor(() =>
-            expect(authContext.store).toHaveBeenCalledWith(tokenA)
+            expect(authContext.store).toHaveBeenCalledWith(
+                tokenA,
+                expect.anything()
+            )
         )
         await new Promise((resolve) => setTimeout(resolve, 0))
 
         // B must wait for A's commit; without serialization it writes here.
-        expect(authContext.store).not.toHaveBeenCalledWith(tokenB)
+        expect(authContext.store).not.toHaveBeenCalledWith(
+            tokenB,
+            expect.anything()
+        )
 
         releaseA()
         await Promise.all([connectA, connectB])

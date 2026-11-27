@@ -13,7 +13,6 @@ import { beforeEach, describe, expect, it, type Mock, vi } from 'vitest'
 import { createJsonRpcProxyHandler } from './json-rpc-proxy.ts'
 
 const runtimeId = 'runtime-id'
-const origin = 'https://dapp.example'
 
 const connectRequest: JsonRpcRequest = {
     jsonrpc: '2.0',
@@ -35,11 +34,10 @@ const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 describe('createJsonRpcProxyHandler', () => {
     let page: { postMessage: Mock }
-    let request: Mock<
-        (request: JsonRpcRequest, origin: string) => Promise<JsonRpcResponse>
-    >
+    let request: Mock<(request: JsonRpcRequest) => Promise<JsonRpcResponse>>
     let sendMessage: Mock<(message: SpliceMessage) => Promise<unknown>>
     let onResponse: Mock
+    let openPresence: Mock<() => void>
     let handle: ReturnType<typeof createJsonRpcProxyHandler>
 
     /** Delivers a `message` event the page posted to itself. */
@@ -51,17 +49,18 @@ describe('createJsonRpcProxyHandler', () => {
         request = vi.fn()
         sendMessage = vi.fn()
         onResponse = vi.fn()
+        openPresence = vi.fn()
         handle = createJsonRpcProxyHandler({
             dispatcher: { request },
             sendMessage,
             notificationRelay: { onResponse },
+            presence: { open: openPresence },
             window: page,
-            origin,
             runtimeId,
         })
     })
 
-    it('forwards a request with the page origin and posts the response', async () => {
+    it('forwards a request and posts the response', async () => {
         const response: JsonRpcResponse = {
             jsonrpc: '2.0',
             id: 'request-1',
@@ -71,7 +70,7 @@ describe('createJsonRpcProxyHandler', () => {
 
         await fromPage(requestMessage(connectRequest, runtimeId))
 
-        expect(request).toHaveBeenCalledWith(connectRequest, origin)
+        expect(request).toHaveBeenCalledWith(connectRequest)
         expect(page.postMessage).toHaveBeenCalledWith(
             { type: WalletEvent.SPLICE_WALLET_RESPONSE, response },
             '*'
@@ -79,6 +78,17 @@ describe('createJsonRpcProxyHandler', () => {
         expect(onResponse).toHaveBeenCalledWith('connect', {
             isConnected: true,
         })
+    })
+
+    it('opens the presence port before relaying a request', async () => {
+        request.mockResolvedValue({ jsonrpc: '2.0', id: 'request-1' })
+
+        await fromPage(requestMessage(connectRequest, runtimeId))
+
+        expect(openPresence).toHaveBeenCalledTimes(1)
+        expect(openPresence.mock.invocationCallOrder[0]).toBeLessThan(
+            request.mock.invocationCallOrder[0]!
+        )
     })
 
     it('handles requests without a target', async () => {
@@ -135,6 +145,7 @@ describe('createJsonRpcProxyHandler', () => {
 
         expect(request).not.toHaveBeenCalled()
         expect(page.postMessage).not.toHaveBeenCalled()
+        expect(openPresence).not.toHaveBeenCalled()
     })
 
     it('ignores messages for another extension', async () => {

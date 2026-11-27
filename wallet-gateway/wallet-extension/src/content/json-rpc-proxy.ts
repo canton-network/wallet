@@ -11,22 +11,23 @@ import {
 import { createProxyService } from '@webext-core/proxy-service'
 import { browser } from 'wxt/browser'
 
-import type { DappDispatcher } from '@/background/controllers/dapp/dispatch.ts'
+import type { DappService } from '@/background/controllers/dapp/dispatch.ts'
 import { logger } from '@/shared/logger.ts'
 import { DAPP_RPC_KEY } from '@/shared/service-keys.ts'
 
 import type { NotificationRelay } from './notification-relay.ts'
+import { createPagePresence, type PagePresence } from './page-presence.ts'
 
 export interface JsonRpcProxyOptions {
     /** The background dApp dispatcher. */
-    dispatcher: Pick<DappDispatcher, 'request'>
+    dispatcher: DappService
     /** Forwards a message to the background (`runtime.sendMessage`). */
     sendMessage: (message: SpliceMessage) => Promise<unknown>
     notificationRelay: Pick<NotificationRelay, 'onResponse'>
+    /** Opened before a request is relayed, as `connect` may prompt. */
+    presence: PagePresence
     /** The dApp page window requests come from and responses go to. */
     window: Pick<Window, 'postMessage'>
-    /** The page origin, sent with each request. */
-    origin: string
     /** Routing key of this extension, see `SpliceMessage.target`. */
     runtimeId: string | undefined
 }
@@ -40,7 +41,8 @@ export interface JsonRpcProxyOptions {
  * access token.
  */
 export function createJsonRpcProxyHandler(options: JsonRpcProxyOptions) {
-    const { dispatcher, notificationRelay, runtimeId, window } = options
+    const { dispatcher, notificationRelay, presence, runtimeId, window } =
+        options
 
     const shouldHandle = (target: string | undefined): boolean => {
         if (!target) return true
@@ -50,7 +52,7 @@ export function createJsonRpcProxyHandler(options: JsonRpcProxyOptions) {
 
     async function dispatch(request: JsonRpcRequest): Promise<JsonRpcResponse> {
         try {
-            return await dispatcher.request(request, options.origin)
+            return await dispatcher.request(request)
         } catch (error) {
             // e.g. "Extension context invalidated" after an extension reload
             return {
@@ -77,6 +79,7 @@ export function createJsonRpcProxyHandler(options: JsonRpcProxyOptions) {
                 // They must not be proxied back to the background script.
                 if (msg.request.id == null) return
 
+                presence.open()
                 const response = await dispatch(msg.request)
                 window.postMessage(
                     {
@@ -127,8 +130,8 @@ export function jsonRpcProxy(notificationRelay: NotificationRelay): void {
         dispatcher: createProxyService(DAPP_RPC_KEY),
         sendMessage: (message) => browser.runtime.sendMessage(message),
         notificationRelay,
+        presence: createPagePresence(),
         window,
-        origin: location.origin,
         runtimeId: browser.runtime?.id,
     })
     window.addEventListener('message', (event: MessageEvent) => {
