@@ -47,3 +47,39 @@ export const holdingsQueryOptions = ({
             return toOwnedHoldings(mergeHoldings(v1, v2), partyId)
         },
     })
+
+export const pendingTransfersQueryOptions = ({
+    client,
+    partyId,
+}: {
+    client: TokenClient | undefined
+    partyId: string | undefined
+}) =>
+    queryOptions({
+        queryKey: tokenQueryKeys.pendingTransfers.forVersion(partyId, 'v1'),
+        enabled: !!partyId && !!client,
+        queryFn: async () => {
+            if (!partyId || !client) {
+                throw new Error('Token client and party are required')
+            }
+            return client.token.v1.transfer.pending(partyId)
+        },
+    })
+
+export const pendingTransfersV2QueryOptions = ({
+    client,
+    partyId,
+}: {
+    client: TokenClient | undefined
+    partyId: string | undefined
+}) =>
+    queryOptions({
+        queryKey: tokenQueryKeys.pendingTransfers.forVersion(partyId, 'v2'),
+        enabled: !!partyId && !!client,
+        queryFn: async () => {
+            if (!partyId || !client) {
+                throw new Error('Token client and party are required')
+            }
+            return client.token.v2.transfer.pending(partyId)
+        },
+    })

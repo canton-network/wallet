@@ -6,19 +6,7 @@ import type { Account } from '@canton-network/core-token-standard-v2'
 import { Decimal } from 'decimal.js'
 
 import { isBasicAccount, type PortfolioHolding } from './holdings.ts'
-
-// The name and symbol we show next to a holding. The portfolio and the
-// extension each look these up their own way and hand them over in this
-// shape. The extension doesn't know how many decimals a token has, so that
-// part is optional.
-export interface TokenInstrument {
-    id: string
-    name: string
-    symbol: string
-    decimals?: number | undefined
-}
-
-export type TokenInstruments = ReadonlyMap<string, readonly TokenInstrument[]>
+import type { TokenInstruments } from './registry-instrument.ts'
 
 export interface AggregatedAccountBalance {
     account: Account
@@ -39,7 +27,7 @@ export interface AggregatedHolding {
         | {
               name: string
               symbol: string
-              decimals?: number | undefined
+              decimals: number
           }
         | undefined
 }

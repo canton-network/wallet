@@ -3,14 +3,21 @@
 
 import { describe, expect, it } from 'vitest'
 
-import { alice, amulet, bob, holding, lockUntil } from './__tests__/fixtures.ts'
+import {
+    alice,
+    amulet,
+    amuletInstrument,
+    bob,
+    holding,
+    lockUntil,
+} from './__tests__/fixtures.ts'
 import {
     aggregateHoldings,
     enrichWithInstrumentInfo,
     getInstrumentKey,
-    type TokenInstruments,
 } from './aggregate-holdings.ts'
 import { basicAccount } from './holdings.ts'
+import type { TokenInstruments } from './registry-instrument.ts'
 
 const now = new Date('2026-06-01T00:00:00.000Z')
 const bank = 'bank::1220'
@@ -129,10 +136,7 @@ describe('aggregateHoldings', () => {
 
 describe('enrichWithInstrumentInfo', () => {
     const instruments: TokenInstruments = new Map([
-        [
-            amulet.admin,
-            [{ id: 'Amulet', name: 'Amulet', symbol: 'AMT', decimals: 10 }],
-        ],
+        [amulet.admin, [amuletInstrument]],
     ])
 
     it('adds the name, symbol and decimals of a known instrument', () => {

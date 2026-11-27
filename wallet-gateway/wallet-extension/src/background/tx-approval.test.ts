@@ -25,6 +25,7 @@ import { storage } from 'wxt/utils/storage'
 
 import { asPort, type FakePort, fakePort } from '@/__tests__/fake-port.ts'
 import createPlain from '@/__tests__/fixtures/v3-create-plain.json'
+import { EXTENSION_ORIGIN } from '@/shared/auth-protocol.ts'
 import { PAGE_PRESENCE_PORT_NAME, txApprovalPortName } from '@/shared/ports.ts'
 
 import type { TransactionSubmitter } from './controllers/user/transactions.ts'
@@ -142,7 +143,8 @@ describe('createTxApprovals', () => {
     const storeTransaction = (
         request: Pick<TxApprovalRequest, 'transactionId' | 'commandId'>,
         status: Transaction['status'] = 'pending',
-        preparedTransactionHash = preparedHash
+        preparedTransactionHash = preparedHash,
+        transactionOrigin = origin
     ) =>
         store.setTransaction({
             id: request.transactionId,
@@ -151,7 +153,7 @@ describe('createTxApprovals', () => {
             preparedTransaction: prepared,
             preparedTransactionHash,
             payload: { actAs: [party] },
-            origin,
+            origin: transactionOrigin,
         } satisfies Transaction)
 
     /** Begins, prepares and prompts for a transaction, as the dApp API does. */
@@ -648,11 +650,18 @@ describe('createTxApprovals', () => {
         ).resolves.toMatchObject({ id: first.request.transactionId })
     })
 
-    it('deletes pending transactions without a prompt on unlock and at start-up, and keeps signed or signing ones', async () => {
+    it("deletes pending transactions without a prompt on unlock and at start-up, and keeps signed or signing ones and the extension's reviews", async () => {
         const live = await prompt()
         const orphan = nextRequest()
         const signed = nextRequest()
         const signing = nextRequest()
+        const review = nextRequest()
+        await storeTransaction(
+            review,
+            'pending',
+            preparedHash,
+            EXTENSION_ORIGIN
+        )
         await storeTransaction(orphan)
         await storeTransaction(signed, 'signed')
         await storeTransaction(signing, 'awaiting-signature')
@@ -674,6 +683,7 @@ describe('createTxApprovals', () => {
         await vi.waitFor(async () =>
             expect(await stored(restarted.transactionId)).toBeUndefined()
         )
+        expect(await stored(review.transactionId)).toBeDefined()
     })
 
     it('reports a deleted orphan failed to its session, if that is the current one', async () => {

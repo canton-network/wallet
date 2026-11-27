@@ -2,17 +2,16 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import type {
+    RegistryInstrument,
+    TokenInstruments,
+} from '@canton-network/core-wallet-ui-components/react/token'
 import { queryKeys } from '@hooks/query-keys'
 import { resolveRegistryClient } from '@lib/registry-client'
 import { useQueries } from '@tanstack/react-query'
 import { useMemo } from 'react'
 
-import {
-    type Instrument,
-    type Instruments,
-    type PortfolioInstrument,
-    toPortfolioInstrument,
-} from '../types/instruments.ts'
+import { type Instrument, toRegistryInstrument } from '../types/instruments.ts'
 import { useRegistryUrls } from './useRegistryUrls.ts'
 
 const fetchAllInstruments = async (url: string): Promise<Instrument[]> => {
@@ -30,7 +29,15 @@ const fetchAllInstruments = async (url: string): Promise<Instrument[]> => {
     return collected
 }
 
-export const useInstruments = (): Instruments => {
+export const fetchRegistryInstruments = async (
+    admin: PartyId,
+    registryUrl: string
+): Promise<RegistryInstrument[]> =>
+    (await fetchAllInstruments(registryUrl)).map((instrument) =>
+        toRegistryInstrument({ instrument, admin, registryUrl })
+    )
+
+export const useInstruments = (): TokenInstruments => {
     const registryUrls = useRegistryUrls()
     const entries = useMemo(
         () => Array.from(registryUrls.entries()),
@@ -40,20 +47,13 @@ export const useInstruments = (): Instruments => {
     const queries = useQueries({
         queries: entries.map(([party, url]) => ({
             queryKey: queryKeys.instruments.forRegistry(party, url),
-            queryFn: async () =>
-                (await fetchAllInstruments(url)).map((instrument) =>
-                    toPortfolioInstrument({
-                        instrument,
-                        admin: party,
-                        registryUrl: url,
-                    })
-                ),
+            queryFn: () => fetchRegistryInstruments(party, url),
             staleTime: Infinity,
         })),
     })
 
     return useMemo(() => {
-        const map = new Map<PartyId, PortfolioInstrument[]>()
+        const map = new Map<PartyId, RegistryInstrument[]>()
         entries.forEach(([party], index) => {
             const data = queries[index]?.data
             if (data) map.set(party, data)

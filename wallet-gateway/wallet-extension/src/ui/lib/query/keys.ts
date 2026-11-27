@@ -53,8 +53,8 @@ export const queryKeys = {
     },
 
     // Under the shared token keys, so that clearing `tokenQueryKeys.all`
-    // also drops the previous network's assets.
+    // also drops the previous network's instruments.
     token: {
-        assets: () => [...tokenQueryKeys.all, 'assets'] as const,
+        instruments: () => [...tokenQueryKeys.all, 'instruments'] as const,
     },
 }

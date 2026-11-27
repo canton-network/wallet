@@ -1,12 +1,22 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-export type { ListHoldingsParams, TokenClient } from './client.ts'
+export type {
+    CreateTransferParams,
+    ListHoldingsParams,
+    TokenClient,
+    TokenStandardVersion,
+    TransferChoiceParams,
+} from './client.ts'
 export { TokenProvider, type TokenProviderProps } from './TokenProvider.tsx'
 export type { TokenContextValue } from './TokenContext.ts'
 export { useTokenContext } from './useTokenContext.ts'
 export { tokenQueryKeys } from './query-keys.ts'
-export { holdingsQueryOptions } from './query-options.ts'
+export {
+    holdingsQueryOptions,
+    pendingTransfersQueryOptions,
+    pendingTransfersV2QueryOptions,
+} from './query-options.ts'
 export {
     basicAccount,
     isBasicAccount,
@@ -21,9 +31,11 @@ export {
     getInstrumentKey,
     type AggregatedAccountBalance,
     type AggregatedHolding,
-    type TokenInstrument,
-    type TokenInstruments,
 } from './aggregate-holdings.ts'
+export type {
+    RegistryInstrument,
+    TokenInstruments,
+} from './registry-instrument.ts'
 export {
     useWalletHoldings,
     type WalletHoldingsResult,
@@ -37,3 +49,33 @@ export {
     type TokenWallet,
 } from './useAllAccountAssets.ts'
 export { useInstrumentAvailableBalance } from './useInstrumentAvailableBalance.ts'
+export {
+    resolveTransferVersion,
+    type TransferVersionResult,
+} from './transfer-version.ts'
+export { transferAmountError } from './transfer-amount.ts'
+export {
+    canWithdraw,
+    outgoingTransfers,
+    type OutgoingTransfer,
+} from './outgoing-transfers.ts'
+export {
+    getTransferActions,
+    type TransferAction,
+    type TransferActionAvailability,
+    type TransferActionItem,
+} from './transfer-actions.ts'
+export {
+    useOutgoingTransfers,
+    type OutgoingTransfersResult,
+} from './useOutgoingTransfers.ts'
+export {
+    useCreateTransfer,
+    type CreateTransferArgs,
+} from './useCreateTransfer.ts'
+export {
+    transferActionVersion,
+    useExerciseTransfer,
+    type ExerciseTransferArgs,
+    type TransferInstructionChoice,
+} from './useExerciseTransfer.ts'

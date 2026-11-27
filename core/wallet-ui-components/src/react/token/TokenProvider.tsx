@@ -3,8 +3,8 @@
 
 import { useMemo, type ReactNode } from 'react'
 
-import type { TokenInstruments } from './aggregate-holdings.ts'
 import type { TokenClient } from './client.ts'
+import type { TokenInstruments } from './registry-instrument.ts'
 import { TokenContext } from './TokenContext.ts'
 
 export interface TokenProviderProps {

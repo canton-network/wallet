@@ -17,8 +17,7 @@ import type {
     AllocationInstruction,
 } from '@canton-network/core-token-standard-v2'
 import type { PrettyContract } from '@canton-network/core-tx-parser'
-
-import type { TokenStandardVersion } from '../types/instruments.ts'
+import type { TokenStandardVersion } from '@canton-network/core-wallet-ui-components/react/token'
 
 interface ActionItemBase {
     contractId: string

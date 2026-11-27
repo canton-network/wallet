@@ -2,8 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { InstrumentId } from '@canton-network/core-token-standard'
-
-import type { TokenStandardVersion } from '../types/instruments.ts'
+import type { TokenStandardVersion } from '@canton-network/core-wallet-ui-components/react/token'
 
 export interface SelectableInstrument {
     instrumentId: InstrumentId

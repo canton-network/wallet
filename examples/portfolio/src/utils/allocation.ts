@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
+import type { TokenInstruments } from '@canton-network/core-wallet-ui-components/react/token'
+import type { AssetBody } from '@canton-network/wallet-sdk'
 
-import type { Instruments, PortfolioInstrument } from '../types/instruments.ts'
 import { normalizeRegistryUrl } from './registry.ts'
 
 export const resolveAllocationAsset = ({
@@ -13,10 +14,10 @@ export const resolveAllocationAsset = ({
     reachableRegistryUrls,
 }: {
     instrumentId: { admin: PartyId; id: string }
-    instruments: Instruments
+    instruments: TokenInstruments
     registryUrls: ReadonlyMap<PartyId, string>
     reachableRegistryUrls: ReadonlyMap<PartyId, string>
-}): PortfolioInstrument => {
+}): AssetBody => {
     const registryUrl = registryUrls.get(instrumentId.admin)
     if (!registryUrl) {
         throw new Error(`no registry URL for admin ${instrumentId.admin}`)
@@ -51,7 +52,7 @@ export const resolveAllocationAsset = ({
     }
 
     if (
-        normalizeRegistryUrl(asset.registryUrl.href) !==
+        normalizeRegistryUrl(asset.registryUrl) !==
         normalizeRegistryUrl(reachableRegistryUrl)
     ) {
         throw new Error(
@@ -59,5 +60,5 @@ export const resolveAllocationAsset = ({
         )
     }
 
-    return asset
+    return { ...asset, registryUrl: new URL(asset.registryUrl) }
 }

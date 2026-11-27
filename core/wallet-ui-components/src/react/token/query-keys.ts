@@ -11,4 +11,13 @@ export const tokenQueryKeys = {
         forParty: (partyId: string | undefined) =>
             [...token, 'holdings', partyId] as const,
     },
+
+    // Both versions under the party, so one invalidation refreshes both.
+    pendingTransfers: {
+        all: [...token, 'pendingTransfers'] as const,
+        forParty: (partyId: string | undefined) =>
+            [...token, 'pendingTransfers', partyId] as const,
+        forVersion: (partyId: string | undefined, version: 'v1' | 'v2') =>
+            [...token, 'pendingTransfers', partyId, version] as const,
+    },
 }

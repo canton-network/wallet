@@ -17,8 +17,16 @@ function clientWith({
 }) {
     return {
         token: {
-            v1: { utxos: { list: vi.fn().mockResolvedValue(v1) } },
-            v2: { utxos: { list: vi.fn().mockReturnValue(v2) } },
+            instruments: vi.fn(),
+            transfer: { create: vi.fn(), withdraw: vi.fn() },
+            v1: {
+                utxos: { list: vi.fn().mockResolvedValue(v1) },
+                transfer: { pending: vi.fn() },
+            },
+            v2: {
+                utxos: { list: vi.fn().mockReturnValue(v2) },
+                transfer: { pending: vi.fn() },
+            },
         },
     } satisfies TokenClient
 }

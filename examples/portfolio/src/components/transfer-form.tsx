@@ -1,12 +1,14 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useInstrumentAvailableBalance } from '@canton-network/core-wallet-ui-components/react/token'
+import {
+    useInstrumentAvailableBalance,
+    type useCreateTransfer,
+} from '@canton-network/core-wallet-ui-components/react/token'
 import { CopyableIdentifier } from '@components/copyable-identifier'
 import { PillButton } from '@components/ui/PillButton'
 import { formatCharacterCount } from '@components/utils'
 import { usePrimaryAccount } from '@hooks/useAccounts'
-import type { useCreateTransfer } from '@hooks/useCreateTransfer'
 import CloseIcon from '@mui/icons-material/Close'
 import {
     Alert,

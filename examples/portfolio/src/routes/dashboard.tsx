@@ -38,6 +38,15 @@ export const Route = createFileRoute('/dashboard')({
 })
 
 function RouteComponent() {
+    // The sidebar's offer count reads the token context too.
+    return (
+        <PortfolioTokenProvider>
+            <DashboardLayout />
+        </PortfolioTokenProvider>
+    )
+}
+
+function DashboardLayout() {
     const accounts = useAccounts()
     const { initialized, status, open, disconnect } = useConnection()
     const pathname = useLocation({ select: (location) => location.pathname })
@@ -223,9 +232,7 @@ function RouteComponent() {
                     bgcolor: 'background.default',
                 }}
             >
-                <PortfolioTokenProvider>
-                    <Outlet />
-                </PortfolioTokenProvider>
+                <Outlet />
             </Box>
         </Box>
     )

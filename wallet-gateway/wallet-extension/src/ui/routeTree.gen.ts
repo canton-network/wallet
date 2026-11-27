@@ -20,8 +20,10 @@ import { Route as OnboardingPasswordRouteImport } from './routes/onboarding/pass
 import { Route as UnlockedConnectedApproveTransactionRouteImport } from './routes/_unlocked/_connected/approve-transaction'
 import { Route as UnlockedConnectIndexRouteImport } from './routes/_unlocked/connect/index'
 import { Route as UnlockedConnectedAssetsIndexRouteImport } from './routes/_unlocked/_connected/assets/index'
+import { Route as UnlockedConnectedAssetsSendRouteImport } from './routes/_unlocked/_connected/assets/send'
 import { Route as UnlockedConnectedPartiesIndexRouteImport } from './routes/_unlocked/_connected/parties/index'
 import { Route as UnlockedConnectedPartiesAddRouteImport } from './routes/_unlocked/_connected/parties/add'
+import { Route as UnlockedConnectedTransfersIndexRouteImport } from './routes/_unlocked/_connected/transfers/index'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -78,6 +80,12 @@ const UnlockedConnectedAssetsIndexRoute =
     path: '/assets/',
     getParentRoute: () => UnlockedConnectedRoute,
   } as any)
+const UnlockedConnectedAssetsSendRoute =
+  UnlockedConnectedAssetsSendRouteImport.update({
+    id: '/assets/send',
+    path: '/assets/send',
+    getParentRoute: () => UnlockedConnectedRoute,
+  } as any)
 const UnlockedConnectedPartiesIndexRoute =
   UnlockedConnectedPartiesIndexRouteImport.update({
     id: '/parties/',
@@ -90,6 +98,12 @@ const UnlockedConnectedPartiesAddRoute =
     path: '/parties/add',
     getParentRoute: () => UnlockedConnectedRoute,
   } as any)
+const UnlockedConnectedTransfersIndexRoute =
+  UnlockedConnectedTransfersIndexRouteImport.update({
+    id: '/transfers/',
+    path: '/transfers/',
+    getParentRoute: () => UnlockedConnectedRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -100,9 +114,11 @@ export interface FileRoutesByFullPath {
   '/onboarding/': typeof OnboardingIndexRoute
   '/approve-transaction': typeof UnlockedConnectedApproveTransactionRoute
   '/connect/': typeof UnlockedConnectIndexRoute
+  '/assets/send': typeof UnlockedConnectedAssetsSendRoute
   '/parties/add': typeof UnlockedConnectedPartiesAddRoute
   '/assets/': typeof UnlockedConnectedAssetsIndexRoute
   '/parties/': typeof UnlockedConnectedPartiesIndexRoute
+  '/transfers/': typeof UnlockedConnectedTransfersIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -112,9 +128,11 @@ export interface FileRoutesByTo {
   '/onboarding': typeof OnboardingIndexRoute
   '/approve-transaction': typeof UnlockedConnectedApproveTransactionRoute
   '/connect': typeof UnlockedConnectIndexRoute
+  '/assets/send': typeof UnlockedConnectedAssetsSendRoute
   '/parties/add': typeof UnlockedConnectedPartiesAddRoute
   '/assets': typeof UnlockedConnectedAssetsIndexRoute
   '/parties': typeof UnlockedConnectedPartiesIndexRoute
+  '/transfers': typeof UnlockedConnectedTransfersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -128,9 +146,11 @@ export interface FileRoutesById {
   '/onboarding/': typeof OnboardingIndexRoute
   '/_unlocked/_connected/approve-transaction': typeof UnlockedConnectedApproveTransactionRoute
   '/_unlocked/connect/': typeof UnlockedConnectIndexRoute
+  '/_unlocked/_connected/assets/send': typeof UnlockedConnectedAssetsSendRoute
   '/_unlocked/_connected/parties/add': typeof UnlockedConnectedPartiesAddRoute
   '/_unlocked/_connected/assets/': typeof UnlockedConnectedAssetsIndexRoute
   '/_unlocked/_connected/parties/': typeof UnlockedConnectedPartiesIndexRoute
+  '/_unlocked/_connected/transfers/': typeof UnlockedConnectedTransfersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -143,9 +163,11 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/approve-transaction'
     | '/connect/'
+    | '/assets/send'
     | '/parties/add'
     | '/assets/'
     | '/parties/'
+    | '/transfers/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,9 +177,11 @@ export interface FileRouteTypes {
     | '/onboarding'
     | '/approve-transaction'
     | '/connect'
+    | '/assets/send'
     | '/parties/add'
     | '/assets'
     | '/parties'
+    | '/transfers'
   id:
     | '__root__'
     | '/'
@@ -170,9 +194,11 @@ export interface FileRouteTypes {
     | '/onboarding/'
     | '/_unlocked/_connected/approve-transaction'
     | '/_unlocked/connect/'
+    | '/_unlocked/_connected/assets/send'
     | '/_unlocked/_connected/parties/add'
     | '/_unlocked/_connected/assets/'
     | '/_unlocked/_connected/parties/'
+    | '/_unlocked/_connected/transfers/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -261,6 +287,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnlockedConnectedAssetsIndexRouteImport
       parentRoute: typeof UnlockedConnectedRoute
     }
+    '/_unlocked/_connected/assets/send': {
+      id: '/_unlocked/_connected/assets/send'
+      path: '/assets/send'
+      fullPath: '/assets/send'
+      preLoaderRoute: typeof UnlockedConnectedAssetsSendRouteImport
+      parentRoute: typeof UnlockedConnectedRoute
+    }
     '/_unlocked/_connected/parties/': {
       id: '/_unlocked/_connected/parties/'
       path: '/parties'
@@ -275,22 +308,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UnlockedConnectedPartiesAddRouteImport
       parentRoute: typeof UnlockedConnectedRoute
     }
+    '/_unlocked/_connected/transfers/': {
+      id: '/_unlocked/_connected/transfers/'
+      path: '/transfers'
+      fullPath: '/transfers/'
+      preLoaderRoute: typeof UnlockedConnectedTransfersIndexRouteImport
+      parentRoute: typeof UnlockedConnectedRoute
+    }
   }
 }
 
 interface UnlockedConnectedRouteChildren {
   UnlockedConnectedApproveTransactionRoute: typeof UnlockedConnectedApproveTransactionRoute
+  UnlockedConnectedAssetsSendRoute: typeof UnlockedConnectedAssetsSendRoute
   UnlockedConnectedPartiesAddRoute: typeof UnlockedConnectedPartiesAddRoute
   UnlockedConnectedAssetsIndexRoute: typeof UnlockedConnectedAssetsIndexRoute
   UnlockedConnectedPartiesIndexRoute: typeof UnlockedConnectedPartiesIndexRoute
+  UnlockedConnectedTransfersIndexRoute: typeof UnlockedConnectedTransfersIndexRoute
 }
 
 const UnlockedConnectedRouteChildren: UnlockedConnectedRouteChildren = {
   UnlockedConnectedApproveTransactionRoute:
     UnlockedConnectedApproveTransactionRoute,
+  UnlockedConnectedAssetsSendRoute: UnlockedConnectedAssetsSendRoute,
   UnlockedConnectedPartiesAddRoute: UnlockedConnectedPartiesAddRoute,
   UnlockedConnectedAssetsIndexRoute: UnlockedConnectedAssetsIndexRoute,
   UnlockedConnectedPartiesIndexRoute: UnlockedConnectedPartiesIndexRoute,
+  UnlockedConnectedTransfersIndexRoute: UnlockedConnectedTransfersIndexRoute,
 }
 
 const UnlockedConnectedRouteWithChildren =

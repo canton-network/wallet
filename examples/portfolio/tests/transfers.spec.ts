@@ -5,9 +5,9 @@ import type {
     GatewayUserApi,
     WalletGateway,
 } from '@canton-network/core-wallet-test-utils'
+import type { TokenStandardVersion } from '@canton-network/core-wallet-ui-components/react/token'
 import { test, expect, type Page } from '@playwright/test'
 
-import type { TokenStandardVersion } from '../src/types/instruments.ts'
 import {
     createGatewayApi,
     connectGateway,

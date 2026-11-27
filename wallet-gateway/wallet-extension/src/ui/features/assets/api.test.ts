@@ -1,20 +1,21 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import type { RegistryInstrument } from '@canton-network/core-wallet-ui-components/react/token'
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { describe, expect, it } from 'vitest'
 
-import type { TokenAsset } from '@/background/token/service.ts'
-
 import { toTokenInstruments, toTokenWallets } from './api.ts'
 
-const asset = (admin: string, id: string, symbol: string): TokenAsset => ({
+const instrument = (admin: string, id: string): RegistryInstrument => ({
     id,
+    name: `${id} name`,
     displayName: `${id} name`,
-    symbol,
+    symbol: id,
+    decimals: 10,
     admin,
-    registryUrl: 'http://registry.test',
-    capabilities: {} as TokenAsset['capabilities'],
+    registryUrl: 'http://registry.test/',
+    capabilities: {} as RegistryInstrument['capabilities'],
 })
 
 const wallet = (
@@ -34,22 +35,16 @@ const wallet = (
     }) as Wallet
 
 describe('toTokenInstruments', () => {
-    it('groups the assets by admin party, with no decimals', () => {
-        const instruments = toTokenInstruments([
-            asset('dso::1', 'Amulet', 'CC'),
-            asset('issuer::2', 'USDX', 'USDX'),
-            asset('dso::1', 'Other', 'OTH'),
-        ])
+    it('groups the instruments by admin party', () => {
+        const amulet = instrument('dso::1', 'Amulet')
+        const usdx = instrument('issuer::2', 'USDX')
+        const other = instrument('dso::1', 'Other')
 
-        expect([...instruments.entries()]).toEqual([
-            [
-                'dso::1',
-                [
-                    { id: 'Amulet', name: 'Amulet name', symbol: 'CC' },
-                    { id: 'Other', name: 'Other name', symbol: 'OTH' },
-                ],
-            ],
-            ['issuer::2', [{ id: 'USDX', name: 'USDX name', symbol: 'USDX' }]],
+        expect([
+            ...toTokenInstruments([amulet, usdx, other]).entries(),
+        ]).toEqual([
+            ['dso::1', [amulet, other]],
+            ['issuer::2', [usdx]],
         ])
     })
 })

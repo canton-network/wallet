@@ -76,40 +76,6 @@ export const transactionHistoryServiceQueryOptions = (partyId: string) =>
         gcTime: Infinity,
     })
 
-export const usePendingTransfersQueryOptions = (party: string | undefined) => {
-    const { sdk } = useWalletSdk()
-
-    return queryOptions({
-        queryKey: queryKeys.walletConnection.pendingTransfers.forParty(party),
-        enabled: !!party && !!sdk,
-        queryFn: async () => {
-            if (!party || !sdk) {
-                throw new Error('Wallet SDK and party are required')
-            }
-
-            return await sdk.token.v1.transfer.pending(party)
-        },
-    })
-}
-
-export const usePendingTransfersV2QueryOptions = (
-    party: string | undefined
-) => {
-    const { sdk } = useWalletSdk()
-
-    return queryOptions({
-        queryKey: queryKeys.walletConnection.pendingTransfersV2.forParty(party),
-        enabled: !!party && !!sdk,
-        queryFn: async () => {
-            if (!party || !sdk) {
-                throw new Error('Wallet SDK and party are required')
-            }
-
-            return await sdk.token.v2.transfer.pending(party)
-        },
-    })
-}
-
 export const useAllocationRequestsQueryOptions = (
     party: string | undefined
 ) => {

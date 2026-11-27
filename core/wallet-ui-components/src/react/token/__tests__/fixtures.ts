@@ -9,11 +9,28 @@ import type {
 import type { PrettyContract } from '@canton-network/core-tx-parser'
 
 import type { PortfolioHolding } from '../holdings.ts'
+import type { RegistryInstrument } from '../registry-instrument.ts'
 
 export const alice = 'alice::1220'
 export const bob = 'bob::1220'
 export const amulet = { admin: 'dso::1220', id: 'Amulet' }
 export const createdAt = '2026-01-01T00:00:00.000Z'
+
+export const amuletInstrument: RegistryInstrument = {
+    ...amulet,
+    name: 'Amulet',
+    displayName: 'Amulet',
+    symbol: 'AMT',
+    decimals: 10,
+    registryUrl: 'http://scan.localhost:4000',
+    capabilities: {
+        holding: ['v1'],
+        transferInstruction: ['v1', 'v2'],
+        allocation: [],
+        allocationInstruction: [],
+        allocationRequest: [],
+    },
+}
 
 type Lock = PortfolioHolding['lock']
 
