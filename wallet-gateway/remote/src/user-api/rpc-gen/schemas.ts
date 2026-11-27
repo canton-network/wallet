@@ -700,6 +700,13 @@ export const paramSchemas: Record<string, z.ZodType> = {
                 type: 'string',
                 description: 'Origin starting the onboarding flow.',
             },
+            scopes: {
+                title: 'scopes',
+                type: 'array',
+                description:
+                    'Ledger api token scopes. They will be added to network.auth.scope of the self-issued token.',
+                items: { title: 'scope', type: 'string' },
+            },
         },
         required: ['username', 'networkId', 'origin'],
     }),
@@ -1027,6 +1034,12 @@ export const paramSchemas: Record<string, z.ZodType> = {
                 type: 'string',
                 minLength: 1,
                 description: 'Network Id',
+            },
+            scopes: {
+                title: 'scopes',
+                type: 'array',
+                description: 'Ledger api token scopes the dApp requested.',
+                items: { title: 'scope', type: 'string' },
             },
         },
         required: ['networkId', 'origin'],

@@ -22,6 +22,8 @@ import {
     idpSchema,
     resolveAuthIdentityProviderId,
     assertIsConnected,
+    findInvalidScope,
+    mergeScopes,
 } from '@canton-network/core-wallet-auth'
 import {
     assertLoginAllowed,
@@ -558,6 +560,7 @@ export const userController = ({
                 )
             }
 
+            assertValidScopes(params.scopes)
             const accessToken = await new AuthTokenProvider({
                 method: 'self_signed',
                 issuer: idp.issuer,
@@ -680,6 +683,7 @@ export const userController = ({
             if (!username) {
                 throw new Error('username is required')
             }
+            assertValidScopes(params.scopes)
 
             const network = await authAwareStore.getNetwork(params.networkId)
             if (network.auth.method !== 'self_issued') {
@@ -698,6 +702,7 @@ export const userController = ({
                 id: sessionId,
                 origin: params.origin,
                 network: network.id,
+                ...(params.scopes && { scopes: params.scopes }),
             })
 
             return { sessionId }
@@ -1061,6 +1066,7 @@ export const userController = ({
                 const network = await store.getNetwork(params.networkId)
                 const idp = await store.getIdp(network.identityProviderId)
 
+                // TODO should check scope claim against params.scopes?
                 assertTokenClaimsMatchNetwork(accessToken, network, idp)
 
                 await store.setSession({
@@ -1068,6 +1074,7 @@ export const userController = ({
                     origin: params.origin,
                     network: params.networkId,
                     accessToken: accessToken || '',
+                    ...(params.scopes && { scopes: params.scopes }),
                 })
 
                 const ledgerClient = new LedgerClient({
@@ -1602,22 +1609,13 @@ export const userController = ({
     })
 }
 
-// concatenates network.auth.scope with scoped token scopes requested by a dApp with deduplication
-function mergeScopes(networkScope: string, scopes: string[] = []): string {
-    // Don't throw on empty or space padded requested scope, just filter it out
-    const requested = scopes.map((scope) => scope.trim()).filter(Boolean)
-
-    // Prevent sneaking in multiple scopes as a single requested one with spaces in-between
-    const invalid = requested.find((scope) => /\s/.test(scope))
+function assertValidScopes(scopes: string[] | undefined): void {
+    const invalid = findInvalidScope(scopes)
     if (invalid !== undefined) {
         throw rpcErrors.invalidParams({
             message: `Scope "${invalid}" must not contain whitespace`,
         })
     }
-
-    return [...new Set([...networkScope.split(/\s+/), ...requested])]
-        .filter(Boolean)
-        .join(' ')
 }
 
 /** API keys get their ledger tokens through the network's service account auth */

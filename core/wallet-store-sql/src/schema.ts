@@ -129,6 +129,7 @@ interface SessionTable {
     network: string
     accessTokenHash: string | null
     userId: UserId
+    scopes: string | null // json stringified
 }
 
 interface ApiKeysTable {
@@ -276,6 +277,7 @@ export const toSession = (table: SessionTable): Session => {
             ? { accessTokenHash: table.accessTokenHash }
             : {}),
         userId: table.userId,
+        ...(table.scopes !== null && { scopes: JSON.parse(table.scopes) }),
     }
 }
 

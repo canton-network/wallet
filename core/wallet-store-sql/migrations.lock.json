@@ -22,6 +22,7 @@
         "019-make-session-access-token-nullable": "f10a15bc2323c1177d5dad4b1f4df81853e71a9df968223fe388836d8584ec35",
         "020-add-message-external-tx-id-and-failure-reason": "79d875d49168b5320af44ce735cad32e3a7e5156d14fadb15df813e492b8dc6b",
         "021-add-message-kind": "6d4b4a27f6e3edbadf5104b7773ed36a06c76c0b1a02c0b39689e4ff60a8e77d",
-        "022-hash-session-access-token": "b394f4fedc768d22efb3c98b4eb3255c4bda99011446cf83a17be4ffd50c6a60"
+        "022-hash-session-access-token": "b394f4fedc768d22efb3c98b4eb3255c4bda99011446cf83a17be4ffd50c6a60",
+        "023-add-session-scopes": "19ca5fd71a9c705d2daadbd64f2bafec04d6be81f6fb024864d5bf78653eb071"
     }
 }

@@ -538,6 +538,9 @@ export class StoreSql implements BaseStore, AuthAware<StoreSql> {
                     network: session.network,
                     accessTokenHash: tokenHash,
                     userId,
+                    scopes: session.scopes?.length
+                        ? JSON.stringify(session.scopes)
+                        : null,
                 })
                 .execute()
 

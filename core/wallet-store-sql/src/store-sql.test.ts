@@ -763,6 +763,66 @@ implementations.forEach(([name, StoreImpl]) => {
             )
         })
 
+        test('stores the requested scopes with the session and keeps them through the self-issued upgrade', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.setSession({
+                id: 'scoped-session',
+                origin: 'https://a.example',
+                network: 'network1',
+                accessToken: 'scoped-token',
+                scopes: ['ledger:read', 'users:self'],
+            })
+            await store.setSession({
+                id: 'onboarding-session',
+                origin: 'https://b.example',
+                network: 'network1',
+                scopes: ['ledger:read'],
+            })
+
+            await expect(store.getSession('scoped-token')).resolves.toEqual(
+                expect.objectContaining({
+                    scopes: ['ledger:read', 'users:self'],
+                })
+            )
+            await expect(
+                store.getSelfIssuedLoginSession('onboarding-session')
+            ).resolves.toEqual(
+                expect.objectContaining({ scopes: ['ledger:read'] })
+            )
+            await expect(
+                store.upgradeSelfIssuedLoginSession(
+                    'onboarding-session',
+                    'upgraded-token',
+                    'login-message'
+                )
+            ).resolves.toEqual(
+                expect.objectContaining({ scopes: ['ledger:read'] })
+            )
+            await expect(store.getSession('upgraded-token')).resolves.toEqual(
+                expect.objectContaining({ scopes: ['ledger:read'] })
+            )
+        })
+
+        test('stores an empty scope list as no scopes', async () => {
+            const store = new StoreImpl(db, authContextMock)
+            await store.setSession({
+                id: 'unscoped-session',
+                origin: 'https://example.com',
+                network: 'network1',
+                accessToken: 'unscoped-token',
+                scopes: [],
+            })
+
+            const session = await store.getSession('unscoped-token')
+            expect(session).toBeDefined()
+            expect(session).not.toHaveProperty('scopes')
+            const row = await db
+                .selectFrom('sessions')
+                .select('scopes')
+                .executeTakeFirstOrThrow()
+            expect(row.scopes).toBeNull()
+        })
+
         test('should add, list, get, update, and remove networks', async () => {
             const store = new StoreImpl(db, authContextMock)
             await store.addIdp(idp)

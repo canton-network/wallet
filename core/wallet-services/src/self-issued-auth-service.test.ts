@@ -5,6 +5,7 @@ import type { LedgerClient } from '@canton-network/core-ledger-client'
 import { SigningProvider } from '@canton-network/core-signing-lib'
 import type {
     MessageRaw,
+    Session,
     Store,
     Wallet,
 } from '@canton-network/core-wallet-store'
@@ -78,6 +79,14 @@ const network = {
     },
 }
 
+const loginSession = (scopes?: string[]): Session => ({
+    id: 'onboarding-session',
+    origin: 'https://app.example',
+    network: 'network-1',
+    userId: 'alice',
+    ...(scopes && { scopes }),
+})
+
 describe('SelfIssuedAuthService', () => {
     const logger = {
         info: vi.fn(),
@@ -94,6 +103,7 @@ describe('SelfIssuedAuthService', () => {
             | 'setMessageRaw'
             | 'getMessageRaw'
             | 'setMessageRawStatus'
+            | 'getSelfIssuedLoginSession'
         >
     >
     let signMessageService: Mocked<
@@ -141,6 +151,9 @@ describe('SelfIssuedAuthService', () => {
             setMessageRaw: vi.fn().mockResolvedValue(undefined),
             getMessageRaw: vi.fn(),
             setMessageRawStatus: vi.fn().mockResolvedValue(undefined),
+            getSelfIssuedLoginSession: vi
+                .fn()
+                .mockResolvedValue(loginSession()),
         }
         walletAllocator = {
             createWallet: vi.fn(),
@@ -585,6 +598,45 @@ describe('SelfIssuedAuthService', () => {
             })
             expect(ledgerClient.patch).not.toHaveBeenCalled()
             expect(store.upgradeSelfIssuedLoginSession).not.toHaveBeenCalled()
+        })
+
+        it('adds the scopes of the login session to the network scope', async () => {
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            store.getSelfIssuedLoginSession.mockResolvedValue(
+                loginSession(['ledger:read', 'daml_ledger_api'])
+            )
+
+            await createService().signAccessToken('alice::ns')
+
+            expect(store.getSelfIssuedLoginSession).toHaveBeenCalledWith(
+                'onboarding-session'
+            )
+            const payload = JSON.parse(
+                new TextDecoder().decode(
+                    decodeBase64(
+                        savedTokenMessage().message.split('.')[1],
+                        'base64url'
+                    )
+                )
+            )
+            expect(payload.scope).toBe('daml_ledger_api ledger:read')
+        })
+
+        it('rejects a login session that no longer exists', async () => {
+            store.getWallet.mockResolvedValue(
+                createWallet({ status: 'allocated' })
+            )
+            store.getSelfIssuedLoginSession.mockResolvedValue(undefined)
+
+            await expect(
+                createService().signAccessToken('alice::ns')
+            ).rejects.toThrow(
+                'Self-issued login session onboarding-session not found'
+            )
+            expect(store.setMessageRaw).not.toHaveBeenCalled()
+            expect(signMessageService.sign).not.toHaveBeenCalled()
         })
 
         it('returns awaiting-signature while the provider awaits approval', async () => {

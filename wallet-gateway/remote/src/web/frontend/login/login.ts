@@ -159,6 +159,7 @@ export class LoginUI extends BaseElement {
                         username: onboardingUsername,
                         networkId: selectedNetwork.id,
                         origin: currentOrigin,
+                        scopes: this.scopes,
                     },
                 })
                 stateManager.selfIssuedLoginSessionId.set(
@@ -287,7 +288,7 @@ export class LoginUI extends BaseElement {
         )
         await stateManager.accessToken.set(accessToken, currentOrigin)
 
-        await addUserSession(accessToken, networkId)
+        await addUserSession(accessToken, networkId, this.scopes)
     }
 
     protected render() {

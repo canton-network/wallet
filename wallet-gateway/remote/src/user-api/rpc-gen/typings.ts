@@ -143,7 +143,7 @@ export interface Network {
 export type NetworkName = string
 /**
  *
- * Ledger api token scopes. They will be added to network.auth.scope.
+ * Ledger api token scopes the dApp requested.
  *
  */
 export type Scopes = Scope[]
@@ -740,6 +740,7 @@ export interface StartSelfIssuedLoginSessionParams {
     username: Username
     networkId: NetworkId
     origin: Origin
+    scopes?: Scopes
 }
 export interface GetSelfIssuedLoginModeParams {
     sessionId: SessionId
@@ -805,6 +806,7 @@ export interface ExecuteParams {
 export interface AddSessionParams {
     origin: Origin
     networkId: NetworkId
+    scopes?: Scopes
 }
 export interface GetTransactionParams {
     transactionId: TransactionId

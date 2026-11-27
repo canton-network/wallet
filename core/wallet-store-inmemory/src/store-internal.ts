@@ -323,7 +323,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
 
     async setSession(session: NewSession): Promise<void> {
         const userId = this.assertConnected()
-        const { accessToken, ...rest } = session
+        const { accessToken, scopes, ...rest } = session
         const tokenHash = accessToken
             ? await hashAccessToken(accessToken)
             : undefined
@@ -342,6 +342,7 @@ export class StoreInternal implements Store, AuthAware<StoreInternal> {
             ...rest,
             ...(tokenHash ? { accessTokenHash: tokenHash } : {}),
             userId,
+            ...(scopes?.length ? { scopes } : {}),
         })
         this.updateStorage(storage)
     }

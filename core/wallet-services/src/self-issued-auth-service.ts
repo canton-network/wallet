@@ -16,6 +16,7 @@ import {
     type AuthContext,
     AuthTokenProvider,
     SelfIssuedTokenService,
+    mergeScopes,
     resolveAuthIdentityProviderId,
 } from '@canton-network/core-wallet-auth'
 import type {
@@ -493,9 +494,18 @@ export class SelfIssuedAuthService {
             throw new Error('Current network has no synchronizerId')
         }
 
+        const loginSession = await this.store.getSelfIssuedLoginSession(
+            this.session.sessionId
+        )
+        if (!loginSession) {
+            throw new Error(
+                `Self-issued login session ${this.session.sessionId} not found`
+            )
+        }
+
         return SelfIssuedTokenService.prepareForSigning(wallet.publicKey, {
             audience: network.auth.audience,
-            scope: network.auth.scope,
+            scope: mergeScopes(network.auth.scope, loginSession.scopes),
             partyId: wallet.partyId,
             username: this.session.userId,
             synchronizerId: network.synchronizerId,

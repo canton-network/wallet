@@ -102,6 +102,10 @@ export interface Session {
      */
     accessTokenHash?: string
     userId?: string
+    /**
+     * Ledger API scopes the dApp requested. Absent when the dApp requested none.
+     */
+    scopes?: string[]
 }
 
 /**

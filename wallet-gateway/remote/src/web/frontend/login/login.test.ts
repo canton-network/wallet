@@ -260,7 +260,8 @@ describe('LoginUI', () => {
         expect(mockExpirationDateSet).toHaveBeenCalled()
         expect(mockAddUserSession).toHaveBeenCalledWith(
             defaultAccessToken,
-            'net-1'
+            'net-1',
+            []
         )
         expect(mockRedirectToIntendedOrDefault).toHaveBeenCalled()
     })
@@ -288,6 +289,7 @@ describe('LoginUI', () => {
                 username: 'alice',
                 networkId: 'self-issued-network',
                 origin: window.location.origin,
+                scopes: [],
             },
         })
         expect(mockOnboardingSessionIdSet).toHaveBeenCalledWith(
@@ -321,6 +323,7 @@ describe('LoginUI', () => {
                     networkId: 'net-1',
                     clientId: 'client-id',
                     clientSecret: 'network-secret',
+                    scopes: [],
                 },
             })
         )
@@ -360,6 +363,49 @@ describe('LoginUI', () => {
                     },
                 })
             )
+            expect(mockAddUserSession).toHaveBeenCalledWith(
+                defaultAccessToken,
+                'net-1',
+                ['ledger:read', 'l:pkg:#pkg-one']
+            )
+        } finally {
+            window.history.replaceState(null, '', originalUrl)
+        }
+    })
+
+    it('starts a self-issued login session with the scopes from the URL query', async () => {
+        const originalUrl = window.location.href
+        window.history.replaceState(
+            null,
+            '',
+            '?scopes=ledger%3Aread&scopes=l%3Apkg%3A%23pkg-one'
+        )
+        try {
+            const scopedEl = await fixture<LoginUI>(componentFixture)
+            await waitUntil(() => scopedEl.networks.length === 1)
+
+            dispatchConnect(
+                scopedEl,
+                makePublicNetwork({
+                    id: 'self-issued-network',
+                    authMethod: 'self_issued',
+                }),
+                selfSignedIdp,
+                undefined,
+                undefined,
+                'alice'
+            )
+
+            await waitUntil(() => setLocationHref.mock.calls.length > 0)
+            expect(mockRequest).toHaveBeenCalledWith({
+                method: 'startSelfIssuedLoginSession',
+                params: {
+                    username: 'alice',
+                    networkId: 'self-issued-network',
+                    origin: window.location.origin,
+                    scopes: ['ledger:read', 'l:pkg:#pkg-one'],
+                },
+            })
         } finally {
             window.history.replaceState(null, '', originalUrl)
         }
