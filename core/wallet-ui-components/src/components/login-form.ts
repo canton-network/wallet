@@ -8,11 +8,20 @@ import type {
 import { css, html, nothing, type PropertyValues } from 'lit'
 
 import './back-link.ts'
+import './scope-consent.ts'
 import { customElement, property, state } from 'lit/decorators.js'
 
 import cantonLogo from '../../images/logos/canton-logo.png'
 import { chevronDownIcon } from '../icons/index.ts'
 import { BaseElement } from '../internal/base-element.ts'
+import { assessScopes } from '../logic/scopes.ts'
+
+const CONSENT_LABELS = {
+    none: 'I allow this dApp full access',
+    scoped: 'I allow this dApp to use these permissions',
+    partial: 'I allow this dApp to use these permissions',
+    unrecognized: 'I understand this dApp may get full access',
+} as const
 
 /** Emitted when the user clicks the Connect button */
 export class LoginConnectEvent extends Event {
@@ -52,6 +61,9 @@ class WgLoginForm extends BaseElement {
 
     @property({ type: Boolean }) accessor connecting = false
     @property({ type: String }) accessor backHref = '/'
+    /** Scopes to ask consent for. Undefined or an empty array asks consent for full access */
+    @property({ type: Array }) accessor scopes: string[] | undefined = undefined
+    @property({ type: String }) accessor origin = ''
 
     @property({ type: Boolean }) accessor displayTopBar = true
 
@@ -284,6 +296,29 @@ class WgLoginForm extends BaseElement {
         this.messageType = null
     }
 
+    private renderScopesConsent() {
+        const { verdict } = assessScopes(this.scopes)
+
+        return html`<div class="mb-3">
+            <wg-scope-consent
+                .scopes=${this.scopes}
+                .origin=${this.origin}
+            ></wg-scope-consent>
+            <div class="form-check mt-2 mb-0">
+                <input
+                    id="scopes-consent"
+                    class="form-check-input"
+                    type="checkbox"
+                    required
+                    ?disabled=${this.connecting}
+                />
+                <label class="form-check-label" for="scopes-consent"
+                    >${CONSENT_LABELS[verdict]}</label
+                >
+            </div>
+        </div>`
+    }
+
     protected render() {
         const renderAuthSpecificInputs = () => {
             if (
@@ -358,6 +393,8 @@ class WgLoginForm extends BaseElement {
                     <div class="title-row">
                         <h3 class="h3 mb-0 fw-bold">Wallet Gateway</h3>
                     </div>
+
+                    ${this.renderScopesConsent()}
 
                     <label
                         class="form-label fw-semibold text-body mt-3 mb-2"

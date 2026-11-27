@@ -27,7 +27,9 @@ const {
     mockNetworkIdGet,
     mockOnboardingSessionIdSet,
     setLocationHref,
+    mockDetectCurrentOrigin,
 } = vi.hoisted(() => ({
+    mockDetectCurrentOrigin: vi.fn(),
     mockCreateUserClient: vi.fn(),
     handleErrorToast: vi.fn(),
     mockRedirectToIntendedOrDefault: vi.fn(),
@@ -54,6 +56,9 @@ vi.mock('../index.ts', () => ({
     addUserSession: mockAddUserSession,
 }))
 vi.mock('../navigation.ts', () => ({ setLocationHref }))
+vi.mock('../listeners.ts', () => ({
+    detectCurrentOrigin: mockDetectCurrentOrigin,
+}))
 vi.mock('../rpc-client.ts', () => ({
     createUserClient: mockCreateUserClient,
 }))
@@ -164,6 +169,8 @@ describe('LoginUI', () => {
         mockNetworkIdGet.mockReturnValue('net-1')
         mockOnboardingSessionIdSet.mockReset()
         setLocationHref.mockReset()
+        mockDetectCurrentOrigin.mockReset()
+        mockDetectCurrentOrigin.mockResolvedValue(window.origin)
         mockCreateUserClient.mockResolvedValue(createMockUserClient())
         mockRequest.mockImplementation(async ({ method }) => {
             if (method === 'listNetworks') {
@@ -197,6 +204,40 @@ describe('LoginUI', () => {
 
         expect(el.shadowRoot?.querySelector('wg-login-form')).not.toBeNull()
         expect(el.idps).toHaveLength(1)
+    })
+
+    it('passes scopes from the URL query to the login form', async () => {
+        const originalUrl = window.location.href
+        window.history.replaceState(
+            null,
+            '',
+            '?scopes=ledger%3Aread&scopes=l%3Apkg%3A%23pkg-one'
+        )
+        try {
+            const scopedEl = await fixture<LoginUI>(componentFixture)
+            await waitUntil(() => scopedEl.networks.length === 1)
+
+            expect(getLoginForm(scopedEl)?.scopes).toEqual([
+                'ledger:read',
+                'l:pkg:#pkg-one',
+            ])
+        } finally {
+            window.history.replaceState(null, '', originalUrl)
+        }
+    })
+
+    it('passes the current origin to the login form', async () => {
+        mockDetectCurrentOrigin.mockResolvedValue('https://dapp.example')
+        const dappEl = await fixture<LoginUI>(componentFixture)
+        await waitUntil(() => dappEl.networks.length === 1)
+
+        expect(getLoginForm(dappEl)?.origin).toBe('https://dapp.example')
+    })
+
+    it('passes no scopes when the URL has no scopes query', async () => {
+        await waitUntil(() => el.networks.length === 1)
+
+        expect(getLoginForm(el)?.scopes).toEqual([])
     })
 
     it('redirects after self-signed connect succeeds', async () => {
