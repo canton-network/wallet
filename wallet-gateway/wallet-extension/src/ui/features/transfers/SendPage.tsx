@@ -11,7 +11,6 @@ import {
     type TokenStandardVersion,
     type TokenWallet,
 } from '@canton-network/core-wallet-ui-components/react/token'
-import ArrowBack from '@mui/icons-material/ArrowBack'
 import Alert from '@mui/material/Alert'
 import Button from '@mui/material/Button'
 import FormControlLabel from '@mui/material/FormControlLabel'
@@ -200,11 +199,7 @@ export function SendPage() {
 
     return (
         <>
-            <PageHeader heading="Send">
-                <ButtonLink to="/assets" size="small" startIcon={<ArrowBack />}>
-                    Assets
-                </ButtonLink>
-            </PageHeader>
+            <PageHeader heading="Send" />
 
             {wallets.isError ? (
                 <Alert severity="error">
