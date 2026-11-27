@@ -46,3 +46,4 @@ export {
     type RawFields,
     type RawValue,
 } from './unknown-fields.ts'
+export { Code } from './_proto/google/rpc/code.ts'

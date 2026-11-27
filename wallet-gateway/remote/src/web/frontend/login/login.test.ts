@@ -77,6 +77,7 @@ vi.mock('@canton-network/core-wallet-ui-components', async (importOriginal) => {
     return { ...actual, handleErrorToast }
 })
 
+import type { AuthVerdict } from '../index.ts'
 import './login.ts'
 import type { LoginUI } from './login.ts'
 
@@ -121,6 +122,16 @@ function dispatchConnect(
                 username
             )
         )
+}
+
+// Stands in for <user-ui-auth-redirect>, which is mocked away with ../index.js
+async function settleAuth(el: LoginUI, verdict: AuthVerdict) {
+    el.shadowRoot
+        ?.querySelector('user-ui-auth-redirect')
+        ?.dispatchEvent(
+            new CustomEvent('auth-settled', { detail: { verdict } })
+        )
+    await el.updateComplete
 }
 
 function getLoginForm(el: LoginUI): WgLoginForm | null {
@@ -181,6 +192,7 @@ describe('LoginUI', () => {
             return undefined
         })
         el = await fixture<LoginUI>(componentFixture)
+        await settleAuth(el, 'show-page')
     })
 
     afterEach(() => {
@@ -190,6 +202,28 @@ describe('LoginUI', () => {
         vi.unstubAllGlobals()
         vi.restoreAllMocks()
         vi.useRealTimers()
+    })
+
+    it('hides the login form until the user is known not to be logged in', async () => {
+        const pending = await fixture<LoginUI>(componentFixture)
+        expect(getLoginForm(pending)).toBeNull()
+
+        await settleAuth(pending, 'redirecting')
+        expect(getLoginForm(pending)).toBeNull()
+        expect(
+            pending.shadowRoot?.querySelector('wg-loading-state')
+        ).not.toBeNull()
+
+        await settleAuth(pending, 'show-page')
+        expect(getLoginForm(pending)).not.toBeNull()
+    })
+
+    it('shows the login form when the session could not be verified', async () => {
+        const pending = await fixture<LoginUI>(componentFixture)
+
+        await settleAuth(pending, 'unavailable')
+
+        expect(getLoginForm(pending)).not.toBeNull()
     })
 
     it('renders the login form with loaded networks and idps', async () => {

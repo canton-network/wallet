@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { Code } from '@canton-network/core-ledger-proto'
 import { rpcErrors, toHttpErrorCode } from '@canton-network/core-rpc-errors'
 import type { JsonRpcResponse } from '@canton-network/core-types'
 import type { Request, Response } from 'express'
@@ -500,6 +501,30 @@ describe('handleRpcError', () => {
             data: ledgerErr,
         })
     })
+
+    it.each([
+        [Code.UNAUTHENTICATED, 'UNAUTHENTICATED'],
+        [Code.PERMISSION_DENIED, 'PERMISSION_DENIED'],
+    ])(
+        'adds the gRPC code %i to the message of a Canton error',
+        (grpcCodeValue, name) => {
+            const ledgerErr = {
+                code: 'NA',
+                cause: 'A security-sensitive error has been received',
+                context: {},
+                errorCategory: -1,
+                grpcCodeValue,
+            }
+            const [status, body] = handleRpcError(ledgerErr, null)
+
+            expect(status).toBe(500)
+            expect(errorPayload(body)).toEqual({
+                code: rpcErrors.internal().code,
+                message: `A security-sensitive error has been received (${name})`,
+                data: ledgerErr,
+            })
+        }
+    )
 
     it('falls back to generic internal error for unknown payloads', () => {
         const [status, body] = handleRpcError({ foo: 'bar' }, 2, 'wrongMethod')

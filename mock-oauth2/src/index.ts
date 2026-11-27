@@ -23,6 +23,11 @@ const readQueryParam = (req: { url?: string }, key: string): string => {
     return requestUrl.searchParams.get(key) || ''
 }
 
+// Access token lifetime. Set it to e.g. 90 to try out token expiry without
+// waiting an hour.
+const tokenTtlSeconds =
+    Number(process.env.MOCK_OAUTH2_TOKEN_TTL_SECONDS) || 3600
+
 async function main() {
     logger.info('Starting mock-oauth2 server...')
 
@@ -155,9 +160,8 @@ async function main() {
         // Unique ID per token, so tokens generated in the same second for same network and user differ
         token.payload.jti = randomUUID()
 
-        // Set token expiration to 1 hour from now
         const now = Math.floor(Date.now() / 1000)
-        token.payload.exp = now + 3600
+        token.payload.exp = now + tokenTtlSeconds
         token.payload.iat = now
     })
 }

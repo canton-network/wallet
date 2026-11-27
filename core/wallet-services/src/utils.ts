@@ -120,7 +120,7 @@ export async function networkStatus(
     } catch (e) {
         return {
             isConnected: false,
-            reason: `Ledger unreachable: ${(e as Error).message}`,
+            reason: `Ledger status check failed: ${(e as Error).message}`,
         }
     }
 }

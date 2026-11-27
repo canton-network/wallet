@@ -204,8 +204,33 @@ describe('AuthTokenProvider', () => {
 
         await expect(
             AuthTokenProvider.fromToken(token).getAccessToken()
-        ).rejects.toThrow(
-            'Attempted to refresh a token, but it came back expired.'
+        ).rejects.toThrow('The access token is expired or not a valid JWT')
+    })
+
+    it('rejects a token that is not a JWT', async () => {
+        await expect(
+            AuthTokenProvider.fromToken('abc.def.ghi').getAccessToken()
+        ).rejects.toThrow('The access token is expired or not a valid JWT')
+    })
+
+    it('names the method that fetched an invalid token', async () => {
+        vi.mocked(clientCredentialsService).mockReturnValue({
+            fetchToken: vi.fn().mockResolvedValue('abc.def.ghi'),
+        })
+        const provider = new AuthTokenProvider({
+            method: 'client_credentials',
+            configUrl,
+            credentials: tokenProviderConfig.credentials,
+        })
+
+        await expect(provider.getAccessToken()).rejects.toThrow(
+            'The access token fetched via client_credentials is expired or not a valid JWT'
         )
+    })
+
+    it('rejects a missing token', async () => {
+        await expect(
+            AuthTokenProvider.fromToken('').getAccessToken()
+        ).rejects.toThrow('No access token available')
     })
 })

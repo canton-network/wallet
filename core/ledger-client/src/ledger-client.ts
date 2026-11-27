@@ -191,7 +191,6 @@ export class LedgerClient {
 
     public async init() {
         if (!this.initialized) {
-            //TODO: parse error response and escalate
             const versionFromClient =
                 await this.currentClient.GET('/v2/version')
 
@@ -199,6 +198,13 @@ export class LedgerClient {
                 data: versionFromClient.data,
                 status: versionFromClient.response.status,
             })
+
+            if (!versionFromClient.response.ok) {
+                throw new Error(
+                    `GET /v2/version failed with HTTP ${versionFromClient.response.status}`,
+                    { cause: versionFromClient.error }
+                )
+            }
 
             this.clientVersion = this.parseSupportedVersions(
                 versionFromClient.data?.version
@@ -574,14 +580,14 @@ export class LedgerClient {
     ): Promise<PostResponse<Path>> {
         let lastBody: PostRequest<Path> | undefined
 
-        return await retryable(() => {
-            lastBody = isBodyFactory(body) ? body() : body
-            return this.post(path, lastBody, params, additionalOptions)
-        }, retryOptions).catch((e) => {
-            this.logger.warn(`Error in postWithRetry for path {path}`, {
-                path,
-                options: retryOptions,
-            })
+        return await retryable(
+            () => {
+                lastBody = isBodyFactory(body) ? body() : body
+                return this.post(path, lastBody, params, additionalOptions)
+            },
+            retryOptions,
+            `POST ${path}`
+        ).catch((e) => {
             this.logger.debug({ body: lastBody })
             throw asJsCantonError(e)
         })
@@ -597,12 +603,9 @@ export class LedgerClient {
     ): Promise<GetResponse<Path>> {
         return await retryable(
             () => this.get(path, params),
-            retryOptions
+            retryOptions,
+            `GET ${path}`
         ).catch((e) => {
-            this.logger.warn(
-                `Error in getWithRetry for path ${path} with retry options ${JSON.stringify(retryOptions)}`
-            )
-
             throw asJsCantonError(e)
         })
     }
@@ -619,11 +622,9 @@ export class LedgerClient {
     ): Promise<PatchResponse<Path>> {
         return await retryable(
             () => this.patch(path, body, params, additionalOptions),
-            retryOptions
+            retryOptions,
+            `PATCH ${path}`
         ).catch((e) => {
-            this.logger.warn(
-                `Error in patchWithRetry for path ${path} with body retry options ${JSON.stringify(retryOptions)}`
-            )
             throw asJsCantonError(e)
         })
     }

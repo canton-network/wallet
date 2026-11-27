@@ -126,9 +126,14 @@ export class AuthTokenProvider implements AccessTokenProvider {
             return this.cachedToken
         } else {
             const newToken = await this._fetchToken()
+            if (!newToken) {
+                throw new Error('No access token available')
+            }
             if (jwtExpired(newToken)) {
                 throw new Error(
-                    'Attempted to refresh a token, but it came back expired.'
+                    this.config.method === 'static'
+                        ? 'The access token is expired or not a valid JWT'
+                        : `The access token fetched via ${this.config.method} is expired or not a valid JWT`
                 )
             }
 

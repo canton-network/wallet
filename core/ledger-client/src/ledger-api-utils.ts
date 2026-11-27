@@ -124,28 +124,44 @@ export const defaultRetryableOptions: RetryableOptions = {
 
 export async function retryable<T>(
     fn: () => Promise<T>,
-    retryableOptions: RetryableOptions
+    retryableOptions: RetryableOptions,
+    request: string
 ): Promise<T> {
-    for (let attempts = 1; attempts <= retryableOptions.retries; attempts++) {
+    const { retries, delayMs, cantonErrorKeys } = retryableOptions
+    const logFailure = (attempts: number, err: unknown) =>
+        logger.warn(
+            attempts > 1
+                ? '{request} failed after {attempts} attempts: {error}'
+                : '{request} failed and was not retried: {error}',
+            {
+                request,
+                attempts,
+                error: err instanceof Error ? err.message : err,
+            }
+        )
+
+    for (let attempts = 1; attempts <= retries; attempts++) {
         try {
             return await fn()
         } catch (err: unknown) {
-            const grpcError = asGrpcError(err)
-            const message: string = grpcError.message
+            let grpcError: ReturnType<typeof asGrpcError>
+            try {
+                grpcError = asGrpcError(err)
+            } catch {
+                logFailure(attempts, err)
+                throw err
+            }
             const shouldRetry =
-                retryableOptions.cantonErrorKeys.length === 0 ||
-                retryableOptions.cantonErrorKeys.some((key) =>
-                    message.includes(key)
+                cantonErrorKeys.length === 0 ||
+                cantonErrorKeys.some((key) => grpcError.message.includes(key))
+            if (attempts < retries && shouldRetry) {
+                logger.info(
+                    '{request} failed with a retryable error, retrying (attempt {attempts} of {retries}): {error}',
+                    { request, attempts, retries, error: grpcError.message }
                 )
-            if (attempts < retryableOptions.retries && shouldRetry) {
-                logger.warn(
-                    `Caught retryiable error: ${message}. Retrying attempt ${attempts} of ${retryableOptions.retries}...`
-                )
-                await new Promise((res) =>
-                    setTimeout(res, retryableOptions.delayMs)
-                )
-                // continue to next attempt
+                await new Promise((res) => setTimeout(res, delayMs))
             } else {
+                logFailure(attempts, grpcError)
                 throw grpcError
             }
         }

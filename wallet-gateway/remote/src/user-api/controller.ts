@@ -1093,7 +1093,7 @@ export const userController = ({
                                 networkId: network.id,
                                 reason: status.reason,
                             },
-                            'Skipping initial wallet sync because the ledger is unavailable'
+                            'Skipping initial wallet sync because the ledger status check failed'
                         )
                     } else {
                         try {
