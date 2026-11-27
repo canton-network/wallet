@@ -13,8 +13,10 @@ import Stack from '@mui/material/Stack'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 
+import { partyLabel } from './party-label.ts'
 import { PartyTransfersPage, TransferList } from './PartyTransfers.tsx'
 import { TransferChoiceDialog } from './TransferChoiceDialog.tsx'
+import { useHasExpired } from './useHasExpired.ts'
 import { useSymbol } from './useSymbol.ts'
 
 type IncomingChoice = 'Accept' | 'Reject'
@@ -40,11 +42,12 @@ function Transfers({ partyId }: { partyId: string }) {
                 pending={incoming}
                 waitingFor="your party to accept them"
             >
-                {(transfer) => (
+                {(transfer, actionable) => (
                     <TransferCard
                         key={transfer.contractId}
                         partyId={partyId}
                         transfer={transfer}
+                        actionable={actionable}
                         onChoose={(choice) => setChoosing({ transfer, choice })}
                     />
                 )}
@@ -61,23 +64,21 @@ function Transfers({ partyId }: { partyId: string }) {
     )
 }
 
-function hasExpired({ executeBefore }: IncomingTransfer): boolean {
-    return new Date(executeBefore).getTime() <= Date.now()
-}
-
 function TransferCard({
     partyId,
     transfer,
+    actionable,
     onChoose,
 }: {
     partyId: string
     transfer: IncomingTransfer
+    actionable: boolean
     onChoose: (choice: IncomingChoice) => void
 }) {
     const symbol = useSymbol(transfer)
-    const expired = hasExpired(transfer)
-    const canAccept = canAct(partyId, transfer, 'Accept')
-    const canReject = canAct(partyId, transfer, 'Reject')
+    const expired = useHasExpired(transfer.executeBefore)
+    const canAccept = actionable && canAct(partyId, transfer, 'Accept')
+    const canReject = actionable && canAct(partyId, transfer, 'Reject')
     // An expired transfer can no longer be accepted, but rejecting it still
     // returns the amount to the sender.
     const choices: IncomingChoice[] = [
@@ -92,7 +93,7 @@ function TransferCard({
                     {transfer.amount} {symbol}
                 </Typography>
                 <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-                    From {transfer.sender}
+                    From {partyLabel(transfer.sender)}
                 </Typography>
                 {transfer.memo !== '' && (
                     <Typography
@@ -125,6 +126,7 @@ function TransferCard({
                         ))}
                     </Stack>
                 ) : (
+                    actionable &&
                     !canAccept &&
                     !canReject && (
                         <Typography variant="body2" color="text.secondary">

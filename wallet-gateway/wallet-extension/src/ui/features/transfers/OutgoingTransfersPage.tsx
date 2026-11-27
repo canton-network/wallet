@@ -12,6 +12,7 @@ import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import { useState } from 'react'
 
+import { partyLabel } from './party-label.ts'
 import { PartyTransfersPage, TransferList } from './PartyTransfers.tsx'
 import { TransferChoiceDialog } from './TransferChoiceDialog.tsx'
 import { useSymbol } from './useSymbol.ts'
@@ -31,10 +32,11 @@ function Transfers({ partyId }: { partyId: string }) {
     return (
         <>
             <TransferList pending={outgoing} waitingFor="their receiver">
-                {(transfer) => (
+                {(transfer, actionable) => (
                     <TransferCard
                         key={transfer.contractId}
                         transfer={transfer}
+                        actionable={actionable}
                         canWithdraw={canAct(partyId, transfer, 'Withdraw')}
                         onWithdraw={() => setWithdrawing(transfer)}
                     />
@@ -54,10 +56,12 @@ function Transfers({ partyId }: { partyId: string }) {
 
 function TransferCard({
     transfer,
+    actionable,
     canWithdraw,
     onWithdraw,
 }: {
     transfer: OutgoingTransfer
+    actionable: boolean
     canWithdraw: boolean
     onWithdraw: () => void
 }) {
@@ -69,12 +73,12 @@ function TransferCard({
                     {transfer.amount} {symbol}
                 </Typography>
                 <Typography variant="body2" sx={{ wordBreak: 'break-all' }}>
-                    To {transfer.receiver}
+                    To {partyLabel(transfer.receiver)}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
                     Expires {new Date(transfer.executeBefore).toLocaleString()}
                 </Typography>
-                {canWithdraw ? (
+                {!actionable ? null : canWithdraw ? (
                     <Button size="small" sx={{ mt: 1 }} onClick={onWithdraw}>
                         Withdraw
                     </Button>

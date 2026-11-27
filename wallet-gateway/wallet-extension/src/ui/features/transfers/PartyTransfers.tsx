@@ -12,7 +12,7 @@ import MenuItem from '@mui/material/MenuItem'
 import Stack from '@mui/material/Stack'
 import TextField from '@mui/material/TextField'
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState, type ReactNode } from 'react'
+import { Fragment, useMemo, useState, type ReactNode } from 'react'
 
 import { PageLoader } from '@/ui/components/feedback.tsx'
 import { toTokenWallets } from '@/ui/features/assets/index.ts'
@@ -66,7 +66,8 @@ export function PartyTransfersPage({
                             </MenuItem>
                         ))}
                     </TextField>
-                    {children(partyId)}
+                    {/* A new party drops the old one's unsubmitted dialog. */}
+                    <Fragment key={partyId}>{children(partyId)}</Fragment>
                 </Stack>
             )}
         </>
@@ -75,7 +76,9 @@ export function PartyTransfersPage({
 
 /**
  * The loaded transfers, with an alert for the versions that failed and,
- * when none loaded, `No transfers wait for {waitingFor}.`
+ * when none loaded, `No transfers wait for {waitingFor}.` A transfer is
+ * `actionable` unless it is listed as v1 while v2 failed to load: the
+ * contract may implement v2, which must then be acted through.
  */
 export function TransferList({
     pending,
@@ -84,7 +87,7 @@ export function TransferList({
 }: {
     pending: PendingTransfersResult
     waitingFor: string
-    children: (transfer: PendingTransfer) => ReactNode
+    children: (transfer: PendingTransfer, actionable: boolean) => ReactNode
 }) {
     const retry = (
         <Button color="inherit" size="small" onClick={pending.refetch}>
@@ -100,6 +103,7 @@ export function TransferList({
         (version) =>
             !pending.failures.some((failure) => failure.version === version)
     )
+    const v2Failed = !loaded.includes('v2')
 
     if (pending.isError) {
         return (
@@ -124,7 +128,9 @@ export function TransferList({
                         : `No token standard ${loaded.join(' or ')} transfers wait for ${waitingFor}.`}
                 </Alert>
             )}
-            {pending.transfers.map(children)}
+            {pending.transfers.map((transfer) =>
+                children(transfer, !(v2Failed && transfer.version === 'v1'))
+            )}
         </>
     )
 }
