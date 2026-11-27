@@ -8,7 +8,10 @@ import type { Logger } from 'pino'
 
 import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
 import type { PartyAllocationService } from '../../party-allocation-service.ts'
-import type { WalletAllocator } from '../wallet-allocation-service.ts'
+import type {
+    WalletAllocationOptions,
+    WalletAllocator,
+} from '../wallet-allocation-service.ts'
 
 export class InternalWalletAllocator implements WalletAllocator {
     constructor(
@@ -25,12 +28,16 @@ export class InternalWalletAllocator implements WalletAllocator {
     async createWallet(
         authContext: AuthContext,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
-        const party = await this.partyAllocator.allocateParty(
-            authContext.userId,
-            partyHint
-        )
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(partyHint)
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      authContext.userId,
+                      partyHint
+                  )
         const network = await this.store.getCurrentNetwork()
         const wallet: Wallet = {
             partyId: party.partyId,
@@ -52,12 +59,16 @@ export class InternalWalletAllocator implements WalletAllocator {
 
     async allocateParty(
         authContext: AuthContext,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
-        const party = await this.partyAllocator.allocateParty(
-            authContext.userId,
-            existingWallet.hint
-        )
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(existingWallet.hint)
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      authContext.userId,
+                      existingWallet.hint
+                  )
         const network = await this.store.getCurrentNetwork()
         return await this.store.updateWallet({
             partyId: party.partyId,

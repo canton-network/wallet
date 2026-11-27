@@ -7,7 +7,10 @@ import type { UserId } from '@canton-network/core-wallet-auth'
 import type { Wallet } from '@canton-network/core-wallet-store'
 
 import type { PartyAllocationService } from '../../party-allocation-service.ts'
-import { handleSigningProviderError } from '../wallet-allocation-service.ts'
+import {
+    handleSigningProviderError,
+    type WalletAllocationOptions,
+} from '../wallet-allocation-service.ts'
 
 export async function finalizeWallet(
     walletBase: Omit<Wallet, 'status'>,
@@ -17,7 +20,8 @@ export async function finalizeWallet(
     topologyTransactions: string[],
     namespace: string,
     driver: ReturnType<SigningDriverInterface['controller']>,
-    partyAllocator: PartyAllocationService
+    partyAllocator: PartyAllocationService,
+    options: WalletAllocationOptions = {}
 ): Promise<Wallet> {
     if (status === 'signed') {
         const { signature } = await driver
@@ -28,12 +32,19 @@ export async function finalizeWallet(
                 'Transaction signed but no signature found in result'
             )
         }
-        const partyId = await partyAllocator.allocatePartyWithExistingWallet(
-            namespace,
-            topologyTransactions,
-            signature,
-            userId
-        )
+        const partyId =
+            options.grantRights === false
+                ? await partyAllocator.allocatePartyWithExistingWallet(
+                      namespace,
+                      topologyTransactions,
+                      signature
+                  )
+                : await partyAllocator.allocatePartyWithExistingWalletAndGrantRights(
+                      namespace,
+                      topologyTransactions,
+                      signature,
+                      userId
+                  )
         return { ...walletBase, partyId, status: 'allocated' }
     }
 

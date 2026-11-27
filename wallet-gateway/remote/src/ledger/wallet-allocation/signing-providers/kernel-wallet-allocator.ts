@@ -18,6 +18,7 @@ import type { PartyHint, Primary } from '../../../user-api/rpc-gen/typings.ts'
 import type { PartyAllocationService } from '../../party-allocation-service.ts'
 import {
     handleSigningProviderError,
+    type WalletAllocationOptions,
     type WalletAllocator,
 } from '../wallet-allocation-service.ts'
 
@@ -38,7 +39,8 @@ export class KernelWalletAllocator implements WalletAllocator {
     async createWallet(
         authContext: AuthContext,
         partyHint: PartyHint,
-        primary: Primary = false
+        primary: Primary = false,
+        options: WalletAllocationOptions = {}
     ): Promise<Wallet> {
         const driver = getSigningController(this.signingDriver, authContext)
         const key = await driver
@@ -47,29 +49,37 @@ export class KernelWalletAllocator implements WalletAllocator {
             })
             .then(handleSigningProviderError)
 
-        const party = await this.partyAllocator.allocateParty(
-            authContext.userId,
-            partyHint,
-            key.publicKey,
-            async (hash) => {
-                const { signature } = await driver
-                    .signTransaction({
-                        tx: '',
-                        txHash: hash,
-                        extraParams: { txPurpose: 'topology' },
-                        keyIdentifier: {
-                            publicKey: key.publicKey,
-                        },
-                    })
-                    .then(handleSigningProviderError)
+        const signingCallback = async (hash: string) => {
+            const { signature } = await driver
+                .signTransaction({
+                    tx: '',
+                    txHash: hash,
+                    extraParams: { txPurpose: 'topology' },
+                    keyIdentifier: {
+                        publicKey: key.publicKey,
+                    },
+                })
+                .then(handleSigningProviderError)
 
-                if (!signature) {
-                    throw new Error('No signature returned from signing driver')
-                }
-
-                return signature
+            if (!signature) {
+                throw new Error('No signature returned from signing driver')
             }
-        )
+
+            return signature
+        }
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(
+                      partyHint,
+                      key.publicKey,
+                      signingCallback
+                  )
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      authContext.userId,
+                      partyHint,
+                      key.publicKey,
+                      signingCallback
+                  )
 
         const network = await this.store.getCurrentNetwork()
         const wallet: Wallet = {
@@ -92,7 +102,8 @@ export class KernelWalletAllocator implements WalletAllocator {
 
     async allocateParty(
         authContext: AuthContext,
-        existingWallet: Wallet
+        existingWallet: Wallet,
+        options: WalletAllocationOptions = {}
     ): Promise<void> {
         const driver = getSigningController(this.signingDriver, authContext)
         const signingCallback = async (hash: string) => {
@@ -111,12 +122,19 @@ export class KernelWalletAllocator implements WalletAllocator {
             return result.signature
         }
 
-        const party = await this.partyAllocator.allocateParty(
-            authContext.userId,
-            existingWallet.hint,
-            existingWallet.publicKey,
-            signingCallback
-        )
+        const party =
+            options.grantRights === false
+                ? await this.partyAllocator.allocateParty(
+                      existingWallet.hint,
+                      existingWallet.publicKey,
+                      signingCallback
+                  )
+                : await this.partyAllocator.allocatePartyAndGrantRights(
+                      authContext.userId,
+                      existingWallet.hint,
+                      existingWallet.publicKey,
+                      signingCallback
+                  )
 
         const network = await this.store.getCurrentNetwork()
         const walletUpdate: UpdateWallet = {
