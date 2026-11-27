@@ -6,14 +6,18 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { LedgerProvider } from '@canton-network/core-provider-ledger'
 import { packageId } from '@canton-network/core-traffic-purchase'
+import {
+    TrafficPaymasterApi,
+    TrafficScan,
+} from '@canton-network/core-traffic-purchase/paymaster'
+import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 import { describe, expect, it } from 'vitest'
 
 import { localNetStaticConfig } from '../../../config.ts'
 import { SDK } from '../../sdk.ts'
 import { localNetAuth } from './test-support/localnet-auth.ts'
-import { TrafficPaymasterApi } from './test-support/traffic-paymaster-api.ts'
-import { TrafficScan } from './test-support/traffic-scan.ts'
 
 /**
  * The full round trip a wallet provider sets `traffic` up for, against a real
@@ -116,10 +120,13 @@ describe('traffic.setup and traffic.purchaseTraffic on LocalNet', () => {
         // The paymaster's own off-ledger API, which is how the buyer finds the
         // rest: the contracts the setup just created, and -- the point of it --
         // their disclosures, which only the paymaster can produce.
+        const ledger = new LedgerProvider({
+            baseUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
+            accessTokenProvider: new AuthTokenProvider(auth),
+        })
         const paymasterApi = await TrafficPaymasterApi.start({
             traffic: admin.traffic,
-            ledgerApiUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-            auth,
+            ledger,
             paymaster,
         })
 
@@ -162,10 +169,9 @@ describe('traffic.setup and traffic.purchaseTraffic on LocalNet', () => {
         // 3. The scan: started before the purchase, so it is following the
         // stream by the time the purchase's transaction commits.
         const scan = await TrafficScan.start({
-            ledgerApiUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-            auth,
+            ledger,
             traffic: admin.traffic,
-            parties: [paymaster, buyer.partyId],
+            paymaster,
         })
 
         try {
