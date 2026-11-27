@@ -16,5 +16,10 @@
             ]
         }
     },
-    "include": ["src"]
+    "include": ["src"],
+    "references": [
+        {
+            "path": "../wallet-auth"
+        }
+    ]
 }
