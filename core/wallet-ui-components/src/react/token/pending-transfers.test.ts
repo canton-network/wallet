@@ -13,7 +13,6 @@ import {
     canAct,
     incomingTransfers,
     outgoingTransfers,
-    type PendingTransfer,
 } from './pending-transfers.ts'
 
 const times = {
@@ -45,23 +44,31 @@ const v1 = (
         },
     }) as unknown as PrettyContract<TransferInstructionView>
 
+/** An owner of `null` is an account with no owner party. */
+const account = (owner: string | null) =>
+    owner === null
+        ? { owner: null, provider: 'provider::1220', id: 'pooled' }
+        : basicAccount(owner)
+
 const v2 = (
     contractId: string,
-    sender: string,
+    sender: string | null,
     receiver: string,
-    memo?: string
+    memo?: string,
+    availableActions?: unknown[]
 ) =>
     ({
         contractId,
         interfaceViewValue: {
             transfer: {
-                sender: basicAccount(sender),
-                receiver: basicAccount(receiver),
+                sender: account(sender),
+                receiver: account(receiver),
                 amount: '5',
                 instrumentId: amulet,
                 meta: meta(memo),
                 ...times,
             },
+            availableActions,
         },
     }) as unknown as PrettyContract<TransferInstructionViewV2>
 
@@ -104,11 +111,13 @@ describe('incomingTransfers', () => {
                 [
                     v1('received-v1', bob, alice, 'rent'),
                     v1('both', bob, alice),
+                    v1('ownerless', bob, alice),
                     v1('sent-v1', alice, bob),
                 ],
                 [
                     v2('received-v2', bob, alice, 'lunch'),
                     v2('both', bob, alice),
+                    v2('ownerless', null, alice),
                     v2('sent-v2', alice, bob),
                 ]
             )
@@ -123,6 +132,14 @@ describe('incomingTransfers', () => {
             },
             {
                 contractId: 'both',
+                version: 'v2',
+                sender: bob,
+                receiver: alice,
+                memo: '',
+                ...pending,
+            },
+            {
+                contractId: 'ownerless',
                 version: 'v2',
                 sender: bob,
                 receiver: alice,
@@ -162,28 +179,24 @@ describe('canAct', () => {
     })
 
     it('offers a v2 choice only when the party can take it alone', () => {
-        const transfer = (
-            sender: string,
-            receiver: string,
-            availableActions: unknown[]
-        ): PendingTransfer => ({
-            contractId: 'v2',
-            version: 'v2',
-            instrumentId: amulet,
-            amount: '5',
-            sender,
-            receiver,
-            memo: '',
-            ...times,
-            availableActions:
-                availableActions as unknown as PendingTransfer['availableActions'],
-        })
         const action = (tag: string, groups: string[][]) => [
             { tag, value: {} },
             groups,
         ]
+        // Through the mapping, so the actions must survive it.
+        const sent = (...actions: unknown[]) =>
+            outgoingTransfers(
+                alice,
+                [],
+                [v2('sent', alice, bob, '', actions)]
+            )[0]!
+        const received = (...actions: unknown[]) =>
+            incomingTransfers(
+                alice,
+                [],
+                [v2('received', bob, alice, '', actions)]
+            )[0]!
 
-        const sent = (...actions: unknown[]) => transfer(alice, bob, actions)
         expect(
             canAct(alice, sent(action('TIA_Withdraw', [[alice]])), 'Withdraw')
         ).toBe(true)
@@ -198,19 +211,17 @@ describe('canAct', () => {
             )
         ).toBe(false)
 
-        const received = (...actions: unknown[]) =>
-            transfer(bob, alice, actions)
-        const alone = received(
+        const acceptAlone = received(
             action('TIA_Accept', [[alice]]),
-            action('TIA_Reject', [[alice]])
-        )
-        expect(canAct(alice, alone, 'Accept')).toBe(true)
-        expect(canAct(alice, alone, 'Reject')).toBe(true)
-        const together = received(
-            action('TIA_Accept', [[alice, bob]]),
             action('TIA_Reject', [[alice, bob]])
         )
-        expect(canAct(alice, together, 'Accept')).toBe(false)
-        expect(canAct(alice, together, 'Reject')).toBe(false)
+        expect(canAct(alice, acceptAlone, 'Accept')).toBe(true)
+        expect(canAct(alice, acceptAlone, 'Reject')).toBe(false)
+        const rejectAlone = received(
+            action('TIA_Accept', [[alice, bob]]),
+            action('TIA_Reject', [[alice]])
+        )
+        expect(canAct(alice, rejectAlone, 'Accept')).toBe(false)
+        expect(canAct(alice, rejectAlone, 'Reject')).toBe(true)
     })
 })

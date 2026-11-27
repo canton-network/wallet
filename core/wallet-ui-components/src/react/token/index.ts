@@ -58,11 +58,9 @@ export {
     canAct,
     incomingTransfers,
     outgoingTransfers,
-    pendingTransfers,
     type IncomingTransfer,
     type OutgoingTransfer,
     type PendingTransfer,
-    type TransferDirection,
 } from './pending-transfers.ts'
 export {
     getTransferActions,

@@ -60,13 +60,15 @@ export function pendingTransfers(
     }
     for (const { contractId, interfaceViewValue } of v2) {
         const { transfer } = interfaceViewValue
+        // A v2 account may have no owner party; the v1 view still names it.
+        const fromV1 = byContract.get(contractId)
         byContract.set(contractId, {
             contractId,
             version: 'v2',
             instrumentId: transfer.instrumentId,
             amount: transfer.amount,
-            sender: transfer.sender.owner ?? '',
-            receiver: transfer.receiver.owner ?? '',
+            sender: transfer.sender.owner ?? fromV1?.sender ?? '',
+            receiver: transfer.receiver.owner ?? fromV1?.receiver ?? '',
             memo: transfer.meta?.values?.[MEMO_KEY] ?? '',
             requestedAt: transfer.requestedAt,
             executeBefore: transfer.executeBefore,
