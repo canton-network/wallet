@@ -1,154 +1,70 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
-import type { Ops } from '@canton-network/core-provider-ledger'
-import {
-    TrafficCreditReporter,
-    type TrafficCreditReporter_PublishCredit,
-} from '@canton-network/core-traffic-purchase'
-import { AuthTokenProvider } from '@canton-network/core-wallet-auth'
 /**
- * Stands in for the participant TEA that credits purchased traffic (adapted
- * from `wallet-sdk`'s own `TrafficScan` test double, which is private to that
- * package). `TrafficPurchaser_PurchaseCredits` credits the traffic on-ledger by
- * exercising the non-consuming `TrafficCreditReporter_PublishCredit` choice on a
- * `TrafficCreditReporter`; the exercise is in the transaction tree even though it
- * creates no contract.
- * This follows the update stream for those exercises and applies each with
- * `topUpTraffic`. Long-running: scans forever until Ctrl+C. For a one-off
- * manual credit instead, see `topup.ts`.
+ * Stands in for the participant TEA that credits purchased traffic: follows
+ * the paymaster's update stream and applies every purchase's
+ * `TrafficCreditReporter_PublishCredit` exercise with `topUpTraffic`.
+ *
+ * Resumes from the offset saved in `.scan-topup-offset.local`, so purchases
+ * made while it was stopped are still credited. Long-running until Ctrl+C. For
+ * a one-off manual credit instead, see `topup.ts`.
  */
-import {
-    LedgerProvider,
-    localNetStaticConfig,
-} from '@canton-network/wallet-sdk'
+import fs from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+import { TrafficScan } from '@canton-network/core-traffic-purchase/paymaster'
 
 import { requireEnvVar } from './env-file.ts'
-import { createAdminSdk, localNetAuth, type AdminSdk } from './lib.ts'
+import { createAdminSdk, createPaymasterLedger } from './lib.ts'
 
-const trafficCreditReporterQualifiedName =
-    TrafficCreditReporter.templateId.slice(
-        TrafficCreditReporter.templateId.indexOf(':')
-    )
+// Not `.env.local`: the UI's dev server restarts whenever that changes.
+const offsetPath = path.join(
+    path.dirname(fileURLToPath(import.meta.url)),
+    '../.scan-topup-offset.local'
+)
+
+/** The saved offset, unless it belongs to an earlier `initialize`'s paymaster. */
+async function readSavedOffset(paymaster: string): Promise<number | undefined> {
+    const contents = await fs.readFile(offsetPath, 'utf-8').catch(() => '')
+    const [savedPaymaster, savedOffset] = contents.split('\n')
+    const offset = Number(savedOffset)
+    return savedPaymaster === paymaster && Number.isSafeInteger(offset)
+        ? offset
+        : undefined
+}
+
+async function saveOffset(paymaster: string, offset: number): Promise<void> {
+    await fs.writeFile(offsetPath, `${paymaster}\n${offset}\n`)
+}
 
 async function main() {
     const paymaster = await requireEnvVar('VITE_PAYMASTER_PARTY_ID')
     const admin = await createAdminSdk()
 
-    const ledger = new LedgerProvider({
-        baseUrl: localNetStaticConfig.LOCALNET_APP_USER_LEDGER_URL,
-        accessTokenProvider: new AuthTokenProvider(
-            localNetAuth(localNetStaticConfig.LOCALNET_USER_ID)
-        ),
+    const scan = await TrafficScan.start({
+        ledger: createPaymasterLedger(),
+        traffic: admin.traffic,
+        paymaster,
+        beginExclusive: await readSavedOffset(paymaster),
+        onOffset: (offset) => saveOffset(paymaster, offset),
+        onCredit: ({ accountId, balanceDelta, balance, deduplicationId }) =>
+            console.log(
+                `Credited ${balanceDelta} to ${accountId} ` +
+                    `(exercise ${deduplicationId}); balance is now ${balance}`
+            ),
     })
 
-    let offset =
-        (
-            await ledger.request<Ops.GetV2StateLedgerEnd>({
-                method: 'ledgerApi',
-                params: {
-                    resource: '/v2/state/ledger-end',
-                    requestMethod: 'get',
-                    query: {},
-                },
-            })
-        ).offset ?? 0
-
     console.log(
-        `Scanning purchases for paymaster ${paymaster} from offset ${offset}`
+        `Scanning purchases for paymaster ${paymaster} after offset ${scan.currentOffset}`
     )
     console.log('Leave this running. Ctrl+C to stop.')
 
-    const stop = new AbortController()
-    process.on('SIGINT', () => stop.abort())
-
-    while (!stop.signal.aborted) {
-        const responses = await ledger.request<Ops.PostV2Updates>({
-            method: 'ledgerApi',
-            params: {
-                resource: '/v2/updates',
-                requestMethod: 'post',
-                body: {
-                    beginExclusive: offset,
-                    updateFormat: {
-                        includeTransactions: {
-                            transactionShape:
-                                'TRANSACTION_SHAPE_LEDGER_EFFECTS',
-                            eventFormat: {
-                                filtersByParty: { [paymaster]: {} },
-                                verbose: true,
-                            },
-                        },
-                    },
-                },
-                query: { limit: 100, stream_idle_timeout_ms: 1000 },
-            },
-        })
-
-        for (const { update } of responses) {
-            if (typeof update !== 'object' || update === null) continue
-            if (!('Transaction' in update)) continue
-
-            const transaction = (
-                update as {
-                    Transaction: {
-                        value: { events: unknown[]; offset: number }
-                    }
-                }
-            ).Transaction.value
-            for (const event of transaction.events) {
-                await applyEvent(admin, event)
-            }
-            offset = transaction.offset
-        }
-    }
-}
-
-async function applyEvent(admin: AdminSdk, event: unknown): Promise<void> {
-    if (
-        typeof event !== 'object' ||
-        event === null ||
-        !('ExercisedEvent' in event)
-    ) {
-        return
-    }
-    const exercised = (
-        event as {
-            ExercisedEvent: {
-                offset: number
-                nodeId: number
-                interfaceId?: string
-                choice: string
-                choiceArgument?: unknown
-            }
-        }
-    ).ExercisedEvent
-
-    if (exercised.choice !== 'TrafficCreditReporter_PublishCredit') return
-    if (
-        exercised.interfaceId === undefined ||
-        !exercised.interfaceId.endsWith(trafficCreditReporterQualifiedName)
-    ) {
-        return
-    }
-    if (exercised.choiceArgument === undefined) return
-
-    const credit =
-        exercised.choiceArgument as TrafficCreditReporter_PublishCredit
-    const accountId = credit.accountId
-    const balanceDelta = Number(credit.trafficAmount)
-    const deduplicationId = `${exercised.offset}:${exercised.nodeId}`
-    const account = await admin.traffic.topUpTraffic({
-        accountId,
-        balanceDelta,
-        // The exercise's place in the tree is unique per credit, so re-seeing
-        // the same exercise cannot top the account up twice.
-        deduplicationId,
+    process.on('SIGINT', () => {
+        void scan.stop().then(() => process.exit(0))
     })
-    console.log(
-        `Credited ${balanceDelta} bytes to ${accountId} ` +
-            `(exercise ${deduplicationId}); balance is now ${account.balance}`
-    )
+    await scan.finished
 }
 
 main().catch((error: unknown) => {

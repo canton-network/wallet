@@ -61,6 +61,14 @@ Amulet balance so you can confirm it landed.
 The traffic balance only updates once `scan-topup` notices the purchase on the ledger and credits
 it — that's the real shape of the production flow, not a UI bug.
 
+`scan-topup` only credits `TrafficCreditReporter_PublishCredit` exercises the paymaster itself
+authorized; an exercise the paymaster only observed is ignored. It saves its progress to
+`.scan-topup-offset.local` and resumes from there, so purchases made while it was stopped are
+credited when it restarts. Delete that file to start again from the current ledger end.
+
+`serve-paymaster` and `scan-topup` are thin wrappers around the reference `TrafficPaymasterApi`
+and `TrafficScan` from `@canton-network/core-traffic-purchase/paymaster`.
+
 To fund a participant-hosted internal party with Amulet, you can instead use the one-shot tap
 script. It cannot submit for externally signed parties; use the UI's wallet-signed tap for those:
 

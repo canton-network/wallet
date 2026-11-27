@@ -15,9 +15,7 @@
         "tap-amulet": "tsx scripts/tap-amulet.ts"
     },
     "dependencies": {
-        "@canton-network/core-provider-ledger": "workspace:",
         "@canton-network/core-traffic-purchase": "workspace:",
-        "@canton-network/core-types": "workspace:",
         "@canton-network/core-wallet-auth": "workspace:",
         "@canton-network/dapp-sdk": "workspace:^",
         "@canton-network/wallet-sdk": "workspace:^",

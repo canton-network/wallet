@@ -158,4 +158,44 @@ const types = {
     ],
 }
 
-export default [codeEsm, codeCjs, codeBrowser, types]
+// Node-only reference paymaster services; no browser bundle. Declarations
+// come from `paymasterTypes`, so the code bundles must not emit any.
+const paymasterExternal = [...external, /^node:/]
+const paymasterPlugins = [
+    damlJsAlias,
+    json(),
+    commonjsPlugin,
+    nodeResolve(),
+    typescript({
+        composite: false,
+        declaration: false,
+        emitDeclarationOnly: false,
+    }),
+]
+const paymasterEsm = {
+    input: 'src/paymaster/index.ts',
+    output: { ...codeEsm.output, file: 'dist/paymaster.js' },
+    external: paymasterExternal,
+    plugins: paymasterPlugins,
+}
+const paymasterCjs = {
+    input: 'src/paymaster/index.ts',
+    output: { ...codeCjs.output, file: 'dist/paymaster.cjs' },
+    external: paymasterExternal,
+    plugins: paymasterPlugins,
+}
+const paymasterTypes = {
+    ...types,
+    input: 'src/paymaster/index.ts',
+    output: { ...types.output, file: 'dist/paymaster.d.ts' },
+}
+
+export default [
+    codeEsm,
+    codeCjs,
+    codeBrowser,
+    types,
+    paymasterEsm,
+    paymasterCjs,
+    paymasterTypes,
+]

@@ -35,13 +35,7 @@
             "path": "../../core/wallet-auth"
         },
         {
-            "path": "../../core/types"
-        },
-        {
             "path": "../../core/traffic-purchase"
-        },
-        {
-            "path": "../../core/provider-ledger"
         }
     ]
 }
