@@ -110,10 +110,12 @@ export type TokenService = {
             /** Removes the prepared transfer, unless it is signed or being submitted. */
             discard(transactionId: string): Promise<void>
             /**
-             * Prepares, signs and executes in one call. v2 acts as `partyId`
-             * alone; `actors` is ignored.
+             * The choices prepare, sign and execute in one call. v2 acts as
+             * `partyId` alone; `actors` is ignored.
              */
             withdraw(params: TransferChoiceParams): Promise<void>
+            accept(params: TransferChoiceParams): Promise<void>
+            reject(params: TransferChoiceParams): Promise<void>
         }
         v1: {
             utxos: {
@@ -701,34 +703,36 @@ export function createTokenService({
         }
     }
 
-    async function withdraw({
-        partyId,
-        contractId,
-        instrumentId,
-        version,
-    }: TransferChoiceParams): Promise<void> {
-        const [writer, transactionId] = await beforeSigning(async () => {
-            const writer = await writerFor(partyId)
-            const sdk = await sdkOn(writer.network, writer.context)
-            const { registryUrl } = await findAsset(sdk, instrumentId)
-            const command =
-                version === 'v2'
-                    ? await sdk.token.v2.transfer.withdraw(
-                          contractId,
-                          [partyId],
-                          registryUrl
-                      )
-                    : await sdk.token.v1.transfer.withdraw({
-                          transferInstructionCid: contractId,
-                          registryUrl,
-                      })
-            return [
-                writer,
-                await prepareCommand(writer, partyId, command),
-            ] as const
-        })
-        await signAndExecute(writer, transactionId)
-    }
+    const exercise =
+        (choice: 'accept' | 'reject' | 'withdraw') =>
+        async ({
+            partyId,
+            contractId,
+            instrumentId,
+            version,
+        }: TransferChoiceParams): Promise<void> => {
+            const [writer, transactionId] = await beforeSigning(async () => {
+                const writer = await writerFor(partyId)
+                const sdk = await sdkOn(writer.network, writer.context)
+                const { registryUrl } = await findAsset(sdk, instrumentId)
+                const command =
+                    version === 'v2'
+                        ? await sdk.token.v2.transfer[choice](
+                              contractId,
+                              [partyId],
+                              registryUrl
+                          )
+                        : await sdk.token.v1.transfer[choice]({
+                              transferInstructionCid: contractId,
+                              registryUrl,
+                          })
+                return [
+                    writer,
+                    await prepareCommand(writer, partyId, command),
+                ] as const
+            })
+            await signAndExecute(writer, transactionId)
+        }
 
     return {
         token: {
@@ -743,7 +747,9 @@ export function createTokenService({
                 prepare,
                 submit,
                 discard,
-                withdraw,
+                withdraw: exercise('withdraw'),
+                accept: exercise('accept'),
+                reject: exercise('reject'),
             },
             v1: {
                 utxos: {

@@ -43,6 +43,8 @@ function fakeSdk(transferVersions = ['v1', 'v2']) {
     const transfer = () => ({
         create: vi.fn(async () => command()),
         withdraw: vi.fn(async () => command()),
+        accept: vi.fn(async () => command()),
+        reject: vi.fn(async () => command()),
     })
     return {
         token: {
@@ -753,36 +755,48 @@ describe('createTokenService', () => {
         })
     })
 
-    describe('transfer.withdraw', () => {
-        it('sends a v1 and a v2 withdraw to their own SDK call', async () => {
-            const tokenService = await signedIn()
-            const withdraw = {
-                partyId: wallet.partyId,
-                contractId: 'instruction-1',
-                instrumentId: amulet,
+    describe('transfer choices', () => {
+        it.each(['withdraw', 'accept', 'reject'] as const)(
+            'sends a v1 and a v2 %s to their own SDK call',
+            async (choice) => {
+                const tokenService = await signedIn()
+                const params = {
+                    partyId: wallet.partyId,
+                    contractId: 'instruction-1',
+                    instrumentId: amulet,
+                }
+                const others = (['withdraw', 'accept', 'reject'] as const)
+                    .filter((other) => other !== choice)
+                    .flatMap((other) => [
+                        sdk.token.v1.transfer[other],
+                        sdk.token.v2.transfer[other],
+                    ])
+
+                await tokenService.token.transfer[choice]({
+                    ...params,
+                    version: 'v1',
+                })
+                expect(sdk.token.v1.transfer[choice]).toHaveBeenCalledWith({
+                    transferInstructionCid: 'instruction-1',
+                    registryUrl,
+                })
+                expect(sdk.token.v2.transfer[choice]).not.toHaveBeenCalled()
+
+                await tokenService.token.transfer[choice]({
+                    ...params,
+                    version: 'v2',
+                })
+                expect(sdk.token.v2.transfer[choice]).toHaveBeenCalledWith(
+                    'instruction-1',
+                    [wallet.partyId],
+                    registryUrl
+                )
+                expect(sdk.token.v1.transfer[choice]).toHaveBeenCalledTimes(1)
+                for (const other of others) {
+                    expect(other).not.toHaveBeenCalled()
+                }
+                expect(execute).toHaveBeenCalledTimes(2)
             }
-
-            await tokenService.token.transfer.withdraw({
-                ...withdraw,
-                version: 'v1',
-            })
-            expect(sdk.token.v1.transfer.withdraw).toHaveBeenCalledWith({
-                transferInstructionCid: 'instruction-1',
-                registryUrl,
-            })
-            expect(sdk.token.v2.transfer.withdraw).not.toHaveBeenCalled()
-
-            await tokenService.token.transfer.withdraw({
-                ...withdraw,
-                version: 'v2',
-            })
-            expect(sdk.token.v2.transfer.withdraw).toHaveBeenCalledWith(
-                'instruction-1',
-                [wallet.partyId],
-                registryUrl
-            )
-            expect(sdk.token.v1.transfer.withdraw).toHaveBeenCalledTimes(1)
-            expect(execute).toHaveBeenCalledTimes(2)
-        })
+        )
     })
 })
