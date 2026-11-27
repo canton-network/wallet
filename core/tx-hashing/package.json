@@ -38,7 +38,8 @@
         "clean": "rm -rf dist"
     },
     "dependencies": {
-        "@canton-network/core-ledger-proto": "workspace:"
+        "@canton-network/core-ledger-proto": "workspace:",
+        "@protobuf-ts/runtime": "catalog:"
     },
     "devDependencies": {
         "@types/node": "catalog:",
