@@ -74,6 +74,23 @@ export const dappController = ({
 }: DappControllerOptions) => {
     const logger = _logger.child({ component: 'dapp-controller' })
 
+    function validateSignMessageParams(params: SignMessageParams | undefined) {
+        const message = params?.message
+        const messageType = params?.messageType
+        if (!message) throw new Error('Message is required')
+        if (messageType !== undefined) {
+            throw rpcErrors.invalidParams(
+                `Unsupported messageType: ${messageType}`
+            )
+        }
+        if (Array.isArray(message)) {
+            throw rpcErrors.invalidParams(
+                'A message without a messageType must be a single string'
+            )
+        }
+        return message
+    }
+
     function assertActAsPartiesBelongToUser(
         actAs: string[],
         wallets: Wallet[]
@@ -497,7 +514,7 @@ export const dappController = ({
         ): Promise<SignMessageResult> => {
             assertIsConnected(context)
 
-            if (!params?.message) throw new Error('Message is required')
+            const message = validateSignMessageParams(params)
 
             const wallet = await store.getPrimaryWallet()
 
@@ -515,7 +532,7 @@ export const dappController = ({
                 userId: context.userId,
                 partyId: wallet.partyId,
                 publicKey: wallet.publicKey,
-                message: params.message,
+                message,
                 origin: origin || null,
                 createdAt: new Date(),
             })

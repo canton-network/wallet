@@ -179,8 +179,26 @@ export const paramSchemas: Record<string, z.ZodType> = {
         properties: {
             message: {
                 title: 'message',
+                description:
+                    'The message to sign. A UTF-8 string without a messageType, one base64 prepared transaction for canton-prepared-transaction, or the base64 topology transactions to sign together for canton-topology-transactions.',
+                oneOf: [
+                    { title: 'messageText', type: 'string' },
+                    {
+                        title: 'messageSet',
+                        type: 'array',
+                        items: { title: 'messageEntry', type: 'string' },
+                    },
+                ],
+            },
+            messageType: {
+                title: 'MessageType',
                 type: 'string',
-                description: 'The message to sign.',
+                enum: [
+                    'canton-prepared-transaction',
+                    'canton-topology-transactions',
+                ],
+                description:
+                    'The Canton data the message carries. The wallet decodes the message as this type, displays it, signs the hash it computes itself and submits nothing.',
             },
         },
         required: ['message'],

@@ -134,13 +134,18 @@ describe('Conformance harness', () => {
                     signingProviderId: 'signer',
                 },
             ],
-            signMessage: async ({ message }) => ({
-                signature: sign(
-                    null,
-                    Buffer.from(message),
-                    privateKey
-                ).toString('base64'),
-            }),
+            signMessage: async ({ message }) => {
+                if (typeof message !== 'string') {
+                    throw new Error('Expected a string message')
+                }
+                return {
+                    signature: sign(
+                        null,
+                        Buffer.from(message),
+                        privateKey
+                    ).toString('base64'),
+                }
+            },
         } satisfies Pick<SigningSDK, 'listAccounts' | 'signMessage'>
         const signature = await signReportWithWallet(
             report,

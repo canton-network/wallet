@@ -513,12 +513,23 @@ export interface SignResultFailed {
  *
  */
 export type Status = string
+export type MessageText = string
+export type MessageEntry = string
+export type MessageSet = MessageEntry[]
 /**
  *
- * The message to sign.
+ * The message to sign. A UTF-8 string without a messageType, one base64 prepared transaction for canton-prepared-transaction, or the base64 topology transactions to sign together for canton-topology-transactions.
  *
  */
-export type Message = string
+export type Message = MessageText | MessageSet
+/**
+ *
+ * The Canton data the message carries.
+ *
+ */
+export type MessageType =
+    | 'canton-prepared-transaction'
+    | 'canton-topology-transactions'
 /**
  *
  * The timestamp when the API key was created.
@@ -537,6 +548,7 @@ export interface MessageRaw {
     partyId: PartyId
     publicKey: PublicKey
     message: Message
+    messageType?: MessageType
     origin?: Origin
     createdAt: CreatedAt
     signedAt?: SignedAt
