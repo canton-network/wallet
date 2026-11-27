@@ -16,6 +16,7 @@ import { KeysNamespace } from '../namespace/keys/index.ts'
 import { LedgerNamespace } from '../namespace/ledger/index.ts'
 import { PartyNamespace } from '../namespace/party/index.ts'
 import { TokenNamespace } from '../namespace/token/index.ts'
+import { TrafficAccountNamespace } from '../namespace/traffic/index.ts'
 import { UserNamespace } from '../namespace/user/index.ts'
 import { SDKUtilsNamespace } from '../namespace/utils/index.ts'
 import { parseAssets, ParsedURL } from '../namespace/utils/url.ts'
@@ -168,6 +169,7 @@ const createNamespace: {
             websocketURL: new ParsedURL(ctx, config.websocketURL),
         })
     },
+    traffic: async (ctx: SDKContext) => new TrafficAccountNamespace(ctx),
 }
 
 export class InitializedSDK<
@@ -280,6 +282,9 @@ export class ExtendedInitializedSDK<
         : never
     declare readonly events: ExtendedItems extends 'events'
         ? EventsNamespace
+        : never
+    declare readonly traffic: ExtendedItems extends 'traffic'
+        ? TrafficAccountNamespace
         : never
 
     private constructor(
