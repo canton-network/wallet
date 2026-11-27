@@ -53,7 +53,7 @@ export default async (args: TransferTestScriptParameters) => {
             registryUrl
         )
 
-    const acceptTxResult = await sdk.ledger
+    const acceptedTxResult = await sdk.ledger
         .prepare({
             partyId: receiver.partyId,
             commands: acceptCommand,
@@ -80,7 +80,7 @@ export default async (args: TransferTestScriptParameters) => {
     })
 
     const receiverTx = await sdk.token.transactionsById({
-        updateId: acceptTxResult.updateId,
+        updateId: acceptedTxResult.updateId,
         partyId: receiver.partyId,
     })
 
