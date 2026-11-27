@@ -336,6 +336,13 @@ function extractChoiceIdAndAmount(obj: any) {
     const choiceId = exercise?.choiceId
     const exerciseAmount =
         getNumericValue(getFieldValue(exercise?.chosenValue, 'amount')) ??
+        // TransferFactory_Transfer of the token standard
+        getNumericValue(
+            getFieldValue(
+                getFieldValue(exercise?.chosenValue, 'transfer'),
+                'amount'
+            )
+        ) ??
         getNumericValue(
             getFieldValue(
                 getFieldValue(
