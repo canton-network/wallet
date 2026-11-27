@@ -4,12 +4,12 @@
 import { useMemo, type ReactNode } from 'react'
 
 import type { TokenClient } from './client.ts'
-import type { TokenInstruments } from './registry-instrument.ts'
+import type { RegistryInstrumentsByAdmin } from './registry-instrument.ts'
 import { TokenContext } from './TokenContext.ts'
 
 export interface TokenProviderProps {
     client: TokenClient | undefined
-    instruments: TokenInstruments
+    instruments: RegistryInstrumentsByAdmin
     isLoading?: boolean
     error?: Error | null
     children: ReactNode

@@ -12,8 +12,8 @@ export type RegistryInstrument = Omit<AssetBody, 'registryUrl'> & {
     decimals: number
 }
 
-// Keyed by the instrument admin party.
-export type TokenInstruments = ReadonlyMap<
+/** Groups registry instruments by instrument admin party ID. */
+export type RegistryInstrumentsByAdmin = ReadonlyMap<
     string,
     readonly RegistryInstrument[]
 >

@@ -17,7 +17,7 @@ import {
     getInstrumentKey,
 } from './aggregate-holdings.ts'
 import { basicAccount } from './holdings.ts'
-import type { TokenInstruments } from './registry-instrument.ts'
+import type { RegistryInstrumentsByAdmin } from './registry-instrument.ts'
 
 const now = new Date('2026-06-01T00:00:00.000Z')
 const bank = 'bank::1220'
@@ -135,7 +135,7 @@ describe('aggregateHoldings', () => {
 })
 
 describe('enrichWithInstrumentInfo', () => {
-    const instruments: TokenInstruments = new Map([
+    const instruments: RegistryInstrumentsByAdmin = new Map([
         [amulet.admin, [amuletInstrument]],
     ])
 

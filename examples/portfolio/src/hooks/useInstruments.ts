@@ -4,7 +4,7 @@
 import type { PartyId } from '@canton-network/core-types'
 import type {
     RegistryInstrument,
-    TokenInstruments,
+    RegistryInstrumentsByAdmin,
 } from '@canton-network/core-wallet-ui-components/react/token'
 import { queryKeys } from '@hooks/query-keys'
 import { resolveRegistryClient } from '@lib/registry-client'
@@ -37,7 +37,7 @@ export const fetchRegistryInstruments = async (
         toRegistryInstrument({ instrument, admin, registryUrl })
     )
 
-export const useInstruments = (): TokenInstruments => {
+export const useInstruments = (): RegistryInstrumentsByAdmin => {
     const registryUrls = useRegistryUrls()
     const entries = useMemo(
         () => Array.from(registryUrls.entries()),

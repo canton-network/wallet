@@ -3,7 +3,7 @@
 
 import type {
     RegistryInstrument,
-    TokenInstruments,
+    RegistryInstrumentsByAdmin,
     TokenWallet,
 } from '@canton-network/core-wallet-ui-components/react/token'
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
@@ -13,9 +13,9 @@ import { queryKeys } from '@/ui/lib/query/keys.ts'
 import { getTokenClient } from '@/ui/lib/token-client.ts'
 
 /** The registries' instruments, keyed by their admin party. */
-export function toTokenInstruments(
+export function groupInstrumentsByAdmin(
     list: RegistryInstrument[]
-): TokenInstruments {
+): RegistryInstrumentsByAdmin {
     const instruments = new Map<string, RegistryInstrument[]>()
     for (const instrument of list) {
         const forAdmin = instruments.get(instrument.admin) ?? []
@@ -29,7 +29,7 @@ export const tokenInstrumentsQuery = () =>
     queryOptions({
         queryKey: queryKeys.token.instruments(),
         queryFn: () => getTokenClient().token.instruments(),
-        select: toTokenInstruments,
+        select: groupInstrumentsByAdmin,
     })
 
 /**

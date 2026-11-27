@@ -5,7 +5,7 @@ import type { RegistryInstrument } from '@canton-network/core-wallet-ui-componen
 import type { Wallet } from '@canton-network/core-wallet-user-rpc-client'
 import { describe, expect, it } from 'vitest'
 
-import { toTokenInstruments, toTokenWallets } from './api.ts'
+import { groupInstrumentsByAdmin, toTokenWallets } from './api.ts'
 
 const instrument = (admin: string, id: string): RegistryInstrument => ({
     id,
@@ -34,14 +34,14 @@ const wallet = (
         signingProviderId: 'wallet-kernel',
     }) as Wallet
 
-describe('toTokenInstruments', () => {
+describe('groupInstrumentsByAdmin', () => {
     it('groups the instruments by admin party', () => {
         const amulet = instrument('dso::1', 'Amulet')
         const usdx = instrument('issuer::2', 'USDX')
         const other = instrument('dso::1', 'Other')
 
         expect([
-            ...toTokenInstruments([amulet, usdx, other]).entries(),
+            ...groupInstrumentsByAdmin([amulet, usdx, other]).entries(),
         ]).toEqual([
             ['dso::1', [amulet, other]],
             ['issuer::2', [usdx]],

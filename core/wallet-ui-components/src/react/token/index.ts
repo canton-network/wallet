@@ -34,7 +34,7 @@ export {
 } from './aggregate-holdings.ts'
 export type {
     RegistryInstrument,
-    TokenInstruments,
+    RegistryInstrumentsByAdmin,
 } from './registry-instrument.ts'
 export {
     useWalletHoldings,

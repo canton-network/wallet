@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import {
+    type RegistryInstrumentsByAdmin,
     TokenProvider,
-    type TokenInstruments,
 } from '@canton-network/core-wallet-ui-components/react/token'
 import { useQuery } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
@@ -12,7 +12,7 @@ import { getTokenClient } from '@/ui/lib/token-client.ts'
 
 import { tokenInstrumentsQuery } from './api.ts'
 
-const NO_INSTRUMENTS: TokenInstruments = new Map()
+const NO_INSTRUMENTS: RegistryInstrumentsByAdmin = new Map()
 
 /**
  * Holdings don't need the instruments, so a registry that fails only costs

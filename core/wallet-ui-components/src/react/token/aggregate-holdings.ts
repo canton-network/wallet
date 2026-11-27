@@ -6,7 +6,7 @@ import type { Account } from '@canton-network/core-token-standard-v2'
 import { Decimal } from 'decimal.js'
 
 import { isBasicAccount, type PortfolioHolding } from './holdings.ts'
-import type { TokenInstruments } from './registry-instrument.ts'
+import type { RegistryInstrumentsByAdmin } from './registry-instrument.ts'
 
 export interface AggregatedAccountBalance {
     account: Account
@@ -129,7 +129,7 @@ function compareAccountBalances(
 
 export function enrichWithInstrumentInfo(
     aggregated: Map<string, AggregatedHolding>,
-    instruments: TokenInstruments
+    instruments: RegistryInstrumentsByAdmin
 ): AggregatedHolding[] {
     return Array.from(aggregated.values(), (item) => {
         const instrumentInfo = instruments

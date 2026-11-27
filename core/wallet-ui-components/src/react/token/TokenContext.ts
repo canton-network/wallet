@@ -4,11 +4,11 @@
 import { createContext } from 'react'
 
 import type { TokenClient } from './client.ts'
-import type { TokenInstruments } from './registry-instrument.ts'
+import type { RegistryInstrumentsByAdmin } from './registry-instrument.ts'
 
 export interface TokenContextValue {
     client: TokenClient | undefined
-    instruments: TokenInstruments
+    instruments: RegistryInstrumentsByAdmin
     isLoading: boolean
     error: Error | null
 }

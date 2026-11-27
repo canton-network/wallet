@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import type { PartyId } from '@canton-network/core-types'
-import type { TokenInstruments } from '@canton-network/core-wallet-ui-components/react/token'
+import type { RegistryInstrumentsByAdmin } from '@canton-network/core-wallet-ui-components/react/token'
 import type { AssetBody } from '@canton-network/wallet-sdk'
 
 import { normalizeRegistryUrl } from './registry.ts'
@@ -14,7 +14,7 @@ export const resolveAllocationAsset = ({
     reachableRegistryUrls,
 }: {
     instrumentId: { admin: PartyId; id: string }
-    instruments: TokenInstruments
+    instruments: RegistryInstrumentsByAdmin
     registryUrls: ReadonlyMap<PartyId, string>
     reachableRegistryUrls: ReadonlyMap<PartyId, string>
 }): AssetBody => {
