@@ -11,6 +11,7 @@ import type { EventsNamespace } from '../../namespace/events/namespace.ts'
 import type { KeysNamespace } from '../../namespace/keys/index.ts'
 import type { LedgerNamespace } from '../../namespace/ledger/index.ts'
 import type { PartyNamespace } from '../../namespace/party/index.ts'
+import type { TrafficAccountNamespace } from '../../namespace/traffic/index.ts'
 import type { UserNamespace } from '../../namespace/user/index.ts'
 import type { SDKUtilsNamespace } from '../../namespace/utils/index.ts'
 import type { AssetNamespace, TokenNamespace } from '../../sdk.ts'
@@ -21,6 +22,7 @@ import type {
     AssetConfig,
     EventsConfig,
     TokenConfig,
+    TrafficConfig,
 } from './config.ts'
 
 // SDK OPTIONS
@@ -52,6 +54,7 @@ export const EXTENDED_SDK_OPTION_KEYS = [
     'token',
     'asset',
     'events',
+    'traffic',
 ] as const
 
 type EnforceKeys<
@@ -66,6 +69,7 @@ export type ExtendedSDKOptions = EnforceKeys<
         token: TokenConfig
         asset: AssetConfig
         events: EventsConfig
+        traffic: TrafficConfig
     }>
 >
 
@@ -109,6 +113,7 @@ export type ExtendedFullSDKInterface = Readonly<{
     token: TokenNamespace
     asset: AssetNamespace
     events: EventsNamespace
+    traffic: TrafficAccountNamespace
 }>
 
 export type NullableExtendedFullSDKInterface = {
