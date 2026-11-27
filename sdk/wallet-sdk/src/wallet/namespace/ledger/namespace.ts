@@ -241,10 +241,5 @@ export class LedgerNamespace {
                     }
                 })
         },
-        /**
-         * Queries the ACS and returns the first matching contract, throwing if none is found.
-         * @param options AcsOptions for querying the Active Contract Set (ACS).
-         * @throws {SDKError} When no matching contract is found.
-         */
     }
 }

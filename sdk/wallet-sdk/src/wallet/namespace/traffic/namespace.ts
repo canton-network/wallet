@@ -1,6 +1,7 @@
 // Copyright (c) 2025-2026 Digital Asset (Switzerland) GmbH and/or its affiliates. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0
 
+import { ACSReader } from '@canton-network/core-acs-reader'
 import type { LedgerCommonSchemas } from '@canton-network/core-ledger-client-types'
 import type { Ops } from '@canton-network/core-provider-ledger'
 import {
@@ -11,6 +12,7 @@ import {
 } from '@canton-network/core-token-standard'
 import { TokenStandardService } from '@canton-network/core-token-standard-service'
 import {
+    ConversionRate,
     TrafficPurchaseApiError,
     TrafficPurchaseClient,
     TrafficPurchaser,
@@ -28,7 +30,10 @@ import type { SDKContext } from '../../init/types/context.ts'
 import type { SDKLogger } from '../../logger/logger.ts'
 import { findAsset } from '../asset/index.ts'
 import type { PreparedCommand } from '../transactions/types.ts'
-import { dedupeDisclosedContracts } from '../utils/disclosedContracts.ts'
+import {
+    dedupeDisclosedContracts,
+    toDisclosedContract,
+} from '../utils/disclosedContracts.ts'
 import { ParsedURL, parseAssets, type URLInput } from '../utils/url.ts'
 import {
     assetNeededFor,
@@ -36,11 +41,15 @@ import {
     sumAmounts,
     wholeBytes,
 } from './pricing.ts'
+import { assertSetupParams, planTrafficSetup, trafficSetupOf } from './setup.ts'
 import type {
+    ActiveTrafficSetup,
     ContractIdString,
     PurchaseTrafficParams,
+    SetupTrafficParams,
     TopUpTrafficParams,
     TrafficAccount,
+    TrafficSetupPlan,
 } from './types.ts'
 
 /** Allowed delay of execute after prepare operation */
@@ -115,9 +124,11 @@ type ServedTerms = {
  */
 export class TrafficAccountNamespace {
     private readonly logger: SDKLogger
+    private readonly acsReader: ACSReader
 
     constructor(private readonly ctx: TrafficPurchaseContext) {
         this.logger = ctx.logger.child({ namespace: 'TrafficAccountNamespace' })
+        this.acsReader = new ACSReader(ctx.ledgerProvider)
     }
 
     /**
@@ -321,13 +332,142 @@ export class TrafficAccountNamespace {
         ]
     }
 
-    public async setup(): Promise<never> {
-        this.ctx.error.throw({
-            message: 'traffic.setup is not implemented yet',
-            type: 'SDKOperationUnsupported',
+    /**
+     * Works out what a paymaster's ledger needs in order to sell traffic, and
+     * returns the commands that get it there.
+     *
+     * Idempotent by design. The ledger is meant to carry one `TrafficPurchaser`
+     * per paymaster and one `ConversionRate` per instrument that paymaster
+     * accepts, so this reads what is already there and plans only the
+     * difference: what is missing is created, a rate whose terms have changed is
+     * repriced through `ConversionRate_Update`, and one that already matches is
+     * left alone. Calling it twice with the same params plans nothing at all;
+     * the result says which of the three applies to each rate, since repricing
+     * replaces a contract and invalidates any disclosure a buyer cached for it.
+     *
+     * Convergence is scoped to what the call names. Each `ConversionRateSpec` is
+     * the whole intended terms of its rate rather than a patch -- a field left
+     * out is set to `None` -- while an instrument no spec mentions is not
+     * touched at all, so a partial call cannot withdraw an instrument from sale.
+     *
+     * Nothing is submitted here: the paymaster signs for itself, so the caller
+     * drives `sdk.ledger.internal.submit({ commands, actAs: [paymaster] })` for
+     * a participant-hosted paymaster, or
+     * `sdk.ledger.prepare({ partyId: paymaster, commands })` for an external
+     * one. Everything planned goes on in a single transaction, so a setup takes
+     * effect whole or not at all.
+     *
+     * The model's DAR must already be vetted on the participant, and the
+     * paymaster party must already exist -- deploying a package and allocating
+     * a party are an operator's steps (`sdk.ledger.dar.upload`,
+     * `sdk.party.internal.allocate`), not this method's.
+     *
+     * What it cannot do is serialise itself against another setup running at the
+     * same moment. A paymaster that ends up with two purchasers, or an
+     * instrument with two live rates, is reported with both contract ids named
+     * rather than resolved by guessing -- see the note in `setup.ts`.
+     */
+    public async setup(params: SetupTrafficParams): Promise<TrafficSetupPlan> {
+        const { paymaster } = params
+        // Refused before the read, so a call that could never converge does not
+        // spend a round trip on an ACS it is not going to use.
+        this.withErrorHandling(() => assertSetupParams(params))
+
+        const contracts = await this.readActiveSetup(paymaster)
+
+        const existing = this.withErrorHandling(() =>
+            trafficSetupOf(paymaster, contracts)
+        )
+        const plan = this.withErrorHandling(() =>
+            planTrafficSetup(existing, params)
+        )
+
+        // Only the contracts the plan leaves alone can be disclosed: a created
+        // or repriced one has no contract id until the caller's transaction
+        // commits.
+        const reused = new Set(
+            [
+                plan.trafficPurchaser.contractId,
+                ...plan.conversionRates.map((rate) => rate.contractId),
+            ].filter((contractId) => contractId !== undefined)
+        )
+        const disclosedContracts = dedupeDisclosedContracts(
+            contracts
+                .filter((contract) => reused.has(contract.contractId))
+                .map((contract) =>
+                    toDisclosedContract(contract, this.ctx.error)
+                )
+        )
+
+        this.logger.debug(
+            {
+                paymaster,
+                commands: plan.commands.length,
+                trafficPurchaser: plan.trafficPurchaser.status,
+                conversionRates: plan.conversionRates.map((rate) => ({
+                    instrumentId: rate.instrumentId,
+                    status: rate.status,
+                })),
+            },
+            'Planned a traffic setup'
+        )
+
+        return { ...plan, disclosedContracts }
+    }
+
+    /**
+     * Everything of a paymaster's traffic setup that is live on the ledger.
+     *
+     * One ACS read filtered to the two templates. Useful on its own to diagnose
+     * what `setup` refuses: a paymaster carrying two `TrafficPurchaser`s, or an
+     * instrument priced by two live `ConversionRate`s.
+     *
+     * Needs no rights beyond the ones a setup already needs in order to submit,
+     * since acting as a party implies reading as it.
+     */
+    public async readTrafficSetup(
+        paymaster: PartyId
+    ): Promise<ActiveTrafficSetup> {
+        const contracts = await this.readActiveSetup(paymaster)
+        return this.withErrorHandling(() =>
+            trafficSetupOf(paymaster, contracts)
+        )
+    }
+
+    /**
+     * Reads the paymaster's `TrafficPurchaser` and `ConversionRate` contracts.
+     *
+     * Straight to the service rather than through the ACS cache: converging on
+     * what the ledger says now is the whole point, and a cached answer could
+     * plan a create for a contract that is already there.
+     *
+     * The filter this builds already asks for `includeCreatedEventBlob`, so one
+     * read yields both the arguments to converge on and the blobs a buyer's
+     * disclosures need. Filtering to the paymaster is enough to say the
+     * contracts are its own: it is the sole signatory of both templates.
+     */
+    private async readActiveSetup(paymaster: PartyId) {
+        return this.acsReader.raw.readJsContracts({
+            parties: [paymaster],
+            templateIds: [
+                TrafficPurchaser.templateId,
+                ConversionRate.templateId,
+            ],
+            filterByParty: true,
         })
     }
 
+    /**
+     * Runs a pure calculation, reporting the plain `Error` it rejects with as an
+     * `SDKError`.
+     *
+     * `pricing.ts` and `setup.ts` are pure by design -- they hold no SDK context
+     * -- so a `Decimal` that cannot be parsed, a non-positive rate, or a ledger
+     * a setup refuses to converge all arrive as plain `Error`s. Every other
+     * failure this namespace produces goes through `ctx.error.throw`, so the
+     * translation belongs here rather than leaving a caller to handle two kinds
+     * of error from one method.
+     */
     private withErrorHandling<T>(compute: () => T): T {
         try {
             return compute()
