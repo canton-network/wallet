@@ -39,4 +39,7 @@ export type EventsConfig = {
     auth: TokenProviderConfig
 }
 
-export type TrafficConfig = Record<string, never>
+export type TrafficConfig = RegistryAuthConfig & {
+    auth: TokenProviderConfig
+    registries: URLInput[]
+}
