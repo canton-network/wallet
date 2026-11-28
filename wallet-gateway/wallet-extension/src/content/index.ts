@@ -10,6 +10,10 @@ import { createNotificationRelay } from './notification-relay.ts'
  * JSON-RPC requests to the background and relays notifications back.
  */
 export function startContent(): void {
+    // An opaque origin (e.g. a CSP-sandboxed page) is not the origin of its
+    // URL, which is all the background sees in Firefox. Such a page must not
+    // act with that origin's approval, so it gets no wallet at all.
+    if (window.origin === 'null') return
     announceSelf()
     jsonRpcProxy(createNotificationRelay())
 }

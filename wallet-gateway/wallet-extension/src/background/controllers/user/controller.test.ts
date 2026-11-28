@@ -21,11 +21,20 @@ import {
     type Transaction,
     type Wallet,
 } from '@canton-network/core-wallet-store'
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import {
+    afterEach,
+    beforeEach,
+    describe,
+    expect,
+    it,
+    type Mock,
+    vi,
+} from 'vitest'
 import { fakeBrowser } from 'wxt/testing/fake-browser'
 
 import { fakeAuthContext } from '@/__tests__/fake-auth-context.ts'
 
+import type { SitePorts } from '../../notifications.ts'
 import { createWalletStore, loadAuthedStore } from '../../store/index.ts'
 import { createVaultSigningStore } from '../../store/signing-store.ts'
 import { createTestWalletStore } from '../../store/test-store.ts'
@@ -33,7 +42,11 @@ import { createVault, type Vault, VaultLockedError } from '../../vault/index.ts'
 import { userController } from './index.ts'
 
 const networkId = 'canton:local-oauth'
-const authContext = { userId: 'user-1', accessToken: 'token-1' }
+const authContext = {
+    userId: 'user-1',
+    accessToken: 'token-1',
+    identityProviderId: 'idp-mock-oauth',
+}
 
 describe('userController.addSession', () => {
     let service: NotificationService
@@ -58,6 +71,7 @@ describe('userController.addSession', () => {
             authContext: fakeAuthContext(authContext),
             signingDriver: {} as SigningDriverInterface,
             notificationService: service,
+            sitePorts: { send: vi.fn() },
         })
     })
 
@@ -89,10 +103,35 @@ describe('userController.addSession', () => {
         ])
         expect(firstSink.send).not.toHaveBeenCalled()
     })
+
+    it('refuses a network of another identity provider than the sign-in', async () => {
+        // Signed in through idp-mock-oauth; canton:localnet uses
+        // idp-self-signed.
+        await expect(
+            controller.addSession({
+                origin: 'https://dapp.example',
+                networkId: 'canton:localnet',
+            })
+        ).rejects.toThrow('another identity provider')
+    })
+
+    it('refuses to move a session while the sign-in provider is unknown', async () => {
+        const { identityProviderId: _, ...legacy } = authContext
+        controller = userController({
+            getStore: async () => createTestWalletStore(legacy),
+            authContext: fakeAuthContext(legacy),
+            signingDriver: {} as SigningDriverInterface,
+            notificationService: service,
+            sitePorts: { send: vi.fn() },
+        })
+
+        await expect(
+            controller.addSession({ origin: 'https://dapp.example', networkId })
+        ).rejects.toThrow('another identity provider')
+    })
 })
 
 describe('userController transactions', () => {
-    const otherAuthContext = { ...authContext, accessToken: 'token-2' }
     const keyPair = createKeyPair()
     // Base64 of a 32-byte hash, as signed by the wallet-kernel driver
     const preparedTransactionHash = btoa('h'.repeat(32))
@@ -132,22 +171,16 @@ describe('userController transactions', () => {
     // postWithRetry receives a factory that builds a fresh body per attempt
     const resolvePostBody = (call: unknown[]): unknown =>
         typeof call[1] === 'function' ? call[1]() : call[1]
-    let sessionSink: { send: ReturnType<typeof vi.fn>; close: () => void }
-    let otherSessionSink: { send: ReturnType<typeof vi.fn>; close: () => void }
+    let sitePorts: { send: Mock<SitePorts['send']> }
 
-    const subscribe = (sessionId: string) => {
-        const sink = { send: vi.fn(), close: vi.fn() }
-        subscribeNotifications(
-            service,
-            { sessionId, userId: authContext.userId },
-            sink
-        )
-        return sink
-    }
-    const txChangedEvents = (sink: { send: ReturnType<typeof vi.fn> }) =>
-        sink.send.mock.calls
-            .filter(([event]) => event === 'txChanged')
-            .map(([, args]) => (args as unknown[])[0])
+    /** The events sent to the site that asked for the transaction. */
+    const txChangedEvents = () =>
+        sitePorts.send.mock.calls
+            .filter(
+                ([site, event]) =>
+                    site === pendingTransaction.origin && event === 'txChanged'
+            )
+            .map(([, , args]) => (args as unknown[])[0])
 
     beforeEach(async () => {
         fakeBrowser.reset()
@@ -157,6 +190,7 @@ describe('userController transactions', () => {
             .mockResolvedValue(ledgerResult)
 
         service = new NotificationService()
+        sitePorts = { send: vi.fn() }
         store = createTestWalletStore(authContext)
         const vault = createVault({ iterations: 1000 })
         await vault.create('abcde1')
@@ -173,19 +207,13 @@ describe('userController transactions', () => {
             authContext: authContextStore,
             signingDriver: new InternalSigningDriver(signingStore),
             notificationService: service,
+            sitePorts,
         })
 
-        const session = await controller.addSession({
+        await controller.addSession({
             origin: pendingTransaction.origin!,
             networkId,
         })
-        authContextStore.load.mockResolvedValueOnce(otherAuthContext)
-        const otherSession = await controller.addSession({
-            origin: 'https://other.example',
-            networkId,
-        })
-        sessionSink = subscribe(session.id)
-        otherSessionSink = subscribe(otherSession.id)
 
         await store.addWallet({ ...wallet })
         await store.setTransaction({ ...pendingTransaction })
@@ -268,7 +296,7 @@ describe('userController transactions', () => {
             { status: 'executed', payload: ledgerResult, externalTxId }
         )
 
-        expect(txChangedEvents(sessionSink)).toEqual([
+        expect(txChangedEvents()).toEqual([
             expect.objectContaining({
                 id: pendingTransaction.id,
                 commandId: pendingTransaction.commandId,
@@ -293,7 +321,6 @@ describe('userController transactions', () => {
                 payload: ledgerResult,
             }),
         ])
-        expect(otherSessionSink.send).not.toHaveBeenCalled()
     })
 
     it('executes transactions signed concurrently', async () => {
@@ -356,7 +383,7 @@ describe('userController transactions', () => {
                 payload: ledgerResult,
             })
         }
-        const events = txChangedEvents(sessionSink).map((event) => {
+        const events = txChangedEvents().map((event) => {
             const { id, status } = event as Transaction
             return `${id}:${status}`
         })
@@ -365,7 +392,6 @@ describe('userController transactions', () => {
             'tx-2:signed',
         ])
         expect(events.slice(2)).toEqual(['tx-1:executed', 'tx-2:executed'])
-        expect(otherSessionSink.send).not.toHaveBeenCalled()
     })
 
     it('re-signs a legacy signed transaction without a signing transaction ID', async () => {
@@ -386,14 +412,13 @@ describe('userController transactions', () => {
                 signature
             )
         ).toBe(true)
-        expect(txChangedEvents(sessionSink)).toEqual([
+        expect(txChangedEvents()).toEqual([
             expect.objectContaining({
                 id: pendingTransaction.id,
                 origin: pendingTransaction.origin,
                 status: 'executed',
             }),
         ])
-        expect(otherSessionSink.send).not.toHaveBeenCalled()
     })
 
     it('does not mark a transaction signed after it changed while signing', async () => {
@@ -416,8 +441,7 @@ describe('userController transactions', () => {
         expect(await store.getTransaction(pendingTransaction.id)).toMatchObject(
             { status: 'failed' }
         )
-        expect(sessionSink.send).not.toHaveBeenCalled()
-        expect(otherSessionSink.send).not.toHaveBeenCalled()
+        expect(sitePorts.send).not.toHaveBeenCalled()
     })
 
     it('records a ledger rejection as a failed transaction', async () => {
@@ -439,7 +463,7 @@ describe('userController transactions', () => {
                 failureReason: 'INVALID_ARGUMENT: bad signature',
             }
         )
-        expect(txChangedEvents(sessionSink)).toEqual([
+        expect(txChangedEvents()).toEqual([
             expect.objectContaining({ status: 'signed' }),
             expect.objectContaining({
                 id: pendingTransaction.id,
@@ -448,7 +472,6 @@ describe('userController transactions', () => {
                 status: 'failed',
             }),
         ])
-        expect(otherSessionSink.send).not.toHaveBeenCalled()
     })
 
     it('only signs with the wallet-kernel driver', async () => {
@@ -461,7 +484,7 @@ describe('userController transactions', () => {
         await expect(controller.sign(params)).rejects.toThrow(
             `No driver found for ${SigningProvider.PARTICIPANT}`
         )
-        expect(sessionSink.send).not.toHaveBeenCalled()
+        expect(sitePorts.send).not.toHaveBeenCalled()
     })
 })
 
@@ -509,6 +532,7 @@ describe('userController wallets', () => {
             authContext: fakeAuthContext(authContext),
             signingDriver: new InternalSigningDriver(signingStore),
             notificationService: service,
+            sitePorts: { send: vi.fn() },
         })
         const session = await controller.addSession({ origin, networkId })
         subscribeNotifications(

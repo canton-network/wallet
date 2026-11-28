@@ -51,6 +51,12 @@ export interface Vault {
      */
     onLock(listener: () => void): void
     /**
+     * Calls `listener` once `create()` or `unlock()` has completed with the
+     * vault open, not when a `lock()` interrupted it. If it throws, the error
+     * is logged.
+     */
+    onUnlock(listener: () => void): void
+    /**
      * An encrypted item. Values must be JSON-serializable; they are stored,
      * and returned, as they look after `JSON.stringify` and `JSON.parse`.
      */
@@ -111,6 +117,7 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
     let generation = 0
     let publishedStatus: VaultStatus | undefined
     const lockListeners = new Set<() => void>()
+    const unlockListeners = new Set<() => void>()
 
     const ready = restore(generation)
         .catch((error: unknown) => {
@@ -130,17 +137,23 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
     /**
      * Runs an operation in the queue, then publishes the status. With
      * `rejectIfLocked`, a `lock()` that came in at any await, the status write
-     * included, turns the operation's success into `VaultLockedError`.
+     * included, turns the operation's success into `VaultLockedError`. With
+     * `unlocks`, the unlock listeners run once the operation has succeeded
+     * and the vault is still open.
      */
     function run<T>(
         op: (gen: number) => Promise<T>,
-        { rejectIfLocked = false } = {}
+        { rejectIfLocked = false, unlocks = false } = {}
     ): Promise<T> {
         const gen = generation
         return enqueue(async () => {
             const result = await op(gen).finally(publishStatus)
-            // Nothing awaits after this check, so no lock() can come in after it.
+            // Nothing awaits after these checks, so no lock() can come in
+            // between them and the listeners.
             if (rejectIfLocked) assertCurrent(gen)
+            if (unlocks && gen === generation && status === 'unlocked') {
+                notifyUnlock()
+            }
             return result
         })
     }
@@ -159,6 +172,16 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
                 listener()
             } catch (error) {
                 log.warn('A lock listener failed: {error}', { error })
+            }
+        }
+    }
+
+    function notifyUnlock(): void {
+        for (const listener of unlockListeners) {
+            try {
+                listener()
+            } catch (error) {
+                log.warn('An unlock listener failed: {error}', { error })
             }
         }
     }
@@ -282,23 +305,27 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
         status: () => status,
 
         create: (password) =>
-            run(async (gen) => {
-                const problems = passwordProblems(password)
-                if (problems.length > 0) throw new WeakPasswordError(problems)
-                if ((await vaultItem.getValue()) !== null) {
-                    throw new VaultExistsError()
-                }
-                const header = newHeader(iterations)
-                const key = await deriveVaultKey(password, header)
-                const doc: VaultDocV1 = { items: {} }
-                const envelope = await sealDocument(key, header, doc)
-                assertCurrent(gen)
-                await vaultItem.setValue(envelope)
-                // The vault exists now, even if a lock() keeps it locked.
-                status = 'locked'
-                await openSession(gen, key, header, doc)
-                log.info('Vault created')
-            }),
+            run(
+                async (gen) => {
+                    const problems = passwordProblems(password)
+                    if (problems.length > 0)
+                        throw new WeakPasswordError(problems)
+                    if ((await vaultItem.getValue()) !== null) {
+                        throw new VaultExistsError()
+                    }
+                    const header = newHeader(iterations)
+                    const key = await deriveVaultKey(password, header)
+                    const doc: VaultDocV1 = { items: {} }
+                    const envelope = await sealDocument(key, header, doc)
+                    assertCurrent(gen)
+                    await vaultItem.setValue(envelope)
+                    // The vault exists now, even if a lock() keeps it locked.
+                    status = 'locked'
+                    await openSession(gen, key, header, doc)
+                    log.info('Vault created')
+                },
+                { unlocks: true }
+            ),
 
         unlock: (password) =>
             run(
@@ -311,7 +338,7 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
                     }
                 },
                 // An unlock that a lock() interrupts must not report success.
-                { rejectIfLocked: true }
+                { rejectIfLocked: true, unlocks: true }
             ),
 
         lock: () => {
@@ -358,6 +385,10 @@ export function createVault(opts: { iterations?: number } = {}): Vault {
 
         onLock: (listener) => {
             lockListeners.add(listener)
+        },
+
+        onUnlock: (listener) => {
+            unlockListeners.add(listener)
         },
 
         defineItem<T>(

@@ -12,6 +12,7 @@ import type { Session, Store } from '@canton-network/core-wallet-store'
 
 import { logger } from '@/shared/logger.ts'
 
+import { siteNotifier } from '../../notifications.ts'
 import type { TxChangedFailedEvent } from '../dapp/rpc-gen/typings.ts'
 import { toSigningDrivers, type UserControllerDeps } from './deps.ts'
 import type { Methods } from './rpc-gen/index.ts'
@@ -38,7 +39,7 @@ export const transactions = ({
     getStore,
     authContext,
     signingDriver,
-    notificationService,
+    sitePorts,
 }: UserControllerDeps): Pick<
     Methods,
     | 'sign'
@@ -49,11 +50,12 @@ export const transactions = ({
     | 'getTransactionStatus'
 > => {
     const signingDrivers = toSigningDrivers(signingDriver)
-    const createTransactionService = (store: Store, sessionId: string) =>
+    // Its events go to the site that asked for the transaction only.
+    const createTransactionService = (store: Store, origin: string | null) =>
         new TransactionService(
             store,
             signingDrivers,
-            notificationService.getNotifier(sessionId),
+            siteNotifier(sitePorts, origin),
             'HASHING_SCHEME_VERSION_V3'
         )
 
@@ -74,13 +76,13 @@ export const transactions = ({
                 throw new Error('No primary wallet found')
             }
 
-            const session = await requireSession(
-                store,
-                connectedContext.accessToken
+            await requireSession(store, connectedContext.accessToken)
+            const transaction = await store.getTransaction(
+                signParams.transactionId
             )
             const transactionService = createTransactionService(
                 store,
-                session.id
+                transaction?.origin ?? null
             )
 
             logger.info('Signing transaction', {
@@ -119,10 +121,7 @@ export const transactions = ({
                 throw new Error('No network session found')
             }
 
-            const session = await requireSession(
-                store,
-                connectedContext.accessToken
-            )
+            await requireSession(store, connectedContext.accessToken)
 
             const ledgerClient = new LedgerClient({
                 baseUrl: new URL(network.ledgerApi.baseUrl),
@@ -132,7 +131,7 @@ export const transactions = ({
             })
             const transactionService = createTransactionService(
                 store,
-                session.id
+                transaction.origin
             )
 
             logger.info('Executing transaction', {
@@ -210,13 +209,10 @@ export const transactions = ({
                 )
             }
 
-            const session = await requireSession(
-                store,
-                connectedContext.accessToken
-            )
+            await requireSession(store, connectedContext.accessToken)
 
             await store.removeTransaction(transaction.id)
-            notificationService.getNotifier(session.id).emit('txChanged', {
+            siteNotifier(sitePorts, transaction.origin).emit('txChanged', {
                 status: 'failed',
                 commandId: transaction.commandId,
                 error: {

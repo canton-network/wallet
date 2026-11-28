@@ -669,9 +669,63 @@ describe('DappSDK', () => {
             expect(provider.request).toHaveBeenCalledWith(
                 expect.objectContaining({ method: 'status' })
             )
-            expect(provider.request).toHaveBeenCalledWith(
-                expect.objectContaining({ method: 'disconnect' })
+            expect(
+                provider.request.mock.calls.filter(
+                    ([args]) => args.method === 'disconnect'
+                )
+            ).toHaveLength(1)
+        })
+
+        it('removes listeners while a disconnect is in flight', async () => {
+            const { sdk, provider } = await connectSdk()
+            const listener = makeListener<StatusEvent>()
+            await sdk.onStatusChanged(listener)
+            let finish!: () => void
+            const connected = provider.request.getMockImplementation()!
+            provider.request.mockImplementation(async (args) =>
+                args.method === 'disconnect'
+                    ? new Promise((resolve) => {
+                          finish = () => resolve(null)
+                      })
+                    : connected(args)
             )
+
+            const disconnecting = sdk.disconnect()
+            await sdk.removeOnStatusChanged(listener)
+            finish()
+            await disconnecting
+
+            expect(provider.removeListener).toHaveBeenCalledWith(
+                'statusChanged',
+                listener
+            )
+        })
+
+        it('forgets the session when the wallet refuses to disconnect', async () => {
+            const refusal = new Error('locked')
+            const { sdk, provider, adapter } = await connectSdk()
+            const connected = provider.request.getMockImplementation()!
+            provider.request.mockImplementation(async (args) =>
+                args.method === 'disconnect'
+                    ? Promise.reject(refusal)
+                    : connected(args)
+            )
+
+            await expect(sdk.disconnect()).rejects.toBe(refusal)
+
+            expect(
+                provider.request.mock.calls.filter(
+                    ([args]) => args.method === 'disconnect'
+                )
+            ).toHaveLength(1)
+            expect(sdk.getConnectedProvider()).toBeNull()
+            expect(adapter.teardown).toHaveBeenCalled()
+            expect(mockClearAllLocalState).toHaveBeenCalledWith({
+                closePopup: true,
+            })
+            await expect(sdk.isConnected()).resolves.toMatchObject({
+                isConnected: false,
+            })
         })
 
         it('registers and removes event listeners on the active client', async () => {
